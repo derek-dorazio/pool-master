@@ -138,32 +138,32 @@ interface UsageResult {
 
 ### Middleware Integration
 
-```python
-# FastAPI dependency — inject into any route that needs entitlement checking
-async def require_entitlement(entitlement: EntitlementKey):
-    async def check(tenant: TenantContext = Depends(get_tenant_context)):
-        result = await entitlement_service.check(tenant.id, entitlement)
-        if not result.entitled:
-            raise HTTPException(
-                status_code=403,
-                detail={
-                    "error": "PLAN_LIMIT_REACHED",
-                    "message": result.reason,
-                    "upgrade_plan": result.upgrade_plan,
-                    "current_usage": result.current_usage,
-                    "limit": result.limit,
-                },
-            )
-        return result
-    return check
+```typescript
+// Express middleware — attach to any route that needs entitlement checking
+function requireEntitlement(entitlement: EntitlementKey) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const tenantId = req.tenantContext.tenantId;
+    const result = await entitlementService.check(tenantId, entitlement);
 
-# Usage
-@router.post("/leagues")
-async def create_league(
-    data: CreateLeagueInput,
-    _entitlement=Depends(require_entitlement("league.create")),
-):
-    ...
+    if (!result.entitled) {
+      return res.status(403).json({
+        error: 'PLAN_LIMIT_REACHED',
+        message: result.reason,
+        upgrade_plan: result.upgrade_plan,
+        current_usage: result.current_usage,
+        limit: result.limit,
+      });
+    }
+
+    next();
+  };
+}
+
+// Usage
+router.post('/leagues',
+  requireEntitlement('league.create'),
+  leagueController.create
+);
 ```
 
 ---

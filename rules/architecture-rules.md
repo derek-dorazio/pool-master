@@ -10,14 +10,15 @@ All plan documents and implementation work must conform to these rules. This is 
 
 | Concern | Choice | Rationale |
 |---|---|---|
-| **Language** | Python 3.12+ | Mature ecosystem, strong data processing, fast development |
-| **API Framework** | FastAPI | Async-native, automatic OpenAPI docs, Pydantic validation, high performance |
-| **Data Validation** | Pydantic v2 | Schema validation, serialisation, settings management |
-| **ORM / DB Access** | SQLAlchemy 2.0 (async) + Alembic | Port/adapter pattern via repository interfaces; Alembic for migrations |
-| **Task Queue** | Celery + Redis (broker) or ARQ | Background jobs, scheduled tasks, notification delivery |
-| **WebSockets** | FastAPI WebSocket + Redis Pub/Sub | Native FastAPI WebSocket support; Redis for multi-instance fan-out |
+| **Language** | TypeScript (strict mode) | Type safety across entire monorepo, shared types with frontend |
+| **API Framework** | Express + ts-rest or tRPC | Type-safe routes, mature ecosystem, easy to scale horizontally |
+| **Data Validation** | Zod | Runtime validation + TypeScript inference, shared with frontend |
+| **ORM / DB Access** | Prisma (primary) or Knex + custom repos | Type-safe queries; port/adapter pattern via repository interfaces |
+| **Migrations** | Prisma Migrate or Knex migrations | Schema-driven, version-controlled |
+| **Task Queue** | BullMQ + Redis | Background jobs, scheduled tasks, notification delivery |
+| **WebSockets** | ws + Socket.io with Redis adapter | Redis adapter allows multi-instance WS clustering |
 | **Auth** | Auth0 or AWS Cognito | OAuth, MFA, JWT — no reinventing |
-| **ASGI Server** | Uvicorn (production: behind Gunicorn) | High-performance async Python server |
+| **Runtime** | Node.js 20+ LTS | Long-term support, modern ES features, native fetch |
 
 ### Frontend (Client-Side)
 
@@ -26,8 +27,8 @@ All plan documents and implementation work must conform to these rules. This is 
 | **Web** | React + TypeScript | Component model, large ecosystem, type safety |
 | **Mobile** | React Native (Expo managed workflow) | Shared codebase iOS/Android, code sharing with web via shared packages |
 | **Mobile State** | Zustand or similar | Lightweight, React-native compatible |
-| **Form Validation (client)** | Zod | TypeScript-first schema validation |
-| **Internationalisation (client)** | i18next (React + React Native) | Works across web and mobile, pluralisation, interpolation |
+| **Form Validation** | Zod | Shared with backend — single schema definition |
+| **Internationalisation** | i18next (React + React Native) | Works across web and mobile, pluralisation, interpolation |
 
 ### Databases
 
@@ -53,6 +54,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | **CDN** | AWS CloudFront | Serve static assets, participant photos, share cards |
 | **CI/CD** | GitHub Actions (or equivalent) | Automated build, test, deploy pipeline |
 | **Monitoring** | CloudWatch + Sentry (or Datadog) | Metrics, alerting, error tracking |
+| **Monorepo** | Turborepo | Fast builds, shared packages, clean boundaries |
 
 ### Third-Party Services
 
@@ -73,7 +75,7 @@ All plan documents and implementation work must conform to these rules. This is 
 
 ### Service Topology
 
-All backend services are Python + FastAPI applications deployed as independent Docker containers.
+All backend services are Node.js + Express + TypeScript applications deployed as independent Docker containers.
 
 | Service | Responsibility |
 |---|---|
@@ -87,18 +89,19 @@ All backend services are Python + FastAPI applications deployed as independent D
 
 No service touches a database directly. All DB access goes through typed repository interfaces (ports). The adapter is injected at startup via a factory that reads `DB_RELATIONAL_ADAPTER` and `DB_NOSQL_ADAPTER` from environment config.
 
-```python
-# Port (interface)
-class LeagueRepository(Protocol):
-    async def find_by_id(self, id: str, tenant_id: str) -> League | None: ...
-    async def find_by_tenant(self, tenant_id: str) -> list[League]: ...
-    async def create(self, league: CreateLeagueInput) -> League: ...
-    async def update(self, id: str, updates: dict) -> League: ...
-    async def delete(self, id: str) -> None: ...
+```typescript
+// Port (interface)
+export interface LeagueRepository {
+  findById(id: string, tenantId: string): Promise<League | null>;
+  findByTenant(tenantId: string): Promise<League[]>;
+  create(league: CreateLeagueInput): Promise<League>;
+  update(id: string, updates: Partial<League>): Promise<League>;
+  delete(id: string): Promise<void>;
+}
 
-# Adapter (implementation)
-class PostgresLeagueRepository(LeagueRepository): ...
-class MySQLLeagueRepository(LeagueRepository): ...
+// Adapter (implementation)
+export class PostgresLeagueRepository implements LeagueRepository { ... }
+export class MySQLLeagueRepository implements LeagueRepository { ... }
 ```
 
 Services never import adapters directly — only ports. The correct implementation is injected at startup.
@@ -107,12 +110,13 @@ Services never import adapters directly — only ports. The correct implementati
 
 Every row in every relational table carries a `tenant_id`. A `TenantContext` middleware extracts the tenant from the JWT or subdomain on every request and attaches it to the request context. Repository implementations always scope queries by `tenant_id`.
 
-```python
-# FastAPI dependency for tenant context
-async def get_tenant_context(request: Request) -> TenantContext:
-    # Extract tenant from JWT claims or subdomain
-    # Attach to request state for repository scoping
-    ...
+```typescript
+// Express middleware for tenant context
+export function tenantContext(req: Request, res: Response, next: NextFunction) {
+  const tenantId = extractTenantFromJWT(req);
+  req.tenantContext = { tenantId };
+  next();
+}
 ```
 
 ### Event-Driven Communication
@@ -139,16 +143,16 @@ Three distinct real-time channels:
 | **Live scores** | WebSocket or SSE (per contest) | Leaderboard updates during events |
 | **Notifications** | APNs + FCM + in-app WS | Draft reminders, score milestones, contest results |
 
-The WebSocket gateway subscribes to Redis Pub/Sub and fans out events to connected clients. Redis allows the WebSocket layer to scale across multiple container instances.
+The WebSocket gateway (via Socket.io or ws + Redis Pub/Sub) subscribes to the message bus and fans out events to connected clients. The Redis adapter allows the WebSocket layer to scale across multiple container instances.
 
 ### Provider Abstraction
 
 All external service integrations use an adapter pattern so providers can be swapped without changing business logic:
 
-- **Sports data providers:** Each implements a `SportDataProvider` protocol
-- **Email providers:** SES / SendGrid behind an `EmailProvider` protocol
-- **Push providers:** APNs / FCM behind a `PushProvider` protocol
-- **Payment provider:** Stripe behind a `PaymentProvider` protocol
+- **Sports data providers:** Each implements a `SportDataProvider` interface
+- **Email providers:** SES / SendGrid behind an `EmailProvider` interface
+- **Push providers:** APNs / FCM behind a `PushProvider` interface
+- **Payment provider:** Stripe behind a `PaymentProvider` interface
 
 ---
 
@@ -156,64 +160,67 @@ All external service integrations use an adapter pattern so providers can be swa
 
 ```
 poolmaster/
-├── services/
-│   ├── core-api/                  # FastAPI, main REST API
-│   │   ├── app/
-│   │   │   ├── api/               # Route handlers (endpoints)
-│   │   │   ├── models/            # SQLAlchemy models
-│   │   │   ├── schemas/           # Pydantic request/response schemas
+├── packages/
+│   ├── core-api/                  # Express + TypeScript, main REST API
+│   │   ├── src/
+│   │   │   ├── routes/            # Route handlers (endpoints)
+│   │   │   ├── models/            # Prisma/DB models
+│   │   │   ├── schemas/           # Zod request/response schemas
 │   │   │   ├── services/          # Business logic
 │   │   │   ├── repositories/      # Repository implementations (adapters)
-│   │   │   ├── middleware/        # Tenant context, auth, etc.
-│   │   │   └── __init__.py
-│   │   ├── alembic/               # Database migrations
-│   │   │   ├── versions/
-│   │   │   ├── env.py
-│   │   │   └── alembic.ini
-│   │   └── pyproject.toml
-│   ├── draft-service/             # FastAPI + WebSocket, draft orchestration
-│   │   ├── app/
-│   │   └── pyproject.toml
+│   │   │   ├── middleware/        # Tenant context, auth, error handling
+│   │   │   └── index.ts           # App entry point
+│   │   ├── prisma/                # Prisma schema + migrations
+│   │   │   ├── schema.prisma
+│   │   │   └── migrations/
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   ├── draft-service/             # Express + WS, draft orchestration
+│   │   ├── src/
+│   │   ├── package.json
+│   │   └── tsconfig.json
 │   ├── scoring-service/           # Score computation worker
-│   │   ├── app/
-│   │   └── pyproject.toml
+│   │   ├── src/
+│   │   ├── package.json
+│   │   └── tsconfig.json
 │   ├── ingestion-worker/          # Stats data ingestion
-│   │   ├── app/
-│   │   └── pyproject.toml
-│   └── notification-service/      # Push, email, in-app notifications
-│       ├── app/
-│       └── pyproject.toml
-├── packages/
+│   │   ├── src/
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   ├── notification-service/      # Push, email, in-app notifications
+│   │   ├── src/
+│   │   ├── package.json
+│   │   └── tsconfig.json
 │   └── shared/
-│       ├── poolmaster_shared/
-│       │   ├── domain/            # Shared Python domain types (Pydantic models)
-│       │   ├── db/                # Repository port interfaces (Protocols)
-│       │   ├── events/            # Event schema definitions (shared message contracts)
-│       │   ├── utils/             # Shared utilities
-│       │   └── __init__.py
-│       └── pyproject.toml
+│       ├── domain/                # Shared TypeScript domain types & interfaces
+│       ├── db/                    # Repository port interfaces
+│       ├── events/                # Event schema definitions (shared message contracts)
+│       ├── utils/                 # Shared utilities
+│       ├── package.json
+│       └── tsconfig.json
 ├── tests/                         # ALL tests live here — separate from application code
 │   ├── unit/
-│   │   ├── core_api/
-│   │   ├── draft_service/
-│   │   ├── scoring_service/
-│   │   ├── ingestion_worker/
-│   │   ├── notification_service/
+│   │   ├── core-api/
+│   │   ├── draft-service/
+│   │   ├── scoring-service/
+│   │   ├── ingestion-worker/
+│   │   ├── notification-service/
 │   │   └── shared/
 │   ├── integration/
-│   │   ├── core_api/
-│   │   ├── draft_service/
-│   │   ├── scoring_service/
+│   │   ├── core-api/
+│   │   ├── draft-service/
+│   │   ├── scoring-service/
 │   │   └── shared/
 │   ├── api/
-│   │   ├── core_api/
-│   │   ├── draft_service/
-│   │   └── scoring_service/
+│   │   ├── core-api/
+│   │   ├── draft-service/
+│   │   └── scoring-service/
 │   ├── e2e/
-│   ├── factories/                 # Test data factories (factory-boy)
+│   ├── factories/                 # Test data factories (fishery or similar)
 │   ├── fixtures/                  # Shared test fixtures and seed data
-│   ├── conftest.py                # Root conftest — shared fixtures, DB setup
-│   └── pytest.ini                 # Pytest configuration
+│   ├── setup.ts                   # Global test setup
+│   ├── jest.config.ts             # Jest configuration (or vitest.config.ts)
+│   └── tsconfig.json
 ├── clients/
 │   ├── web/                       # React + TypeScript
 │   │   ├── src/
@@ -222,7 +229,7 @@ poolmaster/
 │   │   ├── src/
 │   │   └── __tests__/             # Mobile tests (Jest)
 │   ├── shared/                    # Shared TypeScript types, API client, validation
-│   │   ├── types/                 # TypeScript types matching backend Pydantic schemas
+│   │   ├── types/                 # TypeScript types (shared with backend domain types)
 │   │   ├── api-client/            # Typed HTTP + WebSocket client
 │   │   └── validation/            # Zod schemas for client-side validation
 │   ├── ios/                       # Swift / SwiftUI (if native path chosen)
@@ -233,36 +240,38 @@ poolmaster/
 │   └── terraform/
 ├── plans/                         # Plan documents
 ├── rules/                         # This file and other project rules
-└── pyproject.toml                 # Root pyproject — workspace config, dev dependencies
+├── package.json                   # Root package — workspace config, dev dependencies
+├── turbo.json                     # Turborepo pipeline configuration
+└── tsconfig.base.json             # Shared TypeScript compiler options
 ```
 
 ### Test / Application Code Separation
 
-**Rule: Test code must be separate from application code.** Tests live in the top-level `tests/` directory, not inside service directories. This keeps application packages clean for deployment (no test code shipped in Docker images) and provides a single place to run all tests across all services.
+**Rule: Test code must be separate from application code.** Tests live in the top-level `tests/` directory, not inside service `src/` directories. This keeps application packages clean for deployment (no test code shipped in Docker images) and provides a single place to run all tests across all services.
 
 ```
 tests/
 ├── unit/           # Fast, mocked dependencies. Run on every commit.
-│   └── {service}/  # Mirror the service name (e.g. core_api/, scoring_service/)
+│   └── {service}/  # Mirror the service name (e.g. core-api/, scoring-service/)
 ├── integration/    # Real DB via testcontainers. Run on every PR.
 │   └── {service}/
 ├── api/            # Full HTTP request/response cycle. Run on every PR.
 │   └── {service}/
 ├── e2e/            # Multi-service flows against staging. Run on merge to main.
-├── factories/      # factory-boy factories for all domain models
+├── factories/      # fishery (or similar) factories for all domain models
 ├── fixtures/       # Shared test data, JSON fixture files, seed scripts
-├── conftest.py     # Root conftest with shared fixtures (db_session, redis, api_client)
-└── pytest.ini      # Pytest config (markers, paths, coverage settings)
+├── setup.ts        # Global test setup (DB connections, test containers)
+└── jest.config.ts  # Test runner configuration
 ```
 
-**Naming convention:** Test directories use underscores to match Python module names (e.g. `core_api/` maps to `services/core-api/`).
+### Node.js / TypeScript Package Management
 
-### Python Package Management
-
-- **Package manager:** `uv` (preferred) or `pip` + `pyproject.toml`
-- **Dependency locking:** `uv.lock` or `requirements.lock`
-- **Shared code:** Published as internal packages via workspace configuration
-- **Python version:** 3.12+ (for modern typing, performance improvements)
+- **Package manager:** npm (with workspaces) or pnpm
+- **Monorepo tool:** Turborepo — fast builds, shared packages, clean boundaries
+- **Dependency locking:** `package-lock.json` or `pnpm-lock.yaml`
+- **Shared code:** Internal workspace packages via Turborepo
+- **Node version:** 20+ LTS
+- **TypeScript:** Strict mode (`"strict": true`) across all packages
 
 ---
 
@@ -279,7 +288,7 @@ tests/
 
 ### API
 
-- REST API with OpenAPI 3.0 specification (auto-generated by FastAPI)
+- REST API with OpenAPI 3.0 specification (via ts-rest or generated from Zod schemas)
 - API versioning via `Accept-Version` header (not URL-based)
 - Pagination via `page` + `page_size` query parameters
 - Consistent error response format: `{ "error": "CODE", "message": "...", "details": {...} }`
@@ -312,7 +321,7 @@ tests/
 
 - Every service is independently deployable
 - Blue/green or rolling deployments (zero-downtime)
-- Database migrations run before service deployment (Alembic)
+- Database migrations run before service deployment (Prisma Migrate or Knex)
 - Feature flags for gradual rollouts (not code branches)
 - Environment parity: dev, staging, production all use the same Docker images with different config
 - Health check endpoint on every service: `GET /health`

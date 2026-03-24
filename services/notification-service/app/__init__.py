@@ -1,1 +1,0 @@
-"""PoolMaster Notification Service."""

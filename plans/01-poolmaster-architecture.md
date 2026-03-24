@@ -31,7 +31,7 @@
 A multi-tenant SaaS platform where groups of friends (or colleagues) create leagues, configure contests across any sport, draft squads, and compete on live leaderboards. The platform is sport-agnostic by design — golf, tennis, F1, NCAA brackets, horse racing, and anything else are all first-class citizens configured through a flexible domain model rather than hard-coded sport logic.
 
 **Target clients:** Web (React), iOS (Swift/SwiftUI), Android (Kotlin)
-**Backend:** Python + FastAPI
+**Backend:** Node.js + Express + TypeScript
 **Deployment:** Docker on AWS ECS Fargate or EKS
 **Scale:** Multi-tenant SaaS, horizontally scalable per service
 
@@ -177,7 +177,7 @@ Clients                 │   Web (React)  iOS  Android      │
               │                      │                     │
    ┌──────────▼──────┐   ┌──────────▼──────┐  ┌──────────▼──────┐
    │   Core API      │   │  Draft Service  │  │  Scoring Service │
-   │ (Python/FastAPI)│   │(Python/FastAPI) │  │ (Python/FastAPI) │
+   │ (Node/Express)  │   │ (Node/Express)  │  │  (Node/Express)  │
    │                 │   │  + WebSocket    │  │                  │
    └──────────┬──────┘   └──────────┬──────┘  └──────────┬──────┘
               │                      │                     │
@@ -214,15 +214,15 @@ Clients                 │   Web (React)  iOS  Android      │
 ```
 poolmaster/
 ├── services/
-│   ├── core-api/              # FastAPI, main REST API
-│   ├── draft-service/         # FastAPI + WebSocket, draft orchestration
+│   ├── core-api/              # Express + TypeScript, main REST API
+│   ├── draft-service/         # Express + WS, draft orchestration
 │   ├── scoring-service/       # Score computation worker
 │   ├── ingestion-worker/      # Stats data ingestion
 │   └── notification-service/
 ├── packages/
 │   └── shared/
-│       ├── domain/            # Shared Python domain types (Pydantic models)
-│       ├── db/                # Repository port interfaces (Protocols)
+│       ├── domain/            # Shared TypeScript domain types & interfaces
+│       ├── db/                # Repository port interfaces
 │       ├── events/            # Event schema definitions (shared message contracts)
 │       └── utils/             # Shared utilities
 ├── clients/
@@ -240,51 +240,51 @@ poolmaster/
 
 > **Full project structure:** See [Architecture Rules](../rules/architecture-rules.md) § Project Structure for the canonical layout.
 
-Backend services share Python domain types and repository interfaces via the `packages/shared` package. Frontend clients share TypeScript types and the API client via `clients/shared`.
+This is a **monorepo** (Turborepo + npm workspaces) so packages share types, interfaces, and event schemas without duplication.
 
 ---
 
 ## 5. Database Port/Adapter Design
 
-No service touches a database directly. All DB access goes through typed repository interfaces (ports using Python's `Protocol`), and the adapter is injected at startup via a factory that reads `DB_RELATIONAL_ADAPTER` and `DB_NOSQL_ADAPTER` from environment config.
+No service touches a database directly. All DB access goes through a typed port interface, and the adapter is injected at startup via a `DatabaseFactory` that reads `DB_RELATIONAL_ADAPTER` and `DB_NOSQL_ADAPTER` from environment config.
 
 > **Full pattern details:** See [Architecture Rules](../rules/architecture-rules.md) § Port / Adapter (Hexagonal Architecture).
 
 ### Relational Port Example
 
-```python
-# packages/shared/db/ports/league_repository.py
-from typing import Protocol
-
-class LeagueRepository(Protocol):
-    async def find_by_id(self, id: str, tenant_id: str) -> League | None: ...
-    async def find_by_tenant(self, tenant_id: str) -> list[League]: ...
-    async def create(self, league: CreateLeagueInput) -> League: ...
-    async def update(self, id: str, updates: dict) -> League: ...
-    async def delete(self, id: str) -> None: ...
+```typescript
+// packages/shared/db/ports/LeagueRepository.ts
+export interface LeagueRepository {
+  findById(id: string, tenantId: string): Promise<League | null>;
+  findByTenant(tenantId: string): Promise<League[]>;
+  create(league: CreateLeagueInput): Promise<League>;
+  update(id: string, updates: Partial<League>): Promise<League>;
+  delete(id: string): Promise<void>;
+}
 ```
 
 ### NoSQL Port Example
 
-```python
-# packages/shared/db/ports/team_points_repository.py
-class TeamPointsRepository(Protocol):
-    async def append_points_event(self, event: TeamPointsEvent) -> None: ...
-    async def get_running_total(self, contest_id: str, team_id: str) -> float: ...
-    async def get_timeline(self, contest_id: str, team_id: str) -> list[TeamPointsEvent]: ...
-    async def get_leaderboard(self, contest_id: str) -> list[TeamStanding]: ...
+```typescript
+// packages/shared/db/ports/TeamPointsRepository.ts
+export interface TeamPointsRepository {
+  appendPointsEvent(event: TeamPointsEvent): Promise<void>;
+  getRunningTotal(contestId: string, teamId: string): Promise<number>;
+  getTimeline(contestId: string, teamId: string): Promise<TeamPointsEvent[]>;
+  getLeaderboard(contestId: string): Promise<TeamStanding[]>;
+}
 ```
 
 ### Adapters
 
-```python
-# Relational adapters (SQLAlchemy 2.0 async)
-class PostgresLeagueRepository(LeagueRepository): ...
-class MySQLLeagueRepository(LeagueRepository): ...
+```typescript
+// Relational adapters
+export class PostgresLeagueRepository implements LeagueRepository { ... }
+export class MySQLLeagueRepository implements LeagueRepository { ... }
 
-# NoSQL adapters
-class DynamoTeamPointsRepository(TeamPointsRepository): ...
-class MongoTeamPointsRepository(TeamPointsRepository): ...
+// NoSQL adapters
+export class DynamoTeamPointsRepository implements TeamPointsRepository { ... }
+export class MongoTeamPointsRepository implements TeamPointsRepository { ... }
 ```
 
 Services never import adapters directly — only ports. The correct implementation is injected at startup.
@@ -387,13 +387,13 @@ Three distinct real-time channels:
 | **Live scores** | WebSocket or SSE (per contest) | Leaderboard updates during events |
 | **Notifications** | APNs + FCM + in-app WS | Draft reminders, score milestones, contest results |
 
-The WebSocket gateway (in the Draft Service, and optionally a separate Realtime Service at scale) subscribes to the message bus and fans out events to connected clients. **Redis Pub/Sub** allows the WebSocket layer to scale across multiple container instances without routing issues.
+The WebSocket gateway (in the Draft Service, and optionally a separate Realtime Service at scale) subscribes to the message bus and fans out events to connected clients. A **Redis adapter** (via Socket.io or ws + Redis pub/sub) allows the WebSocket layer to scale across multiple container instances without routing issues.
 
 ---
 
 ## 9. Multi-Tenancy Approach
 
-Every row in every relational table carries a `tenant_id`. A `TenantContext` FastAPI dependency extracts the tenant from the JWT or subdomain on every request and attaches it to the request context. Repository implementations always scope queries by `tenant_id` — it is not optional and not caller-supplied after the middleware step. This prevents cross-tenant data leakage at the data layer rather than relying solely on application logic.
+Every row in every relational table carries a `tenant_id`. A `TenantContext` middleware extracts the tenant from the JWT or subdomain on every request and attaches it to the request context. Repository implementations always scope queries by `tenant_id` — it is not optional and not caller-supplied after the middleware step. This prevents cross-tenant data leakage at the data layer rather than relying solely on application logic.
 
 ---
 
@@ -403,29 +403,28 @@ Every row in every relational table carries a `tenant_id`. A `TenantContext` Fas
 
 | Concern | Choice | Rationale |
 |---|---|---|
-| Backend Language | Python 3.12+ | Mature ecosystem, strong data processing, fast development |
-| API Framework | FastAPI | Async-native, automatic OpenAPI docs, Pydantic validation |
-| Frontend Language | TypeScript | Type safety across web and mobile clients |
-| Frontend Framework | React (web) + React Native (mobile) | Shared component model, large ecosystem |
+| Language | TypeScript throughout | Type safety across monorepo, shared domain types |
+| API Framework | Express + ts-rest or tRPC | Type-safe routes, easy to scale horizontally |
 | Auth | Auth0 or AWS Cognito | Handles OAuth, MFA, JWT — no reinventing |
 | Relational DB | PostgreSQL (primary), MySQL (adapter) | JSONB support in Postgres is heavily used |
 | NoSQL | DynamoDB (primary), MongoDB (adapter) | DynamoDB scales without ops burden on AWS |
 | Message Bus | AWS EventBridge or SQS+SNS, Redis Streams | Decouples scoring from ingestion, fan-out |
-| WebSockets | FastAPI WebSocket + Redis Pub/Sub | Native async support; Redis for multi-instance clustering |
-| Task Queue | Celery + Redis (or ARQ) | Background jobs, scheduled notifications, data processing |
+| WebSockets | ws or Socket.io with Redis adapter | Redis adapter allows multi-instance WS clustering |
+| Task Queue | BullMQ + Redis | Background jobs, scheduled notifications, data processing |
 | Containers | Docker on ECS Fargate or EKS | Scales each service independently |
 | IaC | Terraform | Reproducible infra across environments |
+| Monorepo | Turborepo | Fast builds, shared packages, clean boundaries |
 
 ---
 
 ## 11. Build Phases
 
 ### Phase 1 — Foundation (Weeks 1–4)
-- Project structure setup, Python package config, shared domain types (Pydantic)
+- Monorepo setup (Turborepo), TypeScript config, shared domain types
 - Auth (JWT + OAuth via Auth0 or Cognito)
-- DB port/adapter interfaces (Protocol classes) + Postgres adapter + DynamoDB adapter
+- DB port/adapter interfaces + Postgres adapter + DynamoDB adapter
 - Core domain: Tenants, Users, Leagues, Memberships
-- Basic FastAPI REST API with tenant scoping dependency
+- Basic REST API with tenant scoping middleware
 - CI/CD pipeline, Docker images, ECS/EKS scaffolding
 
 ### Phase 2 — Contest & Roster (Weeks 5–8)
@@ -443,7 +442,7 @@ Every row in every relational table carries a `tenant_id`. A `TenantContext` Fas
 - REST endpoints for leaderboard and contest state
 
 ### Phase 4 — Real-Time (Weeks 13–16)
-- WebSocket server for draft rooms (FastAPI WebSocket + Redis Pub/Sub)
+- WebSocket server for draft rooms (Socket.io + Redis adapter)
 - Live draft — on-the-clock timer, auto-pick on expiry
 - WebSocket/SSE for live contest leaderboards
 - Push notification service (APNs + FCM) for async draft turns and score milestones
@@ -470,14 +469,14 @@ Every row in every relational table carries a `tenant_id`. A `TenantContext` Fas
 
 When opening this project in Claude Code, a productive first sprint is:
 
-1. **Scaffold the project** — Create `services/`, `packages/shared/`, `clients/` directory structure with `pyproject.toml` configs
-2. **Create `packages/shared/domain`** — All Pydantic models for the full domain model (no implementation, just types)
-3. **Create `packages/shared/db`** — Repository port interfaces (Python Protocol classes) for all repositories
-4. **Create `services/core-api`** — FastAPI app shell with tenant dependency, auth middleware, health check, and dependency injection wiring
-5. **Implement Postgres adapter** for `LeagueRepository` and `UserRepository` as the first working slice (SQLAlchemy 2.0 async)
-6. **Write database migrations** (using Alembic) for the Tenant, User, League, LeagueMembership, Sport, and Season tables
+1. **Scaffold the monorepo** — Turborepo + npm workspaces, root `tsconfig.json`, shared ESLint/Prettier config
+2. **Create `packages/shared/domain`** — All TypeScript interfaces for the full domain model (no implementation, just types)
+3. **Create `packages/shared/db`** — Port interfaces for all repositories
+4. **Create `packages/core-api`** — Express app shell with tenant middleware, auth middleware, health check, and DI container wiring
+5. **Implement Postgres adapter** for `LeagueRepository` and `UserRepository` as the first working slice
+6. **Write database migrations** (using Prisma Migrate or Knex) for the Tenant, User, League, LeagueMembership, Sport, and Season tables
 7. **First working API route:** `POST /leagues` and `GET /leagues` — end-to-end through the port/adapter stack
-8. **Set up tests** — pytest + testcontainers for integration tests, factory-boy for test data
+8. **Set up tests** — Jest + testcontainers for integration tests, fishery for test data
 
 ---
 
@@ -485,17 +484,17 @@ When opening this project in Claude Code, a productive first sprint is:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 01-001 | 1 | Project structure setup (`services/`, `packages/`, `clients/`, `tests/`) | Done | Scaffolded with pyproject.toml configs |
-| 01-002 | 1 | Shared domain types — Pydantic models for all entities | Done | `poolmaster_shared/domain/` |
-| 01-003 | 1 | Repository port interfaces — Protocol classes for all repos | Done | `poolmaster_shared/db/ports.py` |
-| 01-004 | 1 | Event schemas — StatEvent, DraftPick, Contest lifecycle | Done | `poolmaster_shared/events/` |
+| 01-001 | 1 | Monorepo setup (Turborepo + npm workspaces, tsconfig, ESLint/Prettier) | Not Started | |
+| 01-002 | 1 | Shared domain types — TypeScript interfaces for all entities | Not Started | `packages/shared/domain/` |
+| 01-003 | 1 | Repository port interfaces for all repos | Not Started | `packages/shared/db/` |
+| 01-004 | 1 | Event schemas — StatEvent, DraftPick, Contest lifecycle | Not Started | `packages/shared/events/` |
 | 01-005 | 1 | Auth integration (JWT + OAuth via Auth0 or Cognito) | Not Started | |
-| 01-006 | 1 | Postgres adapter for TenantRepository | Not Started | SQLAlchemy 2.0 async |
+| 01-006 | 1 | Postgres adapter for TenantRepository | Not Started | Prisma or Knex |
 | 01-007 | 1 | Postgres adapter for UserRepository | Not Started | |
 | 01-008 | 1 | Postgres adapter for LeagueRepository | Not Started | |
 | 01-009 | 1 | Postgres adapter for LeagueMembershipRepository | Not Started | |
-| 01-010 | 1 | Alembic migrations — Tenant, User, League, Membership, Sport, Season tables | Not Started | |
-| 01-011 | 1 | TenantContext FastAPI dependency (extract tenant from JWT/subdomain) | Not Started | |
+| 01-010 | 1 | DB migrations — Tenant, User, League, Membership, Sport, Season tables | Not Started | Prisma Migrate or Knex |
+| 01-011 | 1 | TenantContext Express middleware (extract tenant from JWT/subdomain) | Not Started | |
 | 01-012 | 1 | Core API — `POST /leagues` and `GET /leagues` end-to-end | Not Started | |
 | 01-013 | 1 | CI/CD pipeline (GitHub Actions: lint, type check, test, build) | Not Started | |
 | 01-014 | 1 | Docker images for each service | Not Started | Dockerfile.service template exists |

@@ -534,7 +534,7 @@ interface ScheduledNotification {
 ### Scheduler Implementation
 
 ```
-Job queue (Celery + Redis or ARQ):
+Job queue (BullMQ on Redis):
   1. When a contest/draft is created, enqueue scheduled notifications
   2. Each job has a delay (fire_at - now)
   3. At fire time: job executes, checks if still relevant (contest not cancelled?)

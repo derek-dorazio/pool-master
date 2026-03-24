@@ -140,9 +140,8 @@ interface LocaleConfig {
 ### Implementation: Use Intl API
 
 ```typescript
-// Client-side: leverage JavaScript's built-in Intl API for locale-aware formatting
-// Works in browsers and React Native
-// Backend: use Python's babel library or standard locale module
+// Leverage JavaScript's built-in Intl API for locale-aware formatting
+// Works in Node.js (backend), browsers, and React Native
 
 function formatDate(date: Date, locale: string, format: 'short' | 'long'): string {
   const options: Intl.DateTimeFormatOptions = format === 'short'
@@ -277,7 +276,7 @@ Phase 2 (International): Add languages based on demand
 ### Translation Framework
 
 ```typescript
-// Client: i18next (React + React Native). Backend: Python babel or gettext
+// Use i18next (works in Node.js, React, React Native)
 interface TranslationService {
   // Get translated string
   t(key: string, params?: Record<string, any>): string;
@@ -342,7 +341,7 @@ Some content is generated server-side and must be localised there:
 - Weekly recap content
 - Error messages in API responses
 
-For these: accept `Accept-Language` header and use server-side Python i18n (babel or gettext).
+For these: accept `Accept-Language` header and use server-side i18next.
 ```
 
 ### API Headers
@@ -494,7 +493,7 @@ CREATE TABLE user_locale_preferences (
 - Extract all UI strings to translation files (en-US.json)
 - Integrate i18next in web app
 - Integrate i18next in React Native app
-- Server-side Python i18n (babel) for emails and notifications
+- Server-side i18next for emails and notifications
 - Pluralisation rules
 
 ### Phase 4 — Multi-Language (When Needed)

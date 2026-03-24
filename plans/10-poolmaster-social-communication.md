@@ -510,7 +510,7 @@ interface WebSocketManager {
 ### Scaling Considerations
 
 ```
-Single server: FastAPI WebSocket, in-memory channel management
+Single server: ws library on Node.js, in-memory channel management
 Multi-server: Redis Pub/Sub for cross-server channel broadcasting
 
 Expected load:

@@ -1,20 +1,9 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
+# Dependencies
+node_modules/
+
+# Build output
 dist/
-build/
-.eggs/
-*.egg
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# uv
-.python-version
+*.tsbuildinfo
 
 # IDE
 .idea/
@@ -29,23 +18,17 @@ env/
 .LSOverride
 
 # Testing
-.coverage
-htmlcov/
-.pytest_cache/
-
-# mypy
-.mypy_cache/
-
-# ruff
-.ruff_cache/
+coverage/
 
 # Environment
 .env
 .env.local
 .env.*.local
 
+# Turbo
+.turbo/
+
 # Node (clients)
-node_modules/
 clients/web/dist/
 clients/mobile/.expo/
 

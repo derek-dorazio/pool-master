@@ -2,26 +2,24 @@
 
 All services and clients must follow these testing standards. This document defines the testing strategy, tools, coverage requirements, and conventions for the PoolMaster platform.
 
-> **Architecture dependency:** This document assumes the tech stack defined in [architecture-rules.md](../rules/architecture-rules.md). Backend = Python + FastAPI. Frontend = React + TypeScript. Mobile = React Native.
+> **Architecture dependency:** This document assumes the tech stack defined in [architecture-rules.md](../rules/architecture-rules.md). Backend = Node.js + Express + TypeScript. Frontend = React + TypeScript. Mobile = React Native.
 
 ---
 
 ## 1. Testing Tools
 
-### Backend (Python)
+### Backend (Node.js + TypeScript)
 
 | Tool | Purpose |
 |---|---|
-| **pytest** | Test runner and framework |
-| **pytest-asyncio** | Async test support (FastAPI is async-native) |
-| **pytest-cov** | Coverage reporting |
-| **httpx** | Async HTTP client for API testing (FastAPI TestClient uses this) |
-| **factory-boy** | Test data factories (generate realistic domain objects) |
-| **Faker** | Generate fake data (names, emails, dates) |
-| **testcontainers-python** | Spin up PostgreSQL, Redis, DynamoDB containers for integration tests |
-| **moto** | Mock AWS services (S3, SQS, DynamoDB) for unit tests |
-| **freezegun** | Freeze/mock time (critical for draft timers, scheduling, TTLs) |
-| **respx** | Mock HTTP requests to external APIs (sports data providers, Stripe) |
+| **Jest** (or **Vitest**) | Test runner and framework |
+| **supertest** | HTTP assertion library for Express API testing |
+| **fishery** | Test data factories (generate realistic domain objects) |
+| **Faker** (`@faker-js/faker`) | Generate fake data (names, emails, dates) |
+| **testcontainers** (`testcontainers-node`) | Spin up PostgreSQL, Redis, DynamoDB containers for integration tests |
+| **aws-sdk-client-mock** | Mock AWS services (S3, SQS, DynamoDB) for unit tests |
+| **sinon** (or Jest mocks) | Stubs, spies, and mocks for time, dependencies |
+| **nock** | Mock HTTP requests to external APIs (sports data providers, Stripe) |
 
 ### Frontend (React + TypeScript)
 
@@ -54,7 +52,7 @@ All services and clients must follow these testing standards. This document defi
 │         Integration Tests (testcontainers)        │  Moderate count
 │  Service + real DB + real Redis + real message bus │
 ├─────────────────────────────────────────────────┤
-│              Unit Tests (pytest / Vitest)          │  Many, fast, focused
+│              Unit Tests (Jest / Vitest)            │  Many, fast, focused
 │  Single function/class, mocked dependencies        │
 └─────────────────────────────────────────────────┘
 ```
@@ -63,8 +61,8 @@ All services and clients must follow these testing standards. This document defi
 
 | Layer | Scope | Database | External Services | Speed |
 |---|---|---|---|---|
-| **Unit** | Single function, class, or Pydantic model | Mocked | Mocked | < 1s per test |
-| **Integration** | Service → repository → real database | Real (testcontainers PostgreSQL) | Mocked (respx, moto) | < 5s per test |
+| **Unit** | Single function, class, or Zod schema | Mocked | Mocked | < 1s per test |
+| **Integration** | Service → repository → real database | Real (testcontainers PostgreSQL) | Mocked (nock, aws-sdk-client-mock) | < 5s per test |
 | **API** | Full HTTP request → response cycle | Real (testcontainers) | Mocked | < 5s per test |
 | **E2E** | Multi-service flows | Real | Real (staging providers) | < 30s per test |
 
@@ -105,7 +103,7 @@ The scoring engine is the most business-critical component. An incorrect score c
 ### Backend — Required Test Cases
 
 **Domain models and schemas:**
-- Pydantic model validation (valid and invalid inputs)
+- Zod schema validation (valid and invalid inputs)
 - Serialisation / deserialisation round-trips
 - Enum value validation
 
@@ -176,62 +174,55 @@ The scoring engine is the most business-critical component. An incorrect score c
 
 ### Factories (Backend)
 
-Use `factory-boy` to generate realistic test data. Every domain model has a factory.
+Use `fishery` to generate realistic test data. Every domain model has a factory.
 
-```python
-class LeagueFactory(factory.Factory):
-    class Meta:
-        model = League
+```typescript
+import { Factory } from "fishery";
+import { v4 as uuid } from "uuid";
+import { League, Contest } from "@poolmaster/shared/domain";
 
-    id = factory.LazyFunction(uuid4)
-    tenant_id = factory.LazyFunction(uuid4)
-    name = factory.Faker("company")
-    description = factory.Faker("sentence")
-    created_by = factory.LazyFunction(uuid4)
-    visibility = "PRIVATE"
-    max_members = 20
+export const leagueFactory = Factory.define<League>(() => ({
+  id: uuid(),
+  tenantId: uuid(),
+  name: faker.company.name(),
+  description: faker.lorem.sentence(),
+  createdBy: uuid(),
+  visibility: "PRIVATE",
+  maxMembers: 20,
+}));
 
-class ContestFactory(factory.Factory):
-    class Meta:
-        model = Contest
-
-    id = factory.LazyFunction(uuid4)
-    league_id = factory.LazyFunction(uuid4)
-    sport = "GOLF"
-    contest_type = "SINGLE_EVENT"
-    scoring_type = "CUMULATIVE"
-    status = "DRAFT"
+export const contestFactory = Factory.define<Contest>(() => ({
+  id: uuid(),
+  leagueId: uuid(),
+  sport: "GOLF",
+  contestType: "SINGLE_EVENT",
+  scoringType: "CUMULATIVE",
+  status: "DRAFT",
+}));
 ```
 
 ### Fixtures (Backend)
 
-Shared fixtures in `conftest.py` at the service level:
+Shared setup in `tests/setup.ts`:
 
-```python
-@pytest.fixture
-async def db_session():
-    """Real PostgreSQL session via testcontainers."""
-    ...
+```typescript
+// Global test setup — DB connections, test containers
+import { PostgreSqlContainer } from "@testcontainers/postgresql";
+import { GenericContainer } from "testcontainers";
 
-@pytest.fixture
-async def redis_client():
-    """Real Redis via testcontainers."""
-    ...
+let pgContainer: StartedPostgreSqlContainer;
+let redisContainer: StartedTestContainer;
 
-@pytest.fixture
-async def api_client(db_session):
-    """FastAPI TestClient with real DB."""
-    ...
+beforeAll(async () => {
+  pgContainer = await new PostgreSqlContainer().start();
+  redisContainer = await new GenericContainer("redis:7-alpine").withExposedPorts(6379).start();
+  // Set connection URLs in environment
+});
 
-@pytest.fixture
-def tenant():
-    """Default test tenant."""
-    return TenantFactory()
-
-@pytest.fixture
-def commissioner(tenant):
-    """Commissioner user in the test tenant."""
-    return UserFactory(tenant_id=tenant.id, role="COMMISSIONER")
+afterAll(async () => {
+  await pgContainer.stop();
+  await redisContainer.stop();
+});
 ```
 
 ### Seed Data
@@ -250,13 +241,21 @@ For E2E and manual testing, a seed script populates:
 
 ### Naming
 
-```python
-# Backend: test_{what}_{scenario}_{expected_outcome}
-def test_create_league_with_valid_data_returns_league():
-def test_create_league_without_name_returns_422():
-def test_snake_draft_pick_order_reverses_on_even_rounds():
-def test_scoring_engine_golf_missed_cut_assigns_penalty_score():
-def test_entitlement_check_free_plan_blocks_fourth_league():
+```typescript
+// Backend: describe block = module, it block = behaviour
+describe("LeagueService", () => {
+  it("creates a league with valid data");
+  it("rejects league creation without a name");
+});
+
+describe("ScoringEngine", () => {
+  it("reverses snake draft pick order on even rounds");
+  it("assigns penalty score for golf missed cut");
+});
+
+describe("EntitlementService", () => {
+  it("blocks fourth league creation on free plan");
+});
 ```
 
 ```typescript
@@ -271,32 +270,37 @@ describe("DraftRoom", () => {
 ### File Organisation
 
 ```
-# Backend
-services/core-api/tests/
+# Backend tests (top-level tests/ directory)
+tests/
 ├── unit/
-│   ├── test_league_service.py
-│   ├── test_scoring_engine.py
-│   └── test_entitlement_service.py
+│   ├── core-api/
+│   │   ├── league-service.test.ts
+│   │   ├── scoring-engine.test.ts
+│   │   └── entitlement-service.test.ts
+│   └── shared/
+│       └── domain-models.test.ts
 ├── integration/
-│   ├── test_league_repository.py
-│   ├── test_contest_repository.py
-│   └── test_scoring_pipeline.py
+│   ├── core-api/
+│   │   ├── league-repository.test.ts
+│   │   ├── contest-repository.test.ts
+│   │   └── scoring-pipeline.test.ts
 ├── api/
-│   ├── test_league_endpoints.py
-│   ├── test_contest_endpoints.py
-│   └── test_draft_endpoints.py
+│   ├── core-api/
+│   │   ├── league-endpoints.test.ts
+│   │   ├── contest-endpoints.test.ts
+│   │   └── draft-endpoints.test.ts
 ├── factories/
-│   ├── league_factory.py
-│   ├── contest_factory.py
-│   └── user_factory.py
-└── conftest.py
+│   ├── league.factory.ts
+│   ├── contest.factory.ts
+│   └── user.factory.ts
+└── setup.ts
 
-# Frontend
+# Frontend tests (co-located within client)
 clients/web/src/
 ├── components/
 │   ├── DraftRoom/
 │   │   ├── DraftRoom.tsx
-│   │   └── DraftRoom.test.tsx    # co-located
+│   │   └── DraftRoom.test.tsx
 ├── __tests__/
 │   └── e2e/
 │       ├── draft-flow.spec.ts
@@ -308,8 +312,8 @@ clients/web/src/
 - Each test is independent — no shared mutable state between tests
 - Database tests use transactions that roll back after each test (or fresh containers)
 - Redis tests flush the test database between tests
-- Time-dependent tests use `freezegun` to freeze time
-- External API tests use `respx` mocks — never call real providers in unit/integration tests
+- Time-dependent tests use Jest fake timers or sinon to freeze time
+- External API tests use `nock` mocks — never call real providers in unit/integration tests
 
 ---
 
@@ -319,26 +323,24 @@ clients/web/src/
 
 ```
 1. Lint & Format
-   ├── Backend: ruff check + ruff format --check
-   ├── Frontend: eslint + prettier --check
+   ├── Backend + Frontend: eslint + prettier --check
    └── Block merge on failure
 
 2. Type Check
-   ├── Backend: mypy (strict mode)
-   ├── Frontend: tsc --noEmit
+   ├── All packages: tsc --noEmit (via Turborepo)
    └── Block merge on failure
 
 3. Unit Tests
-   ├── Backend: pytest tests/unit/ --cov
+   ├── Backend: jest tests/unit/ --coverage
    ├── Frontend: vitest run
    └── Block merge on failure or coverage below threshold
 
 4. Integration Tests
-   ├── Backend: pytest tests/integration/ (testcontainers)
+   ├── Backend: jest tests/integration/ (testcontainers)
    └── Block merge on failure
 
 5. API Tests
-   ├── Backend: pytest tests/api/ (testcontainers)
+   ├── Backend: jest tests/api/ (testcontainers)
    └── Block merge on failure
 
 6. E2E Tests (on merge to main only)
@@ -351,14 +353,13 @@ clients/web/src/
    └── Deploy to staging
 ```
 
-### Pre-Commit Hooks
+### Pre-Commit Hooks (via lint-staged + husky)
 
-```yaml
-# Run locally before every commit
-- ruff check --fix          # Python linting + auto-fix
-- ruff format               # Python formatting
-- mypy                      # Python type checking
-- pytest tests/unit/ -x     # Run unit tests, stop on first failure
+```json
+{
+  "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+  "*.{json,md}": ["prettier --write"]
+}
 ```
 
 ### Pull Request Requirements
@@ -376,25 +377,25 @@ Given the sport-agnostic scoring engine, each sport needs a dedicated test suite
 
 ### Validation Approach
 
-```python
-# For each sport, test against known historical results:
-# "Given this scoring config and these real stat events,
-#  the engine should produce these exact scores and standings."
+```typescript
+// For each sport, test against known historical results:
+// "Given this scoring config and these real stat events,
+//  the engine should produce these exact scores and standings."
 
-class TestGolfScoringAgainstRealData:
-    """Validate golf scoring against 2025 Masters actual results."""
+describe("Golf scoring against real data", () => {
+  it("DFS scoring matches 2025 Masters actual results", () => {
+    const config = SCORING_TEMPLATES["golf_dfs_standard"];
+    const stats = loadFixture("masters_2025_stats.json");
+    const results = scoringEngine.calculate(config, stats);
+    expect(results[0].participantName).toBe("Scottie Scheffler");
+    expect(results[0].totalPoints).toBeCloseTo(287.5, 1);
+  });
 
-    def test_dfs_scoring_masters_2025(self, scoring_engine):
-        config = SCORING_TEMPLATES["golf_dfs_standard"]
-        stats = load_fixture("masters_2025_stats.json")
-        results = scoring_engine.calculate(config, stats)
-        # Verify top 10 scores match expected values
-        assert results[0].participant_name == "Scottie Scheffler"
-        assert results[0].total_points == pytest.approx(287.5, abs=0.1)
-
-    def test_stroke_play_masters_2025(self, scoring_engine):
-        config = SCORING_TEMPLATES["golf_stroke_pick6_use4"]
-        # ... validate stroke play scoring
+  it("Stroke play scoring matches 2025 Masters actual results", () => {
+    const config = SCORING_TEMPLATES["golf_stroke_pick6_use4"];
+    // ... validate stroke play scoring
+  });
+});
 ```
 
 ### Required Fixtures Per Sport
@@ -421,7 +422,7 @@ class TestGolfScoringAgainstRealData:
 
 ### Tools
 
-- **Locust** (Python-native load testing) or **k6** (JavaScript-based)
+- **k6** (JavaScript-based, runs natively) or **Artillery**
 - Run against a dedicated load-test environment (mirrors production infra)
 
 ### Key Scenarios

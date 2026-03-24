@@ -1,0 +1,31 @@
+{
+  "name": "poolmaster",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-tenant fantasy sports pool management platform",
+  "workspaces": [
+    "packages/*",
+    "clients/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "jest --config tests/jest.config.ts",
+    "test:unit": "jest --config tests/jest.config.ts tests/unit",
+    "test:integration": "jest --config tests/jest.config.ts tests/integration",
+    "test:api": "jest --config tests/jest.config.ts tests/api",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
