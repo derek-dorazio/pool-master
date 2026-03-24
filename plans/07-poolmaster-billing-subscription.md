@@ -709,10 +709,10 @@ CREATE INDEX idx_usage_tenant ON tenant_usage(tenant_id);
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
 | 07-001 | 1 | `plan_tiers` table + seed data (Free, Starter, Pro, League+) | Not Started | |
-| 07-002 | 1 | `PlanEntitlements` Pydantic model | Not Started | |
+| 07-002 | 1 | `PlanEntitlements` Zod schema + TypeScript type | Not Started | |
 | 07-003 | 1 | EntitlementService — `check()` and `checkMultiple()` | Not Started | |
 | 07-004 | 1 | Entitlement resolution order (override → flag → plan → usage) | Not Started | |
-| 07-005 | 1 | FastAPI entitlement dependency (middleware for routes) | Not Started | |
+| 07-005 | 1 | Express entitlement middleware for routes | Not Started | |
 | 07-006 | 1 | `tenant_usage` table + usage counting | Not Started | |
 | 07-007 | 1 | Free tier functional with hard-coded limits | Not Started | |
 | 07-008 | 2 | Stripe customer creation on tenant signup | Not Started | |

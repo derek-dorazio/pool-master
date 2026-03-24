@@ -511,7 +511,7 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-025 | 3 | NoSQL writes for ParticipantEventStats and TeamContestPoints | Not Started | |
 | 01-026 | 3 | SQL standings rollup (periodic + on-demand) | Not Started | |
 | 01-027 | 3 | Leaderboard and contest state REST endpoints | Not Started | |
-| 01-028 | 4 | WebSocket server for draft rooms (FastAPI WS + Redis Pub/Sub) | Not Started | |
+| 01-028 | 4 | WebSocket server for draft rooms (Socket.io + Redis adapter) | Not Started | |
 | 01-029 | 4 | Live draft — on-the-clock timer, auto-pick on expiry | Not Started | |
 | 01-030 | 4 | WebSocket/SSE for live contest leaderboards | Not Started | |
 | 01-031 | 4 | Push notification service (APNs + FCM) | Not Started | |

@@ -930,7 +930,7 @@ CREATE INDEX idx_delivery_user ON notification_delivery_log(user_id, created_at)
 | 09-017 | 3 | Unsubscribe handling (per-category opt-out) | Not Started | |
 | 09-018 | 4 | Rate limiting engine (per-user, per-channel, per-event-type) | Not Started | |
 | 09-019 | 4 | Suppression rules (DND schedule, dedup, batch low-priority) | Not Started | |
-| 09-020 | 4 | `scheduled_notifications` table + job queue (Celery/ARQ) | Not Started | |
+| 09-020 | 4 | `scheduled_notifications` table + job queue (BullMQ) | Not Started | |
 | 09-021 | 4 | Scheduled notifications (24h before lock, 1h before draft) | Not Started | |
 | 09-022 | 4 | Scoring event grouping/collapsing | Not Started | |
 | 09-023 | 5 | Weekly digest generation and email delivery | Not Started | |

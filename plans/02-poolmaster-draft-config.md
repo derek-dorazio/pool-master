@@ -521,19 +521,19 @@ const DRAFT_TEMPLATES = {
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 02-001 | 1 | `SnakeDraftConfig` Pydantic model + validation | Not Started | |
+| 02-001 | 1 | `SnakeDraftConfig` Zod schema + TypeScript type | Not Started | |
 | 02-002 | 1 | Snake pick order algorithm implementation | Not Started | Odd/even round reversal |
 | 02-003 | 1 | `SnakeDraftStrategy` — validate pick, check exclusivity | Not Started | |
 | 02-004 | 1 | Auto-pick logic (queue → rankings → system default) | Not Started | |
 | 02-005 | 1 | Draft session lifecycle state machine (CREATED → COMPLETE) | Not Started | |
 | 02-006 | 1 | Async draft mode — REST-based pick submission | Not Started | |
 | 02-007 | 1 | Commissioner draft controls (pause, resume, undo, extend clock) | Not Started | |
-| 02-008 | 2 | `SalaryCapDraftConfig` Pydantic model + validation | Not Started | |
+| 02-008 | 2 | `SalaryCapDraftConfig` Zod schema + TypeScript type | Not Started | |
 | 02-009 | 2 | `SalaryCapDraftStrategy` — budget validation, bid logic | Not Started | |
 | 02-010 | 2 | Nomination order (snake, rotating, simultaneous) | Not Started | |
 | 02-011 | 2 | Exclusivity modes (exclusive auction vs non-exclusive DFS) | Not Started | |
 | 02-012 | 2 | FAAB waiver wire system | Not Started | Post-draft roster management |
-| 02-013 | 3 | `TieredDraftConfig` Pydantic model + validation | Not Started | |
+| 02-013 | 3 | `TieredDraftConfig` Zod schema + TypeScript type | Not Started | |
 | 02-014 | 3 | `TieredDraftStrategy` — tier enforcement, picks per tier | Not Started | |
 | 02-015 | 3 | Tier assignment methods (commissioner, ranking, odds, seeding) | Not Started | |
 | 02-016 | 3 | Best-ball variant support | Not Started | |

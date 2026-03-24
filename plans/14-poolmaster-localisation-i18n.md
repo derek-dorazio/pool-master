@@ -522,7 +522,7 @@ CREATE TABLE user_locale_preferences (
 | 14-011 | 3 | Extract all UI strings to translation files (`en-US.json`) | Not Started | |
 | 14-012 | 3 | Integrate i18next in web app | Not Started | |
 | 14-013 | 3 | Integrate i18next in React Native app | Not Started | |
-| 14-014 | 3 | Server-side Python i18n (babel) for emails and notifications | Not Started | |
+| 14-014 | 3 | Server-side i18next for emails and notifications | Not Started | |
 | 14-015 | 3 | Pluralisation rules | Not Started | |
 | 14-016 | 4 | Professional translation of string files (Spanish, French first) | Not Started | When needed |
 | 14-017 | 4 | Language picker in user settings | Not Started | |

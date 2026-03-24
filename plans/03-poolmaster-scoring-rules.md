@@ -707,7 +707,7 @@ const STAT_SCHEMAS: Record<string, string[]> = {
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 03-001 | 1 | `ScoringConfig` Pydantic model (stat rules, position rules, bonus, penalty, multiplier) | Not Started | |
+| 03-001 | 1 | `ScoringConfig` Zod schema + TypeScript type (stat rules, position rules, bonus, penalty, multiplier) | Not Started | |
 | 03-002 | 1 | Scoring engine — evaluate stat_rules against stat deltas | Not Started | |
 | 03-003 | 1 | Scoring engine — evaluate position_rules | Not Started | |
 | 03-004 | 1 | Scoring engine — evaluate bonus_rules and penalty_rules | Not Started | |
