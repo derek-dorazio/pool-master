@@ -6,13 +6,14 @@ This document identifies the feature areas not yet covered by the existing PoolM
 
 ### Existing Plans (Already Completed)
 
+> **See the full plan index** in [01-poolmaster-architecture.md](01-poolmaster-architecture.md).
+
 | Plan Document | Coverage |
 |---|---|
-| `poolmaster-plan.md` | Architecture, domain model, tech stack, service topology, build phases |
-| `poolmaster-draft-config-rules.md` | Snake, salary cap, and tiered draft formats, auto-pick, waiver wire |
-| `poolmaster-scoring-rules.md` | Sport-specific scoring configs, stat schemas, scoring engine flow |
-| `poolmaster-payouts-tiebreakers.md` | Prize pool construction, payout schedules, intermediate prizes, tiebreaker chains |
-| `poolmaster-history-plan.md` | Contest history, league history, records, rivalries, analytics (luck/power ratings) |
+| `01-poolmaster-architecture.md` | Architecture, domain model, tech stack, service topology, build phases |
+| `02-poolmaster-draft-config.md` | Snake, salary cap, and tiered draft formats, auto-pick, waiver wire |
+| `03-poolmaster-scoring-rules.md` | Sport-specific scoring configs, stat schemas, scoring engine flow |
+| `04-poolmaster-history.md` | Contest history, league history, records, rivalries, analytics (luck/power ratings) |
 
 ---
 

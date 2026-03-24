@@ -2,6 +2,31 @@
 
 > **Rules:** All technology and infrastructure choices follow [Architecture Rules](../rules/architecture-rules.md). Testing standards follow [Testing Rules](../rules/testing-rules.md).
 
+---
+
+## Plan Index
+
+| # | Document | Coverage |
+|---|---|---|
+| 01 | [Architecture & Build Plan](01-poolmaster-architecture.md) | Architecture, domain model, tech stack, service topology, build phases |
+| 02 | [Draft Configuration](02-poolmaster-draft-config.md) | Snake, salary cap, tiered draft formats, auto-pick, waiver wire |
+| 03 | [Scoring Rules](03-poolmaster-scoring-rules.md) | Sport-specific scoring configs, stat schemas, scoring engine flow |
+| 04 | [Contest History](04-poolmaster-history.md) | Contest history, league history, records, rivalries, analytics |
+| 05 | [Sports Data Integration](05-poolmaster-sports-data-integration.md) | Provider adapters, ingestion pipelines, polling, outage handling |
+| 06 | [Participant Data](06-poolmaster-participant-data.md) | Participant profiles, pricing, tiers, pools, deduplication, search |
+| 07 | [Billing & Subscriptions](07-poolmaster-billing-subscription.md) | Plan tiers, entitlements, Stripe, trials, dunning, revenue analytics |
+| 08 | [Commissioner Tooling](08-poolmaster-commissioner-tooling.md) | League/contest wizards, overrides, dashboard, templates, audit trail |
+| 09 | [Notifications & Alerts](09-poolmaster-notifications-alerts.md) | Event taxonomy, channels, preferences, templates, scheduling |
+| 10 | [Social & Communication](10-poolmaster-social-communication.md) | Activity feed, chat, DMs, recaps, share-to-social, moderation |
+| 11 | [Admin Dashboard](11-poolmaster-admin-dashboard.md) | Tenant/user management, feature flags, platform health, support tools |
+| 12 | [Mobile Client](12-poolmaster-mobile-client.md) | React Native, offline caching, push, deep linking, draft room mobile |
+| 13 | [Search & Discovery](13-poolmaster-search-discovery.md) | Draft search, pool setup filtering, public league discovery |
+| 14 | [Localisation & i18n](14-poolmaster-localisation-i18n.md) | Timezone handling, multi-currency, number formatting, translation |
+| 15 | [Responsible Gaming](15-poolmaster-responsible-gaming.md) | Age verification, geographic restrictions, GDPR/CCPA, data retention |
+| 16 | [Gap Analysis](16-poolmaster-gap-analysis.md) | Missing feature areas, priority assessment, recommended planning order |
+
+---
+
 ## 1. Vision & Scope
 
 A multi-tenant SaaS platform where groups of friends (or colleagues) create leagues, configure contests across any sport, draft squads, and compete on live leaderboards. The platform is sport-agnostic by design — golf, tennis, F1, NCAA brackets, horse racing, and anything else are all first-class citizens configured through a flexible domain model rather than hard-coded sport logic.
