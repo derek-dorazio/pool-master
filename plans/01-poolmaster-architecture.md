@@ -23,7 +23,6 @@
 | 13 | [Search & Discovery](13-poolmaster-search-discovery.md) | Draft search, pool setup filtering, public league discovery |
 | 14 | [Localisation & i18n](14-poolmaster-localisation-i18n.md) | Timezone handling, multi-currency, number formatting, translation |
 | 15 | [Responsible Gaming](15-poolmaster-responsible-gaming.md) | Age verification, geographic restrictions, GDPR/CCPA, data retention |
-| 16 | [Gap Analysis](16-poolmaster-gap-analysis.md) | Missing feature areas, priority assessment, recommended planning order |
 
 ---
 
