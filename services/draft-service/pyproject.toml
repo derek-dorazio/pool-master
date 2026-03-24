@@ -1,0 +1,13 @@
+[project]
+name = "poolmaster-draft-service"
+version = "0.1.0"
+description = "PoolMaster Draft Service — draft session lifecycle, live/async pick orchestration"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.30",
+    "redis>=5.2",
+    "poolmaster-shared",
+]

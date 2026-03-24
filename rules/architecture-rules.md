@@ -157,48 +157,111 @@ All external service integrations use an adapter pattern so providers can be swa
 ```
 poolmaster/
 ├── services/
-│   ├── core-api/              # FastAPI, main REST API
+│   ├── core-api/                  # FastAPI, main REST API
 │   │   ├── app/
-│   │   │   ├── api/           # Route handlers
-│   │   │   ├── models/        # SQLAlchemy models
-│   │   │   ├── schemas/       # Pydantic request/response schemas
-│   │   │   ├── services/      # Business logic
-│   │   │   ├── repositories/  # Repository implementations (adapters)
-│   │   │   └── middleware/     # Tenant context, auth, etc.
-│   │   ├── alembic/           # Database migrations
-│   │   ├── tests/
+│   │   │   ├── api/               # Route handlers (endpoints)
+│   │   │   ├── models/            # SQLAlchemy models
+│   │   │   ├── schemas/           # Pydantic request/response schemas
+│   │   │   ├── services/          # Business logic
+│   │   │   ├── repositories/      # Repository implementations (adapters)
+│   │   │   ├── middleware/        # Tenant context, auth, etc.
+│   │   │   └── __init__.py
+│   │   ├── alembic/               # Database migrations
+│   │   │   ├── versions/
+│   │   │   ├── env.py
+│   │   │   └── alembic.ini
 │   │   └── pyproject.toml
-│   ├── draft-service/         # FastAPI + WebSocket, draft orchestration
-│   ├── scoring-service/       # Score computation worker
-│   ├── ingestion-worker/      # Stats data ingestion
-│   └── notification-service/  # Push, email, in-app notifications
+│   ├── draft-service/             # FastAPI + WebSocket, draft orchestration
+│   │   ├── app/
+│   │   └── pyproject.toml
+│   ├── scoring-service/           # Score computation worker
+│   │   ├── app/
+│   │   └── pyproject.toml
+│   ├── ingestion-worker/          # Stats data ingestion
+│   │   ├── app/
+│   │   └── pyproject.toml
+│   └── notification-service/      # Push, email, in-app notifications
+│       ├── app/
+│       └── pyproject.toml
 ├── packages/
 │   └── shared/
-│       ├── domain/            # Shared Python domain types (Pydantic models)
-│       ├── db/                # Repository port interfaces (Protocols)
-│       ├── events/            # Event schema definitions (shared message contracts)
-│       └── utils/             # Shared utilities
+│       ├── poolmaster_shared/
+│       │   ├── domain/            # Shared Python domain types (Pydantic models)
+│       │   ├── db/                # Repository port interfaces (Protocols)
+│       │   ├── events/            # Event schema definitions (shared message contracts)
+│       │   ├── utils/             # Shared utilities
+│       │   └── __init__.py
+│       └── pyproject.toml
+├── tests/                         # ALL tests live here — separate from application code
+│   ├── unit/
+│   │   ├── core_api/
+│   │   ├── draft_service/
+│   │   ├── scoring_service/
+│   │   ├── ingestion_worker/
+│   │   ├── notification_service/
+│   │   └── shared/
+│   ├── integration/
+│   │   ├── core_api/
+│   │   ├── draft_service/
+│   │   ├── scoring_service/
+│   │   └── shared/
+│   ├── api/
+│   │   ├── core_api/
+│   │   ├── draft_service/
+│   │   └── scoring_service/
+│   ├── e2e/
+│   ├── factories/                 # Test data factories (factory-boy)
+│   ├── fixtures/                  # Shared test fixtures and seed data
+│   ├── conftest.py                # Root conftest — shared fixtures, DB setup
+│   └── pytest.ini                 # Pytest configuration
 ├── clients/
-│   ├── web/                   # React + TypeScript
-│   ├── mobile/                # React Native (Expo)
-│   ├── shared/                # Shared TypeScript types, API client, validation
-│   │   ├── types/             # TypeScript types matching backend Pydantic schemas
-│   │   ├── api-client/        # Typed HTTP + WebSocket client
-│   │   └── validation/        # Zod schemas for client-side validation
-│   ├── ios/                   # Swift / SwiftUI (if native path chosen)
-│   └── android/               # Kotlin (if native path chosen)
+│   ├── web/                       # React + TypeScript
+│   │   ├── src/
+│   │   └── __tests__/             # Web client tests (Vitest)
+│   ├── mobile/                    # React Native (Expo)
+│   │   ├── src/
+│   │   └── __tests__/             # Mobile tests (Jest)
+│   ├── shared/                    # Shared TypeScript types, API client, validation
+│   │   ├── types/                 # TypeScript types matching backend Pydantic schemas
+│   │   ├── api-client/            # Typed HTTP + WebSocket client
+│   │   └── validation/            # Zod schemas for client-side validation
+│   ├── ios/                       # Swift / SwiftUI (if native path chosen)
+│   └── android/                   # Kotlin (if native path chosen)
 ├── infrastructure/
 │   ├── docker/
-│   ├── k8s/                   # or ECS task definitions
+│   ├── k8s/                       # or ECS task definitions
 │   └── terraform/
-└── rules/                     # This file and other project rules
+├── plans/                         # Plan documents
+├── rules/                         # This file and other project rules
+└── pyproject.toml                 # Root pyproject — workspace config, dev dependencies
 ```
+
+### Test / Application Code Separation
+
+**Rule: Test code must be separate from application code.** Tests live in the top-level `tests/` directory, not inside service directories. This keeps application packages clean for deployment (no test code shipped in Docker images) and provides a single place to run all tests across all services.
+
+```
+tests/
+├── unit/           # Fast, mocked dependencies. Run on every commit.
+│   └── {service}/  # Mirror the service name (e.g. core_api/, scoring_service/)
+├── integration/    # Real DB via testcontainers. Run on every PR.
+│   └── {service}/
+├── api/            # Full HTTP request/response cycle. Run on every PR.
+│   └── {service}/
+├── e2e/            # Multi-service flows against staging. Run on merge to main.
+├── factories/      # factory-boy factories for all domain models
+├── fixtures/       # Shared test data, JSON fixture files, seed scripts
+├── conftest.py     # Root conftest with shared fixtures (db_session, redis, api_client)
+└── pytest.ini      # Pytest config (markers, paths, coverage settings)
+```
+
+**Naming convention:** Test directories use underscores to match Python module names (e.g. `core_api/` maps to `services/core-api/`).
 
 ### Python Package Management
 
 - **Package manager:** `uv` (preferred) or `pip` + `pyproject.toml`
 - **Dependency locking:** `uv.lock` or `requirements.lock`
-- **Shared code:** Published as internal packages or symlinked via workspace configuration
+- **Shared code:** Published as internal packages via workspace configuration
 - **Python version:** 3.12+ (for modern typing, performance improvements)
 
 ---

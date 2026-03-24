@@ -1,0 +1,8 @@
+[project]
+name = "poolmaster-shared"
+version = "0.1.0"
+description = "Shared domain types, repository ports, and event schemas for PoolMaster"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.10",
+]

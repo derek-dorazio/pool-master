@@ -1,0 +1,1 @@
+"""PoolMaster Ingestion Worker."""

@@ -1,0 +1,33 @@
+# Base Dockerfile for all PoolMaster Python services.
+# Build context should be the repo root so shared packages are accessible.
+#
+# Usage:
+#   docker build -f infrastructure/docker/Dockerfile.service \
+#     --build-arg SERVICE=core-api -t poolmaster-core-api .
+
+ARG PYTHON_VERSION=3.12
+
+FROM python:${PYTHON_VERSION}-slim AS base
+
+WORKDIR /app
+
+# Install uv for fast dependency resolution
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Copy shared package first (changes less frequently)
+COPY packages/shared/ /app/packages/shared/
+
+# Copy the target service
+ARG SERVICE
+COPY services/${SERVICE}/ /app/services/${SERVICE}/
+COPY pyproject.toml /app/
+
+# Install dependencies
+RUN uv sync --frozen --no-dev
+
+# Runtime
+FROM base AS runtime
+ARG SERVICE
+ENV SERVICE_MODULE=services.${SERVICE}.app.main:app
+EXPOSE 8000
+CMD ["uvicorn", "${SERVICE_MODULE}", "--host", "0.0.0.0", "--port", "8000"]
