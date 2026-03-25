@@ -521,31 +521,29 @@ const DRAFT_TEMPLATES = {
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 02-001 | 1 | `SnakeDraftConfig` Zod schema + TypeScript type | Not Started | |
-| 02-002 | 1 | Snake pick order algorithm implementation | Not Started | Odd/even round reversal |
-| 02-003 | 1 | `SnakeDraftStrategy` — validate pick, check exclusivity | Not Started | |
-| 02-004 | 1 | Auto-pick logic (queue → rankings → system default) | Not Started | |
-| 02-005 | 1 | Draft session lifecycle state machine (CREATED → COMPLETE) | Not Started | |
-| 02-006 | 1 | Async draft mode — REST-based pick submission | Not Started | |
-| 02-007 | 1 | Commissioner draft controls (pause, resume, undo, extend clock) | Not Started | |
-| 02-008 | 2 | `SalaryCapDraftConfig` Zod schema + TypeScript type | Not Started | |
-| 02-009 | 2 | `SalaryCapDraftStrategy` — budget validation, bid logic | Not Started | |
-| 02-010 | 2 | Nomination order (snake, rotating, simultaneous) | Not Started | |
-| 02-011 | 2 | Exclusivity modes (exclusive auction vs non-exclusive DFS) | Not Started | |
-| 02-012 | 2 | FAAB waiver wire system | Not Started | Post-draft roster management |
-| 02-013 | 3 | `TieredDraftConfig` Zod schema + TypeScript type | Not Started | |
-| 02-014 | 3 | `TieredDraftStrategy` — tier enforcement, picks per tier | Not Started | |
-| 02-015 | 3 | Tier assignment methods (commissioner, ranking, odds, seeding) | Not Started | |
-| 02-016 | 3 | Best-ball variant support | Not Started | |
-| 02-017 | 4 | Survivor draft mode | Not Started | |
-| 02-018 | 4 | Confidence/weighted pick'em mode | Not Started | |
-| 02-019 | 4 | Pick'em (straight picks) mode | Not Started | |
-| 02-020 | 5 | Manager draft queue (pre-rank participants, drag to reorder) | Not Started | |
-| 02-021 | 5 | Draft configuration templates (pre-built per sport) | Not Started | |
-| 02-022 | 5 | Draft order generation (random, reverse standings, commissioner) | Not Started | |
-| 02-023 | 5 | Live draft mode — WebSocket integration | Not Started | Depends on 01-028 |
-| 02-024 | 5 | Position requirements and roster constraints validation | Not Started | |
-| 02-025 | 5 | Trade pick positions before draft | Not Started | |
+| 02-001 | 1 | Snake draft pick order algorithm | Done | `draft-service/src/engine/pick-order.ts` — getRoundOrder, getPickPosition, generatePickSchedule |
+| 02-002 | 1 | `SnakeDraftEngine` — validate pick, enforce exclusivity, advance turn | Done | `draft-service/src/engine/snake-draft-engine.ts` — immutable state, applyPick, validatePick |
+| 02-003 | 1 | Draft session lifecycle state machine (PENDING → LIVE → PAUSED → COMPLETE) | Done | `draft-service/src/engine/draft-session-manager.ts` — transitionSession, start/pause/resume/complete |
+| 02-004 | 1 | Auto-pick logic (queue → rankings → best available) | Done | In SnakeDraftEngine.resolveAutoPick — QUEUE_THEN_BEST, BEST_AVAILABLE, RANDOM policies |
+| 02-005 | 1 | Async draft mode — REST-based pick submission with timer | Not Started | |
+| 02-006 | 1 | Commissioner draft controls (pause, resume, undo, extend clock) | Done | extendPickDeadline in session manager; pause/resume via state transitions |
+| 02-007 | 1 | Draft order generation (random, commissioner-set) | Not Started | |
+| 02-008 | 2 | `TieredPickEngine` — tier enforcement, picks per tier, non-exclusive | Not Started | |
+| 02-009 | 2 | Tier assignment (seed, ranking, odds, commissioner) | Not Started | |
+| 02-010 | 2 | Best-ball variant (pick N, use best M scores — golf) | Not Started | |
+| 02-011 | 3 | `BudgetPickEngine` — cost validation, budget cap, non-exclusive | Not Started | |
+| 02-012 | 3 | Budget pricing (from odds, seed, ranking, or commissioner-set) | Not Started | |
+| 02-013 | 3 | Open selection (pick N from unrestricted field — NCAA "Pick 8") | Not Started | |
+| 02-014 | 4 | Survivor engine — live pick mode (one pick per period) | Not Started | |
+| 02-015 | 4 | Survivor engine — locked pick mode (all picks upfront) | Not Started | |
+| 02-016 | 4 | Survivor config: one-entity-per-season, strikes, buybacks, double pick | Not Started | |
+| 02-017 | 4 | Multiplier survivor (NCAAF-5 hold'em: carry player with growing multiplier) | Not Started | |
+| 02-018 | 5 | Pick'em engine — predict outcomes, score on correctness | Not Started | |
+| 02-019 | 5 | Confidence-weighted pick'em (assign weights to predictions) | Not Started | |
+| 02-020 | 5 | Bracket pick'em — full bracket submission + round multipliers | Not Started | |
+| 02-021 | 6 | Manager draft queue (pre-rank participants, drag to reorder) | Not Started | Snake draft only |
+| 02-022 | 6 | Live draft mode — WebSocket integration | Not Started | Depends on 01-028 |
+| 02-023 | 6 | Selection config templates (pre-built per sport per contest type) | Not Started | |
 
 ---
 
