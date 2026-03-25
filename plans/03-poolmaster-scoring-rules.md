@@ -727,10 +727,10 @@ const STAT_SCHEMAS: Record<string, string[]> = {
 | 03-018 | 3 | Tiebreaker configuration and chain evaluation | Done | `engine/tiebreaker.ts` — `evaluateTiebreaker()` + `rankWithTiebreakers()`, all 10 methods |
 | 03-019 | 3 | Sport stat schema validation (validate stat_key against sport's schema) | Done | `engine/stat-schemas.ts` — 11 sports, `validateStatKeys()` checks stat/bonus/penalty rules |
 | 03-020 | 3 | Scoring template library (commissioner selects, all fields editable) | Done | `modules/scoring/routes.ts` — list/get/validate endpoints |
-| 03-021 | 4 | Bracket scoring type (round-based, correct pick points) | Not Started | |
-| 03-022 | 4 | Rotisserie scoring type (category-based rankings) | Not Started | |
-| 03-023 | 4 | Head-to-head scoring type (weekly matchups) | Not Started | |
-| 03-024 | 4 | Stroke play scoring type (lower is better) | Not Started | |
+| 03-021 | 4 | Bracket scoring type (round-based, correct pick points) | Done | `engine/bracket-scoring.ts` — round points, SEED_DIFFERENCE upset bonus, SEED_MULTIPLIER |
+| 03-022 | 4 | Rotisserie scoring type (category-based rankings) | Done | `engine/rotisserie-scoring.ts` — category ranking with tie averaging, lower_is_better support |
+| 03-023 | 4 | Head-to-head scoring type (weekly matchups) | Done | `engine/head-to-head-scoring.ts` — matchup eval, season records, win% standings |
+| 03-024 | 4 | Stroke play scoring type (lower is better) | Done | `engine/stroke-play-scoring.ts` — missed cut penalties, BEST_N counting, withdrawal handling |
 | 03-025 | 5 | Test suite — validate each template against real historical data | Not Started | See testing-rules.md §8 |
 
 ---
