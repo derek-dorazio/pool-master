@@ -1,17 +1,27 @@
 import Fastify from 'fastify';
 
-const app = Fastify({ logger: true });
-const PORT = Number(process.env.PORT ?? 3000);
+export function buildApp() {
+  const app = Fastify({ logger: true });
 
-app.get('/health', async () => {
-  return { status: 'ok', service: 'draft-service' };
-});
+  app.get('/health', async () => {
+    return { status: 'ok', service: 'draft-service' };
+  });
 
-app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
-  if (err) {
+  // TODO: Register draft modules and WebSocket plugin
+
+  return app;
+}
+
+async function start(): Promise<void> {
+  const app = buildApp();
+  const port = Number(process.env.PORT ?? 3001);
+
+  try {
+    await app.listen({ port, host: '0.0.0.0' });
+  } catch (err) {
     app.log.error(err);
     process.exit(1);
   }
-});
+}
 
-export { app };
+start();

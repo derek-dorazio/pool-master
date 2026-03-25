@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Tenant & Identity ---
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  planTier  String   @default("free") @map("plan_tier")
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  users   User[]
+  leagues League[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  displayName  String   @map("display_name")
+  authProvider String?  @map("auth_provider")
+  authId       String?  @map("auth_id")
+  tenantId     String   @map("tenant_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
+  memberships LeagueMembership[]
+
+  @@map("users")
+}
+
+// --- League ---
+
+model League {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String
+  description String?
+  createdBy   String   @map("created_by") @db.Uuid
+  visibility  String   @default("PRIVATE")
+  maxMembers  Int      @default(20) @map("max_members")
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
+  memberships LeagueMembership[]
+  contests    Contest[]
+
+  @@map("leagues")
+}
+
+model LeagueMembership {
+  id       String   @id @default(uuid()) @db.Uuid
+  leagueId String   @map("league_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  role     String   @default("MANAGER")
+  joinedAt DateTime @default(now()) @map("joined_at") @db.Timestamptz
+
+  league  League         @relation(fields: [leagueId], references: [id])
+  user    User           @relation(fields: [userId], references: [id])
+  entries ContestEntry[]
+
+  @@unique([leagueId, userId])
+  @@map("league_memberships")
+}
+
+// --- Contest ---
+
+model Contest {
+  id                          String   @id @default(uuid()) @db.Uuid
+  leagueId                    String   @map("league_id") @db.Uuid
+  seasonId                    String?  @map("season_id") @db.Uuid
+  name                        String
+  status                      String   @default("DRAFT")
+  contestType                 String   @map("contest_type")
+  selectionType               String   @map("selection_type")
+  scoringEngine               String   @map("scoring_engine")
+  isExclusive                 Boolean  @default(false) @map("is_exclusive")
+  scoringStopsOnElimination   Boolean  @default(false) @map("scoring_stops_on_elimination")
+  scoringRules                Json     @default("{}") @map("scoring_rules")
+  startsAt                    DateTime? @map("starts_at") @db.Timestamptz
+  endsAt                      DateTime? @map("ends_at") @db.Timestamptz
+  lockAt                      DateTime? @map("lock_at") @db.Timestamptz
+  createdAt                   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  league  League         @relation(fields: [leagueId], references: [id])
+  entries ContestEntry[]
+
+  @@map("contests")
+}
+
+model ContestEntry {
+  id                  String   @id @default(uuid()) @db.Uuid
+  contestId           String   @map("contest_id") @db.Uuid
+  leagueMembershipId  String   @map("league_membership_id") @db.Uuid
+  name                String
+  totalScore          Float    @default(0) @map("total_score")
+  rank                Int?
+  isEliminated        Boolean  @default(false) @map("is_eliminated")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contest    Contest          @relation(fields: [contestId], references: [id])
+  membership LeagueMembership @relation(fields: [leagueMembershipId], references: [id])
+
+  @@unique([contestId, leagueMembershipId])
+  @@map("contest_entries")
+}

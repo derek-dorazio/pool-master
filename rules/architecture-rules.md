@@ -167,14 +167,45 @@ All external service integrations use an adapter pattern so providers can be swa
 poolmaster/
 ├── packages/
 │   ├── core-api/                  # Fastify, main REST API
-│   │   ├── src/                   # See service-rules.md for internal structure
+│   │   ├── src/
+│   │   │   ├── modules/           # Domain modules (one per resource)
+│   │   │   │   ├── leagues/       #   routes.ts, handler.ts, service.ts
+│   │   │   │   ├── contests/
+│   │   │   │   └── auth/
+│   │   │   ├── core/              # Shared: error handler, tenant context, logging
+│   │   │   ├── plugins/           # Fastify plugins (health, auth, etc.)
+│   │   │   └── index.ts           # App entry point (buildApp + start)
 │   │   ├── prisma/                # Prisma schema + migrations
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   ├── draft-service/             # Fastify + WS, draft orchestration
+│   │   ├── src/
+│   │   │   ├── modules/drafts/    # Draft session routes, handlers, engine
+│   │   │   ├── core/
+│   │   │   ├── plugins/
+│   │   │   ├── engine/            # Draft strategies (snake, tiered, budget)
+│   │   │   └── index.ts
+│   │   └── ...
 │   ├── scoring-service/           # Score computation worker
+│   │   ├── src/
+│   │   │   ├── modules/scoring/
+│   │   │   ├── engine/            # Scoring engines (advancement, stat accumulation, etc.)
+│   │   │   └── index.ts
+│   │   └── ...
 │   ├── ingestion-worker/          # Stats data ingestion
+│   │   ├── src/
+│   │   │   ├── adapters/          # Sport data provider adapters
+│   │   │   ├── core/
+│   │   │   ├── services/
+│   │   │   └── index.ts
+│   │   └── ...
 │   ├── notification-service/      # Push, email, in-app notifications
+│   │   ├── src/
+│   │   │   ├── modules/notifications/
+│   │   │   ├── channels/          # APNs, FCM, SES, in-app
+│   │   │   ├── templates/
+│   │   │   └── index.ts
+│   │   └── ...
 │   └── shared/
 │       ├── domain/                # Shared TypeScript domain types & interfaces
 │       ├── db/                    # Repository port interfaces

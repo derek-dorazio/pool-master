@@ -1,18 +1,29 @@
 import Fastify from 'fastify';
-import { healthRoute } from './routes/health';
-import { leaguesRoute } from './routes/leagues';
+import { healthPlugin } from './plugins/health';
+import { leaguesModule } from './modules/leagues/routes';
 
-const app = Fastify({ logger: true });
-const PORT = Number(process.env.PORT ?? 3000);
+export function buildApp() {
+  const app = Fastify({ logger: true });
 
-app.register(healthRoute);
-app.register(leaguesRoute, { prefix: '/api/v1' });
+  // Core plugins
+  app.register(healthPlugin);
 
-app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
-  if (err) {
+  // Domain modules
+  app.register(leaguesModule, { prefix: '/api/v1/leagues' });
+
+  return app;
+}
+
+async function start(): Promise<void> {
+  const app = buildApp();
+  const port = Number(process.env.PORT ?? 3000);
+
+  try {
+    await app.listen({ port, host: '0.0.0.0' });
+  } catch (err) {
     app.log.error(err);
     process.exit(1);
   }
-});
+}
 
-export { app };
+start();
