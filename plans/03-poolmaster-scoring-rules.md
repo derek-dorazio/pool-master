@@ -723,10 +723,10 @@ const STAT_SCHEMAS: Record<string, string[]> = {
 | 03-014 | 2 | Tennis scoring template | Done | `templates/tennis.ts` — position + ace/fault/break stats |
 | 03-015 | 2 | Horse racing scoring template | Done | `templates/horse-racing.ts` — position-only scoring |
 | 03-016 | 2 | EPL/soccer scoring template | Done | `templates/soccer.ts` — attack/defend/GK stat scoring |
-| 03-017 | 3 | Special roster slot configuration (captain, MVP, double-down) | Not Started | |
-| 03-018 | 3 | Tiebreaker configuration and chain evaluation | Not Started | |
-| 03-019 | 3 | Sport stat schema validation (validate stat_key against sport's schema) | Not Started | |
-| 03-020 | 3 | Scoring template library (commissioner selects, all fields editable) | Not Started | |
+| 03-017 | 3 | Special roster slot configuration (captain, MVP, double-down) | Done | `SpecialSlotConfigSchema` Zod type + `special_slots` field on ScoringConfig |
+| 03-018 | 3 | Tiebreaker configuration and chain evaluation | Done | `engine/tiebreaker.ts` — `evaluateTiebreaker()` + `rankWithTiebreakers()`, all 10 methods |
+| 03-019 | 3 | Sport stat schema validation (validate stat_key against sport's schema) | Done | `engine/stat-schemas.ts` — 11 sports, `validateStatKeys()` checks stat/bonus/penalty rules |
+| 03-020 | 3 | Scoring template library (commissioner selects, all fields editable) | Done | `modules/scoring/routes.ts` — list/get/validate endpoints |
 | 03-021 | 4 | Bracket scoring type (round-based, correct pick points) | Not Started | |
 | 03-022 | 4 | Rotisserie scoring type (category-based rankings) | Not Started | |
 | 03-023 | 4 | Head-to-head scoring type (weekly matchups) | Not Started | |

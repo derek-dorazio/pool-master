@@ -141,6 +141,18 @@ export const TiebreakerConfigSchema = z.object({
 });
 export type TiebreakerConfig = z.infer<typeof TiebreakerConfigSchema>;
 
+// --- Special Slot Config (Captain / MVP / Double-Down) ---
+
+export const SpecialSlotConfigSchema = z.object({
+  slot_id: z.string(),
+  slot_name: z.string(),
+  multiplier: z.number(),
+  cost_multiplier: z.number().optional(),
+  max_per_roster: z.number().int().positive().default(1),
+  eligible_positions: z.array(z.string()).optional(),
+});
+export type SpecialSlotConfig = z.infer<typeof SpecialSlotConfigSchema>;
+
 // --- Main ScoringConfig ---
 
 export const ScoringConfigSchema = z.object({
@@ -156,6 +168,8 @@ export const ScoringConfigSchema = z.object({
 
   bracket_round_rules: z.array(BracketRoundRuleSchema).default([]),
   upset_bonus_config: UpsetBonusConfigSchema.optional(),
+
+  special_slots: z.array(SpecialSlotConfigSchema).default([]),
 
   tiebreaker_config: TiebreakerConfigSchema.optional(),
 

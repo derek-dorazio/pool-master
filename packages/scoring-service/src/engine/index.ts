@@ -16,3 +16,20 @@ export type {
   ScoreBreakdown,
   StatDeltas,
 } from './scoring-engine';
+
+export {
+  evaluateTiebreaker,
+  rankWithTiebreakers,
+} from './tiebreaker';
+export type {
+  TiebreakerData,
+  TiebreakerResult,
+} from './tiebreaker';
+
+export {
+  STAT_SCHEMAS,
+  getStatSchema,
+  listSports,
+  validateStatKeys,
+} from './stat-schemas';
+export type { StatValidationError } from './stat-schemas';
