@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import type { FastifyInstance } from 'fastify';
 
-export const leaguesRouter = Router();
+export async function leaguesRoute(fastify: FastifyInstance): Promise<void> {
+  fastify.get('/leagues', async () => {
+    return { leagues: [] };
+  });
 
-leaguesRouter.get('/leagues', (_req, res) => {
-  res.json({ leagues: [] });
-});
-
-leaguesRouter.post('/leagues', (_req, res) => {
-  res.status(501).json({ message: 'not implemented' });
-});
+  fastify.post('/leagues', async (_request, reply) => {
+    return reply.status(501).send({ message: 'not implemented' });
+  });
+}

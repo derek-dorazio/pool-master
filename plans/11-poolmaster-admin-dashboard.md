@@ -820,7 +820,7 @@ CREATE INDEX idx_migration_runs_status ON migration_runs(status);
 
 ```
 Frontend:   React + TypeScript (admin-specific SPA, separate from public app)
-Backend:    Same Node.js + Express services, admin-scoped endpoints with admin auth middleware
+Backend:    Same Node.js + Fastify services, admin-scoped endpoints with admin auth hook
 UI Library: Tailwind CSS + Headless UI (or similar admin-focused component library)
 Charting:   Recharts or similar for health graphs and metrics
 Auth:       Internal SSO (Okta / Google Workspace) + MFA

@@ -1,16 +1,17 @@
-import express from 'express';
+import Fastify from 'fastify';
 
-const app = express();
-const PORT = process.env.PORT ?? 3000;
+const app = Fastify({ logger: true });
+const PORT = Number(process.env.PORT ?? 3000);
 
-app.use(express.json());
-
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'ingestion-worker' });
+app.get('/health', async () => {
+  return { status: 'ok', service: 'ingestion-worker' };
 });
 
-app.listen(PORT, () => {
-  console.log(`PoolMaster Ingestion Worker listening on port ${PORT}`);
+app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
+  if (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
 });
 
 export { app };

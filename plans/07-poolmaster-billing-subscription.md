@@ -139,31 +139,31 @@ interface UsageResult {
 ### Middleware Integration
 
 ```typescript
-// Express middleware — attach to any route that needs entitlement checking
-function requireEntitlement(entitlement: EntitlementKey) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const tenantId = req.tenantContext.tenantId;
-    const result = await entitlementService.check(tenantId, entitlement);
+// Fastify preHandler hook — attach to any route that needs entitlement checking
+async function requireEntitlement(
+  entitlement: EntitlementKey,
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  const tenantId = request.tenantContext.tenantId;
+  const result = await entitlementService.check(tenantId, entitlement);
 
-    if (!result.entitled) {
-      return res.status(403).json({
-        error: 'PLAN_LIMIT_REACHED',
-        message: result.reason,
-        upgrade_plan: result.upgrade_plan,
-        current_usage: result.current_usage,
-        limit: result.limit,
-      });
-    }
-
-    next();
-  };
+  if (!result.entitled) {
+    return reply.status(403).send({
+      error: 'PLAN_LIMIT_REACHED',
+      message: result.reason,
+      upgrade_plan: result.upgrade_plan,
+      current_usage: result.current_usage,
+      limit: result.limit,
+    });
+  }
 }
 
 // Usage
-router.post('/leagues',
-  requireEntitlement('league.create'),
-  leagueController.create
-);
+fastify.post('/leagues', {
+  preHandler: (req, reply) => requireEntitlement('league.create', req, reply),
+  handler: leagueController.create,
+});
 ```
 
 ---
@@ -712,7 +712,7 @@ CREATE INDEX idx_usage_tenant ON tenant_usage(tenant_id);
 | 07-002 | 1 | `PlanEntitlements` Zod schema + TypeScript type | Not Started | |
 | 07-003 | 1 | EntitlementService — `check()` and `checkMultiple()` | Not Started | |
 | 07-004 | 1 | Entitlement resolution order (override → flag → plan → usage) | Not Started | |
-| 07-005 | 1 | Express entitlement middleware for routes | Not Started | |
+| 07-005 | 1 | Fastify entitlement preHandler hook for routes | Not Started | |
 | 07-006 | 1 | `tenant_usage` table + usage counting | Not Started | |
 | 07-007 | 1 | Free tier functional with hard-coded limits | Not Started | |
 | 07-008 | 2 | Stripe customer creation on tenant signup | Not Started | |

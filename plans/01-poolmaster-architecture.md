@@ -32,7 +32,7 @@
 A multi-tenant SaaS platform where groups of friends (or colleagues) create leagues, configure contests across any sport, draft squads, and compete on live leaderboards. The platform is sport-agnostic by design — golf, tennis, F1, NCAA brackets, horse racing, and anything else are all first-class citizens configured through a flexible domain model rather than hard-coded sport logic.
 
 **Target clients:** Web (React), iOS (Swift/SwiftUI), Android (Kotlin)
-**Backend:** Node.js + Express + TypeScript
+**Backend:** Node.js + Fastify + TypeScript
 **Deployment:** Docker on AWS ECS Fargate or EKS
 **Scale:** Multi-tenant SaaS, horizontally scalable per service
 
@@ -201,7 +201,7 @@ Clients                 │   Web (React)  iOS  Android      │
               │                      │                     │
    ┌──────────▼──────┐   ┌──────────▼──────┐  ┌──────────▼──────┐
    │   Core API      │   │  Draft Service  │  │  Scoring Service │
-   │ (Node/Express)  │   │ (Node/Express)  │  │  (Node/Express)  │
+   │ (Node/Fastify)  │   │ (Node/Fastify)  │  │  (Node/Fastify)  │
    │                 │   │  + WebSocket    │  │                  │
    └──────────┬──────┘   └──────────┬──────┘  └──────────┬──────┘
               │                      │                     │
@@ -238,8 +238,8 @@ Clients                 │   Web (React)  iOS  Android      │
 ```
 poolmaster/
 ├── services/
-│   ├── core-api/              # Express + TypeScript, main REST API
-│   ├── draft-service/         # Express + WS, draft orchestration
+│   ├── core-api/              # Fastify + TypeScript, main REST API
+│   ├── draft-service/         # Fastify + WS, draft orchestration
 │   ├── scoring-service/       # Score computation worker
 │   ├── ingestion-worker/      # Stats data ingestion
 │   └── notification-service/
@@ -428,7 +428,7 @@ Every row in every relational table carries a `tenant_id`. A `TenantContext` mid
 | Concern | Choice | Rationale |
 |---|---|---|
 | Language | TypeScript throughout | Type safety across monorepo, shared domain types |
-| API Framework | Express + ts-rest or tRPC | Type-safe routes, easy to scale horizontally |
+| API Framework | Fastify | Modular plugins, JSON schema validation, high performance |
 | Auth | Auth0 or AWS Cognito | Handles OAuth, MFA, JWT — no reinventing |
 | Relational DB | PostgreSQL (primary), MySQL (adapter) | JSONB support in Postgres is heavily used |
 | NoSQL | DynamoDB (primary), MongoDB (adapter) | DynamoDB scales without ops burden on AWS |
@@ -496,7 +496,7 @@ When opening this project in Claude Code, a productive first sprint is:
 1. **Scaffold the monorepo** — Turborepo + npm workspaces, root `tsconfig.json`, shared ESLint/Prettier config
 2. **Create `packages/shared/domain`** — All TypeScript interfaces for the full domain model (no implementation, just types)
 3. **Create `packages/shared/db`** — Port interfaces for all repositories
-4. **Create `packages/core-api`** — Express app shell with tenant middleware, auth middleware, health check, and DI container wiring
+4. **Create `packages/core-api`** — Fastify app shell with tenant hook, auth plugin, health check, and DI wiring
 5. **Implement Postgres adapter** for `LeagueRepository` and `UserRepository` as the first working slice
 6. **Write database migrations** (using Prisma Migrate or Knex) for the Tenant, User, League, LeagueMembership, Sport, and Season tables
 7. **First working API route:** `POST /leagues` and `GET /leagues` — end-to-end through the port/adapter stack
@@ -518,7 +518,7 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-008 | 1 | Postgres adapter for LeagueRepository | Not Started | |
 | 01-009 | 1 | Postgres adapter for LeagueMembershipRepository | Not Started | |
 | 01-010 | 1 | DB migrations — Tenant, User, League, Membership, Sport, Season tables | Not Started | Prisma Migrate or Knex |
-| 01-011 | 1 | TenantContext Express middleware (extract tenant from JWT/subdomain) | Not Started | |
+| 01-011 | 1 | TenantContext Fastify hook (extract tenant from JWT/subdomain) | Not Started | |
 | 01-012 | 1 | Core API — `POST /leagues` and `GET /leagues` end-to-end | Not Started | |
 | 01-013 | 1 | CI/CD pipeline (GitHub Actions: lint, type check, test, build) | Not Started | |
 | 01-014 | 1 | Docker images for each service | Not Started | Dockerfile.service template exists |

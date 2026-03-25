@@ -2,7 +2,7 @@
 
 All services and clients must follow these testing standards. This document defines the testing strategy, tools, coverage requirements, and conventions for the PoolMaster platform.
 
-> **Architecture dependency:** This document assumes the tech stack defined in [architecture-rules.md](../rules/architecture-rules.md). Backend = Node.js + Express + TypeScript. Frontend = React + TypeScript. Mobile = React Native.
+> **Architecture dependency:** This document assumes the tech stack defined in [architecture-rules.md](architecture-rules.md). Backend = Node.js + Fastify + TypeScript (see [service-rules.md](service-rules.md)). Frontend = React + shadcn/ui + TailwindCSS (see [react-ui-rules.md](react-ui-rules.md)). Mobile = React Native.
 
 ---
 
@@ -13,7 +13,7 @@ All services and clients must follow these testing standards. This document defi
 | Tool | Purpose |
 |---|---|
 | **Jest** (or **Vitest**) | Test runner and framework |
-| **supertest** | HTTP assertion library for Express API testing |
+| **light-my-request** (or Fastify inject) | HTTP testing via Fastify's built-in inject method |
 | **fishery** | Test data factories (generate realistic domain objects) |
 | **Faker** (`@faker-js/faker`) | Generate fake data (names, emails, dates) |
 | **testcontainers** (`testcontainers-node`) | Spin up PostgreSQL, Redis, DynamoDB containers for integration tests |

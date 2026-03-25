@@ -1,16 +1,18 @@
-import express from 'express';
-import { healthRouter } from './routes/health';
-import { leaguesRouter } from './routes/leagues';
+import Fastify from 'fastify';
+import { healthRoute } from './routes/health';
+import { leaguesRoute } from './routes/leagues';
 
-const app = express();
-const PORT = process.env.PORT ?? 3000;
+const app = Fastify({ logger: true });
+const PORT = Number(process.env.PORT ?? 3000);
 
-app.use(express.json());
-app.use(healthRouter);
-app.use('/api/v1', leaguesRouter);
+app.register(healthRoute);
+app.register(leaguesRoute, { prefix: '/api/v1' });
 
-app.listen(PORT, () => {
-  console.log(`PoolMaster Core API listening on port ${PORT}`);
+app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
+  if (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
 });
 
 export { app };

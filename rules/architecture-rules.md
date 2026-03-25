@@ -1,34 +1,42 @@
 # PoolMaster — Architecture Rules
 
-All plan documents and implementation work must conform to these rules. This is the single source of truth for technology choices, architectural patterns, and infrastructure decisions across the PoolMaster platform.
+All plan documents and implementation work must conform to these rules. This is the single source of truth for system-level architecture, infrastructure, and cross-cutting decisions.
+
+**For implementation-level rules, see:**
+- **[Service Rules](service-rules.md)** — Backend TypeScript, Fastify, Prisma, coding conventions, testing patterns
+- **[React UI Rules](react-ui-rules.md)** — React, shadcn/ui, TailwindCSS, TanStack Query, Zustand, Vite
+- **[Testing Rules](testing-rules.md)** — Test strategy, coverage thresholds, CI pipeline, load testing
 
 ---
 
-## 1. Tech Stack
+## 1. Tech Stack Summary
 
 ### Backend
 
-| Concern | Choice | Rationale |
+| Concern | Choice | Details In |
 |---|---|---|
-| **Language** | TypeScript (strict mode) | Type safety across entire monorepo, shared types with frontend |
-| **API Framework** | Express + ts-rest or tRPC | Type-safe routes, mature ecosystem, easy to scale horizontally |
-| **Data Validation** | Zod | Runtime validation + TypeScript inference, shared with frontend |
-| **ORM / DB Access** | Prisma (primary) or Knex + custom repos | Type-safe queries; port/adapter pattern via repository interfaces |
-| **Migrations** | Prisma Migrate or Knex migrations | Schema-driven, version-controlled |
-| **Task Queue** | BullMQ + Redis | Background jobs, scheduled tasks, notification delivery |
-| **WebSockets** | ws + Socket.io with Redis adapter | Redis adapter allows multi-instance WS clustering |
-| **Auth** | Auth0 or AWS Cognito | OAuth, MFA, JWT — no reinventing |
-| **Runtime** | Node.js 20+ LTS | Long-term support, modern ES features, native fetch |
+| **Language** | TypeScript (strict mode) | [Service Rules](service-rules.md) |
+| **API Framework** | Fastify | [Service Rules](service-rules.md) |
+| **Data Validation** | JSON schemas + ajv (Fastify built-in) | [Service Rules](service-rules.md) |
+| **ORM / DB Access** | Prisma | [Service Rules](service-rules.md) |
+| **Task Queue** | BullMQ + Redis | — |
+| **WebSockets** | ws + Socket.io with Redis adapter | — |
+| **Auth** | Auth0 or AWS Cognito | — |
+| **Runtime** | Node.js 20+ LTS | — |
 
-### Frontend (Client-Side)
+### Frontend
 
-| Concern | Choice | Rationale |
+| Concern | Choice | Details In |
 |---|---|---|
-| **Web** | React + TypeScript | Component model, large ecosystem, type safety |
-| **Mobile** | React Native (Expo managed workflow) | Shared codebase iOS/Android, code sharing with web via shared packages |
-| **Mobile State** | Zustand or similar | Lightweight, React-native compatible |
-| **Form Validation** | Zod | Shared with backend — single schema definition |
-| **Internationalisation** | i18next (React + React Native) | Works across web and mobile, pluralisation, interpolation |
+| **Web** | React 18+ + TypeScript | [React UI Rules](react-ui-rules.md) |
+| **UI Library** | shadcn/ui (Radix UI + TailwindCSS) | [React UI Rules](react-ui-rules.md) |
+| **Build Tool** | Vite | [React UI Rules](react-ui-rules.md) |
+| **Server State** | TanStack Query | [React UI Rules](react-ui-rules.md) |
+| **Client State** | Zustand | [React UI Rules](react-ui-rules.md) |
+| **Forms** | React Hook Form | [React UI Rules](react-ui-rules.md) |
+| **Routing** | React Router | [React UI Rules](react-ui-rules.md) |
+| **Mobile** | React Native (Expo managed workflow) | — |
+| **Internationalisation** | i18next (React + React Native) | — |
 
 ### Databases
 
@@ -71,15 +79,13 @@ All plan documents and implementation work must conform to these rules. This is 
 
 ---
 
-## 2. Architectural Patterns
+## 2. Service Topology
 
-### Service Topology
-
-All backend services are Node.js + Express + TypeScript applications deployed as independent Docker containers.
+All backend services are Fastify + TypeScript applications deployed as independent Docker containers.
 
 | Service | Responsibility |
 |---|---|
-| **Core API** | Auth, leagues, memberships, contests, roster management, standings reads |
+| **Core API** | Auth, leagues, memberships, contests, entries, picks, standings reads |
 | **Draft Service** | Draft session lifecycle, live/async pick orchestration, WebSocket room per draft |
 | **Scoring Service** | Consumes stat events, applies scoring rules, writes to NoSQL, updates SQL standings |
 | **Stats Ingestion Worker** | Polls or receives webhooks from sport data providers, normalises to internal schema, publishes events |
@@ -87,37 +93,11 @@ All backend services are Node.js + Express + TypeScript applications deployed as
 
 ### Port / Adapter (Hexagonal Architecture)
 
-No service touches a database directly. All DB access goes through typed repository interfaces (ports). The adapter is injected at startup via a factory that reads `DB_RELATIONAL_ADAPTER` and `DB_NOSQL_ADAPTER` from environment config.
-
-```typescript
-// Port (interface)
-export interface LeagueRepository {
-  findById(id: string, tenantId: string): Promise<League | null>;
-  findByTenant(tenantId: string): Promise<League[]>;
-  create(league: CreateLeagueInput): Promise<League>;
-  update(id: string, updates: Partial<League>): Promise<League>;
-  delete(id: string): Promise<void>;
-}
-
-// Adapter (implementation)
-export class PostgresLeagueRepository implements LeagueRepository { ... }
-export class MySQLLeagueRepository implements LeagueRepository { ... }
-```
-
-Services never import adapters directly — only ports. The correct implementation is injected at startup.
+No service touches a database directly. All DB access goes through typed repository interfaces (ports). The adapter is injected at startup. See [Service Rules](service-rules.md) for Prisma conventions and service structure.
 
 ### Multi-Tenancy
 
-Every row in every relational table carries a `tenant_id`. A `TenantContext` middleware extracts the tenant from the JWT or subdomain on every request and attaches it to the request context. Repository implementations always scope queries by `tenant_id`.
-
-```typescript
-// Express middleware for tenant context
-export function tenantContext(req: Request, res: Response, next: NextFunction) {
-  const tenantId = extractTenantFromJWT(req);
-  req.tenantContext = { tenantId };
-  next();
-}
-```
+Every row in every relational table carries a `tenant_id`. A tenant context hook extracts the tenant from the JWT or subdomain on every request and attaches it to the request context. Repository implementations always scope queries by `tenant_id`.
 
 ### Event-Driven Communication
 
@@ -143,7 +123,7 @@ Three distinct real-time channels:
 | **Live scores** | WebSocket or SSE (per contest) | Leaderboard updates during events |
 | **Notifications** | APNs + FCM + in-app WS | Draft reminders, score milestones, contest results |
 
-The WebSocket gateway (via Socket.io or ws + Redis Pub/Sub) subscribes to the message bus and fans out events to connected clients. The Redis adapter allows the WebSocket layer to scale across multiple container instances.
+The WebSocket gateway subscribes to Redis Pub/Sub and fans out events to connected clients. The Redis adapter allows the WebSocket layer to scale across multiple container instances.
 
 ### Provider Abstraction
 
@@ -161,115 +141,51 @@ All external service integrations use an adapter pattern so providers can be swa
 ```
 poolmaster/
 ├── packages/
-│   ├── core-api/                  # Express + TypeScript, main REST API
-│   │   ├── src/
-│   │   │   ├── routes/            # Route handlers (endpoints)
-│   │   │   ├── models/            # Prisma/DB models
-│   │   │   ├── schemas/           # Zod request/response schemas
-│   │   │   ├── services/          # Business logic
-│   │   │   ├── repositories/      # Repository implementations (adapters)
-│   │   │   ├── middleware/        # Tenant context, auth, error handling
-│   │   │   └── index.ts           # App entry point
+│   ├── core-api/                  # Fastify, main REST API
+│   │   ├── src/                   # See service-rules.md for internal structure
 │   │   ├── prisma/                # Prisma schema + migrations
-│   │   │   ├── schema.prisma
-│   │   │   └── migrations/
 │   │   ├── package.json
 │   │   └── tsconfig.json
-│   ├── draft-service/             # Express + WS, draft orchestration
-│   │   ├── src/
-│   │   ├── package.json
-│   │   └── tsconfig.json
+│   ├── draft-service/             # Fastify + WS, draft orchestration
 │   ├── scoring-service/           # Score computation worker
-│   │   ├── src/
-│   │   ├── package.json
-│   │   └── tsconfig.json
 │   ├── ingestion-worker/          # Stats data ingestion
-│   │   ├── src/
-│   │   ├── package.json
-│   │   └── tsconfig.json
 │   ├── notification-service/      # Push, email, in-app notifications
-│   │   ├── src/
-│   │   ├── package.json
-│   │   └── tsconfig.json
 │   └── shared/
 │       ├── domain/                # Shared TypeScript domain types & interfaces
 │       ├── db/                    # Repository port interfaces
 │       ├── events/                # Event schema definitions (shared message contracts)
-│       ├── utils/                 # Shared utilities
-│       ├── package.json
-│       └── tsconfig.json
+│       └── utils/                 # Shared utilities
 ├── tests/                         # ALL tests live here — separate from application code
-│   ├── unit/
-│   │   ├── core-api/
-│   │   ├── draft-service/
-│   │   ├── scoring-service/
-│   │   ├── ingestion-worker/
-│   │   ├── notification-service/
-│   │   └── shared/
+│   ├── unit/                      # See testing-rules.md for structure
 │   ├── integration/
-│   │   ├── core-api/
-│   │   ├── draft-service/
-│   │   ├── scoring-service/
-│   │   └── shared/
 │   ├── api/
-│   │   ├── core-api/
-│   │   ├── draft-service/
-│   │   └── scoring-service/
 │   ├── e2e/
-│   ├── factories/                 # Test data factories (fishery or similar)
-│   ├── fixtures/                  # Shared test fixtures and seed data
-│   ├── setup.ts                   # Global test setup
-│   ├── jest.config.ts             # Jest configuration (or vitest.config.ts)
-│   └── tsconfig.json
+│   ├── factories/
+│   └── fixtures/
 ├── clients/
-│   ├── web/                       # React + TypeScript
-│   │   ├── src/
-│   │   └── __tests__/             # Web client tests (Vitest)
+│   ├── web/                       # React + TypeScript — see react-ui-rules.md
 │   ├── mobile/                    # React Native (Expo)
-│   │   ├── src/
-│   │   └── __tests__/             # Mobile tests (Jest)
-│   ├── shared/                    # Shared TypeScript types, API client, validation
-│   │   ├── types/                 # TypeScript types (shared with backend domain types)
-│   │   ├── api-client/            # Typed HTTP + WebSocket client
-│   │   └── validation/            # Zod schemas for client-side validation
-│   ├── ios/                       # Swift / SwiftUI (if native path chosen)
-│   └── android/                   # Kotlin (if native path chosen)
+│   └── shared/                    # Shared TS types, API client, validation
 ├── infrastructure/
 │   ├── docker/
-│   ├── k8s/                       # or ECS task definitions
+│   ├── k8s/
 │   └── terraform/
-├── plans/                         # Plan documents
-├── rules/                         # This file and other project rules
-├── package.json                   # Root package — workspace config, dev dependencies
-├── turbo.json                     # Turborepo pipeline configuration
+├── plans/
+├── rules/
+├── package.json                   # Root — workspace config
+├── turbo.json                     # Turborepo pipeline
 └── tsconfig.base.json             # Shared TypeScript compiler options
 ```
 
 ### Test / Application Code Separation
 
-**Rule: Test code must be separate from application code.** Tests live in the top-level `tests/` directory, not inside service `src/` directories. This keeps application packages clean for deployment (no test code shipped in Docker images) and provides a single place to run all tests across all services.
+**Rule: Test code must be separate from application code.** Tests live in the top-level `tests/` directory, not inside service `src/` directories. This keeps application packages clean for deployment (no test code shipped in Docker images) and provides a single place to run all tests across all services. See [Testing Rules](testing-rules.md) for full test structure and conventions.
 
-```
-tests/
-├── unit/           # Fast, mocked dependencies. Run on every commit.
-│   └── {service}/  # Mirror the service name (e.g. core-api/, scoring-service/)
-├── integration/    # Real DB via testcontainers. Run on every PR.
-│   └── {service}/
-├── api/            # Full HTTP request/response cycle. Run on every PR.
-│   └── {service}/
-├── e2e/            # Multi-service flows against staging. Run on merge to main.
-├── factories/      # fishery (or similar) factories for all domain models
-├── fixtures/       # Shared test data, JSON fixture files, seed scripts
-├── setup.ts        # Global test setup (DB connections, test containers)
-└── jest.config.ts  # Test runner configuration
-```
-
-### Node.js / TypeScript Package Management
+### Package Management
 
 - **Package manager:** npm (with workspaces) or pnpm
 - **Monorepo tool:** Turborepo — fast builds, shared packages, clean boundaries
 - **Dependency locking:** `package-lock.json` or `pnpm-lock.yaml`
-- **Shared code:** Internal workspace packages via Turborepo
 - **Node version:** 20+ LTS
 - **TypeScript:** Strict mode (`"strict": true`) across all packages
 
@@ -281,14 +197,14 @@ tests/
 
 - All tables include `id` (UUID), `created_at` (TIMESTAMPTZ), `updated_at` (TIMESTAMPTZ)
 - All tenant-scoped tables include `tenant_id` (UUID, NOT NULL, FOREIGN KEY)
-- Flexible configuration stored as `JSONB` columns (scoring rules, draft config, settings)
+- Flexible configuration stored as `JSONB` columns (scoring rules, selection config, settings)
 - All times stored in **UTC** in the database
 - Monetary values stored in **smallest unit** (cents) as integers
 - Soft deletes where audit trail matters; hard deletes where data privacy requires it
 
 ### API
 
-- REST API with OpenAPI 3.0 specification (via ts-rest or generated from Zod schemas)
+- REST API with JSON schema validation (Fastify built-in)
 - API versioning via `Accept-Version` header (not URL-based)
 - Pagination via `page` + `page_size` query parameters
 - Consistent error response format: `{ "error": "CODE", "message": "...", "details": {...} }`
@@ -321,19 +237,27 @@ tests/
 
 - Every service is independently deployable
 - Blue/green or rolling deployments (zero-downtime)
-- Database migrations run before service deployment (Prisma Migrate or Knex)
+- Database migrations run before service deployment (Prisma Migrate)
 - Feature flags for gradual rollouts (not code branches)
 - Environment parity: dev, staging, production all use the same Docker images with different config
 - Health check endpoint on every service: `GET /health`
 
 ---
 
-## 7. Configuration Priority
+## 7. Rules Hierarchy
 
-When a technology or pattern decision is needed, consult this file first. If this file doesn't cover it, the relevant plan document is the next authority. If neither covers it, make the decision, document it, and update this file.
+When a decision is needed, consult rules files in this order:
 
-**Update policy:** When a technology choice changes (e.g., swapping a provider), update this file first, then update affected plan documents to reference these rules rather than repeating the choice.
+1. **This file** (`architecture-rules.md`) — system architecture, infrastructure, databases, security, deployment
+2. **[Service Rules](service-rules.md)** — backend code: Fastify, TypeScript, Prisma, coding patterns
+3. **[React UI Rules](react-ui-rules.md)** — frontend code: React, shadcn/ui, TailwindCSS, state management
+4. **[Testing Rules](testing-rules.md)** — test strategy, tools, coverage, CI pipeline
+5. **Plan documents** — feature-specific design decisions
+
+If a conflict exists between rules files, escalate. If no rules file covers it, make the decision, document it, and update the relevant file.
+
+**Update policy:** When a technology choice changes, update the relevant rules file first, then update affected plan documents.
 
 ---
 
-*PoolMaster Architecture Rules v1.0*
+*PoolMaster Architecture Rules v1.1*
