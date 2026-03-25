@@ -1,1 +1,19 @@
-export * from './ports';
+export type {
+  BracketPredictionRepository,
+  ContestEntryRepository,
+  ContestParticipantPoolRepository,
+  ContestPickRepository,
+  ContestRepository,
+  ContestResultRepository,
+  ContestStandingRepository,
+  DraftSessionRepository,
+  LeagueMembershipRepository,
+  LeagueRepository,
+  ParticipantRepository,
+  RosterPickRepository,
+  SeasonRepository,
+  SelectionConfigRepository,
+  SportRepository,
+  TenantRepository,
+  UserRepository,
+} from './ports';

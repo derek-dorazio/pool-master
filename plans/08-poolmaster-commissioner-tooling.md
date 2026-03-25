@@ -169,17 +169,17 @@ Step 2: Participant Pool
   ├── Preview pool (show participant count, names)
   ├── Add/remove individual participants
   ├── Set participant count limits if needed
-  └── For salary cap: preview auto-generated prices
+  └── For budget pick: preview auto-generated costs
 
 Step 3: Draft Configuration
-  ├── Draft type: SNAKE | SALARY_CAP | TIERED
+  ├── Selection type: SNAKE_DRAFT | TIERED | BUDGET_PICK | PICK_EM | BRACKET_PICK_EM
   ├── Draft mode: LIVE | ASYNC
   ├── Number of rounds / roster size
   ├── Time per pick (with sport-appropriate defaults)
   │   ├── Live: 60s (golf), 90s (NFL), 30s (quick)
   │   └── Async: 4h, 8h, 12h, 24h
   ├── Auto-pick policy: BEST_AVAILABLE | BY_RANKING | RANDOM
-  ├── For SALARY_CAP: budget, pricing review
+  ├── For BUDGET_PICK: budget and cost review
   ├── For TIERED: tier configuration, picks per tier
   ├── Draft start time (for LIVE mode)
   └── Exclusive picks toggle (can two teams draft the same player?)
@@ -187,7 +187,7 @@ Step 3: Draft Configuration
 Step 4: Scoring Rules
   ├── Start from template (recommended): show sport-specific templates
   │   ├── "Standard PGA Scoring"
-  │   ├── "DraftKings-style Golf"
+  │   ├── "Budget Pick Golf"
   │   └── "Custom" (build from scratch)
   ├── Review/customize stat rules, bonuses, penalties
   ├── Counting method: ALL | BEST_N | DROP_LOWEST_N
@@ -533,13 +533,13 @@ PoolMaster ships with curated templates for common contest formats:
 ```
 Golf Templates:
   ├── "Standard Pick 'Em" — snake draft, 5 picks, cumulative scoring
-  ├── "DraftKings-style" — salary cap, stat-based scoring
+  ├── "Budget Pick" — pick players within a cost budget
   ├── "Major Championship" — tiered draft, position-based scoring
   └── "Season Long (Best N)" — snake draft, best 15 of 25 events
 
 NFL Templates:
   ├── "Weekly Pick 'Em" — pick winners against the spread
-  ├── "Season Fantasy" — salary cap, full stat scoring
+  ├── "Survivor Pool" — pick one team per week, eliminated on loss
   └── "Survivor Pool" — pick one team per week, can't repeat
 
 NCAA Basketball Templates:

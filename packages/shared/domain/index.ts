@@ -1,2 +1,25 @@
 export * from './enums';
-export * from './types';
+export type {
+  BracketMatchPrediction,
+  BracketPrediction,
+  Contest,
+  ContestEntry,
+  ContestParticipantPool,
+  ContestPick,
+  ContestResult,
+  ContestStanding,
+  DomainEntity,
+  DraftPick,
+  DraftSession,
+  League,
+  LeagueMembership,
+  Participant,
+  RosterPick,
+  ScoringRulesConfig,
+  Season,
+  SelectionConfig,
+  SportConfig,
+  Tenant,
+  TierDefinition,
+  User,
+} from './types';

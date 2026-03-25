@@ -1,4 +1,11 @@
-/** Enumerations used across the PoolMaster domain. */
+/**
+ * Enumerations used across the PoolMaster domain.
+ *
+ * Aligned to poolmaster-contest-structures-v4.md — the source of truth
+ * for all supported contest types and mechanics.
+ */
+
+// --- Sports ---
 
 export const Sport = {
   GOLF: 'GOLF',
@@ -7,11 +14,14 @@ export const Sport = {
   F1: 'F1',
   NASCAR: 'NASCAR',
   NCAA_BASKETBALL: 'NCAA_BASKETBALL',
+  NCAA_HOCKEY: 'NCAA_HOCKEY',
+  NCAA_FOOTBALL: 'NCAA_FOOTBALL',
   TENNIS: 'TENNIS',
   HORSE_RACING: 'HORSE_RACING',
-  EPL: 'EPL',
+  SOCCER: 'SOCCER',
   NHL: 'NHL',
   MLB: 'MLB',
+  UFC: 'UFC',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
 
@@ -21,36 +31,85 @@ export const ParticipantType = {
 } as const;
 export type ParticipantType = (typeof ParticipantType)[keyof typeof ParticipantType];
 
+// --- Contest Structure ---
+
 export const ContestType = {
   SINGLE_EVENT: 'SINGLE_EVENT',
   SEASON_LONG: 'SEASON_LONG',
-  BRACKET: 'BRACKET',
 } as const;
 export type ContestType = (typeof ContestType)[keyof typeof ContestType];
 
-export const ScoringType = {
-  CUMULATIVE: 'CUMULATIVE',
-  KNOCKOUT: 'KNOCKOUT',
-  BRACKET: 'BRACKET',
+/**
+ * How participants select their picks for a contest.
+ *
+ * SNAKE_DRAFT — turn-based exclusive selection; each pick owned by one manager.
+ * TIERED — pick N from defined tier groups; non-exclusive.
+ * BUDGET_PICK — build a roster within a cost budget; non-exclusive.
+ * OPEN_SELECTION — pick N from unrestricted field (e.g. NCAA "Pick 8").
+ * PICK_EM — predict outcomes (winners, scores); no squad to build.
+ * BRACKET_PICK_EM — predict bracket progression; single submission.
+ */
+export const SelectionType = {
+  SNAKE_DRAFT: 'SNAKE_DRAFT',
+  TIERED: 'TIERED',
+  BUDGET_PICK: 'BUDGET_PICK',
+  OPEN_SELECTION: 'OPEN_SELECTION',
+  PICK_EM: 'PICK_EM',
+  BRACKET_PICK_EM: 'BRACKET_PICK_EM',
+} as const;
+export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
+
+/**
+ * How scores are calculated.
+ *
+ * ADVANCEMENT — points from team/player wins and round progression.
+ * STAT_ACCUMULATION — points from personal player stats (goals, assists, etc.).
+ * STROKE_PLAY — lower total strokes wins (golf).
+ * POSITION — points by finish position (horse racing, F1).
+ * BRACKET — points for correct bracket predictions.
+ * FIGHT_RESULT — points by win method: KO, submission, decision (UFC).
+ * CUMULATIVE — generic point accumulation (pick'em correct picks, etc.).
+ */
+export const ScoringEngine = {
+  ADVANCEMENT: 'ADVANCEMENT',
+  STAT_ACCUMULATION: 'STAT_ACCUMULATION',
   STROKE_PLAY: 'STROKE_PLAY',
   POSITION: 'POSITION',
-  ROTISSERIE: 'ROTISSERIE',
-  HEAD_TO_HEAD: 'HEAD_TO_HEAD',
+  BRACKET: 'BRACKET',
+  FIGHT_RESULT: 'FIGHT_RESULT',
+  CUMULATIVE: 'CUMULATIVE',
 } as const;
-export type ScoringType = (typeof ScoringType)[keyof typeof ScoringType];
+export type ScoringEngine = (typeof ScoringEngine)[keyof typeof ScoringEngine];
 
-export const DraftType = {
-  SNAKE: 'SNAKE',
-  SALARY_CAP: 'SALARY_CAP',
-  TIERED: 'TIERED',
+/**
+ * For survivor/knockout contests — how picks are submitted.
+ *
+ * LIVE_PICK — one pick per period, submitted before each period begins.
+ * LOCKED_PICK — all picks submitted upfront before the event starts.
+ */
+export const SurvivorStyle = {
+  LIVE_PICK: 'LIVE_PICK',
+  LOCKED_PICK: 'LOCKED_PICK',
 } as const;
-export type DraftType = (typeof DraftType)[keyof typeof DraftType];
+export type SurvivorStyle = (typeof SurvivorStyle)[keyof typeof SurvivorStyle];
+
+// --- Draft Session ---
 
 export const DraftMode = {
   LIVE: 'LIVE',
   ASYNC: 'ASYNC',
 } as const;
 export type DraftMode = (typeof DraftMode)[keyof typeof DraftMode];
+
+export const DraftStatus = {
+  PENDING: 'PENDING',
+  LIVE: 'LIVE',
+  PAUSED: 'PAUSED',
+  COMPLETE: 'COMPLETE',
+} as const;
+export type DraftStatus = (typeof DraftStatus)[keyof typeof DraftStatus];
+
+// --- Contest Lifecycle ---
 
 export const ContestStatus = {
   DRAFT: 'DRAFT',
@@ -63,13 +122,7 @@ export const ContestStatus = {
 } as const;
 export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
 
-export const DraftStatus = {
-  PENDING: 'PENDING',
-  LIVE: 'LIVE',
-  PAUSED: 'PAUSED',
-  COMPLETE: 'COMPLETE',
-} as const;
-export type DraftStatus = (typeof DraftStatus)[keyof typeof DraftStatus];
+// --- League ---
 
 export const LeagueRole = {
   OWNER: 'OWNER',
@@ -84,3 +137,26 @@ export const LeagueVisibility = {
   PUBLIC: 'PUBLIC',
 } as const;
 export type LeagueVisibility = (typeof LeagueVisibility)[keyof typeof LeagueVisibility];
+
+// --- Pricing (for Tiered and Budget Pick contests) ---
+
+export const PricingMethod = {
+  ODDS: 'ODDS',
+  SEED: 'SEED',
+  WORLD_RANKING: 'WORLD_RANKING',
+  SEASON_STATS: 'SEASON_STATS',
+  COMMISSIONER: 'COMMISSIONER',
+} as const;
+export type PricingMethod = (typeof PricingMethod)[keyof typeof PricingMethod];
+
+export const TierAssignmentMethod = {
+  SEED: 'SEED',
+  WORLD_RANKING: 'WORLD_RANKING',
+  ODDS: 'ODDS',
+  CONFERENCE: 'CONFERENCE',
+  DIVISION: 'DIVISION',
+  POT: 'POT',
+  BOUT_POSITION: 'BOUT_POSITION',
+  COMMISSIONER: 'COMMISSIONER',
+} as const;
+export type TierAssignmentMethod = (typeof TierAssignmentMethod)[keyof typeof TierAssignmentMethod];

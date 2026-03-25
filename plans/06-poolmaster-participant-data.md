@@ -4,7 +4,7 @@
 
 ## Overview
 
-Participants — golfers, F1 drivers, NFL players, college basketball teams, tennis players, racehorses — are a first-class domain object referenced by nearly every feature in the system. The draft selects them, the scoring engine tracks them, tiers and salary caps price them, and the history system records their performance over time. This plan defines how participant records are created, maintained, enriched, searched, and served across all sports.
+Participants — golfers, F1 drivers, NFL players, college basketball teams, tennis players, racehorses — are a first-class domain object referenced by nearly every feature in the system. The draft selects them, the scoring engine tracks them, tiers and budget picks price them, and the history system records their performance over time. This plan defines how participant records are created, maintained, enriched, searched, and served across all sports.
 
 ---
 
@@ -111,8 +111,8 @@ interface ParticipantSeasonRecord {
   // Rankings (refreshed from provider)
   rankings: SeasonRanking[];
 
-  // Pricing (for salary cap contests)
-  salary_cap_price: number;                // calculated from rankings + form
+  // Pricing (for budget pick contests)
+  budget_price: number;                // calculated from rankings + form
   price_tier?: string;                     // auto-assigned tier: "ELITE", "MID", "VALUE"
   price_updated_at: Date;
 
@@ -144,9 +144,9 @@ interface SeasonRanking {
 
 ---
 
-## 3. Salary Cap Pricing Engine
+## 3. Budget Pick Pricing Engine
 
-For salary cap draft formats, each participant needs a price. Prices are derived from rankings, recent form, and event-specific factors.
+For budget pick draft formats, each participant needs a price. Prices are derived from rankings, recent form, and event-specific factors.
 
 ### Pricing Model
 
@@ -192,7 +192,7 @@ interface PriceOverride {
 5. Map raw score to price range [min_price, max_price] using linear interpolation
 6. Round to price_increment
 7. Apply manual override if one exists
-8. Store as salary_cap_price on ParticipantSeasonRecord
+8. Store as budget_price on ParticipantSeasonRecord
 ```
 
 ### Price Refresh Schedule
@@ -296,7 +296,7 @@ interface PoolParticipant {
   participant_id: string;
   display_name: string;
   ranking?: number;
-  salary_cap_price?: number;
+  budget_price?: number;
   tier_id?: string;
   injury_status: InjuryStatus;
   is_available: boolean;                   // false if withdrawn/scratched after pool creation
@@ -308,7 +308,7 @@ interface PoolParticipant {
 ```
 1. Commissioner creates contest → selects pool type
 2. Pool is RESOLVED: participant list generated from source
-3. Pricing and tiers are applied (if salary cap or tiered draft)
+3. Pricing and tiers are applied (if budget pick or tiered draft)
 4. Commissioner reviews pool, makes manual adjustments
 5. Pool is LOCKED when draft begins
 6. Post-lock updates:
@@ -484,7 +484,7 @@ interface ParticipantSearchItem {
   photo_url?: string;
   sport: Sport;
   ranking?: number;
-  salary_cap_price?: number;
+  budget_price?: number;
   tier_id?: string;
   tier_name?: string;
   injury_status: InjuryStatus;
@@ -535,7 +535,7 @@ const SEARCH_INDEX_FIELDS = [
 // Fields indexed for filtering (not full-text)
 const FILTER_FIELDS = [
   'sport', 'status', 'position', 'team_affiliation',
-  'ranking', 'salary_cap_price', 'tier_id', 'form_rating',
+  'ranking', 'budget_price', 'tier_id', 'form_rating',
   'injury_status',
 ];
 ```
@@ -638,7 +638,7 @@ CREATE TABLE participant_season_records (
   sport VARCHAR(50) NOT NULL,
   season VARCHAR(20) NOT NULL,
   rankings JSONB DEFAULT '[]',
-  salary_cap_price INTEGER DEFAULT 0,
+  budget_price INTEGER DEFAULT 0,
   price_tier VARCHAR(50),
   price_updated_at TIMESTAMPTZ,
   events_entered INTEGER DEFAULT 0,
@@ -655,7 +655,7 @@ CREATE TABLE participant_season_records (
 );
 
 CREATE INDEX idx_season_records_sport_season ON participant_season_records(sport, season);
-CREATE INDEX idx_season_records_price ON participant_season_records(salary_cap_price);
+CREATE INDEX idx_season_records_price ON participant_season_records(budget_price);
 
 -- Contest participant pools
 CREATE TABLE contest_participant_pools (
@@ -678,7 +678,7 @@ CREATE TABLE contest_pool_participants (
   pool_id UUID NOT NULL REFERENCES contest_participant_pools(id),
   participant_id UUID NOT NULL REFERENCES participants(id),
   ranking INTEGER,
-  salary_cap_price INTEGER,
+  budget_price INTEGER,
   tier_id VARCHAR(100),
   is_available BOOLEAN DEFAULT TRUE,
   unavailable_reason VARCHAR(255),

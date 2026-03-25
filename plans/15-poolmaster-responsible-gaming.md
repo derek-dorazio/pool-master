@@ -23,7 +23,7 @@ PoolMaster does NOT handle real money between members.
 
 Implications:
   ✓ No money transmission licence required
-  ✓ No state-by-state DFS licensing required
+  ✓ No state-by-state fantasy pool regulation required
   ✓ No escrow or trust account requirements
   ✓ Dramatically reduced regulatory burden
   ✓ Apple/Google app store approval is simpler
@@ -39,7 +39,7 @@ via Stripe Connect.
 
 Implications:
   ✗ May require money transmission licences in some states
-  ✗ Must comply with state-by-state DFS regulations
+  ✗ Must comply with state-by-state fantasy pool regulations
   ✗ Must maintain separate trust/escrow accounts for prize pools
   ✗ Apple App Store gambling entitlement required
   ✗ Significantly more complex compliance requirements
@@ -122,15 +122,15 @@ Joining a league with entry fees:
 
 ```typescript
 interface GeographicRestrictions {
-  // States where DFS/fantasy contests with prizes may be restricted
+  // States where fantasy pool contests with prizes may be restricted
   restricted_states: {
     // Fully restricted (no contests with displayed entry fees)
     blocked: ['MT', 'WA'];             // as of planning date — verify with counsel
 
-    // Requires DFS operator licence
+    // Requires gaming operator licence
     licensed: ['MA', 'NY', 'VA', 'IN', 'CO', 'MD', 'TN'];
 
-    // No specific DFS regulation (generally permitted)
+    // No specific fantasy pool regulation (generally permitted)
     permitted: string[];               // remaining states
   };
 
@@ -739,8 +739,8 @@ CREATE INDEX idx_enforcement_user ON account_enforcement(user_id, created_at);
 ### Before Real-Money Features (Future)
 
 ```
-□ State-by-state DFS regulation review completed with legal counsel
-□ Required DFS operator licences obtained
+□ State-by-state fantasy pool regulation review completed with legal counsel
+□ Required required gaming licences obtained
 □ Identity verification integrated
 □ Geographic blocking implemented for restricted states
 □ Separate trust/escrow accounts for prize pools
@@ -791,7 +791,7 @@ CREATE INDEX idx_enforcement_user ON account_enforcement(user_id, created_at);
 - Geographic blocking for restricted states
 - Enhanced spending limits
 - Tax reporting framework
-- Legal counsel engagement for DFS licensing
+- Legal counsel engagement for fantasy pool regulation
 
 ---
 
@@ -825,7 +825,7 @@ CREATE INDEX idx_enforcement_user ON account_enforcement(user_id, created_at);
 | 15-024 | 5 | Geographic blocking for restricted states | Not Started | |
 | 15-025 | 5 | Enhanced spending limits | Not Started | |
 | 15-026 | 5 | Tax reporting framework (1099 for US winnings) | Not Started | |
-| 15-027 | 5 | Legal counsel engagement for DFS licensing | Not Started | |
+| 15-027 | 5 | Legal counsel engagement for fantasy pool regulation | Not Started | |
 
 ---
 

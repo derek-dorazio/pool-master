@@ -261,7 +261,7 @@ interface ChatMessage {
 
 ## 5. Direct Messaging
 
-Optional 1-to-1 messaging between league members, primarily for trade negotiations in season-long formats.
+Optional 1-to-1 messaging between league members.
 
 ### DM Model
 

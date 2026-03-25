@@ -359,7 +359,7 @@ interface ProviderAdminActions {
 ```typescript
 interface FeatureFlag {
   id: string;
-  key: string;                         // "live_draft_v2", "salary_cap_golf"
+  key: string;                         // "live_draft_v2", "budget_pick_golf"
   name: string;                        // human-readable
   description: string;
   flag_type: 'BOOLEAN' | 'PERCENTAGE' | 'TENANT_LIST';
@@ -693,7 +693,7 @@ interface MigrationRunStatus {
 ```
 - Backfill analytics data for existing contests
 - Re-compute history records and league records
-- Re-calculate all salary cap prices from current rankings
+- Re-calculate all budget pricing from current rankings
 - Migrate data model changes (schema migrations)
 - Re-index search data
 - Clean up orphaned records

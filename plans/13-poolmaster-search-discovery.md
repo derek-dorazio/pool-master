@@ -82,7 +82,7 @@ interface SearchEngineConfig {
       "team_affiliation": { "type": "keyword" },
       "nationality": { "type": "keyword" },
       "ranking": { "type": "integer" },
-      "salary_cap_price": { "type": "integer" },
+      "budget_price": { "type": "integer" },
       "tier_id": { "type": "keyword" },
       "form_rating": { "type": "float" },
       "injury_status": { "type": "keyword" }
@@ -172,7 +172,7 @@ interface DraftSearchResult {
   display_name: string;
   photo_url?: string;
   ranking?: number;
-  salary_cap_price?: number;
+  budget_price?: number;
   tier_id?: string;
   tier_name?: string;
   position?: string;

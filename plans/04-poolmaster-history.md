@@ -29,7 +29,7 @@ History is split between two storage layers:
 │  TeamRosterHistory ← frozen roster at contest lock                  │
 │  DraftPickHistory  ← every pick in every draft                      │
 │  PayoutHistory     ← prizes awarded per contest per team            │
-│  MatchupHistory    ← head-to-head results (season-long H2H leagues) │
+│  (no H2H matchups — out of scope for v1)                            │
 │  IntermediatePrize ← mid-contest prize awards                       │
 └───────────────────────────┬─────────────────────────────────────────┘
                             │ derived from
@@ -137,7 +137,7 @@ interface TeamRosterHistory {
   team_id: string;
   locked_at: Date;
   roster: RosterEntry[];             // JSONB snapshot of full roster at lock time
-  draft_budget_used?: number;        // for salary cap contests
+  draft_budget_used?: number;        // for budget pick contests
   tiers_selected?: TierSelection[];  // for tiered contests
 }
 ```
@@ -281,7 +281,7 @@ interface DraftPickHistoryEntry {
   team_name: string;
   participant_id: string;
   participant_name: string;
-  participant_cost?: number;         // salary cap
+  participant_cost?: number;         // budget pick
   participant_tier?: number;         // tiered draft
   was_auto_picked: boolean;
   picked_at: Date;
@@ -902,7 +902,7 @@ Commissioners have additional history management capabilities:
 - ContestScoringTimeline checkpoints
 - DraftHistoryReplay
 - ContestRosterReplay with scoring breakdown
-- MatchupHistory for H2H season-long leagues
+- (H2H matchup history removed — out of scope for v1)
 
 ### Phase 4 — Records & Rivalries
 - LeagueRecord book engine (30+ categories)
@@ -943,7 +943,7 @@ Commissioners have additional history management capabilities:
 | 04-011 | 3 | ContestScoringTimeline checkpoints | Not Started | Periodic snapshots during live contest |
 | 04-012 | 3 | DraftHistoryReplay endpoint | Not Started | |
 | 04-013 | 3 | ContestRosterReplay with scoring breakdown | Not Started | |
-| 04-014 | 3 | MatchupHistory for H2H season-long leagues | Not Started | |
+| 04-014 | 3 | ~~MatchupHistory for H2H season-long leagues~~ | Removed | Out of scope — no H2H in v1 |
 | 04-015 | 4 | LeagueRecord book engine (30+ categories) | Not Started | |
 | 04-016 | 4 | StreakRecord computation (win streaks, podium streaks) | Not Started | |
 | 04-017 | 4 | RivalryRecord computation for all member pairs | Not Started | |

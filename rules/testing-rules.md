@@ -121,7 +121,7 @@ The scoring engine is the most business-critical component. An incorrect score c
 - Pagination (first page, last page, empty results)
 
 **Scoring engine:**
-- Every scoring template (golf DFS, golf stroke play, NFL standard, NFL PPR, F1, NCAA bracket, etc.)
+- Every scoring template (golf stroke play, NBA advancement, NCAA bracket, NHL player stats, soccer tournament, etc.)
 - Every stat rule, bonus rule, penalty rule, multiplier rule
 - Edge cases: missed cut, DNF, withdrawal, disqualification
 - Data corrections (is_correction = true) and recalculation
@@ -383,7 +383,7 @@ Given the sport-agnostic scoring engine, each sport needs a dedicated test suite
 //  the engine should produce these exact scores and standings."
 
 describe("Golf scoring against real data", () => {
-  it("DFS scoring matches 2025 Masters actual results", () => {
+  it("stroke play scoring matches 2025 Masters actual results", () => {
     const config = SCORING_TEMPLATES["golf_dfs_standard"];
     const stats = loadFixture("masters_2025_stats.json");
     const results = scoringEngine.calculate(config, stats);

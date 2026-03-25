@@ -34,7 +34,7 @@ Provider Assignment (Recommended)
 ├── NCAA BBall: SportsDataIO (primary)
 ├── Tennis:     Sportradar (primary)
 ├── Horse Racing: Equibase (primary) — specialist provider, general providers lack depth
-└── Odds/Pricing: the-odds-api (for salary cap pricing inputs)
+└── Odds/Pricing: the-odds-api (for budget pick and tier assignment pricing)
 ```
 
 ### Provider Contract Model
@@ -555,7 +555,7 @@ Before launch, historical data must be ingested to populate:
 
 - Participant profiles and career records
 - Past event results (for history features)
-- Historical rankings (for pricing model calibration in salary cap)
+- Historical rankings (for pricing model calibration in budget pick contests)
 
 ### Seeding Pipeline
 

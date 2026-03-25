@@ -9,7 +9,8 @@
 | # | Document | Coverage |
 |---|---|---|
 | 01 | [Architecture & Build Plan](01-poolmaster-architecture.md) | Architecture, domain model, tech stack, service topology, build phases |
-| 02 | [Draft Configuration](02-poolmaster-draft-config.md) | Snake, salary cap, tiered draft formats, auto-pick, waiver wire |
+| 02 | [Draft Configuration](02-poolmaster-draft-config.md) | Snake draft, tiered pick, budget pick, pick'em, survivor mechanics |
+| 02a | [Contest Structures](02a-poolmaster-contest-structures.md) | All v1 contest types per sport — source of truth for supported formats |
 | 03 | [Scoring Rules](03-poolmaster-scoring-rules.md) | Sport-specific scoring configs, stat schemas, scoring engine flow |
 | 04 | [Contest History](04-poolmaster-history.md) | Contest history, league history, records, rivalries, analytics |
 | 05 | [Sports Data Integration](05-poolmaster-sports-data-integration.md) | Provider adapters, ingestion pipelines, polling, outage handling |
@@ -89,47 +90,70 @@ Participant          ← sport-agnostic: could be a golfer, driver, horse, colle
 ```
 Contest
   ├── id, league_id, season_id, name, status
-  ├── contest_type: SINGLE_EVENT | SEASON_LONG | BRACKET
-  ├── scoring_type: CUMULATIVE | KNOCKOUT | BRACKET
-  ├── draft_config_id → DraftConfiguration
-  ├── starts_at, ends_at, lock_at  ← when picks lock
-  └── rules_config: JSONB  ← flexible scoring rules per contest
+  ├── contest_type: SINGLE_EVENT | SEASON_LONG
+  ├── selection_type: SNAKE_DRAFT | TIERED | BUDGET_PICK | OPEN_SELECTION | PICK_EM | BRACKET_PICK_EM
+  ├── scoring_engine: ADVANCEMENT | STAT_ACCUMULATION | STROKE_PLAY | POSITION | BRACKET | FIGHT_RESULT | CUMULATIVE
+  ├── is_exclusive: boolean
+  ├── scoring_stops_on_elimination: boolean
+  ├── starts_at, ends_at, lock_at
+  └── scoring_rules: JSONB  ← round values, stat weights, position points, etc.
 
-DraftConfiguration
-  ├── id, draft_type: SNAKE | SALARY_CAP | TIERED
-  ├── draft_mode: LIVE | ASYNC
-  ├── rounds, time_per_pick (seconds), auto_pick_policy
-  ├── budget (for SALARY_CAP)
-  ├── tier_config: JSONB (for TIERED: tier definitions, picks per tier)
-  └── is_exclusive: boolean  ← false for salary cap (shared participants)
+SelectionConfig
+  ├── id, contest_id, selection_type
+  ├── draft_mode: LIVE | ASYNC (for SNAKE_DRAFT)
+  ├── rounds, time_per_pick (for SNAKE_DRAFT)
+  ├── tier_config: JSONB (for TIERED)
+  ├── budget, pricing_method, roster_size (for BUDGET_PICK)
+  ├── pick_count (for OPEN_SELECTION: "Pick 8")
+  ├── survivor_style: LIVE_PICK | LOCKED_PICK (for PICK_EM survivor)
+  ├── picks_per_period, one_entity_per_season, strikes, buybacks (survivor)
+  ├── round_values: JSONB (for BRACKET_PICK_EM)
+  ├── best_ball_n, missed_cut_penalty (for STROKE_PLAY golf)
+  └── is_exclusive: boolean
 
 ContestParticipantPool
   ├── contest_id, participant_id
-  ├── cost (for SALARY_CAP)
-  ├── tier (for TIERED)
+  ├── cost (for BUDGET_PICK)
+  ├── tier, tier_assignment_method (for TIERED)
   └── is_available: boolean
 ```
 
-### Team & Draft Layer
+### Entry & Picks Layer
 
 ```
-Team
+ContestEntry       ← one per league member per contest (replaces "Team")
   ├── id, contest_id, league_membership_id, name
-  └── → TeamRoster entries
+  ├── total_score, rank
+  └── is_eliminated: boolean (for survivor contests)
 
-TeamRoster
-  ├── team_id, participant_id
-  ├── drafted_at, draft_round, draft_pick_number
-  └── is_active (for knockout: still alive?)
+RosterPick         ← squad selection picks (snake, tiered, budget)
+  ├── entry_id, participant_id
+  ├── draft_round, draft_pick_number, picked_at
+  └── auto_picked: boolean
 
+ContestPick        ← survivor / pick'em picks (one per period)
+  ├── entry_id, contest_id, participant_id
+  ├── period, period_label, picked_at
+  ├── is_correct: boolean (resolved after period ends)
+  └── confidence_weight, multiplier (optional)
+
+BracketPrediction  ← bracket pick'em (all predictions at once)
+  ├── entry_id, contest_id, submitted_at
+  ├── predictions: JSONB (round, match, predicted_winner, series_length)
+  └── tiebreaker_value
+```
+
+### Draft Session (Snake Draft Only)
+
+```
 DraftSession
   ├── id, contest_id, status: PENDING | LIVE | PAUSED | COMPLETE
-  ├── current_pick_number, current_team_id (on the clock)
+  ├── current_pick_number, current_entry_id (on the clock)
   ├── started_at, pick_deadline (for async)
   └── → DraftPicks
 
 DraftPick
-  ├── id, draft_session_id, team_id, participant_id
+  ├── id, draft_session_id, entry_id, participant_id
   ├── pick_number, round, pick_in_round
   └── picked_at, auto_picked: boolean
 ```
@@ -201,7 +225,7 @@ Clients                 │   Web (React)  iOS  Android      │
 
 | Service | Responsibility |
 |---|---|
-| **Core API** | Auth, leagues, memberships, contests, roster management, standings reads |
+| **Core API** | Auth, leagues, memberships, contests, entries, picks, standings reads |
 | **Draft Service** | Draft session lifecycle, live/async pick orchestration, WebSocket room per draft |
 | **Scoring Service** | Consumes stat events, applies scoring rules, writes to NoSQL, updates SQL standings |
 | **Stats Ingestion Worker** | Polls or receives webhooks from sport data providers, normalizes to internal schema, publishes events |
@@ -430,7 +454,7 @@ Every row in every relational table carries a `tenant_id`. A `TenantContext` mid
 ### Phase 2 — Contest & Roster (Weeks 5–8)
 - Sports, Seasons, Contests, DraftConfiguration
 - ContestParticipantPool management (commissioner uploads/configures the field)
-- Team creation and roster management
+- Contest entry creation and pick management
 - Snake draft engine (async mode first — simpler to build and test)
 - Basic standings (manual or seeded data for testing)
 
@@ -447,10 +471,10 @@ Every row in every relational table carries a `tenant_id`. A `TenantContext` mid
 - WebSocket/SSE for live contest leaderboards
 - Push notification service (APNs + FCM) for async draft turns and score milestones
 
-### Phase 5 — Salary Cap & Tiered Drafts (Weeks 17–18)
-- `SalaryCapDraftStrategy` + budget validation
-- `TieredDraftStrategy` + tier enforcement per round
-- UI flows for each draft type on web and mobile
+### Phase 5 — Budget Pick, Tiered Pick & Survivor (Weeks 17–18)
+- Budget pick selection with cost validation
+- Tiered pick selection with tier enforcement
+- Survivor / pick'em pick submission (live pick and locked pick modes)
 
 ### Phase 6 — Bracket & Knockout Contests (Weeks 19–21)
 - Bracket contest type (NCAA March Madness model)
@@ -503,7 +527,7 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-017 | 2 | Contest CRUD endpoints | Not Started | |
 | 01-018 | 2 | DraftConfiguration CRUD | Not Started | |
 | 01-019 | 2 | ContestParticipantPool management endpoints | Not Started | |
-| 01-020 | 2 | Team creation and roster management | Not Started | |
+| 01-020 | 2 | Contest entry creation and pick management | Not Started | |
 | 01-021 | 2 | Snake draft engine — async mode | Not Started | |
 | 01-022 | 2 | Basic standings endpoint (manual/seeded data) | Not Started | |
 | 01-023 | 3 | Stats ingestion worker — golf adapter | Not Started | First sport |
@@ -515,9 +539,9 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-029 | 4 | Live draft — on-the-clock timer, auto-pick on expiry | Not Started | |
 | 01-030 | 4 | WebSocket/SSE for live contest leaderboards | Not Started | |
 | 01-031 | 4 | Push notification service (APNs + FCM) | Not Started | |
-| 01-032 | 5 | SalaryCapDraftStrategy + budget validation | Not Started | |
-| 01-033 | 5 | TieredDraftStrategy + tier enforcement | Not Started | |
-| 01-034 | 5 | UI flows for salary cap and tiered draft types | Not Started | |
+| 01-032 | 5 | Budget pick selection + cost validation | Not Started | |
+| 01-033 | 5 | Tiered pick selection + tier enforcement | Not Started | |
+| 01-034 | 5 | Survivor / pick'em pick submission flow | Not Started | |
 | 01-035 | 6 | Bracket contest type (NCAA March Madness model) | Not Started | |
 | 01-036 | 6 | Knockout scoring logic | Not Started | |
 | 01-037 | 6 | Bracket visualisation API | Not Started | |
