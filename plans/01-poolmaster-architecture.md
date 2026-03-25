@@ -20,7 +20,7 @@
 | 09 | [Notifications & Alerts](09-poolmaster-notifications-alerts.md) | Event taxonomy, channels, preferences, templates, scheduling |
 | 10 | [Social & Communication](10-poolmaster-social-communication.md) | Activity feed, chat, DMs, recaps, share-to-social, moderation |
 | 11 | [Admin Dashboard](11-poolmaster-admin-dashboard.md) | Tenant/user management, feature flags, platform health, support tools |
-| 12 | [Mobile Client](12-poolmaster-mobile-client.md) | React Native, offline caching, push, deep linking, draft room mobile |
+| 12 | [Mobile Client](12-poolmaster-mobile-client.md) | Native iOS (SwiftUI) + Android (Compose), offline caching, push, deep linking |
 | 13 | [Search & Discovery](13-poolmaster-search-discovery.md) | Draft search, pool setup filtering, public league discovery |
 | 14 | [Localisation & i18n](14-poolmaster-localisation-i18n.md) | Timezone handling, multi-currency, number formatting, translation |
 | 15 | [Responsible Gaming](15-poolmaster-responsible-gaming.md) | Age verification, geographic restrictions, GDPR/CCPA, data retention |
@@ -31,7 +31,7 @@
 
 A multi-tenant SaaS platform where groups of friends (or colleagues) create leagues, configure contests across any sport, draft squads, and compete on live leaderboards. The platform is sport-agnostic by design — golf, tennis, F1, NCAA brackets, horse racing, and anything else are all first-class citizens configured through a flexible domain model rather than hard-coded sport logic.
 
-**Target clients:** Web (React), iOS (Swift/SwiftUI), Android (Kotlin)
+**Target clients:** Web (React + shadcn/ui), iOS (Swift + SwiftUI), Android (Kotlin + Jetpack Compose)
 **Backend:** Node.js + Fastify + TypeScript
 **Deployment:** Docker on AWS ECS Fargate or EKS
 **Scale:** Multi-tenant SaaS, horizontally scalable per service

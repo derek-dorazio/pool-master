@@ -4,7 +4,9 @@ All plan documents and implementation work must conform to these rules. This is 
 
 **For implementation-level rules, see:**
 - **[Service Rules](service-rules.md)** — Backend TypeScript, Fastify, Prisma, coding conventions, testing patterns
-- **[React UI Rules](react-ui-rules.md)** — React, shadcn/ui, TailwindCSS, TanStack Query, Zustand, Vite
+- **[React UI Rules](react-ui-rules.md)** — Web: React, shadcn/ui, TailwindCSS, TanStack Query, Zustand, Vite
+- **[Swift Rules](swift-rules.md)** — iOS: SwiftUI, Observation framework, state management, accessibility
+- **[Android Rules](android-rules.md)** — Android: Kotlin, Jetpack Compose, Hilt, Coroutines, Room
 - **[Testing Rules](testing-rules.md)** — Test strategy, coverage thresholds, CI pipeline, load testing
 
 ---
@@ -24,7 +26,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | **Auth** | Auth0 or AWS Cognito | — |
 | **Runtime** | Node.js 20+ LTS | — |
 
-### Frontend
+### Frontend — Web
 
 | Concern | Choice | Details In |
 |---|---|---|
@@ -35,8 +37,31 @@ All plan documents and implementation work must conform to these rules. This is 
 | **Client State** | Zustand | [React UI Rules](react-ui-rules.md) |
 | **Forms** | React Hook Form | [React UI Rules](react-ui-rules.md) |
 | **Routing** | React Router | [React UI Rules](react-ui-rules.md) |
-| **Mobile** | React Native (Expo managed workflow) | — |
-| **Internationalisation** | i18next (React + React Native) | — |
+| **Internationalisation** | i18next | — |
+
+### Frontend — iOS
+
+| Concern | Choice | Details In |
+|---|---|---|
+| **Language** | Swift | [Swift Rules](swift-rules.md) |
+| **UI Framework** | SwiftUI | [Swift Rules](swift-rules.md) |
+| **State Management** | @Observable, @State, @Environment | [Swift Rules](swift-rules.md) |
+| **Navigation** | NavigationStack | [Swift Rules](swift-rules.md) |
+| **Networking** | URLSession (or Alamofire) | — |
+| **Push Notifications** | APNs | — |
+
+### Frontend — Android
+
+| Concern | Choice | Details In |
+|---|---|---|
+| **Language** | Kotlin | [Android Rules](android-rules.md) |
+| **UI Framework** | Jetpack Compose | [Android Rules](android-rules.md) |
+| **Architecture** | MVVM / MVI with UDF | [Android Rules](android-rules.md) |
+| **DI** | Hilt | [Android Rules](android-rules.md) |
+| **Async** | Coroutines + Flow | [Android Rules](android-rules.md) |
+| **Networking** | Retrofit + OkHttp | [Android Rules](android-rules.md) |
+| **Local Storage** | Room / DataStore | [Android Rules](android-rules.md) |
+| **Push Notifications** | FCM | — |
 
 ### Databases
 
@@ -164,8 +189,9 @@ poolmaster/
 │   └── fixtures/
 ├── clients/
 │   ├── web/                       # React + TypeScript — see react-ui-rules.md
-│   ├── mobile/                    # React Native (Expo)
-│   └── shared/                    # Shared TS types, API client, validation
+│   ├── ios/                       # Swift + SwiftUI — see swift-rules.md
+│   ├── android/                   # Kotlin + Jetpack Compose — see android-rules.md
+│   └── shared/                    # Shared TS types, API client (web), validation
 ├── infrastructure/
 │   ├── docker/
 │   ├── k8s/
@@ -249,10 +275,12 @@ poolmaster/
 When a decision is needed, consult rules files in this order:
 
 1. **This file** (`architecture-rules.md`) — system architecture, infrastructure, databases, security, deployment
-2. **[Service Rules](service-rules.md)** — backend code: Fastify, TypeScript, Prisma, coding patterns
-3. **[React UI Rules](react-ui-rules.md)** — frontend code: React, shadcn/ui, TailwindCSS, state management
-4. **[Testing Rules](testing-rules.md)** — test strategy, tools, coverage, CI pipeline
-5. **Plan documents** — feature-specific design decisions
+2. **[Service Rules](service-rules.md)** — backend: Fastify, TypeScript, Prisma, coding patterns
+3. **[React UI Rules](react-ui-rules.md)** — web: React, shadcn/ui, TailwindCSS, state management
+4. **[Swift Rules](swift-rules.md)** — iOS: SwiftUI, Observation, state management
+5. **[Android Rules](android-rules.md)** — Android: Kotlin, Jetpack Compose, Hilt, Coroutines
+6. **[Testing Rules](testing-rules.md)** — test strategy, tools, coverage, CI pipeline
+7. **Plan documents** — feature-specific design decisions
 
 If a conflict exists between rules files, escalate. If no rules file covers it, make the decision, document it, and update the relevant file.
 
