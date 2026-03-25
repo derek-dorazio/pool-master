@@ -538,9 +538,9 @@ const DRAFT_TEMPLATES = {
 | 02-015 | 4 | Survivor engine — locked pick mode (all picks upfront) | Done | submitLockedPicks with sequential validation |
 | 02-016 | 4 | Survivor config: one-entity-per-season, strikes, buybacks, double pick | Done | All 4 config options implemented and tested |
 | 02-017 | 4 | Multiplier survivor (NCAAF-5 hold'em: carry player with growing multiplier) | Done | multipliers config + submitReplacementPick at 1× |
-| 02-018 | 5 | Pick'em engine — predict outcomes, score on correctness | Not Started | |
-| 02-019 | 5 | Confidence-weighted pick'em (assign weights to predictions) | Not Started | |
-| 02-020 | 5 | Bracket pick'em — full bracket submission + round multipliers | Not Started | |
+| 02-018 | 5 | Pick'em engine — predict outcomes, score on correctness | Done | `pickem-engine.ts` — validate, submit, resolve period, leaderboard |
+| 02-019 | 5 | Confidence-weighted pick'em (assign weights to predictions) | Done | Confidence weights validated (unique, 1-N range); used as points when correct |
+| 02-020 | 5 | Bracket pick'em — full bracket submission + round multipliers | Done | `bracket-engine.ts` — validate, submit, score round, series length bonus, tiebreaker |
 | 02-021 | 6 | Manager draft queue (pre-rank participants, drag to reorder) | Not Started | Snake draft only |
 | 02-022 | 6 | Live draft mode — WebSocket integration | Not Started | Depends on 01-028 |
 | 02-023 | 6 | Selection config templates (pre-built per sport per contest type) | Not Started | |

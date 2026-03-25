@@ -51,3 +51,22 @@ export type {
   SurvivorPick,
   SurvivorPickValidation,
 } from './survivor-engine';
+
+export { PickEmEngine } from './pickem-engine';
+export type {
+  PickEmConfig,
+  PickEmState,
+  PickEmEntryState,
+  PickEmPick,
+  PickEmValidation,
+} from './pickem-engine';
+
+export { BracketEngine } from './bracket-engine';
+export type {
+  BracketConfig,
+  BracketState,
+  BracketEntryState,
+  MatchPrediction,
+  MatchResult,
+  BracketValidation,
+} from './bracket-engine';
