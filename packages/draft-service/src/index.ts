@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { draftsModule } from './modules/drafts/routes';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -7,7 +8,7 @@ export function buildApp() {
     return { status: 'ok', service: 'draft-service' };
   });
 
-  // TODO: Register draft modules and WebSocket plugin
+  app.register(draftsModule, { prefix: '/api/v1/drafts' });
 
   return app;
 }

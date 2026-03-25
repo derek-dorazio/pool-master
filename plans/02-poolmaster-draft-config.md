@@ -525,15 +525,15 @@ const DRAFT_TEMPLATES = {
 | 02-002 | 1 | `SnakeDraftEngine` — validate pick, enforce exclusivity, advance turn | Done | `draft-service/src/engine/snake-draft-engine.ts` — immutable state, applyPick, validatePick |
 | 02-003 | 1 | Draft session lifecycle state machine (PENDING → LIVE → PAUSED → COMPLETE) | Done | `draft-service/src/engine/draft-session-manager.ts` — transitionSession, start/pause/resume/complete |
 | 02-004 | 1 | Auto-pick logic (queue → rankings → best available) | Done | In SnakeDraftEngine.resolveAutoPick — QUEUE_THEN_BEST, BEST_AVAILABLE, RANDOM policies |
-| 02-005 | 1 | Async draft mode — REST-based pick submission with timer | Not Started | |
+| 02-005 | 1 | Async draft mode — REST routes for pick submission | Done | `draft-service/src/modules/drafts/routes.ts` — GET state, POST pick/start/pause/resume/extend |
 | 02-006 | 1 | Commissioner draft controls (pause, resume, undo, extend clock) | Done | extendPickDeadline in session manager; pause/resume via state transitions |
-| 02-007 | 1 | Draft order generation (random, commissioner-set) | Not Started | |
-| 02-008 | 2 | `TieredPickEngine` — tier enforcement, picks per tier, non-exclusive | Not Started | |
-| 02-009 | 2 | Tier assignment (seed, ranking, odds, commissioner) | Not Started | |
-| 02-010 | 2 | Best-ball variant (pick N, use best M scores — golf) | Not Started | |
-| 02-011 | 3 | `BudgetPickEngine` — cost validation, budget cap, non-exclusive | Not Started | |
-| 02-012 | 3 | Budget pricing (from odds, seed, ranking, or commissioner-set) | Not Started | |
-| 02-013 | 3 | Open selection (pick N from unrestricted field — NCAA "Pick 8") | Not Started | |
+| 02-007 | 1 | Draft order generation (random, commissioner-set, signup) | Done | `draft-service/src/engine/draft-order.ts` — Fisher-Yates shuffle, validation |
+| 02-008 | 2 | `TieredPickEngine` — tier enforcement, picks per tier, non-exclusive | Done | `draft-service/src/engine/tiered-pick-engine.ts` — validate, apply, remaining tiers |
+| 02-009 | 2 | Tier assignment (seed, ranking, odds, commissioner) | Not Started | Tier definitions passed in; assignment logic in participant-data service |
+| 02-010 | 2 | Best-ball variant (pick N, use best M scores — golf) | Not Started | bestBallN field on state; scoring-side concern |
+| 02-011 | 3 | `BudgetPickEngine` — cost validation, budget cap, non-exclusive | Done | `draft-service/src/engine/budget-pick-engine.ts` — validate, apply, affordability check |
+| 02-012 | 3 | Budget pricing (from odds, seed, ranking, or commissioner-set) | Not Started | Pricing logic in participant-data service |
+| 02-013 | 3 | Open selection (pick N from unrestricted field — NCAA "Pick 8") | Not Started | Can reuse BudgetPickEngine with no cost constraint |
 | 02-014 | 4 | Survivor engine — live pick mode (one pick per period) | Not Started | |
 | 02-015 | 4 | Survivor engine — locked pick mode (all picks upfront) | Not Started | |
 | 02-016 | 4 | Survivor config: one-entity-per-season, strikes, buybacks, double pick | Not Started | |
