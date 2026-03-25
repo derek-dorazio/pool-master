@@ -731,7 +731,7 @@ const STAT_SCHEMAS: Record<string, string[]> = {
 | 03-022 | 4 | Rotisserie scoring type (category-based rankings) | Done | `engine/rotisserie-scoring.ts` — category ranking with tie averaging, lower_is_better support |
 | 03-023 | 4 | Head-to-head scoring type (weekly matchups) | Done | `engine/head-to-head-scoring.ts` — matchup eval, season records, win% standings |
 | 03-024 | 4 | Stroke play scoring type (lower is better) | Done | `engine/stroke-play-scoring.ts` — missed cut penalties, BEST_N counting, withdrawal handling |
-| 03-025 | 5 | Test suite — validate each template against real historical data | Not Started | See testing-rules.md §8 |
+| 03-025 | 5 | Test suite — validate each template against real historical data | Done | `historical-validation.test.ts` — 22 tests: NFL (Mahomes/Hill), Golf (Masters), NCAA bracket, NBA (Jokic), F1, NASCAR, Tennis, Horse Racing, EPL |
 
 ---
 
