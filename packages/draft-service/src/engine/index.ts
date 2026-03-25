@@ -42,3 +42,12 @@ export type {
   BudgetPick,
   BudgetPickValidation,
 } from './budget-pick-engine';
+
+export { SurvivorEngine } from './survivor-engine';
+export type {
+  SurvivorConfig,
+  SurvivorState,
+  SurvivorEntryState,
+  SurvivorPick,
+  SurvivorPickValidation,
+} from './survivor-engine';

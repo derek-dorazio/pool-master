@@ -534,10 +534,10 @@ const DRAFT_TEMPLATES = {
 | 02-011 | 3 | `BudgetPickEngine` — cost validation, budget cap, non-exclusive | Done | `draft-service/src/engine/budget-pick-engine.ts` — validate, apply, affordability check |
 | 02-012 | 3 | Budget pricing (from odds, seed, ranking, or commissioner-set) | Not Started | Pricing logic in participant-data service |
 | 02-013 | 3 | Open selection (pick N from unrestricted field — NCAA "Pick 8") | Not Started | Can reuse BudgetPickEngine with no cost constraint |
-| 02-014 | 4 | Survivor engine — live pick mode (one pick per period) | Not Started | |
-| 02-015 | 4 | Survivor engine — locked pick mode (all picks upfront) | Not Started | |
-| 02-016 | 4 | Survivor config: one-entity-per-season, strikes, buybacks, double pick | Not Started | |
-| 02-017 | 4 | Multiplier survivor (NCAAF-5 hold'em: carry player with growing multiplier) | Not Started | |
+| 02-014 | 4 | Survivor engine — live pick mode (one pick per period) | Done | `survivor-engine.ts` — submitLivePick, resolvePeriod, getPendingEntries |
+| 02-015 | 4 | Survivor engine — locked pick mode (all picks upfront) | Done | submitLockedPicks with sequential validation |
+| 02-016 | 4 | Survivor config: one-entity-per-season, strikes, buybacks, double pick | Done | All 4 config options implemented and tested |
+| 02-017 | 4 | Multiplier survivor (NCAAF-5 hold'em: carry player with growing multiplier) | Done | multipliers config + submitReplacementPick at 1× |
 | 02-018 | 5 | Pick'em engine — predict outcomes, score on correctness | Not Started | |
 | 02-019 | 5 | Confidence-weighted pick'em (assign weights to predictions) | Not Started | |
 | 02-020 | 5 | Bracket pick'em — full bracket submission + round multipliers | Not Started | |
