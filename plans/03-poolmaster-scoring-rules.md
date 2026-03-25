@@ -707,22 +707,22 @@ const STAT_SCHEMAS: Record<string, string[]> = {
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 03-001 | 1 | `ScoringConfig` Zod schema + TypeScript type (stat rules, position rules, bonus, penalty, multiplier) | Not Started | |
-| 03-002 | 1 | Scoring engine — evaluate stat_rules against stat deltas | Not Started | |
-| 03-003 | 1 | Scoring engine — evaluate position_rules | Not Started | |
-| 03-004 | 1 | Scoring engine — evaluate bonus_rules and penalty_rules | Not Started | |
-| 03-005 | 1 | Scoring engine — apply multiplier_rules (captain/double-down slots) | Not Started | |
-| 03-006 | 1 | DNF/missed cut handling (ZERO, EXCLUDE, LAST_PLACE, PENALTY, MISSED_CUT_SCORE) | Not Started | |
-| 03-007 | 1 | Counting methods (ALL, BEST_N, DROP_LOWEST_N) | Not Started | |
-| 03-008 | 2 | NFL scoring templates (standard, PPR, half-PPR) | Not Started | |
-| 03-009 | 2 | Golf scoring templates (DFS, stroke play office pool) | Not Started | |
-| 03-010 | 2 | F1 scoring template (position + SVG + stats) | Not Started | |
-| 03-011 | 2 | NASCAR scoring template | Not Started | |
-| 03-012 | 2 | NCAA bracket scoring templates (standard, upset bonus, seed multiplier) | Not Started | |
-| 03-013 | 2 | NBA scoring templates (points league, 9-cat rotisserie) | Not Started | |
-| 03-014 | 2 | Tennis scoring template | Not Started | |
-| 03-015 | 2 | Horse racing scoring template | Not Started | |
-| 03-016 | 2 | EPL/soccer scoring template | Not Started | |
+| 03-001 | 1 | `ScoringConfig` Zod schema + TypeScript type (stat rules, position rules, bonus, penalty, multiplier) | Done | Zod schemas in `packages/shared/domain/scoring-config.ts`; exports added to domain index |
+| 03-002 | 1 | Scoring engine — evaluate stat_rules against stat deltas | Done | `evaluateStatRules()` in `packages/scoring-service/src/engine/scoring-engine.ts` |
+| 03-003 | 1 | Scoring engine — evaluate position_rules | Done | `evaluatePositionRules()` — exact match, range, and LAST support |
+| 03-004 | 1 | Scoring engine — evaluate bonus_rules and penalty_rules | Done | `evaluateBonusRules()` + `evaluatePenaltyRules()` with condition evaluation |
+| 03-005 | 1 | Scoring engine — apply multiplier_rules (captain/double-down slots) | Done | `applyMultiplierRules()` — ALL, SLOT, STAT, POSITION modes |
+| 03-006 | 1 | DNF/missed cut handling (ZERO, EXCLUDE, LAST_PLACE, PENALTY, MISSED_CUT_SCORE) | Done | `handleDNF()` — all 5 policies implemented |
+| 03-007 | 1 | Counting methods (ALL, BEST_N, DROP_LOWEST_N) | Done | `applyCountingMethod()` — supports lower_is_better for stroke play |
+| 03-008 | 2 | NFL scoring templates (standard, PPR, half-PPR) | Done | `templates/nfl.ts` — 3 templates with shared base + bonus rules |
+| 03-009 | 2 | Golf scoring templates (DFS, stroke play office pool) | Done | `templates/golf.ts` — DFS per-hole scoring + stroke play BEST_N |
+| 03-010 | 2 | F1 scoring template (position + SVG + stats) | Done | `templates/f1.ts` — position + SVG bonuses + stat penalties |
+| 03-011 | 2 | NASCAR scoring template | Done | `templates/nascar.ts` — finish position + place differential + laps |
+| 03-012 | 2 | NCAA bracket scoring templates (standard, upset bonus, seed multiplier) | Done | `templates/ncaa.ts` — 4 templates: standard, upset bonus, seed multiplier, flat |
+| 03-013 | 2 | NBA scoring templates (points league, 9-cat rotisserie) | Done | `templates/nba.ts` — points league with 9 stat categories |
+| 03-014 | 2 | Tennis scoring template | Done | `templates/tennis.ts` — position + ace/fault/break stats |
+| 03-015 | 2 | Horse racing scoring template | Done | `templates/horse-racing.ts` — position-only scoring |
+| 03-016 | 2 | EPL/soccer scoring template | Done | `templates/soccer.ts` — attack/defend/GK stat scoring |
 | 03-017 | 3 | Special roster slot configuration (captain, MVP, double-down) | Not Started | |
 | 03-018 | 3 | Tiebreaker configuration and chain evaluation | Not Started | |
 | 03-019 | 3 | Sport stat schema validation (validate stat_key against sport's schema) | Not Started | |
