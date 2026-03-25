@@ -508,24 +508,24 @@ When opening this project in Claude Code, a productive first sprint is:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 01-001 | 1 | Monorepo setup (Turborepo + npm workspaces, tsconfig, ESLint/Prettier) | Not Started | |
-| 01-002 | 1 | Shared domain types — TypeScript interfaces for all entities | Not Started | `packages/shared/domain/` |
-| 01-003 | 1 | Repository port interfaces for all repos | Not Started | `packages/shared/db/` |
-| 01-004 | 1 | Event schemas — StatEvent, DraftPick, Contest lifecycle | Not Started | `packages/shared/events/` |
+| 01-001 | 1 | Monorepo setup (Turborepo + npm workspaces, tsconfig, ESLint/Prettier) | Done | `package.json`, `turbo.json`, `tsconfig.base.json` |
+| 01-002 | 1 | Shared domain types — TypeScript interfaces for all entities | Done | 16 interfaces + enums in `packages/shared/domain/` |
+| 01-003 | 1 | Repository port interfaces for all repos | Done | 17 repo interfaces in `packages/shared/db/ports.ts` |
+| 01-004 | 1 | Event schemas — StatEvent, DraftPick, Contest lifecycle | Done | `packages/shared/events/` |
 | 01-005 | 1 | Auth integration (JWT + OAuth via Auth0 or Cognito) | Not Started | |
-| 01-006 | 1 | Postgres adapter for TenantRepository | Not Started | Prisma or Knex |
-| 01-007 | 1 | Postgres adapter for UserRepository | Not Started | |
-| 01-008 | 1 | Postgres adapter for LeagueRepository | Not Started | |
-| 01-009 | 1 | Postgres adapter for LeagueMembershipRepository | Not Started | |
-| 01-010 | 1 | DB migrations — Tenant, User, League, Membership, Sport, Season tables | Not Started | Prisma Migrate or Knex |
-| 01-011 | 1 | TenantContext Fastify hook (extract tenant from JWT/subdomain) | Not Started | |
-| 01-012 | 1 | Core API — `POST /leagues` and `GET /leagues` end-to-end | Not Started | |
+| 01-006 | 1 | Prisma schema — full domain model (18 models) | Done | `packages/core-api/prisma/schema.prisma` |
+| 01-007 | 1 | Prisma adapter for UserRepository | Not Started | |
+| 01-008 | 1 | Prisma adapter for LeagueRepository | Not Started | |
+| 01-009 | 1 | Prisma adapter for LeagueMembershipRepository | Not Started | |
+| 01-010 | 1 | DB migrations — run `prisma migrate dev` to generate initial migration | Not Started | Schema ready, migration not yet run |
+| 01-011 | 1 | TenantContext Fastify hook (extract tenant from JWT/subdomain) | In Progress | Stub in `core-api/src/core/tenant-context.ts` |
+| 01-012 | 1 | Core API — `POST /leagues` and `GET /leagues` end-to-end | In Progress | Route + handler stubs exist, needs Prisma wiring |
 | 01-013 | 1 | CI/CD pipeline (GitHub Actions: lint, type check, test, build) | Not Started | |
-| 01-014 | 1 | Docker images for each service | Not Started | Dockerfile.service template exists |
+| 01-014 | 1 | Docker images for each service | In Progress | `Dockerfile.service` template exists, not tested |
 | 01-015 | 1 | ECS/EKS scaffolding (Terraform) | Not Started | |
 | 01-016 | 2 | Sport and Season CRUD endpoints | Not Started | |
 | 01-017 | 2 | Contest CRUD endpoints | Not Started | |
-| 01-018 | 2 | DraftConfiguration CRUD | Not Started | |
+| 01-018 | 2 | SelectionConfig CRUD | Not Started | |
 | 01-019 | 2 | ContestParticipantPool management endpoints | Not Started | |
 | 01-020 | 2 | Contest entry creation and pick management | Not Started | |
 | 01-021 | 2 | Snake draft engine — async mode | Not Started | |
