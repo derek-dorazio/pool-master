@@ -1,4 +1,34 @@
 export * from './enums';
+export {
+  BonusRuleSchema,
+  BonusTriggerSchema,
+  BracketRoundRuleSchema,
+  CountingMethod,
+  DNFHandling,
+  MultiplierRuleSchema,
+  PenaltyRuleSchema,
+  PositionRuleSchema,
+  RuleConditionSchema,
+  ScoringConfigSchema,
+  ScoringType,
+  StatRuleSchema,
+  TiebreakerConfigSchema,
+  TiebreakerMethod,
+  UpsetBonusConfigSchema,
+} from './scoring-config';
+export type {
+  BonusRule,
+  BonusTrigger,
+  BracketRoundRule,
+  MultiplierRule,
+  PenaltyRule,
+  PositionRule,
+  RuleCondition,
+  ScoringConfig,
+  StatRule,
+  TiebreakerConfig,
+  UpsetBonusConfig,
+} from './scoring-config';
 export type {
   BracketMatchPrediction,
   BracketPrediction,

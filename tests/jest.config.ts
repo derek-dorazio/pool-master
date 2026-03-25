@@ -8,7 +8,7 @@ const config: Config = {
   moduleNameMapper: {
     '^@poolmaster/shared/(.*)$': '<rootDir>/../packages/shared/$1',
   },
-  setupFilesAfterSetup: ['./setup.ts'],
+  setupFilesAfterEnv: ['./setup.ts'],
   coverageDirectory: '../coverage',
   collectCoverageFrom: [
     '../packages/*/src/**/*.ts',
