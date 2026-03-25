@@ -401,17 +401,39 @@ When a stats event arrives from the ingestion worker:
 
 ---
 
-## 8. Real-Time Architecture
+## 8. Client Update Strategy
 
-Three distinct real-time channels:
+### Phase 1 — Polling (v1 launch)
 
-| Channel | Mechanism | Use Case |
+All client data freshness is achieved via **configurable polling** from the client. This is the simplest approach, requires no additional infrastructure, and is sufficient for the v1 contest types (picks lock before events start; leaderboards update on scoring intervals, not sub-second).
+
+| Surface | Default Interval | Configurable | Notes |
+|---|---|---|---|
+| **Leaderboard / standings** | 10 seconds | Yes | Clients poll `GET /contests/:id/standings` |
+| **Draft room (async)** | 10 seconds | Yes | Clients poll `GET /drafts/:id` for current state |
+| **Contest status** | 30 seconds | Yes | Lock time, completion, period transitions |
+| **Notifications** | 30 seconds | Yes | Clients poll `GET /notifications/unread-count` |
+
+**Configuration:** Polling intervals are set client-side per surface. The API returns `Cache-Control` and `ETag` headers so unchanged responses are cheap (304 Not Modified). A global config value `POLL_INTERVAL_MS` (default: 10000) can be overridden per surface.
+
+**Why polling first:**
+- No WebSocket infrastructure to build, deploy, or scale
+- No Redis Pub/Sub, no connection state management, no reconnection logic
+- Draft room works well as async (REST-based picks with timer) — most pool/office formats are async
+- Leaderboards update on scoring intervals (minutes), not real-time seconds
+- Push notifications (APNs/FCM) handle time-sensitive alerts (draft pick reminders)
+
+### Future Phase — WebSockets / SSE (deferred)
+
+When user demand or a live draft experience requires sub-second updates, upgrade specific surfaces to WebSocket or SSE:
+
+| Channel | Mechanism | Trigger to Build |
 |---|---|---|
-| **Draft room** | WebSocket (per session) | Live pick-by-pick draft experience |
-| **Live scores** | WebSocket or SSE (per contest) | Leaderboard updates during events |
-| **Notifications** | APNs + FCM + in-app WS | Draft reminders, score milestones, contest results |
+| **Live draft room** | WebSocket (per session) | When live synchronous drafts are needed |
+| **Live scores** | SSE (per contest) | When scoring events need sub-10s delivery |
+| **In-app notifications** | WebSocket | When polling latency is insufficient for UX |
 
-The WebSocket gateway (in the Draft Service, and optionally a separate Realtime Service at scale) subscribes to the message bus and fans out events to connected clients. A **Redis adapter** (via Socket.io or ws + Redis pub/sub) allows the WebSocket layer to scale across multiple container instances without routing issues.
+This upgrade is additive — polling continues to work as a fallback. WebSocket/SSE infrastructure (Socket.io + Redis adapter for multi-instance fan-out) is built only when needed.
 
 ---
 
@@ -433,7 +455,7 @@ Every row in every relational table carries a `tenant_id`. A `TenantContext` mid
 | Relational DB | PostgreSQL (primary), MySQL (adapter) | JSONB support in Postgres is heavily used |
 | NoSQL | DynamoDB (primary), MongoDB (adapter) | DynamoDB scales without ops burden on AWS |
 | Message Bus | AWS EventBridge or SQS+SNS, Redis Streams | Decouples scoring from ingestion, fan-out |
-| WebSockets | ws or Socket.io with Redis adapter | Redis adapter allows multi-instance WS clustering |
+| Client Updates | Polling (10s configurable) | Simple, no WS infrastructure; upgrade to WebSocket/SSE when needed |
 | Task Queue | BullMQ + Redis | Background jobs, scheduled notifications, data processing |
 | Containers | Docker on ECS Fargate or EKS | Scales each service independently |
 | IaC | Terraform | Reproducible infra across environments |
@@ -465,11 +487,11 @@ Every row in every relational table carries a `tenant_id`. A `TenantContext` mid
 - SQL standings rollup (periodic + on-demand)
 - REST endpoints for leaderboard and contest state
 
-### Phase 4 — Real-Time (Weeks 13–16)
-- WebSocket server for draft rooms (Socket.io + Redis adapter)
-- Live draft — on-the-clock timer, auto-pick on expiry
-- WebSocket/SSE for live contest leaderboards
-- Push notification service (APNs + FCM) for async draft turns and score milestones
+### Phase 4 — Client Polling & Push (Weeks 13–16)
+- Polling endpoints with ETag/304 support for standings, draft state, contest status
+- Configurable poll interval (default 10s) with per-surface overrides
+- Push notification service (APNs + FCM) for draft pick reminders and score milestones
+- **Deferred:** WebSocket/SSE for live draft room and sub-second leaderboards (build when needed)
 
 ### Phase 5 — Budget Pick, Tiered Pick & Survivor (Weeks 17–18)
 - Budget pick selection with cost validation
@@ -535,10 +557,10 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-025 | 3 | NoSQL writes for ParticipantEventStats and TeamContestPoints | Not Started | |
 | 01-026 | 3 | SQL standings rollup (periodic + on-demand) | Not Started | |
 | 01-027 | 3 | Leaderboard and contest state REST endpoints | Not Started | |
-| 01-028 | 4 | WebSocket server for draft rooms (Socket.io + Redis adapter) | Not Started | |
-| 01-029 | 4 | Live draft — on-the-clock timer, auto-pick on expiry | Not Started | |
-| 01-030 | 4 | WebSocket/SSE for live contest leaderboards | Not Started | |
-| 01-031 | 4 | Push notification service (APNs + FCM) | Not Started | |
+| 01-028 | 4 | Polling endpoints with ETag/304 support (standings, draft, contest status) | Not Started | Default 10s interval |
+| 01-029 | 4 | Configurable poll interval per surface (leaderboard, draft, notifications) | Not Started | `POLL_INTERVAL_MS` default 10000 |
+| 01-030 | 4 | Push notification service (APNs + FCM) | Not Started | Draft reminders, score milestones |
+| 01-031 | — | ~~WebSocket/SSE for live draft room and leaderboards~~ | Deferred | Build when live synchronous drafts needed |
 | 01-032 | 5 | Budget pick selection + cost validation | Not Started | |
 | 01-033 | 5 | Tiered pick selection + tier enforcement | Not Started | |
 | 01-034 | 5 | Survivor / pick'em pick submission flow | Not Started | |

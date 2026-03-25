@@ -23,7 +23,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | **Data Validation** | JSON schemas + ajv (Fastify built-in) | [Service Rules](service-rules.md) |
 | **ORM / DB Access** | Prisma | [Service Rules](service-rules.md) |
 | **Task Queue** | BullMQ + Redis | — |
-| **WebSockets** | ws + Socket.io with Redis adapter | — |
+| **Client Updates** | Polling (10s default), push notifications | WebSocket/SSE deferred to future phase |
 | **Auth** | Auth0 or AWS Cognito | — |
 | **Runtime** | Node.js 20+ LTS | — |
 
@@ -112,10 +112,10 @@ All backend services are Fastify + TypeScript applications deployed as independe
 | Service | Responsibility |
 |---|---|
 | **Core API** | Auth, leagues, memberships, contests, entries, picks, standings reads |
-| **Draft Service** | Draft session lifecycle, live/async pick orchestration, WebSocket room per draft |
+| **Draft Service** | Draft session lifecycle, async pick orchestration, draft engines |
 | **Scoring Service** | Consumes stat events, applies scoring rules, writes to NoSQL, updates SQL standings |
 | **Stats Ingestion Worker** | Polls or receives webhooks from sport data providers, normalises to internal schema, publishes events |
-| **Notification Service** | Push (APNs/FCM), email, in-app via WebSocket — draft reminders, score alerts |
+| **Notification Service** | Push (APNs/FCM), email — draft reminders, score alerts |
 
 ### Port / Adapter (Hexagonal Architecture)
 
@@ -139,17 +139,18 @@ Examples:
   Contest Service → ContestCompleted → Notification Service
 ```
 
-### Real-Time Architecture
+### Client Update Strategy
 
-Three distinct real-time channels:
+**v1: Polling.** All client data freshness uses configurable client-side polling (default 10s). The API returns `ETag` headers for cheap 304 responses. Push notifications (APNs/FCM) handle time-sensitive alerts.
 
-| Channel | Mechanism | Use Case |
+| Surface | Default Interval | Notes |
 |---|---|---|
-| **Draft room** | WebSocket (per session) | Live pick-by-pick draft experience |
-| **Live scores** | WebSocket or SSE (per contest) | Leaderboard updates during events |
-| **Notifications** | APNs + FCM + in-app WS | Draft reminders, score milestones, contest results |
+| Leaderboard / standings | 10s | `GET /contests/:id/standings` |
+| Draft room (async) | 10s | `GET /drafts/:id` |
+| Contest status | 30s | Lock time, completion |
+| Notifications | 30s | `GET /notifications/unread-count` |
 
-The WebSocket gateway subscribes to Redis Pub/Sub and fans out events to connected clients. The Redis adapter allows the WebSocket layer to scale across multiple container instances.
+**Deferred: WebSocket/SSE.** Upgrade to real-time push when live synchronous drafts or sub-second leaderboards are needed. This is additive — polling remains as fallback.
 
 ### Provider Abstraction
 
