@@ -550,7 +550,7 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-018 | 2 | SelectionConfig CRUD | Not Started | |
 | 01-019 | 2 | ContestParticipantPool management endpoints | Not Started | |
 | 01-020 | 2 | Contest entry creation and pick management | Not Started | |
-| 01-021 | 2 | Snake draft engine — async mode | Not Started | |
+| 01-021 | 2 | Snake draft engine — async mode | Done | 8 engines built in draft-service: snake, tiered, budget, survivor, pick'em, bracket + session manager + draft order |
 | 01-022 | 2 | Basic standings endpoint (manual/seeded data) | Not Started | |
 | 01-023 | 3 | Stats ingestion worker — golf adapter | Not Started | First sport |
 | 01-024 | 3 | Scoring rule evaluator (JSONB config → points) | Not Started | |
@@ -561,11 +561,11 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-029 | 4 | Configurable poll interval per surface (leaderboard, draft, notifications) | Not Started | `POLL_INTERVAL_MS` default 10000 |
 | 01-030 | 4 | Push notification service (APNs + FCM) | Not Started | Draft reminders, score milestones |
 | 01-031 | — | ~~WebSocket/SSE for live draft room and leaderboards~~ | Deferred | Build when live synchronous drafts needed |
-| 01-032 | 5 | Budget pick selection + cost validation | Not Started | |
-| 01-033 | 5 | Tiered pick selection + tier enforcement | Not Started | |
-| 01-034 | 5 | Survivor / pick'em pick submission flow | Not Started | |
-| 01-035 | 6 | Bracket contest type (NCAA March Madness model) | Not Started | |
-| 01-036 | 6 | Knockout scoring logic | Not Started | |
+| 01-032 | 5 | Budget pick selection + cost validation | Done | `budget-pick-engine.ts` — see 02-011 |
+| 01-033 | 5 | Tiered pick selection + tier enforcement | Done | `tiered-pick-engine.ts` — see 02-008 |
+| 01-034 | 5 | Survivor / pick'em pick submission flow | Done | `survivor-engine.ts`, `pickem-engine.ts` — see 02-014, 02-018 |
+| 01-035 | 6 | Bracket contest type (NCAA March Madness model) | Done | `bracket-engine.ts` — see 02-020 |
+| 01-036 | 6 | Knockout scoring logic | Done | Survivor engine handles elimination — see 02-014 to 02-017 |
 | 01-037 | 6 | Bracket visualisation API | Not Started | |
 | 01-038 | 7 | MySQL adapter + MongoDB adapter | Not Started | |
 | 01-039 | 7 | Tenant onboarding flow + Stripe billing hooks | Not Started | |
