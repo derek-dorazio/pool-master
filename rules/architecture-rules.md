@@ -8,6 +8,7 @@ All plan documents and implementation work must conform to these rules. This is 
 - **[Swift Rules](swift-rules.md)** — iOS: SwiftUI, Observation framework, state management, accessibility
 - **[Android Rules](android-rules.md)** — Android: Kotlin, Jetpack Compose, Hilt, Coroutines, Room
 - **[Testing Rules](testing-rules.md)** — Test strategy, coverage thresholds, CI pipeline, load testing
+- **[Workflow Rules](workflow-rules.md)** — Action plan tracking: update task status when starting and completing work
 
 ---
 
@@ -311,7 +312,8 @@ When a decision is needed, consult rules files in this order:
 4. **[Swift Rules](swift-rules.md)** — iOS: SwiftUI, Observation, state management
 5. **[Android Rules](android-rules.md)** — Android: Kotlin, Jetpack Compose, Hilt, Coroutines
 6. **[Testing Rules](testing-rules.md)** — test strategy, tools, coverage, CI pipeline
-7. **Plan documents** — feature-specific design decisions
+7. **[Workflow Rules](workflow-rules.md)** — action plan tracking, task status updates
+8. **Plan documents** — feature-specific design decisions and action plan task tables
 
 If a conflict exists between rules files, escalate. If no rules file covers it, make the decision, document it, and update the relevant file.
 
