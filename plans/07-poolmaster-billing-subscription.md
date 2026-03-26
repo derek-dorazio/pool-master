@@ -10,24 +10,26 @@ This document defines the monetisation engine for PoolMaster as a multi-tenant S
 
 ## 1. Plan Tiers
 
+> **Launch Strategy:** The platform launches as **fully free with no constraints**. All features are available to every tenant. The tier structure below is the future monetisation model — it is defined now so the entitlement system can be built with paid tiers in mind, but the Free tier starts with no limits. Paid tiers and Stripe integration will be enabled in a later phase once the platform has traction.
+
 ### Tier Structure
 
-| Feature | Free | Starter ($9/mo) | Pro ($29/mo) | League+ ($79/mo) |
+| Feature | Free (Launch) | Starter ($9/mo) | Pro ($29/mo) | League+ ($79/mo) |
 |---|---|---|---|---|
-| Leagues | 1 | 3 | 10 | Unlimited |
-| Members per league | 12 | 20 | 50 | 100 |
-| Contests per season | 2 | 10 | Unlimited | Unlimited |
-| Sports available | Golf only | Golf, NFL | All sports | All sports |
-| Draft types | Snake only | Snake, Tiered | All types | All types |
-| Draft modes | Async only | Async + Live | Async + Live | Async + Live |
-| Real-time leaderboard | ✗ (refresh) | ✓ | ✓ | ✓ |
-| Scoring templates | Standard only | Standard + Custom | Full custom | Full custom |
-| History depth | Current season | 2 seasons | 5 seasons | Unlimited |
-| Analytics (luck/power) | ✗ | Basic | Full | Full |
-| Custom branding | ✗ | ✗ | Logo only | Full white-label |
-| Intermediate prizes | ✗ | ✗ | ✓ | ✓ |
-| API access | ✗ | ✗ | ✗ | ✓ |
-| Priority support | ✗ | Email | Email + Chat | Dedicated |
+| Leagues | **Unlimited** | 3 | 10 | Unlimited |
+| Members per league | **Unlimited** | 20 | 50 | 100 |
+| Contests per season | **Unlimited** | 10 | Unlimited | Unlimited |
+| Sports available | **All sports** | Golf, NFL | All sports | All sports |
+| Draft types | **All types** | Snake, Tiered | All types | All types |
+| Draft modes | **All modes** | Async + Live | Async + Live | Async + Live |
+| Real-time leaderboard | **✓** | ✓ | ✓ | ✓ |
+| Scoring templates | **Full custom** | Standard + Custom | Full custom | Full custom |
+| History depth | **Unlimited** | 2 seasons | 5 seasons | Unlimited |
+| Analytics (luck/power) | **Full** | Basic | Full | Full |
+| Custom branding | **✗** | ✗ | Logo only | Full white-label |
+| Intermediate prizes | **✓** | ✗ | ✓ | ✓ |
+| API access | **✓** | ✗ | ✗ | ✓ |
+| Priority support | **Community** | Email | Email + Chat | Dedicated |
 
 ### Pricing
 
@@ -50,7 +52,7 @@ interface PlanTier {
 
 interface PlanEntitlements {
   max_leagues: number;                 // -1 = unlimited
-  max_members_per_league: number;
+  max_members_per_league: number;      // -1 = unlimited
   max_contests_per_season: number;     // -1 = unlimited
   allowed_sports: Sport[] | 'ALL';
   allowed_draft_types: DraftType[] | 'ALL';
@@ -64,6 +66,24 @@ interface PlanEntitlements {
   api_access: boolean;
   support_tier: 'COMMUNITY' | 'EMAIL' | 'EMAIL_CHAT' | 'DEDICATED';
 }
+
+// Launch Free tier — everything unlocked, no limits
+const FREE_LAUNCH_ENTITLEMENTS: PlanEntitlements = {
+  max_leagues: -1,
+  max_members_per_league: -1,
+  max_contests_per_season: -1,
+  allowed_sports: 'ALL',
+  allowed_draft_types: 'ALL',
+  allowed_draft_modes: 'ALL',
+  real_time_leaderboard: true,
+  custom_scoring: true,
+  history_seasons: -1,
+  analytics_tier: 'FULL',
+  branding: 'NONE',
+  intermediate_prizes: true,
+  api_access: true,
+  support_tier: 'COMMUNITY',
+};
 ```
 
 ---
@@ -669,38 +689,37 @@ CREATE INDEX idx_usage_tenant ON tenant_usage(tenant_id);
 
 ## 12. Implementation Phases
 
-### Phase 1 — Foundation (Before Phase 1 code)
-- Plan tier definitions in database (seed data)
-- Entitlement service with plan-based resolution
-- Entitlement middleware for API routes
-- Free tier functional with hard-coded limits
+### Phase 1 — Free Launch (No Limits)
+- Plan tier definitions in database (seed Free tier with unlimited entitlements)
+- Entitlement service with plan-based resolution (all checks pass for Free)
+- Entitlement middleware wired to API routes (ready for future gating)
+- All features available to all tenants — no paywalls
 
-### Phase 2 — Stripe Integration
+### Phase 2 — Entitlement Infrastructure (Deferred)
+- Usage tracking tables and counting logic
+- Tighten Free tier limits when ready to monetise
+- Add paid tier seed data (Starter, Pro, League+)
+- Entitlement override tooling for admin
+
+### Phase 3 — Stripe Integration (Deferred)
 - Stripe customer creation on tenant signup
 - Subscription creation for paid plans
 - Webhook handler for subscription events
 - Payment method management (Stripe Elements)
 - Trial start and conversion flow
 
-### Phase 3 — Self-Service Portal
+### Phase 4 — Self-Service Portal (Deferred)
 - Billing portal UI (current plan, invoices, payment method)
 - Plan change flow (upgrade with proration, downgrade at period end)
 - Cancellation flow with retention offer
 - Invoice history and PDF download
 
-### Phase 4 — Dunning & Recovery
-- Failed payment webhook handling
-- Retry schedule implementation
-- Grace period and degradation logic
-- Dunning email sequence
-- Recovery tracking
-
-### Phase 5 — Analytics & Enterprise
-- Revenue metrics dashboard (internal)
+### Phase 5 — Dunning, Analytics & Enterprise (Deferred)
+- Failed payment webhook handling and retry schedule
+- Grace period and feature degradation logic
+- Revenue metrics dashboard (MRR, ARR, churn, conversion)
 - Trial conversion tracking
-- Churn analysis
 - Enterprise plan management in admin dashboard
-- Entitlement override tooling
 
 ---
 
@@ -708,34 +727,33 @@ CREATE INDEX idx_usage_tenant ON tenant_usage(tenant_id);
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 07-001 | 1 | `plan_tiers` table + seed data (Free, Starter, Pro, League+) | Not Started | |
+| 07-001 | 1 | `plan_tiers` table + seed Free tier (unlimited entitlements) | Not Started | No paid tiers yet |
 | 07-002 | 1 | `PlanEntitlements` Zod schema + TypeScript type | Not Started | |
-| 07-003 | 1 | EntitlementService — `check()` and `checkMultiple()` | Not Started | |
+| 07-003 | 1 | EntitlementService — `check()` and `checkMultiple()` (all pass for Free) | Not Started | |
 | 07-004 | 1 | Entitlement resolution order (override → flag → plan → usage) | Not Started | |
-| 07-005 | 1 | Fastify entitlement preHandler hook for routes | Not Started | |
-| 07-006 | 1 | `tenant_usage` table + usage counting | Not Started | |
-| 07-007 | 1 | Free tier functional with hard-coded limits | Not Started | |
-| 07-008 | 2 | Stripe customer creation on tenant signup | Not Started | |
-| 07-009 | 2 | `tenant_subscriptions` table + migrations | Not Started | |
-| 07-010 | 2 | Subscription creation for paid plans | Not Started | |
-| 07-011 | 2 | Stripe webhook handler (subscription events) | Not Started | |
-| 07-012 | 2 | Payment method management (Stripe Elements) | Not Started | |
-| 07-013 | 2 | Trial start and conversion flow (14-day trial) | Not Started | |
-| 07-014 | 3 | Billing portal UI (current plan, invoices, payment method) | Not Started | |
-| 07-015 | 3 | Plan upgrade flow (proration) | Not Started | |
-| 07-016 | 3 | Plan downgrade flow (at period end + graceful degradation) | Not Started | |
-| 07-017 | 3 | Cancellation flow with retention offer | Not Started | |
-| 07-018 | 3 | Invoice history and PDF download | Not Started | |
-| 07-019 | 4 | Failed payment webhook handling | Not Started | |
-| 07-020 | 4 | Retry schedule implementation (days 1, 3, 5, 7) | Not Started | |
-| 07-021 | 4 | Grace period and feature degradation logic | Not Started | |
-| 07-022 | 4 | Dunning email sequence | Not Started | |
-| 07-023 | 4 | Recovery rate tracking | Not Started | |
-| 07-024 | 5 | Revenue metrics dashboard (MRR, ARR, churn, conversion) | Not Started | Internal |
-| 07-025 | 5 | Trial conversion tracking | Not Started | |
-| 07-026 | 5 | Enterprise plan management in admin dashboard | Not Started | |
-| 07-027 | 5 | `entitlement_overrides` table + admin tooling | Not Started | |
-| 07-028 | 5 | `cancellation_feedback` table + collection flow | Not Started | |
+| 07-005 | 1 | Fastify entitlement preHandler hook for routes | Not Started | Wired but never blocks at launch |
+| 07-006 | 1 | Auto-assign Free tier on tenant creation | Not Started | |
+| 07-007 | 2 | `tenant_usage` table + usage counting | Not Started | Deferred |
+| 07-008 | 2 | Tighten Free tier limits + add paid tier seed data | Not Started | Deferred — when ready to monetise |
+| 07-009 | 2 | `entitlement_overrides` table + admin tooling | Not Started | Deferred |
+| 07-010 | 3 | Stripe customer creation on tenant signup | Not Started | Deferred |
+| 07-011 | 3 | `tenant_subscriptions` table + migrations | Not Started | Deferred |
+| 07-012 | 3 | Subscription creation for paid plans | Not Started | Deferred |
+| 07-013 | 3 | Stripe webhook handler (subscription events) | Not Started | Deferred |
+| 07-014 | 3 | Payment method management (Stripe Elements) | Not Started | Deferred |
+| 07-015 | 3 | Trial start and conversion flow (14-day trial) | Not Started | Deferred |
+| 07-016 | 4 | Billing portal UI (current plan, invoices, payment method) | Not Started | Deferred |
+| 07-017 | 4 | Plan upgrade flow (proration) | Not Started | Deferred |
+| 07-018 | 4 | Plan downgrade flow (at period end + graceful degradation) | Not Started | Deferred |
+| 07-019 | 4 | Cancellation flow with retention offer | Not Started | Deferred |
+| 07-020 | 4 | Invoice history and PDF download | Not Started | Deferred |
+| 07-021 | 5 | Failed payment webhook handling + retry schedule | Not Started | Deferred |
+| 07-022 | 5 | Grace period and feature degradation logic | Not Started | Deferred |
+| 07-023 | 5 | Dunning email sequence + recovery tracking | Not Started | Deferred |
+| 07-024 | 5 | Revenue metrics dashboard (MRR, ARR, churn, conversion) | Not Started | Deferred |
+| 07-025 | 5 | Trial conversion tracking | Not Started | Deferred |
+| 07-026 | 5 | Enterprise plan management in admin dashboard | Not Started | Deferred |
+| 07-027 | 5 | `cancellation_feedback` table + collection flow | Not Started | Deferred |
 
 ---
 
