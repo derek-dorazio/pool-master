@@ -930,11 +930,11 @@ Commissioners have additional history management capabilities:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 04-001 | 1 | ContestResult table + write on contest close | Not Started | One row per team per closed contest |
-| 04-002 | 1 | TeamRosterHistory freeze at contest lock | Not Started | |
-| 04-003 | 1 | PayoutHistory write on payout confirmation | Not Started | |
-| 04-004 | 1 | Basic contest summary endpoint | Not Started | |
-| 04-005 | 1 | Final standings history per contest | Not Started | |
+| 04-001 | 1 | ContestResult table + write on contest close | Done | Enriched with denormalised metadata, percentile, net result, points behind |
+| 04-002 | 1 | TeamRosterHistory freeze at contest lock | Done | Frozen roster snapshot as JSONB, upsert on close |
+| 04-003 | 1 | PayoutHistory write on payout confirmation | Done | Written by HistoryWriter on contest close |
+| 04-004 | 1 | Basic contest summary endpoint | Done | GET /contests/:id/history/summary with highlights |
+| 04-005 | 1 | Final standings history per contest | Done | GET /contests/:id/history/standings |
 | 04-006 | 2 | LeagueSeasonSummary aggregation job | Not Started | |
 | 04-007 | 2 | All-time champion list per league | Not Started | |
 | 04-008 | 2 | Member stats page (wins, entries, winnings) | Not Started | |

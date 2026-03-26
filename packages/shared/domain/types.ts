@@ -480,6 +480,93 @@ export interface ContestResult extends DomainEntity {
   finalRank: number;
   totalScore: number;
   prizeAmount?: number;
+
+  // Denormalised history fields (immutable after contest close)
+  leagueId?: string;
+  seasonId?: string;
+  leagueMembershipId?: string;
+  contestName?: string;
+  contestType?: string;
+  sport?: string;
+  numEntries?: number;
+  startedAt?: Date;
+  endedAt?: Date;
+  isWinner: boolean;
+  isPaidPosition: boolean;
+  entryFeePaid?: number;
+  prizeLabel?: string;
+  netResult?: number;
+  percentileRank?: number;
+  pointsBehindWinner?: number;
+  pointsBehindNext?: number;
+  draftPosition?: number;
+  rosterSnapshotId?: string;
+  closedAt?: Date;
+}
+
+// --- Contest History ---
+
+export interface TeamRosterHistory {
+  id: string;
+  contestId: string;
+  entryId: string;
+  lockedAt: Date;
+  roster: RosterHistoryEntry[];
+  draftBudgetUsed?: number;
+  tiersSelected?: TierSelection[];
+}
+
+export interface RosterHistoryEntry {
+  participantId: string;
+  participantName: string;
+  tier?: number;
+  salaryCost?: number;
+  draftRound?: number;
+  draftPick?: number;
+}
+
+export interface TierSelection {
+  tierId: string;
+  tierName: string;
+  participantIds: string[];
+}
+
+export interface PayoutHistoryRecord {
+  id: string;
+  contestId: string;
+  leagueId: string;
+  entryId: string;
+  leagueMembershipId: string;
+  prizeType: 'FINAL_STANDING' | 'INTERMEDIATE' | 'BONUS';
+  prizeLabel: string;
+  prizeRank?: number;
+  amount: number;
+  isCash: boolean;
+  nonCashDescription?: string;
+  paidAt?: Date;
+  acknowledgedByMember: boolean;
+  createdAt: Date;
+}
+
+export interface ContestHistorySummary {
+  contestId: string;
+  contestName: string;
+  sport: string;
+  contestType: string;
+  season?: string;
+  startedAt?: Date;
+  endedAt?: Date;
+  numEntries: number;
+  finalStandings: ContestResult[];
+  payouts: PayoutHistoryRecord[];
+  highlights: ContestHighlights;
+}
+
+export interface ContestHighlights {
+  highestScore?: { entryId: string; entryName: string; score: number };
+  lowestScore?: { entryId: string; entryName: string; score: number };
+  closestFinish?: { margin: number };
+  winnerMargin?: number;
 }
 
 // --- Payout Configuration ---
