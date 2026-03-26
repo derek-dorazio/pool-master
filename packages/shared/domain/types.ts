@@ -300,7 +300,42 @@ export interface TierDefinition {
   tierName: string;
   tierNumber: number;
   picksFromTier: number;
+  rankingRange?: [number, number];
+  priceRange?: [number, number];
+  maxParticipants?: number;
   participantIds: string[];
+}
+
+// --- Pricing & Tier Configuration ---
+
+export interface PricingConfig {
+  sport: Sport;
+  contestId?: string;
+  totalBudget: number;
+  minPrice: number;
+  maxPrice: number;
+  priceIncrement: number;
+  rankingWeight: number;
+  formWeight: number;
+  oddsWeight: number;
+  manualOverrides: PriceOverride[];
+}
+
+export interface PriceOverride {
+  participantId: string;
+  overridePrice: number;
+  reason: string;
+  setBy: string;
+  setAt: Date;
+}
+
+export type TierAssignmentMode = 'AUTO_RANKING' | 'AUTO_PRICE' | 'MANUAL';
+
+export interface TierConfig {
+  contestId: string;
+  sport: Sport;
+  assignmentMode: TierAssignmentMode;
+  tiers: TierDefinition[];
 }
 
 // --- Contest Pool ---

@@ -785,11 +785,11 @@ POST   /api/v1/admin/participants/import       # Bulk import
 | 05-010 | 2 | Pool lifecycle (create → resolve → review → lock) | Done | Full lifecycle: create → resolve → refresh → lock |
 | 05-011 | 2 | Pool refresh on field changes | Done | refreshPool re-resolves from source |
 | 05-012 | 2 | Withdrawal/scratch handling post-lock | Done | markUnavailable/markAvailable on locked pools |
-| 05-013 | 3 | Salary cap pricing engine (ranking + form + odds → price) | Not Started | |
-| 05-014 | 3 | Price calculation and refresh schedule | Not Started | |
-| 05-015 | 3 | Commissioner price overrides | Not Started | |
-| 05-016 | 3 | Tier auto-assignment (AUTO_RANKING, AUTO_PRICE) | Not Started | |
-| 05-017 | 3 | Commissioner tier review and manual adjustments | Not Started | |
+| 05-013 | 3 | Salary cap pricing engine (ranking + form + odds → price) | Done | PricingEngine pure functions + PricingAndTierService |
+| 05-014 | 3 | Price calculation and refresh schedule | Done | calculateAndApplyPrices via POST /pool/pricing/calculate; schedule deferred to cron |
+| 05-015 | 3 | Commissioner price overrides | Done | PUT /pool/pricing/override/:participantId |
+| 05-016 | 3 | Tier auto-assignment (AUTO_RANKING, AUTO_PRICE) | Done | TierAssignmentEngine + POST /pool/tiers/assign |
+| 05-017 | 3 | Commissioner tier review and manual adjustments | Done | PUT /pool/tiers/:tierId/participants/:participantId |
 | 05-018 | 4 | Photo ingestion pipeline (download, resize, WebP, S3, CDN) | Not Started | |
 | 05-019 | 4 | Fallback image system per sport/position | Not Started | |
 | 05-020 | 4 | Enhanced search — Elasticsearch migration (if needed) | Not Started | |
