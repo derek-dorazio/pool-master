@@ -678,6 +678,47 @@ model PayoutHistory {
   @@map("payout_history")
 }
 
+model LeagueSeasonSummary {
+  id                String   @id @default(uuid()) @db.Uuid
+  leagueId          String   @map("league_id") @db.Uuid
+  seasonId          String?  @map("season_id") @db.Uuid
+  seasonName        String   @map("season_name")
+  sport             String?  @db.VarChar(50)
+  year              Int?
+  numMembers        Int      @default(0) @map("num_members")
+  numContests       Int      @default(0) @map("num_contests")
+  totalPrizePool    Int      @default(0) @map("total_prize_pool")
+  champions         Json     @default("[]")
+  highlights        Json     @default("{}")
+  commissionerNote  String?  @map("commissioner_note")
+  openedAt          DateTime? @map("opened_at") @db.Timestamptz
+  closedAt          DateTime? @map("closed_at") @db.Timestamptz
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([leagueId, seasonId])
+  @@index([leagueId])
+  @@map("league_season_summaries")
+}
+
+model Trophy {
+  id                    String    @id @default(uuid()) @db.Uuid
+  leagueId              String    @map("league_id") @db.Uuid
+  leagueMembershipId    String    @map("league_membership_id") @db.Uuid
+  trophyType            String    @map("trophy_type") @db.VarChar(50)
+  seasonId              String?   @map("season_id") @db.Uuid
+  contestId             String?   @map("contest_id") @db.Uuid
+  label                 String    @db.VarChar(255)
+  description           String?
+  awardedAt             DateTime  @map("awarded_at") @db.Timestamptz
+  isDisplayed           Boolean   @default(true) @map("is_displayed")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([leagueId, leagueMembershipId])
+  @@index([leagueId, trophyType])
+  @@map("trophies")
+}
+
 // =============================================================================
 // Sports Data Integration (Plan 06)
 // =============================================================================

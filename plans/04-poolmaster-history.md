@@ -935,11 +935,11 @@ Commissioners have additional history management capabilities:
 | 04-003 | 1 | PayoutHistory write on payout confirmation | Done | Written by HistoryWriter on contest close |
 | 04-004 | 1 | Basic contest summary endpoint | Done | GET /contests/:id/history/summary with highlights |
 | 04-005 | 1 | Final standings history per contest | Done | GET /contests/:id/history/standings |
-| 04-006 | 2 | LeagueSeasonSummary aggregation job | Not Started | |
-| 04-007 | 2 | All-time champion list per league | Not Started | |
-| 04-008 | 2 | Member stats page (wins, entries, winnings) | Not Started | |
-| 04-009 | 2 | AllTimeLeaderboard (sort by wins, points, winnings) | Not Started | |
-| 04-010 | 2 | Trophy case — championship and runner-up trophies | Not Started | |
+| 04-006 | 2 | LeagueSeasonSummary aggregation job | Done | Aggregates from ContestResult, upserts season summary with champions |
+| 04-007 | 2 | All-time champion list per league | Done | GET /leagues/:id/history/champions |
+| 04-008 | 2 | Member stats page (wins, entries, winnings) | Done | MemberAllTimeStats computed from results; GET /leagues/:id/history/members/:mid/stats |
+| 04-009 | 2 | AllTimeLeaderboard (sort by wins, points, winnings) | Done | GET /leagues/:id/history/leaderboard?sortBy=WINS|POINTS|WINNINGS |
+| 04-010 | 2 | Trophy case — championship and runner-up trophies | Done | Trophy model + awardContestTrophies (champion, runner-up, top-3, paid) |
 | 04-011 | 3 | ContestScoringTimeline checkpoints | Not Started | Periodic snapshots during live contest |
 | 04-012 | 3 | DraftHistoryReplay endpoint | Not Started | |
 | 04-013 | 3 | ContestRosterReplay with scoring breakdown | Not Started | |
