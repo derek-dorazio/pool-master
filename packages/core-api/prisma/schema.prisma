@@ -43,6 +43,9 @@ model User {
   invitationsAccepted LeagueInvitation[] @relation("AcceptedBy")
   contestTemplates    ContestTemplate[]  @relation("TemplateCreator")
   auditActions        CommissionerAuditLog[] @relation("AuditActor")
+  notifications       Notification[]
+  notificationPreference NotificationPreference?
+  deviceRegistrations DeviceRegistration[]
 
   @@map("users")
 }
@@ -840,4 +843,100 @@ model ProviderHealthLog {
 
   @@index([providerId, recordedAt])
   @@map("provider_health_log")
+}
+
+// =============================================================================
+// Notifications (Plan 09)
+// =============================================================================
+
+model Notification {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  eventType    String    @map("event_type") @db.VarChar(100)
+  title        String    @db.VarChar(500)
+  body         String
+  imageUrl     String?   @map("image_url")
+  actionScreen String?   @map("action_screen") @db.VarChar(100)
+  actionParams Json      @default("{}") @map("action_params")
+  read         Boolean   @default(false)
+  readAt       DateTime? @map("read_at") @db.Timestamptz
+  dismissed    Boolean   @default(false)
+  groupKey     String?   @map("group_key") @db.VarChar(255)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, read, createdAt(sort: Desc)])
+  @@index([userId, groupKey])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                    String   @id @default(uuid()) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+  doNotDisturb          Boolean  @default(false) @map("do_not_disturb")
+  dndSchedule           Json?    @map("dnd_schedule")
+  categoryPreferences   Json     @default("{}") @map("category_preferences")
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notification_preferences")
+}
+
+model NotificationTemplate {
+  id          String  @id @default(uuid()) @db.Uuid
+  eventType   String  @map("event_type") @db.VarChar(100)
+  version     Int     @default(1)
+  pushTitle   String? @map("push_title") @db.VarChar(255)
+  pushBody    String? @map("push_body")
+  emailSubject String? @map("email_subject") @db.VarChar(255)
+  emailHtml   String? @map("email_html")
+  emailText   String? @map("email_text")
+  inAppTitle  String? @map("in_app_title") @db.VarChar(255)
+  inAppBody   String? @map("in_app_body")
+  inAppIcon   String? @map("in_app_icon") @db.VarChar(50)
+  smsBody     String? @map("sms_body") @db.VarChar(160)
+  category    String  @db.VarChar(50)
+  variables   Json    @default("[]")
+  active      Boolean @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([eventType, version])
+  @@map("notification_templates")
+}
+
+model DeviceRegistration {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  platform     String   @db.VarChar(20)
+  token        String
+  appVersion   String?  @map("app_version") @db.VarChar(50)
+  osVersion    String?  @map("os_version") @db.VarChar(50)
+  deviceModel  String?  @map("device_model") @db.VarChar(100)
+  isActive     Boolean  @default(true) @map("is_active")
+  lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamptz
+  registeredAt DateTime @default(now()) @map("registered_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([platform, token])
+  @@index([userId, isActive])
+  @@map("device_registrations")
+}
+
+model ScheduledNotification {
+  id              String    @id @default(uuid()) @db.Uuid
+  eventType       String    @map("event_type") @db.VarChar(100)
+  fireAt          DateTime  @map("fire_at") @db.Timestamptz
+  context         Json
+  sourceType      String    @map("source_type") @db.VarChar(50)
+  sourceId        String    @map("source_id") @db.Uuid
+  status          String    @default("PENDING") @db.VarChar(20)
+  cancelledReason String?   @map("cancelled_reason") @db.VarChar(255)
+  firedAt         DateTime? @map("fired_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([status, fireAt])
+  @@map("scheduled_notifications")
 }

@@ -911,13 +911,13 @@ CREATE INDEX idx_delivery_user ON notification_delivery_log(user_id, created_at)
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 09-001 | 1 | NotificationEvent schema in `poolmaster_shared/events/` | Not Started | |
-| 09-002 | 1 | Notification Service skeleton (message bus consumer) | Not Started | |
-| 09-003 | 1 | `notifications` table (in-app notification centre) | Not Started | |
-| 09-004 | 1 | In-app notification API (list, unread count, mark read, dismiss) | Not Started | |
-| 09-005 | 1 | `notification_preferences` table + default preferences | Not Started | |
-| 09-006 | 1 | `notification_templates` table + initial draft event templates | Not Started | |
-| 09-007 | 1 | Template renderer (variable substitution) | Not Started | |
+| 09-001 | 1 | NotificationEvent schema in `poolmaster_shared/events/` | Done | Full event schema + 35 event type constants |
+| 09-002 | 1 | Notification Service skeleton (message bus consumer) | Done | Fastify app on port 3004, InAppChannel wired |
+| 09-003 | 1 | `notifications` table (in-app notification centre) | Done | + NotificationPreference, NotificationTemplate, DeviceRegistration, ScheduledNotification models |
+| 09-004 | 1 | In-app notification API (list, unread count, mark read, dismiss) | Done | Full CRUD at /api/v1/notifications |
+| 09-005 | 1 | `notification_preferences` table + default preferences | Done | Upsert preferences + per-category defaults |
+| 09-006 | 1 | `notification_templates` table + initial draft event templates | Done | 14 seed templates across all categories |
+| 09-007 | 1 | Template renderer (variable substitution) | Done | Mustache-style {{var}} rendering per channel |
 | 09-008 | 2 | `device_registrations` table | Not Started | |
 | 09-009 | 2 | Device registration API (`POST /api/v1/devices`) | Not Started | |
 | 09-010 | 2 | APNs push channel integration (iOS) | Not Started | |
