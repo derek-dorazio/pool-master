@@ -42,6 +42,8 @@ export type {
   ContestEntry,
   ContestParticipantPool,
   ContestPick,
+  ContestPool,
+  ContestPoolConfig,
   ContestResult,
   ContestStanding,
   ContestTemplate,

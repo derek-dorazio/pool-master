@@ -4,6 +4,7 @@ export type {
   ContestEntryRepository,
   ContestParticipantPoolRepository,
   ContestPickRepository,
+  ContestPoolRepository,
   ContestRepository,
   ContestResultRepository,
   ContestStandingRepository,

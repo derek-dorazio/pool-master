@@ -16,6 +16,7 @@ import type {
   InjuryStatusCode,
   InvitationStatus,
   InvitePolicy,
+  PoolType,
   InviteType,
   LeagueRole,
   LeagueVisibility,
@@ -302,15 +303,42 @@ export interface TierDefinition {
   participantIds: string[];
 }
 
-// --- Contest Participant Pool ---
+// --- Contest Pool ---
+
+export interface ContestPool extends DomainEntity {
+  contestId: string;
+  sport: Sport;
+  eventId?: string;
+  poolType: PoolType;
+  config: ContestPoolConfig;
+  excludedParticipantIds: string[];
+  poolLocked: boolean;
+  poolLockedAt?: Date;
+}
+
+export interface ContestPoolConfig {
+  // EVENT_FIELD config
+  includeAlternates?: boolean;
+  autoUpdateOnFieldChange?: boolean;
+
+  // RANKING_CUTOFF config
+  rankingType?: string;
+  maxRank?: number;
+
+  // CUSTOM config
+  customParticipantIds?: string[];
+}
 
 export interface ContestParticipantPool extends DomainEntity {
+  poolId: string;
   contestId: string;
   participantId: string;
   cost?: number;
   tier?: string;
   tierAssignmentMethod?: TierAssignmentMethod;
+  ranking?: number;
   isAvailable: boolean;
+  unavailableReason?: string;
 }
 
 // --- Entry & Picks ---

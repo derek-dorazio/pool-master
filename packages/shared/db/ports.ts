@@ -12,6 +12,7 @@ import type {
   ContestEntry,
   ContestParticipantPool,
   ContestPick,
+  ContestPool,
   ContestResult,
   ContestStanding,
   ContestTemplate,
@@ -142,10 +143,20 @@ export interface SelectionConfigRepository {
   update(id: string, updates: Partial<SelectionConfig>): Promise<SelectionConfig>;
 }
 
+export interface ContestPoolRepository {
+  findByContest(contestId: string): Promise<ContestPool | null>;
+  create(pool: Omit<ContestPool, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestPool>;
+  update(id: string, updates: Partial<ContestPool>): Promise<ContestPool>;
+  lock(id: string): Promise<ContestPool>;
+}
+
 export interface ContestParticipantPoolRepository {
   findByContest(contestId: string): Promise<ContestParticipantPool[]>;
+  findByPool(poolId: string): Promise<ContestParticipantPool[]>;
   create(entry: Omit<ContestParticipantPool, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestParticipantPool>;
+  createMany(entries: Omit<ContestParticipantPool, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
   update(id: string, updates: Partial<ContestParticipantPool>): Promise<ContestParticipantPool>;
+  deleteByPool(poolId: string): Promise<number>;
 }
 
 // --- Entries & Picks ---

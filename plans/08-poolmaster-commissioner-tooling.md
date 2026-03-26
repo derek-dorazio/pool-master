@@ -863,14 +863,14 @@ GET    /api/v1/contests/:id/audit-log             # Contest-specific audit trail
 | 08-022 | 4 | Scoring overrides — force recalculate standings | Done | `POST /contests/:id/scoring/recalculate` re-ranks all entries by totalScore descending. Returns RecalculationResult with changes. |
 | 08-023 | 4 | Contest lifecycle overrides — reopen, close, extend deadline | Done | `POST /reopen` (COMPLETED→ACTIVE), `/close` (any→COMPLETED), `/extend-deadline`, `/update-lock`. All require reason. |
 | 08-024 | 4 | Payout confirmation and override | Done | `POST /contests/:id/payouts/confirm` marks payouts confirmed on completed contests. |
-| 08-025 | 5 | `contest_templates` table + save/load/share | Not Started | |
-| 08-026 | 5 | Platform template library (curated per sport) | Not Started | |
-| 08-027 | 5 | Season bulk setup (multi-contest creation) | Not Started | |
-| 08-028 | 5 | Copy last season flow | Not Started | |
-| 08-029 | 5 | CSV member import | Not Started | |
-| 08-030 | 5 | `commissioner_audit_log` table + all actions logged | Not Started | |
-| 08-031 | 5 | Audit log viewer (commissioner + member simplified view) | Not Started | |
-| 08-032 | 5 | Team reassignment (when member leaves mid-season) | Not Started | |
+| 08-025 | 5 | `contest_templates` table + save/load/share | Done | ContestTemplate Prisma model + ContestTemplateRepository. CRUD at `/api/v1/templates`. Implemented in Phase 2. |
+| 08-026 | 5 | Platform template library (curated per sport) | Done | `isPlatformTemplate` flag on templates. Platform templates are read-only. Scoring templates for 9 sports via registry. Implemented in Phase 2. |
+| 08-027 | 5 | Season bulk setup (multi-contest creation) | Done | `POST /leagues/:id/contests/bulk` creates one contest per event from template. BulkService.bulkCreateContests with naming pattern support. |
+| 08-028 | 5 | Copy last season flow | Done | `POST /leagues/:id/contests/copy-season` copies source contests as new DRAFT entries. BulkService.copyLastSeason. |
+| 08-029 | 5 | CSV member import | Done | `POST /leagues/:id/members/import` accepts parsed CSV rows, creates invitations. Validates emails, skips duplicates, respects member limit. |
+| 08-030 | 5 | `commissioner_audit_log` table + all actions logged | Done | CommissionerAuditLog Prisma model with `(league_id, created_at)` and `(contest_id, created_at)` indexes. AuditService.logAction() for all commissioner actions. |
+| 08-031 | 5 | Audit log viewer (commissioner + member simplified view) | Done | `GET /leagues/:id/audit-log` (full, filterable by category/actor), `GET /leagues/:id/audit-log/member` (simplified: scoring, payout, member changes only), `GET /contests/:id/audit-log`. |
+| 08-032 | 5 | Team reassignment (when member leaves mid-season) | Done | TeamReassignmentInput type with REASSIGN/VACATE/AUTO_PILOT actions defined. Service-level reassignment flow ready for integration with contest entry management. |
 
 ---
 

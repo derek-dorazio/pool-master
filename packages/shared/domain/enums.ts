@@ -66,6 +66,16 @@ export const MappingConfidence = {
 } as const;
 export type MappingConfidence = (typeof MappingConfidence)[keyof typeof MappingConfidence];
 
+// --- Contest Pool ---
+
+export const PoolType = {
+  EVENT_FIELD: 'EVENT_FIELD',
+  CUSTOM: 'CUSTOM',
+  RANKING_CUTOFF: 'RANKING_CUTOFF',
+  FULL_SPORT: 'FULL_SPORT',
+} as const;
+export type PoolType = (typeof PoolType)[keyof typeof PoolType];
+
 // --- Contest Structure ---
 
 export const ContestType = {

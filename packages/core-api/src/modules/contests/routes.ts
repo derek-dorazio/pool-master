@@ -195,4 +195,13 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
 
   // --- Payout Overrides ---
   fastify.post('/:contestId/payouts/confirm', overrides.confirmPayouts);
+
+  // --- Contest Audit Log ---
+  fastify.get('/:contestId/audit-log', async (request, reply) => {
+    const { contestId } = request.params as { contestId: string };
+    const { AuditService: AuditSvc } = await import('../leagues/audit-service');
+    const auditService = new AuditSvc(prisma);
+    const entries = await auditService.getContestAuditLog(contestId);
+    return reply.send({ entries });
+  });
 }

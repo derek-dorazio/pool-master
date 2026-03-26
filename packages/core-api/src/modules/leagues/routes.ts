@@ -10,6 +10,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
   PrismaContestRepository,
+  PrismaContestTemplateRepository,
   PrismaActionItemRepository,
 } from '../../adapters';
 import { requirePermission, requireOwner } from '../../core/require-permission';
@@ -17,10 +18,14 @@ import { LeagueService } from './service';
 import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
 import { DashboardService } from './dashboard-service';
+import { AuditService } from './audit-service';
+import { BulkService } from './bulk-service';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
 import { createDashboardHandlers } from './dashboard-handler';
+import { createAuditHandlers } from './audit-handler';
+import { createBulkHandlers } from './bulk-handler';
 
 export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -28,6 +33,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
   const contestRepo = new PrismaContestRepository(prisma);
+  const contestTemplateRepo = new PrismaContestTemplateRepository(prisma);
   const actionItemRepo = new PrismaActionItemRepository(prisma);
 
   const leagueService = new LeagueService(leagueRepo, membershipRepo);
@@ -40,11 +46,21 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     invitationRepo,
     actionItemRepo,
   );
+  const auditService = new AuditService(prisma);
+  const bulkService = new BulkService(
+    contestRepo,
+    contestTemplateRepo,
+    leagueRepo,
+    membershipRepo,
+    invitationRepo,
+  );
 
   const league = createLeagueHandlers(leagueService);
   const invitation = createInvitationHandlers(invitationService);
   const member = createMemberHandlers(memberService);
   const dashboard = createDashboardHandlers(dashboardService);
+  const audit = createAuditHandlers(auditService);
+  const bulk = createBulkHandlers(bulkService);
 
   // --- League CRUD ---
 
@@ -177,4 +193,81 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   fastify.get('/:id/dashboard', dashboard.getDashboard);
 
   fastify.post('/:id/action-items/:itemId/resolve', dashboard.resolveActionItem);
+
+  // --- Audit Log ---
+
+  fastify.get('/:id/audit-log', audit.getLeagueAuditLog);
+  fastify.get('/:id/audit-log/member', audit.getMemberAuditLog);
+
+  // --- Bulk Operations ---
+
+  fastify.post('/:id/contests/bulk', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['templateId', 'namingPattern', 'events'],
+        properties: {
+          templateId: { type: 'string' },
+          namingPattern: { type: 'string' },
+          events: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['name'],
+              properties: {
+                name: { type: 'string' },
+                startsAt: { type: 'string', format: 'date-time' },
+                endsAt: { type: 'string', format: 'date-time' },
+              },
+            },
+            minItems: 1,
+          },
+        },
+      },
+    },
+    preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
+    handler: bulk.bulkCreateContests,
+  });
+
+  fastify.post('/:id/contests/copy-season', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['sourceContestIds'],
+        properties: {
+          sourceContestIds: { type: 'array', items: { type: 'string' }, minItems: 1 },
+          seasonId: { type: 'string' },
+        },
+      },
+    },
+    preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
+    handler: bulk.copySeason,
+  });
+
+  fastify.post('/:id/members/import', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['rows'],
+        properties: {
+          rows: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['email'],
+              properties: {
+                email: { type: 'string' },
+                displayName: { type: 'string' },
+                role: { type: 'string' },
+              },
+            },
+            minItems: 1,
+            maxItems: 500,
+          },
+        },
+      },
+    },
+    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
+    handler: bulk.importMembers,
+  });
 }
