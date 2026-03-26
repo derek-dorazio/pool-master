@@ -13,8 +13,8 @@
 | 02a | [Contest Structures](02a-poolmaster-contest-structures.md) | All v1 contest types per sport — source of truth for supported formats |
 | 03 | [Scoring Rules](03-poolmaster-scoring-rules.md) | Sport-specific scoring configs, stat schemas, scoring engine flow |
 | 04 | [Contest History](04-poolmaster-history.md) | Contest history, league history, records, rivalries, analytics |
-| 05 | [Sports Data Integration](05-poolmaster-sports-data-integration.md) | Provider adapters, ingestion pipelines, polling, outage handling |
-| 06 | [Participant Data](06-poolmaster-participant-data.md) | Participant profiles, pricing, tiers, pools, deduplication, search |
+| 05 | [Participant Data](05-poolmaster-participant-data.md) | Participant profiles, pricing, tiers, pools, deduplication, search |
+| 06 | [Sports Data Integration](06-poolmaster-sports-data-integration.md) | Provider adapters, ingestion pipelines, polling, outage handling |
 | 07 | [Billing & Subscriptions](07-poolmaster-billing-subscription.md) | Plan tiers, entitlements, Stripe, trials, dunning, revenue analytics |
 | 08 | [Commissioner Tooling](08-poolmaster-commissioner-tooling.md) | League/contest wizards, overrides, dashboard, templates, audit trail |
 | 09 | [Notifications & Alerts](09-poolmaster-notifications-alerts.md) | Event taxonomy, channels, preferences, templates, scheduling |
