@@ -1,0 +1,121 @@
+/**
+ * ProviderRegistry — manages adapter registration, lookup, and health reporting.
+ *
+ * Each sport can have a PRIMARY and FALLBACK provider. The registry
+ * automatically routes to the fallback when the primary is DOWN.
+ */
+
+import type { Sport } from '@poolmaster/shared/domain';
+import type { SportDataProvider, ProviderHealthStatus } from './provider-interface';
+
+type Priority = 'PRIMARY' | 'FALLBACK';
+
+interface RegisteredProvider {
+  provider: SportDataProvider;
+  priority: Priority;
+  sport: Sport;
+  health: ProviderHealthStatus;
+}
+
+export class ProviderRegistry {
+  private readonly providers = new Map<string, RegisteredProvider>();
+
+  /** Registers a provider for a specific sport with a priority. */
+  register(sport: Sport, provider: SportDataProvider, priority: Priority): void {
+    const key = `${sport}:${priority}`;
+    this.providers.set(key, {
+      provider,
+      priority,
+      sport,
+      health: {
+        providerId: provider.providerId,
+        status: 'HEALTHY',
+        errorRateLastHour: 0,
+        latencyMsP95: 0,
+      },
+    });
+  }
+
+  /**
+   * Gets the active provider for a sport.
+   * Tries primary first; falls back if primary is DOWN.
+   */
+  getProvider(sport: Sport): SportDataProvider | null {
+    const primary = this.providers.get(`${sport}:PRIMARY`);
+    if (primary && primary.health.status !== 'DOWN') {
+      return primary.provider;
+    }
+
+    const fallback = this.providers.get(`${sport}:FALLBACK`);
+    if (fallback && fallback.health.status !== 'DOWN') {
+      return fallback.provider;
+    }
+
+    // Both down or no provider registered — return primary if it exists
+    return primary?.provider ?? fallback?.provider ?? null;
+  }
+
+  /** Gets a specific provider by ID. */
+  getProviderById(providerId: string): SportDataProvider | null {
+    for (const reg of this.providers.values()) {
+      if (reg.provider.providerId === providerId) {
+        return reg.provider;
+      }
+    }
+    return null;
+  }
+
+  /** Returns all registered providers for a sport. */
+  getProvidersForSport(sport: Sport): SportDataProvider[] {
+    const result: SportDataProvider[] = [];
+    const primary = this.providers.get(`${sport}:PRIMARY`);
+    const fallback = this.providers.get(`${sport}:FALLBACK`);
+    if (primary) result.push(primary.provider);
+    if (fallback) result.push(fallback.provider);
+    return result;
+  }
+
+  /** Returns all unique registered providers. */
+  getAllProviders(): SportDataProvider[] {
+    const seen = new Set<string>();
+    const result: SportDataProvider[] = [];
+    for (const reg of this.providers.values()) {
+      if (!seen.has(reg.provider.providerId)) {
+        seen.add(reg.provider.providerId);
+        result.push(reg.provider);
+      }
+    }
+    return result;
+  }
+
+  /** Updates health status for a provider. */
+  updateHealth(providerId: string, health: ProviderHealthStatus): void {
+    for (const [key, reg] of this.providers) {
+      if (reg.provider.providerId === providerId) {
+        reg.health = health;
+      }
+    }
+  }
+
+  /** Returns health report for all registered providers. */
+  getHealthReport(): ProviderHealthStatus[] {
+    const seen = new Set<string>();
+    const report: ProviderHealthStatus[] = [];
+    for (const reg of this.providers.values()) {
+      if (!seen.has(reg.provider.providerId)) {
+        seen.add(reg.provider.providerId);
+        report.push(reg.health);
+      }
+    }
+    return report;
+  }
+
+  /** Returns all sports that have at least one registered provider. */
+  getSupportedSports(): Sport[] {
+    const sports = new Set<Sport>();
+    for (const reg of this.providers.values()) {
+      sports.add(reg.sport);
+    }
+    return Array.from(sports);
+  }
+}

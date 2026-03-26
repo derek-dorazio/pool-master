@@ -614,3 +614,63 @@ model ContestResult {
   @@index([contestId, finalRank])
   @@map("contest_results")
 }
+
+// =============================================================================
+// Sports Data Integration (Plan 06)
+// =============================================================================
+
+model SportEvent {
+  id              String    @id @default(uuid()) @db.Uuid
+  externalId      String    @map("external_id") @db.VarChar(255)
+  providerId      String    @map("provider_id") @db.VarChar(100)
+  sport           String    @db.VarChar(50)
+  name            String    @db.VarChar(500)
+  venue           String?   @db.VarChar(500)
+  location        String?   @db.VarChar(500)
+  startDate       DateTime  @map("start_date") @db.Timestamptz
+  endDate         DateTime? @map("end_date") @db.Timestamptz
+  status          String    @default("SCHEDULED") @db.VarChar(50)
+  rounds          Int?
+  participantCount Int?     @map("participant_count")
+  fieldLocked     Boolean   @default(false) @map("field_locked")
+  metadata        Json      @default("{}")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([providerId, externalId])
+  @@index([sport, status])
+  @@index([startDate, endDate])
+  @@map("sport_events")
+}
+
+model IngestionJob {
+  id               String    @id @default(uuid()) @db.Uuid
+  jobType          String    @map("job_type") @db.VarChar(50)
+  providerId       String    @map("provider_id") @db.VarChar(100)
+  sport            String    @db.VarChar(50)
+  eventExternalId  String?   @map("event_external_id") @db.VarChar(255)
+  status           String    @default("PENDING") @db.VarChar(50)
+  startedAt        DateTime? @map("started_at") @db.Timestamptz
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz
+  recordsProcessed Int       @default(0) @map("records_processed")
+  errors           Int       @default(0)
+  errorLog         Json      @default("[]") @map("error_log")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([status, createdAt])
+  @@index([providerId, sport])
+  @@map("ingestion_jobs")
+}
+
+model ProviderHealthLog {
+  id                   String   @id @default(uuid()) @db.Uuid
+  providerId           String   @map("provider_id") @db.VarChar(100)
+  status               String   @db.VarChar(20)
+  errorRate            Decimal? @map("error_rate") @db.Decimal(5, 4)
+  avgLatencyMs         Int?     @map("avg_latency_ms")
+  consecutiveFailures  Int      @default(0) @map("consecutive_failures")
+  recordedAt           DateTime @default(now()) @map("recorded_at") @db.Timestamptz
+
+  @@index([providerId, recordedAt])
+  @@map("provider_health_log")
+}

@@ -736,35 +736,35 @@ CREATE INDEX idx_provider_health_log_time ON provider_health_log(provider_id, re
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 06-001 | 1 | `SportDataProvider` Protocol interface | Not Started | |
-| 06-002 | 1 | `ProviderRegistry` — register, lookup, health report | Not Started | |
-| 06-003 | 1 | SportsDataIO golf adapter (first adapter) | Not Started | |
-| 06-004 | 1 | Schedule ingestion worker (cron — daily event schedule pull) | Not Started | |
-| 06-005 | 1 | Participant ingestion worker (cron — daily profiles/rankings) | Not Started | |
-| 06-006 | 1 | `sport_events` database table + migrations | Not Started | |
-| 06-007 | 1 | `participant_provider_mappings` table + migrations | Not Started | |
-| 06-008 | 1 | `ingestion_jobs` tracking table | Not Started | |
-| 06-009 | 1 | Redis caching layer (scores, schedules, profiles) | Not Started | |
-| 06-010 | 2 | Live scoring ingestion worker with adaptive polling | Not Started | Sport-specific intervals |
-| 06-011 | 2 | StatEvent normalisation and message bus publishing (Redis Streams) | Not Started | |
-| 06-012 | 2 | Scoring engine subscription to stat event stream | Not Started | |
-| 06-013 | 2 | Stale score detection and UI staleness indicator | Not Started | |
-| 06-014 | 2 | Provider health monitoring (HEALTHY/DEGRADED/DOWN) | Not Started | |
-| 06-015 | 2 | `provider_health_log` table | Not Started | |
-| 06-016 | 3 | Sportradar F1 adapter | Not Started | |
-| 06-017 | 3 | SportsDataIO NFL adapter | Not Started | |
-| 06-018 | 3 | SportsDataIO NCAA basketball adapter | Not Started | |
-| 06-019 | 3 | Sportradar tennis adapter | Not Started | |
-| 06-020 | 3 | Equibase horse racing adapter | Not Started | |
-| 06-021 | 3 | Fallback provider registration and automatic failover | Not Started | |
-| 06-022 | 3 | Webhook receiver endpoint (`POST /api/v1/internal/webhooks/{provider_id}`) | Not Started | |
-| 06-023 | 3 | Data correction handling pipeline (is_correction flag → recalculate) | Not Started | |
-| 06-024 | 3 | Cost tracking and budget alerts per provider | Not Started | |
-| 06-025 | 4 | Historical data seeding pipeline (last 3 seasons per sport) | Not Started | |
-| 06-026 | 4 | Participant deduplication and cross-provider mapping | Not Started | |
-| 06-027 | 4 | Smart polling optimisation (contest-aware frequency) | Not Started | |
-| 06-028 | 4 | Ingestion admin dashboard (provider status, errors, costs) | Not Started | |
-| 06-029 | 4 | Request batching and cost optimisation | Not Started | |
+| 06-001 | 1 | `SportDataProvider` interface + adapter pattern | Done | Full interface: schedule, participants, rankings, live scores, results, health |
+| 06-002 | 1 | `ProviderRegistry` — register, lookup, health report | Done | PRIMARY/FALLBACK per sport, automatic failover on DOWN |
+| 06-003 | 1 | PGA Tour golf adapter (free, primary use case) | Done | ESPN Golf endpoints — schedule, leaderboard, field, rankings, round scores |
+| 06-004 | 1 | Schedule ingestion worker (cron — daily event schedule pull) | Done | IngestionScheduler with 6hr schedule sync + manual trigger routes |
+| 06-005 | 1 | Participant ingestion worker (cron — daily profiles/rankings) | Done | 12hr participant sync, 24hr ranking sync |
+| 06-006 | 1 | `sport_events` database table + migrations | Done | SportEvent Prisma model with provider+externalId unique |
+| 06-007 | 1 | `participant_provider_mappings` table + migrations | Done | Already built in Plan 05-006 |
+| 06-008 | 1 | `ingestion_jobs` tracking table | Done | IngestionJob + ProviderHealthLog Prisma models |
+| 06-009 | 1 | Redis caching layer (scores, schedules, profiles) | Not Started | Deferred — ioredis scaffolded, cache layer needs implementation |
+| 06-010 | 2 | Live scoring ingestion worker with adaptive polling | Done | pollLiveScores + fetchEventResults on scheduler |
+| 06-011 | 2 | StatEvent normalisation and message bus publishing (Redis Streams) | Not Started | Deferred |
+| 06-012 | 2 | Scoring engine subscription to stat event stream | Not Started | Deferred |
+| 06-013 | 2 | Stale score detection and UI staleness indicator | Not Started | Deferred |
+| 06-014 | 2 | Provider health monitoring (HEALTHY/DEGRADED/DOWN) | Done | Health checks every 5min, registry auto-failover |
+| 06-015 | 2 | `provider_health_log` table | Done | ProviderHealthLog Prisma model |
+| 06-016 | 3 | OpenF1 adapter (free, F1 live timing) | Done | Sessions, drivers, positions. No API key needed |
+| 06-017 | 3 | ESPN adapter (free, NFL + NBA + MLB + NHL + NCAA) | Done | Scoreboard, teams, rankings. No API key needed |
+| 06-018 | 3 | The Odds API adapter (free tier, odds for pricing) | Done | H2H + outright odds, 500 req/month free |
+| 06-019 | 3 | Sportradar tennis adapter | Not Started | Deferred — requires enterprise contract |
+| 06-020 | 3 | Equibase horse racing adapter | Not Started | Deferred — requires commercial data license |
+| 06-021 | 3 | Fallback provider registration and automatic failover | Done | Built into ProviderRegistry PRIMARY/FALLBACK system |
+| 06-022 | 3 | Webhook receiver endpoint (`POST /api/v1/internal/webhooks/{provider_id}`) | Not Started | Deferred |
+| 06-023 | 3 | Data correction handling pipeline (is_correction flag → recalculate) | Not Started | isCorrection flag in ProviderStatEvent, pipeline deferred |
+| 06-024 | 3 | Cost tracking and budget alerts per provider | Not Started | Deferred |
+| 06-025 | 4 | Historical data seeding pipeline (last 3 seasons per sport) | Not Started | Deferred |
+| 06-026 | 4 | Participant deduplication and cross-provider mapping | Done | Built in Plan 05-023/05-025 |
+| 06-027 | 4 | Smart polling optimisation (contest-aware frequency) | Not Started | Deferred |
+| 06-028 | 4 | Ingestion admin dashboard (provider status, errors, costs) | Not Started | Deferred |
+| 06-029 | 4 | Request batching and cost optimisation | Not Started | Deferred |
 
 ---
 
