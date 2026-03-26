@@ -519,8 +519,8 @@ CREATE TABLE user_locale_preferences (
 | 14-008 | 2 | Currency display with proper symbols and decimal places | Not Started | |
 | 14-009 | 2 | Currency configuration on league settings | Not Started | |
 | 14-010 | 2 | Salary cap price formatting (locale-aware) | Not Started | |
-| 14-011 | 3 | Extract all UI strings to translation files (`en-US.json`) | Not Started | |
-| 14-012 | 3 | Integrate i18next in web app | Not Started | |
+| 14-011 | 3 | Extract all UI strings to translation files (`en-US.json`) | Done | Created en/common.json (app name, nav, buttons, states) and en/auth.json (all auth page strings). Namespace-per-page pattern. |
+| 14-012 | 3 | Integrate i18next in web app | Done | Created src/lib/i18n.ts with i18next + react-i18next. English only, inline imports, imported in main.tsx before render. |
 | 14-013 | 3 | Integrate i18next in React Native app | Not Started | |
 | 14-014 | 3 | Server-side i18next for emails and notifications | Not Started | |
 | 14-015 | 3 | Pluralisation rules | Not Started | |

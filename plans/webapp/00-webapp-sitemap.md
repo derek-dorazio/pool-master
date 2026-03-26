@@ -302,11 +302,11 @@ This document defines the complete sitemap for the PoolMaster React web applicat
 | W-015 | 2 | Implement shared layout components (public, auth, fullscreen) | Done | PublicLayout, AuthenticatedLayout (sidebar + topbar), FullscreenLayout (draft room) |
 | W-016 | 2 | Set up TanStack Query provider + polling infrastructure | Done | QueryClientProvider in app.tsx, api-client.ts with JWT auth, 30s staleTime default |
 | W-017 | 2 | Set up Zustand stores (auth, user preferences) | Done | auth-store.ts (user, tokens), preferences-store.ts (timezone, formats, sidebar) with localStorage persistence |
-| W-018 | 2 | Set up i18next with namespace-per-page | Not Started | |
-| W-019 | 3 | Implement auth pages (login, register, callback) | Not Started | Depends on W-015 |
-| W-020 | 3 | Implement dashboard page | Not Started | Depends on W-016, W-017 |
-| W-021 | 3 | Implement leagues list + creation wizard | Not Started | |
-| W-022 | 3 | Implement contest detail + standings pages | Not Started | |
+| W-018 | 2 | Set up i18next with namespace-per-page | Done | i18n.ts, en/common.json, en/auth.json |
+| W-019 | 3 | Implement auth pages (login, register, callback) | Done | Landing, login, register (5-step), forgot password, callback + 6 UI components |
+| W-020 | 3 | Implement dashboard page | Done | 7 widgets with mock data, 10s/30s polling, responsive grid layout |
+| W-021 | 3 | Implement leagues list + creation wizard | Done | 8 league pages: list, 4-step wizard, detail with tabs, settings, members, feed, records, history |
+| W-022 | 3 | Implement contest detail + standings pages | Done | 6 contest pages: 7-step wizard, detail, standings, scoring, results, head-to-head |
 | W-023 | 3 | Implement draft room | Not Started | Most complex page |
 | W-024 | 4 | Implement league feed + social features | Not Started | |
 | W-025 | 4 | Implement notification centre + preferences | Not Started | |

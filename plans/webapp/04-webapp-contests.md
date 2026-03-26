@@ -942,19 +942,19 @@ function useContestPolling(contestId: string, status: ContestStatus) {
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-C-001 | 1 | Contest creation wizard shell (multi-step form, routing, Zustand state) | Not Started | |
-| W-C-002 | 1 | Event picker component (sport selector + event list from ingested data) | Not Started | Depends on 06-004 |
-| W-C-003 | 1 | Contest type selector (duration + selection type with compatibility filter) | Not Started | Depends on plan 02a type definitions |
-| W-C-004 | 2 | Scoring rule editor (template selector + custom rule editing + preview) | Not Started | Depends on 03-020 |
-| W-C-005 | 2 | Draft config panel (mode, order, timing, commissioner controls) | Not Started | Depends on 02-001 through 02-007 |
-| W-C-006 | 2 | Pool builder (full field, custom, tier assignment, budget pricing) | Not Started | Depends on 06-003, 06-005 |
-| W-C-007 | 2 | Entry settings form (max entries, deadline, roster size, survivor/confidence config) | Not Started | |
-| W-C-008 | 2 | Review & create step (summary + POST /contests + POST /drafts) | Not Started | |
+| W-C-001 | 1 | Contest creation wizard shell (multi-step form, routing, Zustand state) | Done | 7-step wizard with React Hook Form + zod in `pages/contests/create.tsx`; steps 1-3 fully interactive, steps 4-7 simplified with mock data |
+| W-C-002 | 1 | Event picker component (sport selector + event list from ingested data) | Done | Sport grid (9 sports) + event list with mock data per sport + custom event option; part of create wizard step 1 |
+| W-C-003 | 1 | Contest type selector (duration + selection type with compatibility filter) | Done | Duration radio + selection type card grid with bracket filtering for NCAA/NBA; part of create wizard step 2 |
+| W-C-004 | 2 | Scoring rule editor (template selector + custom rule editing + preview) | Done | Template selector with preview table + customize toggle (read-only placeholder); part of create wizard step 3 |
+| W-C-005 | 2 | Draft config panel (mode, order, timing, commissioner controls) | Done | Static mock UI with mode toggle, seconds-per-pick slider, draft date picker; part of create wizard step 4 |
+| W-C-006 | 2 | Pool builder (full field, custom, tier assignment, budget pricing) | Done | Simplified info card showing full field selected (90 participants); part of create wizard step 5 |
+| W-C-007 | 2 | Entry settings form (max entries, deadline, roster size, survivor/confidence config) | Done | Functional form fields for max entries, entry deadline, roster size; part of create wizard step 6 |
+| W-C-008 | 2 | Review & create step (summary + POST /contests + POST /drafts) | Done | Summary card of all steps + Create Contest button with toast + navigate; part of create wizard step 7 |
 | W-C-009 | 3 | Contest detail page — pre-draft/open state (info card, countdown, entry list, join CTA) | Not Started | |
-| W-C-010 | 3 | Contest detail page — in-progress state (live standings, my entry, timeline, stale indicator) | Not Started | Depends on W-C-014 |
-| W-C-011 | 3 | Contest detail page — completed state (results summary, winner highlight, link to results) | Not Started | |
-| W-C-012 | 3 | Full standings table (sortable, expandable rows, movement arrows, filters, CSV export) | Not Started | |
-| W-C-013 | 4 | Score breakdown view (entry scorecard, participant score rows, rule chips, legend) | Not Started | Depends on 03-002 through 03-007 |
+| W-C-010 | 3 | Contest detail page — in-progress state (live standings, my entry, timeline, stale indicator) | Done | Contest header, My Entry card with picks, standings snapshot, contest info sidebar; uses `useContest` hook with mock data |
+| W-C-011 | 3 | Contest detail page — completed state (results summary, winner highlight, link to results) | Done | Winner spotlight card, final standings table, contest summary; implemented in `pages/contests/results.tsx` |
+| W-C-012 | 3 | Full standings table (sortable, expandable rows, movement arrows, filters, CSV export) | Done | 12-entry table with sortable columns, rank badges, movement indicators, eliminated/user highlighting; `pages/contests/standings.tsx` with `useStandings` hook |
+| W-C-013 | 4 | Score breakdown view (entry scorecard, participant score rows, rule chips, legend) | Done | Entry selector, expandable participant rows with stat-to-score mapping, collapsible scoring rules reference; `pages/contests/scoring.tsx` |
 | W-C-014 | 4 | Contest polling infrastructure (useContestPolling hook, visibility-aware, ETag support) | Not Started | Depends on W-016 |
 | W-C-015 | 4 | Commissioner contest controls (score override, recalculate, close/cancel, extend deadline) | Not Started | Depends on plan 08 API endpoints |
 

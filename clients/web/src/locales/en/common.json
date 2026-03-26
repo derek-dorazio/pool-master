@@ -1,0 +1,28 @@
+{
+  "appName": "PoolMaster",
+  "nav": {
+    "dashboard": "Dashboard",
+    "leagues": "Leagues",
+    "discover": "Discover",
+    "settings": "Settings",
+    "billing": "Billing"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "create": "Create",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit"
+  },
+  "states": {
+    "loading": "Loading...",
+    "error": "Error",
+    "noResults": "No results",
+    "empty": "Nothing here yet",
+    "saving": "Saving...",
+    "deleting": "Deleting..."
+  }
+}

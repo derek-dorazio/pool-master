@@ -335,11 +335,11 @@ This plan covers the landing page, login, registration, password reset, and auth
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-A-001 | 1 | Build Landing page with Hero, FeatureGrid, SportCarousel, SocialProof, CTASection, and Footer components | Not Started | |
-| W-A-002 | 1 | Build Login page with email/password form, social login buttons, error handling, and redirect logic | Not Started | |
-| W-A-003 | 1 | Build Registration multi-step form with StepIndicator and step navigation (React Hook Form) | Not Started | |
-| W-A-004 | 1 | Build AgeVerification component with DOB picker and 13+ validation logic | Not Started | |
-| W-A-005 | 1 | Build TermsAcceptance component with scrollable legal text and consent checkboxes | Not Started | |
-| W-A-006 | 1 | Build Forgot Password page with email form and confirmation state | Not Started | |
-| W-A-007 | 1 | Build Auth Callback handler with token exchange, loading state, and error handling | Not Started | |
-| W-A-008 | 1 | Implement auth state management — Zustand store for tokens, user session, and auth status; secure cookie handling for refresh tokens | Not Started | |
+| W-A-001 | 1 | Build Landing page with Hero, FeatureGrid, SportCarousel, SocialProof, CTASection, and Footer components | Done | Full implementation with hero, 6-card feature grid, sport badges, social proof bar, secondary CTA. Auth redirect to /dashboard. |
+| W-A-002 | 1 | Build Login page with email/password form, social login buttons, error handling, and redirect logic | Done | React Hook Form + zod, show/hide password, remember me, social buttons, error display, API integration. |
+| W-A-003 | 1 | Build Registration multi-step form with StepIndicator and step navigation (React Hook Form) | Done | 5-step wizard (Account, Profile, Age, Terms, Plan) with progress bar, per-step validation, shared form context. |
+| W-A-004 | 1 | Build AgeVerification component with DOB picker and 13+ validation logic | Done | 3-dropdown DOB picker (month/day/year) with 13+ age calculation and error message. Integrated as Step 3 of registration. |
+| W-A-005 | 1 | Build TermsAcceptance component with scrollable legal text and consent checkboxes | Done | Two required checkboxes with links to /terms and /privacy. Integrated as Step 4 of registration. |
+| W-A-006 | 1 | Build Forgot Password page with email form and confirmation state | Done | Two-state page: email form and "Check Your Email" confirmation. Prevents enumeration by always showing success. |
+| W-A-007 | 1 | Build Auth Callback handler with token exchange, loading state, and error handling | Done | Extracts code/state from URL, shows spinner, calls API, handles errors, redirects to /login if no params. |
+| W-A-008 | 1 | Implement auth state management — Zustand store for tokens, user session, and auth status; secure cookie handling for refresh tokens | Done | Auth store already existed. Auth pages integrate with useAuthStore for setUser, localStorage for access_token. |
