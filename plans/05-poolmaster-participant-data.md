@@ -790,11 +790,11 @@ POST   /api/v1/admin/participants/import       # Bulk import
 | 05-015 | 3 | Commissioner price overrides | Done | PUT /pool/pricing/override/:participantId |
 | 05-016 | 3 | Tier auto-assignment (AUTO_RANKING, AUTO_PRICE) | Done | TierAssignmentEngine + POST /pool/tiers/assign |
 | 05-017 | 3 | Commissioner tier review and manual adjustments | Done | PUT /pool/tiers/:tierId/participants/:participantId |
-| 05-018 | 4 | Photo ingestion pipeline (download, resize, WebP, S3, CDN) | Not Started | |
-| 05-019 | 4 | Fallback image system per sport/position | Not Started | |
-| 05-020 | 4 | Enhanced search — Elasticsearch migration (if needed) | Not Started | |
-| 05-021 | 4 | Faceted filtering (nationality, position, team, ranking) | Not Started | |
-| 05-022 | 4 | Draft room search optimisation (< 100ms) | Not Started | |
+| 05-018 | 4 | Photo ingestion pipeline (download, resize, WebP, S3, CDN) | Not Started | Deferred — needs S3/CDN infrastructure |
+| 05-019 | 4 | Fallback image system per sport/position | Done | fallback-photos.ts with per-sport, per-position silhouette map |
+| 05-020 | 4 | Enhanced search — Elasticsearch migration (if needed) | Not Started | Deferred — PostgreSQL search sufficient for launch |
+| 05-021 | 4 | Faceted filtering (nationality, position, team, ranking) | Done | DraftSearchService returns facet counts |
+| 05-022 | 4 | Draft room search optimisation (< 100ms) | Done | GET /pool/search — in-memory filtering over pool participants |
 | 05-023 | 5 | Cross-provider participant matching (fuzzy name + sport) | Not Started | |
 | 05-024 | 5 | Manual resolution queue in admin dashboard | Not Started | |
 | 05-025 | 5 | Participant merge tooling | Not Started | |

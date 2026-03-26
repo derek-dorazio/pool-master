@@ -14,6 +14,8 @@ import { ContestPoolService } from './pool-service';
 import { createPoolHandlers } from './pool-handler';
 import { PricingAndTierService } from './pricing-service';
 import { createPricingHandlers } from './pricing-handler';
+import { DraftSearchService } from './draft-search-service';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 export async function contestPoolModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -25,6 +27,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
 
   const poolService = new ContestPoolService(poolRepo, poolParticipantRepo, participantRepo);
   const pricingService = new PricingAndTierService(poolRepo, poolParticipantRepo, seasonRecordRepo);
+  const draftSearchService = new DraftSearchService(poolRepo, poolParticipantRepo, participantRepo);
   const handler = createPoolHandlers(poolService);
   const pricing = createPricingHandlers(pricingService);
 
@@ -173,4 +176,56 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
   });
 
   fastify.put('/tiers/:tierId/participants/:participantId', pricing.moveParticipantTier);
+
+  // --- Draft Room Search ---
+
+  fastify.get('/search', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          q: { type: 'string' },
+          position: { type: 'string' },
+          team: { type: 'string' },
+          tier: { type: 'string' },
+          availableOnly: { type: 'string', enum: ['true', 'false'] },
+          undraftedOnly: { type: 'string', enum: ['true', 'false'] },
+          draftedIds: { type: 'string' },
+          limit: { type: 'string' },
+          offset: { type: 'string' },
+        },
+      },
+    },
+    handler: async (
+      request: FastifyRequest<{
+        Params: { contestId: string };
+        Querystring: {
+          q?: string;
+          position?: string;
+          team?: string;
+          tier?: string;
+          availableOnly?: string;
+          undraftedOnly?: string;
+          draftedIds?: string;
+          limit?: string;
+          offset?: string;
+        };
+      }>,
+      _reply: FastifyReply,
+    ) => {
+      const qs = request.query;
+      return draftSearchService.search({
+        contestId: request.params.contestId,
+        query: qs.q,
+        position: qs.position ? qs.position.split(',') : undefined,
+        team: qs.team ? qs.team.split(',') : undefined,
+        tier: qs.tier,
+        availableOnly: qs.availableOnly === 'true',
+        undraftedOnly: qs.undraftedOnly === 'true',
+        draftedParticipantIds: qs.draftedIds ? qs.draftedIds.split(',') : undefined,
+        limit: qs.limit ? parseInt(qs.limit, 10) : undefined,
+        offset: qs.offset ? parseInt(qs.offset, 10) : undefined,
+      });
+    },
+  });
 }
