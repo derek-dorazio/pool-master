@@ -6,6 +6,7 @@
  */
 
 import type {
+  ActionItem,
   BracketPrediction,
   Contest,
   ContestEntry,
@@ -13,12 +14,15 @@ import type {
   ContestPick,
   ContestResult,
   ContestStanding,
+  ContestTemplate,
   DraftPick,
   DraftSession,
   League,
   LeagueInvitation,
   LeagueMembership,
   Participant,
+  ParticipantProviderMapping,
+  ParticipantSeasonRecord,
   RosterPick,
   Season,
   SelectionConfig,
@@ -26,6 +30,8 @@ import type {
   Tenant,
   User,
 } from '../domain';
+
+import type { ParticipantStatus, Sport } from '../domain';
 
 // --- Tenant & Identity ---
 
@@ -88,12 +94,36 @@ export interface SeasonRepository {
   create(season: Omit<Season, 'id' | 'createdAt' | 'updatedAt'>): Promise<Season>;
 }
 
+export interface ParticipantSearchFilters {
+  sport?: Sport;
+  sportId?: string;
+  status?: ParticipantStatus[];
+  position?: string[];
+  teamAffiliation?: string[];
+  nationality?: string[];
+}
+
 export interface ParticipantRepository {
   findById(id: string): Promise<Participant | null>;
   findBySport(sportId: string): Promise<Participant[]>;
-  search(sportId: string, query: string): Promise<Participant[]>;
+  findByExternalId(providerId: string, externalId: string): Promise<Participant | null>;
+  search(query: string, filters: ParticipantSearchFilters, limit?: number, offset?: number): Promise<{ participants: Participant[]; total: number }>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
+  createMany(participants: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
+}
+
+export interface ParticipantSeasonRecordRepository {
+  findByParticipantAndSeason(participantId: string, season: string): Promise<ParticipantSeasonRecord | null>;
+  findByParticipant(participantId: string): Promise<ParticipantSeasonRecord[]>;
+  findBySportAndSeason(sport: Sport, season: string): Promise<ParticipantSeasonRecord[]>;
+  upsert(record: Omit<ParticipantSeasonRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantSeasonRecord>;
+}
+
+export interface ParticipantProviderMappingRepository {
+  findByProvider(providerId: string, externalId: string): Promise<ParticipantProviderMapping | null>;
+  findByParticipant(participantId: string): Promise<ParticipantProviderMapping[]>;
+  create(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
 }
 
 // --- Contest ---
@@ -169,4 +199,26 @@ export interface ContestStandingRepository {
 export interface ContestResultRepository {
   findByContest(contestId: string): Promise<ContestResult[]>;
   create(result: Omit<ContestResult, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestResult>;
+}
+
+// --- Commissioner Action Items ---
+
+export interface ActionItemRepository {
+  findByLeague(leagueId: string, includeResolved?: boolean): Promise<ActionItem[]>;
+  findUnresolved(leagueId: string): Promise<ActionItem[]>;
+  create(item: Omit<ActionItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<ActionItem>;
+  resolve(id: string): Promise<ActionItem>;
+  delete(id: string): Promise<void>;
+}
+
+// --- Contest Templates ---
+
+export interface ContestTemplateRepository {
+  findById(id: string): Promise<ContestTemplate | null>;
+  findByLeague(leagueId: string): Promise<ContestTemplate[]>;
+  findPlatformTemplates(): Promise<ContestTemplate[]>;
+  create(template: Omit<ContestTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestTemplate>;
+  update(id: string, updates: Partial<ContestTemplate>): Promise<ContestTemplate>;
+  delete(id: string): Promise<void>;
+  incrementUsage(id: string): Promise<void>;
 }

@@ -31,6 +31,41 @@ export const ParticipantType = {
 } as const;
 export type ParticipantType = (typeof ParticipantType)[keyof typeof ParticipantType];
 
+// --- Participant Status ---
+
+export const ParticipantStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  RETIRED: 'RETIRED',
+  SUSPENDED: 'SUSPENDED',
+} as const;
+export type ParticipantStatus = (typeof ParticipantStatus)[keyof typeof ParticipantStatus];
+
+export const InjuryStatusCode = {
+  HEALTHY: 'HEALTHY',
+  QUESTIONABLE: 'QUESTIONABLE',
+  DOUBTFUL: 'DOUBTFUL',
+  OUT: 'OUT',
+  WITHDRAWN: 'WITHDRAWN',
+  SUSPENDED: 'SUSPENDED',
+  SCRATCHED: 'SCRATCHED',
+} as const;
+export type InjuryStatusCode = (typeof InjuryStatusCode)[keyof typeof InjuryStatusCode];
+
+export const FormTrend = {
+  RISING: 'RISING',
+  STABLE: 'STABLE',
+  FALLING: 'FALLING',
+} as const;
+export type FormTrend = (typeof FormTrend)[keyof typeof FormTrend];
+
+export const MappingConfidence = {
+  EXACT: 'EXACT',
+  HIGH: 'HIGH',
+  MANUAL: 'MANUAL',
+} as const;
+export type MappingConfidence = (typeof MappingConfidence)[keyof typeof MappingConfidence];
+
 // --- Contest Structure ---
 
 export const ContestType = {

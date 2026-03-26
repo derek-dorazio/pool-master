@@ -9,28 +9,42 @@ import {
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
+  PrismaContestRepository,
+  PrismaActionItemRepository,
 } from '../../adapters';
 import { requirePermission, requireOwner } from '../../core/require-permission';
 import { LeagueService } from './service';
 import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
+import { DashboardService } from './dashboard-service';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
+import { createDashboardHandlers } from './dashboard-handler';
 
 export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
+  const contestRepo = new PrismaContestRepository(prisma);
+  const actionItemRepo = new PrismaActionItemRepository(prisma);
 
   const leagueService = new LeagueService(leagueRepo, membershipRepo);
   const invitationService = new InvitationService(invitationRepo, membershipRepo, leagueRepo);
   const memberService = new MemberService(membershipRepo);
+  const dashboardService = new DashboardService(
+    leagueRepo,
+    membershipRepo,
+    contestRepo,
+    invitationRepo,
+    actionItemRepo,
+  );
 
   const league = createLeagueHandlers(leagueService);
   const invitation = createInvitationHandlers(invitationService);
   const member = createMemberHandlers(memberService);
+  const dashboard = createDashboardHandlers(dashboardService);
 
   // --- League CRUD ---
 
@@ -157,4 +171,10 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     preHandler: requireOwner(membershipRepo),
     handler: member.transferOwnership,
   });
+
+  // --- Commissioner Dashboard ---
+
+  fastify.get('/:id/dashboard', dashboard.getDashboard);
+
+  fastify.post('/:id/action-items/:itemId/resolve', dashboard.resolveActionItem);
 }

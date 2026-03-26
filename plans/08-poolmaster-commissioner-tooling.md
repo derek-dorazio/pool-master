@@ -846,16 +846,16 @@ GET    /api/v1/contests/:id/audit-log             # Contest-specific audit trail
 | 08-005 | 1 | `league_invitations` table + migrations | Done | Prisma `LeagueInvitation` model added with indexes on `(league_id, status)` and `invite_code`. `permissions` JSONB + timestamps added to `LeagueMembership`. |
 | 08-006 | 1 | Role management (owner, commissioner, manager, viewer) | Done | MemberService: `changeRole`, `removeMember`, `transferOwnership`. OWNER protected from demotion/removal. All permission-gated via preHandler hooks. |
 | 08-007 | 1 | Granular commissioner permissions model | Done | 25 CommissionerPermission values. `hasPermission()` utility with OWNER bypass. `requirePermission()` Fastify preHandler hook. Stored as JSONB array on membership. |
-| 08-008 | 2 | Contest creation wizard (7-step: sport, pool, draft, scoring, payouts, schedule, review) | Not Started | |
-| 08-009 | 2 | Scoring template selection in contest wizard | Not Started | |
-| 08-010 | 2 | Payout structure configuration in contest wizard | Not Started | |
-| 08-011 | 2 | Contest quick-create from template | Not Started | |
-| 08-012 | 3 | Commissioner dashboard home screen | Not Started | |
-| 08-013 | 3 | Action items feed (drafts starting, payouts pending, join requests) | Not Started | |
-| 08-014 | 3 | `commissioner_action_items` table + generation logic | Not Started | |
-| 08-015 | 3 | Active contest summary widget | Not Started | |
-| 08-016 | 3 | Member activity feed widget | Not Started | |
-| 08-017 | 3 | Upcoming events calendar widget | Not Started | |
+| 08-008 | 2 | Contest creation wizard (7-step: sport, pool, draft, scoring, payouts, schedule, review) | Done | `POST /api/v1/leagues/:id/contests` with full wizard input (sport, selection config, scoring, payouts, schedule). ContestService creates Contest + SelectionConfig atomically. DRAFT status by default. |
+| 08-009 | 2 | Scoring template selection in contest wizard | Done | `scoringTemplateKey` input resolves from scoring-service template registry (9 sports). Template rules become contest's scoringRules JSONB. |
+| 08-010 | 2 | Payout structure configuration in contest wizard | Done | PayoutConfig type with payoutStructure (rank/percentage/fixedAmount) + intermediatePrizes. Validated: unique ranks, percentages ≤ 100%. Stored as JSONB on Contest. |
+| 08-011 | 2 | Contest quick-create from template | Done | ContestTemplate model + `contest_templates` table. ContestTemplateService: CRUD + useTemplate (increments usage). Platform templates read-only. `GET/POST/PUT/DELETE /api/v1/templates`. |
+| 08-012 | 3 | Commissioner dashboard home screen | Done | `GET /api/v1/leagues/:id/dashboard` returns CommissionerDashboard with all widgets. DashboardService aggregates league, contests, members, invitations, action items. |
+| 08-013 | 3 | Action items feed (drafts starting, payouts pending, join requests) | Done | ActionItem type with 7 types and 3 priority levels. Unresolved items sorted by priority then date. `POST /:id/action-items/:itemId/resolve` to dismiss. |
+| 08-014 | 3 | `commissioner_action_items` table + generation logic | Done | Prisma CommissionerActionItem model with `(league_id, resolved, priority)` index. PrismaActionItemRepository adapter. DashboardService.createActionItem(). |
+| 08-015 | 3 | Active contest summary widget | Done | Dashboard returns full contest list from ContestRepository.findByLeague. Contests include status, name, dates. |
+| 08-016 | 3 | Member activity feed widget | Done | Dashboard returns recentMemberActivity (last 10 join events sorted by date). Built from membership joinedAt data. |
+| 08-017 | 3 | Upcoming events calendar widget | Done | Dashboard returns upcomingEvents extracted from contests with future startsAt, lockAt, endsAt dates. Sorted chronologically, limited to 20. |
 | 08-018 | 4 | Draft overrides — undo pick (within window) | Not Started | |
 | 08-019 | 4 | Draft overrides — pause/resume, extend clock | Not Started | |
 | 08-020 | 4 | Draft overrides — make pick for member, force skip | Not Started | |

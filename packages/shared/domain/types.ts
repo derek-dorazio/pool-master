@@ -12,11 +12,15 @@ import type {
   ContestType,
   DraftMode,
   DraftStatus,
+  FormTrend,
+  InjuryStatusCode,
   InvitationStatus,
   InvitePolicy,
   InviteType,
   LeagueRole,
   LeagueVisibility,
+  MappingConfidence,
+  ParticipantStatus,
   ParticipantType,
   PricingMethod,
   ScoringEngine,
@@ -124,6 +128,62 @@ export interface Participant extends DomainEntity {
   participantType: ParticipantType;
   externalId?: string;
   metadata: Record<string, unknown>;
+
+  // Enriched profile fields
+  firstName?: string;
+  lastName?: string;
+  shortName?: string;
+  nationality?: string;
+  position?: string;
+  teamAffiliation?: string;
+  status: ParticipantStatus;
+  injuryStatus: InjuryStatus;
+  photoUrl?: string;
+  photoLastUpdated?: Date;
+  externalIds: Record<string, string>;
+}
+
+export interface InjuryStatus {
+  status: InjuryStatusCode;
+  detail?: string;
+  expectedReturn?: Date;
+  updatedAt?: Date;
+  source?: string;
+}
+
+export interface ParticipantSeasonRecord extends DomainEntity {
+  participantId: string;
+  sport: Sport;
+  season: string;
+  rankings: SeasonRanking[];
+  budgetPrice: number;
+  priceTier?: string;
+  priceUpdatedAt?: Date;
+  eventsEntered: number;
+  eventsCompleted: number;
+  wins: number;
+  top5Finishes: number;
+  top10Finishes: number;
+  top25Finishes: number;
+  seasonStats: Record<string, number>;
+  formRating: number;
+  formTrend: FormTrend;
+  lastUpdated: Date;
+}
+
+export interface SeasonRanking {
+  rankingType: string;
+  rank: number;
+  points?: number;
+  asOfDate: Date;
+}
+
+export interface ParticipantProviderMapping extends DomainEntity {
+  participantId: string;
+  providerId: string;
+  externalId: string;
+  confidence: MappingConfidence;
+  mappedAt: Date;
 }
 
 // --- Contest ---
@@ -357,4 +417,94 @@ export interface ContestResult extends DomainEntity {
   finalRank: number;
   totalScore: number;
   prizeAmount?: number;
+}
+
+// --- Payout Configuration ---
+
+export interface PayoutConfig {
+  entryFee?: number;
+  prizePool?: number;
+  payoutStructure: PayoutSlot[];
+  intermediatePrizes: IntermediatePrize[];
+}
+
+export interface PayoutSlot {
+  rank: number;
+  percentage: number;
+  fixedAmount?: number;
+}
+
+export interface IntermediatePrize {
+  name: string;
+  description?: string;
+  amount?: number;
+  percentage?: number;
+}
+
+// --- Commissioner Dashboard ---
+
+export interface ActionItem extends DomainEntity {
+  leagueId: string;
+  contestId?: string;
+  type: ActionItemType;
+  priority: ActionItemPriority;
+  title: string;
+  description?: string;
+  actionUrl?: string;
+  resolved: boolean;
+  resolvedAt?: Date;
+}
+
+export type ActionItemType =
+  | 'DRAFT_STARTING'
+  | 'PAYOUT_PENDING'
+  | 'JOIN_REQUEST'
+  | 'SCORE_OVERRIDE_NEEDED'
+  | 'MEMBER_INACTIVE'
+  | 'CONTEST_ENDING'
+  | 'DATA_ISSUE';
+
+export type ActionItemPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface CommissionerDashboard {
+  league: League;
+  actionItems: ActionItem[];
+  contests: Contest[];
+  memberCount: number;
+  pendingInvites: number;
+  recentMemberActivity: MemberActivityEvent[];
+  upcomingEvents: UpcomingEvent[];
+}
+
+export interface MemberActivityEvent {
+  userId: string;
+  displayName: string;
+  action: string;
+  timestamp: Date;
+}
+
+export interface UpcomingEvent {
+  contestId?: string;
+  title: string;
+  date: Date;
+  eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
+}
+
+// --- Contest Template ---
+
+export interface ContestTemplate extends DomainEntity {
+  leagueId: string;
+  createdBy: string;
+  name: string;
+  description?: string;
+  sport: Sport;
+  contestType: ContestType;
+  draftConfig: Record<string, unknown>;
+  scoringConfig: Record<string, unknown>;
+  payoutConfig: Record<string, unknown>;
+  poolConfig: Record<string, unknown>;
+  sharedWithTenant: boolean;
+  isPlatformTemplate: boolean;
+  timesUsed: number;
+  lastUsedAt?: Date;
 }

@@ -773,12 +773,12 @@ POST   /api/v1/admin/participants/import       # Bulk import
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 05-001 | 1 | `participants` table + migrations (core schema) | Not Started | |
-| 05-002 | 1 | `participant_season_records` table + migrations | Not Started | |
-| 05-003 | 1 | Participant CRUD service + API endpoints | Not Started | |
+| 05-001 | 1 | `participants` table + migrations (core schema) | Done | Prisma schema enriched with full profile fields, indexes |
+| 05-002 | 1 | `participant_season_records` table + migrations | Done | Prisma model + adapter + season record API endpoints |
+| 05-003 | 1 | Participant CRUD service + API endpoints | Done | Service, handler, routes at /api/v1/participants |
 | 05-004 | 1 | Ingestion integration (consume from sports data layer) | Not Started | Depends on 06-004 |
-| 05-005 | 1 | PostgreSQL full-text search on participants (`tsvector`) | Not Started | |
-| 05-006 | 1 | Provider ID mapping table and resolution | Not Started | |
+| 05-005 | 1 | PostgreSQL full-text search on participants (`tsvector`) | Done | Case-insensitive search on name, firstName, lastName, shortName, teamAffiliation |
+| 05-006 | 1 | Provider ID mapping table and resolution | Done | ParticipantProviderMapping model + adapter + findByProvider |
 | 05-007 | 2 | `contest_participant_pools` table + migrations | Not Started | |
 | 05-008 | 2 | `contest_pool_participants` table + migrations | Not Started | |
 | 05-009 | 2 | Contest pool creation and resolution (EVENT_FIELD, RANKING_CUTOFF, CUSTOM) | Not Started | |

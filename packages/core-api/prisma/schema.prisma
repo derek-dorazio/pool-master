@@ -41,6 +41,7 @@ model User {
   memberships         LeagueMembership[]
   invitationsSent     LeagueInvitation[] @relation("InvitedBy")
   invitationsAccepted LeagueInvitation[] @relation("AcceptedBy")
+  contestTemplates    ContestTemplate[]  @relation("TemplateCreator")
 
   @@map("users")
 }
@@ -62,9 +63,11 @@ model League {
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant      Tenant             @relation(fields: [tenantId], references: [id])
-  memberships LeagueMembership[]
-  contests    Contest[]
-  invitations LeagueInvitation[]
+  memberships      LeagueMembership[]
+  contests         Contest[]
+  invitations      LeagueInvitation[]
+  actionItems      CommissionerActionItem[]
+  contestTemplates ContestTemplate[]
 
   @@map("leagues")
 }
@@ -109,6 +112,53 @@ model LeagueInvitation {
 
   @@index([leagueId, status])
   @@map("league_invitations")
+}
+
+model CommissionerActionItem {
+  id          String    @id @default(uuid()) @db.Uuid
+  leagueId    String    @map("league_id") @db.Uuid
+  contestId   String?   @map("contest_id") @db.Uuid
+  type        String    @db.VarChar(50)
+  priority    String    @default("MEDIUM") @db.VarChar(20)
+  title       String    @db.VarChar(255)
+  description String?
+  actionUrl   String?   @map("action_url") @db.VarChar(500)
+  resolved    Boolean   @default(false)
+  resolvedAt  DateTime? @map("resolved_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@index([leagueId, resolved, priority])
+  @@map("commissioner_action_items")
+}
+
+model ContestTemplate {
+  id                 String    @id @default(uuid()) @db.Uuid
+  leagueId           String    @map("league_id") @db.Uuid
+  createdBy          String    @map("created_by") @db.Uuid
+  name               String    @db.VarChar(255)
+  description        String?
+  sport              String    @db.VarChar(50)
+  contestType        String    @map("contest_type") @db.VarChar(50)
+  draftConfig        Json      @default("{}") @map("draft_config")
+  scoringConfig      Json      @default("{}") @map("scoring_config")
+  payoutConfig       Json      @default("{}") @map("payout_config")
+  poolConfig         Json      @default("{}") @map("pool_config")
+  sharedWithTenant   Boolean   @default(false) @map("shared_with_tenant")
+  isPlatformTemplate Boolean   @default(false) @map("is_platform_template")
+  timesUsed          Int       @default(0) @map("times_used")
+  lastUsedAt         DateTime? @map("last_used_at") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  league  League @relation(fields: [leagueId], references: [id])
+  creator User   @relation("TemplateCreator", fields: [createdBy], references: [id])
+
+  @@index([leagueId])
+  @@index([isPlatformTemplate])
+  @@map("contest_templates")
 }
 
 // =============================================================================
@@ -157,14 +207,77 @@ model Participant {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  sport          Sport                    @relation(fields: [sportId], references: [id])
-  poolEntries    ContestParticipantPool[]
-  rosterPicks    RosterPick[]
-  contestPicks   ContestPick[]
-  draftPicks     DraftPick[]
+  // Enriched profile fields (Plan 05)
+  firstName       String?  @map("first_name")
+  lastName        String?  @map("last_name")
+  shortName       String?  @map("short_name") @db.VarChar(100)
+  nationality     String?  @db.VarChar(10)
+  position        String?  @db.VarChar(50)
+  teamAffiliation String?  @map("team_affiliation")
+  status          String   @default("ACTIVE") @db.VarChar(20)
+  injuryStatus    Json     @default("{\"status\": \"HEALTHY\"}") @map("injury_status")
+  photoUrl        String?  @map("photo_url")
+  photoLastUpdated DateTime? @map("photo_last_updated") @db.Timestamptz
+  externalIds     Json     @default("{}") @map("external_ids")
+
+  sport            Sport                    @relation(fields: [sportId], references: [id])
+  poolEntries      ContestParticipantPool[]
+  rosterPicks      RosterPick[]
+  contestPicks     ContestPick[]
+  draftPicks       DraftPick[]
+  seasonRecords    ParticipantSeasonRecord[]
+  providerMappings ParticipantProviderMapping[]
 
   @@index([sportId])
+  @@index([sportId, status])
   @@map("participants")
+}
+
+model ParticipantSeasonRecord {
+  id              String   @id @default(uuid()) @db.Uuid
+  participantId   String   @map("participant_id") @db.Uuid
+  sport           String   @db.VarChar(50)
+  season          String   @db.VarChar(20)
+  rankings        Json     @default("[]")
+  budgetPrice     Int      @default(0) @map("budget_price")
+  priceTier       String?  @map("price_tier") @db.VarChar(50)
+  priceUpdatedAt  DateTime? @map("price_updated_at") @db.Timestamptz
+  eventsEntered   Int      @default(0) @map("events_entered")
+  eventsCompleted Int      @default(0) @map("events_completed")
+  wins            Int      @default(0)
+  top5Finishes    Int      @default(0) @map("top_5_finishes")
+  top10Finishes   Int      @default(0) @map("top_10_finishes")
+  top25Finishes   Int      @default(0) @map("top_25_finishes")
+  seasonStats     Json     @default("{}") @map("season_stats")
+  formRating      Decimal  @default(50.0) @map("form_rating") @db.Decimal(5, 2)
+  formTrend       String   @default("STABLE") @map("form_trend") @db.VarChar(20)
+  lastUpdated     DateTime @default(now()) @map("last_updated") @db.Timestamptz
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@unique([participantId, season])
+  @@index([sport, season])
+  @@index([budgetPrice])
+  @@map("participant_season_records")
+}
+
+model ParticipantProviderMapping {
+  id            String   @id @default(uuid()) @db.Uuid
+  participantId String   @map("participant_id") @db.Uuid
+  providerId    String   @map("provider_id") @db.VarChar(100)
+  externalId    String   @map("external_id") @db.VarChar(255)
+  confidence    String   @default("EXACT") @db.VarChar(20)
+  mappedAt      DateTime @default(now()) @map("mapped_at") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@unique([providerId, externalId])
+  @@index([participantId])
+  @@map("participant_provider_mappings")
 }
 
 // =============================================================================
@@ -183,6 +296,7 @@ model Contest {
   isExclusive               Boolean   @default(false) @map("is_exclusive")
   scoringStopsOnElimination Boolean   @default(false) @map("scoring_stops_on_elimination")
   scoringRules              Json      @default("{}") @map("scoring_rules")
+  payoutConfig              Json      @default("{}") @map("payout_config")
   startsAt                  DateTime? @map("starts_at") @db.Timestamptz
   endsAt                    DateTime? @map("ends_at") @db.Timestamptz
   lockAt                    DateTime? @map("lock_at") @db.Timestamptz
