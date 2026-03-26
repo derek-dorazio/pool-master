@@ -7,18 +7,25 @@
  */
 
 import type {
+  Contest,
+  ContestTemplate,
   League,
   LeagueInvitation,
   LeagueMembership,
   LeagueSettings,
+  PayoutConfig,
   User,
 } from '@poolmaster/shared/domain/types';
 import {
+  ContestStatus,
+  ContestType,
   InvitationStatus,
   InvitePolicy,
   InviteType,
   LeagueRole,
   LeagueVisibility,
+  ScoringEngine,
+  SelectionType,
   WeekDay,
 } from '@poolmaster/shared/domain/enums';
 
@@ -97,6 +104,60 @@ export function buildInvitation(overrides: Partial<LeagueInvitation> = {}): Leag
     currentUses: 0,
     invitedBy: 'owner-1',
     expiresAt: new Date('2026-02-01'),
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+    ...overrides,
+  };
+}
+
+export function buildContest(overrides: Partial<Contest> = {}): Contest {
+  return {
+    id: nextId(),
+    leagueId: 'league-1',
+    seasonId: 'season-1',
+    name: 'Masters Pool 2026',
+    status: ContestStatus.DRAFT,
+    contestType: ContestType.SINGLE_EVENT,
+    selectionType: SelectionType.SNAKE_DRAFT,
+    scoringEngine: ScoringEngine.STROKE_PLAY,
+    isExclusive: false,
+    scoringStopsOnElimination: false,
+    scoringRules: {},
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+    ...overrides,
+  };
+}
+
+export function buildPayoutConfig(overrides: Partial<PayoutConfig> = {}): PayoutConfig {
+  return {
+    entryFee: 5000,
+    prizePool: 50000,
+    payoutStructure: [
+      { rank: 1, percentage: 60 },
+      { rank: 2, percentage: 25 },
+      { rank: 3, percentage: 15 },
+    ],
+    intermediatePrizes: [],
+    ...overrides,
+  };
+}
+
+export function buildContestTemplate(overrides: Partial<ContestTemplate> = {}): ContestTemplate {
+  return {
+    id: nextId(),
+    leagueId: 'league-1',
+    createdBy: 'owner-1',
+    name: 'Standard Golf Pool',
+    sport: 'GOLF' as ContestTemplate['sport'],
+    contestType: ContestType.SINGLE_EVENT,
+    draftConfig: {},
+    scoringConfig: {},
+    payoutConfig: {},
+    poolConfig: {},
+    sharedWithTenant: false,
+    isPlatformTemplate: false,
+    timesUsed: 0,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,
