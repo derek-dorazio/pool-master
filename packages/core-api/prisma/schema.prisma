@@ -678,6 +678,20 @@ model PayoutHistory {
   @@map("payout_history")
 }
 
+model ScoringCheckpoint {
+  id                String   @id @default(uuid()) @db.Uuid
+  contestId         String   @map("contest_id") @db.Uuid
+  checkpointLabel   String   @map("checkpoint_label") @db.VarChar(100)
+  checkpointType    String   @map("checkpoint_type") @db.VarChar(50)
+  checkpointOrder   Int      @map("checkpoint_order")
+  standings         Json     @default("[]")
+  recordedAt        DateTime @map("recorded_at") @db.Timestamptz
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([contestId, checkpointOrder])
+  @@map("scoring_checkpoints")
+}
+
 model LeagueSeasonSummary {
   id                String   @id @default(uuid()) @db.Uuid
   leagueId          String   @map("league_id") @db.Uuid

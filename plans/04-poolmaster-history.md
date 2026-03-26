@@ -940,9 +940,9 @@ Commissioners have additional history management capabilities:
 | 04-008 | 2 | Member stats page (wins, entries, winnings) | Done | MemberAllTimeStats computed from results; GET /leagues/:id/history/members/:mid/stats |
 | 04-009 | 2 | AllTimeLeaderboard (sort by wins, points, winnings) | Done | GET /leagues/:id/history/leaderboard?sortBy=WINS|POINTS|WINNINGS |
 | 04-010 | 2 | Trophy case — championship and runner-up trophies | Done | Trophy model + awardContestTrophies (champion, runner-up, top-3, paid) |
-| 04-011 | 3 | ContestScoringTimeline checkpoints | Not Started | Periodic snapshots during live contest |
-| 04-012 | 3 | DraftHistoryReplay endpoint | Not Started | |
-| 04-013 | 3 | ContestRosterReplay with scoring breakdown | Not Started | |
+| 04-011 | 3 | ContestScoringTimeline checkpoints | Done | ScoringCheckpoint model + TimelineService.recordCheckpoint/getTimeline |
+| 04-012 | 3 | DraftHistoryReplay endpoint | Done | GET /contests/:id/history/draft — full pick-by-pick replay |
+| 04-013 | 3 | ContestRosterReplay with scoring breakdown | Done | GET /contests/:id/history/replay/:entryId — frozen or live roster |
 | 04-014 | 3 | ~~MatchupHistory for H2H season-long leagues~~ | Removed | Out of scope — no H2H in v1 |
 | 04-015 | 4 | LeagueRecord book engine (30+ categories) | Not Started | |
 | 04-016 | 4 | StreakRecord computation (win streaks, podium streaks) | Not Started | |

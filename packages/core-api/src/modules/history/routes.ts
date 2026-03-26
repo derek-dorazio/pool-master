@@ -6,10 +6,12 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { HistoryService } from './history-service';
 import { LeagueHistoryService } from './league-history-service';
+import { TimelineService } from './timeline-service';
 
 export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const historyService = new HistoryService(prisma);
+  const timelineService = new TimelineService(prisma);
   const leagueHistoryService = new LeagueHistoryService(prisma);
 
   // GET /contests/:id/history/summary
@@ -72,6 +74,44 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
     async (request) => {
       const results = await historyService.getMemberResults(request.params.mid);
       return { results };
+    },
+  );
+
+  // --- Scoring Timeline & Replays (Phase 3) ---
+
+  // GET /contests/:id/history/timeline
+  fastify.get<{ Params: { id: string } }>(
+    '/contests/:id/history/timeline',
+    async (request) => {
+      const timeline = await timelineService.getTimeline(request.params.id);
+      return timeline;
+    },
+  );
+
+  // GET /contests/:id/history/draft
+  fastify.get<{ Params: { id: string } }>(
+    '/contests/:id/history/draft',
+    async (request, reply) => {
+      const replay = await timelineService.getDraftReplay(request.params.id);
+      if (!replay) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: 'No draft history for this contest' });
+      }
+      return reply.send(replay);
+    },
+  );
+
+  // GET /contests/:id/history/roster/:entryId (detailed replay)
+  fastify.get<{ Params: { id: string; entryId: string } }>(
+    '/contests/:id/history/replay/:entryId',
+    async (request, reply) => {
+      const replay = await timelineService.getRosterReplay(
+        request.params.id,
+        request.params.entryId,
+      );
+      if (!replay) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: 'Roster replay not found' });
+      }
+      return reply.send(replay);
     },
   );
 
