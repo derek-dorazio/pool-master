@@ -31,17 +31,25 @@ This installs all dependencies across the monorepo workspaces (`packages/*` and 
 
 ---
 
-## 2. Start Local Databases
+## 2. Start Local Infrastructure
 
-PostgreSQL 16 and Redis 7 run via Docker Compose:
+All local services (databases, caches, mock providers) run via Docker Compose:
 
 ```bash
 docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
 ```
 
 This starts:
-- **PostgreSQL 16** on `localhost:5432` (database: `poolmaster`, user: `postgres`, password: `postgres`)
-- **Redis 7** on `localhost:6379`
+
+| Service | Port(s) | Purpose |
+|---|---|---|
+| **PostgreSQL 16** | `5432` | Primary database (`poolmaster` / `postgres` / `postgres`) |
+| **Redis 7** | `6379` | Cache, message bus, BullMQ |
+| **Mailpit** | `8025` (UI), `1025` (SMTP) | Email capture — all outbound email lands here. Browse at http://localhost:8025 |
+| **LocalStack** | `4566` | AWS mock (SES, SNS, SQS) — real SDK APIs, no credentials needed |
+| **Push Mock** | `3099` | APNs/FCM push capture — view payloads at `GET http://localhost:3099/push-log` |
+
+LocalStack auto-initialises on first start (verifies SES sender, creates SNS topic + SQS queue).
 
 To stop:
 ```bash
@@ -52,23 +60,32 @@ docker compose -f infrastructure/docker/docker-compose.dev.yml down
 
 ## 3. Configure Environment
 
-Create a `.env` file in the repo root (or in `packages/core-api/`):
+Copy the example env file and adjust as needed:
 
 ```bash
-# Database
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster
+cp .env.example .env
+```
 
-# Redis
+The defaults work out of the box with Docker Compose. Key settings:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster
 REDIS_URL=redis://localhost:6379
 
-# Auth (placeholder — not yet integrated)
-# AUTH_PROVIDER=auth0
-# AUTH_DOMAIN=your-domain.auth0.com
-# AUTH_CLIENT_ID=xxx
+# Email: "smtp" sends to Mailpit (localhost:1025), "ses" sends to LocalStack
+EMAIL_PROVIDER=smtp
+SMTP_HOST=localhost
+SMTP_PORT=1025
 
-# Ports (defaults)
-PORT=3000
+# Push: points to push-mock-server in dev
+APNS_BASE_URL=http://localhost:3099
+FCM_BASE_URL=http://localhost:3099
+
+# AWS mock (LocalStack)
+AWS_ENDPOINT=http://localhost:4566
 ```
+
+See `.env.example` for the full list of variables.
 
 ---
 
@@ -190,6 +207,7 @@ poolmaster/
 │   ├── scoring-service/    # Scoring engines (port 3002)
 │   ├── ingestion-worker/   # Data polling (port 3003)
 │   ├── notification-service/ # Notifications (port 3004)
+│   ├── push-mock-server/    # APNs/FCM mock for local dev (port 3099)
 │   └── shared/             # Domain types, DB ports, events, utils
 ├── clients/
 │   ├── web/                # React + TypeScript (not yet started)
@@ -272,3 +290,6 @@ npm run dev --workspace=@poolmaster/core-api
 | Database connection refused | Ensure Docker containers are running: `docker compose -f infrastructure/docker/docker-compose.dev.yml up -d` |
 | Port already in use | Check for running processes: `lsof -ti:3000` |
 | Tests fail with import errors | Ensure you're running from `tests/` directory or using `npm test` from root |
+| Emails not appearing in Mailpit | Ensure docker-compose is running and SMTP_HOST=localhost, SMTP_PORT=1025 |
+| Push payloads not in push-log | Ensure push-mock container is running on port 3099 |
+| LocalStack SES errors | Run `awslocal ses get-send-statistics` to verify; check init script ran |
