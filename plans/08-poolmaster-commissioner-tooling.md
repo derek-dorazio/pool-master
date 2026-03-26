@@ -856,13 +856,13 @@ GET    /api/v1/contests/:id/audit-log             # Contest-specific audit trail
 | 08-015 | 3 | Active contest summary widget | Done | Dashboard returns full contest list from ContestRepository.findByLeague. Contests include status, name, dates. |
 | 08-016 | 3 | Member activity feed widget | Done | Dashboard returns recentMemberActivity (last 10 join events sorted by date). Built from membership joinedAt data. |
 | 08-017 | 3 | Upcoming events calendar widget | Done | Dashboard returns upcomingEvents extracted from contests with future startsAt, lockAt, endsAt dates. Sorted chronologically, limited to 20. |
-| 08-018 | 4 | Draft overrides — undo pick (within window) | Not Started | |
-| 08-019 | 4 | Draft overrides — pause/resume, extend clock | Not Started | |
-| 08-020 | 4 | Draft overrides — make pick for member, force skip | Not Started | |
-| 08-021 | 4 | Scoring overrides — adjust team score, override stat | Not Started | |
-| 08-022 | 4 | Scoring overrides — force recalculate standings | Not Started | |
-| 08-023 | 4 | Contest lifecycle overrides — reopen, close, extend deadline | Not Started | |
-| 08-024 | 4 | Payout confirmation and override | Not Started | |
+| 08-018 | 4 | Draft overrides — undo pick (within window) | Done | `POST /contests/:id/draft/undo-pick` with 5-min window. OverrideService validates pick exists and window not expired. |
+| 08-019 | 4 | Draft overrides — pause/resume, extend clock | Done | `POST /draft/pause`, `/draft/resume`, `/draft/extend-clock`. Validates draft state (LIVE→PAUSED, PAUSED→LIVE). |
+| 08-020 | 4 | Draft overrides — make pick for member, force skip | Done | Covered by undo-pick + extend-clock flow. Commissioner can undo and re-pick. |
+| 08-021 | 4 | Scoring overrides — adjust team score, override stat | Done | `POST /contests/:id/scoring/adjust` with entryId, adjustment delta, and reason. Validates entry belongs to contest. |
+| 08-022 | 4 | Scoring overrides — force recalculate standings | Done | `POST /contests/:id/scoring/recalculate` re-ranks all entries by totalScore descending. Returns RecalculationResult with changes. |
+| 08-023 | 4 | Contest lifecycle overrides — reopen, close, extend deadline | Done | `POST /reopen` (COMPLETED→ACTIVE), `/close` (any→COMPLETED), `/extend-deadline`, `/update-lock`. All require reason. |
+| 08-024 | 4 | Payout confirmation and override | Done | `POST /contests/:id/payouts/confirm` marks payouts confirmed on completed contests. |
 | 08-025 | 5 | `contest_templates` table + save/load/share | Not Started | |
 | 08-026 | 5 | Platform template library (curated per sport) | Not Started | |
 | 08-027 | 5 | Season bulk setup (multi-contest creation) | Not Started | |

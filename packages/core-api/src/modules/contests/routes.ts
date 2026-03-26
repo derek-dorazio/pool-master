@@ -11,10 +11,15 @@ import {
   PrismaSelectionConfigRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
+  PrismaContestEntryRepository,
+  PrismaContestStandingRepository,
+  PrismaDraftSessionRepository,
 } from '../../adapters';
 import { requirePermission } from '../../core/require-permission';
 import { ContestService } from './service';
+import { OverrideService } from './override-service';
 import { createContestHandlers } from './handler';
+import { createOverrideHandlers } from './override-handler';
 
 export async function contestsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -111,6 +116,9 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   const selectionConfigRepo = new PrismaSelectionConfigRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
+  const entryRepo = new PrismaContestEntryRepository(prisma);
+  const standingRepo = new PrismaContestStandingRepository(prisma);
+  const draftSessionRepo = new PrismaDraftSessionRepository(prisma);
 
   const contestService = new ContestService(
     contestRepo,
@@ -118,8 +126,11 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     membershipRepo,
     leagueRepo,
   );
+  const overrideService = new OverrideService(contestRepo, draftSessionRepo, entryRepo, standingRepo);
   const handlers = createContestHandlers(contestService);
+  const overrides = createOverrideHandlers(overrideService);
 
+  // --- Contest CRUD ---
   fastify.get('/:contestId', handlers.getContest);
 
   fastify.put('/:contestId', {
@@ -141,4 +152,47 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   });
 
   fastify.delete('/:contestId', handlers.deleteContest);
+
+  // --- Draft Overrides ---
+  fastify.post('/:contestId/draft/undo-pick', {
+    schema: { body: { type: 'object', required: ['pickId', 'reason'], properties: { pickId: { type: 'string' }, reason: { type: 'string' } } } },
+    handler: overrides.undoPick,
+  });
+  fastify.post('/:contestId/draft/pause', {
+    schema: { body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } } },
+    handler: overrides.pauseDraft,
+  });
+  fastify.post('/:contestId/draft/resume', overrides.resumeDraft);
+  fastify.post('/:contestId/draft/extend-clock', {
+    schema: { body: { type: 'object', required: ['additionalSeconds'], properties: { additionalSeconds: { type: 'integer', minimum: 1 } } } },
+    handler: overrides.extendPickClock,
+  });
+
+  // --- Scoring Overrides ---
+  fastify.post('/:contestId/scoring/adjust', {
+    schema: { body: { type: 'object', required: ['entryId', 'adjustment', 'reason'], properties: { entryId: { type: 'string' }, adjustment: { type: 'number' }, reason: { type: 'string' } } } },
+    handler: overrides.adjustScore,
+  });
+  fastify.post('/:contestId/scoring/recalculate', overrides.recalculateStandings);
+
+  // --- Contest Lifecycle Overrides ---
+  fastify.post('/:contestId/reopen', {
+    schema: { body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } } },
+    handler: overrides.reopenContest,
+  });
+  fastify.post('/:contestId/close', {
+    schema: { body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } } },
+    handler: overrides.closeContest,
+  });
+  fastify.post('/:contestId/extend-deadline', {
+    schema: { body: { type: 'object', required: ['newEnd', 'reason'], properties: { newEnd: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } } },
+    handler: overrides.extendDeadline,
+  });
+  fastify.post('/:contestId/update-lock', {
+    schema: { body: { type: 'object', required: ['newLock', 'reason'], properties: { newLock: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } } },
+    handler: overrides.updateLockTime,
+  });
+
+  // --- Payout Overrides ---
+  fastify.post('/:contestId/payouts/confirm', overrides.confirmPayouts);
 }
