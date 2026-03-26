@@ -839,13 +839,13 @@ GET    /api/v1/contests/:id/audit-log             # Contest-specific audit trail
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 08-001 | 1 | League creation wizard (multi-step: identity, sports, rules, invite, review) | Not Started | |
-| 08-002 | 1 | League settings management API + UI | Not Started | |
-| 08-003 | 1 | Email invitation flow (`POST /leagues/:id/invitations`) | Not Started | |
-| 08-004 | 1 | Shareable invite link generation and acceptance | Not Started | |
-| 08-005 | 1 | `league_invitations` table + migrations | Not Started | |
-| 08-006 | 1 | Role management (owner, commissioner, manager, viewer) | Not Started | |
-| 08-007 | 1 | Granular commissioner permissions model | Not Started | |
+| 08-001 | 1 | League creation wizard (multi-step: identity, sports, rules, invite, review) | Done | `POST /api/v1/leagues` with full settings merge, OWNER membership auto-created. LeagueService in `packages/core-api/src/modules/leagues/service.ts` |
+| 08-002 | 1 | League settings management API + UI | Done | `GET /api/v1/leagues/:id` returns league+members; `PUT /api/v1/leagues/:id/settings` partial-merges LeagueSettings JSONB. Permission-gated. |
+| 08-003 | 1 | Email invitation flow (`POST /leagues/:id/invitations`) | Done | InvitationService creates PENDING invitations, skips duplicates/existing members. Email delivery deferred to notification-service. |
+| 08-004 | 1 | Shareable invite link generation and acceptance | Done | `POST /:id/invite-link` generates LINK invitation; `DELETE /:id/invite-link/:code` revokes; `POST /api/v1/invitations/accept` validates and creates MANAGER membership. |
+| 08-005 | 1 | `league_invitations` table + migrations | Done | Prisma `LeagueInvitation` model added with indexes on `(league_id, status)` and `invite_code`. `permissions` JSONB + timestamps added to `LeagueMembership`. |
+| 08-006 | 1 | Role management (owner, commissioner, manager, viewer) | Done | MemberService: `changeRole`, `removeMember`, `transferOwnership`. OWNER protected from demotion/removal. All permission-gated via preHandler hooks. |
+| 08-007 | 1 | Granular commissioner permissions model | Done | 25 CommissionerPermission values. `hasPermission()` utility with OWNER bypass. `requirePermission()` Fastify preHandler hook. Stored as JSONB array on membership. |
 | 08-008 | 2 | Contest creation wizard (7-step: sport, pool, draft, scoring, payouts, schedule, review) | Not Started | |
 | 08-009 | 2 | Scoring template selection in contest wizard | Not Started | |
 | 08-010 | 2 | Payout structure configuration in contest wizard | Not Started | |

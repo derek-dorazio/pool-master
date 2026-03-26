@@ -160,3 +160,76 @@ export const TierAssignmentMethod = {
   COMMISSIONER: 'COMMISSIONER',
 } as const;
 export type TierAssignmentMethod = (typeof TierAssignmentMethod)[keyof typeof TierAssignmentMethod];
+
+// --- League Invitation ---
+
+export const InvitePolicy = {
+  COMMISSIONER_ONLY: 'COMMISSIONER_ONLY',
+  LINK_INVITE: 'LINK_INVITE',
+  OPEN: 'OPEN',
+} as const;
+export type InvitePolicy = (typeof InvitePolicy)[keyof typeof InvitePolicy];
+
+export const InviteType = {
+  EMAIL: 'EMAIL',
+  LINK: 'LINK',
+} as const;
+export type InviteType = (typeof InviteType)[keyof typeof InviteType];
+
+export const InvitationStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  EXPIRED: 'EXPIRED',
+  REVOKED: 'REVOKED',
+} as const;
+export type InvitationStatus = (typeof InvitationStatus)[keyof typeof InvitationStatus];
+
+// --- Commissioner Permissions ---
+
+export const CommissionerPermission = {
+  // League management
+  LEAGUE_SETTINGS_EDIT: 'league.settings.edit',
+  LEAGUE_MEMBERS_INVITE: 'league.members.invite',
+  LEAGUE_MEMBERS_REMOVE: 'league.members.remove',
+  LEAGUE_MEMBERS_ROLE_CHANGE: 'league.members.role.change',
+  // Contest management
+  CONTEST_CREATE: 'contest.create',
+  CONTEST_EDIT: 'contest.edit',
+  CONTEST_DELETE: 'contest.delete',
+  CONTEST_CLOSE: 'contest.close',
+  CONTEST_REOPEN: 'contest.reopen',
+  // Draft management
+  DRAFT_START: 'draft.start',
+  DRAFT_PAUSE: 'draft.pause',
+  DRAFT_UNDO_PICK: 'draft.undo_pick',
+  DRAFT_OVERRIDE_PICK: 'draft.override_pick',
+  DRAFT_EXTEND_CLOCK: 'draft.extend_clock',
+  // Scoring & results
+  SCORING_OVERRIDE: 'scoring.override',
+  SCORING_RECALCULATE: 'scoring.recalculate',
+  RESULTS_OVERRIDE: 'results.override',
+  PAYOUT_CONFIRM: 'payout.confirm',
+  PAYOUT_RECALCULATE: 'payout.recalculate',
+  // Communication
+  ANNOUNCEMENT_POST: 'announcement.post',
+  ANNOUNCEMENT_PIN: 'announcement.pin',
+  MESSAGE_DELETE: 'message.delete',
+  MEMBER_MUTE: 'member.mute',
+  // Templates
+  TEMPLATE_CREATE: 'template.create',
+  TEMPLATE_SHARE: 'template.share',
+} as const;
+export type CommissionerPermission = (typeof CommissionerPermission)[keyof typeof CommissionerPermission];
+
+// --- Week Day ---
+
+export const WeekDay = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY',
+} as const;
+export type WeekDay = (typeof WeekDay)[keyof typeof WeekDay];

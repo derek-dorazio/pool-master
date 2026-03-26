@@ -7,10 +7,14 @@
  */
 
 import type {
+  CommissionerPermission,
   ContestStatus,
   ContestType,
   DraftMode,
   DraftStatus,
+  InvitationStatus,
+  InvitePolicy,
+  InviteType,
   LeagueRole,
   LeagueVisibility,
   ParticipantType,
@@ -20,6 +24,7 @@ import type {
   Sport,
   SurvivorStyle,
   TierAssignmentMethod,
+  WeekDay,
 } from './enums';
 
 // --- Base ---
@@ -63,7 +68,37 @@ export interface LeagueMembership extends DomainEntity {
   leagueId: string;
   userId: string;
   role: LeagueRole;
+  permissions: CommissionerPermission[];
   joinedAt: Date;
+}
+
+export interface LeagueInvitation extends DomainEntity {
+  leagueId: string;
+  email?: string;
+  inviteCode: string;
+  inviteType: InviteType;
+  status: InvitationStatus;
+  maxUses: number;
+  currentUses: number;
+  invitedBy: string;
+  expiresAt?: Date;
+  acceptedAt?: Date;
+  acceptedBy?: string;
+}
+
+export interface LeagueSettings {
+  invitePolicy: InvitePolicy;
+  inviteLinkCode?: string;
+  allowMidSeasonJoin: boolean;
+  requireApproval: boolean;
+  defaultScoringTemplateId?: string;
+  defaultDraftType?: DraftMode;
+  defaultPayoutTemplateId?: string;
+  activityFeedEnabled: boolean;
+  weeklyRecapEnabled: boolean;
+  weeklyRecapDay: WeekDay;
+  timezone: string;
+  currency: string;
 }
 
 // --- Sport & Participant ---

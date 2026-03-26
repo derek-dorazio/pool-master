@@ -7,6 +7,7 @@ export type {
   ContestResultRepository,
   ContestStandingRepository,
   DraftSessionRepository,
+  LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantRepository,

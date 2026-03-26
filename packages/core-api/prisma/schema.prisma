@@ -37,8 +37,10 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant      Tenant             @relation(fields: [tenantId], references: [id])
-  memberships LeagueMembership[]
+  tenant              Tenant             @relation(fields: [tenantId], references: [id])
+  memberships         LeagueMembership[]
+  invitationsSent     LeagueInvitation[] @relation("InvitedBy")
+  invitationsAccepted LeagueInvitation[] @relation("AcceptedBy")
 
   @@map("users")
 }
@@ -62,16 +64,20 @@ model League {
   tenant      Tenant             @relation(fields: [tenantId], references: [id])
   memberships LeagueMembership[]
   contests    Contest[]
+  invitations LeagueInvitation[]
 
   @@map("leagues")
 }
 
 model LeagueMembership {
-  id       String   @id @default(uuid()) @db.Uuid
-  leagueId String   @map("league_id") @db.Uuid
-  userId   String   @map("user_id") @db.Uuid
-  role     String   @default("MANAGER")
-  joinedAt DateTime @default(now()) @map("joined_at") @db.Timestamptz
+  id          String   @id @default(uuid()) @db.Uuid
+  leagueId    String   @map("league_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  role        String   @default("MANAGER")
+  permissions Json     @default("[]")
+  joinedAt    DateTime @default(now()) @map("joined_at") @db.Timestamptz
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   league  League         @relation(fields: [leagueId], references: [id])
   user    User           @relation(fields: [userId], references: [id])
@@ -79,6 +85,30 @@ model LeagueMembership {
 
   @@unique([leagueId, userId])
   @@map("league_memberships")
+}
+
+model LeagueInvitation {
+  id          String    @id @default(uuid()) @db.Uuid
+  leagueId    String    @map("league_id") @db.Uuid
+  email       String?   @db.VarChar(255)
+  inviteCode  String    @unique @map("invite_code") @db.VarChar(100)
+  inviteType  String    @default("EMAIL") @map("invite_type") @db.VarChar(20)
+  status      String    @default("PENDING") @db.VarChar(20)
+  maxUses     Int       @default(1) @map("max_uses")
+  currentUses Int       @default(0) @map("current_uses")
+  invitedBy   String    @map("invited_by") @db.Uuid
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz
+  acceptedAt  DateTime? @map("accepted_at") @db.Timestamptz
+  acceptedBy  String?   @map("accepted_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  league   League @relation(fields: [leagueId], references: [id])
+  inviter  User   @relation("InvitedBy", fields: [invitedBy], references: [id])
+  acceptor User?  @relation("AcceptedBy", fields: [acceptedBy], references: [id])
+
+  @@index([leagueId, status])
+  @@map("league_invitations")
 }
 
 // =============================================================================

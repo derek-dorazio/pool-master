@@ -16,6 +16,7 @@ import type {
   DraftPick,
   DraftSession,
   League,
+  LeagueInvitation,
   LeagueMembership,
   Participant,
   RosterPick,
@@ -57,8 +58,19 @@ export interface LeagueRepository {
 export interface LeagueMembershipRepository {
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
   findByUser(userId: string): Promise<LeagueMembership[]>;
+  findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null>;
   create(membership: Omit<LeagueMembership, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueMembership>;
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
+  delete(id: string): Promise<void>;
+}
+
+export interface LeagueInvitationRepository {
+  findById(id: string): Promise<LeagueInvitation | null>;
+  findByLeague(leagueId: string): Promise<LeagueInvitation[]>;
+  findByCode(inviteCode: string): Promise<LeagueInvitation | null>;
+  findByEmail(leagueId: string, email: string): Promise<LeagueInvitation | null>;
+  create(invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueInvitation>;
+  update(id: string, updates: Partial<LeagueInvitation>): Promise<LeagueInvitation>;
   delete(id: string): Promise<void>;
 }
 

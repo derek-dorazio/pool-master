@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import { healthPlugin } from './plugins/health';
 import { leaguesModule } from './modules/leagues/routes';
+import { invitationsModule } from './modules/invitations/routes';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -10,6 +11,7 @@ export function buildApp() {
 
   // Domain modules
   app.register(leaguesModule, { prefix: '/api/v1/leagues' });
+  app.register(invitationsModule, { prefix: '/api/v1/invitations' });
 
   return app;
 }
