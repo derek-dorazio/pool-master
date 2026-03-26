@@ -795,11 +795,11 @@ POST   /api/v1/admin/participants/import       # Bulk import
 | 05-020 | 4 | Enhanced search — Elasticsearch migration (if needed) | Not Started | Deferred — PostgreSQL search sufficient for launch |
 | 05-021 | 4 | Faceted filtering (nationality, position, team, ranking) | Done | DraftSearchService returns facet counts |
 | 05-022 | 4 | Draft room search optimisation (< 100ms) | Done | GET /pool/search — in-memory filtering over pool participants |
-| 05-023 | 5 | Cross-provider participant matching (fuzzy name + sport) | Not Started | |
-| 05-024 | 5 | Manual resolution queue in admin dashboard | Not Started | |
-| 05-025 | 5 | Participant merge tooling | Not Started | |
-| 05-026 | 5 | Form rating calculation engine | Not Started | |
-| 05-027 | 5 | Season stat aggregation pipeline | Not Started | |
+| 05-023 | 5 | Cross-provider participant matching (fuzzy name + sport) | Done | Levenshtein-based fuzzy matching with name normalisation (diacritics, Last/First) |
+| 05-024 | 5 | Manual resolution queue in admin dashboard | Not Started | Deferred — admin UI |
+| 05-025 | 5 | Participant merge tooling | Done | ParticipantMergeService — transfers mappings, external IDs, season records |
+| 05-026 | 5 | Form rating calculation engine | Done | Recency-weighted percentile-based form rating (0-100) with trend detection |
+| 05-027 | 5 | Season stat aggregation pipeline | Not Started | Deferred — needs sports data provider integration |
 
 ---
 
