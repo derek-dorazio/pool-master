@@ -779,12 +779,12 @@ POST   /api/v1/admin/participants/import       # Bulk import
 | 05-004 | 1 | Ingestion integration (consume from sports data layer) | Not Started | Depends on 06-004 |
 | 05-005 | 1 | PostgreSQL full-text search on participants (`tsvector`) | Done | Case-insensitive search on name, firstName, lastName, shortName, teamAffiliation |
 | 05-006 | 1 | Provider ID mapping table and resolution | Done | ParticipantProviderMapping model + adapter + findByProvider |
-| 05-007 | 2 | `contest_participant_pools` table + migrations | Not Started | |
-| 05-008 | 2 | `contest_pool_participants` table + migrations | Not Started | |
-| 05-009 | 2 | Contest pool creation and resolution (EVENT_FIELD, RANKING_CUTOFF, CUSTOM) | Not Started | |
-| 05-010 | 2 | Pool lifecycle (create → resolve → review → lock) | Not Started | |
-| 05-011 | 2 | Pool refresh on field changes | Not Started | |
-| 05-012 | 2 | Withdrawal/scratch handling post-lock | Not Started | |
+| 05-007 | 2 | `contest_participant_pools` table + migrations | Done | ContestPool Prisma model + adapter for pool config |
+| 05-008 | 2 | `contest_pool_participants` table + migrations | Done | Enhanced ContestParticipantPool with poolId, ranking, unavailableReason |
+| 05-009 | 2 | Contest pool creation and resolution (EVENT_FIELD, RANKING_CUTOFF, CUSTOM) | Done | ContestPoolService.resolvePool — CUSTOM, FULL_SPORT, RANKING_CUTOFF; EVENT_FIELD deferred to Plan 06 |
+| 05-010 | 2 | Pool lifecycle (create → resolve → review → lock) | Done | Full lifecycle: create → resolve → refresh → lock |
+| 05-011 | 2 | Pool refresh on field changes | Done | refreshPool re-resolves from source |
+| 05-012 | 2 | Withdrawal/scratch handling post-lock | Done | markUnavailable/markAvailable on locked pools |
 | 05-013 | 3 | Salary cap pricing engine (ranking + form + odds → price) | Not Started | |
 | 05-014 | 3 | Price calculation and refresh schedule | Not Started | |
 | 05-015 | 3 | Commissioner price overrides | Not Started | |

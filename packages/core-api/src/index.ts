@@ -5,6 +5,7 @@ import { invitationsModule } from './modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { templatesModule } from './modules/templates/routes';
 import { participantsModule } from './modules/participants/routes';
+import { contestPoolModule } from './modules/participants/pool-routes';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -19,6 +20,7 @@ export function buildApp() {
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   app.register(templatesModule, { prefix: '/api/v1/templates' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
+  app.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool' });
 
   return app;
 }

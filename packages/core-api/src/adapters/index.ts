@@ -8,6 +8,8 @@ export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantSeasonRecordRepository } from './prisma-participant-season-record-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
 export { PrismaActionItemRepository } from './prisma-action-item-repository';
+export { PrismaContestPoolRepository } from './prisma-contest-pool-repository';
+export { PrismaContestParticipantPoolRepository } from './prisma-contest-participant-pool-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
 export { PrismaContestStandingRepository } from './prisma-contest-standing-repository';
 export { PrismaDraftSessionRepository } from './prisma-draft-session-repository';
