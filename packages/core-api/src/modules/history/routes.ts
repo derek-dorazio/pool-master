@@ -9,6 +9,7 @@ import { LeagueHistoryService } from './league-history-service';
 import { TimelineService } from './timeline-service';
 import { RecordsEngine } from './records-engine';
 import { RivalryEngine } from './rivalry-engine';
+import { AnalyticsService } from './analytics-engine';
 
 export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -16,6 +17,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const timelineService = new TimelineService(prisma);
   const recordsEngine = new RecordsEngine(prisma);
   const rivalryEngine = new RivalryEngine(prisma);
+  const analyticsService = new AnalyticsService(prisma);
   const leagueHistoryService = new LeagueHistoryService(prisma);
 
   // GET /contests/:id/history/summary
@@ -254,6 +256,47 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
     async (request) => {
       const count = await rivalryEngine.recomputeRivalries(request.params.id);
       return { rivalriesComputed: count };
+    },
+  );
+
+  // --- Analytics (Phase 5) ---
+
+  // GET /leagues/:id/history/analytics/luck
+  fastify.get<{ Params: { id: string } }>(
+    '/leagues/:id/history/analytics/luck',
+    async (request) => {
+      const scores = await analyticsService.computeLuckScores(request.params.id);
+      return { luckScores: scores };
+    },
+  );
+
+  // GET /leagues/:id/history/analytics/power
+  fastify.get<{ Params: { id: string } }>(
+    '/leagues/:id/history/analytics/power',
+    async (request) => {
+      const ratings = await analyticsService.computePowerRatings(request.params.id);
+      return { powerRatings: ratings };
+    },
+  );
+
+  // GET /leagues/:id/history/analytics/consistency
+  fastify.get<{ Params: { id: string } }>(
+    '/leagues/:id/history/analytics/consistency',
+    async (request) => {
+      const scores = await analyticsService.computeConsistencyScores(request.params.id);
+      return { consistencyScores: scores };
+    },
+  );
+
+  // POST /leagues/:id/history/analytics/trophies (admin — award analytics trophies)
+  fastify.post<{ Params: { id: string }; Querystring: { seasonId?: string } }>(
+    '/leagues/:id/history/analytics/trophies',
+    async (request) => {
+      const count = await analyticsService.awardAnalyticsTrophies(
+        request.params.id,
+        request.query.seasonId,
+      );
+      return { trophiesAwarded: count };
     },
   );
 }

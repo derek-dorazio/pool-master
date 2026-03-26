@@ -948,11 +948,11 @@ Commissioners have additional history management capabilities:
 | 04-016 | 4 | StreakRecord computation (win streaks, podium streaks) | Done | Built into RecordsEngine — LONGEST_WIN_STREAK, LONGEST_LOSS_STREAK |
 | 04-017 | 4 | RivalryRecord computation for all member pairs | Done | RivalryEngine — shared contests, streaks, biggest margin, closest finish |
 | 04-018 | 4 | Full trophy type library | Done | LEAGUE_CHAMPION, RUNNER_UP, TOP_3_FINISH, PAID_POSITION + model for analytics trophies |
-| 04-019 | 5 | All-play luck score calculation | Not Started | |
-| 04-020 | 5 | Power rating (Oberon Mountain method) | Not Started | |
-| 04-021 | 5 | Consistency score | Not Started | |
-| 04-022 | 5 | Year-over-year improvement tracking | Not Started | |
-| 04-023 | 5 | Analytics-based trophies (Power Player, Unluckiest) | Not Started | |
+| 04-019 | 5 | All-play luck score calculation | Done | computeAllPlayLuck — actual vs expected wins with percentiles |
+| 04-020 | 5 | Power rating (Oberon Mountain method) | Done | computePowerRatings — raw + league-adjusted ratings |
+| 04-021 | 5 | Consistency score | Done | computeConsistency — std dev of percentile ranks, labelled |
+| 04-022 | 5 | Year-over-year improvement tracking | Not Started | Deferred — needs multi-season data |
+| 04-023 | 5 | Analytics-based trophies (Power Player, Unluckiest) | Done | POWER_PLAYER, UNLUCKIEST_PLAYER, IRON_CONSISTENT |
 | 04-024 | 6 | Season notes and custom trophy awards | Not Started | Commissioner tools |
 | 04-025 | 6 | Manual season import (for migrating leagues) | Not Started | |
 | 04-026 | 6 | Member merge tool | Not Started | |
