@@ -7,11 +7,15 @@ import { PrismaClient } from '@prisma/client';
 import { HistoryService } from './history-service';
 import { LeagueHistoryService } from './league-history-service';
 import { TimelineService } from './timeline-service';
+import { RecordsEngine } from './records-engine';
+import { RivalryEngine } from './rivalry-engine';
 
 export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const historyService = new HistoryService(prisma);
   const timelineService = new TimelineService(prisma);
+  const recordsEngine = new RecordsEngine(prisma);
+  const rivalryEngine = new RivalryEngine(prisma);
   const leagueHistoryService = new LeagueHistoryService(prisma);
 
   // GET /contests/:id/history/summary
@@ -184,6 +188,72 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         request.params.mid,
       );
       return { trophies };
+    },
+  );
+
+  // --- Records & Rivalries (Phase 4) ---
+
+  // GET /leagues/:id/history/records
+  fastify.get<{ Params: { id: string } }>(
+    '/leagues/:id/history/records',
+    async (request) => {
+      const records = await recordsEngine.getRecords(request.params.id);
+      return { records };
+    },
+  );
+
+  // GET /leagues/:id/history/records/:category
+  fastify.get<{ Params: { id: string; category: string } }>(
+    '/leagues/:id/history/records/:category',
+    async (request, reply) => {
+      const record = await recordsEngine.getRecord(request.params.id, request.params.category);
+      if (!record) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: 'Record not found' });
+      }
+      return reply.send(record);
+    },
+  );
+
+  // POST /leagues/:id/history/records/recompute (admin)
+  fastify.post<{ Params: { id: string } }>(
+    '/leagues/:id/history/records/recompute',
+    async (request) => {
+      const count = await recordsEngine.recomputeAllRecords(request.params.id);
+      return { recordsComputed: count };
+    },
+  );
+
+  // GET /leagues/:id/history/rivalries
+  fastify.get<{ Params: { id: string } }>(
+    '/leagues/:id/history/rivalries',
+    async (request) => {
+      const rivalries = await rivalryEngine.getRivalries(request.params.id);
+      return { rivalries };
+    },
+  );
+
+  // GET /leagues/:id/history/rivalries/:mid1/:mid2
+  fastify.get<{ Params: { id: string; mid1: string; mid2: string } }>(
+    '/leagues/:id/history/rivalries/:mid1/:mid2',
+    async (request, reply) => {
+      const rivalry = await rivalryEngine.getRivalry(
+        request.params.id,
+        request.params.mid1,
+        request.params.mid2,
+      );
+      if (!rivalry) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: 'No rivalry record found' });
+      }
+      return reply.send(rivalry);
+    },
+  );
+
+  // POST /leagues/:id/history/rivalries/recompute (admin)
+  fastify.post<{ Params: { id: string } }>(
+    '/leagues/:id/history/rivalries/recompute',
+    async (request) => {
+      const count = await rivalryEngine.recomputeRivalries(request.params.id);
+      return { rivalriesComputed: count };
     },
   );
 }

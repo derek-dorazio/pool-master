@@ -692,6 +692,55 @@ model ScoringCheckpoint {
   @@map("scoring_checkpoints")
 }
 
+model LeagueRecord {
+  id                    String    @id @default(uuid()) @db.Uuid
+  leagueId              String    @map("league_id") @db.Uuid
+  category              String    @db.VarChar(100)
+  scope                 String    @db.VarChar(30)
+  recordValue           Float     @map("record_value")
+  recordLabel           String    @map("record_label") @db.VarChar(255)
+  heldByMemberId        String    @map("held_by_member_id") @db.Uuid
+  heldByMemberName      String    @map("held_by_member_name") @db.VarChar(255)
+  setInContestId        String?   @map("set_in_contest_id") @db.Uuid
+  setInSeasonId         String?   @map("set_in_season_id") @db.Uuid
+  setAt                 DateTime  @map("set_at") @db.Timestamptz
+  previousRecord        Json?     @map("previous_record")
+  isTied                Boolean   @default(false) @map("is_tied")
+  tiedWith              String[]  @default([]) @map("tied_with") @db.Uuid
+  lastComputedAt        DateTime  @map("last_computed_at") @db.Timestamptz
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([leagueId, category, scope])
+  @@index([leagueId])
+  @@map("league_records")
+}
+
+model RivalryRecord {
+  id                    String   @id @default(uuid()) @db.Uuid
+  leagueId              String   @map("league_id") @db.Uuid
+  memberAId             String   @map("member_a_id") @db.Uuid
+  memberBId             String   @map("member_b_id") @db.Uuid
+  totalContestsShared   Int      @default(0) @map("total_contests_shared")
+  memberAHigherFinishes Int      @default(0) @map("member_a_higher_finishes")
+  memberBHigherFinishes Int      @default(0) @map("member_b_higher_finishes")
+  ties                  Int      @default(0)
+  memberATotalPoints    Float    @default(0) @map("member_a_total_points")
+  memberBTotalPoints    Float    @default(0) @map("member_b_total_points")
+  currentStreak         Json?    @map("current_streak")
+  longestStreak         Json?    @map("longest_streak")
+  biggestMargin         Json?    @map("biggest_margin")
+  closestFinish         Json?    @map("closest_finish")
+  lastContestAt         DateTime? @map("last_contest_at") @db.Timestamptz
+  lastUpdatedAt         DateTime @map("last_updated_at") @db.Timestamptz
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([leagueId, memberAId, memberBId])
+  @@index([leagueId])
+  @@map("rivalry_records")
+}
+
 model LeagueSeasonSummary {
   id                String   @id @default(uuid()) @db.Uuid
   leagueId          String   @map("league_id") @db.Uuid

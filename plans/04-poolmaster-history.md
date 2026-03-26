@@ -944,10 +944,10 @@ Commissioners have additional history management capabilities:
 | 04-012 | 3 | DraftHistoryReplay endpoint | Done | GET /contests/:id/history/draft — full pick-by-pick replay |
 | 04-013 | 3 | ContestRosterReplay with scoring breakdown | Done | GET /contests/:id/history/replay/:entryId — frozen or live roster |
 | 04-014 | 3 | ~~MatchupHistory for H2H season-long leagues~~ | Removed | Out of scope — no H2H in v1 |
-| 04-015 | 4 | LeagueRecord book engine (30+ categories) | Not Started | |
-| 04-016 | 4 | StreakRecord computation (win streaks, podium streaks) | Not Started | |
-| 04-017 | 4 | RivalryRecord computation for all member pairs | Not Started | |
-| 04-018 | 4 | Full trophy type library | Not Started | |
+| 04-015 | 4 | LeagueRecord book engine (30+ categories) | Done | 15+ record categories: scores, championships, streaks, ROI, consistency |
+| 04-016 | 4 | StreakRecord computation (win streaks, podium streaks) | Done | Built into RecordsEngine — LONGEST_WIN_STREAK, LONGEST_LOSS_STREAK |
+| 04-017 | 4 | RivalryRecord computation for all member pairs | Done | RivalryEngine — shared contests, streaks, biggest margin, closest finish |
+| 04-018 | 4 | Full trophy type library | Done | LEAGUE_CHAMPION, RUNNER_UP, TOP_3_FINISH, PAID_POSITION + model for analytics trophies |
 | 04-019 | 5 | All-play luck score calculation | Not Started | |
 | 04-020 | 5 | Power rating (Oberon Mountain method) | Not Started | |
 | 04-021 | 5 | Consistency score | Not Started | |
