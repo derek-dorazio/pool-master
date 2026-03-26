@@ -20,6 +20,9 @@ All services and clients must follow these testing standards. This document defi
 | **aws-sdk-client-mock** | Mock AWS services (S3, SQS, DynamoDB) for unit tests |
 | **sinon** (or Jest mocks) | Stubs, spies, and mocks for time, dependencies |
 | **nock** | Mock HTTP requests to external APIs (sports data providers, Stripe) |
+| **Mailpit** | Email capture for integration/E2E tests (SMTP on 1025, API on 8025) |
+| **LocalStack** | AWS service mocks (SES, SNS, SQS) for integration tests |
+| **Push Mock Server** | APNs/FCM push capture for integration tests (port 3099) |
 
 ### Frontend (React + TypeScript)
 
@@ -463,4 +466,34 @@ describe("Golf scoring against real data", () => {
 
 ---
 
-*PoolMaster Testing Rules v1.0*
+## 11. Notification Testing
+
+### Unit Tests
+Mock channel adapters directly with Jest mocks. Test the preference service, template renderer, and channel factory in isolation.
+
+### Integration Tests — Email
+1. Start Mailpit via docker-compose (SMTP on `localhost:1025`)
+2. Send email through `SmtpEmailProvider`
+3. Verify delivery via Mailpit API: `GET http://localhost:8025/api/v1/messages`
+4. Assert subject, recipients, body content
+
+### Integration Tests — Push
+1. Start push-mock-server via docker-compose (port `3099`)
+2. Send push through `ApnsPushProvider` or `FcmPushProvider`
+3. Verify delivery via mock API: `GET http://localhost:3099/push-log`
+4. Assert payload structure, device token, platform
+5. Clear between tests: `DELETE http://localhost:3099/push-log`
+
+### Integration Tests — AWS SES
+- **Unit tests:** Use `aws-sdk-client-mock` to mock the SES client
+- **Integration tests:** Use LocalStack (`localhost:4566`) with real `@aws-sdk/client-ses`
+- Verify sends: `awslocal ses get-send-statistics`
+
+### Test Environment Setup
+All mock infrastructure starts with: `docker compose -f infrastructure/docker/docker-compose.dev.yml up`
+
+See `rules/architecture-rules.md` section 8 for the full local dev infrastructure reference.
+
+---
+
+*PoolMaster Testing Rules v1.1*

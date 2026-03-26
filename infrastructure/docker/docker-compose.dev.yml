@@ -1,4 +1,4 @@
-# Development docker-compose — local databases and services
+# Development docker-compose — local databases, caches, and mock services
 # Usage: docker compose -f infrastructure/docker/docker-compose.dev.yml up
 
 services:
@@ -18,5 +18,35 @@ services:
     ports:
       - "6379:6379"
 
+  # Email capture — all outbound SMTP lands here, viewable at http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"   # Web UI
+      - "1025:1025"   # SMTP
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+  # AWS mock — SES, SNS, SQS on a single gateway endpoint
+  localstack:
+    image: localstack/localstack:latest
+    environment:
+      SERVICES: ses,sns,sqs
+      DEFAULT_REGION: us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - ./localstack-init:/etc/localstack/init
+
+  # Push notification mock — captures APNs/FCM payloads, log at GET http://localhost:3099/push-log
+  push-mock:
+    build:
+      context: ../../packages/push-mock-server
+    ports:
+      - "3099:3099"
+
 volumes:
   pgdata:
+  localstack-data:

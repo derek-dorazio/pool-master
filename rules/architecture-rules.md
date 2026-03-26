@@ -303,7 +303,47 @@ poolmaster/
 
 ---
 
-## 7. Rules Hierarchy
+## 8. Local Development Infrastructure
+
+Start all services: `docker compose -f infrastructure/docker/docker-compose.dev.yml up`
+
+Copy env config: `cp .env.example .env`
+
+### Services
+
+| Service | Port | Purpose |
+|---|---|---|
+| PostgreSQL | 5432 | Primary database |
+| Redis | 6379 | Cache, message bus, BullMQ |
+| **Mailpit** | 8025 (UI), 1025 (SMTP) | Email capture — all outbound SMTP lands here. Visual preview at http://localhost:8025 |
+| **LocalStack** | 4566 | AWS mock — SES, SNS, SQS. Real SDK APIs, no credentials needed |
+| **Push Mock** | 3099 | APNs/FCM mock — captures push payloads. View at `GET http://localhost:3099/push-log` |
+
+### Provider Abstraction Pattern
+
+All external service integrations (push, email, data providers) use a **provider interface** with configurable endpoints. Dev vs prod is controlled entirely by environment variables — no conditional logic in provider code.
+
+| Channel | Dev Target | Prod Target |
+|---|---|---|
+| Email (SMTP) | Mailpit (`localhost:1025`) | — |
+| Email (SES) | LocalStack (`localhost:4566`) | AWS SES |
+| Push (APNs) | Push Mock (`localhost:3099`) | `api.push.apple.com` |
+| Push (FCM) | Push Mock (`localhost:3099`) | `fcm.googleapis.com` |
+| AWS SNS/SQS | LocalStack (`localhost:4566`) | Real AWS |
+
+### LocalStack Bootstrap
+
+LocalStack auto-initialises on startup via `infrastructure/docker/localstack-init/ready.d/init-aws.sh`:
+- Verifies SES sender identity (`noreply@poolmaster.local`)
+- Creates SNS topic and SQS queue
+- Subscribes queue to topic
+
+### Mailpit vs LocalStack SES
+
+- **Mailpit** (SMTP): Primary dev email path — visual email preview, fastest feedback loop
+- **LocalStack SES**: Validates AWS SDK integration code works correctly. Does not render emails — use Mailpit for visual inspection
+
+## 9. Rules Hierarchy
 
 When a decision is needed, consult rules files in this order:
 
@@ -322,4 +362,4 @@ If a conflict exists between rules files, escalate. If no rules file covers it, 
 
 ---
 
-*PoolMaster Architecture Rules v1.1*
+*PoolMaster Architecture Rules v1.2*

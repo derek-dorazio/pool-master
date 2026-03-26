@@ -918,13 +918,13 @@ CREATE INDEX idx_delivery_user ON notification_delivery_log(user_id, created_at)
 | 09-005 | 1 | `notification_preferences` table + default preferences | Done | Upsert preferences + per-category defaults |
 | 09-006 | 1 | `notification_templates` table + initial draft event templates | Done | 14 seed templates across all categories |
 | 09-007 | 1 | Template renderer (variable substitution) | Done | Mustache-style {{var}} rendering per channel |
-| 09-008 | 2 | `device_registrations` table | Not Started | |
-| 09-009 | 2 | Device registration API (`POST /api/v1/devices`) | Not Started | |
-| 09-010 | 2 | APNs push channel integration (iOS) | Not Started | |
-| 09-011 | 2 | FCM push channel integration (Android) | Not Started | |
-| 09-012 | 2 | Push delivery for draft events (on-the-clock, clock warnings) | Not Started | |
-| 09-013 | 2 | Deep linking from push notification to correct app screen | Not Started | |
-| 09-014 | 3 | Email channel integration (SES or SendGrid) | Not Started | |
+| 09-008 | 2 | `device_registrations` table | Done | DeviceRegistration Prisma model + push-mock-server for dev |
+| 09-009 | 2 | Device registration API (`POST /api/v1/devices`) | Done | POST /api/v1/devices + DELETE /api/v1/devices/:id |
+| 09-010 | 2 | APNs push channel integration (iOS) | Done | ApnsPushProvider with configurable base URL (push-mock in dev) |
+| 09-011 | 2 | FCM push channel integration (Android) | Done | FcmPushProvider with configurable base URL (push-mock in dev) |
+| 09-012 | 2 | Push delivery for draft events (on-the-clock, clock warnings) | Not Started | Templates ready, event bus wiring deferred |
+| 09-013 | 2 | Deep linking from push notification to correct app screen | Not Started | Action params wired in templates, client routing deferred |
+| 09-014 | 3 | Email channel integration (SES or SendGrid) | Done | SmtpEmailProvider (Mailpit dev) + SesEmailProvider (LocalStack dev / real SES prod) |
 | 09-015 | 3 | Transactional email templates (draft, contest results, account) | Not Started | |
 | 09-016 | 3 | Email delivery tracking (sent, delivered, opened, clicked) | Not Started | |
 | 09-017 | 3 | Unsubscribe handling (per-category opt-out) | Not Started | |

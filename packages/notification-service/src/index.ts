@@ -1,27 +1,28 @@
 import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { InAppChannel } from './channels/in-app-channel';
+import { loadConfig } from './core/config';
 import { getDefaultPreferences } from './core/preference-service';
+import { createChannels } from './channels/channel-factory';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
   const prisma = new PrismaClient();
-  const inAppChannel = new InAppChannel(prisma);
+  const config = loadConfig();
+  const channels = createChannels(config, prisma);
 
   // --- Health ---
 
   app.get('/health', async () => {
-    return { status: 'ok', service: 'notification-service' };
+    return { status: 'ok', service: 'notification-service', emailProvider: config.emailProvider };
   });
 
   // --- In-App Notification Centre ---
 
-  // GET /api/v1/notifications
   app.get<{ Querystring: { limit?: string; offset?: string; unreadOnly?: string } }>(
     '/api/v1/notifications',
     async (request) => {
       const userId = request.headers['x-user-id'] as string;
-      return inAppChannel.getNotifications(userId, {
+      return channels.inApp.getNotifications(userId, {
         limit: request.query.limit ? parseInt(request.query.limit, 10) : undefined,
         offset: request.query.offset ? parseInt(request.query.offset, 10) : undefined,
         unreadOnly: request.query.unreadOnly === 'true',
@@ -29,46 +30,39 @@ export function buildApp() {
     },
   );
 
-  // GET /api/v1/notifications/unread-count
   app.get('/api/v1/notifications/unread-count', async (request) => {
     const userId = request.headers['x-user-id'] as string;
-    const count = await inAppChannel.getUnreadCount(userId);
+    const count = await channels.inApp.getUnreadCount(userId);
     return { unreadCount: count };
   });
 
-  // PUT /api/v1/notifications/:id/read
   app.put<{ Params: { id: string } }>(
     '/api/v1/notifications/:id/read',
     async (request) => {
-      await inAppChannel.markAsRead(request.params.id);
+      await channels.inApp.markAsRead(request.params.id);
       return { success: true };
     },
   );
 
-  // PUT /api/v1/notifications/read-all
   app.put('/api/v1/notifications/read-all', async (request) => {
     const userId = request.headers['x-user-id'] as string;
-    const count = await inAppChannel.markAllAsRead(userId);
+    const count = await channels.inApp.markAllAsRead(userId);
     return { markedRead: count };
   });
 
-  // DELETE /api/v1/notifications/:id
   app.delete<{ Params: { id: string } }>(
     '/api/v1/notifications/:id',
     async (request) => {
-      await inAppChannel.dismiss(request.params.id);
+      await channels.inApp.dismiss(request.params.id);
       return { success: true };
     },
   );
 
   // --- Preferences ---
 
-  // GET /api/v1/notifications/preferences
   app.get('/api/v1/notifications/preferences', async (request) => {
     const userId = request.headers['x-user-id'] as string;
-    const prefs = await prisma.notificationPreference.findUnique({
-      where: { userId },
-    });
+    const prefs = await prisma.notificationPreference.findUnique({ where: { userId } });
     if (!prefs) {
       return { preferences: { doNotDisturb: false, categories: getDefaultPreferences() } };
     }
@@ -81,13 +75,11 @@ export function buildApp() {
     };
   });
 
-  // PUT /api/v1/notifications/preferences
   app.put<{ Body: { doNotDisturb?: boolean; dndSchedule?: object; categories?: object } }>(
     '/api/v1/notifications/preferences',
     async (request) => {
       const userId = request.headers['x-user-id'] as string;
       const body = request.body;
-
       const prefs = await prisma.notificationPreference.upsert({
         where: { userId },
         create: {
@@ -102,8 +94,76 @@ export function buildApp() {
           ...(body.categories !== undefined && { categoryPreferences: body.categories as object }),
         },
       });
-
       return { preferences: prefs };
+    },
+  );
+
+  // --- Device Registration (Push) ---
+
+  app.post<{ Body: { platform: string; token: string; appVersion?: string; osVersion?: string; deviceModel?: string } }>(
+    '/api/v1/devices',
+    async (request, reply) => {
+      const userId = request.headers['x-user-id'] as string;
+      const body = request.body;
+      const device = await prisma.deviceRegistration.upsert({
+        where: { platform_token: { platform: body.platform, token: body.token } },
+        create: {
+          userId,
+          platform: body.platform,
+          token: body.token,
+          appVersion: body.appVersion,
+          osVersion: body.osVersion,
+          deviceModel: body.deviceModel,
+          lastActiveAt: new Date(),
+        },
+        update: {
+          userId,
+          appVersion: body.appVersion,
+          osVersion: body.osVersion,
+          deviceModel: body.deviceModel,
+          isActive: true,
+          lastActiveAt: new Date(),
+        },
+      });
+      return reply.status(201).send({ device });
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>(
+    '/api/v1/devices/:id',
+    async (request) => {
+      await prisma.deviceRegistration.update({
+        where: { id: request.params.id },
+        data: { isActive: false },
+      });
+      return { success: true };
+    },
+  );
+
+  // --- Test endpoints (dev only) ---
+
+  app.post<{ Body: { to: string; subject: string; text: string; html?: string } }>(
+    '/api/v1/test/email',
+    async (request) => {
+      const result = await channels.email.sendToUser(
+        request.body.to,
+        request.body.subject,
+        request.body.text,
+        request.body.html,
+      );
+      return result;
+    },
+  );
+
+  app.post<{ Body: { platform: string; token: string; title: string; body: string; data?: Record<string, string> } }>(
+    '/api/v1/test/push',
+    async (request) => {
+      const result = await channels.push.sendToDevice(
+        request.body.platform as 'ios' | 'android',
+        request.body.token,
+        { title: request.body.title, body: request.body.body, data: request.body.data },
+      );
+      return result;
     },
   );
 
@@ -112,10 +172,10 @@ export function buildApp() {
 
 async function start(): Promise<void> {
   const app = buildApp();
-  const port = Number(process.env.PORT ?? 3004);
+  const config = loadConfig();
 
   try {
-    await app.listen({ port, host: '0.0.0.0' });
+    await app.listen({ port: config.port, host: '0.0.0.0' });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
