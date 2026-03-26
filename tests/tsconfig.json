@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "outDir": "../dist-tests",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "paths": {
+      "@poolmaster/shared/*": ["./packages/shared/*"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "../packages/*/src/**/*.ts",
+    "../packages/shared/**/*.ts"
+  ]
+}

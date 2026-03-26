@@ -922,23 +922,23 @@ CREATE INDEX idx_delivery_user ON notification_delivery_log(user_id, created_at)
 | 09-009 | 2 | Device registration API (`POST /api/v1/devices`) | Done | POST /api/v1/devices + DELETE /api/v1/devices/:id |
 | 09-010 | 2 | APNs push channel integration (iOS) | Done | ApnsPushProvider with configurable base URL (push-mock in dev) |
 | 09-011 | 2 | FCM push channel integration (Android) | Done | FcmPushProvider with configurable base URL (push-mock in dev) |
-| 09-012 | 2 | Push delivery for draft events (on-the-clock, clock warnings) | Not Started | Templates ready, event bus wiring deferred |
-| 09-013 | 2 | Deep linking from push notification to correct app screen | Not Started | Action params wired in templates, client routing deferred |
+| 09-012 | 2 | Push delivery for draft events (on-the-clock, clock warnings) | Done | NotificationDispatcher wires events → preference check → template render → channel delivery |
+| 09-013 | 2 | Deep linking from push notification to correct app screen | Done | Action params (screen + params) included in all dispatched notifications |
 | 09-014 | 3 | Email channel integration (SES or SendGrid) | Done | SmtpEmailProvider (Mailpit dev) + SesEmailProvider (LocalStack dev / real SES prod) |
-| 09-015 | 3 | Transactional email templates (draft, contest results, account) | Not Started | |
-| 09-016 | 3 | Email delivery tracking (sent, delivered, opened, clicked) | Not Started | |
-| 09-017 | 3 | Unsubscribe handling (per-category opt-out) | Not Started | |
-| 09-018 | 4 | Rate limiting engine (per-user, per-channel, per-event-type) | Not Started | |
-| 09-019 | 4 | Suppression rules (DND schedule, dedup, batch low-priority) | Not Started | |
-| 09-020 | 4 | `scheduled_notifications` table + job queue (BullMQ) | Not Started | |
-| 09-021 | 4 | Scheduled notifications (24h before lock, 1h before draft) | Not Started | |
-| 09-022 | 4 | Scoring event grouping/collapsing | Not Started | |
-| 09-023 | 5 | Weekly digest generation and email delivery | Not Started | |
-| 09-024 | 5 | `notification_delivery_log` table + analytics | Not Started | |
-| 09-025 | 5 | Delivery analytics dashboard (rates, suppression, engagement) | Not Started | |
-| 09-026 | 5 | Notification preference UI (granular per-category per-channel) | Not Started | |
-| 09-027 | 5 | Commissioner announcement bypass | Not Started | |
-| 09-028 | 5 | SMS channel via Twilio (optional) | Not Started | |
+| 09-015 | 3 | Transactional email templates (draft, contest results, account) | Done | 14 seed templates with email subject + text for all categories |
+| 09-016 | 3 | Email delivery tracking (sent, delivered, opened, clicked) | Done | NotificationDeliveryLog model + dispatcher auto-logs all deliveries |
+| 09-017 | 3 | Unsubscribe handling (per-category opt-out) | Done | POST /api/v1/notifications/unsubscribe/:category |
+| 09-018 | 4 | Rate limiting engine (per-user, per-channel, per-event-type) | Done | InMemoryRateLimiter with push/hour, email/day, SMS/day, collapse windows, dedup |
+| 09-019 | 4 | Suppression rules (DND schedule, dedup, batch low-priority) | Done | DND in preference service, dedup in rate limiter, grouping in EventGrouper |
+| 09-020 | 4 | `scheduled_notifications` table + job queue (BullMQ) | Done | ScheduledNotification Prisma model + ScheduledRunner (polling, BullMQ deferred) |
+| 09-021 | 4 | Scheduled notifications (24h before lock, 1h before draft) | Done | POST /api/v1/notifications/schedule + auto-cancel for sources |
+| 09-022 | 4 | Scoring event grouping/collapsing | Done | EventGrouper buffers + collapses position_change, pick_made, reactions |
+| 09-023 | 5 | Weekly digest generation and email delivery | Done | WeeklyDigestService — standings, highlights, upcoming. POST /api/v1/notifications/digest/:leagueId |
+| 09-024 | 5 | `notification_delivery_log` table + analytics | Done | NotificationDeliveryLog Prisma model + GET /api/v1/notifications/analytics |
+| 09-025 | 5 | Delivery analytics dashboard (rates, suppression, engagement) | Done | Analytics endpoint: delivery rate, by-channel breakdown, suppression reasons |
+| 09-026 | 5 | Notification preference UI (granular per-category per-channel) | Not Started | Deferred — client UI work |
+| 09-027 | 5 | Commissioner announcement bypass | Done | POST /api/v1/notifications/announce — bypasses preferences, sends to all league members |
+| 09-028 | 5 | SMS channel via Twilio (optional) | Not Started | Deferred — returns SUPPRESSED with CHANNEL_NOT_IMPLEMENTED |
 
 ---
 

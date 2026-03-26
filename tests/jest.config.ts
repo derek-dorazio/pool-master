@@ -1,10 +1,12 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  preset: 'ts-jest',
   testEnvironment: 'node',
   rootDir: '.',
   testMatch: ['**/*.test.ts'],
+  transform: {
+    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tests/tsconfig.json' }],
+  },
   moduleNameMapper: {
     '^@poolmaster/shared/(.*)$': '<rootDir>/../packages/shared/$1',
   },

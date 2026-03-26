@@ -940,3 +940,23 @@ model ScheduledNotification {
   @@index([status, fireAt])
   @@map("scheduled_notifications")
 }
+
+model NotificationDeliveryLog {
+  id                    String    @id @default(uuid()) @db.Uuid
+  notificationEventId   String    @map("notification_event_id") @db.VarChar(255)
+  userId                String    @map("user_id") @db.Uuid
+  channel               String    @db.VarChar(20)
+  status                String    @db.VarChar(20)
+  suppressionReason     String?   @map("suppression_reason") @db.VarChar(255)
+  providerMessageId     String?   @map("provider_message_id") @db.VarChar(255)
+  sentAt                DateTime? @map("sent_at") @db.Timestamptz
+  deliveredAt           DateTime? @map("delivered_at") @db.Timestamptz
+  openedAt              DateTime? @map("opened_at") @db.Timestamptz
+  tappedAt              DateTime? @map("tapped_at") @db.Timestamptz
+  failedReason          String?   @map("failed_reason")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([notificationEventId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notification_delivery_log")
+}
