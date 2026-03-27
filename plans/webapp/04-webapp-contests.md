@@ -950,13 +950,13 @@ function useContestPolling(contestId: string, status: ContestStatus) {
 | W-C-006 | 2 | Pool builder (full field, custom, tier assignment, budget pricing) | Done | Simplified info card showing full field selected (90 participants); part of create wizard step 5 |
 | W-C-007 | 2 | Entry settings form (max entries, deadline, roster size, survivor/confidence config) | Done | Functional form fields for max entries, entry deadline, roster size; part of create wizard step 6 |
 | W-C-008 | 2 | Review & create step (summary + POST /contests + POST /drafts) | Done | Summary card of all steps + Create Contest button with toast + navigate; part of create wizard step 7 |
-| W-C-009 | 3 | Contest detail page — pre-draft/open state (info card, countdown, entry list, join CTA) | Not Started | |
+| W-C-009 | 3 | Contest detail page — pre-draft/open state (info card, countdown, entry list, join CTA) | Done | PreDraftView with countdown timer, entry list, spots remaining, join CTA, contest details sidebar |
 | W-C-010 | 3 | Contest detail page — in-progress state (live standings, my entry, timeline, stale indicator) | Done | Contest header, My Entry card with picks, standings snapshot, contest info sidebar; uses `useContest` hook with mock data |
 | W-C-011 | 3 | Contest detail page — completed state (results summary, winner highlight, link to results) | Done | Winner spotlight card, final standings table, contest summary; implemented in `pages/contests/results.tsx` |
 | W-C-012 | 3 | Full standings table (sortable, expandable rows, movement arrows, filters, CSV export) | Done | 12-entry table with sortable columns, rank badges, movement indicators, eliminated/user highlighting; `pages/contests/standings.tsx` with `useStandings` hook |
 | W-C-013 | 4 | Score breakdown view (entry scorecard, participant score rows, rule chips, legend) | Done | Entry selector, expandable participant rows with stat-to-score mapping, collapsible scoring rules reference; `pages/contests/scoring.tsx` |
-| W-C-014 | 4 | Contest polling infrastructure (useContestPolling hook, visibility-aware, ETag support) | Not Started | Depends on W-016 |
-| W-C-015 | 4 | Commissioner contest controls (score override, recalculate, close/cancel, extend deadline) | Not Started | Depends on plan 08 API endpoints |
+| W-C-014 | 4 | Contest polling infrastructure (useContestPolling hook, visibility-aware, ETag support) | Done | Visibility-aware polling, pauses on hidden tab, immediate refetch on focus, configurable interval |
+| W-C-015 | 4 | Commissioner contest controls (score override, recalculate, close/cancel, extend deadline) | Done | Score override form, recalculate/close/cancel/reopen/extend actions with confirmation dialogs |
 
 ---
 

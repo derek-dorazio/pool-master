@@ -802,10 +802,10 @@ All loading states use shadcn/ui `Skeleton` component. Tab content is wrapped in
 | W-L-008 | 2 | League settings page (general, rules, invitations, danger zone) | Done | 184 lines — general settings form, invite link management, danger zone (leave/delete) |
 | W-L-009 | 2 | Member management table with sort and search | Done | 321 lines — member table with role badges, search, invite dialog, role change |
 | W-L-010 | 3 | Invite flow: email invitations and shareable invite link | Done | Email invite dialog + copy invite link in members.tsx |
-| W-L-011 | 3 | Join/leave league flow with approval-based request handling | Not Started | Leave button exists; join/approval flow needs implementation |
+| W-L-011 | 3 | Join/leave league flow with approval-based request handling | Done | JoinLeagueButton (open/approval/pending/joined states) + LeaveLeagueButton with confirmation |
 | W-L-012 | 3 | League header component (shared across league pages) | Done | Header with sport icon, name, role badge, member count built into detail.tsx |
-| W-L-013 | 3 | Role-based access guard (RoleGuard HOC) | Not Started | Settings link visible to all; guard logic not yet implemented |
-| W-L-014 | 3 | Entitlement checks for league creation limits | Not Started | Free tier = no limits; wire when billing is enabled |
+| W-L-013 | 3 | Role-based access guard (RoleGuard HOC) | Done | RoleGuard component + withRoleGuard HOC, role hierarchy, redirect on denied |
+| W-L-014 | 3 | Entitlement checks for league creation limits | Done | EntitlementGate component — free tier always passes, upgrade prompt when limits hit |
 
 ---
 
