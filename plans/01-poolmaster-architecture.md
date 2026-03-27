@@ -25,6 +25,13 @@
 | 14 | [Localisation & i18n](14-poolmaster-localisation-i18n.md) | Timezone handling, multi-currency, number formatting, translation |
 | 15 | [Responsible Gaming](15-poolmaster-responsible-gaming.md) | Age verification, geographic restrictions, GDPR/CCPA, data retention |
 
+### Client Plans
+
+| Subfolder | Scope |
+|---|---|
+| [webapp/](webapp/) | React web app — 14 plan files (auth, dashboard, leagues, contests, draft room, etc.) |
+| [ios-app/](ios-app/) | Native iOS (Swift/SwiftUI) — 9 plan files, 51 tasks (auth, navigation, draft room, push, social) |
+
 ---
 
 ## 1. Vision & Scope
