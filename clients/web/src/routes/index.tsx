@@ -51,6 +51,7 @@ export const router = createBrowserRouter([
       { path: 'discover', lazy: () => import('@/pages/discover') },
       { path: 'discover/leagues', lazy: () => import('@/pages/discover/leagues') },
       { path: 'discover/contests', lazy: () => import('@/pages/discover/contests') },
+      { path: 'discover/search', lazy: () => import('@/pages/discover/search') },
 
       // Settings
       { path: 'settings', lazy: () => import('@/pages/settings') },

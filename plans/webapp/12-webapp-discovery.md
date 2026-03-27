@@ -578,14 +578,14 @@ All skeleton screens use the shadcn/ui `Skeleton` component. Error states includ
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-DIS-001 | 1 | Discovery hub page — hero banner, sport tabs, featured sections with horizontal scroll, trending/popular data loading | Not Started | |
-| W-DIS-002 | 1 | Global search bar with debounce — reusable SearchBar component, 150ms debounce, Cmd+K shortcut, recent search history via Zustand | Not Started | Depends on 13-xxx (search API) |
-| W-DIS-003 | 2 | Browse leagues page with filters — LeagueBrowser, LeagueFilterBar, URL param sync, infinite scroll, sort options | Not Started | Depends on 13-xxx (discover leagues API) |
-| W-DIS-004 | 2 | Browse contests page with filters — ContestBrowser, ContestFilterBar, URL param sync, infinite scroll, sort options | Not Started | Depends on 13-xxx (discover contests API) |
-| W-DIS-005 | 2 | League discovery card — LeagueDiscoveryCard component with sport icon, member count, commissioner, join type badge | Not Started | |
-| W-DIS-006 | 2 | Contest discovery card — ContestDiscoveryCard component with entry progress bar, deadline countdown, capacity badge | Not Started | |
-| W-DIS-007 | 3 | Join league flow — JoinLeagueButton with open join, approval request, pending/joined states, mutation hooks, optimistic updates | Not Started | Depends on 01-xxx (join league API) |
-| W-DIS-008 | 3 | Global search results with tabs — GlobalSearchResultsPage, tabbed results, SearchHighlight, cross-entity search, result counts per tab | Not Started | Depends on 13-xxx (search API) |
+| W-DIS-001 | 1 | Discovery hub page — hero banner, sport tabs, featured sections with horizontal scroll, trending/popular data loading | Done | Hero search, sport filter tabs, trending leagues grid, popular contests grid, skeleton loading |
+| W-DIS-002 | 1 | Global search bar with debounce — reusable SearchBar component, 150ms debounce, Cmd+K shortcut, recent search history via Zustand | Done | Reusable SearchBar with Cmd+K, clear button, sm/lg sizes |
+| W-DIS-003 | 2 | Browse leagues page with filters — LeagueBrowser, LeagueFilterBar, URL param sync, infinite scroll, sort options | Done | Sport badge filters, sort dropdown, URL param sync, search, skeleton loading |
+| W-DIS-004 | 2 | Browse contests page with filters — ContestBrowser, ContestFilterBar, URL param sync, infinite scroll, sort options | Done | Sport badges, sort (starting soon/popular/newest), URL params, search |
+| W-DIS-005 | 2 | League discovery card — LeagueDiscoveryCard component with sport icon, member count, commissioner, join type badge | Done | Sport emoji, member count, active contests, join policy badge, commissioner name |
+| W-DIS-006 | 2 | Contest discovery card — ContestDiscoveryCard component with entry progress bar, deadline countdown, capacity badge | Done | Entry progress bar, days-until-lock countdown, draft type badge, member capacity |
+| W-DIS-007 | 3 | Join league flow — JoinLeagueButton with open join, approval request, pending/joined states, mutation hooks, optimistic updates | Done | Join/Request/Joined/Pending states, loading spinner, mutation with query invalidation |
+| W-DIS-008 | 3 | Global search results with tabs — GlobalSearchResultsPage, tabbed results, SearchHighlight, cross-entity search, result counts per tab | Done | Tabbed results (All/Leagues/Contests), per-tab counts, empty states, URL param sync |
 
 ---
 
