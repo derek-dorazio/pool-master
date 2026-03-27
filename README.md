@@ -16,12 +16,16 @@ npm run dev:start
 
 This starts Docker (Postgres, Redis, DynamoDB, Mailpit), runs migrations, seeds test data, and launches all services.
 
-| What | URL |
-|------|-----|
-| **Webapp** | http://localhost:5173 |
-| **Core API** | http://localhost:3000 |
-| **Mailpit (email viewer)** | http://localhost:8025 |
-| **Prisma Studio** | `npm run db:studio` |
+| What | URL | Purpose |
+|------|-----|---------|
+| **Webapp** | http://localhost:5173 | React frontend |
+| **Core API** | http://localhost:3000 | REST API (health: `GET /health`) |
+| **Mailpit** | http://localhost:8025 | View all sent emails |
+| **Push Mock** | http://localhost:3099/push-log | View push notifications |
+| **Prisma Studio** | `npm run db:studio` | Browse/edit database |
+| **Redis** | `localhost:6379` | CLI: `docker exec -it docker-redis-1 redis-cli` |
+| **DynamoDB** | `localhost:8000` | NoSQL event store |
+| **PostgreSQL** | `localhost:5432` | CLI: `docker exec -it docker-postgres-1 psql -U postgres -d poolmaster` |
 
 See [docs/DEVELOPER-SETUP.md](docs/DEVELOPER-SETUP.md) for full setup instructions.
 

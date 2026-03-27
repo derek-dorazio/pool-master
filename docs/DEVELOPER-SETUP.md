@@ -46,11 +46,38 @@ This starts:
 | **PostgreSQL 16** | `5432` | Primary database (`poolmaster` / `postgres` / `postgres`) |
 | **Redis 7** | `6379` | Cache, message bus, BullMQ |
 | **DynamoDB Local** | `8000` | NoSQL for high-volume event data |
-| **Mailpit** | `8025` (UI), `1025` (SMTP) | **Email viewer** — all outbound email lands here. Browse at http://localhost:8025 |
-| **LocalStack** | `4566` | AWS mock (SES, SNS, SQS) — real SDK APIs, no credentials needed |
-| **Push Mock** | `3099` | APNs/FCM push capture — view payloads at `GET http://localhost:3099/push-log` |
+| **Mailpit** | `8025` (UI), `1025` (SMTP) | Email viewer — all outbound email. Browse at http://localhost:8025 |
+| **LocalStack** | `4566` | AWS mock (SES, SNS, SQS) — no credentials needed |
+| **Push Mock** | `3099` | APNs/FCM push capture — view at http://localhost:3099/push-log |
 
-> **Tip:** Open http://localhost:8025 in your browser to see all emails sent by the notification service during testing (welcome emails, draft reminders, contest results, weekly digests, etc.)
+### Browser-Accessible Dev Tools
+
+| Tool | URL | What It Shows |
+|---|---|---|
+| **Mailpit** | http://localhost:8025 | All emails sent by notification service (welcome, drafts, results, digests) |
+| **Push Mock Log** | http://localhost:3099/push-log | All push notifications sent to APNs/FCM mock |
+| **Prisma Studio** | `npm run db:studio` → http://localhost:5555 | Visual database browser — view/edit all tables |
+
+### CLI Access to Infrastructure
+
+```bash
+# Redis CLI — inspect keys, pub/sub, cache
+docker exec -it docker-redis-1 redis-cli
+
+# PostgreSQL CLI — run SQL queries
+docker exec -it docker-postgres-1 psql -U postgres -d poolmaster
+
+# DynamoDB — list tables (requires AWS CLI or use the SDK)
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
+  aws dynamodb list-tables --endpoint-url http://localhost:8000 --region us-east-1
+
+# LocalStack — interact with mock AWS services
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
+  aws ses get-send-statistics --endpoint-url http://localhost:4566 --region us-east-1
+
+# Push Mock — clear the log between test runs
+curl -X DELETE http://localhost:3099/push-log
+```
 
 LocalStack auto-initialises on first start (verifies SES sender, creates SNS topic + SQS queue).
 
