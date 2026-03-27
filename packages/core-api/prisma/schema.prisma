@@ -368,6 +368,11 @@ model Contest {
   scoringStopsOnElimination Boolean   @default(false) @map("scoring_stops_on_elimination")
   scoringRules              Json      @default("{}") @map("scoring_rules")
   payoutConfig              Json      @default("{}") @map("payout_config")
+  sport                     String?   @db.VarChar(50)
+  isImported                Boolean   @default(false) @map("is_imported")
+  importedBy                String?   @map("imported_by") @db.Uuid
+  startDate                 DateTime? @map("start_date") @db.Timestamptz
+  endDate                   DateTime? @map("end_date") @db.Timestamptz
   startsAt                  DateTime? @map("starts_at") @db.Timestamptz
   endsAt                    DateTime? @map("ends_at") @db.Timestamptz
   lockAt                    DateTime? @map("lock_at") @db.Timestamptz
@@ -821,12 +826,40 @@ model Trophy {
   label                 String    @db.VarChar(255)
   description           String?
   awardedAt             DateTime  @map("awarded_at") @db.Timestamptz
+  awardedBy             String?   @map("awarded_by") @db.Uuid
+  seasonLabel           String?   @map("season_label") @db.VarChar(100)
   isDisplayed           Boolean   @default(true) @map("is_displayed")
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([leagueId, leagueMembershipId])
   @@index([leagueId, trophyType])
   @@map("trophies")
+}
+
+model SeasonNote {
+  id        String   @id @default(uuid()) @db.Uuid
+  leagueId  String   @map("league_id") @db.Uuid
+  season    String   @db.VarChar(100)
+  content   String
+  authorId  String   @map("author_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([leagueId, season])
+  @@map("season_notes")
+}
+
+model RetentionConfig {
+  id                       String @id @default(uuid()) @db.Uuid
+  leagueId                 String @unique @map("league_id") @db.Uuid
+  contestResultRetention   Int    @default(-1) @map("contest_result_retention")
+  rosterHistoryRetention   Int    @default(-1) @map("roster_history_retention")
+  activityLogRetention     Int    @default(365) @map("activity_log_retention")
+  payoutRecordRetention    Int    @default(-1) @map("payout_record_retention")
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("retention_configs")
 }
 
 // =============================================================================

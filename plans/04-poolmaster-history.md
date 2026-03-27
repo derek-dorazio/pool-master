@@ -951,13 +951,13 @@ Commissioners have additional history management capabilities:
 | 04-019 | 5 | All-play luck score calculation | Done | computeAllPlayLuck — actual vs expected wins with percentiles |
 | 04-020 | 5 | Power rating (Oberon Mountain method) | Done | computePowerRatings — raw + league-adjusted ratings |
 | 04-021 | 5 | Consistency score | Done | computeConsistency — std dev of percentile ranks, labelled |
-| 04-022 | 5 | Year-over-year improvement tracking | Not Started | Deferred — needs multi-season data |
+| 04-022 | 5 | Year-over-year improvement tracking | Done | YearOverYearTracker — season comparisons with deltas, trends, improvement rankings |
 | 04-023 | 5 | Analytics-based trophies (Power Player, Unluckiest) | Done | POWER_PLAYER, UNLUCKIEST_PLAYER, IRON_CONSISTENT |
-| 04-024 | 6 | Season notes and custom trophy awards | Not Started | Commissioner tools |
-| 04-025 | 6 | Manual season import (for migrating leagues) | Not Started | |
-| 04-026 | 6 | Member merge tool | Not Started | |
-| 04-027 | 6 | Full data export (CSV/JSON) | Not Started | |
-| 04-028 | 6 | Extended retention configuration | Not Started | |
+| 04-024 | 6 | Season notes and custom trophy awards | Done | SeasonNotesService — markdown notes + CUSTOM trophy type; SeasonNote and RetentionConfig Prisma models |
+| 04-025 | 6 | Manual season import (for migrating leagues) | Done | ImportService — validate + execute import; auto-creates users/memberships/seasons |
+| 04-026 | 6 | Member merge tool | Done | HistoryMergeService — preview + execute merge with conflict resolution (KEEP_PRIMARY/KEEP_BEST) |
+| 04-027 | 6 | Full data export (CSV/JSON) | Done | HistoryExportService — JSON + CSV (members, results, records); member personal export |
+| 04-028 | 6 | Extended retention configuration | Done | RetentionService — per-league retention config, preview + run cleanup, RetentionConfig Prisma model |
 
 ---
 

@@ -10,6 +10,12 @@ import { TimelineService } from './timeline-service';
 import { RecordsEngine } from './records-engine';
 import { RivalryEngine } from './rivalry-engine';
 import { AnalyticsService } from './analytics-engine';
+import { YearOverYearTracker } from './yoy-tracker';
+import { SeasonNotesService } from './season-notes-service';
+import { ImportService } from './import-service';
+import { HistoryMergeService } from './member-merge';
+import { HistoryExportService } from './export-service';
+import { RetentionService } from './retention-service';
 
 export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -19,6 +25,12 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const rivalryEngine = new RivalryEngine(prisma);
   const analyticsService = new AnalyticsService(prisma);
   const leagueHistoryService = new LeagueHistoryService(prisma);
+  const yoyTracker = new YearOverYearTracker(prisma);
+  const seasonNotesService = new SeasonNotesService(prisma);
+  const importService = new ImportService(prisma);
+  const mergeService = new HistoryMergeService(prisma);
+  const exportService = new HistoryExportService(prisma);
+  const retentionService = new RetentionService(prisma);
 
   // GET /contests/:id/history/summary
   fastify.get<{ Params: { id: string } }>(
@@ -297,6 +309,182 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         request.query.seasonId,
       );
       return { trophiesAwarded: count };
+    },
+  );
+
+  // --- Year-over-Year Improvement (Phase 5/6) ---
+
+  // GET /members/:mid/history/yoy
+  fastify.get<{ Params: { mid: string }; Querystring: { sport?: string } }>(
+    '/members/:mid/history/yoy',
+    async (request) => {
+      const stats = await yoyTracker.getYoYStats(request.params.mid, request.query.sport);
+      return stats;
+    },
+  );
+
+  // GET /leagues/:id/history/improvement-rankings
+  fastify.get<{ Params: { id: string }; Querystring: { season: string } }>(
+    '/leagues/:id/history/improvement-rankings',
+    async (request, reply) => {
+      const season = request.query.season;
+      if (!season) {
+        return reply.status(400).send({ error: 'BAD_REQUEST', message: 'season query param required' });
+      }
+      const rankings = await yoyTracker.getImprovementRankings(request.params.id, season);
+      return { rankings };
+    },
+  );
+
+  // --- Season Notes & Custom Trophies (Phase 6) ---
+
+  // POST /leagues/:id/seasons/:season/notes
+  fastify.post<{ Params: { id: string; season: string }; Body: { content: string; authorId: string } }>(
+    '/leagues/:id/seasons/:season/notes',
+    async (request) => {
+      const note = await seasonNotesService.addNote(
+        request.params.id,
+        request.params.season,
+        request.body.content,
+        request.body.authorId,
+      );
+      return note;
+    },
+  );
+
+  // GET /leagues/:id/seasons/:season/notes
+  fastify.get<{ Params: { id: string; season: string } }>(
+    '/leagues/:id/seasons/:season/notes',
+    async (request) => {
+      const notes = await seasonNotesService.getNotes(request.params.id, request.params.season);
+      return { notes };
+    },
+  );
+
+  // POST /leagues/:id/seasons/:season/trophies
+  fastify.post<{
+    Params: { id: string; season: string };
+    Body: { label: string; description?: string; recipientMemberId: string; awardedBy: string };
+  }>(
+    '/leagues/:id/seasons/:season/trophies',
+    async (request) => {
+      const trophy = await seasonNotesService.awardTrophy(
+        request.params.id,
+        request.params.season,
+        request.body,
+      );
+      return trophy;
+    },
+  );
+
+  // GET /leagues/:id/trophies (custom trophies)
+  fastify.get<{ Params: { id: string }; Querystring: { season?: string } }>(
+    '/leagues/:id/custom-trophies',
+    async (request) => {
+      const trophies = await seasonNotesService.getTrophies(
+        request.params.id,
+        request.query.season,
+      );
+      return { trophies };
+    },
+  );
+
+  // --- Manual Season Import (Phase 6) ---
+
+  // POST /leagues/:id/import-season
+  fastify.post<{
+    Params: { id: string };
+    Body: { data: { season: string; year: number; sport: string; contests: unknown[] }; importedBy: string };
+  }>(
+    '/leagues/:id/import-season',
+    async (request, reply) => {
+      const { data, importedBy } = request.body;
+      const validation = await importService.validateImport(request.params.id, data as any);
+      if (!validation.isValid) {
+        return reply.status(400).send({ error: 'VALIDATION_FAILED', validation });
+      }
+      const result = await importService.executeImport(request.params.id, data as any, importedBy);
+      return result;
+    },
+  );
+
+  // --- Member Merge (Phase 6) ---
+
+  // POST /members/merge/preview
+  fastify.post<{ Body: { primaryMemberId: string; duplicateMemberId: string } }>(
+    '/members/merge/preview',
+    async (request) => {
+      const preview = await mergeService.previewMerge(
+        request.body.primaryMemberId,
+        request.body.duplicateMemberId,
+      );
+      return preview;
+    },
+  );
+
+  // POST /members/merge/execute
+  fastify.post<{ Body: { primaryMemberId: string; duplicateMemberId: string } }>(
+    '/members/merge/execute',
+    async (request) => {
+      const result = await mergeService.executeMerge(
+        request.body.primaryMemberId,
+        request.body.duplicateMemberId,
+      );
+      return result;
+    },
+  );
+
+  // --- Data Export (Phase 6) ---
+
+  // GET /leagues/:id/export
+  fastify.get<{ Params: { id: string }; Querystring: { format?: string } }>(
+    '/leagues/:id/export',
+    async (request, reply) => {
+      const format = request.query.format ?? 'json';
+      if (format === 'csv') {
+        const csvFiles = await exportService.exportLeagueCsv(request.params.id);
+        return reply.send({ files: csvFiles });
+      }
+      const data = await exportService.exportLeagueJson(request.params.id);
+      return reply.send(data);
+    },
+  );
+
+  // GET /members/:mid/export
+  fastify.get<{ Params: { mid: string } }>(
+    '/members/:mid/export',
+    async (request) => {
+      const data = await exportService.exportMemberHistory(request.params.mid);
+      return data;
+    },
+  );
+
+  // --- Retention Configuration (Phase 6) ---
+
+  // GET /leagues/:id/retention
+  fastify.get<{ Params: { id: string } }>(
+    '/leagues/:id/retention',
+    async (request) => {
+      const config = await retentionService.getConfig(request.params.id);
+      return config;
+    },
+  );
+
+  // PUT /leagues/:id/retention
+  fastify.put<{ Params: { id: string }; Body: Record<string, unknown> }>(
+    '/leagues/:id/retention',
+    async (request) => {
+      const config = await retentionService.updateConfig(request.params.id, request.body as any);
+      return config;
+    },
+  );
+
+  // POST /leagues/:id/retention/preview-cleanup
+  fastify.post<{ Params: { id: string } }>(
+    '/leagues/:id/retention/preview-cleanup',
+    async (request) => {
+      const preview = await retentionService.previewCleanup(request.params.id);
+      return preview;
     },
   );
 }
