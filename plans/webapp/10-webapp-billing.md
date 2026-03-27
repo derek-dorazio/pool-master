@@ -663,18 +663,20 @@ During Phase 1, the billing UI is scaffolded but operates in free-only mode:
 
 ## Action Plan
 
+> **Note:** All billing UI tasks are deferred. The platform launches as free with no SaaS fees or Stripe integration. These tasks will be needed when moving to paid plans (see backend Plan 07 for the tier model and Stripe integration roadmap). The `EntitlementGate` component (W-B-009) was already built in `features/leagues/entitlement-gate.tsx` — it passes all checks on the free tier and is ready to enforce limits when billing is enabled.
+
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-B-001 | 1 | Billing overview page — page shell, route setup, responsive layout with conditional section visibility based on plan tier | Not Started | |
-| W-B-002 | 1 | Plan card component — current plan display with tier badge, plan name, renewal date, price, and upgrade/change CTA | Not Started | Depends on 07-xxx (subscription API) |
-| W-B-003 | 1 | Usage meter component — progress bars for leagues, contests, and members against plan limits with colour thresholds | Not Started | Depends on 07-xxx (usage API) |
-| W-B-004 | 1 | Plan comparison table — side-by-side tier matrix with feature rows, current plan highlight, responsive accordion on mobile | Not Started | Depends on 07-xxx (plans API) |
-| W-B-005 | 2 | Plan change flow — PlanChangeDialog modal with upgrade (Stripe Checkout redirect), downgrade (warnings + confirmation), and cancel (retention offer) paths | Not Started | Depends on 07-xxx (Stripe integration) |
-| W-B-006 | 2 | Invoice history table — paginated table with date/status filters, status badges, PDF download links | Not Started | Depends on 07-xxx (invoices API) |
-| W-B-007 | 2 | Payment method management — card on file display, update button redirecting to Stripe Customer Portal | Not Started | Depends on 07-xxx (Stripe Portal) |
-| W-B-008 | 2 | Trial banner + countdown — conditional banner with days remaining, colour urgency progression, session-dismissible | Not Started | Depends on 07-xxx (trial status in subscription API) |
-| W-B-009 | 1 | Entitlement-gated UI components — EntitlementGate wrapper, useEntitlement hook, "Coming Soon" fallback for Phase 1 | Not Started | Used across all feature areas |
+| W-B-001 | 1 | Billing overview page — page shell, route setup, responsive layout with conditional section visibility based on plan tier | Deferred | Implement when paid plans are enabled |
+| W-B-002 | 1 | Plan card component — current plan display with tier badge, plan name, renewal date, price, and upgrade/change CTA | Deferred | Depends on 07-xxx (subscription API) |
+| W-B-003 | 1 | Usage meter component — progress bars for leagues, contests, and members against plan limits with colour thresholds | Deferred | Depends on 07-xxx (usage API) |
+| W-B-004 | 1 | Plan comparison table — side-by-side tier matrix with feature rows, current plan highlight, responsive accordion on mobile | Deferred | Depends on 07-xxx (plans API) |
+| W-B-005 | 2 | Plan change flow — PlanChangeDialog modal with upgrade (Stripe Checkout redirect), downgrade (warnings + confirmation), and cancel (retention offer) paths | Deferred | Depends on 07-xxx (Stripe integration) |
+| W-B-006 | 2 | Invoice history table — paginated table with date/status filters, status badges, PDF download links | Deferred | Depends on 07-xxx (invoices API) |
+| W-B-007 | 2 | Payment method management — card on file display, update button redirecting to Stripe Customer Portal | Deferred | Depends on 07-xxx (Stripe Portal) |
+| W-B-008 | 2 | Trial banner + countdown — conditional banner with days remaining, colour urgency progression, session-dismissible | Deferred | Depends on 07-xxx (trial status in subscription API) |
+| W-B-009 | 1 | Entitlement-gated UI components — EntitlementGate wrapper, useEntitlement hook, "Coming Soon" fallback for Phase 1 | Done | Built in features/leagues/entitlement-gate.tsx — free tier always passes |
 
 ---
 
-*PoolMaster Billing & Subscription Page Plan v1.0*
+*PoolMaster Billing & Subscription Page Plan v1.1*
