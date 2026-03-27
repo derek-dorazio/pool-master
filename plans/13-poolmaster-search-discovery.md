@@ -503,25 +503,25 @@ CREATE INDEX idx_discoverable_contests_draft ON discoverable_contests(draft_star
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 13-001 | 1 | PostgreSQL full-text search on `participants` table | Not Started | `tsvector` with weighted fields |
-| 13-002 | 1 | Draft room search endpoint (`GET /api/v1/contests/:id/pool/search`) | Not Started | Scoped to contest pool |
-| 13-003 | 1 | Commissioner pool setup search with basic filtering | Not Started | |
-| 13-004 | 1 | Debounced search-as-you-type on frontend (150ms debounce) | Not Started | |
-| 13-005 | 2 | Facet computation for pool setup (nationality, position, team, ranking) | Not Started | |
-| 13-006 | 2 | Filter UI for commissioner pool builder | Not Started | |
-| 13-007 | 2 | Sort options (ranking, name, price, form) | Not Started | |
-| 13-008 | 2 | Draft room filter chips (tier, position, available only) | Not Started | |
-| 13-009 | 3 | `discoverable_leagues` table + migrations | Not Started | |
-| 13-010 | 3 | `discoverable_contests` table + migrations | Not Started | |
-| 13-011 | 3 | Discovery browse API (`GET /api/v1/discover/leagues`, `/contests`) | Not Started | |
-| 13-012 | 3 | Quality controls (minimum members, activity, spam prevention) | Not Started | |
-| 13-013 | 3 | `discovery_reports` table + report mechanism | Not Started | |
-| 13-014 | 3 | Discovery UI (browse, sort, join) | Not Started | |
-| 13-015 | 4 | Elasticsearch cluster setup | Not Started | If scale requires it |
-| 13-016 | 4 | Index mappings with analysers (name, phonetic, edge ngram) | Not Started | |
-| 13-017 | 4 | Real-time event-driven index sync | Not Started | |
-| 13-018 | 4 | Typo tolerance and phonetic matching | Not Started | |
-| 13-019 | 4 | Batch reindex tooling + admin reindex controls | Not Started | |
+| 13-001 | 1 | PostgreSQL full-text search on `participants` table | Done | tsvector with weighted fields (A=name, B=first/last, C=team) via $queryRaw |
+| 13-002 | 1 | Draft room search endpoint (`GET /api/v1/contests/:id/pool/search`) | Done | Built in Plan 05-022 — DraftSearchService with facets |
+| 13-003 | 1 | Commissioner pool setup search with basic filtering | Done | GET /api/v1/search/participants with sort, filter, facets |
+| 13-004 | 1 | Debounced search-as-you-type on frontend (150ms debounce) | Not Started | Webapp UI — tracked in plans/webapp/ |
+| 13-005 | 2 | Facet computation for pool setup (nationality, position, team, ranking) | Done | SearchService.computeFacets with groupBy queries |
+| 13-006 | 2 | Filter UI for commissioner pool builder | Not Started | Webapp UI — tracked in plans/webapp/ |
+| 13-007 | 2 | Sort options (ranking, name, price, form) | Done | sortBy parameter on search endpoint |
+| 13-008 | 2 | Draft room filter chips (tier, position, available only) | Done | Built in Plan 05-022 — DraftSearchService filters |
+| 13-009 | 3 | `discoverable_leagues` table + migrations | Done | DiscoverableLeague Prisma model |
+| 13-010 | 3 | `discoverable_contests` table + migrations | Done | DiscoverableContest Prisma model |
+| 13-011 | 3 | Discovery browse API (`GET /api/v1/discover/leagues`, `/contests`) | Done | GET /search/discover/leagues + /search/discover/contests |
+| 13-012 | 3 | Quality controls (minimum members, activity, spam prevention) | Done | Auto-hide after 3 reports |
+| 13-013 | 3 | `discovery_reports` table + report mechanism | Done | DiscoveryReport model + POST /search/discover/report |
+| 13-014 | 3 | Discovery UI (browse, sort, join) | Not Started | Webapp UI — tracked in plans/webapp/ |
+| 13-015 | 4 | Elasticsearch cluster setup | Not Started | Deferred — PostgreSQL sufficient for launch |
+| 13-016 | 4 | Index mappings with analysers (name, phonetic, edge ngram) | Not Started | Deferred |
+| 13-017 | 4 | Real-time event-driven index sync | Not Started | Deferred |
+| 13-018 | 4 | Typo tolerance and phonetic matching | Not Started | Deferred |
+| 13-019 | 4 | Batch reindex tooling + admin reindex controls | Not Started | Deferred |
 
 ---
 

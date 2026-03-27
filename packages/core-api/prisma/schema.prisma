@@ -960,3 +960,62 @@ model NotificationDeliveryLog {
   @@index([userId, createdAt(sort: Desc)])
   @@map("notification_delivery_log")
 }
+
+// =============================================================================
+// Search & Discovery (Plan 13)
+// =============================================================================
+
+model DiscoverableLeague {
+  id                 String    @id @map("league_id") @db.Uuid
+  name               String    @db.VarChar(255)
+  description        String?
+  photoUrl           String?   @map("photo_url")
+  sports             String[]  @db.VarChar(50)
+  memberCount        Int       @default(0) @map("member_count")
+  maxMembers         Int?      @map("max_members")
+  activeContestCount Int       @default(0) @map("active_contest_count")
+  activityLevel      String    @default("LOW") @map("activity_level") @db.VarChar(20)
+  joinPolicy         String    @default("OPEN") @map("join_policy") @db.VarChar(20)
+  reportedCount      Int       @default(0) @map("reported_count")
+  isHidden           Boolean   @default(false) @map("is_hidden")
+  lastActivityAt     DateTime? @map("last_activity_at") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([activityLevel, lastActivityAt(sort: Desc)])
+  @@map("discoverable_leagues")
+}
+
+model DiscoverableContest {
+  id           String    @id @map("contest_id") @db.Uuid
+  leagueId     String    @map("league_id") @db.Uuid
+  leagueName   String?   @map("league_name") @db.VarChar(255)
+  contestName  String    @map("contest_name") @db.VarChar(255)
+  sport        String    @db.VarChar(50)
+  eventName    String?   @map("event_name") @db.VarChar(500)
+  draftType    String?   @map("draft_type") @db.VarChar(50)
+  memberCount  Int       @default(0) @map("member_count")
+  maxMembers   Int?      @map("max_members")
+  entryFee     Int?      @map("entry_fee")
+  prizePool    Int?      @map("prize_pool")
+  draftStart   DateTime? @map("draft_start") @db.Timestamptz
+  lockTime     DateTime? @map("lock_time") @db.Timestamptz
+  status       String    @default("OPEN") @db.VarChar(20)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([sport, status, lockTime])
+  @@map("discoverable_contests")
+}
+
+model DiscoveryReport {
+  id         String   @id @default(uuid()) @db.Uuid
+  entityType String   @map("entity_type") @db.VarChar(20)
+  entityId   String   @map("entity_id") @db.Uuid
+  reportedBy String   @map("reported_by") @db.Uuid
+  reason     String   @db.VarChar(500)
+  status     String   @default("PENDING") @db.VarChar(20)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([entityType, entityId])
+  @@map("discovery_reports")
+}
