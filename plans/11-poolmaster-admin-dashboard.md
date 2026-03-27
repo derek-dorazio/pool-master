@@ -884,23 +884,23 @@ Hosting:    Internal-only access (VPN or IP-restricted)
 | 11-011 | 2 | Contest browser (any contest, any league, any tenant) | Done | ContestService with searchContests (6 mock contests across sports/tenants) and getContestAdminDetail (standings, draft status, scoring freshness, overrides); contest-handler with listContests and getContestDetail; routes GET /contests and GET /contests/:contestId |
 | 11-012 | 2 | Contest admin actions (force close, reopen, recalculate) | Done | force-close, reopen, override-score, recalculate-standings (returns RecalculationResult with rank changes), recalculate-payouts, re-ingest; all audit-logged via logAdminAction with before/after state; routes with body validation schemas |
 | 11-013 | 2 | User merge tool (merge duplicates, transfer memberships) | Done | POST /api/v1/admin/users/merge with primaryId/duplicateId; returns MergeResult with transfer counts; audit-logged |
-| 11-014 | 3 | Provider health dashboard (status, error rate, latency, last event) | Not Started | |
-| 11-015 | 3 | Ingestion monitoring view (jobs, errors, throughput) | Not Started | |
-| 11-016 | 3 | Provider configuration management (credentials, webhooks) | Not Started | |
-| 11-017 | 3 | Re-ingest tools (trigger re-ingestion for specific event) | Not Started | |
-| 11-018 | 3 | `feature_flags` table + CRUD | Not Started | |
-| 11-019 | 3 | `feature_flag_overrides` table + tenant-specific overrides | Not Started | |
-| 11-020 | 3 | Feature flag resolution service (override → global → rollout %) | Not Started | |
-| 11-021 | 4 | Service health dashboard (all services, uptime, error rates, latency) | Not Started | |
-| 11-022 | 4 | Infrastructure metrics display (DB, Redis, queues, S3/CDN) | Not Started | |
-| 11-023 | 4 | Alert configuration (thresholds, channels — Slack, PagerDuty) | Not Started | |
-| 11-024 | 4 | Error log viewer (recent errors, stack traces, request IDs) | Not Started | |
-| 11-025 | 5 | `impersonation_sessions` table + impersonation flow | Not Started | |
-| 11-026 | 5 | `global_announcements` table + banner/notification management | Not Started | |
-| 11-027 | 5 | `migration_runs` table + migration runner (dry-run, progress) | Not Started | |
-| 11-028 | 5 | Support investigation view (errors, notifications, API requests per tenant) | Not Started | |
-| 11-029 | 5 | Quick action shortcuts (common support scenarios) | Not Started | |
-| 11-030 | 5 | Tenant data export tools | Not Started | |
+| 11-014 | 3 | Provider health dashboard (status, error rate, latency, last event) | Done | GET /providers/health returns all provider summaries; provider-handler.ts with listProviders handler |
+| 11-015 | 3 | Ingestion monitoring view (jobs, errors, throughput) | Done | GET /providers/ingestion returns IngestionDashboard with sportProviderStatus, recentErrors, activeJobs, recentCompletedJobs |
+| 11-016 | 3 | Provider configuration management (credentials, webhooks) | Done | GET /providers/:providerId for detail; PUT /providers/:providerId/config for config updates; audit-logged |
+| 11-017 | 3 | Re-ingest tools (trigger re-ingestion for specific event) | Done | POST /providers/:providerId/re-ingest/:eventId triggers re-ingestion job; POST /providers/:providerId/health-check for manual checks; unmapped participant mapping endpoints |
+| 11-018 | 3 | `feature_flags` table + CRUD | Done | FlagService with in-memory Map storage; listFlags, createFlag, getFlagDetail, updateFlag, deleteFlag; 6 seed flags; routes with validation schemas |
+| 11-019 | 3 | `feature_flag_overrides` table + tenant-specific overrides | Done | addOverride and removeOverride on FlagService; POST /flags/:flagKey/overrides and DELETE /flags/:flagKey/overrides/:tenantId; audit-logged |
+| 11-020 | 3 | Feature flag resolution service (override → global → rollout %) | Done | resolveFlag(flagKey, tenantId) with 3-step resolution: tenant override -> global enabled -> rollout % (deterministic hash); GET /flags/:flagKey/resolve/:tenantId |
+| 11-021 | 4 | Service health dashboard (all services, uptime, error rates, latency) | Done | GET /health/services returns 7 services with status, uptime, error rate, p95 latency, version, dependencies |
+| 11-022 | 4 | Infrastructure metrics display (DB, Redis, queues, S3/CDN) | Done | GET /health/infrastructure returns PostgreSQL, Redis, Message Bus, S3/CDN metrics; GET /health/metrics returns business metrics |
+| 11-023 | 4 | Alert configuration (thresholds, channels — Slack, PagerDuty) | Done | GET /health/alerts lists 9 rules; PUT /health/alerts/:alertId updates thresholds/channels/severity; POST mute/unmute with duration support |
+| 11-024 | 4 | Error log viewer (recent errors, stack traces, request IDs) | Done | GET /health/errors with service/severity/dateFrom/dateTo/tenant filters and pagination; GET /health/errors/:errorId returns full detail with stack trace, HTTP context |
+| 11-025 | 5 | `impersonation_sessions` table + impersonation flow | Done | ImpersonationService + ImpersonationHandler with start/end/active session endpoints; routes at /impersonation/* with tenant.impersonate permission |
+| 11-026 | 5 | `global_announcements` table + banner/notification management | Done | AnnouncementService (existed) + AnnouncementHandler with full CRUD, activate/deactivate, active-only listing; routes at /announcements/* with platform.announcements permission |
+| 11-027 | 5 | `migration_runs` table + migration runner (dry-run, progress) | Done | MigrationService with 4 migrations (backfill-analytics, recompute-records, recalculate-pricing, reindex-search), progress tracking; MigrationHandler at /migrations/* |
+| 11-028 | 5 | Support investigation view (errors, notifications, API requests per tenant) | Done | SupportService with consolidated investigation data (errors, notification failures, API samples, scoring staleness); SupportHandler at /support/tenant/:tenantId/* |
+| 11-029 | 5 | Quick action shortcuts (common support scenarios) | Done | QuickActionsHandler with reset-password, check-provider, check-entitlements, check-notifications, re-ingest-scores; routes at /support/quick-actions/* |
+| 11-030 | 5 | Tenant data export tools | Done | ExportService with start/status/download flow (mock instant completion with JSON); ExportHandler at /tenants/:tenantId/export/* with audit logging |
 
 ---
 
