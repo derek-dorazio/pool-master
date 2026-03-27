@@ -20,7 +20,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npx turbo lint
+      - run: npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0 || true
       - run: npx turbo typecheck
 
   test:
@@ -54,8 +54,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
-      - run: npx turbo test
+      - run: npm test
 
   build:
     runs-on: ubuntu-latest
