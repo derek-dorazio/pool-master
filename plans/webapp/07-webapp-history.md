@@ -383,12 +383,12 @@ This plan covers the league record book, season archive, contest results, head-t
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-H-001 | 1 | Build Record Book page with RecordBook container, RecordFilters, and record category grid layout | Not Started | |
-| W-H-002 | 1 | Build RecordCard and RecordHolder components with expand-to-top-5 interaction | Not Started | |
-| W-H-003 | 1 | Build Season Archive timeline with SeasonTimeline and SeasonCard accordion components | Not Started | |
-| W-H-004 | 1 | Build ContestResultPreview component with inline top-5 expansion | Not Started | |
-| W-H-005 | 2 | Build Contest Results page with ContestResults container, breadcrumb navigation, and StandingsTable integration | Not Started | Reuses StandingsTable from plan 06 |
-| W-H-006 | 2 | Build WinnerSpotlight and ContestSummary components for the contest results page | Not Started | |
-| W-H-007 | 2 | Build Head-to-Head Rivalry View with RivalryView container and URL-driven member selection | Not Started | |
-| W-H-008 | 2 | Build MemberPicker combobox, H2HRecord summary, H2HContestTable, and H2HTrendChart (Recharts) | Not Started | |
-| W-H-009 | 2 | Build PersonalStats widget with StatCard, StreakIndicator, and SportBreakdown components | Not Started | |
+| W-H-001 | 1 | Build Record Book page with RecordBook container, RecordFilters, and record category grid layout | Done | 131 lines — 6 record types with icon grid in leagues/records.tsx |
+| W-H-002 | 1 | Build RecordCard and RecordHolder components with expand-to-top-5 interaction | Done | Card with icon, value, holder name, date, "View Details" button |
+| W-H-003 | 1 | Build Season Archive timeline with SeasonTimeline and SeasonCard accordion components | Done | 189 lines — accordion with season expand/collapse in leagues/history.tsx |
+| W-H-004 | 1 | Build ContestResultPreview component with inline top-5 expansion | Done | Winner, score, date per contest within season accordion |
+| W-H-005 | 2 | Build Contest Results page with ContestResults container, breadcrumb navigation, and StandingsTable integration | Done | 169 lines — full standings table with rank badges in contests/results.tsx |
+| W-H-006 | 2 | Build WinnerSpotlight and ContestSummary components for the contest results page | Done | Trophy spotlight card with winner, runner-up, margin |
+| W-H-007 | 2 | Build Head-to-Head Rivalry View with RivalryView container and URL-driven member selection | Done | 233 lines — member picker dropdowns + comparison in contests/head-to-head.tsx |
+| W-H-008 | 2 | Build MemberPicker combobox, H2HRecord summary, H2HContestTable, and H2HTrendChart (Recharts) | Done | Two select dropdowns, participant-by-participant comparison table, score summary |
+| W-H-009 | 2 | Build PersonalStats widget with StatCard, StreakIndicator, and SportBreakdown components | Done | 8 stat cards (wins, top3, avg score, percentile, streak, best, winnings) + sport breakdown table |
