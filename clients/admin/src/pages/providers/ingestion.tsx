@@ -1,0 +1,103 @@
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Activity, Zap, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useIngestionJobs } from '@/hooks/use-providers-api';
+
+export function Component() {
+  const { jobs, errors, throughput } = useIngestionJobs();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Activity className="h-6 w-6" />
+        <h1 className="text-2xl font-bold">Ingestion Monitor</h1>
+      </div>
+
+      {/* Throughput stat */}
+      <Card>
+        <CardContent className="flex items-center gap-4 py-4">
+          <Zap className="h-8 w-8 text-yellow-500" />
+          <div>
+            <p className="text-3xl font-bold font-mono">{throughput.toLocaleString()}</p>
+            <p className="text-sm text-muted-foreground">events/min</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Active Jobs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Active Jobs</CardTitle>
+          <CardDescription>{jobs.length} jobs running</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {jobs.map((job) => (
+            <div key={job.id} className="space-y-2 rounded-md border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{job.event}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {job.provider} / {job.sport}
+                  </p>
+                </div>
+                <Badge variant="outline" className="font-mono">{job.progress}%</Badge>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    'h-full rounded-full transition-all',
+                    job.progress > 60 ? 'bg-green-500' : 'bg-blue-500',
+                  )}
+                  style={{ width: `${job.progress}%` }}
+                />
+              </div>
+            </div>
+          ))}
+          {jobs.length === 0 && (
+            <p className="text-sm text-muted-foreground">No active ingestion jobs.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Error Feed */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            Recent Errors
+          </CardTitle>
+          <CardDescription>5 most recent ingestion errors</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th className="px-4 py-3 text-left font-medium">Timestamp</th>
+                <th className="px-4 py-3 text-left font-medium">Provider</th>
+                <th className="px-4 py-3 text-left font-medium">Error Type</th>
+                <th className="px-4 py-3 text-left font-medium">Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {errors.map((err, i) => (
+                <tr key={i} className="border-b">
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                    {new Date(err.timestamp).toLocaleTimeString()}
+                  </td>
+                  <td className="px-4 py-3">{err.message.split(' \u2014 ')[0]}</td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline" className="text-xs">{err.errorType}</Badge>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {err.message.includes(' \u2014 ') ? err.message.split(' \u2014 ')[1] : err.message}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

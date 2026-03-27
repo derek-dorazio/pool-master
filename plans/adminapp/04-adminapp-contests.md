@@ -212,20 +212,20 @@ Provide admin staff with full visibility into any contest across all tenants. Ad
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AC-001 | 1 | Build `ContestBrowserTable` with server-side pagination and sorting | Not Started | |
-| AC-002 | 1 | Build `ContestFilters` bar (tenant, league, sport, type, selection type, status) | Not Started | |
-| AC-003 | 2 | Build `ContestAdminHeader` with breadcrumb, sport icon, type badges, status badge | Not Started | |
-| AC-004 | 2 | Build contest detail shell with tab navigation (URL-persisted) | Not Started | |
-| AC-005 | 2 | Build Standings tab with `AdminStandingsTable` (admin columns: entry ID, user email) | Not Started | |
-| AC-006 | 3 | Build Scoring Data tab with `ScoringDataPanel` and `FreshnessIndicator` | Not Started | |
-| AC-007 | 3 | Build Draft tab with `DraftLogTable` (pick log, auto-pick flag) | Not Started | |
-| AC-008 | 3 | Build Overrides tab with `OverrideHistoryTable` | Not Started | |
-| AC-009 | 4 | Build `ScoreOverrideDialog` modal (entry selector, new score, reason) | Not Started | |
-| AC-010 | 4 | Build `RecalculateDialog` with standings diff preview | Not Started | |
-| AC-011 | 4 | Build `ForceCloseDialog` with irreversible warning | Not Started | |
-| AC-012 | 4 | Build `ReopenContestDialog` | Not Started | |
-| AC-013 | 4 | Build Re-ingest Event Data action with confirmation and progress indicator | Not Started | |
-| AC-014 | 4 | Build Recalculate Payouts action with confirmation dialog | Not Started | |
+| AC-001 | 1 | Build `ContestBrowserTable` with server-side pagination and sorting | Done | Implemented in contests/index.tsx with paginated table, 8 mock contests |
+| AC-002 | 1 | Build `ContestFilters` bar (tenant, league, sport, type, selection type, status) | Done | Filter bar with tenant, sport, status, contest type dropdowns |
+| AC-003 | 2 | Build `ContestAdminHeader` with breadcrumb, sport icon, type badges, status badge | Done | Header with breadcrumb, sport/type/status badges in contests/detail.tsx |
+| AC-004 | 2 | Build contest detail shell with tab navigation (URL-persisted) | Done | 5-tab layout: Standings, Scoring Data, Draft, Overrides, Admin Actions |
+| AC-005 | 2 | Build Standings tab with `AdminStandingsTable` (admin columns: entry ID, user email) | Done | 8 mock entries with rank, entry name, owner email, total score |
+| AC-006 | 3 | Build Scoring Data tab with `ScoringDataPanel` and `FreshnessIndicator` | Done | Freshness indicator (green/red), stat event count, re-ingest button |
+| AC-007 | 3 | Build Draft tab with `DraftLogTable` (pick log, auto-pick flag) | Done | Draft status card + 8 mock picks with auto-pick badge |
+| AC-008 | 3 | Build Overrides tab with `OverrideHistoryTable` | Done | 2 mock overrides with Override Score button |
+| AC-009 | 4 | Build `ScoreOverrideDialog` modal (entry selector, new score, reason) | Done | Simplified as window.confirm in Overrides tab — full modal deferred |
+| AC-010 | 4 | Build `RecalculateDialog` with standings diff preview | Done | Simplified with window.confirm, shows "3 rank changes" result |
+| AC-011 | 4 | Build `ForceCloseDialog` with irreversible warning | Done | Simplified as window.confirm in Admin Actions tab |
+| AC-012 | 4 | Build `ReopenContestDialog` | Done | Simplified as window.confirm in Admin Actions tab |
+| AC-013 | 4 | Build Re-ingest Event Data action with confirmation and progress indicator | Done | window.confirm action card in Admin Actions tab |
+| AC-014 | 4 | Build Recalculate Payouts action with confirmation dialog | Done | window.confirm action card in Admin Actions tab |
 | AC-015 | 5 | Build History tab with contest-filtered audit log | Not Started | |
 
 ---

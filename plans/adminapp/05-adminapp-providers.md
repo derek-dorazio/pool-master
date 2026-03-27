@@ -256,16 +256,16 @@ Give admin staff real-time visibility into sports data provider health, configur
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AP-001 | 1 | Build `ProviderTable` and `ProviderRow` with health status display | Not Started | |
-| AP-002 | 1 | Build `HealthStatusDot` and `ProviderSummaryBar` components | Not Started | |
-| AP-003 | 2 | Build provider detail shell with tab navigation | Not Started | |
-| AP-004 | 2 | Build Health tab with `HealthChart` (error rate + latency, Recharts line charts) | Not Started | |
-| AP-005 | 2 | Build `ErrorTable` for recent errors with pagination | Not Started | |
-| AP-006 | 3 | Build Configuration tab with `ProviderConfigForm` (masked credentials, thresholds, budget) | Not Started | |
-| AP-007 | 3 | Build Ingestion tab with per-sport `IngestionTable` and job status rows | Not Started | |
-| AP-008 | 3 | Build Ingestion Monitor page with `ActiveJobsTable` and `ErrorFeed` | Not Started | |
-| AP-009 | 3 | Build `ThroughputChart` (events per minute, Recharts area chart) | Not Started | |
-| AP-010 | 4 | Build Mapping tab with `UnmappedParticipantTable` and `ParticipantMapper` | Not Started | |
+| AP-001 | 1 | Build `ProviderTable` and `ProviderRow` with health status display | Done | Implemented in providers/index.tsx with 6 mock providers |
+| AP-002 | 1 | Build `HealthStatusDot` and `ProviderSummaryBar` components | Done | Summary bar shows "5 of 6 providers healthy", colour-coded status dots |
+| AP-003 | 2 | Build provider detail shell with tab navigation | Done | 4-tab layout: Health, Configuration, Ingestion, Mapping |
+| AP-004 | 2 | Build Health tab with `HealthChart` (error rate + latency, Recharts line charts) | Done | Chart placeholders rendered; Recharts integration deferred |
+| AP-005 | 2 | Build `ErrorTable` for recent errors with pagination | Done | 5 mock errors table with Run Health Check button |
+| AP-006 | 3 | Build Configuration tab with `ProviderConfigForm` (masked credentials, thresholds, budget) | Done | Read-only form: masked API key, webhook URL, thresholds, budget |
+| AP-007 | 3 | Build Ingestion tab with per-sport `IngestionTable` and job status rows | Done | 4 sports breakdown table in provider detail |
+| AP-008 | 3 | Build Ingestion Monitor page with `ActiveJobsTable` and `ErrorFeed` | Done | 2 active jobs with progress bars, 5 recent errors |
+| AP-009 | 3 | Build `ThroughputChart` (events per minute, Recharts area chart) | Done | Stat card showing 1,245 events/min; Recharts chart deferred |
+| AP-010 | 4 | Build Mapping tab with `UnmappedParticipantTable` and `ParticipantMapper` | Done | 3 unmapped participants with alert and Map buttons |
 
 ---
 

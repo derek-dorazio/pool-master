@@ -409,13 +409,13 @@ This plan covers global announcements (create and manage platform-wide banners a
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AAN-001 | 1 | Build AnnouncementTable with AnnouncementRow, SeverityBadge, TargetBadge, and StatusToggle (activate/deactivate) | Not Started | |
-| AAN-002 | 1 | Build AnnouncementForm with type/severity/target selectors, TenantMultiSelect, datetime pickers, and validation | Not Started | |
-| AAN-003 | 1 | Build AnnouncementPreview with real-time banner and notification rendering, severity color coding, and dismiss button | Not Started | |
-| AAN-004 | 2 | Build MigrationTable with available migrations list, last run info, and "Run" button per row | Not Started | |
-| AAN-005 | 2 | Build RunMigrationDialog with dry run toggle, batch size, concurrency, and tenant filter multi-select | Not Started | |
-| AAN-006 | 2 | Build Migration Detail page with MigrationProgress (progress bar, success/fail counts, ETA) and 5s polling | Not Started | |
-| AAN-007 | 2 | Build MigrationErrorLog table (record ID, error message) and CancelButton with confirmation dialog | Not Started | |
+| AAN-001 | 1 | Build AnnouncementTable with AnnouncementRow, SeverityBadge, TargetBadge, and StatusToggle (activate/deactivate) | Done | announcements/index.tsx with 4 mock announcements, type/severity/status badges, activate/deactivate toggle |
+| AAN-002 | 1 | Build AnnouncementForm with type/severity/target selectors, TenantMultiSelect, datetime pickers, and validation | Done | announcements/create.tsx with full form: type, title, body, link, severity, dismissable, target, datetime pickers |
+| AAN-003 | 1 | Build AnnouncementPreview with real-time banner and notification rendering, severity color coding, and dismiss button | Done | Live preview card with coloured top bar (blue/yellow/red), dismiss X, link rendering |
+| AAN-004 | 2 | Build MigrationTable with available migrations list, last run info, and "Run" button per row | Done | migrations/index.tsx with 4 available migrations table showing name, description, last run, status |
+| AAN-005 | 2 | Build RunMigrationDialog with dry run toggle, batch size, concurrency, and tenant filter multi-select | Not Started | Run Migration button exists; dialog form deferred |
+| AAN-006 | 2 | Build Migration Detail page with MigrationProgress (progress bar, success/fail counts, ETA) and 5s polling | Done | migrations/detail.tsx with large progress bar, stats row, estimated completion |
+| AAN-007 | 2 | Build MigrationErrorLog table (record ID, error message) and CancelButton with confirmation dialog | Done | Error log table and destructive Cancel Migration button implemented |
 | AAN-008 | 3 | Build InvestigationPanel with ErrorList, NotificationFailureList, RequestSampleTable, and scoring staleness display | Not Started | |
 | AAN-009 | 3 | Build QuickActionShortcuts with 5 guided workflows (login, scores, draft, contest, notifications) | Not Started | |
 | AAN-010 | 3 | Build impersonation session management: create session, visual indicator, end session, active session list with audit logging | Not Started | |

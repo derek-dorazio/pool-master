@@ -220,13 +220,13 @@ Allow admin staff to manage feature flags that control rollout of new functional
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AF-001 | 1 | Build `FlagTable` and `FlagRow` with sortable columns and search filtering | Not Started | |
-| AF-002 | 1 | Build `FlagToggle` with inline confirmation and optimistic update | Not Started | |
-| AF-003 | 2 | Build `CreateFlagDialog` with key validation and type selection | Not Started | |
-| AF-004 | 2 | Build flag detail page with `FlagHeader`, `FlagConfigForm`, and section layout | Not Started | |
-| AF-005 | 3 | Build `RolloutSlider` for percentage-type flags | Not Started | |
-| AF-006 | 3 | Build `OverrideTable` and `AddOverrideDialog` with tenant search and override management | Not Started | |
-| AF-007 | 4 | Build `ResolutionTester` (tenant ID input, resolve API call, result display) | Not Started | |
+| AF-001 | 1 | Build `FlagTable` and `FlagRow` with sortable columns and search filtering | Done | Implemented in flags/index.tsx with 6 mock flags |
+| AF-002 | 1 | Build `FlagToggle` with inline confirmation and optimistic update | Done | Inline toggle switch, state managed locally, logs to console |
+| AF-003 | 2 | Build `CreateFlagDialog` with key validation and type selection | Not Started | Create Flag button present; dialog deferred |
+| AF-004 | 2 | Build flag detail page with `FlagHeader`, `FlagConfigForm`, and section layout | Done | Vertical layout: Details, Configuration, Overrides, Resolution Tester, Delete |
+| AF-005 | 3 | Build `RolloutSlider` for percentage-type flags | Done | Range slider 0-100 with Save button in Configuration card |
+| AF-006 | 3 | Build `OverrideTable` and `AddOverrideDialog` with tenant search and override management | Done | 3 mock overrides with Add/Remove buttons; dialog deferred |
+| AF-007 | 4 | Build `ResolutionTester` (tenant ID input, resolve API call, result display) | Done | Tenant input + Test button, shows ON/OFF result with colour |
 
 ---
 

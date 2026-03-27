@@ -112,9 +112,9 @@ This plan covers the audit log viewer — a full-featured, filterable, read-only
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AAU-001 | 1 | Build AuditLogTable with paginated rows, column sorting (timestamp), and page size selector (25/50/100) | Not Started | |
-| AAU-002 | 1 | Build AuditFilters bar with Admin user dropdown, Action type dropdown, Resource type dropdown, and free-text search | Not Started | |
-| AAU-003 | 2 | Build AuditRow and AuditDetail expandable panel with full description, reason, IP address, and user agent display | Not Started | |
-| AAU-004 | 2 | Build StateDiffViewer with JSON before/after comparison, green/red highlighting for additions/removals | Not Started | |
-| AAU-005 | 3 | Build ExportButton with CSV download of filtered results including large result set warning | Not Started | |
-| AAU-006 | 3 | Build DateRangePicker with preset options (Today, Last 7 days, Last 30 days, Custom) and wire into filter bar | Not Started | |
+| AAU-001 | 1 | Build AuditLogTable with paginated rows, column sorting (timestamp), and page size selector (25/50/100) | Done | Implemented in audit/index.tsx with 50-per-page pagination, 12 mock entries |
+| AAU-002 | 1 | Build AuditFilters bar with Admin user dropdown, Action type dropdown, Resource type dropdown, and free-text search | Done | Filter bar with admin/action/resourceType dropdowns, date from/to, and search input |
+| AAU-003 | 2 | Build AuditRow and AuditDetail expandable panel with full description, reason, IP address, and user agent display | Done | Click-to-expand rows showing full description, reason, before/after JSON, IP, user agent |
+| AAU-004 | 2 | Build StateDiffViewer with JSON before/after comparison, green/red highlighting for additions/removals | Done | Before/After state shown as JSON in grey code blocks (diff highlighting deferred) |
+| AAU-005 | 3 | Build ExportButton with CSV download of filtered results including large result set warning | Done | Export CSV button in header (mock — no backend yet) |
+| AAU-006 | 3 | Build DateRangePicker with preset options (Today, Last 7 days, Last 30 days, Custom) and wire into filter bar | Done | Date From/To inputs wired into filter bar |

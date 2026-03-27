@@ -209,8 +209,8 @@ The admin dashboard is a **separate SPA** from the public webapp, accessible onl
 | A-007 | 1 | Create page plan: Platform Health | Done | [07-adminapp-health.md](07-adminapp-health.md) |
 | A-008 | 1 | Create page plan: Audit Log | Done | [08-adminapp-audit.md](08-adminapp-audit.md) |
 | A-009 | 1 | Create page plan: Announcements & Migrations | Done | [09-adminapp-announcements-migrations.md](09-adminapp-announcements-migrations.md) |
-| A-010 | 2 | Scaffold admin SPA with Vite + React Router | Not Started | |
-| A-011 | 2 | Implement admin layout + sidebar + auth | Not Started | |
+| A-010 | 2 | Scaffold admin SPA with Vite + React Router | Done | Created clients/admin with Vite, React Router (basename=/admin), TanStack Query, Tailwind, 22 lazy-loaded route placeholders, all config files |
+| A-011 | 2 | Implement admin layout + sidebar + auth | Done | AdminLayout with 240px fixed sidebar (10 nav items with lucide icons, NavLink active state), top bar with health dot + user dropdown, auth guard redirect, impersonation banner placeholder; AdminLoginLayout for login page; AdminAuthStore with zustand |
 | A-012 | 3 | Implement tenant list + detail pages | Not Started | |
 | A-013 | 3 | Implement user search + detail pages | Not Started | |
 | A-014 | 3 | Implement contest browser + detail pages | Not Started | |
