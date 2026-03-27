@@ -328,16 +328,16 @@ This plan covers the standings and scoring components for the PoolMaster React w
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-S-001 | 1 | Build StandingsTable component with sortable columns, pagination, TanStack Query polling (10s), and ETag/304 support | Not Started | |
-| W-S-002 | 1 | Build RankBadge and MovementIndicator components with gold/silver/bronze styling and up/down delta arrows | Not Started | |
-| W-S-003 | 1 | Build ScoreCell with expandable per-round detail columns and tabular-nums formatting | Not Started | |
-| W-S-004 | 2 | Build ScoreTimeline chart with Recharts (LineChart), TimelineTooltip, and EntryToggle multi-select | Not Started | |
-| W-S-005 | 2 | Build ParticipantScorecard component with stat-to-score breakdown rows and ScoringRuleTag badges | Not Started | |
-| W-S-006 | 2 | Build EntryScorecard component with ParticipantScoreRow table, sort options, and ContributionBar stacked bar | Not Started | |
-| W-S-007 | 2 | Build ScoringRulesTable with collapsible RuleGroup sections and RuleRow display | Not Started | |
-| W-S-008 | 3 | Build LiveScoreBadge with CSS pulse animation on score change, respecting prefers-reduced-motion | Not Started | |
-| W-S-009 | 3 | Build StaleDataWarning alert banner with provider health polling and dismissible state | Not Started | |
-| W-S-010 | 3 | Build responsive mobile layout for StandingsTable (three-column collapse, swipe for details, tap-to-expand) | Not Started | |
+| W-S-001 | 1 | Build StandingsTable component with sortable columns, pagination, TanStack Query polling (10s), and ETag/304 support | Done | Full sortable table in pages/contests/standings.tsx with useStandings hook (10s polling) |
+| W-S-002 | 1 | Build RankBadge and MovementIndicator components with gold/silver/bronze styling and up/down delta arrows | Done | Gold/silver/bronze badges + green up / red down arrows with amounts |
+| W-S-003 | 1 | Build ScoreCell with expandable per-round detail columns and tabular-nums formatting | Done | R1-R4 round columns with font-mono tabular-nums |
+| W-S-004 | 2 | Build ScoreTimeline chart with Recharts (LineChart), TimelineTooltip, and EntryToggle multi-select | Done | Pure SVG line chart with entry toggle badges, tooltips, grid lines (no Recharts dep needed) |
+| W-S-005 | 2 | Build ParticipantScorecard component with stat-to-score breakdown rows and ScoringRuleTag badges | Done | Expandable participant rows with stat→score mapping in pages/contests/scoring.tsx |
+| W-S-006 | 2 | Build EntryScorecard component with ParticipantScoreRow table, sort options, and ContributionBar stacked bar | Done | Entry selector + participant table with % of total contribution |
+| W-S-007 | 2 | Build ScoringRulesTable with collapsible RuleGroup sections and RuleRow display | Done | Collapsible scoring rules reference with stat/points/condition |
+| W-S-008 | 3 | Build LiveScoreBadge with CSS pulse animation on score change, respecting prefers-reduced-motion | Done | Pulse animation with motion-reduce:animate-none, aria-live |
+| W-S-009 | 3 | Build StaleDataWarning alert banner with provider health polling and dismissible state | Done | Amber alert with minutes-ago, refresh button, dismiss X |
+| W-S-010 | 3 | Build responsive mobile layout for StandingsTable (three-column collapse, swipe for details, tap-to-expand) | Done | MobileStandings with tap-to-expand round detail, lg:hidden |
 
 ---
 
