@@ -1315,3 +1315,25 @@ model MigrationRun {
   @@index([status])
   @@map("migration_runs")
 }
+
+// =============================================================================
+// Billing & Entitlements
+// =============================================================================
+
+model PlanTier {
+  id                   String   @id @default(uuid()) @db.Uuid
+  name                 String   @db.VarChar(50)
+  slug                 String   @unique @db.VarChar(50)
+  displayOrder         Int      @default(0) @map("display_order")
+  monthlyPriceCents    Int      @default(0) @map("monthly_price_cents")
+  annualPriceCents     Int      @default(0) @map("annual_price_cents")
+  trialDays            Int      @default(0) @map("trial_days")
+  stripeMonthlyPriceId String?  @map("stripe_monthly_price_id") @db.VarChar(255)
+  stripeAnnualPriceId  String?  @map("stripe_annual_price_id") @db.VarChar(255)
+  entitlements         Json     @default("{}")
+  isPublic             Boolean  @default(true) @map("is_public")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("plan_tiers")
+}

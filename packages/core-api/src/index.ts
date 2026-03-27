@@ -17,6 +17,7 @@ import { adminModule } from './modules/admin/routes';
 import { etagPlugin } from './plugins/etag-support';
 import { pollConfigPlugin } from './plugins/poll-config';
 import { configModule } from './modules/config/routes';
+import { billingModule } from './modules/billing/routes';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -45,6 +46,7 @@ export function buildApp() {
   app.register(complianceModule, { prefix: '/api/v1/account' });
   app.register(adminModule, { prefix: '/api/v1/admin' });
   app.register(configModule, { prefix: '/api/v1/config' });
+  app.register(billingModule, { prefix: '/api/v1/billing' });
 
   return app;
 }

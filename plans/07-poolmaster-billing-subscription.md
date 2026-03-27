@@ -727,12 +727,12 @@ CREATE INDEX idx_usage_tenant ON tenant_usage(tenant_id);
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 07-001 | 1 | `plan_tiers` table + seed Free tier (unlimited entitlements) | Not Started | No paid tiers yet |
-| 07-002 | 1 | `PlanEntitlements` Zod schema + TypeScript type | Not Started | |
-| 07-003 | 1 | EntitlementService — `check()` and `checkMultiple()` (all pass for Free) | Not Started | |
-| 07-004 | 1 | Entitlement resolution order (override → flag → plan → usage) | Not Started | |
-| 07-005 | 1 | Fastify entitlement preHandler hook for routes | Not Started | Wired but never blocks at launch |
-| 07-006 | 1 | Auto-assign Free tier on tenant creation | Not Started | |
+| 07-001 | 1 | `plan_tiers` table + seed Free tier (unlimited entitlements) | Done | PlanTier model in schema.prisma; seed.ts with Free, Starter, Pro, League+ (paid tiers isPublic=false) |
+| 07-002 | 1 | `PlanEntitlements` Zod schema + TypeScript type | Done | packages/shared/domain/entitlements.ts — PlanEntitlementsSchema, EntitlementKey, EntitlementResult, UsageResource, UsageResult; exported from domain/index.ts |
+| 07-003 | 1 | EntitlementService — `check()` and `checkMultiple()` (all pass for Free) | Done | packages/core-api/src/modules/billing/entitlement-service.ts — check(), checkMultiple(), getUsage() with 5-min in-memory cache |
+| 07-004 | 1 | Entitlement resolution order (override → flag → plan → usage) | Done | Implemented in EntitlementService.check() — steps 1-2 are stubs (fall through), step 3 loads tier, step 4 evaluates usage/boolean/list/tier keys |
+| 07-005 | 1 | Fastify entitlement preHandler hook for routes | Done | packages/core-api/src/plugins/entitlement-guard.ts — requireEntitlement() factory returns preHandler hook |
+| 07-006 | 1 | Auto-assign Free tier on tenant creation | Done | Auth service already sets planTier='free'; billing routes at /api/v1/billing (plan, entitlements, usage, plans) registered in index.ts |
 | 07-007 | 2 | `tenant_usage` table + usage counting | Not Started | Deferred |
 | 07-008 | 2 | Tighten Free tier limits + add paid tier seed data | Not Started | Deferred — when ready to monetise |
 | 07-009 | 2 | `entitlement_overrides` table + admin tooling | Not Started | Deferred |
