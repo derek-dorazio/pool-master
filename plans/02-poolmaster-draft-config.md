@@ -529,11 +529,11 @@ const DRAFT_TEMPLATES = {
 | 02-006 | 1 | Commissioner draft controls (pause, resume, undo, extend clock) | Done | extendPickDeadline in session manager; pause/resume via state transitions |
 | 02-007 | 1 | Draft order generation (random, commissioner-set, signup) | Done | `draft-service/src/engine/draft-order.ts` — Fisher-Yates shuffle, validation |
 | 02-008 | 2 | `TieredPickEngine` — tier enforcement, picks per tier, non-exclusive | Done | `draft-service/src/engine/tiered-pick-engine.ts` — validate, apply, remaining tiers |
-| 02-009 | 2 | Tier assignment (seed, ranking, odds, commissioner) | Not Started | Tier definitions passed in; assignment logic in participant-data service |
-| 02-010 | 2 | Best-ball variant (pick N, use best M scores — golf) | Not Started | bestBallN field on state; scoring-side concern |
+| 02-009 | 2 | Tier assignment (seed, ranking, odds, commissioner) | Done | Added AUTO_ODDS and AUTO_SEED modes to tier-engine.ts; extended TierableParticipant with odds/seed fields; updated TierAssignmentMode type |
+| 02-010 | 2 | Best-ball variant (pick N, use best M scores — golf) | Done | `scoring-service/src/engine/best-ball.ts` — applyBestBall with lowerIsBetter direction support; exported from engine index |
 | 02-011 | 3 | `BudgetPickEngine` — cost validation, budget cap, non-exclusive | Done | `draft-service/src/engine/budget-pick-engine.ts` — validate, apply, affordability check |
-| 02-012 | 3 | Budget pricing (from odds, seed, ranking, or commissioner-set) | Not Started | Pricing logic in participant-data service |
-| 02-013 | 3 | Open selection (pick N from unrestricted field — NCAA "Pick 8") | Not Started | Can reuse BudgetPickEngine with no cost constraint |
+| 02-012 | 3 | Budget pricing (from odds, seed, ranking, or commissioner-set) | Done | Added seed-based pricing to pricing-engine.ts; PricingConfig now has seedWeight; ParticipantPricingInput has seed field |
+| 02-013 | 3 | Open selection (pick N from unrestricted field — NCAA "Pick 8") | Done | `draft-service/src/engine/open-selection-engine.ts` — validate, submit, apply, available participants; supports exclusive/non-exclusive |
 | 02-014 | 4 | Survivor engine — live pick mode (one pick per period) | Done | `survivor-engine.ts` — submitLivePick, resolvePeriod, getPendingEntries |
 | 02-015 | 4 | Survivor engine — locked pick mode (all picks upfront) | Done | submitLockedPicks with sequential validation |
 | 02-016 | 4 | Survivor config: one-entity-per-season, strikes, buybacks, double pick | Done | All 4 config options implemented and tested |
@@ -541,9 +541,9 @@ const DRAFT_TEMPLATES = {
 | 02-018 | 5 | Pick'em engine — predict outcomes, score on correctness | Done | `pickem-engine.ts` — validate, submit, resolve period, leaderboard |
 | 02-019 | 5 | Confidence-weighted pick'em (assign weights to predictions) | Done | Confidence weights validated (unique, 1-N range); used as points when correct |
 | 02-020 | 5 | Bracket pick'em — full bracket submission + round multipliers | Done | `bracket-engine.ts` — validate, submit, score round, series length bonus, tiebreaker |
-| 02-021 | 6 | Manager draft queue (pre-rank participants, drag to reorder) | Not Started | Snake draft only |
+| 02-021 | 6 | Manager draft queue (pre-rank participants, drag to reorder) | Done | `draft-service/src/engine/draft-queue.ts` — DraftQueue class with set/get/reorder/removeFromAll; exported singleton; wired into snake engine via QUEUE_THEN_BEST policy |
 | 02-022 | 6 | ~~Live draft mode — WebSocket integration~~ | Deferred | WebSocket/SSE deferred; async polling is v1 approach |
-| 02-023 | 6 | Selection config templates (pre-built per sport per contest type) | Not Started | |
+| 02-023 | 6 | Selection config templates (pre-built per sport per contest type) | Done | `draft-service/src/templates/selection-templates.ts` — 22 templates across 9 sports; GET /templates routes added to drafts module |
 
 ---
 

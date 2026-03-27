@@ -1,11 +1,18 @@
 /**
- * Draft module — REST routes for async snake draft.
+ * Draft module — REST routes for async snake draft and selection templates.
  *
  * In async mode, picks are submitted via HTTP POST.
  * The timer runs server-side; auto-pick triggers if the deadline passes.
  */
 
 import type { FastifyInstance } from 'fastify';
+import type { Sport } from '@poolmaster/shared/domain';
+import {
+  SELECTION_TEMPLATES,
+  getTemplatesForSport,
+  getTemplatesForContestType,
+  getTemplateById,
+} from '../../templates/selection-templates';
 
 export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Get the current draft state for a contest. */
@@ -117,6 +124,54 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
       return reply.status(501).send({ contestId, message: 'not implemented' });
+    },
+  });
+
+  // --- Selection Template Routes ---
+
+  /** List all selection templates, optionally filtered by sport and/or contestType. */
+  fastify.get('/templates', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          sport: { type: 'string' },
+          contestType: { type: 'string' },
+        },
+      },
+    },
+    handler: async (request) => {
+      const { sport, contestType } = request.query as {
+        sport?: string;
+        contestType?: string;
+      };
+
+      if (sport && contestType) {
+        return getTemplatesForContestType(sport as Sport, contestType);
+      }
+      if (sport) {
+        return getTemplatesForSport(sport as Sport);
+      }
+      return SELECTION_TEMPLATES;
+    },
+  });
+
+  /** Get a single selection template by ID. */
+  fastify.get('/templates/:templateId', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['templateId'],
+        properties: { templateId: { type: 'string' } },
+      },
+    },
+    handler: async (request, reply) => {
+      const { templateId } = request.params as { templateId: string };
+      const template = getTemplateById(templateId);
+      if (!template) {
+        return reply.status(404).send({ error: `Template ${templateId} not found` });
+      }
+      return template;
     },
   });
 }

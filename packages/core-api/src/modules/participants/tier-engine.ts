@@ -1,7 +1,8 @@
 /**
  * TierAssignmentEngine — assigns participants to tiers for tiered draft formats.
  *
- * Pure functions. Supports AUTO_RANKING, AUTO_PRICE, and MANUAL assignment modes.
+ * Pure functions. Supports AUTO_RANKING, AUTO_PRICE, AUTO_ODDS, AUTO_SEED,
+ * and MANUAL assignment modes.
  */
 
 import type { TierConfig, TierDefinition, TierAssignmentMode } from '@poolmaster/shared/domain';
@@ -10,6 +11,8 @@ export interface TierableParticipant {
   participantId: string;
   ranking?: number;
   price?: number;
+  odds?: number;
+  seed?: number;
 }
 
 export interface TierAssignment {
@@ -34,6 +37,10 @@ export function assignTiers(
       return assignByRanking(participants, config.tiers);
     case 'AUTO_PRICE':
       return assignByPrice(participants, config.tiers);
+    case 'AUTO_ODDS':
+      return assignByOdds(participants, config.tiers);
+    case 'AUTO_SEED':
+      return assignBySeed(participants, config.tiers);
     case 'MANUAL':
       return assignManual(config.tiers);
   }
@@ -68,6 +75,93 @@ function assignByPrice(
 
   const sortedTiers = [...tiers].sort((a, b) => a.tierNumber - b.tierNumber);
   return assignSorted(sorted, sortedTiers, 'price');
+}
+
+function assignByOdds(
+  participants: TierableParticipant[],
+  tiers: TierDefinition[],
+): TierAssignment[] {
+  // Sort by odds ascending (lower odds = better = top tier)
+  const sorted = [...participants].sort((a, b) => {
+    const oddsA = a.odds ?? Infinity;
+    const oddsB = b.odds ?? Infinity;
+    return oddsA - oddsB;
+  });
+
+  const sortedTiers = [...tiers].sort((a, b) => a.tierNumber - b.tierNumber);
+  return assignEvenDistribution(sorted, sortedTiers);
+}
+
+function assignBySeed(
+  participants: TierableParticipant[],
+  tiers: TierDefinition[],
+): TierAssignment[] {
+  // Sort by seed ascending (seed 1 = best = top tier)
+  const sorted = [...participants].sort((a, b) => {
+    const seedA = a.seed ?? Infinity;
+    const seedB = b.seed ?? Infinity;
+    return seedA - seedB;
+  });
+
+  const sortedTiers = [...tiers].sort((a, b) => a.tierNumber - b.tierNumber);
+  return assignEvenDistribution(sorted, sortedTiers);
+}
+
+/**
+ * Distributes a sorted participant list evenly across tiers,
+ * respecting maxParticipants if set, otherwise splitting evenly.
+ */
+function assignEvenDistribution(
+  sorted: TierableParticipant[],
+  tiers: TierDefinition[],
+): TierAssignment[] {
+  const assignments: TierAssignment[] = [];
+
+  // If tiers have maxParticipants, use those; otherwise split evenly
+  const hasMax = tiers.some((t) => t.maxParticipants !== undefined);
+
+  if (hasMax) {
+    let idx = 0;
+    for (const tier of tiers) {
+      const max = tier.maxParticipants ?? sorted.length;
+      const count = Math.min(max, sorted.length - idx);
+      for (let i = 0; i < count; i++) {
+        assignments.push({
+          participantId: sorted[idx].participantId,
+          tierId: tier.tierId,
+          tierNumber: tier.tierNumber,
+        });
+        idx++;
+      }
+    }
+    // Overflow to last tier
+    if (idx < sorted.length && tiers.length > 0) {
+      const lastTier = tiers[tiers.length - 1];
+      for (let i = idx; i < sorted.length; i++) {
+        assignments.push({
+          participantId: sorted[i].participantId,
+          tierId: lastTier.tierId,
+          tierNumber: lastTier.tierNumber,
+        });
+      }
+    }
+  } else {
+    const perTier = Math.ceil(sorted.length / tiers.length);
+    let idx = 0;
+    for (const tier of tiers) {
+      const count = Math.min(perTier, sorted.length - idx);
+      for (let i = 0; i < count; i++) {
+        assignments.push({
+          participantId: sorted[idx].participantId,
+          tierId: tier.tierId,
+          tierNumber: tier.tierNumber,
+        });
+        idx++;
+      }
+    }
+  }
+
+  return assignments;
 }
 
 function assignSorted(

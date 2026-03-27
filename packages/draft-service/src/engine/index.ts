@@ -70,3 +70,14 @@ export type {
   MatchResult,
   BracketValidation,
 } from './bracket-engine';
+
+export { OpenSelectionEngine } from './open-selection-engine';
+export type {
+  OpenSelectionConfig,
+  OpenSelectionState,
+  OpenSelectionEntryState,
+  ValidationResult as OpenSelectionValidation,
+  SubmitResult as OpenSelectionSubmitResult,
+} from './open-selection-engine';
+
+export { DraftQueue, draftQueue } from './draft-queue';

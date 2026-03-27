@@ -340,6 +340,7 @@ export interface PricingConfig {
   rankingWeight: number;
   formWeight: number;
   oddsWeight: number;
+  seedWeight: number;
   manualOverrides: PriceOverride[];
 }
 
@@ -351,7 +352,7 @@ export interface PriceOverride {
   setAt: Date;
 }
 
-export type TierAssignmentMode = 'AUTO_RANKING' | 'AUTO_PRICE' | 'MANUAL';
+export type TierAssignmentMode = 'AUTO_RANKING' | 'AUTO_PRICE' | 'AUTO_ODDS' | 'AUTO_SEED' | 'MANUAL';
 
 export interface TierConfig {
   contestId: string;

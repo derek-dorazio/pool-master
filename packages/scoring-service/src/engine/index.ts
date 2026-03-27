@@ -70,3 +70,6 @@ export type {
   StrokePlayParticipant,
   StrokePlayResult,
 } from './stroke-play-scoring';
+
+export { applyBestBall } from './best-ball';
+export type { BestBallInput, BestBallResult } from './best-ball';

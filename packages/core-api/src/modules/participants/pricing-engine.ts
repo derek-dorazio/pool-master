@@ -12,6 +12,7 @@ export interface ParticipantPricingInput {
   ranking?: number;
   formRating: number;       // 0-100
   oddsImpliedProb?: number; // 0-1 (higher = more likely to win = more expensive)
+  seed?: number;            // tournament seed (lower = better = more expensive)
 }
 
 export interface ParticipantPrice {
@@ -102,6 +103,12 @@ function computeRawScore(
   // Odds component: implied probability 0-1 (higher = more likely to win)
   if (config.oddsWeight > 0 && participant.oddsImpliedProb !== undefined) {
     score += config.oddsWeight * participant.oddsImpliedProb;
+  }
+
+  // Seed component: seed 1 = best = highest score (used for NCAA, tennis draws)
+  if (config.seedWeight > 0 && participant.seed !== undefined) {
+    const normalisedSeed = 1 - (participant.seed - 1) / Math.max(totalParticipants - 1, 1);
+    score += config.seedWeight * normalisedSeed;
   }
 
   return score;
