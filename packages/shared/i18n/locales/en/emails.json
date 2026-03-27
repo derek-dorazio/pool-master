@@ -1,0 +1,20 @@
+{
+  "subjects": {
+    "draft_reminder": "Draft starting soon: {{contestName}}",
+    "score_update": "Score update: {{contestName}}",
+    "contest_completed": "Contest results: {{contestName}}",
+    "weekly_recap": "Your weekly recap: {{leagueName}}",
+    "welcome": "Welcome to PoolMaster!",
+    "password_reset": "Reset your password",
+    "invitation": "You've been invited to join {{leagueName}}"
+  },
+  "greeting": "Hi {{displayName}},",
+  "closing": "Cheers,\nThe PoolMaster Team",
+  "cta": {
+    "view_contest": "View Contest",
+    "enter_draft": "Enter Draft Room",
+    "view_results": "View Results",
+    "join_league": "Join League",
+    "reset_password": "Reset Password"
+  }
+}

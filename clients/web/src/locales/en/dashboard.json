@@ -1,0 +1,18 @@
+{
+  "welcome": "Welcome back, {{name}}",
+  "active_contests": "Active Contests",
+  "active_contests_count": "{{count}} active contest",
+  "active_contests_count_plural": "{{count}} active contests",
+  "upcoming_drafts": "Upcoming Drafts",
+  "my_leagues": "My Leagues",
+  "recent_activity": "Recent Activity",
+  "quick_actions": "Quick Actions",
+  "season_highlights": "Season Highlights",
+  "no_active_contests": "No active contests. Browse open contests or create one.",
+  "no_upcoming_drafts": "No upcoming drafts scheduled.",
+  "no_leagues": "You're not in any leagues yet.",
+  "view_all": "View all",
+  "rank_of": "{{rank}} of {{total}}",
+  "members_count": "{{count}} member",
+  "members_count_plural": "{{count}} members"
+}

@@ -1,0 +1,38 @@
+{
+  "draft": {
+    "starting_soon": "Draft for {{contestName}} starts in {{time}}",
+    "your_turn": "It's your turn to pick in {{draftName}}!",
+    "pick_made": "{{memberName}} drafted {{participantName}} (Round {{round}}, Pick {{pick}})",
+    "completed": "Draft for {{contestName}} is complete! View your roster.",
+    "auto_picked": "{{participantName}} was auto-picked for you in {{draftName}}"
+  },
+  "scoring": {
+    "contest_scored": "Scores updated for {{contestName}}",
+    "taken_the_lead": "You've taken the lead in {{contestName}}!",
+    "dropped_rank": "You've dropped to {{rank}} in {{contestName}}",
+    "milestone": "{{entryName}} reached {{score}} points in {{contestName}}"
+  },
+  "contest": {
+    "created": "New contest \"{{contestName}}\" created in {{leagueName}}",
+    "opening": "{{contestName}} is now accepting entries",
+    "locked": "Picks are locked for {{contestName}}",
+    "completed": "{{contestName}} is complete! {{winnerName}} wins with {{score}} points",
+    "results_available": "Final results are ready for {{contestName}}"
+  },
+  "league": {
+    "member_joined": "{{memberName}} joined {{leagueName}}",
+    "member_left": "{{memberName}} left {{leagueName}}",
+    "invitation_accepted": "{{memberName}} accepted your invitation to {{leagueName}}",
+    "settings_updated": "League settings updated for {{leagueName}}"
+  },
+  "social": {
+    "mentioned": "{{memberName}} mentioned you in {{leagueName}}",
+    "new_message": "New message from {{memberName}}",
+    "post_reaction": "{{memberName}} reacted to your post in {{leagueName}}"
+  },
+  "account": {
+    "welcome": "Welcome to PoolMaster! Get started by creating or joining a league.",
+    "password_changed": "Your password was successfully changed",
+    "email_verified": "Your email has been verified"
+  }
+}

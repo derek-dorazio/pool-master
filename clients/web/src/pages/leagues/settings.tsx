@@ -13,7 +13,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { CurrencySelect } from '@/components/ui/currency-select';
 import { toast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/format-currency';
+import { usePreferencesStore } from '@/stores/preferences-store';
 
 interface SettingsForm {
   name: string;
@@ -31,6 +34,8 @@ const mockSettings = {
 export function Component() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const [inviteLink, setInviteLink] = useState(mockSettings.inviteLink);
+  const [leagueCurrency, setLeagueCurrency] = useState('USD');
+  const { numberFormat } = usePreferencesStore();
 
   const { register, handleSubmit } = useForm<SettingsForm>({
     defaultValues: {
@@ -97,6 +102,18 @@ export function Component() {
               <Label>Sport</Label>
               <Input value={mockSettings.sport} disabled className="bg-muted" />
               <p className="text-xs text-muted-foreground">Sport cannot be changed after creation.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-currency">League Currency</Label>
+              <CurrencySelect
+                id="settings-currency"
+                value={leagueCurrency}
+                onValueChange={setLeagueCurrency}
+              />
+              <p className="text-xs text-muted-foreground">
+                Amounts in this league will display as:{' '}
+                {formatCurrency(123456, leagueCurrency, numberFormat)}
+              </p>
             </div>
             <Button type="submit">Save Changes</Button>
           </form>

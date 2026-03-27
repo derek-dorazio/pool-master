@@ -509,21 +509,21 @@ CREATE TABLE user_locale_preferences (
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 14-001 | 1 | All dates stored as UTC in database (enforce in models) | Not Started | |
-| 14-002 | 1 | Timezone field on User, League, and Tenant models | Not Started | IANA timezone strings |
-| 14-003 | 1 | `user_locale_preferences` table + migrations | Not Started | |
-| 14-004 | 1 | Time formatting utility (client-side Intl API) | Not Started | |
-| 14-005 | 1 | Dual timezone display for draft start and lock times | Not Started | |
-| 14-006 | 1 | Timezone picker in user settings and league settings | Not Started | |
-| 14-007 | 2 | Locale-aware number formatting (Intl.NumberFormat) | Not Started | |
-| 14-008 | 2 | Currency display with proper symbols and decimal places | Not Started | |
-| 14-009 | 2 | Currency configuration on league settings | Not Started | |
-| 14-010 | 2 | Salary cap price formatting (locale-aware) | Not Started | |
+| 14-001 | 1 | All dates stored as UTC in database (enforce in models) | Done | Added UTC convention comment block to Prisma schema after datasource block |
+| 14-002 | 1 | Timezone field on User, League, and Tenant models | Done | Added timezone/locale/timeFormat/dateFormat to User model; defaultLocale/defaultTimezone/defaultCurrency to Tenant model (Prisma + shared types) |
+| 14-003 | 1 | `user_locale_preferences` table + migrations | Done | Added UserLocalePreference Prisma model + TypeScript interface, exported from shared/domain/index.ts |
+| 14-004 | 1 | Time formatting utility (client-side Intl API) | Done | Created clients/web/src/lib/format-time.ts with formatTime, formatDualTimezone, formatRelative, formatCountdown, getTimezoneAbbr — all using Intl API |
+| 14-005 | 1 | Dual timezone display for draft start and lock times | Done | Created DualTimezone and RelativeTime components in clients/web/src/components/ui/ |
+| 14-006 | 1 | Timezone picker in user settings and league settings | Done | Built full settings page with searchable timezone picker (60 IANA zones grouped by region), date/time format radios, first-day-of-week, live preview. Created clients/web/src/lib/timezones.ts. Updated preferences store with timeFormat + firstDayOfWeek. |
+| 14-007 | 2 | Locale-aware number formatting (Intl.NumberFormat) | Done | Created `src/lib/format-number.ts` with formatNumber, formatDecimal, formatPercent, formatOrdinal, formatCompact. All use Intl.NumberFormat with preferences store fallback. Also created `src/hooks/use-format.ts` convenience hook. |
+| 14-008 | 2 | Currency display with proper symbols and decimal places | Done | Created `src/lib/format-currency.ts` with formatCurrency, formatCurrencyWithCode, getCurrencySymbol, getCurrencyDecimals, formatBudget. Cents-to-major-unit conversion, ISO 4217 decimal map. |
+| 14-009 | 2 | Currency configuration on league settings | Done | Added CurrencySelect component (`src/components/ui/currency-select.tsx`) with 13 currencies. Integrated into league settings General card with live preview of formatted amount. |
+| 14-010 | 2 | Salary cap price formatting (locale-aware) | Done | Created `src/lib/format-salary.ts` with formatParticipantPrice (whole dollars), formatRemainingBudget ("$X of $Y remaining"), formatBudgetUsed ("X% used"). |
 | 14-011 | 3 | Extract all UI strings to translation files (`en-US.json`) | Done | Created en/common.json (app name, nav, buttons, states) and en/auth.json (all auth page strings). Namespace-per-page pattern. |
 | 14-012 | 3 | Integrate i18next in web app | Done | Created src/lib/i18n.ts with i18next + react-i18next. English only, inline imports, imported in main.tsx before render. |
-| 14-013 | 3 | Integrate i18next in React Native app | Not Started | |
-| 14-014 | 3 | Server-side i18next for emails and notifications | Not Started | |
-| 14-015 | 3 | Pluralisation rules | Not Started | |
+| 14-013 | 3 | Integrate i18next in React Native app | Done | Repurposed: created server-side i18next setup in packages/shared/i18n/index.ts with initI18n(), t() helper, and i18next re-export. Preloads notifications, emails, activity namespaces. |
+| 14-014 | 3 | Server-side i18next for emails and notifications | Done | Added i18next dep to @poolmaster/shared package.json. Created locale files: en/notifications.json (draft, scoring, contest, league, social, account), en/emails.json (subjects, greeting, closing, CTAs), en/activity.json (feed strings). Updated tsconfig to include i18n dir. |
+| 14-015 | 3 | Pluralisation rules | Done | Added 4 new web locale namespaces: dashboard.json, leagues.json, contests.json, settings.json with _plural suffix keys for counts. Updated i18n.ts to register all 6 namespaces with compatibilityJSON v3 for plural support. |
 | 14-016 | 4 | Professional translation of string files (Spanish, French first) | Not Started | When needed |
 | 14-017 | 4 | Language picker in user settings | Not Started | |
 | 14-018 | 4 | RTL layout support (if Arabic/Hebrew added) | Not Started | |

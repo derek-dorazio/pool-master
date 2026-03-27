@@ -1,0 +1,11 @@
+{
+  "draft_pick": "{{memberName}} drafted {{participantName}} (Round {{round}})",
+  "draft_completed": "Draft completed — all picks are in!",
+  "contest_started": "{{contestName}} is now in progress",
+  "contest_completed": "{{contestName}} is complete — {{winnerName}} wins!",
+  "score_update": "Scores updated — {{leaderName}} leads with {{score}} points",
+  "member_joined": "{{memberName}} joined the league",
+  "member_left": "{{memberName}} left the league",
+  "commissioner_announcement": "Commissioner announcement: {{message}}",
+  "settings_changed": "League settings were updated"
+}

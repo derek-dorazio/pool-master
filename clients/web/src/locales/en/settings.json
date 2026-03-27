@@ -1,0 +1,20 @@
+{
+  "settings": "Settings",
+  "profile": "Profile",
+  "notifications": "Notifications",
+  "timezone_locale": "Timezone & Locale",
+  "privacy_data": "Privacy & Data",
+  "timezone": "Timezone",
+  "auto_detect": "Auto-detect from browser",
+  "date_format": "Date Format",
+  "time_format": "Time Format",
+  "first_day_of_week": "First Day of Week",
+  "number_format": "Number Format",
+  "format_preview": "Format Preview",
+  "twelve_hour": "12-hour (3:00 PM)",
+  "twenty_four_hour": "24-hour (15:00)",
+  "sunday": "Sunday",
+  "monday": "Monday",
+  "save_preferences": "Save Preferences",
+  "preferences_saved": "Preferences saved"
+}

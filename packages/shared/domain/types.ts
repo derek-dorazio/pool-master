@@ -47,6 +47,9 @@ export interface Tenant extends DomainEntity {
   slug: string;
   planTier: string;
   settings: Record<string, unknown>;
+  defaultLocale: string;
+  defaultTimezone: string;
+  defaultCurrency: string;
 }
 
 export interface User extends DomainEntity {
@@ -55,6 +58,25 @@ export interface User extends DomainEntity {
   authProvider?: string;
   authId?: string;
   tenantId?: string;
+  timezone?: string;
+  locale?: string;
+  timeFormat?: '12H' | '24H';
+  dateFormat?: 'MDY' | 'DMY' | 'YMD';
+}
+
+// --- User Locale Preferences ---
+
+export interface UserLocalePreference {
+  userId: string;
+  language: string;
+  timezone?: string;
+  timeFormat: '12H' | '24H';
+  dateFormat: 'MDY' | 'DMY' | 'YMD';
+  firstDayOfWeek: 'SUNDAY' | 'MONDAY';
+  preferredCurrency?: string;
+  deviceLocale?: string;
+  deviceTimezone?: string;
+  updatedAt: Date;
 }
 
 // --- League ---

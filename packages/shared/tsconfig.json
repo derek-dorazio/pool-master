@@ -4,5 +4,5 @@
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["domain/**/*", "db/**/*", "events/**/*", "utils/**/*", "src/**/*"]
+  "include": ["domain/**/*", "db/**/*", "events/**/*", "utils/**/*", "src/**/*", "i18n/**/*"]
 }
