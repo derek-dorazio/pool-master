@@ -878,12 +878,12 @@ Hosting:    Internal-only access (VPN or IP-restricted)
 | 11-005 | 1 | Tenant detail view (subscription, usage, leagues, activity) | Done | GET /api/v1/admin/tenants/:tenantId returning TenantDetailView with mock data |
 | 11-006 | 1 | Tenant actions (upgrade, downgrade, apply credit, suspend) | Done | PUT plan, POST suspend/unsuspend/credit/extend-trial, DELETE tenant; all audit-logged |
 | 11-007 | 1 | `admin_audit_log` table + all admin actions logged | Done | Audit query service (mock data), audit-handler with list/detail/CSV-export endpoints, audit-routes sub-plugin, and admin-audit-hook (onResponse) for auto-logging mutating admin requests |
-| 11-008 | 2 | User search across tenants (email, name, ID) | Not Started | |
-| 11-009 | 2 | User detail view (tenants, leagues, contests, devices) | Not Started | |
-| 11-010 | 2 | User actions (reset password, force logout, disable) | Not Started | |
-| 11-011 | 2 | Contest browser (any contest, any league, any tenant) | Not Started | |
-| 11-012 | 2 | Contest admin actions (force close, reopen, recalculate) | Not Started | |
-| 11-013 | 2 | User merge tool (merge duplicates, transfer memberships) | Not Started | |
+| 11-008 | 2 | User search across tenants (email, name, ID) | Done | GET /api/v1/admin/users with search/tenant/status/page/pageSize query params; UserService.searchUsers with 5 mock users across 2 tenants |
+| 11-009 | 2 | User detail view (tenants, leagues, contests, devices) | Done | GET /api/v1/admin/users/:userId returning UserDetailView with tenants, leagues, activeContests, devices, recentAuthEvents |
+| 11-010 | 2 | User actions (reset password, force logout, disable) | Done | POST reset-password, force-logout, disable, enable, email endpoints; all audit-logged via logAdminAction |
+| 11-011 | 2 | Contest browser (any contest, any league, any tenant) | Done | ContestService with searchContests (6 mock contests across sports/tenants) and getContestAdminDetail (standings, draft status, scoring freshness, overrides); contest-handler with listContests and getContestDetail; routes GET /contests and GET /contests/:contestId |
+| 11-012 | 2 | Contest admin actions (force close, reopen, recalculate) | Done | force-close, reopen, override-score, recalculate-standings (returns RecalculationResult with rank changes), recalculate-payouts, re-ingest; all audit-logged via logAdminAction with before/after state; routes with body validation schemas |
+| 11-013 | 2 | User merge tool (merge duplicates, transfer memberships) | Done | POST /api/v1/admin/users/merge with primaryId/duplicateId; returns MergeResult with transfer counts; audit-logged |
 | 11-014 | 3 | Provider health dashboard (status, error rate, latency, last event) | Not Started | |
 | 11-015 | 3 | Ingestion monitoring view (jobs, errors, throughput) | Not Started | |
 | 11-016 | 3 | Provider configuration management (credentials, webhooks) | Not Started | |
