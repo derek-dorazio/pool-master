@@ -690,19 +690,19 @@ All skeleton screens use the shadcn/ui `Skeleton` component. Error states includ
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-SET-001 | 1 | Settings hub layout — hub page with card grid navigation to sub-pages, responsive 2-column layout | Not Started | |
-| W-SET-002 | 1 | Profile form with avatar upload — display name, email, bio fields with zod validation; avatar upload with crop dialog and multipart upload | Not Started | Depends on 01-xxx (users API) |
-| W-SET-003 | 1 | Password change form — current/new/confirm fields, strength indicator, collapsible section, rate limiting | Not Started | Depends on 01-xxx (auth API) |
-| W-SET-004 | 1 | Linked accounts management — Google/Apple OAuth connect/disconnect, safety check for last auth method, confirmation dialog | Not Started | Depends on 01-xxx (OAuth API) |
-| W-SET-005 | 2 | Timezone picker with auto-detect — searchable IANA timezone combobox, browser detection with "Use Detected" button, current time display | Not Started | Depends on 14-xxx (i18n preferences) |
-| W-SET-006 | 2 | Date and number format selectors — radio groups for date/number format, live FormatPreview panel, save to user preferences, Zustand store sync | Not Started | Depends on 14-xxx (i18n preferences) |
-| W-SET-007 | 2 | Privacy and data controls page — ConsentManager toggles with optimistic updates, CCPAToggle with locale-based visibility | Not Started | Depends on 15-xxx (compliance API) |
-| W-SET-008 | 3 | Data export request flow — DataExportCard with request button, pending/completed status polling, rate limiting, download link display | Not Started | Depends on 15-xxx (data export API) |
-| W-SET-009 | 3 | Account deletion flow with confirmation — multi-step dialog (consequences, name confirmation, waiting period), 14-day grace period, cancellation banner | Not Started | Depends on 15-xxx (account deletion API) |
-| W-SET-010 | 3 | Cookie preferences dialog — per-category toggles (necessary/functional/analytics) with backend consent recording via `POST /account/consent` | Not Started | Moved from W-LG-006 |
-| W-SET-011 | 3 | Self-exclusion dialog — cool-down period selector (24H/7D/30D/6M/1Y), typed "CONFIRM" confirmation, via `POST /account/self-exclusion` | Not Started | Moved from W-LG-008 |
-| W-SET-012 | 3 | Session reminder config card — interval dropdown (30/60/90 min), auto-save toggle | Not Started | Moved from W-LG-011 |
-| W-SET-013 | 3 | Activity limit config card — weekly contest limit input, auto-save | Not Started | Moved from W-LG-012 |
+| W-SET-001 | 1 | Settings hub layout — hub page with card grid navigation to sub-pages, responsive 2-column layout | Done | `settings-hub.tsx`, `settings-card.tsx` — 4-card grid (Profile, Notifications, Timezone, Privacy), responsive 2-col, notification unread badge |
+| W-SET-002 | 1 | Profile form with avatar upload — display name, email, bio fields with zod validation; avatar upload with crop dialog and multipart upload | Done | `profile-page.tsx`, `profile-form.tsx`, `avatar-upload.tsx` — initials fallback, file type/size validation, SSO email read-only, char counter. Mock data in hooks |
+| W-SET-003 | 1 | Password change form — current/new/confirm fields, strength indicator, collapsible section, rate limiting | Done | `password-change-form.tsx` — collapsible, 4-level strength bar (Weak/Fair/Strong/Very Strong), validation rules, form clear on success |
+| W-SET-004 | 1 | Linked accounts management — Google/Apple OAuth connect/disconnect, safety check for last auth method, confirmation dialog | Done | `linked-accounts.tsx` — connect/disconnect with confirmation, last-method safety check disables disconnect, provider icons |
+| W-SET-005 | 2 | Timezone picker with auto-detect — searchable IANA timezone combobox, browser detection with "Use Detected" button, current time display | Done | Already implemented in `pages/settings/timezone.tsx` — searchable grouped timezone list, auto-detect, preview |
+| W-SET-006 | 2 | Date and number format selectors — radio groups for date/number format, live FormatPreview panel, save to user preferences, Zustand store sync | Done | Already implemented in `pages/settings/timezone.tsx` — date/time format radios, first-day-of-week, FormatPreview with Intl.DateTimeFormat |
+| W-SET-007 | 2 | Privacy and data controls page — ConsentManager toggles with optimistic updates, CCPAToggle with locale-based visibility | Done | `privacy-page.tsx`, `consent-manager.tsx`, `ccpa-toggle.tsx` — Switch toggles, optimistic updates, CCPA visible for en-US locale only |
+| W-SET-008 | 3 | Data export request flow — DataExportCard with request button, pending/completed status polling, rate limiting, download link display | Done | `data-export-card.tsx` — pending/ready/rate-limited states, download link, 7-day rate limit display |
+| W-SET-009 | 3 | Account deletion flow with confirmation — multi-step dialog (consequences, name confirmation, waiting period), 14-day grace period, cancellation banner | Done | `account-deletion-card.tsx` — 3-step flow (consequences → type name → waiting period), destructive styling, alertdialog role |
+| W-SET-010 | 3 | Cookie preferences dialog — per-category toggles (necessary/functional/analytics) with backend consent recording via `POST /account/consent` | Done | `cookie-preferences.tsx` — dialog with 3 categories, necessary locked on, saves to consent API |
+| W-SET-011 | 3 | Self-exclusion dialog — cool-down period selector (24H/7D/30D/6M/1Y), typed "CONFIRM" confirmation, via `POST /account/self-exclusion` | Done | `self-exclusion-dialog.tsx` — radio period selector, typed CONFIRM confirmation, alertdialog role |
+| W-SET-012 | 3 | Session reminder config card — interval dropdown (30/60/90 min), auto-save toggle | Done | `session-reminder-card.tsx` — Switch toggle, interval dropdown, auto-save with toast |
+| W-SET-013 | 3 | Activity limit config card — weekly contest limit input, auto-save | Done | `activity-limit-card.tsx` — Switch toggle, number input (1-100), auto-save with toast |
 
 ---
 

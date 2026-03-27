@@ -5,11 +5,11 @@ import {
   Compass,
   Settings,
   CreditCard,
-  Bell,
   Menu,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import { NotificationBell } from '@/features/notifications/notification-bell';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -80,13 +80,7 @@ export function AuthenticatedLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-4">
-            <Link
-              to="/notifications"
-              className="relative rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-            </Link>
+            <NotificationBell />
             <span className="text-sm font-medium">
               {user?.displayName}
             </span>

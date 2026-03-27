@@ -64,6 +64,7 @@ The plan files and their task ID prefixes:
 | 13-xxx | `plans/13-poolmaster-search-discovery.md` | Search and discovery |
 | 14-xxx | `plans/14-poolmaster-localisation-i18n.md` | Localisation |
 | 15-xxx | `plans/15-poolmaster-responsible-gaming.md` | Compliance and legal |
+| ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites (API + UI) |
 
 ### Important
 

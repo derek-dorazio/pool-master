@@ -38,6 +38,7 @@ export const router = createBrowserRouter([
       { path: 'leagues/:leagueId/feed', lazy: () => import('@/pages/leagues/feed') },
       { path: 'leagues/:leagueId/records', lazy: () => import('@/pages/leagues/records') },
       { path: 'leagues/:leagueId/history', lazy: () => import('@/pages/leagues/history') },
+      { path: 'leagues/:leagueId/recap', lazy: () => import('@/pages/leagues/recap') },
 
       // Contests
       { path: 'contests/create', lazy: () => import('@/pages/contests/create') },

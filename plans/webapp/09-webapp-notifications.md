@@ -593,14 +593,14 @@ All skeleton screens use the shadcn/ui `Skeleton` component. Error states includ
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-N-001 | 1 | Notification centre page — page shell, route setup, responsive layout, date-grouped sections | Not Started | |
-| W-N-002 | 1 | Notification item component — icon mapping, read/unread styling, truncated body, relative timestamp, click navigation | Not Started | Depends on 09-xxx (notifications API) |
-| W-N-003 | 1 | Category filter — pill bar with unread count badges, horizontal scroll on mobile, query parameter integration | Not Started | Depends on 09-xxx (unread count grouped endpoint) |
-| W-N-004 | 1 | Bulk actions — mark all read button, confirmation dialog for large counts, optimistic update with rollback | Not Started | Depends on 09-xxx (read-all API) |
-| W-N-005 | 2 | Notification dropdown (top nav) — bell icon, popover with latest 5, compact notification items, close on outside click | Not Started | Depends on W-N-002 |
-| W-N-006 | 2 | Unread count badge with polling — 30s TanStack Query poll, badge rendering, pause on background tab, animation on change | Not Started | Depends on 09-xxx (unread-count API) |
-| W-N-007 | 2 | Notification preferences matrix — category x channel grid, auto-save with debounce, locked cells, column/row header toggles | Not Started | Depends on 09-xxx (preferences API) |
-| W-N-008 | 2 | DND scheduler — enable/disable toggle, time pickers, timezone selector, quiet hours explanation, validation | Not Started | Depends on W-N-007 |
+| W-N-001 | 1 | Notification centre page — page shell, route setup, responsive layout, date-grouped sections | Done | `notification-centre-page.tsx`, `notification-list.tsx` with date grouping (Today/Yesterday/This Week/Older), infinite scroll via IntersectionObserver |
+| W-N-002 | 1 | Notification item component — icon mapping, read/unread styling, truncated body, relative timestamp, click navigation | Done | `notification-item.tsx` — 6 category icons, blue dot unread indicator, line-clamp-2 body, relative time, click marks read + navigates. Mock data in hooks until API ready |
+| W-N-003 | 1 | Category filter — pill bar with unread count badges, horizontal scroll on mobile, query parameter integration | Done | `category-filter.tsx` — pill buttons with Badge counts, horizontal overflow scroll, resets infinite query on change via Zustand store |
+| W-N-004 | 1 | Bulk actions — mark all read button, confirmation dialog for large counts, optimistic update with rollback | Done | `bulk-actions.tsx` — confirmation prompt when >50 unread, disabled when 0 unread, uses `useMarkAllAsRead` mutation |
+| W-N-005 | 2 | Notification dropdown (top nav) — bell icon, popover with latest 5, compact notification items, close on outside click | Done | `notification-bell.tsx`, `notification-dropdown.tsx` — compact items, mark all read, outside click/Escape close, staleTime 10s. Replaced plain Link in AuthenticatedLayout |
+| W-N-006 | 2 | Unread count badge with polling — 30s TanStack Query poll, badge rendering, pause on background tab, animation on change | Done | `unread-badge.tsx`, `use-unread-count.ts` — 30s refetchInterval, refetchIntervalInBackground:false, 99+ cap, zoom-in animation |
+| W-N-007 | 2 | Notification preferences matrix — category x channel grid, auto-save with debounce, locked cells, column/row header toggles | Done | `preferences-matrix.tsx`, `category-row.tsx`, `channel-toggle.tsx` — desktop table + mobile cards, column/row header toggles, 1s debounce auto-save, locked account cells, push disabled tooltip, optimistic updates |
+| W-N-008 | 2 | DND scheduler — enable/disable toggle, time pickers, timezone selector, quiet hours explanation, validation | Done | `dnd-scheduler.tsx` — checkbox toggle, 12h time selects, 10 common timezones, dimmed when disabled, explanation text, debounced save |
 
 ---
 

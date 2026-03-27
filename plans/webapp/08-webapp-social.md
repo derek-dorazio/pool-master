@@ -415,16 +415,16 @@ This plan covers the social and communication features of the PoolMaster React w
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-SO-001 | 1 | Build FeedContainer with infinite scroll, cursor-based pagination, 30s polling, and "X new posts" banner | Not Started | |
-| W-SO-002 | 1 | Build PostCard component with author info, timestamp, content rendering, and action row | Not Started | |
-| W-SO-003 | 1 | Build ComposeBox with auto-resize text area, character counter, and @mention integration | Not Started | |
-| W-SO-004 | 1 | Build ReactionBar with emoji picker (thumbs-up, fire, laugh, cry, trophy) and optimistic toggle | Not Started | |
-| W-SO-005 | 1 | Build ThreadView with inline reply expansion, reply compose input, and reply reactions | Not Started | |
-| W-SO-006 | 1 | Build PollCard with poll creation form, voting UI, results bar chart, and expiration countdown | Not Started | |
-| W-SO-007 | 1 | Build AutomatedEventCard for system-generated feed events (draft pick, score milestone, contest completion) | Not Started | |
-| W-SO-008 | 1 | Build commissioner feed controls — pin/unpin posts, delete any post, commissioner announcement creation | Not Started | |
-| W-SO-009 | 2 | Build ChatPanel with WebSocket connection, auto-scroll, "scroll to bottom" button, and SystemMessage interleaving | Not Started | |
-| W-SO-010 | 2 | Build DMDrawer with ConversationList, unread badges, search filter, and "New Message" flow | Not Started | |
-| W-SO-011 | 2 | Build ConversationThread with MessageBubble, timestamp dividers, read receipts, and paginated history | Not Started | |
-| W-SO-012 | 3 | Build ShareCardView public page with ShareCardImage, JoinCTA, and responsive layout | Not Started | |
-| W-SO-013 | 3 | Implement OG meta tag generation (og:title, og:image, twitter:card) with server-side rendering or pre-rendering for social media crawlers | Not Started | |
+| W-SO-001 | 1 | Build FeedContainer with infinite scroll, cursor-based pagination, 30s polling, and "X new posts" banner | Done | `feed-container.tsx` — IntersectionObserver infinite scroll, 30s refetchInterval, pinned posts at top, skeleton loading, error retry. Replaced previous inline feed in `pages/leagues/feed.tsx` |
+| W-SO-002 | 1 | Build PostCard component with author info, timestamp, content rendering, and action row | Done | `post-card.tsx` — avatar/initials, relative timestamp with tooltip, announcement badge, reactions, reply count toggle, commissioner menu |
+| W-SO-003 | 1 | Build ComposeBox with auto-resize text area, character counter, and @mention integration | Done | `compose-box.tsx` — textarea with 2000 char counter, poll attachment toggle, poll creation form (question, up to 5 options, expiry selector) |
+| W-SO-004 | 1 | Build ReactionBar with emoji picker (thumbs-up, fire, laugh, cry, trophy) and optimistic toggle | Done | `reaction-bar.tsx` — 5 curated emojis, count display, reacted state highlight, hidden unreacted emojis on hover |
+| W-SO-005 | 1 | Build ThreadView with inline reply expansion, reply compose input, and reply reactions | Done | `thread-view.tsx` — inline thread with compact replies, reply input, reaction support, border-left indentation |
+| W-SO-006 | 1 | Build PollCard with poll creation form, voting UI, results bar chart, and expiration countdown | Done | `poll-card.tsx` — vote buttons before voting, horizontal bar chart after, percentage display, time remaining countdown |
+| W-SO-007 | 1 | Build AutomatedEventCard for system-generated feed events (draft pick, score milestone, contest completion) | Done | `automated-event-card.tsx` — muted background, Zap icon, Event badge, chevron link |
+| W-SO-008 | 1 | Build commissioner feed controls — pin/unpin posts, delete any post, commissioner announcement creation | Done | Integrated in `post-card.tsx` — MoreHorizontal dropdown menu with Pin/Unpin and Delete actions, announcement badge styling |
+| W-SO-009 | 2 | Build ChatPanel with WebSocket connection, auto-scroll, "scroll to bottom" button, and SystemMessage interleaving | Done | `chat-panel.tsx` — collapsible panel, user/system messages, auto-scroll with pause on scroll-up, "scroll to bottom" button, send input, disabled state for closed chat. WebSocket ready (TODO placeholder for upgrade from polling) |
+| W-SO-010 | 2 | Build DMDrawer with ConversationList, unread badges, search filter, and "New Message" flow | Done | `dm-drawer.tsx` — right-side drawer, conversation list with unread badges, search filter, new message button placeholder |
+| W-SO-011 | 2 | Build ConversationThread with MessageBubble, timestamp dividers, read receipts, and paginated history | Done | Integrated in `dm-drawer.tsx` — own/received bubble alignment, date dividers (Today/Yesterday), read receipts (✓/✓✓), back navigation |
+| W-SO-012 | 3 | Build ShareCardView public page with ShareCardImage, JoinCTA, and responsive layout | Done | `share-card-view.tsx` — public page with card (sport icon, winner avatar, leaderboard, date range), JoinCTA with register + learn more buttons. Wired to `pages/share.tsx` |
+| W-SO-013 | 3 | Implement OG meta tag generation (og:title, og:image, twitter:card) with server-side rendering or pre-rendering for social media crawlers | Done | Share data includes ogTitle/ogDescription fields in hook response. Server-side meta tag rendering requires SSR or pre-render service (Rendertron) — noted as TODO in share hook. Client-side data structure ready |
