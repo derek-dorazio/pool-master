@@ -792,20 +792,20 @@ All loading states use shadcn/ui `Skeleton` component. Tab content is wrapped in
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-L-001 | 1 | My Leagues list page with grid/list view, sort, filter | Not Started | |
-| W-L-002 | 1 | League creation wizard --- Step 1: Basics (name, sport, description) | Not Started | |
-| W-L-003 | 1 | League creation wizard --- Step 2: Access (invite policy, visibility) | Not Started | |
-| W-L-004 | 1 | League creation wizard --- Step 3: Scoring template selection | Not Started | Depends on plan 03 templates |
-| W-L-005 | 1 | League creation wizard --- Step 4: Review and create | Not Started | |
-| W-L-006 | 2 | League home shell with tab navigation | Not Started | |
-| W-L-007 | 2 | League overview tab (active contests, standings snapshot, feed preview) | Not Started | |
-| W-L-008 | 2 | League settings page (general, rules, invitations, danger zone) | Not Started | Commissioner only |
-| W-L-009 | 2 | Member management table with sort and search | Not Started | |
-| W-L-010 | 3 | Invite flow: email invitations and shareable invite link | Not Started | Depends on plan 08 API |
-| W-L-011 | 3 | Join/leave league flow with approval-based request handling | Not Started | |
-| W-L-012 | 3 | League header component (shared across league pages) | Not Started | |
-| W-L-013 | 3 | Role-based access guard (RoleGuard HOC) | Not Started | Redirects non-commissioners from settings |
-| W-L-014 | 3 | Entitlement checks for league creation limits | Not Started | Depends on plan 07 entitlement API |
+| W-L-001 | 1 | My Leagues list page with grid/list view, sort, filter | Done | 323 lines — grid/list toggle, sport filter, role filter, search, sort. Mock data |
+| W-L-002 | 1 | League creation wizard --- Step 1: Basics (name, sport, description) | Done | 506-line multi-step wizard with React Hook Form + Zod. Mock API |
+| W-L-003 | 1 | League creation wizard --- Step 2: Access (invite policy, visibility) | Done | Included in create.tsx wizard flow |
+| W-L-004 | 1 | League creation wizard --- Step 3: Scoring template selection | Done | Included in create.tsx wizard flow |
+| W-L-005 | 1 | League creation wizard --- Step 4: Review and create | Done | Included in create.tsx wizard flow |
+| W-L-006 | 2 | League home shell with tab navigation | Done | 330-line detail page with tabs (Overview, Contests, Members, Feed, Records, History) |
+| W-L-007 | 2 | League overview tab (active contests, standings snapshot, feed preview) | Done | Active contests list, recent feed preview, member summary. Plus dedicated feed.tsx and history.tsx |
+| W-L-008 | 2 | League settings page (general, rules, invitations, danger zone) | Done | 184 lines — general settings form, invite link management, danger zone (leave/delete) |
+| W-L-009 | 2 | Member management table with sort and search | Done | 321 lines — member table with role badges, search, invite dialog, role change |
+| W-L-010 | 3 | Invite flow: email invitations and shareable invite link | Done | Email invite dialog + copy invite link in members.tsx |
+| W-L-011 | 3 | Join/leave league flow with approval-based request handling | Not Started | Leave button exists; join/approval flow needs implementation |
+| W-L-012 | 3 | League header component (shared across league pages) | Done | Header with sport icon, name, role badge, member count built into detail.tsx |
+| W-L-013 | 3 | Role-based access guard (RoleGuard HOC) | Not Started | Settings link visible to all; guard logic not yet implemented |
+| W-L-014 | 3 | Entitlement checks for league creation limits | Not Started | Free tier = no limits; wire when billing is enabled |
 
 ---
 
