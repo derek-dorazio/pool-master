@@ -8,17 +8,36 @@ datasource db {
 }
 
 // =============================================================================
+// UTC Storage Convention
+// =============================================================================
+//
+// ALL timestamps in this schema are stored as UTC.
+//
+// - Every DateTime column uses @db.Timestamptz (PostgreSQL `timestamptz`).
+// - Application code MUST write UTC values — never local times.
+// - Timezone conversion is a **display concern** handled by the client using
+//   the user's timezone preference (UserLocalePreference.timezone) or the
+//   league/tenant default timezone.
+// - Resolution order: user timezone > league timezone > tenant timezone.
+//
+// See plans/14-poolmaster-localisation-i18n.md for the full timezone strategy.
+// =============================================================================
+
+// =============================================================================
 // Tenant & Identity
 // =============================================================================
 
 model Tenant {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  slug      String   @unique
-  planTier  String   @default("free") @map("plan_tier")
-  settings  Json     @default("{}")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  slug            String   @unique
+  planTier        String   @default("free") @map("plan_tier")
+  settings        Json     @default("{}")
+  defaultLocale   String   @default("en-US") @map("default_locale") @db.VarChar(10)
+  defaultTimezone String   @default("America/New_York") @map("default_timezone") @db.VarChar(50)
+  defaultCurrency String   @default("USD") @map("default_currency") @db.VarChar(3)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   users   User[]
   leagues League[]
@@ -34,6 +53,10 @@ model User {
   authProvider String?  @map("auth_provider")
   authId       String?  @map("auth_id")
   tenantId     String   @map("tenant_id") @db.Uuid
+  timezone     String?  @db.VarChar(50)
+  locale       String?  @default("en-US") @db.VarChar(10)
+  timeFormat   String?  @default("12H") @map("time_format") @db.VarChar(5)
+  dateFormat   String?  @default("MDY") @map("date_format") @db.VarChar(5)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -46,6 +69,7 @@ model User {
   notifications       Notification[]
   notificationPreference NotificationPreference?
   deviceRegistrations DeviceRegistration[]
+  localePreference    UserLocalePreference?
 
   @@map("users")
 }
@@ -1018,4 +1042,115 @@ model DiscoveryReport {
 
   @@index([entityType, entityId])
   @@map("discovery_reports")
+}
+
+// =============================================================================
+// User Locale Preferences
+// =============================================================================
+
+model UserLocalePreference {
+  userId            String   @id @map("user_id") @db.Uuid
+  language          String   @default("en-US") @db.VarChar(10)
+  timezone          String?  @db.VarChar(50)
+  timeFormat        String   @default("12H") @map("time_format") @db.VarChar(5)
+  dateFormat        String   @default("MDY") @map("date_format") @db.VarChar(5)
+  firstDayOfWeek    String   @default("SUNDAY") @map("first_day_of_week") @db.VarChar(10)
+  preferredCurrency String?  @map("preferred_currency") @db.VarChar(3)
+  deviceLocale      String?  @map("device_locale") @db.VarChar(10)
+  deviceTimezone    String?  @map("device_timezone") @db.VarChar(50)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_locale_preferences")
+}
+
+// =============================================================================
+// Compliance & Responsible Gaming (Plan 15 — Option A: no real money)
+// =============================================================================
+
+model ConsentRecord {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  consentType String   @map("consent_type") @db.VarChar(50)
+  granted     Boolean
+  version     String   @db.VarChar(20)
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId, consentType])
+  @@map("consent_records")
+}
+
+model DataExportRequest {
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  status             String    @default("PENDING") @db.VarChar(20)
+  requestedAt        DateTime  @default(now()) @map("requested_at") @db.Timestamptz
+  completedAt        DateTime? @map("completed_at") @db.Timestamptz
+  downloadUrl        String?   @map("download_url")
+  downloadExpiresAt  DateTime? @map("download_expires_at") @db.Timestamptz
+  error              String?
+
+  @@index([userId, status])
+  @@map("data_export_requests")
+}
+
+model DeletionRequest {
+  id                   String    @id @default(uuid()) @db.Uuid
+  userId               String    @map("user_id") @db.Uuid
+  reason               String?
+  status               String    @default("PENDING") @db.VarChar(20)
+  requestedAt          DateTime  @default(now()) @map("requested_at") @db.Timestamptz
+  scheduledDeletionAt  DateTime? @map("scheduled_deletion_at") @db.Timestamptz
+  completedAt          DateTime? @map("completed_at") @db.Timestamptz
+  cancelledAt          DateTime? @map("cancelled_at") @db.Timestamptz
+
+  @@index([userId, status])
+  @@map("deletion_requests")
+}
+
+model SelfExclusion {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  exclusionType  String    @map("exclusion_type") @db.VarChar(20)
+  duration       String    @db.VarChar(20)
+  startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz
+  endsAt         DateTime? @map("ends_at") @db.Timestamptz
+  reactivatedAt  DateTime? @map("reactivated_at") @db.Timestamptz
+  isActive       Boolean   @default(true) @map("is_active")
+
+  @@index([userId, isActive])
+  @@map("self_exclusions")
+}
+
+model AccountEnforcement {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  level        String    @db.VarChar(30)
+  reason       String
+  trigger      String    @db.VarChar(50)
+  enforcedBy   String?   @map("enforced_by") @db.Uuid
+  startsAt     DateTime  @default(now()) @map("starts_at") @db.Timestamptz
+  endsAt       DateTime? @map("ends_at") @db.Timestamptz
+  appealStatus String?   @map("appeal_status") @db.VarChar(20)
+  notes        String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("account_enforcement")
+}
+
+model RetentionJobRun {
+  id               String    @id @default(uuid()) @db.Uuid
+  jobName          String    @map("job_name") @db.VarChar(100)
+  recordsProcessed Int       @default(0) @map("records_processed")
+  recordsDeleted   Int       @default(0) @map("records_deleted")
+  startedAt        DateTime  @default(now()) @map("started_at") @db.Timestamptz
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz
+  status           String    @default("RUNNING") @db.VarChar(20)
+  error            String?
+
+  @@map("retention_job_runs")
 }

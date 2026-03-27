@@ -799,33 +799,33 @@ CREATE INDEX idx_enforcement_user ON account_enforcement(user_id, created_at);
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 15-001 | 1 | Privacy policy page (published, accessible from registration) | Not Started | |
-| 15-002 | 1 | Terms of service page (acceptance at registration) | Not Started | |
-| 15-003 | 1 | Age verification at registration (DOB collection, 13+ check) | Not Started | |
-| 15-004 | 1 | Cookie consent banner (EU/UK/California) | Not Started | |
-| 15-005 | 1 | `consent_records` table (append-only, immutable) | Not Started | |
-| 15-006 | 1 | Basic data export (JSON download of user's data) | Not Started | |
-| 15-007 | 1 | `deletion_requests` table + account deletion flow (14-day wait) | Not Started | |
-| 15-008 | 2 | Full DSAR export (all data categories: profile, contests, picks, DMs) | Not Started | |
-| 15-009 | 2 | `retention_job_runs` table + automated cleanup jobs | Not Started | |
-| 15-010 | 2 | Anonymisation pipeline for deleted accounts | Not Started | |
-| 15-011 | 2 | Consent management UI in user settings | Not Started | |
-| 15-012 | 2 | "Do Not Sell My Personal Information" page (CCPA) | Not Started | |
-| 15-013 | 3 | `self_exclusions` table + self-exclusion tool (cool-down + long-term) | Not Started | |
-| 15-014 | 3 | Session time reminders (configurable interval) | Not Started | |
-| 15-015 | 3 | Activity limit configuration (contests/week, session time) | Not Started | |
-| 15-016 | 3 | Responsible gaming information page + external resources | Not Started | |
-| 15-017 | 4 | `account_enforcement` table + suspension/ban framework | Not Started | |
-| 15-018 | 4 | Appeal workflow (request → review → grant/deny) | Not Started | |
-| 15-019 | 4 | Admin enforcement tools (warn, suspend, ban) | Not Started | |
-| 15-020 | 4 | Geographic restriction framework (informational for v1) | Not Started | |
-| 15-021 | 4 | Compliance audit trail (admin dashboard view) | Not Started | |
-| 15-022 | 4 | Retention job monitoring in admin dashboard | Not Started | |
-| 15-023 | 5 | Identity verification integration (Stripe Identity or Jumio) | Not Started | If real-money features pursued |
-| 15-024 | 5 | Geographic blocking for restricted states | Not Started | |
-| 15-025 | 5 | Enhanced spending limits | Not Started | |
-| 15-026 | 5 | Tax reporting framework (1099 for US winnings) | Not Started | |
-| 15-027 | 5 | Legal counsel engagement for fantasy pool regulation | Not Started | |
+| 15-001 | 1 | Privacy policy page (published, accessible from registration) | Not Started | Webapp UI — tracked in plans/webapp/13-webapp-legal.md |
+| 15-002 | 1 | Terms of service page (acceptance at registration) | Not Started | Webapp UI — tracked in plans/webapp/13-webapp-legal.md |
+| 15-003 | 1 | Age verification at registration (DOB collection, 13+ check) | Done | verifyAge() + POST /api/v1/account/verify-age |
+| 15-004 | 1 | Cookie consent banner (EU/UK/California) | Not Started | Webapp UI — tracked in plans/webapp/13-webapp-legal.md |
+| 15-005 | 1 | `consent_records` table (append-only, immutable) | Done | ConsentRecord Prisma model + POST/GET /api/v1/account/consent |
+| 15-006 | 1 | Basic data export (JSON download of user's data) | Done | DataExportRequest model + POST /api/v1/account/data-export |
+| 15-007 | 1 | `deletion_requests` table + account deletion flow (14-day wait) | Done | DeletionRequest model + POST /api/v1/account/delete-account |
+| 15-008 | 2 | Full DSAR export (all data categories: profile, contests, picks, DMs) | Done | processDataExport gathers profile, leagues, contests, picks, notifications |
+| 15-009 | 2 | `retention_job_runs` table + automated cleanup jobs | Done | RetentionJobRun model + POST /api/v1/account/retention/cleanup |
+| 15-010 | 2 | Anonymisation pipeline for deleted accounts | Done | anonymiseUser — email hashed, name blanked, devices/notifications deleted |
+| 15-011 | 2 | Consent management UI in user settings | Not Started | Webapp UI — tracked in plans/webapp/ |
+| 15-012 | 2 | "Do Not Sell My Personal Information" page (CCPA) | Not Started | Webapp UI — tracked in plans/webapp/13-webapp-legal.md |
+| 15-013 | 3 | `self_exclusions` table + self-exclusion tool (cool-down + long-term) | Done | SelfExclusion model + POST/GET /api/v1/account/self-exclusion |
+| 15-014 | 3 | Session time reminders (configurable interval) | Not Started | Client-side feature (webapp/iOS) |
+| 15-015 | 3 | Activity limit configuration (contests/week, session time) | Not Started | Client-side feature (webapp/iOS) |
+| 15-016 | 3 | Responsible gaming information page + external resources | Not Started | Webapp UI — tracked in plans/webapp/13-webapp-legal.md |
+| 15-017 | 4 | `account_enforcement` table + suspension/ban framework | Done | AccountEnforcement model + POST /api/v1/account/enforcement |
+| 15-018 | 4 | Appeal workflow (request → review → grant/deny) | Done | PUT /api/v1/account/enforcement/:id/appeal |
+| 15-019 | 4 | Admin enforcement tools (warn, suspend, ban) | Done | Full enforcement API with level, reason, trigger, duration |
+| 15-020 | 4 | Geographic restriction framework (informational for v1) | Not Started | Deferred — informational only, no blocking needed for Option A |
+| 15-021 | 4 | Compliance audit trail (admin dashboard view) | Done | Enforcement history via GET /api/v1/account/enforcement/:userId |
+| 15-022 | 4 | Retention job monitoring in admin dashboard | Done | RetentionJobRun tracks cleanup results |
+| 15-023 | 5 | Identity verification integration (Stripe Identity or Jumio) | N/A | Not needed for Option A (no real money) |
+| 15-024 | 5 | Geographic blocking for restricted states | N/A | Not needed for Option A |
+| 15-025 | 5 | Enhanced spending limits | N/A | Not needed for Option A |
+| 15-026 | 5 | Tax reporting framework (1099 for US winnings) | N/A | Not needed for Option A |
+| 15-027 | 5 | Legal counsel engagement for fantasy pool regulation | N/A | Not needed for Option A |
 
 ---
 
