@@ -699,7 +699,11 @@ All skeleton screens use the shadcn/ui `Skeleton` component. Error states includ
 | W-SET-007 | 2 | Privacy and data controls page — ConsentManager toggles with optimistic updates, CCPAToggle with locale-based visibility | Not Started | Depends on 15-xxx (compliance API) |
 | W-SET-008 | 3 | Data export request flow — DataExportCard with request button, pending/completed status polling, rate limiting, download link display | Not Started | Depends on 15-xxx (data export API) |
 | W-SET-009 | 3 | Account deletion flow with confirmation — multi-step dialog (consequences, name confirmation, waiting period), 14-day grace period, cancellation banner | Not Started | Depends on 15-xxx (account deletion API) |
+| W-SET-010 | 3 | Cookie preferences dialog — per-category toggles (necessary/functional/analytics) with backend consent recording via `POST /account/consent` | Not Started | Moved from W-LG-006 |
+| W-SET-011 | 3 | Self-exclusion dialog — cool-down period selector (24H/7D/30D/6M/1Y), typed "CONFIRM" confirmation, via `POST /account/self-exclusion` | Not Started | Moved from W-LG-008 |
+| W-SET-012 | 3 | Session reminder config card — interval dropdown (30/60/90 min), auto-save toggle | Not Started | Moved from W-LG-011 |
+| W-SET-013 | 3 | Activity limit config card — weekly contest limit input, auto-save | Not Started | Moved from W-LG-012 |
 
 ---
 
-*PoolMaster Settings & Preferences Page Plan v1.0*
+*PoolMaster Settings & Preferences Page Plan v1.1*
