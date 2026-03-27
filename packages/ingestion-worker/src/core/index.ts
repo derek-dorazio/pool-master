@@ -14,3 +14,4 @@ export type {
 export { ProviderRegistry } from './provider-registry';
 export { IngestionScheduler } from './ingestion-scheduler';
 export type { IngestionCallbacks, IngestionJobRecord, JobType } from './ingestion-scheduler';
+export { publishStatEvents } from './score-publisher';

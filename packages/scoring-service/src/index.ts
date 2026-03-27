@@ -1,4 +1,15 @@
 import Fastify from 'fastify';
+import { eventBus } from '@poolmaster/shared/events/event-bus';
+import { scoreStore } from './storage/score-store';
+import { subscribeStatEventConsumer, ContestLookup } from './consumer/stat-event-consumer';
+import { StandingsRollup } from './rollup/standings-rollup';
+import { ScoringService } from './modules/scoring/service';
+import { scoringRoutes } from './modules/scoring/routes';
+
+/** Shared instances — exported for testing and external wiring. */
+export const contestLookup = new ContestLookup();
+export const standingsRollup = new StandingsRollup({ eventBus, scoreStore });
+export const scoringService = new ScoringService({ scoreStore, standingsRollup });
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -7,7 +18,20 @@ export function buildApp() {
     return { status: 'ok', service: 'scoring-service' };
   });
 
-  // TODO: Register scoring modules and event consumer
+  // Register scoring routes (templates + leaderboard + rollup)
+  app.register(scoringRoutes, { scoringService });
+
+  // Subscribe stat event consumer to event bus
+  subscribeStatEventConsumer({ eventBus, scoreStore, contestLookup });
+
+  // Start periodic standings rollup
+  standingsRollup.startPeriodicRollup();
+
+  // Graceful shutdown
+  app.addHook('onClose', async () => {
+    standingsRollup.stopPeriodicRollup();
+    eventBus.clear();
+  });
 
   return app;
 }

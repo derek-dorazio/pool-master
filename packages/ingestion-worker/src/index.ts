@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import { Sport } from '@poolmaster/shared/domain';
-import { ProviderRegistry, IngestionScheduler } from './core';
+import { ProviderRegistry, IngestionScheduler, publishStatEvents } from './core';
 import type { IngestionCallbacks, IngestionJobRecord } from './core';
 import type { SportEvent, ProviderParticipant, ProviderRanking, ProviderStatEvent } from './core';
 import { OpenF1Adapter, OddsApiAdapter, EspnAdapter, PgaTourAdapter } from './adapters';
@@ -44,6 +44,7 @@ export function buildApp() {
     },
     async onLiveScores(scores: ProviderStatEvent[]) {
       app.log.info({ count: scores.length }, 'Ingested live scores');
+      await publishStatEvents(scores);
     },
     async onJobComplete(job: IngestionJobRecord) {
       app.log.info({ jobType: job.jobType, provider: job.providerId, status: job.status, records: job.recordsProcessed }, 'Job complete');

@@ -565,11 +565,11 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-020 | 2 | Contest entry creation and pick management | Done | Entry + pick management in contest modules, draft overrides for pick management |
 | 01-021 | 2 | Snake draft engine — async mode | Done | 8 engines built in draft-service: snake, tiered, budget, survivor, pick'em, bracket + session manager + draft order |
 | 01-022 | 2 | Basic standings endpoint (manual/seeded data) | Done | Standings module: paginated leaderboard, top-N summary, my-entry with rank context and movement indicators. `modules/standings/` |
-| 01-023 | 3 | Stats ingestion worker — golf adapter | Not Started | First sport |
-| 01-024 | 3 | Scoring rule evaluator (JSONB config → points) | Not Started | |
-| 01-025 | 3 | NoSQL writes for ParticipantEventStats and TeamContestPoints | Not Started | |
-| 01-026 | 3 | SQL standings rollup (periodic + on-demand) | Not Started | |
-| 01-027 | 3 | Leaderboard and contest state REST endpoints | Not Started | |
+| 01-023 | 3 | Stats ingestion worker — golf adapter | Done | EventBus in `shared/events/event-bus.ts`, score-publisher in `ingestion-worker/src/core/score-publisher.ts` transforms ProviderStatEvent→StatEvent and publishes to bus. `onLiveScores` callback wired. |
+| 01-024 | 3 | Scoring rule evaluator (JSONB config → points) | Done | StatEventConsumer in `scoring-service/src/consumer/stat-event-consumer.ts` — subscribes to `stat.updated`, looks up contests/entries via ContestLookup, scores with `scoreParticipant()`, stores in ScoreStore, publishes `score.updated`. |
+| 01-025 | 3 | NoSQL writes for ParticipantEventStats and TeamContestPoints | Done | In-memory ScoreStore in `scoring-service/src/storage/score-store.ts` with append-only participant/entry scores, leaderboard, timeline, and participant queries. DynamoDB-ready interface. |
+| 01-026 | 3 | SQL standings rollup (periodic + on-demand) | Done | `StandingsRollup` in `scoring-service/src/rollup/standings-rollup.ts` — periodic (30s default) and on-demand rollup, rank assignment with tie handling, rank-change tracking, publishes `standings.updated`. |
+| 01-027 | 3 | Leaderboard and contest state REST endpoints | Done | 5 endpoints in `scoring-service/src/modules/scoring/`: leaderboard, entry detail, participant history, manual rollup trigger, detailed health. Handler + service layer pattern. Wired in `index.ts` with shutdown cleanup. |
 | 01-028 | 4 | Polling endpoints with ETag/304 support (standings, draft, contest status) | Not Started | Default 10s interval |
 | 01-029 | 4 | Configurable poll interval per surface (leaderboard, draft, notifications) | Not Started | `POLL_INTERVAL_MS` default 10000 |
 | 01-030 | 4 | Push notification service (APNs + FCM) | Not Started | Draft reminders, score milestones |

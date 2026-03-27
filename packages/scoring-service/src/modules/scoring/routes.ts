@@ -1,13 +1,32 @@
 /**
- * Scoring template library routes — commissioners browse and select templates.
+ * Scoring routes — template library and leaderboard/scoring endpoints.
  */
 
 import type { FastifyInstance } from 'fastify';
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
-import { SCORING_TEMPLATES, getTemplate, listTemplates } from '../../templates/registry';
+import { getTemplate, listTemplates } from '../../templates/registry';
 import { validateStatKeys } from '../../engine/stat-schemas';
+import type { ScoringService } from './service';
+import {
+  createGetLeaderboardHandler,
+  createGetEntryScoreHandler,
+  createGetParticipantScoreHandler,
+  createTriggerRollupHandler,
+  createGetHealthHandler,
+} from './handler';
 
-export async function scoringRoutes(app: FastifyInstance): Promise<void> {
+export interface ScoringRoutesOptions {
+  scoringService: ScoringService;
+}
+
+export async function scoringRoutes(
+  app: FastifyInstance,
+  options: ScoringRoutesOptions,
+): Promise<void> {
+  const handlerDeps = { scoringService: options.scoringService };
+
+  // --- Template Routes ---
+
   /** List all available scoring templates. */
   app.get('/scoring/templates', async () => {
     return {
@@ -49,4 +68,33 @@ export async function scoringRoutes(app: FastifyInstance): Promise<void> {
       warnings: statErrors,
     };
   });
+
+  // --- Leaderboard & Scoring Routes ---
+
+  /** Full leaderboard for a contest. */
+  app.get<{ Params: { contestId: string } }>(
+    '/scoring/contests/:contestId/leaderboard',
+    createGetLeaderboardHandler(handlerDeps),
+  );
+
+  /** Entry score breakdown. */
+  app.get<{ Params: { contestId: string; entryId: string } }>(
+    '/scoring/contests/:contestId/entry/:entryId',
+    createGetEntryScoreHandler(handlerDeps),
+  );
+
+  /** Participant score history within a contest. */
+  app.get<{ Params: { contestId: string; participantId: string } }>(
+    '/scoring/contests/:contestId/participant/:participantId',
+    createGetParticipantScoreHandler(handlerDeps),
+  );
+
+  /** Trigger manual standings rollup. */
+  app.post<{ Params: { contestId: string } }>(
+    '/scoring/contests/:contestId/rollup',
+    createTriggerRollupHandler(handlerDeps),
+  );
+
+  /** Detailed health check. */
+  app.get('/scoring/health', createGetHealthHandler(handlerDeps));
 }
