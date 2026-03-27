@@ -443,13 +443,13 @@ All skeleton screens use the shadcn/ui `Skeleton` component. Error states includ
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-D-001 | 1 | Dashboard layout shell — page component, responsive grid, widget collapse/reorder with Zustand persistence | Not Started | |
-| W-D-002 | 1 | Active Contests widget — card component, 10s TanStack Query polling, rank/score display with delta indicators | Not Started | Depends on 01-xxx (contests API) |
-| W-D-003 | 1 | Upcoming Drafts widget — card component, dual timezone display, client-side countdown timer, draft room entry button | Not Started | Depends on 01-xxx (drafts API), 14-xxx (dual timezone) |
-| W-D-004 | 1 | My Leagues Summary — responsive card grid, commissioner badge, member/contest counts, empty state CTAs | Not Started | Depends on 01-xxx (leagues API) |
-| W-D-005 | 2 | Recent Activity Feed — activity item component, type-specific icons, relative timestamps, navigation on click | Not Started | Depends on 01-xxx (activity API) |
-| W-D-006 | 2 | Quick Actions bar — action button row, commissioner-conditional actions, responsive grid layout | Not Started | |
-| W-D-007 | 2 | Season Highlights widget — personal stats from history data, conditional rendering, links to contest results | Not Started | Depends on 04-xxx (history API) |
+| W-D-001 | 1 | Dashboard layout shell — page component, responsive grid, widget collapse/reorder with Zustand persistence | Done | 2-column responsive grid, welcome header, all widgets wired |
+| W-D-002 | 1 | Active Contests widget — card component, 10s TanStack Query polling, rank/score display with delta indicators | Done | Sport emoji, ordinal rank, delta arrows, empty state with discover CTA. Mock data — swap to real API |
+| W-D-003 | 1 | Upcoming Drafts widget — card component, dual timezone display, client-side countdown timer, draft room entry button | Done | Live countdown, draft type badge, "Enter Draft Room" enabled at 5min. Mock data |
+| W-D-004 | 1 | My Leagues Summary — responsive card grid, commissioner badge, member/contest counts, empty state CTAs | Done | 1/2/3 col grid, crown badge, create/join CTAs, "View all" link. Mock data |
+| W-D-005 | 2 | Recent Activity Feed — activity item component, type-specific icons, relative timestamps, navigation on click | Done | 5 activity types with emoji, clickable links, empty state. Mock data |
+| W-D-006 | 2 | Quick Actions bar — action button row, commissioner-conditional actions, responsive grid layout | Done | Outline buttons, conditional commissioner actions |
+| W-D-007 | 2 | Season Highlights widget — personal stats from history data, conditional rendering, links to contest results | Done | 4-stat grid, hidden when no data. Mock data |
 
 ---
 
