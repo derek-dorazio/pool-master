@@ -11,12 +11,17 @@ Sport-agnostic by design -- golf, NFL, F1, NCAA brackets, horse racing, tennis, 
 ```bash
 # Prerequisites: Node.js >= 20, Docker
 npm install
-docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
-cd packages/core-api && npx prisma generate && npx prisma migrate dev --name init && cd ../..
-npm run dev
+npm run dev:start
 ```
 
-Core API runs at `http://localhost:3000`. Health check: `GET /health`.
+This starts Docker (Postgres, Redis, DynamoDB, Mailpit), runs migrations, seeds test data, and launches all services.
+
+| What | URL |
+|------|-----|
+| **Webapp** | http://localhost:5173 |
+| **Core API** | http://localhost:3000 |
+| **Mailpit (email viewer)** | http://localhost:8025 |
+| **Prisma Studio** | `npm run db:studio` |
 
 See [docs/DEVELOPER-SETUP.md](docs/DEVELOPER-SETUP.md) for full setup instructions.
 

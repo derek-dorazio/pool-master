@@ -31,7 +31,7 @@ fi
 
 # --- 2. Start Docker containers ---
 echo -e "${CYAN}[2/5]${RESET} Starting Docker containers..."
-docker compose -f "$COMPOSE_FILE" up -d postgres redis dynamodb 2>&1 | tail -3
+docker compose -f "$COMPOSE_FILE" up -d postgres redis dynamodb mailpit 2>&1 | tail -3
 echo -n "       Waiting for PostgreSQL..."
 until docker exec docker-postgres-1 pg_isready -U postgres -q 2>/dev/null; do
   sleep 1
@@ -70,11 +70,12 @@ echo -e "${BOLD}║${RESET}  ${YELLOW}PostgreSQL${RESET}        localhost:${BOLD
 echo -e "${BOLD}║${RESET}  ${YELLOW}Redis${RESET}             localhost:${BOLD}6379${RESET}                        ${BOLD}║${RESET}"
 echo -e "${BOLD}║${RESET}  ${YELLOW}DynamoDB Local${RESET}    localhost:${BOLD}8000${RESET}                        ${BOLD}║${RESET}"
 echo -e "${BOLD}╟──────────────────────────────────────────────────────────────╢${RESET}"
-echo -e "${BOLD}║  TOOLS                                                      ║${RESET}"
+echo -e "${BOLD}║  DEV TOOLS                                                  ║${RESET}"
 echo -e "${BOLD}╟──────────────────────────────────────────────────────────────╢${RESET}"
-echo -e "${BOLD}║${RESET}  ${DIM}Prisma Studio${RESET}      ${DIM}npm run db:studio${RESET}                    ${BOLD}║${RESET}"
-echo -e "${BOLD}║${RESET}  ${DIM}Mailpit UI${RESET}        ${DIM}http://localhost:8025  (npm run dev:infra:all)${RESET}${BOLD}║${RESET}"
+echo -e "${BOLD}║${RESET}  ${GREEN}Mailpit (Email)${RESET}   ${BOLD}http://localhost:8025${RESET}  ${DIM}View sent emails${RESET}  ${BOLD}║${RESET}"
+echo -e "${BOLD}║${RESET}  ${DIM}Prisma Studio${RESET}      ${DIM}npm run db:studio${RESET}      ${DIM}Browse database${RESET}  ${BOLD}║${RESET}"
 echo -e "${BOLD}║${RESET}  ${DIM}Push Mock Log${RESET}     ${DIM}http://localhost:3099/push-log${RESET}       ${BOLD}║${RESET}"
+echo -e "${BOLD}║${RESET}  ${DIM}LocalStack${RESET}        ${DIM}localhost:4566  (npm run dev:infra:all)${RESET} ${BOLD}║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo -e "${DIM}Press Ctrl+C to stop all services${RESET}"

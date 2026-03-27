@@ -45,9 +45,12 @@ This starts:
 |---|---|---|
 | **PostgreSQL 16** | `5432` | Primary database (`poolmaster` / `postgres` / `postgres`) |
 | **Redis 7** | `6379` | Cache, message bus, BullMQ |
-| **Mailpit** | `8025` (UI), `1025` (SMTP) | Email capture — all outbound email lands here. Browse at http://localhost:8025 |
+| **DynamoDB Local** | `8000` | NoSQL for high-volume event data |
+| **Mailpit** | `8025` (UI), `1025` (SMTP) | **Email viewer** — all outbound email lands here. Browse at http://localhost:8025 |
 | **LocalStack** | `4566` | AWS mock (SES, SNS, SQS) — real SDK APIs, no credentials needed |
 | **Push Mock** | `3099` | APNs/FCM push capture — view payloads at `GET http://localhost:3099/push-log` |
+
+> **Tip:** Open http://localhost:8025 in your browser to see all emails sent by the notification service during testing (welcome emails, draft reminders, contest results, weekly digests, etc.)
 
 LocalStack auto-initialises on first start (verifies SES sender, creates SNS topic + SQS queue).
 
@@ -99,13 +102,14 @@ npm run dev:start
 
 This will:
 1. Create `.env` from `.env.example` (if not present)
-2. Start Docker containers (PostgreSQL, Redis, DynamoDB)
+2. Start Docker containers (PostgreSQL, Redis, DynamoDB, Mailpit)
 3. Run Prisma migrations
-4. Seed the database (plan tiers, etc.)
+4. Seed the database (users, leagues, sports, plan tiers)
 5. Launch all backend services + webapp via Turborepo
 
 After startup you'll have:
 - **Webapp** at http://localhost:5173
+- **Mailpit (email viewer)** at http://localhost:8025
 - **Core API** at http://localhost:3000
 - **Prisma Studio** (optional) at `npm run db:studio`
 
