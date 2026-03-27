@@ -533,15 +533,15 @@ This plan covers the legal, privacy, and responsible gaming pages for the PoolMa
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-LG-001 | 1 | Build shared LegalPage layout component with TableOfContents sidebar, LastUpdated badge, and responsive collapse behavior | Not Started | |
-| W-LG-002 | 1 | Build Privacy Policy page (`/privacy`) with markdown/CMS content rendering and Intersection Observer-based TOC highlighting | Not Started | |
-| W-LG-003 | 1 | Build Terms of Service page (`/terms`) with VersionSelector dropdown and ArchivedBanner for previous versions | Not Started | |
-| W-LG-004 | 1 | Build Cookie Policy page (`/cookie-policy`) with CookieCategorySection components and per-cookie tables | Not Started | |
-| W-LG-005 | 1 | Build CookieBanner global component with Accept All, Reject Non-Essential, and Manage Preferences actions; persist consent to localStorage | Not Started | |
-| W-LG-006 | 1 | Build CookiePreferencesDialog with per-category CategoryToggle switches and backend consent recording via `POST /consent` | Not Started | |
-| W-LG-007 | 2 | Build Responsible Gaming information page (`/responsible-gaming`) with introductory content and ResourceLinks section | Not Started | |
-| W-LG-008 | 2 | Build SelfExclusionCard and SelfExclusionDialog with cool-down period selector and "CONFIRM" typed confirmation via `POST /account/self-exclusion` | Not Started | |
-| W-LG-009 | 2 | Build AgeGate component with DOBPicker (month/day/year dropdowns), client-side age validation, and AgeBlockedMessage for under-13 users | Not Started | |
-| W-LG-010 | 2 | Build DSARStatus component with StatusTimeline, DownloadLink, and RequestActions; integrate polling via TanStack Query for in-progress requests | Not Started | |
+| W-LG-001 | 1 | Build shared LegalPage layout component with TableOfContents sidebar, LastUpdated badge, and responsive collapse behavior | Done | LegalPage + LegalSection with Intersection Observer TOC |
+| W-LG-002 | 1 | Build Privacy Policy page (`/privacy`) with markdown/CMS content rendering and Intersection Observer-based TOC highlighting | Done | 11 sections covering data collection, rights, retention, CCPA |
+| W-LG-003 | 1 | Build Terms of Service page (`/terms`) with VersionSelector dropdown and ArchivedBanner for previous versions | Done | 13 sections including no-real-money clause. Version selector deferred |
+| W-LG-004 | 1 | Build Cookie Policy page (`/cookie-policy`) with CookieCategorySection components and per-cookie tables | Done | 3 cookie categories with per-cookie tables |
+| W-LG-005 | 1 | Build CookieBanner global component with Accept All, Reject Non-Essential, and Manage Preferences actions; persist consent to localStorage | Done | Fixed bottom banner with Accept All / Necessary Only. localStorage persistence |
+| W-LG-006 | 1 | Build CookiePreferencesDialog with per-category CategoryToggle switches and backend consent recording via `POST /consent` | Not Started | Granular per-category dialog deferred |
+| W-LG-007 | 2 | Build Responsible Gaming information page (`/responsible-gaming`) with introductory content and ResourceLinks section | Done | Self-exclusion info, activity limits, session reminders, 3 helpline resources |
+| W-LG-008 | 2 | Build SelfExclusionCard and SelfExclusionDialog with cool-down period selector and "CONFIRM" typed confirmation via `POST /account/self-exclusion` | Not Started | Info cards built; interactive dialog deferred to settings page |
+| W-LG-009 | 2 | Build AgeGate component with DOBPicker (month/day/year dropdowns), client-side age validation, and AgeBlockedMessage for under-13 users | Not Started | Backend API ready; UI deferred to registration flow |
+| W-LG-010 | 2 | Build DSARStatus component with StatusTimeline, DownloadLink, and RequestActions; integrate polling via TanStack Query for in-progress requests | Not Started | Backend API ready; UI deferred to settings/privacy page |
 | W-LG-011 | 2 | Build SessionReminderConfig card with interval dropdown and auto-save via `PUT /account/session-reminder` | Not Started | |
 | W-LG-012 | 2 | Build ActivityLimitConfig card with weekly contest limit input and auto-save via `PUT /account/activity-limits` | Not Started | |

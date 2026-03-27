@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
+import { CookieBanner } from '@/components/cookie-banner';
 
 export function PublicLayout() {
   return (
@@ -35,10 +36,12 @@ export function PublicLayout() {
           <nav className="flex gap-4 text-sm text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground">Terms</Link>
             <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+            <Link to="/cookie-policy" className="hover:text-foreground">Cookies</Link>
             <Link to="/responsible-gaming" className="hover:text-foreground">Responsible Gaming</Link>
           </nav>
         </div>
       </footer>
+      <CookieBanner />
     </div>
   );
 }
