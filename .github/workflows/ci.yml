@@ -20,6 +20,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
       - run: npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0 || true
       - run: npx turbo typecheck
 

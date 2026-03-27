@@ -2,7 +2,7 @@
  * WeeklyDigest — generates and sends weekly league summary emails.
  */
 
-import type { ContestEntry, ContestResult, ContestStanding, PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { Channels } from '../channels/channel-factory';
 import { renderTemplate } from './template-renderer';
 
@@ -62,10 +62,9 @@ export class WeeklyDigestService {
     });
 
     // Build standings text
-    type ContestWithRelations = { name: string; standings: ContestStanding[]; entries: ContestEntry[] };
-    const standingsText = activeContests.map((c: ContestWithRelations) => {
-      const top3 = c.standings.map((s: ContestStanding) => {
-        const entry = c.entries.find((e: ContestEntry) => e.id === s.entryId);
+    const standingsText = activeContests.map((c: any) => {
+      const top3 = c.standings.map((s: any) => {
+        const entry = c.entries.find((e: any) => e.id === s.entryId);
         return `  #${s.rank} ${entry?.name ?? 'Unknown'} — ${s.totalScore} pts`;
       }).join('\n');
       return `${c.name}:\n${top3}`;
@@ -73,7 +72,7 @@ export class WeeklyDigestService {
 
     // Build highlights
     const highlights: string[] = [];
-    for (const result of recentResults.filter((r: ContestResult) => r.isWinner)) {
+    for (const result of recentResults.filter((r: any) => r.isWinner)) {
       highlights.push(`${result.contestName ?? 'Contest'} won with ${result.totalScore} points`);
     }
 
