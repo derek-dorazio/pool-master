@@ -1,0 +1,24 @@
+# Dockerfile for draft-service
+# Build context: repo root
+#   docker build -f infrastructure/docker/Dockerfile.draft-service -t poolmaster-draft-service .
+
+FROM node:20-slim AS builder
+WORKDIR /app
+
+COPY package*.json turbo.json tsconfig.base.json ./
+COPY packages/shared/ packages/shared/
+COPY packages/draft-service/ packages/draft-service/
+
+RUN npm ci
+RUN npx turbo build --filter=@poolmaster/draft-service
+
+FROM node:20-slim
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/packages/draft-service/dist ./dist
+COPY --from=builder /app/packages/draft-service/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 3001
+CMD ["node", "dist/index.js"]

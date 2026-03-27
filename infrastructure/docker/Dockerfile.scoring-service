@@ -1,0 +1,24 @@
+# Dockerfile for scoring-service
+# Build context: repo root
+#   docker build -f infrastructure/docker/Dockerfile.scoring-service -t poolmaster-scoring-service .
+
+FROM node:20-slim AS builder
+WORKDIR /app
+
+COPY package*.json turbo.json tsconfig.base.json ./
+COPY packages/shared/ packages/shared/
+COPY packages/scoring-service/ packages/scoring-service/
+
+RUN npm ci
+RUN npx turbo build --filter=@poolmaster/scoring-service
+
+FROM node:20-slim
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/packages/scoring-service/dist ./dist
+COPY --from=builder /app/packages/scoring-service/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 3002
+CMD ["node", "dist/index.js"]

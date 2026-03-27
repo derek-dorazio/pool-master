@@ -1,0 +1,17 @@
+# Dockerfile for admin client (Vite React -> nginx)
+# Build context: repo root
+#   docker build -f infrastructure/docker/Dockerfile.admin -t poolmaster-admin .
+
+FROM node:20-slim AS builder
+WORKDIR /app
+
+COPY package*.json turbo.json tsconfig.base.json ./
+COPY clients/admin/ clients/admin/
+
+RUN npm ci
+RUN npx turbo build --filter=@poolmaster/admin
+
+FROM nginx:alpine
+COPY --from=builder /app/clients/admin/dist /usr/share/nginx/html
+COPY infrastructure/docker/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80

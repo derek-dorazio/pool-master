@@ -1,11 +1,15 @@
 import Fastify from 'fastify';
 import { healthPlugin } from './plugins/health';
+import { authGuard } from './plugins/auth-guard';
+import { tenantPlugin } from './core/tenant-context';
+import { authModule } from './modules/auth/routes';
 import { leaguesModule } from './modules/leagues/routes';
 import { invitationsModule } from './modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { templatesModule } from './modules/templates/routes';
 import { participantsModule } from './modules/participants/routes';
 import { contestPoolModule } from './modules/participants/pool-routes';
+import { standingsModule } from './modules/standings/routes';
 import { historyModule } from './modules/history/routes';
 import { searchModule } from './modules/search/routes';
 import { complianceModule } from './modules/compliance/routes';
@@ -16,8 +20,13 @@ export function buildApp() {
 
   // Core plugins
   app.register(healthPlugin);
+  app.register(authGuard);
+  app.register(tenantPlugin);
 
-  // Domain modules
+  // Auth module (public routes — no JWT required)
+  app.register(authModule, { prefix: '/api/v1/auth' });
+
+  // Domain modules (protected by auth-guard)
   app.register(leaguesModule, { prefix: '/api/v1/leagues' });
   app.register(invitationsModule, { prefix: '/api/v1/invitations' });
   app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
@@ -25,6 +34,7 @@ export function buildApp() {
   app.register(templatesModule, { prefix: '/api/v1/templates' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
   app.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool' });
+  app.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
   app.register(historyModule, { prefix: '/api/v1' });
   app.register(searchModule, { prefix: '/api/v1/search' });
   app.register(complianceModule, { prefix: '/api/v1/account' });

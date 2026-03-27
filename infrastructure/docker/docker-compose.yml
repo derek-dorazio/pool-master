@@ -1,0 +1,133 @@
+# Full-stack docker-compose for local integration testing.
+# For dev databases only, use docker-compose.dev.yml instead.
+#
+# Usage: docker compose -f infrastructure/docker/docker-compose.yml up
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: poolmaster
+      POSTGRES_PASSWORD: poolmaster
+      POSTGRES_DB: poolmaster
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poolmaster"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  core-api:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.core-api
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  draft-service:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.draft-service
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scoring-service:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.scoring-service
+    ports:
+      - "3002:3002"
+    environment:
+      DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  ingestion-worker:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.ingestion-worker
+    ports:
+      - "3003:3003"
+    environment:
+      DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.notification-service
+    ports:
+      - "3004:3004"
+    environment:
+      DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.web
+    ports:
+      - "8080:80"
+    depends_on:
+      - core-api
+
+  admin:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.admin
+    ports:
+      - "8081:80"
+    depends_on:
+      - core-api
+
+volumes:
+  pgdata:

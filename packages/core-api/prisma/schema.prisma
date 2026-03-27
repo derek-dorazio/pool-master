@@ -52,6 +52,7 @@ model Tenant {
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
+  passwordHash String?  @map("password_hash")
   displayName  String   @map("display_name")
   authProvider String?  @map("auth_provider")
   authId       String?  @map("auth_id")
@@ -74,7 +75,23 @@ model User {
   deviceRegistrations DeviceRegistration[]
   localePreference    UserLocalePreference?
 
+  refreshTokens       RefreshToken[]
+
   @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  token     String   @unique
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }
 
 // =============================================================================

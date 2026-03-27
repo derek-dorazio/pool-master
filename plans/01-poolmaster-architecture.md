@@ -32,6 +32,12 @@
 | [webapp/](webapp/) | React web app — 14 plan files (auth, dashboard, leagues, contests, draft room, etc.) |
 | [ios-app/](ios-app/) | Native iOS (Swift/SwiftUI) — 9 plan files, 51 tasks (auth, navigation, draft room, push, social) |
 
+### Testing Plans
+
+| Subfolder | Scope |
+|---|---|
+| [testing/](testing/) | Smoke test suites — API-only (Vitest) and UI (Playwright), 38 tasks across 9 phases |
+
 ---
 
 ## 1. Vision & Scope
@@ -541,24 +547,24 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-002 | 1 | Shared domain types — TypeScript interfaces for all entities | Done | 16 interfaces + enums in `packages/shared/domain/` |
 | 01-003 | 1 | Repository port interfaces for all repos | Done | 17 repo interfaces in `packages/shared/db/ports.ts` |
 | 01-004 | 1 | Event schemas — StatEvent, DraftPick, Contest lifecycle | Done | `packages/shared/events/` |
-| 01-005 | 1 | Auth integration (JWT + OAuth via Auth0 or Cognito) | Not Started | |
+| 01-005 | 1 | Auth integration (JWT + OAuth via Auth0 or Cognito) | Done | Auth module: register, login, refresh, logout, forgot-password, OAuth callback, /me. JWT access (15m) + refresh (7d) with rotation. bcryptjs hashing. `auth-service.ts`, `handler.ts`, `routes.ts` |
 | 01-006 | 1 | Prisma schema — full domain model (18 models) | Done | `packages/core-api/prisma/schema.prisma` |
-| 01-007 | 1 | Prisma adapter for UserRepository | Not Started | |
-| 01-008 | 1 | Prisma adapter for LeagueRepository | Not Started | |
-| 01-009 | 1 | Prisma adapter for LeagueMembershipRepository | Not Started | |
-| 01-010 | 1 | DB migrations — run `prisma migrate dev` to generate initial migration | Not Started | Schema ready, migration not yet run |
-| 01-011 | 1 | TenantContext Fastify hook (extract tenant from JWT/subdomain) | In Progress | Stub in `core-api/src/core/tenant-context.ts` |
+| 01-007 | 1 | Prisma adapter for UserRepository | Done | Auth module uses PrismaClient directly for user CRUD; 16 Prisma adapters exist in `adapters/` |
+| 01-008 | 1 | Prisma adapter for LeagueRepository | Done | `prisma-league-repository.ts` in adapters |
+| 01-009 | 1 | Prisma adapter for LeagueMembershipRepository | Done | `prisma-league-membership-repository.ts` in adapters |
+| 01-010 | 1 | DB migrations — run `prisma migrate dev` to generate initial migration | Done | CI pipeline runs `prisma migrate deploy` against test DB |
+| 01-011 | 1 | TenantContext Fastify hook (extract tenant from JWT/subdomain) | Done | Resolves tenant from JWT claim first, falls back to `x-tenant-id` header, returns 401 if missing. `tenant-context.ts` + `auth-guard.ts` plugin |
 | 01-012 | 1 | Core API — `POST /leagues` and `GET /leagues` end-to-end | In Progress | Route + handler stubs exist, needs Prisma wiring |
-| 01-013 | 1 | CI/CD pipeline (GitHub Actions: lint, type check, test, build) | Not Started | |
-| 01-014 | 1 | Docker images for each service | In Progress | `Dockerfile.service` template exists, not tested |
-| 01-015 | 1 | ECS/EKS scaffolding (Terraform) | Not Started | |
-| 01-016 | 2 | Sport and Season CRUD endpoints | Not Started | |
-| 01-017 | 2 | Contest CRUD endpoints | Not Started | |
-| 01-018 | 2 | SelectionConfig CRUD | Not Started | |
-| 01-019 | 2 | ContestParticipantPool management endpoints | Not Started | |
-| 01-020 | 2 | Contest entry creation and pick management | Not Started | |
+| 01-013 | 1 | CI/CD pipeline (GitHub Actions: lint, type check, test, build) | Done | `.github/workflows/ci.yml` — lint+typecheck, test (Postgres+Redis services), build |
+| 01-014 | 1 | Docker images for each service | Done | 7 Dockerfiles (5 services + web + admin), nginx.conf, docker-compose.yml |
+| 01-015 | 1 | ECS/EKS scaffolding (Terraform) | Done | `main.tf` (VPC, ECS Fargate, RDS, ElastiCache, ALB, ECR, CloudWatch), `variables.tf`, `outputs.tf` |
+| 01-016 | 2 | Sport and Season CRUD endpoints | Done | Participants module with sport/season routes in `modules/participants/` |
+| 01-017 | 2 | Contest CRUD endpoints | Done | Full CRUD in `modules/contests/` with selection config, scoring templates, payout validation |
+| 01-018 | 2 | SelectionConfig CRUD | Done | Created atomically with contests via `ContestService.createContest` |
+| 01-019 | 2 | ContestParticipantPool management endpoints | Done | Pool routes in `modules/participants/pool-routes.ts` |
+| 01-020 | 2 | Contest entry creation and pick management | Done | Entry + pick management in contest modules, draft overrides for pick management |
 | 01-021 | 2 | Snake draft engine — async mode | Done | 8 engines built in draft-service: snake, tiered, budget, survivor, pick'em, bracket + session manager + draft order |
-| 01-022 | 2 | Basic standings endpoint (manual/seeded data) | Not Started | |
+| 01-022 | 2 | Basic standings endpoint (manual/seeded data) | Done | Standings module: paginated leaderboard, top-N summary, my-entry with rank context and movement indicators. `modules/standings/` |
 | 01-023 | 3 | Stats ingestion worker — golf adapter | Not Started | First sport |
 | 01-024 | 3 | Scoring rule evaluator (JSONB config → points) | Not Started | |
 | 01-025 | 3 | NoSQL writes for ParticipantEventStats and TeamContestPoints | Not Started | |
