@@ -116,7 +116,7 @@ export class NotificationDispatcher {
           where: { leagueId: event.leagueId },
           select: { userId: true },
         });
-        return memberships.map((m) => m.userId);
+        return memberships.map((m: { userId: string }) => m.userId);
       }
       case 'ALL_CONTEST': {
         if (!event.contestId) return [];
@@ -124,7 +124,7 @@ export class NotificationDispatcher {
           where: { contestId: event.contestId },
           include: { membership: { select: { userId: true } } },
         });
-        return entries.map((e) => e.membership.userId);
+        return entries.map((e: { membership: { userId: string } }) => e.membership.userId);
       }
       case 'COMMISSIONERS': {
         if (!event.leagueId) return [];
@@ -132,7 +132,7 @@ export class NotificationDispatcher {
           where: { leagueId: event.leagueId, role: { in: ['OWNER', 'COMMISSIONER'] } },
           select: { userId: true },
         });
-        return commissioners.map((c) => c.userId);
+        return commissioners.map((c: { userId: string }) => c.userId);
       }
       default:
         return [];

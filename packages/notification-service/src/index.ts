@@ -1,5 +1,5 @@
 import Fastify from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type NotificationDeliveryLog } from '@prisma/client';
 import { loadConfig } from './core/config';
 import { getDefaultPreferences } from './core/preference-service';
 import { createChannels } from './channels/channel-factory';
@@ -315,9 +315,9 @@ export function buildApp() {
       });
 
       const total = logs.length;
-      const sent = logs.filter((l) => l.status === 'SENT').length;
-      const suppressed = logs.filter((l) => l.status === 'SUPPRESSED').length;
-      const failed = logs.filter((l) => l.status === 'FAILED').length;
+      const sent = logs.filter((l: NotificationDeliveryLog) => l.status === 'SENT').length;
+      const suppressed = logs.filter((l: NotificationDeliveryLog) => l.status === 'SUPPRESSED').length;
+      const failed = logs.filter((l: NotificationDeliveryLog) => l.status === 'FAILED').length;
 
       const byChannel: Record<string, { sent: number; suppressed: number; failed: number }> = {};
       for (const log of logs) {
@@ -329,7 +329,7 @@ export function buildApp() {
       }
 
       const suppressionReasons: Record<string, number> = {};
-      for (const log of logs.filter((l) => l.status === 'SUPPRESSED')) {
+      for (const log of logs.filter((l: NotificationDeliveryLog) => l.status === 'SUPPRESSED')) {
         const reason = log.suppressionReason ?? 'UNKNOWN';
         suppressionReasons[reason] = (suppressionReasons[reason] ?? 0) + 1;
       }

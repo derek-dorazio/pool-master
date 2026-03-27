@@ -6,7 +6,7 @@
  * APNs/FCM endpoints. No conditional logic — swapped entirely by env config.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { DeviceRegistration, PrismaClient } from '@prisma/client';
 
 // --- Provider Interface ---
 
@@ -197,21 +197,21 @@ export class PushChannel {
 
     if (devices.length === 0) return [];
 
-    const iosDevices = devices.filter((d) => d.platform === 'ios');
-    const androidDevices = devices.filter((d) => d.platform !== 'ios');
+    const iosDevices = devices.filter((d: DeviceRegistration) => d.platform === 'ios');
+    const androidDevices = devices.filter((d: DeviceRegistration) => d.platform !== 'ios');
 
     const results: PushDeliveryResult[] = [];
 
     if (iosDevices.length > 0) {
       const apnsResults = await this.providers.apns.sendBatch(
-        iosDevices.map((d) => ({ token: d.token, payload })),
+        iosDevices.map((d: DeviceRegistration) => ({ token: d.token, payload })),
       );
       results.push(...apnsResults);
     }
 
     if (androidDevices.length > 0) {
       const fcmResults = await this.providers.fcm.sendBatch(
-        androidDevices.map((d) => ({ token: d.token, payload })),
+        androidDevices.map((d: DeviceRegistration) => ({ token: d.token, payload })),
       );
       results.push(...fcmResults);
     }
