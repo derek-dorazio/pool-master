@@ -56,7 +56,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-      - run: NODE_OPTIONS='--experimental-vm-modules' npm test
+      - run: npm test
 
   build:
     runs-on: ubuntu-latest

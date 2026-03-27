@@ -20,10 +20,10 @@
     "db:studio": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma studio",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "jest --config tests/jest.config.ts",
-    "test:unit": "jest --config tests/jest.config.ts tests/unit",
-    "test:integration": "jest --config tests/jest.config.ts tests/integration",
-    "test:api": "jest --config tests/jest.config.ts tests/api",
+    "test": "jest --config tests/jest.config.js",
+    "test:unit": "jest --config tests/jest.config.js tests/unit",
+    "test:integration": "jest --config tests/jest.config.js tests/integration",
+    "test:api": "jest --config tests/jest.config.js tests/api",
     "format": "prettier --write ."
   },
   "devDependencies": {
