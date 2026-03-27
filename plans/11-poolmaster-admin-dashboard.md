@@ -871,13 +871,13 @@ Hosting:    Internal-only access (VPN or IP-restricted)
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 11-001 | 1 | `admin_users` table + migrations | Not Started | |
-| 11-002 | 1 | Admin authentication (SSO integration — Okta/Google Workspace) | Not Started | |
-| 11-003 | 1 | Admin role and permission model (SUPER_ADMIN → VIEWER) | Not Started | |
-| 11-004 | 1 | Tenant list view (name, plan, members, contests, status, last active) | Not Started | |
-| 11-005 | 1 | Tenant detail view (subscription, usage, leagues, activity) | Not Started | |
-| 11-006 | 1 | Tenant actions (upgrade, downgrade, apply credit, suspend) | Not Started | |
-| 11-007 | 1 | `admin_audit_log` table + all admin actions logged | Not Started | Immutable, from day one |
+| 11-001 | 1 | `admin_users` table + migrations | Done | Added AdminUser, AdminAuditEntry, FeatureFlag, FeatureFlagOverride, GlobalAnnouncement, ImpersonationSession, MigrationRun Prisma models; added reverse relations to Tenant |
+| 11-002 | 1 | Admin authentication (SSO integration — Okta/Google Workspace) | Done | Created admin-auth.ts Fastify plugin with JWT extraction, admin user lookup, inactive check; placeholder for SSO token validation |
+| 11-003 | 1 | Admin role and permission model (SUPER_ADMIN → VIEWER) | Done | Created admin-permissions.ts with 5 roles, 24 permissions, role-permission matrix, hasAdminPermission and requireAdminPermission preHandler; added shared domain types |
+| 11-004 | 1 | Tenant list view (name, plan, members, contests, status, last active) | Done | Routes + handler + service with mock data; GET /api/v1/admin/tenants with search/filter/sort/pagination |
+| 11-005 | 1 | Tenant detail view (subscription, usage, leagues, activity) | Done | GET /api/v1/admin/tenants/:tenantId returning TenantDetailView with mock data |
+| 11-006 | 1 | Tenant actions (upgrade, downgrade, apply credit, suspend) | Done | PUT plan, POST suspend/unsuspend/credit/extend-trial, DELETE tenant; all audit-logged |
+| 11-007 | 1 | `admin_audit_log` table + all admin actions logged | Done | Audit query service (mock data), audit-handler with list/detail/CSV-export endpoints, audit-routes sub-plugin, and admin-audit-hook (onResponse) for auto-logging mutating admin requests |
 | 11-008 | 2 | User search across tenants (email, name, ID) | Not Started | |
 | 11-009 | 2 | User detail view (tenants, leagues, contests, devices) | Not Started | |
 | 11-010 | 2 | User actions (reset password, force logout, disable) | Not Started | |

@@ -613,6 +613,107 @@ export interface IntermediatePrize {
   percentage?: number;
 }
 
+// --- Admin & Platform Operations ---
+
+export type AdminRole = 'SUPER_ADMIN' | 'OPERATIONS' | 'SUPPORT' | 'DATA_OPS' | 'VIEWER';
+
+export type AdminPermission =
+  | 'tenant.view' | 'tenant.edit' | 'tenant.suspend' | 'tenant.delete' | 'tenant.impersonate'
+  | 'user.view' | 'user.edit' | 'user.reset_password' | 'user.force_logout' | 'user.merge'
+  | 'contest.view' | 'contest.override' | 'contest.recalculate' | 'contest.close'
+  | 'sportsdata.view' | 'sportsdata.configure' | 'sportsdata.re_ingest'
+  | 'flags.view' | 'flags.edit'
+  | 'platform.health' | 'platform.announcements' | 'platform.migrations'
+  | 'audit.view';
+
+export interface AdminUser extends DomainEntity {
+  email: string;
+  name: string;
+  role: AdminRole;
+  permissions: AdminPermission[];
+  ssoProviderId?: string;
+  mfaEnabled: boolean;
+  mfaSecret?: string;
+  lastLoginAt?: Date;
+  isActive: boolean;
+}
+
+export interface AdminAuditEntry {
+  id: string;
+  adminUserId: string;
+  adminUserEmail: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  description: string;
+  beforeState?: Record<string, unknown>;
+  afterState?: Record<string, unknown>;
+  reason?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: Date;
+}
+
+export interface FeatureFlag extends DomainEntity {
+  key: string;
+  name: string;
+  description?: string;
+  flagType: string;
+  enabledGlobally: boolean;
+  rolloutPercentage?: number;
+  owner?: string;
+  updatedById?: string;
+}
+
+export interface FeatureFlagOverride {
+  id: string;
+  flagId: string;
+  tenantId: string;
+  enabled: boolean;
+  reason?: string;
+  createdAt: Date;
+  createdById?: string;
+}
+
+export interface GlobalAnnouncement {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  linkUrl?: string;
+  linkText?: string;
+  severity: string;
+  dismissable: boolean;
+  target: string;
+  targetTenantIds: string[];
+  startsAt: Date;
+  endsAt?: Date;
+  isActive: boolean;
+  createdById: string;
+  createdAt: Date;
+}
+
+export interface ImpersonationSession {
+  id: string;
+  adminUserId: string;
+  tenantId: string;
+  startedAt: Date;
+  endedAt?: Date;
+  isActive: boolean;
+}
+
+export interface MigrationRun {
+  id: string;
+  migrationId: string;
+  status: string;
+  options: Record<string, unknown>;
+  progress: Record<string, unknown>;
+  errors: Record<string, unknown>[];
+  startedAt: Date;
+  completedAt?: Date;
+  startedById: string;
+}
+
 // --- Commissioner Dashboard ---
 
 export interface ActionItem extends DomainEntity {

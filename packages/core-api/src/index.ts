@@ -9,6 +9,7 @@ import { contestPoolModule } from './modules/participants/pool-routes';
 import { historyModule } from './modules/history/routes';
 import { searchModule } from './modules/search/routes';
 import { complianceModule } from './modules/compliance/routes';
+import { adminModule } from './modules/admin/routes';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -27,6 +28,7 @@ export function buildApp() {
   app.register(historyModule, { prefix: '/api/v1' });
   app.register(searchModule, { prefix: '/api/v1/search' });
   app.register(complianceModule, { prefix: '/api/v1/account' });
+  app.register(adminModule, { prefix: '/api/v1/admin' });
 
   return app;
 }

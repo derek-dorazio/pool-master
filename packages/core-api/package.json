@@ -12,6 +12,7 @@
   "dependencies": {
     "@poolmaster/shared": "*",
     "fastify": "^5.0.0",
+    "fastify-plugin": "^5.0.0",
     "@prisma/client": "^6.0.0",
     "ioredis": "^5.4.0",
     "uuid": "^10.0.0"
