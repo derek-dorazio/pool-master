@@ -405,14 +405,14 @@ This plan covers the draft room and draft recap pages for the PoolMaster React w
 | W-DR-004 | 1 | Participant detail popup — modal/drawer with full stats, form, injury details, draft/nominate/queue actions | Done | Slide-out drawer with stats grid + "Draft" action button |
 | W-DR-005 | 1 | Pick board / draft grid (snake) — 2D grid with snake order visualisation, current pick highlight, completed pick display | Done | Rounds x teams grid, snake arrows, current pick ring highlight, position-coloured badges |
 | W-DR-006 | 1 | My roster panel — drafted participants by position/tier, roster completeness indicator, budget/tier summary | Done | Position-grouped roster, progress bar, empty slot placeholders, auto-pick badge |
-| W-DR-007 | 2 | Auto-pick queue (drag-and-drop) — sortable preference list with drag handles, add/remove, auto-fill from rankings, API sync | Not Started | |
+| W-DR-007 | 2 | Auto-pick queue (drag-and-drop) — sortable preference list with drag handles, add/remove, auto-fill from rankings, API sync | Done | HTML5 drag-and-drop + keyboard reorder (arrow keys), auto-fill button, clear queue |
 | W-DR-008 | 2 | Draft chat panel — collapsible chat with message feed, pick announcements, commissioner action messages, unread badge | Done | Collapsible bottom panel with message input. Pick announcements and system messages deferred to real API |
 | W-DR-009 | 2 | Draft timer component — configurable countdown, visual warnings at 10s/5s, audio alerts, aria-live announcements | Done | Timer in header, red flash at 10s, aria-live, "Your Pick!" badge pulse |
-| W-DR-010 | 2 | Commissioner draft controls — pause/resume, undo last pick, skip pick with confirmation dialogs | Not Started | |
-| W-DR-011 | 3 | Salary cap / auction UI variant — auction stage, bidding controls, bid clock, nomination flow, auction log, budget tracker | Not Started | |
-| W-DR-012 | 3 | Tiered draft UI variant — tier-grouped pick board, tier filters, tier slot indicators on roster panel | Not Started | |
-| W-DR-013 | 3 | Pick'em UI variant — event/game list with pick selectors, confidence points, per-event deadlines | Not Started | |
-| W-DR-014 | 3 | Bracket pick'em UI variant — bracket visualisation, click-to-advance, auto-fill by seed, reset, completion tracking | Not Started | |
+| W-DR-010 | 2 | Commissioner draft controls — pause/resume, undo last pick, skip pick with confirmation dialogs | Done | Shield badge, 4 actions with confirmation modals, mutation with query invalidation |
+| W-DR-011 | 3 | Salary cap / auction UI variant — auction stage, bidding controls, bid clock, nomination flow, auction log, budget tracker | Done | Auction stage card, +1/+5/+10/custom bid buttons, bid timer, budget bar, auction log |
+| W-DR-012 | 3 | Tiered draft UI variant — tier-grouped pick board, tier filters, tier slot indicators on roster panel | Done | Tier-grouped grid with colour-coded tier headers, slot indicators, per-tier progress |
+| W-DR-013 | 3 | Pick'em UI variant — event/game list with pick selectors, confidence points, per-event deadlines | Done | Home/away team cards, confidence point input, lock indicators, deadline display |
+| W-DR-014 | 3 | Bracket pick'em UI variant — bracket visualisation, click-to-advance, auto-fill by seed, reset, completion tracking | Done | Multi-round bracket with seed badges, click-to-pick, champion display, progress bar, auto-fill/reset |
 | W-DR-015 | 2 | Async draft polling — 10s refetchInterval, push notification integration (plan 09), "your turn" detection and alerts | Done | 10s polling via TanStack Query, isMyPick detection, "Your Pick!" banner |
 | W-DR-016 | 3 | Draft recap page — pick grid, team roster cards, draft analysis (best value, reaches, steals), share and export buttons | Done | Full recap: picks table, expandable team rosters, best value/reaches analysis, share/export buttons |
 
