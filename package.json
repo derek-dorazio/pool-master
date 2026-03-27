@@ -10,6 +10,14 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
+    "dev:start": "./scripts/dev-start.sh",
+    "dev:infra": "docker compose -f infrastructure/docker/docker-compose.dev.yml up -d postgres redis dynamodb",
+    "dev:infra:all": "docker compose -f infrastructure/docker/docker-compose.dev.yml up -d",
+    "dev:infra:stop": "docker compose -f infrastructure/docker/docker-compose.dev.yml down",
+    "db:migrate": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma migrate dev",
+    "db:seed": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma db seed",
+    "db:reset": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma migrate reset",
+    "db:studio": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma studio",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "jest --config tests/jest.config.ts",
@@ -29,6 +37,7 @@
     "turbo": "^2.0.0",
     "typescript": "^5.5.0"
   },
+  "packageManager": "npm@11.3.0",
   "engines": {
     "node": ">=20.0.0"
   }

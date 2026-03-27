@@ -89,25 +89,46 @@ See `.env.example` for the full list of variables.
 
 ---
 
-## 4. Initialize the Database
+## 4. Quick Start (Recommended)
 
-Generate the Prisma client and apply the schema:
+Start everything — Docker containers, database migrations, seed data, and all services — with one command:
 
 ```bash
-cd packages/core-api
-npx prisma generate
-npx prisma migrate dev --name init
-cd ../..
+npm run dev:start
 ```
 
-To reset the database (drops all data):
-```bash
-cd packages/core-api && npx prisma migrate reset
-```
+This will:
+1. Create `.env` from `.env.example` (if not present)
+2. Start Docker containers (PostgreSQL, Redis, DynamoDB)
+3. Run Prisma migrations
+4. Seed the database (plan tiers, etc.)
+5. Launch all backend services + webapp via Turborepo
+
+After startup you'll have:
+- **Webapp** at http://localhost:5173
+- **Core API** at http://localhost:3000
+- **Prisma Studio** (optional) at `npm run db:studio`
 
 ---
 
-## 5. Run the Development Server
+## 5. Individual Commands
+
+If you prefer to run steps separately:
+
+### Database Commands
+
+```bash
+npm run dev:infra          # Start Postgres + Redis + DynamoDB
+npm run dev:infra:all      # Start all containers (+ Mailpit, LocalStack, Push Mock)
+npm run dev:infra:stop     # Stop all containers
+
+npm run db:migrate         # Run Prisma migrations
+npm run db:seed            # Seed database
+npm run db:reset           # Reset database (drops all data)
+npm run db:studio          # Open Prisma Studio (visual DB browser)
+```
+
+### Run the Development Server
 
 Start all services in parallel:
 
