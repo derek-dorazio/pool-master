@@ -94,7 +94,7 @@ export class ComplianceService {
       contests,
       picks,
       notifications: notifications.length,
-      devices: devices.map((d) => ({ platform: d.platform, registeredAt: d.registeredAt })),
+      devices: devices.map((d: any) => ({ platform: d.platform, registeredAt: d.registeredAt })),
       consents,
       exportedAt: new Date().toISOString(),
     };

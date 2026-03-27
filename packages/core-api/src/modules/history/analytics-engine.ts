@@ -166,12 +166,12 @@ export class AnalyticsService {
       where: { leagueId },
       include: { user: true },
     });
-    const nameMap = new Map(memberships.map((m) => [m.id, m.user.displayName]));
+    const nameMap = new Map(memberships.map((m: any) => [m.id, m.user.displayName]));
 
     const luckMap = computeAllPlayLuck(
       results
-        .filter((r) => r.leagueMembershipId)
-        .map((r) => ({
+        .filter((r: any) => r.leagueMembershipId)
+        .map((r: any) => ({
           leagueMembershipId: r.leagueMembershipId!,
           contestId: r.contestId,
           totalScore: r.totalScore,
@@ -183,7 +183,7 @@ export class AnalyticsService {
     const luckScores = Array.from(luckMap.entries()).map(([memberId, stats]) => stats.luckScore);
     const sortedLuck = [...luckScores].sort((a, b) => a - b);
 
-    return Array.from(luckMap.entries()).map(([memberId, stats]) => {
+    return Array.from(luckMap.entries()).map(([memberId, stats]: [string, any]) => {
       const percentileIndex = sortedLuck.indexOf(stats.luckScore);
       const luckPercentile = sortedLuck.length > 1
         ? (percentileIndex / (sortedLuck.length - 1)) * 100
@@ -208,7 +208,7 @@ export class AnalyticsService {
       where: { leagueId },
       include: { user: true },
     });
-    const nameMap = new Map(memberships.map((m) => [m.id, m.user.displayName]));
+    const nameMap = new Map(memberships.map((m: any) => [m.id, m.user.displayName]));
 
     // Group scores by member
     const memberScores = new Map<string, { scores: number[]; wins: number; totalContests: number }>();
@@ -224,10 +224,10 @@ export class AnalyticsService {
     const rawRatings = computePowerRatings(memberScores);
 
     // Compute league average for adjustment
-    const allRaw = Array.from(rawRatings.values()).map((r) => r.rawPowerRating);
+    const allRaw = Array.from(rawRatings.values()).map((r: any) => r.rawPowerRating);
     const leagueAvgRaw = allRaw.length > 0 ? allRaw.reduce((a, b) => a + b, 0) / allRaw.length : 1;
 
-    return Array.from(rawRatings.entries()).map(([memberId, data]) => ({
+    return Array.from(rawRatings.entries()).map(([memberId, data]: [string, any]) => ({
       leagueMembershipId: memberId,
       memberName: nameMap.get(memberId) ?? '',
       ...data,

@@ -2,7 +2,7 @@
  * Prisma adapter for ParticipantRepository port.
  */
 
-import type { PrismaClient, Prisma } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { Participant, InjuryStatus } from '@poolmaster/shared/domain';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
@@ -37,7 +37,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     limit = 50,
     offset = 0,
   ): Promise<{ participants: Participant[]; total: number }> {
-    const where: Prisma.ParticipantWhereInput = {};
+    const where: Record<string, unknown> = {};
 
     if (filters.sportId) {
       where.sportId = filters.sportId;

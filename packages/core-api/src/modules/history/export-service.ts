@@ -58,7 +58,7 @@ export class HistoryExportService {
       where: { leagueId },
     });
 
-    const memberNameMap = new Map(memberships.map((m) => [m.id, m.user.displayName]));
+    const memberNameMap = new Map(memberships.map((m: any) => [m.id, m.user.displayName]));
 
     // Group results by season then by contest
     const seasonContests = new Map<string, Map<string, typeof results>>();
@@ -79,7 +79,7 @@ export class HistoryExportService {
     const seasonSummaries = await this.prisma.leagueSeasonSummary.findMany({
       where: { leagueId },
     });
-    const seasonNameMap = new Map(seasonSummaries.map((s) => [s.seasonId ?? '', s.seasonName]));
+    const seasonNameMap = new Map(seasonSummaries.map((s: any) => [s.seasonId ?? '', s.seasonName]));
 
     const seasons = Array.from(seasonContests.entries()).map(([seasonId, contests]) => ({
       season: seasonNameMap.get(seasonId) ?? seasonId,
