@@ -182,6 +182,8 @@ export class ImportService {
       const now = new Date();
 
       // Create a placeholder contest for historical reference
+      // Use type assertion because the Prisma client may not yet reflect
+      // recently-added schema fields (sport, isImported, importedBy, etc.)
       const createdContest = await this.prisma.contest.create({
         data: {
           leagueId,
@@ -196,7 +198,7 @@ export class ImportService {
           endDate: contest.endedAt ? new Date(contest.endedAt) : now,
           isImported: true,
           importedBy,
-        },
+        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       });
 
       // Create ContestResult for each result

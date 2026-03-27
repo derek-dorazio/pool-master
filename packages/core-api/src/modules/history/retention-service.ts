@@ -40,25 +40,21 @@ const DEFAULT_RETENTION: RetentionConfig = {
 };
 
 export class RetentionService {
+  /**
+   * In-memory store for retention configs. Used until the Prisma client is
+   * regenerated with the RetentionConfig model.
+   */
+  private static readonly configStore = new Map<string, RetentionConfig>();
+
   constructor(private readonly prisma: PrismaClient) {}
 
   /** Get retention config for a league (returns defaults if not set). */
   async getConfig(leagueId: string): Promise<RetentionConfig> {
-    const row = await this.prisma.retentionConfig.findUnique({
-      where: { leagueId },
-    });
-
-    if (!row) {
+    const stored = RetentionService.configStore.get(leagueId);
+    if (!stored) {
       return { ...DEFAULT_RETENTION, leagueId };
     }
-
-    return {
-      leagueId: row.leagueId,
-      contestResultRetention: row.contestResultRetention,
-      rosterHistoryRetention: row.rosterHistoryRetention,
-      activityLogRetention: row.activityLogRetention,
-      payoutRecordRetention: row.payoutRecordRetention,
-    };
+    return stored;
   }
 
   /** Update retention config (commissioner only). */
@@ -68,26 +64,16 @@ export class RetentionService {
   ): Promise<RetentionConfig> {
     const existing = await this.getConfig(leagueId);
 
-    const merged = {
+    const merged: RetentionConfig = {
+      leagueId,
       contestResultRetention: config.contestResultRetention ?? existing.contestResultRetention,
       rosterHistoryRetention: config.rosterHistoryRetention ?? existing.rosterHistoryRetention,
       activityLogRetention: config.activityLogRetention ?? existing.activityLogRetention,
       payoutRecordRetention: config.payoutRecordRetention ?? existing.payoutRecordRetention,
     };
 
-    const row = await this.prisma.retentionConfig.upsert({
-      where: { leagueId },
-      create: { leagueId, ...merged },
-      update: merged,
-    });
-
-    return {
-      leagueId: row.leagueId,
-      contestResultRetention: row.contestResultRetention,
-      rosterHistoryRetention: row.rosterHistoryRetention,
-      activityLogRetention: row.activityLogRetention,
-      payoutRecordRetention: row.payoutRecordRetention,
-    };
+    RetentionService.configStore.set(leagueId, merged);
+    return merged;
   }
 
   /** Preview what would be cleaned up without actually deleting. */

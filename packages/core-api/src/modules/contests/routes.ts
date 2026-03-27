@@ -199,7 +199,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   // --- Contest Audit Log ---
   fastify.get('/:contestId/audit-log', async (request, reply) => {
     const { contestId } = request.params as { contestId: string };
-    const { AuditService: AuditSvc } = await import('../leagues/audit-service');
+    const { AuditService: AuditSvc } = await import('../leagues/audit-service.js');
     const auditService = new AuditSvc(prisma);
     const entries = await auditService.getContestAuditLog(contestId);
     return reply.send({ entries });

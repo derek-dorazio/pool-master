@@ -1,4 +1,4 @@
-import { buildApp } from '@poolmaster/core-api';
+import { buildApp } from '../../../packages/core-api/src/index';
 
 describe('GET /health', () => {
   const app = buildApp();

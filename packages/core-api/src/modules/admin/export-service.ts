@@ -55,7 +55,7 @@ export class ExportNotReadyError extends Error {
 // In-memory store
 // ---------------------------------------------------------------------------
 
-const exports = new Map<string, TenantExport>();
+const exportStore = new Map<string, TenantExport>();
 
 // ---------------------------------------------------------------------------
 // Service
@@ -93,7 +93,7 @@ export class ExportService {
       },
     };
 
-    exports.set(tenantId, tenantExport);
+    exportStore.set(tenantId, tenantExport);
 
     await logAdminAction({
       adminUserId,
@@ -112,7 +112,7 @@ export class ExportService {
    * Returns the current export status for a tenant.
    */
   async getExportStatus(tenantId: string): Promise<TenantExport> {
-    const tenantExport = exports.get(tenantId);
+    const tenantExport = exportStore.get(tenantId);
     if (!tenantExport) throw new ExportNotFoundError(tenantId);
     return tenantExport;
   }
@@ -121,7 +121,7 @@ export class ExportService {
    * Returns the export data payload. Only available when status is COMPLETED.
    */
   async getExportData(tenantId: string): Promise<Record<string, unknown>> {
-    const tenantExport = exports.get(tenantId);
+    const tenantExport = exportStore.get(tenantId);
     if (!tenantExport) throw new ExportNotFoundError(tenantId);
     if (tenantExport.status !== 'COMPLETED') {
       throw new ExportNotReadyError(tenantExport.exportId);

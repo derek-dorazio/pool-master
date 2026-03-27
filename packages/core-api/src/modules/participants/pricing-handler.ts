@@ -53,6 +53,7 @@ export function createPricingHandlers(pricingService: PricingAndTierService) {
       rankingWeight: body.rankingWeight,
       formWeight: body.formWeight,
       oddsWeight: body.oddsWeight,
+      seedWeight: (body as Record<string, unknown>).seedWeight as number ?? 0,
       manualOverrides: (body.manualOverrides ?? []).map((o) => ({
         ...o,
         setBy: userId ?? 'system',

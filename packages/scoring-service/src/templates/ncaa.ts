@@ -22,6 +22,7 @@ export const ncaaStandardScoring: ScoringConfig = {
   penalty_rules: [],
   multiplier_rules: [],
   bracket_round_rules: NCAA_STANDARD_ROUND_RULES,
+  special_slots: [],
   upset_bonus_config: null,
   tiebreaker_config: {
     primary: 'CHAMPIONSHIP_SCORE_PREDICTION',

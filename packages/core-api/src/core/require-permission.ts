@@ -19,14 +19,14 @@ export function requirePermission(
   permission: CommissionerPermission,
 ): preHandlerHookHandler {
   return async function checkPermission(
-    request: FastifyRequest<{ Params: { id: string } }>,
+    request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string | undefined;
     if (!userId) {
       return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
     }
-    const leagueId = request.params.id;
+    const leagueId = (request.params as { id: string }).id;
     if (!leagueId) {
       return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Missing league id' });
     }
@@ -55,14 +55,14 @@ export function requireOwner(
   membershipRepo: LeagueMembershipRepository,
 ): preHandlerHookHandler {
   return async function checkOwner(
-    request: FastifyRequest<{ Params: { id: string } }>,
+    request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string | undefined;
     if (!userId) {
       return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
     }
-    const leagueId = request.params.id;
+    const leagueId = (request.params as { id: string }).id;
     const membership = await membershipRepo.findByLeagueAndUser(leagueId, userId);
     if (!membership || membership.role !== 'OWNER') {
       return reply

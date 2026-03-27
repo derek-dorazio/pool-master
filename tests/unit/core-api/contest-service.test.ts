@@ -2,6 +2,7 @@ import {
   ContestService,
   ContestNotFoundError,
   ContestOperationError,
+  registerScoringTemplates,
 } from '../../../packages/core-api/src/modules/contests/service';
 import type {
   ContestRepository,
@@ -11,6 +12,12 @@ import type {
 } from '@poolmaster/shared/db';
 import { ContestStatus, SelectionType, ScoringEngine, ContestType } from '@poolmaster/shared/domain';
 import { buildContest, buildLeague, buildMembership, buildPayoutConfig } from '../../factories';
+
+beforeAll(() => {
+  registerScoringTemplates({
+    golf_dfs_standard: { sport: 'GOLF', scoring_type: 'CUMULATIVE', stat_rules: [{ stat_key: 'birdie', points_per_unit: 3 }] },
+  });
+});
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return {

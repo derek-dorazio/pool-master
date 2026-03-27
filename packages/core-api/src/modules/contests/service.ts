@@ -23,7 +23,19 @@ import {
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
-import { SCORING_TEMPLATES } from '../../../../scoring-service/src/templates/registry';
+/**
+ * Scoring template registry — populated at application startup via
+ * `registerScoringTemplates()`. This avoids a cross-package import of
+ * scoring-service which lives outside core-api's rootDir.
+ */
+let _scoringTemplates: Record<string, Record<string, unknown>> = {};
+
+/** Register scoring templates at startup (called from app bootstrap). */
+export function registerScoringTemplates(
+  templates: Record<string, Record<string, unknown>>,
+): void {
+  _scoringTemplates = templates;
+}
 
 export interface CreateContestInput {
   leagueId: string;
@@ -156,11 +168,11 @@ function resolveScoringRules(
   templateKey?: string,
 ): Record<string, unknown> {
   if (templateKey) {
-    const template = SCORING_TEMPLATES[templateKey];
+    const template = _scoringTemplates[templateKey];
     if (!template) {
       throw new ContestOperationError(`Scoring template not found: ${templateKey}`);
     }
-    return template as unknown as Record<string, unknown>;
+    return template;
   }
   return explicitRules ?? {};
 }

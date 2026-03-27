@@ -26,7 +26,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const analyticsService = new AnalyticsService(prisma);
   const leagueHistoryService = new LeagueHistoryService(prisma);
   const yoyTracker = new YearOverYearTracker(prisma);
-  const seasonNotesService = new SeasonNotesService(prisma);
+  const seasonNotesService = new SeasonNotesService();
   const importService = new ImportService(prisma);
   const mergeService = new HistoryMergeService(prisma);
   const exportService = new HistoryExportService(prisma);

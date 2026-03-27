@@ -22,6 +22,8 @@ export const nbaPointsLeagueScoring: ScoringConfig = {
   bonus_rules: [],
   penalty_rules: [],
   multiplier_rules: [],
+  bracket_round_rules: [],
+  special_slots: [],
   dnf_handling: 'ZERO',
   counting_method: 'ALL',
   lower_is_better: false,

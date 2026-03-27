@@ -29,6 +29,7 @@ const DEFAULT_PRICING_CONFIG: Omit<PricingConfig, 'sport'> = {
   rankingWeight: 0.5,
   formWeight: 0.3,
   oddsWeight: 0.2,
+  seedWeight: 0,
   manualOverrides: [],
 };
 

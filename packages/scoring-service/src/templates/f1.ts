@@ -36,6 +36,8 @@ export const f1DfsScoring: ScoringConfig = {
     { trigger: 'spots_lost_3_4', points: -2, description: '-3-4 spots lost' },
   ],
   multiplier_rules: [],
+  bracket_round_rules: [],
+  special_slots: [],
   dnf_handling: 'ZERO',
   counting_method: 'ALL',
   lower_is_better: false,

@@ -94,6 +94,9 @@ export function pauseSession(session: SessionState): SessionState {
  * Resume a draft session. Transitions from PAUSED to LIVE.
  */
 export function resumeSession(session: SessionState): SessionState {
+  if (session.status !== 'PAUSED') {
+    throw new Error(`Cannot resume from ${session.status} — session must be PAUSED`);
+  }
   const result = transitionSession(session, 'LIVE');
   if (!result.success) {
     throw new Error(result.reason);
