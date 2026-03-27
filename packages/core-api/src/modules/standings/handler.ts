@@ -6,6 +6,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { StandingsService, SortField } from './service';
 import { StandingsError } from './service';
 
+const STANDINGS_POLL_INTERVAL = 10000;
+
 export function createStandingsHandlers(standingsService: StandingsService) {
   return {
     getStandings,
@@ -29,6 +31,8 @@ export function createStandingsHandlers(standingsService: StandingsService) {
 
     try {
       const result = await standingsService.getStandings(contestId, { page, pageSize, sortBy });
+      reply.header('X-Poll-Interval', String(STANDINGS_POLL_INTERVAL));
+      reply.header('X-Poll-Interval-Unit', 'ms');
       return reply.send(result);
     } catch (err) {
       if (err instanceof StandingsError) {
@@ -51,6 +55,8 @@ export function createStandingsHandlers(standingsService: StandingsService) {
 
     try {
       const result = await standingsService.getSummary(contestId, topN);
+      reply.header('X-Poll-Interval', String(STANDINGS_POLL_INTERVAL));
+      reply.header('X-Poll-Interval-Unit', 'ms');
       return reply.send(result);
     } catch (err) {
       if (err instanceof StandingsError) {
@@ -81,6 +87,8 @@ export function createStandingsHandlers(standingsService: StandingsService) {
 
     try {
       const result = await standingsService.getMyEntry(contestId, userId);
+      reply.header('X-Poll-Interval', String(STANDINGS_POLL_INTERVAL));
+      reply.header('X-Poll-Interval-Unit', 'ms');
       return reply.send(result);
     } catch (err) {
       if (err instanceof StandingsError) {

@@ -14,12 +14,17 @@ import { historyModule } from './modules/history/routes';
 import { searchModule } from './modules/search/routes';
 import { complianceModule } from './modules/compliance/routes';
 import { adminModule } from './modules/admin/routes';
+import { etagPlugin } from './plugins/etag-support';
+import { pollConfigPlugin } from './plugins/poll-config';
+import { configModule } from './modules/config/routes';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
 
   // Core plugins
   app.register(healthPlugin);
+  app.register(etagPlugin);
+  app.register(pollConfigPlugin);
   app.register(authGuard);
   app.register(tenantPlugin);
 
@@ -39,6 +44,7 @@ export function buildApp() {
   app.register(searchModule, { prefix: '/api/v1/search' });
   app.register(complianceModule, { prefix: '/api/v1/account' });
   app.register(adminModule, { prefix: '/api/v1/admin' });
+  app.register(configModule, { prefix: '/api/v1/config' });
 
   return app;
 }

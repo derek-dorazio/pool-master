@@ -9,6 +9,7 @@ import { EventGrouper } from './core/event-grouper';
 import { ScheduledRunner } from './core/scheduled-runner';
 import { WeeklyDigestService } from './core/weekly-digest';
 import type { NotificationEvent, NotificationChannel, NotificationPriority } from '@poolmaster/shared/events';
+import { registerPushTriggers } from './triggers/push-triggers';
 import crypto from 'node:crypto';
 
 export function buildApp() {
@@ -150,9 +151,32 @@ export function buildApp() {
     },
   );
 
+  app.post<{ Body: { platform: string; token: string; appVersion?: string; osVersion?: string; deviceModel?: string } }>(
+    '/api/v1/devices/register',
+    async (request, reply) => {
+      const userId = request.headers['x-user-id'] as string;
+      const body = request.body;
+      const device = await prisma.deviceRegistration.upsert({
+        where: { platform_token: { platform: body.platform, token: body.token } },
+        create: { userId, platform: body.platform, token: body.token, appVersion: body.appVersion, osVersion: body.osVersion, deviceModel: body.deviceModel, lastActiveAt: new Date() },
+        update: { userId, appVersion: body.appVersion, osVersion: body.osVersion, deviceModel: body.deviceModel, isActive: true, lastActiveAt: new Date() },
+      });
+      return reply.status(201).send({ device });
+    },
+  );
+
   app.delete<{ Params: { id: string } }>('/api/v1/devices/:id', async (request) => {
     await prisma.deviceRegistration.update({ where: { id: request.params.id }, data: { isActive: false } });
     return { success: true };
+  });
+
+  app.get('/api/v1/devices', async (request) => {
+    const userId = request.headers['x-user-id'] as string;
+    const devices = await prisma.deviceRegistration.findMany({
+      where: { userId, isActive: true },
+      orderBy: { lastActiveAt: 'desc' },
+    });
+    return { devices };
   });
 
   // --- Dispatch (send a notification event) ---
@@ -344,6 +368,9 @@ export function buildApp() {
   app.addHook('onReady', async () => {
     scheduledRunner.start();
     app.log.info('Scheduled notification runner started');
+
+    registerPushTriggers(dispatcher);
+    app.log.info('Push notification triggers registered');
 
     // Flush grouped events periodically
     setInterval(() => {
