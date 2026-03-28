@@ -1,24 +1,16 @@
-# Dockerfile for ingestion-worker
-# Build context: repo root
-#   docker build -f infrastructure/docker/Dockerfile.ingestion-worker -t poolmaster-ingestion-worker .
-
 FROM node:20-slim AS builder
 WORKDIR /app
-
-COPY package*.json turbo.json tsconfig.base.json ./
-COPY packages/shared/ packages/shared/
-COPY packages/ingestion-worker/ packages/ingestion-worker/
-
-RUN npm ci
+COPY package.json package-lock.json turbo.json tsconfig.base.json ./
+COPY packages/shared/ ./packages/shared/
+COPY packages/ingestion-worker/ ./packages/ingestion-worker/
+RUN npm ci --workspace=@poolmaster/shared --workspace=@poolmaster/ingestion-worker
 RUN npx turbo build --filter=@poolmaster/ingestion-worker
 
 FROM node:20-slim
 WORKDIR /app
-ENV NODE_ENV=production
-
 COPY --from=builder /app/packages/ingestion-worker/dist ./dist
 COPY --from=builder /app/packages/ingestion-worker/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
-
+COPY --from=builder /app/packages/shared ./packages/shared
 EXPOSE 3003
 CMD ["node", "dist/index.js"]

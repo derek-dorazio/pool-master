@@ -1,27 +1,16 @@
-# Dockerfile for notification-service
-# Build context: repo root
-#   docker build -f infrastructure/docker/Dockerfile.notification-service -t poolmaster-notification-service .
-
 FROM node:20-slim AS builder
 WORKDIR /app
-
-COPY package*.json turbo.json tsconfig.base.json ./
-COPY packages/shared/ packages/shared/
-COPY packages/core-api/prisma/ packages/core-api/prisma/
-COPY packages/core-api/package.json packages/core-api/package.json
-COPY packages/notification-service/ packages/notification-service/
-
-RUN npm ci
-RUN npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+COPY package.json package-lock.json turbo.json tsconfig.base.json ./
+COPY packages/shared/ ./packages/shared/
+COPY packages/notification-service/ ./packages/notification-service/
+RUN npm ci --workspace=@poolmaster/shared --workspace=@poolmaster/notification-service
 RUN npx turbo build --filter=@poolmaster/notification-service
 
 FROM node:20-slim
 WORKDIR /app
-ENV NODE_ENV=production
-
 COPY --from=builder /app/packages/notification-service/dist ./dist
 COPY --from=builder /app/packages/notification-service/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
-
+COPY --from=builder /app/packages/shared ./packages/shared
 EXPOSE 3004
 CMD ["node", "dist/index.js"]
