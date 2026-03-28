@@ -16,12 +16,16 @@ terraform {
     }
   }
 
+  # State is isolated per environment via -backend-config:
+  #   terraform init -backend-config=envs/qa.backend.hcl
+  #   terraform init -backend-config=envs/staging.backend.hcl
+  #   terraform init -backend-config=envs/prod.backend.hcl
   backend "s3" {
     bucket         = "poolmaster-terraform-state-614049083306-us-east-2-an"
-    key            = "infra/terraform.tfstate"
     region         = "us-east-2"
     dynamodb_table = "poolmaster-terraform-locks"
     encrypt        = true
+    # key is set per environment via backend config file
   }
 }
 
@@ -39,6 +43,14 @@ provider "aws" {
 
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
+
+  # Domain: qa-domain.com, stage-domain.com, domain.com (prod has no prefix)
+  env_subdomain_prefix = {
+    qa      = "qa-"
+    staging = "stage-"
+    prod    = ""
+  }
+  app_domain = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
 
   services = [
     "core-api",
@@ -763,6 +775,7 @@ resource "aws_ecs_task_definition" "notification_service" {
       { name = "EMAIL_PROVIDER", value = "ses" },
       { name = "AWS_REGION", value = var.region },
       { name = "SES_FROM_EMAIL", value = "noreply@${var.domain_name != "" ? var.domain_name : "poolmaster.dev"}" },
+      { name = "ENVIRONMENT", value = var.environment },
     ])
     logConfiguration = {
       logDriver = "awslogs"
@@ -851,9 +864,9 @@ resource "aws_ecs_service" "web" {
 # =============================================================================
 
 resource "aws_route53_record" "app" {
-  count   = var.route53_zone_id != "" && var.domain_name != "" ? 1 : 0
+  count   = var.route53_zone_id != "" && local.app_domain != "" ? 1 : 0
   zone_id = var.route53_zone_id
-  name    = var.domain_name
+  name    = local.app_domain
   type    = "A"
 
   alias {

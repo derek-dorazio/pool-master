@@ -7,9 +7,19 @@ output "alb_dns_name" {
   value       = aws_lb.main.dns_name
 }
 
+output "environment" {
+  description = "Current environment"
+  value       = var.environment
+}
+
+output "app_domain" {
+  description = "Environment-specific domain (e.g., qa-poolmaster.app, poolmaster.app)"
+  value       = local.app_domain
+}
+
 output "app_url" {
   description = "Full app URL (domain if configured, otherwise ALB DNS)"
-  value       = var.domain_name != "" ? "https://${var.domain_name}" : "http://${aws_lb.main.dns_name}"
+  value       = local.app_domain != "" ? "https://${local.app_domain}" : "http://${aws_lb.main.dns_name}"
 }
 
 output "rds_endpoint" {

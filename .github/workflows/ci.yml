@@ -101,7 +101,8 @@ jobs:
         id: tags
         run: |
           SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          PREFIX="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/poolmaster-dev"
+          # QA environment auto-deploys on push to main
+          PREFIX="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/poolmaster-qa"
           echo "sha_tag=${SHA}" >> $GITHUB_OUTPUT
           echo "prefix=${PREFIX}" >> $GITHUB_OUTPUT
 
@@ -193,9 +194,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # --- Deploy to QA (force new deployment to pick up :latest) ---
+
+      - name: Deploy QA services
+        run: |
+          for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web; do
+            echo "Deploying poolmaster-qa-${SERVICE}..."
+            aws ecs update-service \
+              --cluster poolmaster-qa-cluster \
+              --service poolmaster-qa-${SERVICE} \
+              --force-new-deployment \
+              --no-cli-pager || echo "Service poolmaster-qa-${SERVICE} not found (deploy infra first)"
+          done
+
       - name: Summary
         run: |
-          echo "### Docker Images Published to ECR 🐳" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Images Published to ECR + QA Deployed 🐳" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Image | Tags |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY

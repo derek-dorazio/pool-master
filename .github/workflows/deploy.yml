@@ -1,0 +1,75 @@
+name: Deploy to Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - prod
+      image_tag:
+        description: 'Image tag to deploy (default: latest)'
+        required: false
+        default: 'latest'
+
+env:
+  AWS_REGION: us-east-2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Promote images from QA to target environment
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          TAG: ${{ github.event.inputs.image_tag }}
+          ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          QA_PREFIX="${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/poolmaster-qa"
+          TARGET_PREFIX="${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/poolmaster-${ENV}"
+
+          for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web admin; do
+            echo "Promoting ${SERVICE}:${TAG} from QA to ${ENV}..."
+            docker pull "${QA_PREFIX}/${SERVICE}:${TAG}"
+            docker tag "${QA_PREFIX}/${SERVICE}:${TAG}" "${TARGET_PREFIX}/${SERVICE}:${TAG}"
+            docker tag "${QA_PREFIX}/${SERVICE}:${TAG}" "${TARGET_PREFIX}/${SERVICE}:latest"
+            docker push "${TARGET_PREFIX}/${SERVICE}:${TAG}"
+            docker push "${TARGET_PREFIX}/${SERVICE}:latest"
+          done
+
+      - name: Deploy to ECS
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+        run: |
+          CLUSTER="poolmaster-${ENV}-cluster"
+          for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web; do
+            echo "Deploying poolmaster-${ENV}-${SERVICE}..."
+            aws ecs update-service \
+              --cluster "${CLUSTER}" \
+              --service "poolmaster-${ENV}-${SERVICE}" \
+              --force-new-deployment \
+              --no-cli-pager
+          done
+
+      - name: Summary
+        run: |
+          echo "### Deployed to ${{ github.event.inputs.environment }} 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Image tag: \`${{ github.event.inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Triggered by: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
