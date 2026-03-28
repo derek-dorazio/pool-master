@@ -83,8 +83,52 @@ Derek must complete these before the Agent can implement Phase 2:
 - [ ] 16-005: IAM user created — provide access key ID (secret key stored in GitHub)
 - [ ] 16-006: GitHub secrets configured
 
-Once these are done, return and the Agent will implement 16-007 through 16-016.
+Once these are done, return and say "implement the AWS deployment plan" — the Agent will prompt you for the required values below before starting.
 
 ---
 
-*PoolMaster AWS Deployment Plan v1.0*
+## Agent Prompt Checklist
+
+**When Derek requests Phase 2 implementation, the Agent MUST ask for these values before writing any code:**
+
+1. **S3 bucket name** for Terraform state
+   - Example: `poolmaster-terraform-state`
+
+2. **S3 bucket region**
+   - Example: `us-east-1`
+
+3. **DynamoDB table name** for Terraform state locking
+   - Example: `poolmaster-terraform-locks`
+
+4. **Domain name**
+   - Example: `poolmaster.com` or `app.poolmaster.com`
+
+5. **Route 53 hosted zone ID**
+   - Found in Route 53 console → Hosted zones → Zone ID column
+   - Example: `Z0123456789ABCDEFGHIJ`
+
+6. **ACM certificate ARN**
+   - Found in ACM console → Certificates → Certificate ARN
+   - Example: `arn:aws:acm:us-east-1:123456789012:certificate/abc-def-ghi`
+
+7. **AWS account ID**
+   - Found in top-right of AWS console → Account ID
+   - Example: `123456789012`
+
+8. **AWS region** for deployment
+   - Example: `us-east-1`
+
+9. **GitHub repo owner/name** (for ECR image references)
+   - Example: `derek-dorazio/pool-master`
+
+10. **Confirm GitHub secrets are set** (yes/no)
+    - `AWS_ACCESS_KEY_ID`
+    - `AWS_SECRET_ACCESS_KEY`
+    - `AWS_REGION`
+    - `AWS_ACCOUNT_ID`
+
+The Agent should use AskUserQuestion to collect all values in one prompt before proceeding with implementation.
+
+---
+
+*PoolMaster AWS Deployment Plan v1.1*
