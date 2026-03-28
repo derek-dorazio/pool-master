@@ -87,8 +87,8 @@ export class HistoryExportService {
         name: contestResults[0].contestName ?? '',
         type: contestResults[0].contestType ?? '',
         results: contestResults
-          .sort((a, b) => a.finalRank - b.finalRank)
-          .map((r) => ({
+          .sort((a: any, b: any) => a.finalRank - b.finalRank)
+          .map((r: any) => ({
             memberName: memberNameMap.get(r.leagueMembershipId ?? '') ?? '',
             rank: r.finalRank,
             score: r.totalScore,
@@ -103,14 +103,14 @@ export class HistoryExportService {
         sport: (league.settings as Record<string, unknown>)?.sport as string ?? '',
         createdAt: league.createdAt.toISOString(),
       },
-      members: memberships.map((m) => ({
+      members: memberships.map((m: any) => ({
         name: m.user.displayName,
         email: m.user.email,
         role: m.role,
         joinedAt: m.joinedAt.toISOString(),
       })),
       seasons,
-      records: records.map((r) => ({
+      records: records.map((r: any) => ({
         category: r.category,
         holder: r.heldByMemberName,
         value: r.recordValue,
@@ -176,24 +176,24 @@ export class HistoryExportService {
     });
 
     // Resolve season names
-    const seasonIds = [...new Set(results.map((r) => r.seasonId).filter(Boolean))] as string[];
+    const seasonIds = [...new Set(results.map((r: any) => r.seasonId).filter(Boolean))] as string[];
     const seasonSummaries = seasonIds.length > 0
       ? await this.prisma.leagueSeasonSummary.findMany({
           where: { seasonId: { in: seasonIds } },
         })
       : [];
-    const seasonNameMap = new Map(seasonSummaries.map((s) => [s.seasonId ?? '', s.seasonName]));
+    const seasonNameMap = new Map(seasonSummaries.map((s: any) => [s.seasonId ?? '', s.seasonName]));
 
     const totalContests = results.length;
-    const wins = results.filter((r) => r.isWinner).length;
-    const totalPrize = results.reduce((s, r) => s + (r.prizeAmount ?? 0), 0);
+    const wins = results.filter((r: any) => r.isWinner).length;
+    const totalPrize = results.reduce((s: number, r: any) => s + (r.prizeAmount ?? 0), 0);
 
     return {
       member: {
         name: membership.user.displayName,
         email: membership.user.email,
       },
-      contestResults: results.map((r) => ({
+      contestResults: results.map((r: any) => ({
         contestName: r.contestName ?? '',
         sport: r.sport ?? '',
         season: seasonNameMap.get(r.seasonId ?? '') ?? '',
@@ -202,7 +202,7 @@ export class HistoryExportService {
         prize: r.prizeAmount ?? undefined,
         date: r.closedAt?.toISOString() ?? '',
       })),
-      trophies: trophies.map((t) => ({
+      trophies: trophies.map((t: any) => ({
         label: t.label,
         season: t.seasonId ?? '',
         date: t.awardedAt.toISOString(),
