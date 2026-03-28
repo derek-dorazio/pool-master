@@ -48,7 +48,7 @@ export function Component() {
           <CardContent className="flex items-center justify-between py-4">
             <div>
               <p className="font-medium text-blue-900">
-                PoolMaster is currently free for all users.
+                Ultimate Pool Manager is currently free for all users.
               </p>
               <p className="text-sm text-blue-700">
                 Paid plans coming soon!

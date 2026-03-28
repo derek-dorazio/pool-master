@@ -17,6 +17,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
+import { Logo } from '@/components/ui/logo';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -203,6 +204,9 @@ export function Component() {
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-2">
+            <Logo size={48} />
+          </div>
           <CardTitle className="text-2xl">{t('register.title')}</CardTitle>
           <CardDescription>
             {t('register.stepOf', { current: step, total: TOTAL_STEPS })}

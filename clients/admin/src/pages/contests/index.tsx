@@ -11,7 +11,7 @@ import type { Contest, ContestFilters } from '@/hooks/use-contests-api';
 const SPORTS = ['All', 'NFL', 'NBA', 'Golf', 'F1', 'NCAA', 'Soccer', 'Horse Racing', 'NASCAR'];
 const STATUSES = ['All', 'Open', 'Drafting', 'Active', 'Completed', 'Cancelled'];
 const TYPES = ['All', 'Single Event', 'Season Long'];
-const TENANTS = ['All', 'PoolMaster Pro', 'FanDraft', 'RaceFan'];
+const TENANTS = ['All', 'Ultimate Pool Manager Pro', 'FanDraft', 'RaceFan'];
 
 const PAGE_SIZE = 5;
 

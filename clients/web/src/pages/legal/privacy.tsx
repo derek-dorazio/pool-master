@@ -18,13 +18,13 @@ export function Component() {
   return (
     <LegalPage
       title="Privacy Policy"
-      subtitle="How PoolMaster collects, uses, and protects your personal information."
+      subtitle="How Ultimate Pool Manager collects, uses, and protects your personal information."
       lastUpdated="March 26, 2026"
       sections={SECTIONS}
     >
       <LegalSection id="overview" title="Overview">
-        <p>PoolMaster ("we", "us", "our") operates a fantasy sports pool management platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and mobile applications.</p>
-        <p>By using PoolMaster, you agree to the collection and use of information in accordance with this policy.</p>
+        <p>Ultimate Pool Manager ("we", "us", "our") operates a fantasy sports pool management platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and mobile applications.</p>
+        <p>By using Ultimate Pool Manager, you agree to the collection and use of information in accordance with this policy.</p>
       </LegalSection>
 
       <LegalSection id="data-collected" title="Data We Collect">
@@ -45,7 +45,7 @@ export function Component() {
 
       <LegalSection id="how-we-use" title="How We Use Your Data">
         <ul className="list-disc pl-6 space-y-1">
-          <li>To provide and maintain the PoolMaster platform.</li>
+          <li>To provide and maintain the Ultimate Pool Manager platform.</li>
           <li>To manage your account and league memberships.</li>
           <li>To process draft picks, scoring, and contest results.</li>
           <li>To send notifications about contests, drafts, and league activity.</li>
@@ -91,7 +91,7 @@ export function Component() {
       </LegalSection>
 
       <LegalSection id="children" title="Children's Privacy">
-        <p>PoolMaster requires users to be at least 13 years old (COPPA compliance). We do not knowingly collect data from children under 13. If we discover we have collected data from a child under 13, we will delete it immediately.</p>
+        <p>Ultimate Pool Manager requires users to be at least 13 years old (COPPA compliance). We do not knowingly collect data from children under 13. If we discover we have collected data from a child under 13, we will delete it immediately.</p>
       </LegalSection>
 
       <LegalSection id="cookies" title="Cookies">

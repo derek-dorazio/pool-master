@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAdminAuthStore } from '@/stores/admin-auth-store';
+import { Logo } from '@/components/ui/logo';
 import { useState } from 'react';
 
 const navItems = [
@@ -68,8 +69,9 @@ export function AdminLayout() {
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <aside className="flex w-[240px] shrink-0 flex-col border-r bg-muted/40">
-        <div className="flex h-14 items-center border-b px-4">
-          <span className="text-lg font-semibold text-primary">PM Admin</span>
+        <div className="flex h-14 items-center gap-2 border-b px-4">
+          <Logo size={24} className="shrink-0" />
+          <span className="text-lg font-semibold text-primary">UPM Admin</span>
         </div>
         <nav className="flex-1 overflow-y-auto p-2">
           {navItems.map((item) => (
@@ -106,7 +108,7 @@ export function AdminLayout() {
         {/* Top bar */}
         <header className="flex h-14 shrink-0 items-center justify-between border-b px-6">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold">PoolMaster Admin</span>
+            <span className="text-sm font-semibold">Ultimate Pool Manager Admin</span>
             <HealthDot status={healthStatus} />
           </div>
           <div className="relative">

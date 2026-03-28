@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Logo } from '@/components/ui/logo';
 import { api } from '@/lib/api-client';
 
 const forgotSchema = z.object({
@@ -71,6 +72,9 @@ export function Component() {
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-2">
+            <Logo size={48} />
+          </div>
           <CardTitle className="text-2xl">
             {t('forgotPassword.title')}
           </CardTitle>

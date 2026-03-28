@@ -20,16 +20,16 @@ export function Component() {
   return (
     <LegalPage
       title="Terms of Service"
-      subtitle="The terms and conditions governing your use of the PoolMaster platform."
+      subtitle="The terms and conditions governing your use of the Ultimate Pool Manager platform."
       lastUpdated="March 26, 2026"
       sections={SECTIONS}
     >
       <LegalSection id="acceptance" title="1. Acceptance of Terms">
-        <p>By accessing or using PoolMaster, you agree to be bound by these Terms of Service. If you do not agree, do not use the platform.</p>
+        <p>By accessing or using Ultimate Pool Manager, you agree to be bound by these Terms of Service. If you do not agree, do not use the platform.</p>
       </LegalSection>
 
       <LegalSection id="eligibility" title="2. Eligibility">
-        <p>You must be at least 13 years old to create a PoolMaster account. By registering, you represent that you meet this age requirement. Users under 18 may have restricted access to certain features.</p>
+        <p>You must be at least 13 years old to create an Ultimate Pool Manager account. By registering, you represent that you meet this age requirement. Users under 18 may have restricted access to certain features.</p>
       </LegalSection>
 
       <LegalSection id="accounts" title="3. Accounts">
@@ -37,16 +37,16 @@ export function Component() {
       </LegalSection>
 
       <LegalSection id="platform-use" title="4. Platform Use">
-        <p>PoolMaster is a fantasy sports pool management platform. You may create and join leagues, participate in contests, draft participants, and track results. The platform is provided for entertainment and social purposes.</p>
+        <p>Ultimate Pool Manager is a fantasy sports pool management platform. You may create and join leagues, participate in contests, draft participants, and track results. The platform is provided for entertainment and social purposes.</p>
       </LegalSection>
 
       <LegalSection id="no-real-money" title="5. No Real-Money Transactions">
-        <p>PoolMaster does not collect, hold, or distribute real money between users. Entry fees and prize pools displayed in the app are for tracking purposes only. Actual money exchanges between league members happen outside the platform (e.g., Venmo, PayPal, cash).</p>
-        <p>PoolMaster is not responsible for any financial disputes between league members.</p>
+        <p>Ultimate Pool Manager does not collect, hold, or distribute real money between users. Entry fees and prize pools displayed in the app are for tracking purposes only. Actual money exchanges between league members happen outside the platform (e.g., Venmo, PayPal, cash).</p>
+        <p>Ultimate Pool Manager is not responsible for any financial disputes between league members.</p>
       </LegalSection>
 
       <LegalSection id="content" title="6. User Content">
-        <p>You retain ownership of content you post (league feed posts, chat messages, etc.). By posting, you grant PoolMaster a non-exclusive licence to display your content within the platform. You are responsible for the content you post.</p>
+        <p>You retain ownership of content you post (league feed posts, chat messages, etc.). By posting, you grant Ultimate Pool Manager a non-exclusive licence to display your content within the platform. You are responsible for the content you post.</p>
       </LegalSection>
 
       <LegalSection id="conduct" title="7. Prohibited Conduct">
@@ -62,7 +62,7 @@ export function Component() {
       </LegalSection>
 
       <LegalSection id="ip" title="8. Intellectual Property">
-        <p>PoolMaster and its original content, features, and functionality are owned by PoolMaster and protected by copyright, trademark, and other intellectual property laws.</p>
+        <p>Ultimate Pool Manager and its original content, features, and functionality are owned by Ultimate Pool Manager and protected by copyright, trademark, and other intellectual property laws.</p>
       </LegalSection>
 
       <LegalSection id="termination" title="9. Termination">
@@ -70,11 +70,11 @@ export function Component() {
       </LegalSection>
 
       <LegalSection id="disclaimers" title="10. Disclaimers">
-        <p>PoolMaster is provided "as is" without warranties of any kind. We do not guarantee the accuracy of sports data, scores, or standings. Real-world sports data is provided by third-party sources and may contain errors or delays.</p>
+        <p>Ultimate Pool Manager is provided "as is" without warranties of any kind. We do not guarantee the accuracy of sports data, scores, or standings. Real-world sports data is provided by third-party sources and may contain errors or delays.</p>
       </LegalSection>
 
       <LegalSection id="liability" title="11. Limitation of Liability">
-        <p>To the maximum extent permitted by law, PoolMaster shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform.</p>
+        <p>To the maximum extent permitted by law, Ultimate Pool Manager shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform.</p>
       </LegalSection>
 
       <LegalSection id="changes" title="12. Changes to Terms">

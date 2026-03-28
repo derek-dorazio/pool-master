@@ -19,7 +19,7 @@ export function DataExportCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Request a copy of all your PoolMaster data. We'll prepare the export and email you a
+          Request a copy of all your Ultimate Pool Manager data. We'll prepare the export and email you a
           download link within 48 hours.
         </p>
 

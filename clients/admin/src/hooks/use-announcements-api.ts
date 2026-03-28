@@ -19,7 +19,7 @@ const MOCK_ANNOUNCEMENTS: Announcement[] = [
   {
     id: 'ann-001',
     title: 'Scheduled Maintenance — March 28',
-    body: 'PoolMaster will undergo scheduled maintenance on March 28 from 2:00 AM to 4:00 AM EST. During this time, the platform may be temporarily unavailable.',
+    body: 'Ultimate Pool Manager will undergo scheduled maintenance on March 28 from 2:00 AM to 4:00 AM EST. During this time, the platform may be temporarily unavailable.',
     type: 'Both',
     severity: 'Warning',
     target: 'All Users',
@@ -56,8 +56,8 @@ const MOCK_ANNOUNCEMENTS: Announcement[] = [
   },
   {
     id: 'ann-004',
-    title: 'Welcome to PoolMaster!',
-    body: 'Thanks for joining PoolMaster. Get started by creating your first contest or joining an existing one.',
+    title: 'Welcome to Ultimate Pool Manager!',
+    body: 'Thanks for joining Ultimate Pool Manager. Get started by creating your first contest or joining an existing one.',
     type: 'Banner',
     severity: 'Info',
     target: 'New Users',

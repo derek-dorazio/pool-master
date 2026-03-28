@@ -49,7 +49,7 @@ export function Component() {
               <p className="text-lg font-medium">No invoices yet</p>
               <p className="text-sm text-muted-foreground">
                 {!billingEnabled
-                  ? 'PoolMaster is currently free for all users. Invoices will appear here once paid plans are available.'
+                  ? 'Ultimate Pool Manager is currently free for all users. Invoices will appear here once paid plans are available.'
                   : 'Invoices will appear here after your first paid billing cycle.'}
               </p>
             </div>

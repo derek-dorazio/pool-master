@@ -19,12 +19,12 @@ export function Component() {
       sections={SECTIONS}
     >
       <LegalSection id="commitment" title="Our Commitment">
-        <p>PoolMaster is committed to providing a safe, fun, and responsible gaming environment. While PoolMaster does not handle real-money transactions between users, we recognise that fantasy sports engagement should be balanced and healthy.</p>
+        <p>Ultimate Pool Manager is committed to providing a safe, fun, and responsible gaming environment. While Ultimate Pool Manager does not handle real-money transactions between users, we recognise that fantasy sports engagement should be balanced and healthy.</p>
         <p>We provide tools to help you manage your activity and take breaks when needed.</p>
       </LegalSection>
 
       <LegalSection id="self-exclusion" title="Self-Exclusion">
-        <p>If you need a break from PoolMaster, you can use our self-exclusion tools:</p>
+        <p>If you need a break from Ultimate Pool Manager, you can use our self-exclusion tools:</p>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Card>
@@ -98,7 +98,7 @@ export function Component() {
       </LegalSection>
 
       <LegalSection id="age-policy" title="Age Policy">
-        <p>PoolMaster requires all users to be at least 13 years old. Age is verified at registration via date of birth. Users under 13 cannot create accounts.</p>
+        <p>Ultimate Pool Manager requires all users to be at least 13 years old. Age is verified at registration via date of birth. Users under 13 cannot create accounts.</p>
       </LegalSection>
     </LegalPage>
   );

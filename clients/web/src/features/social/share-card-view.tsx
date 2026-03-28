@@ -51,7 +51,7 @@ function JoinCTA() {
       </p>
       <div className="mt-4 flex justify-center gap-3">
         <Button asChild>
-          <Link to="/register">Join PoolMaster</Link>
+          <Link to="/register">Join Ultimate Pool Manager</Link>
         </Button>
         <Button variant="ghost" asChild>
           <Link to="/">Learn More</Link>
@@ -68,7 +68,7 @@ export function ShareCardView() {
   return (
     <div className="min-h-screen bg-muted/30 px-4 py-12">
       <div className="mx-auto max-w-lg">
-        <p className="mb-8 text-center text-xl font-bold text-primary">PoolMaster</p>
+        <p className="mb-8 text-center text-xl font-bold text-primary">Ultimate Pool Manager</p>
 
         {isLoading ? (
           <div className="mx-auto max-w-md space-y-4">

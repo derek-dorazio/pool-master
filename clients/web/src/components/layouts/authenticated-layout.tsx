@@ -8,6 +8,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
+import { Logo } from '@/components/ui/logo';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { cn } from '@/lib/utils';
@@ -45,8 +46,9 @@ export function AuthenticatedLayout() {
         )}
       >
         <div className="flex h-16 items-center border-b px-4">
-          <Link to="/dashboard" className="text-xl font-bold text-primary">
-            {sidebarCollapsed ? 'PM' : 'PoolMaster'}
+          <Link to="/dashboard" className="flex items-center gap-2 text-xl font-bold text-primary">
+            <Logo size={28} />
+            {sidebarCollapsed ? 'UPM' : 'Ultimate Pool Manager'}
           </Link>
         </div>
         <nav className="flex-1 space-y-1 p-2">

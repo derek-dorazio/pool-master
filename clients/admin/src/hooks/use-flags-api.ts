@@ -42,7 +42,7 @@ function buildFlagDetail(flag: FeatureFlag): FlagDetail {
     description: `Feature flag controlling ${flag.name.toLowerCase()} functionality across the platform.`,
     created: '2026-01-15',
     overrides: [
-      { tenantName: 'PoolMaster Pro', override: true, reason: 'Beta tester', setBy: 'admin@poolmaster.io', setAt: '2026-03-20' },
+      { tenantName: 'Ultimate Pool Manager Pro', override: true, reason: 'Beta tester', setBy: 'admin@poolmaster.io', setAt: '2026-03-20' },
       { tenantName: 'FanDraft', override: false, reason: 'Not ready for this tenant', setBy: 'admin@poolmaster.io', setAt: '2026-03-18' },
       { tenantName: 'RaceFan', override: true, reason: 'Early access partner', setBy: 'ops@poolmaster.io', setAt: '2026-03-22' },
     ],

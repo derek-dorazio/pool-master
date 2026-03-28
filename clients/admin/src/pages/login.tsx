@@ -4,6 +4,7 @@ import { KeyRound, LogIn } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Logo } from '@/components/ui/logo';
 import { useAdminAuthStore, type AdminUser } from '@/stores/admin-auth-store';
 
 const MOCK_ADMIN: AdminUser = {
@@ -73,7 +74,10 @@ export function Component() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">PoolMaster Admin</CardTitle>
+          <div className="flex justify-center mb-2">
+            <Logo size={48} />
+          </div>
+          <CardTitle className="text-2xl">Ultimate Pool Manager Admin</CardTitle>
           <CardDescription>Sign in to access the admin dashboard</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

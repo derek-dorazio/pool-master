@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
+import { Logo } from '@/components/ui/logo';
 import { CookieBanner } from '@/components/cookie-banner';
 
 export function PublicLayout() {
@@ -6,8 +7,9 @@ export function PublicLayout() {
     <div className="min-h-screen flex flex-col">
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-primary">
-            PoolMaster
+          <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary">
+            <Logo size={28} />
+            Ultimate Pool Manager
           </Link>
           <nav className="flex items-center gap-4">
             <Link
@@ -31,7 +33,7 @@ export function PublicLayout() {
       <footer className="border-t py-6">
         <div className="container flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} PoolMaster
+            &copy; {new Date().getFullYear()} Ultimate Pool Manager
           </p>
           <nav className="flex gap-4 text-sm text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground">Terms</Link>

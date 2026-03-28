@@ -13,7 +13,7 @@ export function Component() {
   return (
     <LegalPage
       title="Cookie Policy"
-      subtitle="How PoolMaster uses cookies and similar technologies."
+      subtitle="How Ultimate Pool Manager uses cookies and similar technologies."
       lastUpdated="March 26, 2026"
       sections={SECTIONS}
     >

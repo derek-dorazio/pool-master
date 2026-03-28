@@ -42,7 +42,7 @@ export function SelfExclusionCard() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Take a break from PoolMaster. During the cool-down period, you won't be able to enter
+            Take a break from Ultimate Pool Manager. During the cool-down period, you won't be able to enter
             contests or participate in drafts.
           </p>
           <Button variant="outline" onClick={() => setDialogOpen(true)}>

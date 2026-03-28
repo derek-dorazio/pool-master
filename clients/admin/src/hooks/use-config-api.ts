@@ -77,7 +77,7 @@ const MOCK_PUSH_TRIGGERS: PushTrigger[] = [
   { id: 'pt-10', eventType: 'PAYMENT_SUCCESS', title: 'Payment Confirmed', body: 'Your payment has been processed.', priority: 'normal', sound: 'default', enabled: true },
   { id: 'pt-11', eventType: 'PAYMENT_FAILED', title: 'Payment Failed', body: 'Your payment could not be processed.', priority: 'high', sound: 'alert', enabled: true },
   { id: 'pt-12', eventType: 'PAYOUT_READY', title: 'Payout Available', body: 'You have a payout ready to claim.', priority: 'high', sound: 'chime', enabled: true },
-  { id: 'pt-13', eventType: 'ANNOUNCEMENT', title: 'New Announcement', body: 'There is a new announcement from PoolMaster.', priority: 'low', sound: 'default', enabled: false },
+  { id: 'pt-13', eventType: 'ANNOUNCEMENT', title: 'New Announcement', body: 'There is a new announcement from Ultimate Pool Manager.', priority: 'low', sound: 'default', enabled: false },
 ];
 
 export function usePushTriggers() {
@@ -306,7 +306,7 @@ export interface DigestTemplateConfig {
 const MOCK_DIGEST_CONFIG: DigestTemplateConfig = {
   subjectTemplate: 'Weekly Recap — {{league_name}}',
   headerTemplate: "Here's what happened this week in {{league_name}}",
-  footerTemplate: 'See you next week! — PoolMaster',
+  footerTemplate: 'See you next week! — Ultimate Pool Manager',
   includeStandings: true,
   includeHighlights: true,
   includeUpcomingEvents: true,
@@ -339,7 +339,7 @@ Here's what happened this week in Demo League
   NFL Week 13 locks — Sunday 1:00 PM ET
   Trade deadline — Wednesday 11:59 PM ET
 
-See you next week! — PoolMaster`;
+See you next week! — Ultimate Pool Manager`;
 
 export function useDigestPreview() {
   return { data: MOCK_DIGEST_PREVIEW, isLoading: false };
