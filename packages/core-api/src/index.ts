@@ -1,3 +1,4 @@
+// PoolMaster Core API — main application entry point
 import Fastify from 'fastify';
 import { healthPlugin } from './plugins/health';
 import { authGuard } from './plugins/auth-guard';
