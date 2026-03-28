@@ -24,6 +24,9 @@
     "test:unit": "jest --config tests/jest.config.js tests/unit",
     "test:integration": "jest --config tests/jest.config.js tests/integration",
     "test:api": "jest --config tests/jest.config.js tests/api",
+    "test:smoke:api": "jest --config tests/api/jest.config.ts",
+    "test:smoke:e2e": "cd clients/web && npx playwright test",
+    "test:smoke": "npm run test:smoke:api && npm run test:smoke:e2e",
     "format": "prettier --write ."
   },
   "devDependencies": {
