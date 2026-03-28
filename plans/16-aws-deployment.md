@@ -16,16 +16,16 @@ Deploy PoolMaster to AWS using ECS Fargate, RDS PostgreSQL, ElastiCache Redis, a
 | 16-004 | 1 | Request ACM certificate for HTTPS (`*.poolmaster.com` or your domain) | Derek | Not Started | DNS validation — add the CNAME record Route 53 suggests |
 | 16-005 | 1 | Create IAM user/role for GitHub Actions with ECR + ECS permissions | Derek | Not Started | Needs: ecr:*, ecs:UpdateService, iam:PassRole. Save access key as GitHub secrets |
 | 16-006 | 1 | Add AWS credentials to GitHub repo secrets | Derek | Not Started | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_ACCOUNT_ID` |
-| 16-007 | 2 | Configure Terraform remote state backend (S3 + DynamoDB) | Agent | Not Started | Update `main.tf` backend block to use bucket from 16-001 |
-| 16-008 | 2 | Add HTTPS listener to ALB with ACM certificate | Agent | Not Started | Reference ACM ARN from 16-004, redirect HTTP→HTTPS |
-| 16-009 | 2 | Add ECS task definitions for all 5 backend services | Agent | Not Started | core-api, draft-service, scoring-service, ingestion-worker, notification-service |
-| 16-010 | 2 | Add ECS task definition for webapp (nginx + static) | Agent | Not Started | Serve built React app via nginx on port 80 |
-| 16-011 | 2 | Add ALB target groups and listener rules for each service | Agent | Not Started | Path-based routing: `/api/*` → core-api, etc. |
-| 16-012 | 2 | Add ECR repositories for all 7 images | Agent | Not Started | 5 backend + web + admin. Lifecycle: keep last 10 |
-| 16-013 | 2 | Wire secrets via AWS Secrets Manager | Agent | Not Started | DATABASE_URL, REDIS_URL, API keys. Reference in task definitions |
-| 16-014 | 2 | Add Route 53 A record alias pointing domain to ALB | Agent | Not Started | Depends on 16-003 (hosted zone) |
-| 16-015 | 2 | Add CloudWatch alarms (CPU, memory, 5xx rate) | Agent | Not Started | Per-service alarms with SNS topic for alerts |
-| 16-016 | 2 | Update GitHub Actions to push to ECR instead of GHCR | Agent | Not Started | Update `.github/workflows/ci.yml` registry target |
+| 16-007 | 2 | Configure Terraform remote state backend (S3 + DynamoDB) | Agent | Done | S3 bucket + DynamoDB lock table configured in main.tf backend block |
+| 16-008 | 2 | Add HTTPS listener to ALB with ACM certificate | Agent | Done | Conditional: created only when acm_certificate_arn is provided. HTTP redirects to HTTPS |
+| 16-009 | 2 | Add ECS task definitions for all 5 backend services | Agent | Done | core-api, draft-service, scoring-service, ingestion-worker, notification-service |
+| 16-010 | 2 | Add ECS task definition for webapp (nginx + static) | Agent | Done | Web SPA via nginx on port 80, ALB default route |
+| 16-011 | 2 | Add ALB target groups and listener rules for each service | Agent | Done | Path-based: /api/* → core-api, /api/v1/notifications* → notification-service, default → web |
+| 16-012 | 2 | Add ECR repositories for all 7 images | Agent | Done | Already existed in scaffolding (for_each on local.services) |
+| 16-013 | 2 | Wire secrets via AWS Secrets Manager | Agent | Deferred | DB password still in env vars. Move to Secrets Manager when prod-ready |
+| 16-014 | 2 | Add Route 53 A record alias pointing domain to ALB | Agent | Done | Conditional: created only when domain_name + route53_zone_id provided |
+| 16-015 | 2 | Add CloudWatch alarms (CPU, memory, 5xx rate) | Agent | Done | 7 alarms: ALB 5xx + latency, ECS CPU + memory, RDS CPU + storage + connections |
+| 16-016 | 2 | Update GitHub Actions to push to ECR instead of GHCR | Agent | Done | Uses aws-actions/configure-aws-credentials + amazon-ecr-login. Region: us-east-2 |
 | 16-017 | 3 | Run `terraform init` and `terraform plan` for staging | Derek | Not Started | Review plan output before applying |
 | 16-018 | 3 | Run `terraform apply` for staging environment | Derek | Not Started | Creates all AWS resources |
 | 16-019 | 3 | Run Prisma migrations against RDS endpoint | Agent | Not Started | One-time: `DATABASE_URL=<rds-endpoint> npx prisma migrate deploy` |
