@@ -3,8 +3,13 @@
 # -----------------------------------------------------------------------------
 
 output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
+  description = "DNS name of the Application Load Balancer (use this to access the app before DNS is configured)"
   value       = aws_lb.main.dns_name
+}
+
+output "app_url" {
+  description = "Full app URL (domain if configured, otherwise ALB DNS)"
+  value       = var.domain_name != "" ? "https://${var.domain_name}" : "http://${aws_lb.main.dns_name}"
 }
 
 output "rds_endpoint" {
@@ -36,7 +41,22 @@ output "ecs_cluster_name" {
 }
 
 output "database_url" {
-  description = "Full PostgreSQL connection string (sensitive)"
+  description = "Full PostgreSQL connection string (for running migrations)"
   value       = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.endpoint}/${var.db_name}"
   sensitive   = true
+}
+
+output "vpc_id" {
+  description = "VPC ID"
+  value       = aws_vpc.main.id
+}
+
+output "private_subnet_ids" {
+  description = "Private subnet IDs (for running one-off tasks like migrations)"
+  value       = aws_subnet.private[*].id
+}
+
+output "ecs_security_group_id" {
+  description = "ECS tasks security group ID"
+  value       = aws_security_group.ecs_tasks.id
 }
