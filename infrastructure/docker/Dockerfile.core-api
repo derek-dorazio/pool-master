@@ -10,8 +10,8 @@ COPY packages/shared/ packages/shared/
 COPY packages/core-api/ packages/core-api/
 
 RUN npm ci
-RUN npx turbo build --filter=@poolmaster/core-api
 RUN npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+RUN npx turbo build --filter=@poolmaster/core-api
 
 FROM node:20-slim
 WORKDIR /app
