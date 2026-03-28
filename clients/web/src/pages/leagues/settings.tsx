@@ -26,7 +26,6 @@ interface SettingsForm {
 const mockSettings = {
   name: 'Sunday Gridiron League',
   description: 'A competitive NFL pool for friends and family. Weekly picks, survivor pools, and more.',
-  sport: 'NFL',
   invitePolicy: 'Invite Only',
   inviteLink: 'https://poolmaster.app/join/abc123xyz',
 };
@@ -97,11 +96,6 @@ export function Component() {
             <div className="space-y-2">
               <Label htmlFor="settings-desc">Description</Label>
               <Textarea id="settings-desc" rows={3} {...register('description')} />
-            </div>
-            <div className="space-y-2">
-              <Label>Sport</Label>
-              <Input value={mockSettings.sport} disabled className="bg-muted" />
-              <p className="text-xs text-muted-foreground">Sport cannot be changed after creation.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="settings-currency">League Currency</Label>

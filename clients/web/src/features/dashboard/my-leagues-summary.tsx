@@ -4,14 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useMyLeagues } from './hooks/use-my-leagues';
 
-const sportEmoji: Record<string, string> = {
-  football: '\uD83C\uDFC8',
-  soccer: '\u26BD',
-  basketball: '\uD83C\uDFC0',
-  baseball: '\u26BE',
-  hockey: '\uD83C\uDFD2',
-};
-
 const MAX_DISPLAYED = 6;
 
 export function MyLeaguesSummary() {
@@ -70,9 +62,6 @@ export function MyLeaguesSummary() {
               >
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-lg" role="img" aria-label={league.sport}>
-                      {sportEmoji[league.sport] ?? '\uD83C\uDFC6'}
-                    </span>
                     <span className="text-sm font-medium truncate">
                       {league.name}
                     </span>

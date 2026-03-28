@@ -18,72 +18,16 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 
-const sports = [
-  { id: 'nfl', name: 'NFL', emoji: '\u{1F3C8}' },
-  { id: 'nba', name: 'NBA', emoji: '\u{1F3C0}' },
-  { id: 'ncaa', name: 'NCAA Basketball', emoji: '\u{1F3C0}' },
-  { id: 'golf', name: 'Golf', emoji: '\u{26F3}' },
-  { id: 'f1', name: 'F1', emoji: '\u{1F3CE}\uFE0F' },
-  { id: 'tennis', name: 'Tennis', emoji: '\u{1F3BE}' },
-  { id: 'soccer', name: 'Soccer', emoji: '\u{26BD}' },
-  { id: 'nascar', name: 'NASCAR', emoji: '\u{1F3C1}' },
-  { id: 'horse-racing', name: 'Horse Racing', emoji: '\u{1F40E}' },
-] as const;
-
-type SportId = typeof sports[number]['id'];
-
-const scoringTemplates: Record<string, Array<{ id: string; name: string; description: string }>> = {
-  nfl: [
-    { id: 'nfl-standard', name: 'Standard', description: 'Traditional scoring with TDs, FGs, and yardage bonuses.' },
-    { id: 'nfl-ppr', name: 'PPR', description: 'Points per reception format for more balanced scoring.' },
-    { id: 'nfl-half-ppr', name: 'Half PPR', description: 'Half point per reception — the middle ground.' },
-  ],
-  nba: [
-    { id: 'nba-standard', name: 'Standard', description: 'Points, rebounds, assists, steals, and blocks.' },
-    { id: 'nba-dfs', name: 'DFS Points', description: 'Daily fantasy-style scoring with all major categories.' },
-  ],
-  ncaa: [
-    { id: 'ncaa-bracket', name: 'Bracket Challenge', description: 'Pick the winners for each round of the tournament.' },
-    { id: 'ncaa-confidence', name: 'Confidence Pool', description: 'Rank your confidence in each pick for bonus points.' },
-  ],
-  golf: [
-    { id: 'golf-stroke', name: 'Stroke Play', description: 'Total strokes relative to par determine the winner.' },
-    { id: 'golf-dfs', name: 'DFS Points', description: 'Fantasy points based on birdies, eagles, and placement.' },
-  ],
-  f1: [
-    { id: 'f1-standard', name: 'Standard', description: 'Points based on race finishing position.' },
-    { id: 'f1-constructor', name: 'Constructor Style', description: 'Score both drivers and constructors.' },
-  ],
-  tennis: [
-    { id: 'tennis-match', name: 'Match Picks', description: 'Pick winners for each match in the draw.' },
-    { id: 'tennis-fantasy', name: 'Fantasy Points', description: 'Points per ace, winner, and match won.' },
-  ],
-  soccer: [
-    { id: 'soccer-standard', name: 'Standard', description: 'Goals, assists, clean sheets, and saves.' },
-    { id: 'soccer-match', name: 'Match Picks', description: 'Predict match outcomes for points.' },
-  ],
-  nascar: [
-    { id: 'nascar-standard', name: 'Standard', description: 'Points based on race finishing position.' },
-    { id: 'nascar-stage', name: 'Stage Points', description: 'Earn points at each stage and the finish.' },
-  ],
-  'horse-racing': [
-    { id: 'horse-standard', name: 'Standard', description: 'Pick winners, exactas, and trifectas for points.' },
-    { id: 'horse-pari', name: 'Pari-Mutuel Style', description: 'Points based on payout odds of your picks.' },
-  ],
-};
-
 const formSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(60, 'Name must be 60 characters or less'),
-  sport: z.string().min(1, 'Please select a sport'),
   description: z.string().max(500, 'Description must be 500 characters or less').optional().or(z.literal('')),
   invitePolicy: z.enum(['open', 'invite-only', 'approval']),
   visibility: z.enum(['public', 'private']),
-  scoringTemplate: z.string().optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const steps = ['Basics', 'Access', 'Scoring', 'Review'];
+const steps = ['Basics', 'Access', 'Review'];
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
@@ -138,11 +82,9 @@ export function Component() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      sport: '',
       description: '',
       invitePolicy: 'invite-only',
       visibility: 'private',
-      scoringTemplate: '',
     },
     mode: 'onChange',
   });
@@ -150,13 +92,10 @@ export function Component() {
   const { register, control, watch, trigger, formState: { errors } } = form;
   const values = watch();
 
-  const sportObj = sports.find((s) => s.id === values.sport);
-  const templates = values.sport ? (scoringTemplates[values.sport] ?? []) : [];
-
   async function handleNext() {
     let valid = true;
     if (currentStep === 0) {
-      valid = await trigger(['name', 'sport', 'description']);
+      valid = await trigger(['name', 'description']);
     }
     if (valid && currentStep < steps.length - 1) {
       setCurrentStep((s) => s + 1);
@@ -185,7 +124,7 @@ export function Component() {
         <Card>
           <CardHeader>
             <CardTitle>League Basics</CardTitle>
-            <CardDescription>Give your league a name and choose a sport.</CardDescription>
+            <CardDescription>Give your league a name and description.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
@@ -197,40 +136,6 @@ export function Component() {
               />
               {errors.name && (
                 <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Sport</Label>
-              <Controller
-                name="sport"
-                control={control}
-                render={({ field }) => (
-                  <div className="grid grid-cols-3 gap-2">
-                    {sports.map((sport) => (
-                      <button
-                        key={sport.id}
-                        type="button"
-                        onClick={() => {
-                          field.onChange(sport.id);
-                          form.setValue('scoringTemplate', '');
-                        }}
-                        className={cn(
-                          'flex flex-col items-center gap-1 rounded-lg border p-3 text-sm transition-colors hover:bg-accent',
-                          field.value === sport.id
-                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                            : 'border-input',
-                        )}
-                      >
-                        <span className="text-2xl">{sport.emoji}</span>
-                        <span className="font-medium">{sport.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              />
-              {errors.sport && (
-                <p className="text-sm text-destructive">{errors.sport.message}</p>
               )}
             </div>
 
@@ -339,73 +244,8 @@ export function Component() {
         </Card>
       )}
 
-      {/* Step 3 — Scoring Template */}
+      {/* Step 3 — Review */}
       {currentStep === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Scoring Template</CardTitle>
-            <CardDescription>
-              Choose a default scoring template for {sportObj?.name ?? 'your sport'}.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Controller
-              name="scoringTemplate"
-              control={control}
-              render={({ field }) => (
-                <>
-                  {templates.map((tpl) => (
-                    <label
-                      key={tpl.id}
-                      className={cn(
-                        'flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors hover:bg-accent',
-                        field.value === tpl.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-input',
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        className="mt-0.5"
-                        checked={field.value === tpl.id}
-                        onChange={() => field.onChange(tpl.id)}
-                      />
-                      <div>
-                        <div className="font-medium">{tpl.name}</div>
-                        <div className="text-sm text-muted-foreground">{tpl.description}</div>
-                      </div>
-                    </label>
-                  ))}
-                  <label
-                    className={cn(
-                      'flex items-start gap-3 rounded-lg border border-dashed p-4 cursor-pointer transition-colors hover:bg-accent',
-                      field.value === 'skip'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-input',
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      className="mt-0.5"
-                      checked={field.value === 'skip'}
-                      onChange={() => field.onChange('skip')}
-                    />
-                    <div>
-                      <div className="font-medium">Skip</div>
-                      <div className="text-sm text-muted-foreground">
-                        I'll configure scoring per contest.
-                      </div>
-                    </div>
-                  </label>
-                </>
-              )}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 4 — Review */}
-      {currentStep === 3 && (
         <Card>
           <CardHeader>
             <CardTitle>Review & Create</CardTitle>
@@ -417,17 +257,6 @@ export function Component() {
                 <div>
                   <div className="text-xs text-muted-foreground">League Name</div>
                   <div className="font-medium">{values.name}</div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentStep(0)}>
-                  Edit
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-3">
-                <div>
-                  <div className="text-xs text-muted-foreground">Sport</div>
-                  <div className="font-medium">
-                    {sportObj ? `${sportObj.emoji} ${sportObj.name}` : 'Not selected'}
-                  </div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setCurrentStep(0)}>
                   Edit
@@ -462,18 +291,11 @@ export function Component() {
                   Edit
                 </Button>
               </div>
-              <div className="flex items-center justify-between p-3">
-                <div>
-                  <div className="text-xs text-muted-foreground">Scoring Template</div>
-                  <div className="font-medium">
-                    {values.scoringTemplate === 'skip' || !values.scoringTemplate
-                      ? 'Configure per contest'
-                      : templates.find((t) => t.id === values.scoringTemplate)?.name ?? 'None'}
-                  </div>
+              <div className="p-3">
+                <div className="text-xs text-muted-foreground">Scoring</div>
+                <div className="font-medium text-sm">
+                  Scoring will be configured per contest.
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)}>
-                  Edit
-                </Button>
               </div>
             </div>
           </CardContent>

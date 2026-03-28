@@ -19,15 +19,12 @@ import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
-type SortOption = 'activity' | 'name' | 'sport' | 'created';
-type SportFilter = 'all' | 'nfl' | 'nba' | 'golf' | 'f1' | 'tennis' | 'soccer' | 'ncaa' | 'nascar' | 'horse-racing';
+type SortOption = 'activity' | 'name' | 'created';
 type ViewMode = 'grid' | 'list';
 
 interface League {
   id: string;
   name: string;
-  sport: string;
-  sportEmoji: string;
   role: 'commissioner' | 'member';
   memberCount: number;
   activeContests: number;
@@ -40,8 +37,6 @@ const mockLeagues: League[] = [
   {
     id: 'league-1',
     name: 'Sunday Gridiron League',
-    sport: 'NFL',
-    sportEmoji: '\u{1F3C8}',
     role: 'commissioner',
     memberCount: 12,
     activeContests: 2,
@@ -52,8 +47,6 @@ const mockLeagues: League[] = [
   {
     id: 'league-2',
     name: 'Hoop Dreams',
-    sport: 'NBA',
-    sportEmoji: '\u{1F3C0}',
     role: 'member',
     memberCount: 8,
     activeContests: 1,
@@ -64,8 +57,6 @@ const mockLeagues: League[] = [
   {
     id: 'league-3',
     name: 'Fairway Legends',
-    sport: 'Golf',
-    sportEmoji: '\u{26F3}',
     role: 'member',
     memberCount: 16,
     activeContests: 3,
@@ -76,8 +67,6 @@ const mockLeagues: League[] = [
   {
     id: 'league-4',
     name: 'Pit Lane Picks',
-    sport: 'F1',
-    sportEmoji: '\u{1F3CE}\uFE0F',
     role: 'commissioner',
     memberCount: 6,
     activeContests: 0,
@@ -100,7 +89,6 @@ function LeagueCard({ league, viewMode }: { league: League; viewMode: ViewMode }
     return (
       <Card>
         <CardContent className="flex items-center gap-4 p-4">
-          <span className="text-2xl">{league.sportEmoji}</span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <Link
@@ -134,7 +122,6 @@ function LeagueCard({ league, viewMode }: { league: League; viewMode: ViewMode }
               </span>
             </div>
           </div>
-          <Badge variant="outline">{league.sport}</Badge>
         </CardContent>
       </Card>
     );
@@ -144,7 +131,6 @@ function LeagueCard({ league, viewMode }: { league: League; viewMode: ViewMode }
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-3">
-          <span className="text-3xl">{league.sportEmoji}</span>
           <Badge
             className={cn(
               league.role === 'commissioner'
@@ -205,25 +191,20 @@ function EmptyState() {
 export function Component() {
   const { data: leagues = [] } = useLeagues();
   const [sortBy, setSortBy] = useState<SortOption>('activity');
-  const [sportFilter, setSportFilter] = useState<SportFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  const filteredLeagues = leagues
-    .filter((l) => sportFilter === 'all' || l.sport.toLowerCase() === sportFilter)
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'activity':
-          return b.lastActiveDate.getTime() - a.lastActiveDate.getTime();
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'sport':
-          return a.sport.localeCompare(b.sport);
-        case 'created':
-          return b.createdAt.getTime() - a.createdAt.getTime();
-        default:
-          return 0;
-      }
-    });
+  const filteredLeagues = [...leagues].sort((a, b) => {
+    switch (sortBy) {
+      case 'activity':
+        return b.lastActiveDate.getTime() - a.lastActiveDate.getTime();
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'created':
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      default:
+        return 0;
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -247,25 +228,7 @@ export function Component() {
             >
               <option value="activity">Activity</option>
               <option value="name">Name</option>
-              <option value="sport">Sport</option>
               <option value="created">Created</option>
-            </Select>
-
-            <Select
-              value={sportFilter}
-              onChange={(e) => setSportFilter(e.target.value as SportFilter)}
-              className="w-40"
-            >
-              <option value="all">All Sports</option>
-              <option value="nfl">NFL</option>
-              <option value="nba">NBA</option>
-              <option value="golf">Golf</option>
-              <option value="f1">F1</option>
-              <option value="tennis">Tennis</option>
-              <option value="soccer">Soccer</option>
-              <option value="ncaa">NCAA</option>
-              <option value="nascar">NASCAR</option>
-              <option value="horse-racing">Horse Racing</option>
             </Select>
 
             <div className="ml-auto flex items-center gap-1 rounded-md border p-1">

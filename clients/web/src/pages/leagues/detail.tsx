@@ -25,8 +25,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 interface LeagueDetail {
   id: string;
   name: string;
-  sport: string;
-  sportEmoji: string;
   memberCount: number;
   commissioner: string;
   isCommissioner: boolean;
@@ -51,8 +49,6 @@ interface LeagueDetail {
 const mockLeague: LeagueDetail = {
   id: 'league-1',
   name: 'Sunday Gridiron League',
-  sport: 'NFL',
-  sportEmoji: '\u{1F3C8}',
   memberCount: 12,
   commissioner: 'Mike Johnson',
   isCommissioner: true,
@@ -265,12 +261,8 @@ export function Component() {
       {/* League header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{league.sportEmoji}</span>
-            <h1 className="text-3xl font-bold">{league.name}</h1>
-          </div>
+          <h1 className="text-3xl font-bold">{league.name}</h1>
           <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
-            <Badge variant="outline">{league.sport}</Badge>
             <span className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" />
               {league.memberCount} members

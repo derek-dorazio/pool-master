@@ -3,14 +3,11 @@
   "create_league": "Create League",
   "discover_leagues": "Discover Leagues",
   "league_name": "League Name",
-  "sport": "Sport",
   "description": "Description",
   "invite_policy": "Invite Policy",
   "visibility": "Visibility",
-  "scoring_template": "Scoring Template",
   "step_basics": "Basics",
   "step_access": "Access",
-  "step_scoring": "Scoring",
   "step_review": "Review",
   "open": "Open",
   "invite_only": "Invite Only",
@@ -22,7 +19,5 @@
   "commissioner": "Commissioner",
   "member": "Member",
   "no_leagues_message": "You're not in any leagues yet.",
-  "sort_by": "Sort by",
-  "filter_by_sport": "Filter by sport",
-  "all_sports": "All Sports"
+  "sort_by": "Sort by"
 }
