@@ -60,7 +60,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-      - run: npm test
+      - run: npx jest --config tests/jest.config.js --forceExit --ci
 
   build:
     runs-on: ubuntu-latest
