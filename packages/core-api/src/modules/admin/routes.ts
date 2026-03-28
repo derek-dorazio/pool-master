@@ -29,6 +29,12 @@ import { createSupportHandlers } from './support-handler';
 import { createQuickActionsHandlers } from './quick-actions-handler';
 import { ExportService } from './export-service';
 import { createExportHandlers } from './export-handler';
+import { PollConfigService } from './poll-config-service';
+import { IngestionConfigService } from './ingestion-config-service';
+import { DunningConfigService } from './dunning-config-service';
+import { ChannelConfigService } from './channel-config-service';
+import { registerPlatformConfigRoutes } from './platform-config-routes';
+import { configRoutes } from './config-routes';
 
 // ---------------------------------------------------------------------------
 // Admin auth preHandler (placeholder — will be replaced with real SSO check)
@@ -65,6 +71,10 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const migrationService = new MigrationService();
   const supportService = new SupportService();
   const exportService = new ExportService();
+  const pollConfigService = new PollConfigService();
+  const ingestionConfigService = new IngestionConfigService();
+  const dunningConfigService = new DunningConfigService();
+  const channelConfigService = new ChannelConfigService();
 
   // --- Handlers ---
   const tenant = createTenantHandlers(tenantService);
@@ -694,4 +704,19 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   fastify.get('/tenants/:tenantId/export/status', tenantExport.getExportStatus);
 
   fastify.get('/tenants/:tenantId/export/download', tenantExport.downloadExport);
+
+  // --- Platform Configuration Routes ---
+  // Permission: platform.config
+
+  registerPlatformConfigRoutes(fastify, {
+    pollConfig: pollConfigService,
+    ingestionConfig: ingestionConfigService,
+    dunningConfig: dunningConfigService,
+    channelConfig: channelConfigService,
+  });
+
+  // --- Admin Config Routes (templates, push triggers, rate limits) ---
+  // Permission: config.*
+
+  await fastify.register(configRoutes);
 }

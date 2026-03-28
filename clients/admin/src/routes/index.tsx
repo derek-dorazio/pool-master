@@ -100,6 +100,22 @@ export const router = createBrowserRouter(
           path: 'migrations/:runId',
           lazy: () => import('@/pages/migrations/detail'),
         },
+        {
+          path: 'config',
+          lazy: () => import('@/pages/config/index'),
+        },
+        {
+          path: 'config/templates',
+          lazy: () => import('@/pages/config/templates'),
+        },
+        {
+          path: 'config/notifications',
+          lazy: () => import('@/pages/config/notifications'),
+        },
+        {
+          path: 'config/platform',
+          lazy: () => import('@/pages/config/platform'),
+        },
       ],
     },
   ],

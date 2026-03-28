@@ -10,6 +10,7 @@ import {
   FileText,
   Megaphone,
   Workflow,
+  Settings2,
   LogOut,
   ChevronDown,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ const navItems = [
   { to: '/audit', label: 'Audit', icon: FileText },
   { to: '/announcements', label: 'Announcements', icon: Megaphone },
   { to: '/migrations', label: 'Migrations', icon: Workflow },
+  { to: '/config', label: 'Config', icon: Settings2 },
 ];
 
 type HealthStatus = 'green' | 'yellow' | 'red';

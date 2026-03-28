@@ -43,6 +43,11 @@ The admin dashboard is a **separate SPA** from the public webapp, accessible onl
 /admin/announcements                      → Global announcements
 /admin/announcements/create               → Create announcement
 
+/admin/config                             → Configuration hub
+/admin/config/templates                   → Template management
+/admin/config/notifications               → Notification configuration
+/admin/config/platform                    → Platform configuration
+
 /admin/migrations                         → Migration runner
 /admin/migrations/:runId                  → Migration run detail
 ```
@@ -220,6 +225,7 @@ The admin dashboard is a **separate SPA** from the public webapp, accessible onl
 | A-018 | 4 | Implement audit log viewer | Not Started | |
 | A-019 | 5 | Implement announcements pages | Not Started | |
 | A-020 | 5 | Implement migration runner pages | Not Started | |
+| A-021 | 5 | Implement configuration management pages | Done | Config hub, template management, notification config, platform config pages; use-config-api hooks with mock data; 4 new routes + sidebar nav item |
 
 ---
 

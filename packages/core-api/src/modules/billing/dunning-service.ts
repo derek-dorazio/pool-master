@@ -58,8 +58,10 @@ export interface RecoveryMetrics {
 }
 
 // ---------------------------------------------------------------------------
-// Default config
+// Default config — now also available via DunningConfigService for admin tuning
 // ---------------------------------------------------------------------------
+
+import { getDunningConfig } from '../admin/dunning-config-service';
 
 const DEFAULT_CONFIG: DunningConfig = {
   retryAttempts: [
@@ -96,7 +98,9 @@ export class DunningService {
   private readonly config: DunningConfig;
 
   constructor(config?: Partial<DunningConfig>) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    // Merge: explicit constructor arg > admin-configured > hardcoded defaults
+    const adminConfig = getDunningConfig();
+    this.config = { ...DEFAULT_CONFIG, ...adminConfig, ...config };
   }
 
   /**

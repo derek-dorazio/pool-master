@@ -28,8 +28,13 @@ export interface ChannelDelivery {
   error?: string;
 }
 
-/** Default channels per notification category. */
-const DEFAULT_CHANNELS: Record<string, NotificationChannel[]> = {
+/**
+ * Default channels per notification category.
+ *
+ * Hardcoded fallback — at runtime, the ChannelConfigService getter is
+ * checked first so admins can tune channel assignments without redeployment.
+ */
+const HARDCODED_CHANNELS: Record<string, NotificationChannel[]> = {
   DRAFT: ['PUSH', 'EMAIL', 'IN_APP'],
   SCORING: ['PUSH', 'IN_APP'],
   CONTEST: ['PUSH', 'EMAIL', 'IN_APP'],
@@ -37,6 +42,26 @@ const DEFAULT_CHANNELS: Record<string, NotificationChannel[]> = {
   SOCIAL: ['PUSH', 'IN_APP'],
   ACCOUNT: ['EMAIL', 'IN_APP'],
 };
+
+/**
+ * Returns the current default channels, preferring admin-configured values
+ * when available and falling back to hardcoded defaults otherwise.
+ */
+function getDefaultChannels(): Record<string, NotificationChannel[]> {
+  try {
+    // Dynamic import avoids hard coupling — the admin module may not be loaded
+    // in all deployment contexts (e.g. standalone notification worker).
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getChannelDefaults } = require('../../../core-api/src/modules/admin/channel-config-service');
+    const configured = getChannelDefaults();
+    if (configured && Object.keys(configured).length > 0) {
+      return configured as Record<string, NotificationChannel[]>;
+    }
+  } catch {
+    // Admin module not available — fall through to hardcoded defaults
+  }
+  return HARDCODED_CHANNELS;
+}
 
 export class NotificationDispatcher {
   constructor(
@@ -51,7 +76,8 @@ export class NotificationDispatcher {
     const template = await this.getTemplate(event.type);
     const deliveries: ChannelDelivery[] = [];
 
-    const channelsToUse = event.channels ?? DEFAULT_CHANNELS[getEventCategory(event.type)] ?? ['IN_APP'];
+    const defaults = getDefaultChannels();
+    const channelsToUse = event.channels ?? defaults[getEventCategory(event.type)] ?? ['IN_APP'];
 
     for (const userId of recipients) {
       const prefs = await this.getUserPreferences(userId);
