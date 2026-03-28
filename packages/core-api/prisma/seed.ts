@@ -6,8 +6,11 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+const DEV_PASSWORD = 'poolmaster123';
+const BCRYPT_ROUNDS = 12;
 
 // =============================================================================
 // Plan Tiers
@@ -236,13 +239,15 @@ async function main(): Promise<void> {
 
   // --- Regular Users ---
   console.log('Seeding users...');
+  const passwordHash = await bcrypt.hash(DEV_PASSWORD, BCRYPT_ROUNDS);
 
   const derek = await prisma.user.upsert({
     where: { email: 'derek.dorazio@gmail.com' },
-    update: { displayName: 'Derek Dorazio' },
+    update: { displayName: 'Derek Dorazio', passwordHash },
     create: {
       email: 'derek.dorazio@gmail.com',
       displayName: 'Derek Dorazio',
+      passwordHash,
       tenantId: tenant.id,
       timezone: 'America/New_York',
     },
@@ -251,10 +256,11 @@ async function main(): Promise<void> {
 
   const jackson = await prisma.user.upsert({
     where: { email: 'jackson.dorazio@gmail.com' },
-    update: { displayName: 'Jackson Dorazio' },
+    update: { displayName: 'Jackson Dorazio', passwordHash },
     create: {
       email: 'jackson.dorazio@gmail.com',
       displayName: 'Jackson Dorazio',
+      passwordHash,
       tenantId: tenant.id,
       timezone: 'America/New_York',
     },
@@ -264,10 +270,11 @@ async function main(): Promise<void> {
   // Commissioner accounts (separate logins for testing commissioner features)
   const commish1 = await prisma.user.upsert({
     where: { email: 'commish.one@poolmaster.dev' },
-    update: { displayName: 'Commish One' },
+    update: { displayName: 'Commish One', passwordHash },
     create: {
       email: 'commish.one@poolmaster.dev',
       displayName: 'Commish One',
+      passwordHash,
       tenantId: tenant.id,
       timezone: 'America/New_York',
     },
@@ -276,10 +283,11 @@ async function main(): Promise<void> {
 
   const commish2 = await prisma.user.upsert({
     where: { email: 'commish.two@poolmaster.dev' },
-    update: { displayName: 'Commish Two' },
+    update: { displayName: 'Commish Two', passwordHash },
     create: {
       email: 'commish.two@poolmaster.dev',
       displayName: 'Commish Two',
+      passwordHash,
       tenantId: tenant.id,
       timezone: 'America/New_York',
     },
@@ -291,10 +299,11 @@ async function main(): Promise<void> {
   for (let i = 1; i <= 4; i++) {
     const user = await prisma.user.upsert({
       where: { email: `testmanager${i}@poolmaster.dev` },
-      update: { displayName: `Test Manager ${i}` },
+      update: { displayName: `Test Manager ${i}`, passwordHash },
       create: {
         email: `testmanager${i}@poolmaster.dev`,
         displayName: `Test Manager ${i}`,
+        passwordHash,
         tenantId: tenant.id,
         timezone: 'America/New_York',
       },
@@ -454,6 +463,8 @@ async function main(): Promise<void> {
   console.log('');
   console.log('═══════════════════════════════════════════════════');
   console.log('  Seed complete!');
+  console.log('');
+  console.log('  Password for all accounts: poolmaster123');
   console.log('');
   console.log('  Admin accounts:');
   console.log('    derek.dorazio@gmail.com   (SUPER_ADMIN)');
