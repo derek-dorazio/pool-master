@@ -11,7 +11,7 @@ db_password          = "CHANGE_ME_staging_password"
 ecs_cpu    = 256
 ecs_memory = 512
 
-# Domain (uncomment when DNS is configured)
-# domain_name         = "yourdomain.com"
-# acm_certificate_arn = "arn:aws:acm:us-east-2:614049083306:certificate/your-cert-id"
-# route53_zone_id     = "your-zone-id"
+# Domain — results in: stage-ultimateofficepoolmanager.com
+# domain_name         = "ultimateofficepoolmanager.com"
+# acm_certificate_arn = "arn:aws:acm:us-east-2:614049083306:certificate/FILL_IN"
+# route53_zone_id     = "FILL_IN"
