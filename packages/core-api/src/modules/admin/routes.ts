@@ -33,6 +33,8 @@ import { PollConfigService } from './poll-config-service';
 import { IngestionConfigService } from './ingestion-config-service';
 import { DunningConfigService } from './dunning-config-service';
 import { ChannelConfigService } from './channel-config-service';
+import { RetentionConfigService } from './retention-config-service';
+import { DigestConfigService } from './digest-config-service';
 import { registerPlatformConfigRoutes } from './platform-config-routes';
 import { configRoutes } from './config-routes';
 
@@ -75,6 +77,8 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const ingestionConfigService = new IngestionConfigService();
   const dunningConfigService = new DunningConfigService();
   const channelConfigService = new ChannelConfigService();
+  const retentionConfigService = new RetentionConfigService();
+  const digestConfigService = new DigestConfigService();
 
   // --- Handlers ---
   const tenant = createTenantHandlers(tenantService);
@@ -713,6 +717,8 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     ingestionConfig: ingestionConfigService,
     dunningConfig: dunningConfigService,
     channelConfig: channelConfigService,
+    retentionConfig: retentionConfigService,
+    digestConfig: digestConfigService,
   });
 
   // --- Admin Config Routes (templates, push triggers, rate limits) ---

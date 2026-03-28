@@ -11,6 +11,8 @@ import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
 import type { DunningConfigService } from './dunning-config-service';
 import type { ChannelConfigService } from './channel-config-service';
+import type { RetentionConfigService } from './retention-config-service';
+import type { DigestConfigService } from './digest-config-service';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -38,9 +40,18 @@ export function registerPlatformConfigRoutes(
     ingestionConfig: IngestionConfigService;
     dunningConfig: DunningConfigService;
     channelConfig: ChannelConfigService;
+    retentionConfig: RetentionConfigService;
+    digestConfig: DigestConfigService;
   },
 ): void {
-  const { pollConfig, ingestionConfig, dunningConfig, channelConfig } = services;
+  const {
+    pollConfig,
+    ingestionConfig,
+    dunningConfig,
+    channelConfig,
+    retentionConfig,
+    digestConfig,
+  } = services;
 
   // -------------------------------------------------------------------------
   // Poll Interval Configuration
@@ -267,5 +278,160 @@ export function registerPlatformConfigRoutes(
   fastify.post('/config/notification-channels/reset', async (request: FastifyRequest) => {
     const { adminUserId, adminUserEmail } = extractAdminContext(request);
     return channelConfig.resetDefaults(adminUserId, adminUserEmail);
+  });
+
+  // -------------------------------------------------------------------------
+  // Retention Defaults Configuration
+  // -------------------------------------------------------------------------
+
+  fastify.get('/config/retention', async () => {
+    return retentionConfig.getDefaults();
+  });
+
+  fastify.put('/config/retention', {
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          contestResultRetentionSeasons: { type: 'integer' },
+          rosterHistoryRetentionSeasons: { type: 'integer' },
+          activityLogRetentionDays: { type: 'integer' },
+          payoutRecordRetentionSeasons: { type: 'integer' },
+          chatMessageRetentionDays: { type: 'integer' },
+          auditLogRetentionDays: { type: 'integer' },
+        },
+      },
+    },
+    handler: async (
+      request: FastifyRequest<{
+        Body: {
+          contestResultRetentionSeasons?: number;
+          rosterHistoryRetentionSeasons?: number;
+          activityLogRetentionDays?: number;
+          payoutRecordRetentionSeasons?: number;
+          chatMessageRetentionDays?: number;
+          auditLogRetentionDays?: number;
+        };
+      }>,
+    ) => {
+      return retentionConfig.updateDefaults(request.body);
+    },
+  });
+
+  fastify.post('/config/retention/reset', async () => {
+    return retentionConfig.resetDefaults();
+  });
+
+  fastify.get('/config/retention/:tenantId', async (
+    request: FastifyRequest<{ Params: { tenantId: string } }>,
+  ) => {
+    const override = retentionConfig.getTenantOverride(request.params.tenantId);
+    if (!override) {
+      return { override: null, defaults: retentionConfig.getDefaults() };
+    }
+    return { override };
+  });
+
+  fastify.put('/config/retention/:tenantId', {
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          contestResultRetentionSeasons: { type: 'integer' },
+          rosterHistoryRetentionSeasons: { type: 'integer' },
+          activityLogRetentionDays: { type: 'integer' },
+          payoutRecordRetentionSeasons: { type: 'integer' },
+          chatMessageRetentionDays: { type: 'integer' },
+          auditLogRetentionDays: { type: 'integer' },
+        },
+      },
+    },
+    handler: async (
+      request: FastifyRequest<{
+        Params: { tenantId: string };
+        Body: {
+          contestResultRetentionSeasons?: number;
+          rosterHistoryRetentionSeasons?: number;
+          activityLogRetentionDays?: number;
+          payoutRecordRetentionSeasons?: number;
+          chatMessageRetentionDays?: number;
+          auditLogRetentionDays?: number;
+        };
+      }>,
+    ) => {
+      return retentionConfig.setTenantOverride(
+        request.params.tenantId,
+        request.body,
+      );
+    },
+  });
+
+  fastify.delete('/config/retention/:tenantId', async (
+    request: FastifyRequest<{ Params: { tenantId: string } }>,
+  ) => {
+    retentionConfig.clearTenantOverride(request.params.tenantId);
+    return { cleared: true, tenantId: request.params.tenantId };
+  });
+
+  // -------------------------------------------------------------------------
+  // Weekly Digest Configuration
+  // -------------------------------------------------------------------------
+
+  fastify.get('/config/weekly-digest', async () => {
+    return digestConfig.getConfig();
+  });
+
+  fastify.put('/config/weekly-digest', {
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          subjectTemplate: { type: 'string', minLength: 1 },
+          headerTemplate: { type: 'string', minLength: 1 },
+          footerTemplate: { type: 'string', minLength: 1 },
+          includeStandings: { type: 'boolean' },
+          includeHighlights: { type: 'boolean' },
+          includeUpcomingEvents: { type: 'boolean' },
+          lookbackDays: { type: 'integer', minimum: 1, maximum: 30 },
+          sendDay: {
+            type: 'string',
+            enum: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'],
+          },
+          sendHourUtc: { type: 'integer', minimum: 0, maximum: 23 },
+          enabled: { type: 'boolean' },
+        },
+      },
+    },
+    handler: async (
+      request: FastifyRequest<{
+        Body: {
+          subjectTemplate?: string;
+          headerTemplate?: string;
+          footerTemplate?: string;
+          includeStandings?: boolean;
+          includeHighlights?: boolean;
+          includeUpcomingEvents?: boolean;
+          lookbackDays?: number;
+          sendDay?: string;
+          sendHourUtc?: number;
+          enabled?: boolean;
+        };
+      }>,
+    ) => {
+      return digestConfig.updateConfig(request.body);
+    },
+  });
+
+  fastify.post('/config/weekly-digest/reset', async () => {
+    return digestConfig.resetDefaults();
+  });
+
+  fastify.get('/config/weekly-digest/preview', async (
+    request: FastifyRequest<{
+      Querystring: { leagueId?: string };
+    }>,
+  ) => {
+    const leagueId = (request.query as { leagueId?: string }).leagueId;
+    return { preview: digestConfig.previewDigest(leagueId) };
   });
 }

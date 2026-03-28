@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Bell, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
+import { Bell, RotateCcw, ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   usePushTriggers,
   useNotificationTemplates,
   useChannelDefaults,
   useRateLimits,
+  useDigestConfig,
+  useDigestPreview,
 } from '@/hooks/use-config-api';
 import type {
   PushTrigger,
@@ -18,6 +20,7 @@ import type {
   Channel,
   NotificationCategory,
   CollapseRule,
+  SendDay,
 } from '@/hooks/use-config-api';
 
 // ── Shared Toggle ──────────────────────────────────────────────────────────────
@@ -528,6 +531,174 @@ function RateLimitsSection() {
   );
 }
 
+// ── Weekly Digest Section ────────────────────────────────────────────────────
+
+const SEND_DAYS: SendDay[] = [
+  'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
+];
+
+function WeeklyDigestSection() {
+  const { data: config } = useDigestConfig();
+  const { data: mockPreview } = useDigestPreview();
+  const [subjectTemplate, setSubjectTemplate] = useState(config.subjectTemplate);
+  const [headerTemplate, setHeaderTemplate] = useState(config.headerTemplate);
+  const [footerTemplate, setFooterTemplate] = useState(config.footerTemplate);
+  const [includeStandings, setIncludeStandings] = useState(config.includeStandings);
+  const [includeHighlights, setIncludeHighlights] = useState(config.includeHighlights);
+  const [includeUpcomingEvents, setIncludeUpcomingEvents] = useState(config.includeUpcomingEvents);
+  const [lookbackDays, setLookbackDays] = useState(config.lookbackDays);
+  const [sendDay, setSendDay] = useState<SendDay>(config.sendDay);
+  const [sendHourUtc, setSendHourUtc] = useState(config.sendHourUtc);
+  const [enabled, setEnabled] = useState(config.enabled);
+  const [showPreview, setShowPreview] = useState(false);
+
+  function reset() {
+    setSubjectTemplate(config.subjectTemplate);
+    setHeaderTemplate(config.headerTemplate);
+    setFooterTemplate(config.footerTemplate);
+    setIncludeStandings(config.includeStandings);
+    setIncludeHighlights(config.includeHighlights);
+    setIncludeUpcomingEvents(config.includeUpcomingEvents);
+    setLookbackDays(config.lookbackDays);
+    setSendDay(config.sendDay);
+    setSendHourUtc(config.sendHourUtc);
+    setEnabled(config.enabled);
+    setShowPreview(false);
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-lg">Weekly Digest</CardTitle>
+        <div className="flex items-center gap-3">
+          <Toggle checked={enabled} onChange={setEnabled} />
+          <span className="text-sm text-muted-foreground">
+            {enabled ? 'Enabled' : 'Disabled'}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Template fields */}
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium">Subject Template</label>
+            <Input
+              value={subjectTemplate}
+              onChange={(e) => setSubjectTemplate(e.target.value)}
+              placeholder="Weekly Recap — {{league_name}}"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Available placeholder: {'{{league_name}}'}
+            </p>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Header Template</label>
+            <textarea
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              value={headerTemplate}
+              onChange={(e) => setHeaderTemplate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Footer Template</label>
+            <textarea
+              className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              value={footerTemplate}
+              onChange={(e) => setFooterTemplate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Content toggles */}
+        <div>
+          <h4 className="mb-3 text-sm font-semibold">Content Sections</h4>
+          <div className="grid grid-cols-3 gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <Toggle checked={includeStandings} onChange={setIncludeStandings} />
+              Include Standings
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Toggle checked={includeHighlights} onChange={setIncludeHighlights} />
+              Include Highlights
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Toggle checked={includeUpcomingEvents} onChange={setIncludeUpcomingEvents} />
+              Include Upcoming Events
+            </label>
+          </div>
+        </div>
+
+        {/* Schedule settings */}
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium">Lookback Days</label>
+            <Input
+              type="number"
+              min={1}
+              max={30}
+              value={lookbackDays}
+              onChange={(e) => setLookbackDays(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Send Day</label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={sendDay}
+              onChange={(e) => setSendDay(e.target.value as SendDay)}
+            >
+              {SEND_DAYS.map((day) => (
+                <option key={day} value={day}>
+                  {day.charAt(0) + day.slice(1).toLowerCase()}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Send Hour (UTC, 0-23)</label>
+            <Input
+              type="number"
+              min={0}
+              max={23}
+              value={sendHourUtc}
+              onChange={(e) => setSendHourUtc(Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div>
+          <Button
+            variant="outline"
+            onClick={() => setShowPreview(!showPreview)}
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            {showPreview ? 'Hide Preview' : 'Preview Digest'}
+          </Button>
+
+          {showPreview && (
+            <Card className="mt-3 bg-muted/30">
+              <CardContent className="p-4">
+                <h4 className="mb-2 text-sm font-semibold">Mock Digest Preview</h4>
+                <pre className="whitespace-pre-wrap rounded-md bg-background p-4 text-xs font-mono leading-relaxed">
+                  {mockPreview}
+                </pre>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={reset}>Reset</Button>
+          <Button onClick={() => console.log('Save digest config:', { subjectTemplate, headerTemplate, footerTemplate, includeStandings, includeHighlights, includeUpcomingEvents, lookbackDays, sendDay, sendHourUtc, enabled })}>
+            Save
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export function Component() {
@@ -542,6 +713,7 @@ export function Component() {
       <NotificationTemplatesSection />
       <ChannelDefaultsSection />
       <RateLimitsSection />
+      <WeeklyDigestSection />
     </div>
   );
 }

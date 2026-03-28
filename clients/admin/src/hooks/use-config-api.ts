@@ -260,3 +260,87 @@ export function useDunningConfig() {
   const data = useMemo(() => MOCK_DUNNING_CONFIG, []);
   return { data, isLoading: false };
 }
+
+// ── Retention Defaults ──────────────────────────────────────────────────────
+
+export interface RetentionDefaultsConfig {
+  contestResultRetentionSeasons: number;
+  rosterHistoryRetentionSeasons: number;
+  activityLogRetentionDays: number;
+  payoutRecordRetentionSeasons: number;
+  chatMessageRetentionDays: number;
+  auditLogRetentionDays: number;
+}
+
+const MOCK_RETENTION_DEFAULTS: RetentionDefaultsConfig = {
+  contestResultRetentionSeasons: -1,
+  rosterHistoryRetentionSeasons: -1,
+  activityLogRetentionDays: 365,
+  payoutRecordRetentionSeasons: -1,
+  chatMessageRetentionDays: 90,
+  auditLogRetentionDays: -1,
+};
+
+export function useRetentionDefaults() {
+  const data = useMemo(() => MOCK_RETENTION_DEFAULTS, []);
+  return { data, isLoading: false };
+}
+
+// ── Digest Config ───────────────────────────────────────────────────────────
+
+export type SendDay = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
+export interface DigestTemplateConfig {
+  subjectTemplate: string;
+  headerTemplate: string;
+  footerTemplate: string;
+  includeStandings: boolean;
+  includeHighlights: boolean;
+  includeUpcomingEvents: boolean;
+  lookbackDays: number;
+  sendDay: SendDay;
+  sendHourUtc: number;
+  enabled: boolean;
+}
+
+const MOCK_DIGEST_CONFIG: DigestTemplateConfig = {
+  subjectTemplate: 'Weekly Recap — {{league_name}}',
+  headerTemplate: "Here's what happened this week in {{league_name}}",
+  footerTemplate: 'See you next week! — PoolMaster',
+  includeStandings: true,
+  includeHighlights: true,
+  includeUpcomingEvents: true,
+  lookbackDays: 7,
+  sendDay: 'MONDAY',
+  sendHourUtc: 14,
+  enabled: true,
+};
+
+export function useDigestConfig() {
+  const data = useMemo(() => MOCK_DIGEST_CONFIG, []);
+  return { data, isLoading: false };
+}
+
+const MOCK_DIGEST_PREVIEW = `Subject: Weekly Recap — Demo League
+
+Here's what happened this week in Demo League
+
+--- Standings ---
+  NFL Pick'em Week 12:
+    #1 The Underdogs — 87 pts
+    #2 Gridiron Gurus — 82 pts
+    #3 Sunday Funday — 79 pts
+
+--- Highlights ---
+  * The Underdogs clinched the weekly prize with 87 points
+  * League record: 14 members submitted picks before the early deadline
+
+--- Upcoming ---
+  NFL Week 13 locks — Sunday 1:00 PM ET
+  Trade deadline — Wednesday 11:59 PM ET
+
+See you next week! — PoolMaster`;
+
+export function useDigestPreview() {
+  return { data: MOCK_DIGEST_PREVIEW, isLoading: false };
+}

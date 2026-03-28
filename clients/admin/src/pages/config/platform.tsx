@@ -9,11 +9,13 @@ import {
   usePollIntervals,
   useIngestionSchedule,
   useDunningConfig,
+  useRetentionDefaults,
 } from '@/hooks/use-config-api';
 import type {
   PollIntervalConfig,
   SportOverride,
   RetryAttempt,
+  RetentionDefaultsConfig,
 } from '@/hooks/use-config-api';
 
 // ── Shared Toggle ──────────────────────────────────────────────────────────────
@@ -475,6 +477,183 @@ function DunningScheduleSection() {
   );
 }
 
+// ── Retention Defaults Section ──────────────────────────────────────────────────
+
+interface RetentionField {
+  key: keyof RetentionDefaultsConfig;
+  label: string;
+  unit: string;
+}
+
+const RETENTION_FIELDS: RetentionField[] = [
+  { key: 'contestResultRetentionSeasons', label: 'Contest Results', unit: 'seasons' },
+  { key: 'rosterHistoryRetentionSeasons', label: 'Roster History', unit: 'seasons' },
+  { key: 'activityLogRetentionDays', label: 'Activity Log', unit: 'days' },
+  { key: 'payoutRecordRetentionSeasons', label: 'Payout Records', unit: 'seasons' },
+  { key: 'chatMessageRetentionDays', label: 'Chat Messages', unit: 'days' },
+  { key: 'auditLogRetentionDays', label: 'Audit Log', unit: 'days' },
+];
+
+function RetentionDefaultsSection() {
+  const { data: config } = useRetentionDefaults();
+  const [values, setValues] = useState<RetentionDefaultsConfig>({ ...config });
+  const [tenantId, setTenantId] = useState('');
+  const [tenantOverride, setTenantOverride] = useState<RetentionDefaultsConfig | null>(null);
+  const [showTenantOverrides, setShowTenantOverrides] = useState(false);
+
+  function updateField(key: keyof RetentionDefaultsConfig, value: number) {
+    setValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function toggleInfinite(key: keyof RetentionDefaultsConfig) {
+    setValues((prev) => ({
+      ...prev,
+      [key]: prev[key] === -1 ? 90 : -1,
+    }));
+  }
+
+  function reset() {
+    setValues({ ...config });
+  }
+
+  function lookupTenant() {
+    if (!tenantId.trim()) return;
+    // Mock: no override found — uses defaults
+    console.log('Looking up tenant override for:', tenantId);
+    setTenantOverride(null);
+  }
+
+  function clearTenantOverride() {
+    console.log('Clear tenant override for:', tenantId);
+    setTenantOverride(null);
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Retention Defaults</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+          {RETENTION_FIELDS.map((field) => (
+            <div key={field.key}>
+              <label className="mb-1 block text-sm font-medium">
+                {field.label} ({field.unit})
+              </label>
+              <div className="flex items-center gap-2">
+                {values[field.key] === -1 ? (
+                  <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground">
+                    Infinite
+                  </div>
+                ) : (
+                  <Input
+                    type="number"
+                    min={1}
+                    value={values[field.key]}
+                    onChange={(e) => updateField(field.key, Number(e.target.value))}
+                  />
+                )}
+              </div>
+              <label className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={values[field.key] === -1}
+                  onChange={() => toggleInfinite(field.key)}
+                  className="h-3.5 w-3.5 rounded border-gray-300"
+                />
+                Infinite (never delete)
+              </label>
+            </div>
+          ))}
+        </div>
+
+        {/* Tenant Override Lookup */}
+        <div>
+          <button
+            className="flex items-center gap-2 text-sm font-semibold"
+            onClick={() => setShowTenantOverrides(!showTenantOverrides)}
+          >
+            {showTenantOverrides
+              ? <ChevronDown className="h-4 w-4" />
+              : <ChevronRight className="h-4 w-4" />}
+            Tenant Overrides
+          </button>
+
+          {showTenantOverrides && (
+            <div className="mt-3 space-y-3 rounded-md border p-4">
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <label className="mb-1 block text-sm font-medium">Tenant ID</label>
+                  <Input
+                    placeholder="Enter tenant ID to look up"
+                    value={tenantId}
+                    onChange={(e) => setTenantId(e.target.value)}
+                  />
+                </div>
+                <Button variant="outline" onClick={lookupTenant}>
+                  Look Up
+                </Button>
+              </div>
+
+              {tenantId && tenantOverride === null && (
+                <p className="text-sm text-muted-foreground">
+                  No override set — this tenant uses platform defaults.
+                </p>
+              )}
+
+              {tenantOverride && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                    {RETENTION_FIELDS.map((field) => (
+                      <div key={field.key}>
+                        <label className="mb-1 block text-xs font-medium">
+                          {field.label}
+                        </label>
+                        <Input
+                          type="number"
+                          className="h-8"
+                          value={tenantOverride[field.key]}
+                          onChange={(e) =>
+                            setTenantOverride((prev) =>
+                              prev ? { ...prev, [field.key]: Number(e.target.value) } : prev,
+                            )
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={clearTenantOverride}
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      Clear Override
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => console.log('Save tenant override:', tenantId, tenantOverride)}
+                    >
+                      Save Override
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={reset}>Reset</Button>
+          <Button onClick={() => console.log('Save retention defaults:', values)}>Save</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export function Component() {
@@ -488,6 +667,7 @@ export function Component() {
       <PollIntervalsSection />
       <IngestionScheduleSection />
       <DunningScheduleSection />
+      <RetentionDefaultsSection />
     </div>
   );
 }
