@@ -152,6 +152,7 @@ poolmaster/
 ### Guides
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
 - [Scoring & Configuration Guide](docs/scoring-and-configuration-guide.md) — End-user scoring configuration
+- [AWS Deployment Plan](plans/16-aws-deployment.md) — Full deployment plan with action items and status
 
 ### Code READMEs
 - [Backend Services](packages/README.md) — All 5 microservices, shared package, API routes, engines
@@ -163,6 +164,24 @@ poolmaster/
 - [React UI Rules](rules/react-ui-rules.md) — Web: React, shadcn/ui, TailwindCSS
 - [Testing Rules](rules/testing-rules.md) — Test strategy, coverage, CI pipeline
 - [Workflow Rules](rules/workflow-rules.md) — Task tracking via plan documents
+
+---
+
+## Deployment
+
+AWS deployment via Terraform (ECS Fargate) + GitHub Actions CI/CD.
+
+```bash
+cd infrastructure/terraform
+cp terraform.tfvars.example terraform.tfvars    # Set db_password, domain (optional)
+terraform init
+terraform plan -var="environment=dev"
+terraform apply -var="environment=dev"
+```
+
+Infrastructure: ECS Fargate (6 services), RDS PostgreSQL, ElastiCache Redis, ALB with path-based routing, CloudWatch alarms, ECR repositories. HTTPS and custom domain are optional (works with ALB DNS out of the box).
+
+See [AWS Deployment Plan](plans/16-aws-deployment.md) for full details.
 
 ---
 

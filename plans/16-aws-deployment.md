@@ -10,12 +10,12 @@ Deploy PoolMaster to AWS using ECS Fargate, RDS PostgreSQL, ElastiCache Redis, a
 
 | ID | Phase | Task | Owner | Status | Notes |
 |---|---|---|---|---|---|
-| 16-001 | 1 | Create S3 bucket for Terraform state (`poolmaster-terraform-state`) | Derek | Not Started | AWS Console or CLI. Enable versioning. |
-| 16-002 | 1 | Create DynamoDB table for Terraform state locking (`poolmaster-terraform-locks`) | Derek | Not Started | Partition key: `LockID` (String) |
-| 16-003 | 1 | Register domain or configure Route 53 hosted zone | Derek | Not Started | Or point existing domain NS records to Route 53 |
-| 16-004 | 1 | Request ACM certificate for HTTPS (`*.poolmaster.com` or your domain) | Derek | Not Started | DNS validation — add the CNAME record Route 53 suggests |
-| 16-005 | 1 | Create IAM user/role for GitHub Actions with ECR + ECS permissions | Derek | Not Started | Needs: ecr:*, ecs:UpdateService, iam:PassRole. Save access key as GitHub secrets |
-| 16-006 | 1 | Add AWS credentials to GitHub repo secrets | Derek | Not Started | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_ACCOUNT_ID` |
+| 16-001 | 1 | Create S3 bucket for Terraform state | Derek | Done | `poolmaster-terraform-state-614049083306-us-east-2-an` |
+| 16-002 | 1 | Create DynamoDB table for Terraform state locking | Derek | Done | `poolmaster-terraform-locks` (ARN: arn:aws:dynamodb:us-east-2:614049083306:table/poolmaster-terraform-locks) |
+| 16-003 | 1 | Register domain or configure Route 53 hosted zone | Derek | In Progress | Derek settling on domain name. Provide hosted zone ID + domain when ready |
+| 16-004 | 1 | Request ACM certificate for HTTPS | Derek | Not Started | Blocked on 16-003. Request cert for `*.yourdomain.com` + `yourdomain.com` in us-east-2 |
+| 16-005 | 1 | Create IAM user/role for GitHub Actions with ECR + ECS permissions | Derek | Not Started | Username: `poolmaster-github-deploy`. Policies: ECR Full, ECS Full, IAM PassRole |
+| 16-006 | 1 | Add AWS credentials to GitHub repo secrets | Derek | Not Started | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION=us-east-2`, `AWS_ACCOUNT_ID=614049083306` |
 | 16-007 | 2 | Configure Terraform remote state backend (S3 + DynamoDB) | Agent | Done | S3 bucket + DynamoDB lock table configured in main.tf backend block |
 | 16-008 | 2 | Add HTTPS listener to ALB with ACM certificate | Agent | Done | Conditional: created only when acm_certificate_arn is provided. HTTP redirects to HTTPS |
 | 16-009 | 2 | Add ECS task definitions for all 5 backend services | Agent | Done | core-api, draft-service, scoring-service, ingestion-worker, notification-service |
@@ -43,92 +43,81 @@ Deploy PoolMaster to AWS using ECS Fargate, RDS PostgreSQL, ElastiCache Redis, a
 
 ## Phase Summary
 
-### Phase 1 — Manual AWS Setup (Derek)
-One-time bootstrap steps that must be done in AWS Console before Terraform can run. ~30 minutes.
+### Phase 1 — Manual AWS Setup (Derek) — IN PROGRESS
+- [x] 16-001: S3 bucket created
+- [x] 16-002: DynamoDB lock table created
+- [ ] 16-003: Domain + Route 53 (Derek choosing domain name)
+- [ ] 16-004: ACM certificate (blocked on domain)
+- [ ] 16-005: IAM user for GitHub Actions
+- [ ] 16-006: GitHub repo secrets
 
-### Phase 2 — Complete Terraform + CI/CD (Agent)
-Finish the Terraform scaffolding: add all service definitions, HTTPS, secrets, DNS, monitoring, and update GitHub Actions. ~2-3 hours of agent work.
+### Phase 2 — Complete Terraform + CI/CD (Agent) — DONE
+All 10 tasks complete (9 Done, 1 Deferred to prod). Terraform is ready to apply.
 
-### Phase 3 — First Deploy to Staging (Derek + Agent)
-Apply Terraform, run migrations, push images, verify. ~1 hour.
+### Phase 3 — First Deploy (Derek + Agent) — WAITING
+Can proceed in two modes:
+- **Without domain:** `terraform apply` now using ALB DNS. App accessible via `http://<alb-dns>`. No HTTPS.
+- **With domain:** Wait for 16-003/16-004, then `terraform apply` with domain + HTTPS.
 
-### Phase 4 — Production (Derek + Agent)
-Repeat for production with multi-AZ database and production DNS. ~30 minutes.
+### Phase 4 — Production (Derek + Agent) — WAITING
+After staging validated.
+
+---
+
+## Known Values (Collected)
+
+| Key | Value |
+|---|---|
+| AWS Account ID | `614049083306` |
+| AWS Region | `us-east-2` |
+| S3 Bucket | `poolmaster-terraform-state-614049083306-us-east-2-an` |
+| DynamoDB Table | `poolmaster-terraform-locks` |
+| GitHub Repo | `derek-dorazio/pool-master` |
+| Domain | TBD — Derek choosing |
+| Route 53 Zone ID | TBD |
+| ACM Certificate ARN | TBD |
+| GitHub Secrets | Not yet configured |
+
+---
+
+## Remaining Steps for Derek (Before First Deploy)
+
+### Required (can deploy without domain):
+1. **Create IAM user** `poolmaster-github-deploy` with ECR + ECS permissions
+2. **Add GitHub secrets**: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION=us-east-2`, `AWS_ACCOUNT_ID=614049083306`
+3. **Create `terraform.tfvars`**: `cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/terraform.tfvars` and set `db_password`
+
+### Required for HTTPS (can add later):
+4. **Register domain** and create Route 53 hosted zone → provide **domain name** + **hosted zone ID**
+5. **Request ACM certificate** for `*.yourdomain.com` in us-east-2 → provide **certificate ARN**
+6. **Update `terraform.tfvars`** with domain_name, acm_certificate_arn, route53_zone_id
+
+### When ready, return and say "deploy to AWS" — the Agent will:
+1. Prompt for any missing values (domain, cert ARN, zone ID)
+2. Run `terraform init` + `terraform plan` (for review)
+3. After approval, run `terraform apply`
+4. Run Prisma migrations against RDS
+5. Trigger first image push to ECR
+6. Verify health checks
 
 ---
 
 ## Cost Estimate (Monthly)
 
-| Resource | Staging | Production |
+| Resource | Dev | Production |
 |---|---|---|
-| ECS Fargate (7 services) | ~$30-50 | ~$100-200 |
-| RDS PostgreSQL (db.t3.micro/small) | ~$15 | ~$50-100 (multi-AZ) |
+| ECS Fargate (6 services) | ~$30-50 | ~$100-200 |
+| RDS PostgreSQL (db.t3.micro) | ~$15 | ~$50-100 (multi-AZ) |
 | ElastiCache Redis (cache.t3.micro) | ~$12 | ~$25-50 |
 | ALB | ~$16 | ~$16 |
+| NAT Gateway | ~$32 | ~$32 |
 | ECR storage | ~$1 | ~$1 |
 | Route 53 | ~$0.50 | ~$0.50 |
 | CloudWatch | ~$5 | ~$10 |
-| **Total** | **~$80-100/mo** | **~$200-380/mo** |
+| **Total** | **~$110-130/mo** | **~$230-410/mo** |
+
+> Note: NAT Gateway is the largest fixed cost (~$32/mo). Can be removed in dev if services are placed in public subnets instead.
 
 ---
 
-## Prerequisites Checklist (Before Agent Work)
-
-Derek must complete these before the Agent can implement Phase 2:
-
-- [ ] 16-001: S3 bucket created — provide bucket name
-- [ ] 16-002: DynamoDB lock table created
-- [ ] 16-003: Route 53 hosted zone configured — provide hosted zone ID and domain name
-- [ ] 16-004: ACM certificate requested and validated — provide certificate ARN
-- [ ] 16-005: IAM user created — provide access key ID (secret key stored in GitHub)
-- [ ] 16-006: GitHub secrets configured
-
-Once these are done, return and say "implement the AWS deployment plan" — the Agent will prompt you for the required values below before starting.
-
----
-
-## Agent Prompt Checklist
-
-**When Derek requests Phase 2 implementation, the Agent MUST ask for these values before writing any code:**
-
-1. **S3 bucket name** for Terraform state
-   - Example: `poolmaster-terraform-state`
-
-2. **S3 bucket region**
-   - Example: `us-east-1`
-
-3. **DynamoDB table name** for Terraform state locking
-   - Example: `poolmaster-terraform-locks`
-
-4. **Domain name**
-   - Example: `poolmaster.com` or `app.poolmaster.com`
-
-5. **Route 53 hosted zone ID**
-   - Found in Route 53 console → Hosted zones → Zone ID column
-   - Example: `Z0123456789ABCDEFGHIJ`
-
-6. **ACM certificate ARN**
-   - Found in ACM console → Certificates → Certificate ARN
-   - Example: `arn:aws:acm:us-east-1:123456789012:certificate/abc-def-ghi`
-
-7. **AWS account ID**
-   - Found in top-right of AWS console → Account ID
-   - Example: `123456789012`
-
-8. **AWS region** for deployment
-   - Example: `us-east-1`
-
-9. **GitHub repo owner/name** (for ECR image references)
-   - Example: `derek-dorazio/pool-master`
-
-10. **Confirm GitHub secrets are set** (yes/no)
-    - `AWS_ACCESS_KEY_ID`
-    - `AWS_SECRET_ACCESS_KEY`
-    - `AWS_REGION`
-    - `AWS_ACCOUNT_ID`
-
-The Agent should use AskUserQuestion to collect all values in one prompt before proceeding with implementation.
-
----
-
-*PoolMaster AWS Deployment Plan v1.1*
+*PoolMaster AWS Deployment Plan v1.2*

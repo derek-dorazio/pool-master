@@ -286,6 +286,25 @@ docker build -f infrastructure/docker/Dockerfile.service \
 
 The Dockerfile uses a multi-stage build: the build stage compiles TypeScript, and the runtime stage copies only the compiled output and `node_modules`.
 
+### Deploy to AWS
+
+```bash
+cd infrastructure/terraform
+cp terraform.tfvars.example terraform.tfvars    # Set db_password
+terraform init                                   # First time only
+terraform plan -var="environment=dev"            # Review changes
+terraform apply -var="environment=dev"           # Create infrastructure
+```
+
+This creates: ECS Fargate cluster (6 services), RDS PostgreSQL, ElastiCache Redis, ALB with path-based routing, ECR repositories, CloudWatch alarms. HTTPS and custom domain are optional — the app works via ALB DNS name without them.
+
+After `terraform apply`, run migrations:
+```bash
+DATABASE_URL=$(terraform output -raw database_url) npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
+```
+
+See [AWS Deployment Plan](../plans/16-aws-deployment.md) for the full step-by-step guide.
+
 ---
 
 ## Monorepo Structure
@@ -307,8 +326,8 @@ poolmaster/
 ├── tests/                  # All tests (separate from app code)
 ├── infrastructure/
 │   ├── docker/             # Dockerfile, docker-compose.dev.yml
-│   ├── k8s/                # Kubernetes manifests (planned)
-│   └── terraform/          # Terraform modules (planned)
+│   ├── k8s/                # Kubernetes manifests (future)
+│   └── terraform/          # AWS infrastructure (ECS Fargate, RDS, Redis, ALB)
 ├── plans/                  # Feature plan documents with task tables
 ├── rules/                  # Architecture and coding rules
 ├── package.json            # Monorepo root (npm workspaces)
