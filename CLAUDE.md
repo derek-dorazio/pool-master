@@ -23,6 +23,24 @@ Read the rules files in `rules/` before doing any implementation work:
 
 See `rules/workflow-rules.md` for the full task tracking protocol.
 
+## Documentation Requirements
+
+**You MUST keep documentation in sync when making changes:**
+
+- **Architecture, infrastructure, or dev environment changes** → Update `README.md`, `docs/DEVELOPER-SETUP.md`, and `rules/architecture-rules.md`
+- **New or changed test suites** → Update `README.md` (Testing section), `docs/DEVELOPER-SETUP.md` (Run Tests section), and `rules/testing-rules.md`
+- **New backend module or service** → Update `packages/README.md` (service module table) and the service's own README
+- **New webapp feature module** → Update `clients/web/README.md` (features table)
+- **New Docker container or port** → Update `docker-compose.dev.yml`, `scripts/dev-start.sh` (startup banner), `docs/DEVELOPER-SETUP.md` (infrastructure table), and `README.md`
+- **New npm script** → Update `docs/DEVELOPER-SETUP.md`
+- **New API endpoint** → Update the relevant service README
+
+**README locations:**
+- `README.md` — Project overview, quick start, architecture
+- `docs/DEVELOPER-SETUP.md` — Full setup guide, commands, endpoints
+- `packages/README.md` — Backend services and shared package reference
+- `clients/web/README.md` — Webapp features, pages, and components
+
 ## Project Structure
 
 - `packages/` — Backend services (Fastify + TypeScript) and shared domain types

@@ -149,11 +149,20 @@ poolmaster/
 
 ## Documentation
 
-- [Developer Setup Guide](docs/DEVELOPER-SETUP.md) -- environment setup, database init, running services
-- [Architecture Rules](rules/architecture-rules.md) -- system design, tech stack, security, deployment
-- [Service Rules](rules/service-rules.md) -- backend TypeScript/Fastify conventions
-- [Testing Rules](rules/testing-rules.md) -- test strategy, coverage, CI pipeline
-- [Workflow Rules](rules/workflow-rules.md) -- task tracking via plan documents
+### Guides
+- [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
+- [Scoring & Configuration Guide](docs/scoring-and-configuration-guide.md) — End-user scoring configuration
+
+### Code READMEs
+- [Backend Services](packages/README.md) — All 5 microservices, shared package, API routes, engines
+- [Web App](clients/web/README.md) — React app features, pages, components, architecture
+
+### Rules
+- [Architecture Rules](rules/architecture-rules.md) — System design, tech stack, security, deployment, local dev infra
+- [Service Rules](rules/service-rules.md) — Backend TypeScript/Fastify conventions
+- [React UI Rules](rules/react-ui-rules.md) — Web: React, shadcn/ui, TailwindCSS
+- [Testing Rules](rules/testing-rules.md) — Test strategy, coverage, CI pipeline
+- [Workflow Rules](rules/workflow-rules.md) — Task tracking via plan documents
 
 ---
 

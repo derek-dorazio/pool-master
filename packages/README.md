@@ -22,19 +22,24 @@ All services are Fastify + TypeScript, independently deployable Docker container
 
 Main REST API gateway. Manages leagues, contests, entries, and user-facing CRUD operations.
 
-| Module | Status | Endpoints |
-|--------|--------|-----------|
-| Leagues | Active | `GET /api/v1/leagues`, `POST /api/v1/leagues` |
-| Contests | Stubbed | — |
-| Auth | Stubbed | — |
+| Module | Endpoints | Description |
+|--------|-----------|-------------|
+| Leagues | `/api/v1/leagues` | CRUD, settings, invitations, member management |
+| Contests | `/api/v1/contests` | CRUD, pool management, standings, results |
+| Participants | `/api/v1/participants` | Search, CRUD, season records, provider mappings |
+| Contest Pools | `/api/v1/contests/:id/pool` | Pool lifecycle, pricing, tiers, draft search |
+| History | `/api/v1/contests/:id/history/*`, `/api/v1/leagues/:id/history/*` | Standings, timelines, replays, records, rivalries, analytics |
+| Search | `/api/v1/search/participants`, `/api/v1/search/discover/*` | Full-text search, league/contest discovery |
+| Compliance | `/api/v1/account/*` | Age verify, consent, data export, deletion, self-exclusion, enforcement |
+| Billing | `/api/v1/billing/*` | Entitlements, plan tiers, usage (free tier — all pass) |
+| Templates | `/api/v1/templates` | Contest template CRUD |
 
-**Infrastructure:** PostgreSQL via Prisma ORM (20+ models), Redis for caching.
+**Infrastructure:** PostgreSQL via Prisma ORM (50+ models), Redis for caching, DynamoDB for event data.
 
 **Key files:**
+- `prisma/schema.prisma` — Full database schema
 - `src/core/tenant-context.ts` — Multi-tenant extraction from `x-tenant-id` header
-- `src/core/error-handler.ts` — Global error handling
-- `src/modules/leagues/service.ts` — League business logic
-- `prisma/schema.prisma` — Full database schema (Tenant, User, League, Contest, Entry, Pick, Draft, Standing, Result)
+- `src/modules/` — Domain modules (leagues, contests, participants, history, search, compliance)
 
 ---
 
@@ -122,17 +127,56 @@ Validates that `stat_key` references in a config are valid for the sport. Covers
 
 ### @poolmaster/ingestion-worker `:3003`
 
-Polls external data providers and publishes `StatEvent` messages to the bus. **Status: Stubbed.**
+Polls external sports data providers and publishes `StatEvent` messages to the bus.
 
-TODO: Provider adapters (ESPN, TheOdds), polling scheduler, stat normalization.
+| Adapter | Sport(s) | API Key Required |
+|---------|----------|-----------------|
+| PGA Tour (ESPN Golf) | Golf | No |
+| OpenF1 | F1 | No |
+| ESPN | NFL, NBA, MLB, NHL, NCAA | No |
+| The Odds API | All (odds/pricing) | Yes (free tier: 500 req/mo) |
+
+**Key files:**
+- `src/core/provider-interface.ts` — `SportDataProvider` adapter interface
+- `src/core/provider-registry.ts` — PRIMARY/FALLBACK per sport with auto-failover
+- `src/core/ingestion-scheduler.ts` — Scheduled polling (6hr schedule, 12hr participants, 24hr rankings)
+- `src/adapters/` — One adapter per provider
+
+**API Routes:**
+- `GET /health` — Health + provider status
+- `GET /providers` — Registered adapters
+- `POST /sync/:sport` — Manual schedule sync
+- `POST /scores/:sport/:eventId` — Poll live scores
+- `POST /odds/:sport` — Fetch odds data
 
 ---
 
 ### @poolmaster/notification-service `:3004`
 
-Sends notifications (email, SMS, push) triggered by domain events. **Status: Stubbed.**
+Full notification pipeline: events → preferences → templates → channels (push, email, in-app).
 
-TODO: Event consumer, notification channels, user preference management.
+| Component | Description |
+|-----------|-------------|
+| NotificationDispatcher | Central orchestration — resolve recipients, check prefs, render, deliver |
+| InAppChannel | Notification centre (Prisma) |
+| EmailChannel | SMTP (Mailpit dev) / SES (LocalStack dev / real prod) |
+| PushChannel | APNs + FCM (push-mock dev / real prod) |
+| RateLimiter | Per-user push/hr, email/day limits, dedup, collapse windows |
+| EventGrouper | Buffers high-frequency events into grouped summaries |
+| ScheduledRunner | Polls for due scheduled notifications |
+| WeeklyDigest | League recap emails |
+
+**API Routes:**
+- `GET /api/v1/notifications` — Notification centre (list, unread count, mark read)
+- `GET/PUT /api/v1/notifications/preferences` — Per-category per-channel preferences
+- `POST /api/v1/devices` — Push device registration
+- `POST /api/v1/notifications/dispatch` — Send a notification event
+- `POST /api/v1/notifications/announce` — Commissioner announcement (bypass prefs)
+- `POST /api/v1/notifications/schedule` — Schedule future notification
+- `POST /api/v1/notifications/digest/:leagueId` — Send weekly digest
+- `GET /api/v1/notifications/analytics` — Delivery rates, suppression stats
+- `POST /api/v1/test/email` — Test email (dev only)
+- `POST /api/v1/test/push` — Test push (dev only)
 
 ---
 
@@ -140,9 +184,9 @@ TODO: Event consumer, notification channels, user preference management.
 
 | Layer | Files | Purpose |
 |-------|-------|---------|
-| `domain/` | `enums.ts`, `types.ts`, `scoring-config.ts` | 20+ domain interfaces, 14 enum types, Zod-validated scoring config |
-| `db/` | `ports.ts` | 17 repository port interfaces (hexagonal architecture) |
-| `events/` | `base.ts`, `draft.ts`, `scoring.ts`, `contest.ts` | Domain events: `StatEvent`, `ScoreUpdatedEvent`, `DraftPickMadeEvent`, `DraftCompletedEvent` |
+| `domain/` | `enums.ts`, `types.ts`, `scoring-config.ts`, `entitlements.ts` | 40+ domain interfaces, 20+ enum types, Zod-validated scoring config |
+| `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
+| `events/` | `base.ts`, `draft.ts`, `scoring.ts`, `contest.ts`, `notification.ts`, `event-bus.ts` | Domain events + event bus |
 | `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |
 
 ### Supported Sports
@@ -174,4 +218,6 @@ npm run test             # Run all tests
 
 ## Test Coverage
 
-179 tests across 5 test suites covering scoring engine, templates, tiebreakers, stat validation, historical data validation (NFL, Golf, NCAA, NBA, F1, NASCAR, Tennis, Horse Racing, EPL).
+Unit tests: scoring engine, templates, tiebreakers, stat validation, historical data validation, notification template renderer, rate limiter, preference service, event grouper.
+
+Smoke tests: `npm run test:smoke:api` — hits all 5 service health endpoints + key routes.
