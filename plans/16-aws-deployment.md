@@ -14,8 +14,8 @@ Deploy PoolMaster to AWS using ECS Fargate, RDS PostgreSQL, ElastiCache Redis, a
 | 16-002 | 1 | Create DynamoDB table for Terraform state locking | Derek | Done | `poolmaster-terraform-locks` (ARN: arn:aws:dynamodb:us-east-2:614049083306:table/poolmaster-terraform-locks) |
 | 16-003 | 1 | Register domain or configure Route 53 hosted zone | Derek | In Progress | Derek settling on domain name. Provide hosted zone ID + domain when ready |
 | 16-004 | 1 | Request ACM certificate for HTTPS | Derek | Not Started | Blocked on 16-003. Request cert for `*.yourdomain.com` + `yourdomain.com` in us-east-2 |
-| 16-005 | 1 | Create IAM user/role for GitHub Actions with ECR + ECS permissions | Derek | Not Started | Username: `poolmaster-github-deploy`. Policies: ECR Full, ECS Full, IAM PassRole |
-| 16-006 | 1 | Add AWS credentials to GitHub repo secrets | Derek | Not Started | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION=us-east-2`, `AWS_ACCOUNT_ID=614049083306` |
+| 16-005 | 1 | Create IAM user/role for GitHub Actions with ECR + ECS permissions | Derek | Done | `poolmaster-github-deploy` with ECR Full + custom `poolmaster-deploy` inline policy |
+| 16-006 | 1 | Add AWS credentials to GitHub repo secrets | Derek | Done | All 4 secrets configured (KEY, SECRET, REGION, ACCOUNT_ID) |
 | 16-007 | 2 | Configure Terraform remote state backend (S3 + DynamoDB) | Agent | Done | S3 bucket + DynamoDB lock table configured in main.tf backend block |
 | 16-008 | 2 | Add HTTPS listener to ALB with ACM certificate | Agent | Done | Conditional: created only when acm_certificate_arn is provided. HTTP redirects to HTTPS |
 | 16-009 | 2 | Add ECS task definitions for all 5 backend services | Agent | Done | core-api, draft-service, scoring-service, ingestion-worker, notification-service |
