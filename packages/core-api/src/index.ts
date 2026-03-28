@@ -19,6 +19,7 @@ import { etagPlugin } from './plugins/etag-support';
 import { pollConfigPlugin } from './plugins/poll-config';
 import { configModule } from './modules/config/routes';
 import { billingModule } from './modules/billing/routes';
+import { webhookModule } from './modules/billing/webhook-handler';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -48,6 +49,7 @@ export function buildApp() {
   app.register(adminModule, { prefix: '/api/v1/admin' });
   app.register(configModule, { prefix: '/api/v1/config' });
   app.register(billingModule, { prefix: '/api/v1/billing' });
+  app.register(webhookModule, { prefix: '/api/v1' });
 
   return app;
 }

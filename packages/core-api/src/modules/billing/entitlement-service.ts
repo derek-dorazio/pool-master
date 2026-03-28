@@ -20,6 +20,8 @@ import {
   type UsageResource,
   type UsageResult,
 } from '@poolmaster/shared/domain';
+import { isBillingEnabled } from './billing-feature-gate';
+import { getUsage as getTrackedUsage } from './usage-service';
 
 // ---------------------------------------------------------------------------
 // In-memory cache for plan tier entitlements
@@ -67,10 +69,71 @@ const TIER_KEYS: Record<string, keyof PlanEntitlements> = {
 // Service
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// In-memory entitlement override store (replaces Prisma for now)
+// ---------------------------------------------------------------------------
+
+interface OverrideEntry {
+  entitlementKey: string;
+  overrideValue: unknown;
+  reason: string;
+  expiresAt: Date | null;
+}
+
+const overrideStore: Map<string, OverrideEntry> = new Map();
+
+function overrideKey(tenantId: string, entitlementKey: string): string {
+  return `${tenantId}:${entitlementKey}`;
+}
+
+// ---------------------------------------------------------------------------
+// Service
+// ---------------------------------------------------------------------------
+
 export class EntitlementService {
   private tierCache: Map<string, CachedTier> = new Map();
 
   constructor(private readonly prisma: PrismaClient) {}
+
+  /**
+   * Sets an entitlement override for a tenant.
+   */
+  setOverride(
+    tenantId: string,
+    entitlementKey: string,
+    overrideValue: unknown,
+    reason: string,
+    expiresAt?: Date,
+  ): void {
+    overrideStore.set(overrideKey(tenantId, entitlementKey), {
+      entitlementKey,
+      overrideValue,
+      reason,
+      expiresAt: expiresAt ?? null,
+    });
+  }
+
+  /**
+   * Clears an entitlement override for a tenant.
+   */
+  clearOverride(tenantId: string, entitlementKey: string): void {
+    overrideStore.delete(overrideKey(tenantId, entitlementKey));
+  }
+
+  /**
+   * Retrieves the override for a tenant+key, or null if none exists / expired.
+   */
+  private getOverride(tenantId: string, entitlementKey: string): OverrideEntry | null {
+    const entry = overrideStore.get(overrideKey(tenantId, entitlementKey));
+    if (!entry) {
+      return null;
+    }
+    if (entry.expiresAt && entry.expiresAt < new Date()) {
+      overrideStore.delete(overrideKey(tenantId, entitlementKey));
+      return null;
+    }
+    return entry;
+  }
 
   /**
    * Check a single entitlement for a tenant.
@@ -80,7 +143,23 @@ export class EntitlementService {
     key: EntitlementKey,
     context?: Record<string, unknown>,
   ): Promise<EntitlementResult> {
-    // Step 1: Admin override (deferred — always falls through)
+    // When billing is OFF, all entitlement checks pass (free unlimited)
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      return { entitled: true };
+    }
+
+    // Step 1: Admin override
+    const override = this.getOverride(tenantId, key);
+    if (override) {
+      const value = override.overrideValue;
+      if (typeof value === 'boolean') {
+        return value
+          ? { entitled: true }
+          : { entitled: false, reason: `Blocked by admin override: ${override.reason}` };
+      }
+      return { entitled: true };
+    }
 
     // Step 2: Feature flag (deferred — always falls through)
 
@@ -116,7 +195,8 @@ export class EntitlementService {
   }
 
   /**
-   * Get usage for a resource (mock for now — returns 0 usage).
+   * Get usage for a resource.
+   * When billing is OFF, returns 0 usage with unlimited limits.
    */
   async getUsage(tenantId: string, resource: UsageResource): Promise<UsageResult> {
     const entitlements = await this.loadEntitlements(tenantId);
@@ -131,9 +211,7 @@ export class EntitlementService {
       ? (entitlements[limitField[resource]] as number)
       : -1;
 
-    // TODO: Replace with real usage counting when usage tracking is implemented (07-007)
-    const current = 0;
-
+    const current = await getTrackedUsage(tenantId, resource);
     const percentage = limit === -1 ? 0 : limit === 0 ? 100 : Math.round((current / limit) * 100);
 
     return { resource, current, limit, percentage };

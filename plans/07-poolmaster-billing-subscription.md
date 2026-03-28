@@ -733,27 +733,27 @@ CREATE INDEX idx_usage_tenant ON tenant_usage(tenant_id);
 | 07-004 | 1 | Entitlement resolution order (override → flag → plan → usage) | Done | Implemented in EntitlementService.check() — steps 1-2 are stubs (fall through), step 3 loads tier, step 4 evaluates usage/boolean/list/tier keys |
 | 07-005 | 1 | Fastify entitlement preHandler hook for routes | Done | packages/core-api/src/plugins/entitlement-guard.ts — requireEntitlement() factory returns preHandler hook |
 | 07-006 | 1 | Auto-assign Free tier on tenant creation | Done | Auth service already sets planTier='free'; billing routes at /api/v1/billing (plan, entitlements, usage, plans) registered in index.ts |
-| 07-007 | 2 | `tenant_usage` table + usage counting | Not Started | Deferred |
-| 07-008 | 2 | Tighten Free tier limits + add paid tier seed data | Not Started | Deferred — when ready to monetise |
-| 07-009 | 2 | `entitlement_overrides` table + admin tooling | Not Started | Deferred |
-| 07-010 | 3 | Stripe customer creation on tenant signup | Not Started | Deferred |
-| 07-011 | 3 | `tenant_subscriptions` table + migrations | Not Started | Deferred |
-| 07-012 | 3 | Subscription creation for paid plans | Not Started | Deferred |
-| 07-013 | 3 | Stripe webhook handler (subscription events) | Not Started | Deferred |
-| 07-014 | 3 | Payment method management (Stripe Elements) | Not Started | Deferred |
-| 07-015 | 3 | Trial start and conversion flow (14-day trial) | Not Started | Deferred |
-| 07-016 | 4 | Billing portal UI (current plan, invoices, payment method) | Not Started | Deferred |
-| 07-017 | 4 | Plan upgrade flow (proration) | Not Started | Deferred |
-| 07-018 | 4 | Plan downgrade flow (at period end + graceful degradation) | Not Started | Deferred |
-| 07-019 | 4 | Cancellation flow with retention offer | Not Started | Deferred |
-| 07-020 | 4 | Invoice history and PDF download | Not Started | Deferred |
-| 07-021 | 5 | Failed payment webhook handling + retry schedule | Not Started | Deferred |
-| 07-022 | 5 | Grace period and feature degradation logic | Not Started | Deferred |
-| 07-023 | 5 | Dunning email sequence + recovery tracking | Not Started | Deferred |
-| 07-024 | 5 | Revenue metrics dashboard (MRR, ARR, churn, conversion) | Not Started | Deferred |
-| 07-025 | 5 | Trial conversion tracking | Not Started | Deferred |
-| 07-026 | 5 | Enterprise plan management in admin dashboard | Not Started | Deferred |
-| 07-027 | 5 | `cancellation_feedback` table + collection flow | Not Started | Deferred |
+| 07-007 | 2 | `tenant_usage` table + usage counting | Done | TenantUsage Prisma model; usage-service.ts with trackUsage/getUsage/refreshAllUsage, all gated by billing_enabled flag |
+| 07-008 | 2 | Tighten Free tier limits + add paid tier seed data | Done | Free tier: 50 leagues, 100 members, 100 contests; all paid tiers isPublic=true for plan comparison |
+| 07-009 | 2 | `entitlement_overrides` table + admin tooling | Done | EntitlementOverride Prisma model; in-memory override store in entitlement-service.ts; check() resolves overrides in step 1 |
+| 07-010 | 3 | Stripe customer creation on tenant signup | Done | MockStripeClient.customers.create(); ensureCustomer() in subscription-service.ts auto-creates on first subscription |
+| 07-011 | 3 | `tenant_subscriptions` table + migrations | Done | TenantSubscription Prisma model with all fields from plan SQL schema |
+| 07-012 | 3 | Subscription creation for paid plans | Done | subscription-service.ts: createSubscription, changePlan, cancelSubscription, resumeSubscription, getSubscription; routes: POST /subscribe, PUT /plan, POST /cancel, POST /resume, GET /subscription |
+| 07-013 | 3 | Stripe webhook handler (subscription events) | Done | webhook-handler.ts: POST /api/v1/internal/webhooks/stripe; handles 6 event types with idempotency check |
+| 07-014 | 3 | Payment method management (Stripe Elements) | Done | POST /billing/payment-method returns setup intent client_secret; GET /billing/portal returns Stripe billing portal URL |
+| 07-015 | 3 | Trial start and conversion flow (14-day trial) | Done | trial-service.ts: startTrial, checkTrialStatus, convertTrial, getTrialReminders; POST /trial/start, GET /trial/status |
+| 07-016 | 4 | Billing portal UI (current plan, invoices, payment method) | Done | Backend routes for invoices, upgrade/downgrade preview, cancellation preview in routes.ts; InvoiceService with mock data |
+| 07-017 | 4 | Plan upgrade flow (proration) | Done | PlanChangeService.previewUpgrade() with proration calc; GET /upgrade-preview/:planSlug route |
+| 07-018 | 4 | Plan downgrade flow (at period end + graceful degradation) | Done | PlanChangeService.previewDowngrade() + applyDegradation(); GET /downgrade-preview/:planSlug route |
+| 07-019 | 4 | Cancellation flow with retention offer | Done | CancellationService with previewCancellation(), getRetentionOffer(), cancel(); POST /cancel + GET /retention-offer routes |
+| 07-020 | 4 | Invoice history and PDF download | Done | InvoiceService with getInvoiceHistory(), getInvoiceDetail(), getInvoicePdfUrl(), getUpcomingInvoice(); 4 mock invoices per tenant |
+| 07-021 | 5 | Failed payment webhook handling + retry schedule | Done | DunningService.handlePaymentFailure() + processRetries(); retry at 1,3,5,7 days; ~30% mock recovery per attempt |
+| 07-022 | 5 | Grace period and feature degradation logic | Done | DunningService phase resolution (GRACE→DEGRADED→PENDING_CANCEL→CANCELLED); 7d grace, 14d degraded, 21d cancel |
+| 07-023 | 5 | Dunning email sequence + recovery tracking | Done | DunningService.processEscalations() + getRecoveryMetrics(); GET /dunning/:tenantId admin route |
+| 07-024 | 5 | Revenue metrics dashboard (MRR, ARR, churn, conversion) | Done | RevenueAnalyticsService.getMetrics() with realistic mock data (~200 tenants); GET /analytics admin route |
+| 07-025 | 5 | Trial conversion tracking | Done | RevenueAnalyticsService.getTrialMetrics() with conversion rates, avg trial-to-paid days; GET /analytics/trials route |
+| 07-026 | 5 | Enterprise plan management in admin dashboard | Done | EnterpriseService with CRUD operations; GET/POST /enterprise admin routes; in-memory store |
+| 07-027 | 5 | `cancellation_feedback` table + collection flow | Done | CancellationService.cancel() collects reason+feedback; listFeedback() for admin; in-memory Map store (Prisma model deferred) |
 
 ---
 

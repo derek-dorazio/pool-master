@@ -185,6 +185,19 @@ function seedFlags(): Map<string, FeatureFlag> {
       updatedBy: 'admin-001',
     },
     {
+      id: 'flag-007',
+      key: 'billing_enabled',
+      name: 'Billing & Subscriptions',
+      description: 'Gates all billing features including Stripe integration, usage enforcement, and subscription management. When OFF, all entitlement checks pass (free tier, unlimited) and no Stripe calls are made.',
+      flagType: 'BOOLEAN',
+      enabledGlobally: false,
+      tenantOverrides: [],
+      owner: 'billing-team',
+      createdAt: daysAgo(1),
+      updatedAt: daysAgo(1),
+      updatedBy: 'admin-001',
+    },
+    {
       id: 'flag-006',
       key: 'bracket_ncaa',
       name: 'NCAA Bracket Contest',
@@ -214,7 +227,7 @@ function seedFlags(): Map<string, FeatureFlag> {
 
 export class FlagService {
   private flags: Map<string, FeatureFlag> = seedFlags();
-  private nextId = 7;
+  private nextId = 8;
 
   /**
    * Returns all feature flags.

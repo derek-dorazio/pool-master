@@ -45,6 +45,9 @@ model Tenant {
 
   featureFlagOverrides  FeatureFlagOverride[]
   impersonationSessions ImpersonationSession[]
+  usage                 TenantUsage[]
+  entitlementOverrides  EntitlementOverride[]
+  subscriptions         TenantSubscription[]
 
   @@map("tenants")
 }
@@ -1369,4 +1372,65 @@ model PlanTier {
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("plan_tiers")
+}
+
+// =============================================================================
+// Billing — Usage, Overrides, Subscriptions
+// =============================================================================
+
+model TenantUsage {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  resource     String   @db.VarChar(50)
+  currentCount Int      @default(0) @map("current_count")
+  countedAt    DateTime @default(now()) @map("counted_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, resource])
+  @@index([tenantId])
+  @@map("tenant_usage")
+}
+
+model EntitlementOverride {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  entitlementKey String    @map("entitlement_key") @db.VarChar(100)
+  overrideValue  Json      @map("override_value")
+  reason         String?   @db.VarChar(500)
+  setBy          String?   @map("set_by") @db.Uuid
+  expiresAt      DateTime? @map("expires_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, entitlementKey])
+  @@map("entitlement_overrides")
+}
+
+model TenantSubscription {
+  id                     String    @id @default(uuid()) @db.Uuid
+  tenantId               String    @unique @map("tenant_id") @db.Uuid
+  stripeCustomerId       String    @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId   String?   @map("stripe_subscription_id") @db.VarChar(255)
+  planTierSlug           String    @map("plan_tier_slug") @db.VarChar(50)
+  billingCycle           String    @default("MONTHLY") @map("billing_cycle") @db.VarChar(20)
+  status                 String    @default("TRIALING") @db.VarChar(50)
+  trialStart             DateTime? @map("trial_start") @db.Timestamptz
+  trialEnd               DateTime? @map("trial_end") @db.Timestamptz
+  currentPeriodStart     DateTime? @map("current_period_start") @db.Timestamptz
+  currentPeriodEnd       DateTime? @map("current_period_end") @db.Timestamptz
+  cancelledAt            DateTime? @map("cancelled_at") @db.Timestamptz
+  cancelAtPeriodEnd      Boolean   @default(false) @map("cancel_at_period_end")
+  pendingPlanChangeSlug  String?   @map("pending_plan_change_slug") @db.VarChar(50)
+  paymentMethodLast4     String?   @map("payment_method_last4") @db.VarChar(4)
+  paymentMethodBrand     String?   @map("payment_method_brand") @db.VarChar(50)
+  currency               String    @default("usd") @db.VarChar(3)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([status])
+  @@map("tenant_subscriptions")
 }

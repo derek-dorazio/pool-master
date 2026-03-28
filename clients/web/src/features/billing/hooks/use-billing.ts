@@ -1,0 +1,194 @@
+import { useQuery } from '@tanstack/react-query';
+
+export type PlanTier = 'free' | 'starter' | 'pro' | 'league-plus';
+export type InvoiceStatus = 'paid' | 'pending' | 'failed';
+export type BillingCycle = 'monthly' | 'annual';
+
+export interface BillingPlan {
+  tier: PlanTier;
+  name: string;
+  price: number;
+  annualPrice: number;
+  features: PlanFeatures;
+}
+
+export interface PlanFeatures {
+  leagues: number | null;
+  contestsPerLeague: number | null;
+  membersPerLeague: number | null;
+  draftTypes: string;
+  scoringTemplates: string;
+  supportLevel: string;
+  historyRetention: string;
+  customScoring: boolean;
+}
+
+export interface UsageStats {
+  leagues: { current: number; limit: number | null };
+  contests: { current: number; limit: number | null };
+  members: { current: number; limit: number | null };
+}
+
+export interface Subscription {
+  tier: PlanTier;
+  name: string;
+  price: number;
+  cycle: BillingCycle;
+  renewalDate: string | null;
+  status: 'active' | 'trialing' | 'cancelled';
+}
+
+export interface Invoice {
+  id: string;
+  number: string;
+  date: string;
+  amount: number;
+  status: InvoiceStatus;
+  planName: string;
+}
+
+const billingKeys = {
+  all: ['billing'] as const,
+  subscription: () => [...billingKeys.all, 'subscription'] as const,
+  usage: () => [...billingKeys.all, 'usage'] as const,
+  plans: () => [...billingKeys.all, 'plans'] as const,
+  invoices: () => [...billingKeys.all, 'invoices'] as const,
+  enabled: () => [...billingKeys.all, 'enabled'] as const,
+};
+
+const planTiers: BillingPlan[] = [
+  {
+    tier: 'free',
+    name: 'Free',
+    price: 0,
+    annualPrice: 0,
+    features: {
+      leagues: 1,
+      contestsPerLeague: 2,
+      membersPerLeague: 12,
+      draftTypes: 'Snake only',
+      scoringTemplates: 'Basic only',
+      supportLevel: 'Community',
+      historyRetention: 'Current season',
+      customScoring: false,
+    },
+  },
+  {
+    tier: 'starter',
+    name: 'Starter',
+    price: 4.99,
+    annualPrice: 3.99,
+    features: {
+      leagues: 3,
+      contestsPerLeague: 10,
+      membersPerLeague: 25,
+      draftTypes: 'Snake, Auction',
+      scoringTemplates: 'Standard set',
+      supportLevel: 'Email',
+      historyRetention: '2 seasons',
+      customScoring: false,
+    },
+  },
+  {
+    tier: 'pro',
+    name: 'Pro',
+    price: 9.99,
+    annualPrice: 7.99,
+    features: {
+      leagues: 10,
+      contestsPerLeague: 50,
+      membersPerLeague: 100,
+      draftTypes: 'All types',
+      scoringTemplates: 'All templates + custom',
+      supportLevel: 'Priority email',
+      historyRetention: '5 seasons',
+      customScoring: true,
+    },
+  },
+  {
+    tier: 'league-plus',
+    name: 'League+',
+    price: 19.99,
+    annualPrice: 15.99,
+    features: {
+      leagues: null,
+      contestsPerLeague: null,
+      membersPerLeague: null,
+      draftTypes: 'All types',
+      scoringTemplates: 'All templates + custom',
+      supportLevel: 'Dedicated',
+      historyRetention: 'Unlimited',
+      customScoring: true,
+    },
+  },
+];
+
+export function useBillingEnabled() {
+  return useQuery({
+    queryKey: billingKeys.enabled(),
+    queryFn: async (): Promise<boolean> => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return false;
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+}
+
+export function useBillingPlan() {
+  return useQuery({
+    queryKey: billingKeys.subscription(),
+    queryFn: async (): Promise<BillingPlan> => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return planTiers[0];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useBillingUsage() {
+  return useQuery({
+    queryKey: billingKeys.usage(),
+    queryFn: async (): Promise<UsageStats> => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return {
+        leagues: { current: 2, limit: 50 },
+        contests: { current: 5, limit: 100 },
+        members: { current: 24, limit: 100 },
+      };
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useBillingSubscription() {
+  return useQuery({
+    queryKey: [...billingKeys.subscription(), 'detail'] as const,
+    queryFn: async (): Promise<Subscription | null> => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function usePlanTiers() {
+  return useQuery({
+    queryKey: billingKeys.plans(),
+    queryFn: async (): Promise<BillingPlan[]> => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return planTiers;
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+}
+
+export function useInvoices() {
+  return useQuery({
+    queryKey: billingKeys.invoices(),
+    queryFn: async (): Promise<Invoice[]> => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}

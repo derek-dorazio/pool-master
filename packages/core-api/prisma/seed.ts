@@ -21,9 +21,9 @@ const FREE_TIER = {
   annualPriceCents: 0,
   trialDays: 0,
   entitlements: {
-    max_leagues: -1,
-    max_members_per_league: -1,
-    max_contests_per_season: -1,
+    max_leagues: 50,
+    max_members_per_league: 100,
+    max_contests_per_season: 100,
     allowed_sports: 'ALL',
     allowed_draft_types: 'ALL',
     allowed_draft_modes: 'ALL',
@@ -62,7 +62,7 @@ const STARTER_TIER = {
     api_access: false,
     support_tier: 'EMAIL',
   },
-  isPublic: false,
+  isPublic: true,
 };
 
 const PRO_TIER = {
@@ -88,7 +88,7 @@ const PRO_TIER = {
     api_access: false,
     support_tier: 'EMAIL_CHAT',
   },
-  isPublic: false,
+  isPublic: true,
 };
 
 const LEAGUE_PLUS_TIER = {
@@ -114,7 +114,7 @@ const LEAGUE_PLUS_TIER = {
     api_access: true,
     support_tier: 'DEDICATED',
   },
-  isPublic: false,
+  isPublic: true,
 };
 
 const PLAN_TIERS = [FREE_TIER, STARTER_TIER, PRO_TIER, LEAGUE_PLUS_TIER];
