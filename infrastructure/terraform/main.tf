@@ -44,10 +44,10 @@ provider "aws" {
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
 
-  # Domain: qa-domain.com, stage-domain.com, domain.com (prod has no prefix)
+  # Domain: qa.domain.com, stage.domain.com, domain.com (prod has no prefix)
   env_subdomain_prefix = {
-    qa      = "qa-"
-    staging = "stage-"
+    qa      = "qa."
+    staging = "stage."
     prod    = ""
   }
   app_domain = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
