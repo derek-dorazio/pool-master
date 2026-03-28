@@ -12,8 +12,8 @@ Deploy PoolMaster to AWS using ECS Fargate, RDS PostgreSQL, ElastiCache Redis, a
 |---|---|---|---|---|---|
 | 16-001 | 1 | Create S3 bucket for Terraform state | Derek | Done | `poolmaster-terraform-state-614049083306-us-east-2-an` |
 | 16-002 | 1 | Create DynamoDB table for Terraform state locking | Derek | Done | `poolmaster-terraform-locks` (ARN: arn:aws:dynamodb:us-east-2:614049083306:table/poolmaster-terraform-locks) |
-| 16-003 | 1 | Register domain or configure Route 53 hosted zone | Derek | Done | `ultimateofficepoolmanager.com` registered in Route 53 (propagating) |
-| 16-004 | 1 | Request ACM certificate for HTTPS | Derek | Not Started | **LAST STEP:** `aws acm request-certificate --domain-name "*.ultimateofficepoolmanager.com" --subject-alternative-names "ultimateofficepoolmanager.com" --validation-method DNS --region us-east-2` then click "Create records in Route 53" in ACM console |
+| 16-003 | 1 | Register domain or configure Route 53 hosted zone | Derek | Done | `ultimateofficepoolmanager.com` — Zone ID: `Z020704038X1AEGE6QNM9` |
+| 16-004 | 1 | Request ACM certificate for HTTPS | Derek | Done | ARN: `arn:aws:acm:us-east-2:614049083306:certificate/4d0fbf35-523d-4e71-bb33-3086aae9e4c8` |
 | 16-005 | 1 | Create IAM user/role for GitHub Actions with ECR + ECS permissions | Derek | Done | `poolmaster-github-deploy` with ECR Full + custom `poolmaster-deploy` inline policy |
 | 16-006 | 1 | Add AWS credentials to GitHub repo secrets | Derek | Done | All 4 secrets configured (KEY, SECRET, REGION, ACCOUNT_ID) |
 | 16-007 | 2 | Configure Terraform remote state backend (S3 + DynamoDB) | Agent | Done | S3 bucket + DynamoDB lock table configured in main.tf backend block |

@@ -1,4 +1,5 @@
 # Production environment — deployed manually with approval
+# Copy to prod.tfvars and set db_password: cp prod.tfvars.example prod.tfvars
 environment = "prod"
 region      = "us-east-2"
 
@@ -11,7 +12,7 @@ db_password          = "CHANGE_ME_strong_prod_password"
 ecs_cpu    = 512
 ecs_memory = 1024
 
-# Domain — results in: ultimateofficepoolmanager.com (no prefix for prod)
-# domain_name         = "ultimateofficepoolmanager.com"
-# acm_certificate_arn = "arn:aws:acm:us-east-2:614049083306:certificate/FILL_IN"
-# route53_zone_id     = "FILL_IN"
+# Domain → ultimateofficepoolmanager.com (no prefix for prod)
+domain_name         = "ultimateofficepoolmanager.com"
+acm_certificate_arn = "arn:aws:acm:us-east-2:614049083306:certificate/4d0fbf35-523d-4e71-bb33-3086aae9e4c8"
+route53_zone_id     = "Z020704038X1AEGE6QNM9"

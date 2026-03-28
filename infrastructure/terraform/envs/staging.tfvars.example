@@ -1,4 +1,5 @@
 # Staging environment — deployed manually or on release branch
+# Copy to staging.tfvars and set db_password: cp staging.tfvars.example staging.tfvars
 environment = "staging"
 region      = "us-east-2"
 
@@ -11,7 +12,7 @@ db_password          = "CHANGE_ME_staging_password"
 ecs_cpu    = 256
 ecs_memory = 512
 
-# Domain — results in: stage-ultimateofficepoolmanager.com
-# domain_name         = "ultimateofficepoolmanager.com"
-# acm_certificate_arn = "arn:aws:acm:us-east-2:614049083306:certificate/FILL_IN"
-# route53_zone_id     = "FILL_IN"
+# Domain → stage-ultimateofficepoolmanager.com
+domain_name         = "ultimateofficepoolmanager.com"
+acm_certificate_arn = "arn:aws:acm:us-east-2:614049083306:certificate/4d0fbf35-523d-4e71-bb33-3086aae9e4c8"
+route53_zone_id     = "Z020704038X1AEGE6QNM9"
