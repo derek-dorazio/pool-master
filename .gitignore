@@ -36,6 +36,8 @@ clients/mobile/.expo/
 *.tfstate
 *.tfstate.backup
 .terraform/
+*.tfvars
+!terraform.tfvars.example
 
 # Docker
 docker-compose.override.yml

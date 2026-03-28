@@ -16,12 +16,13 @@ terraform {
     }
   }
 
-  # TODO: Configure remote backend for team use
-  # backend "s3" {
-  #   bucket = "poolmaster-terraform-state"
-  #   key    = "infra/terraform.tfstate"
-  #   region = "us-east-1"
-  # }
+  backend "s3" {
+    bucket         = "poolmaster-terraform-state-614049083306-us-east-2-an"
+    key            = "infra/terraform.tfstate"
+    region         = "us-east-2"
+    dynamodb_table = "poolmaster-terraform-locks"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
@@ -112,6 +113,38 @@ resource "aws_route_table_association" "public" {
   count          = length(aws_subnet.public)
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
+}
+
+# --- NAT Gateway (for private subnet internet access — ECS image pulls, etc.) ---
+
+resource "aws_eip" "nat" {
+  domain = "vpc"
+  tags   = { Name = "${local.name_prefix}-nat-eip" }
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
+
+  tags       = { Name = "${local.name_prefix}-nat" }
+  depends_on = [aws_internet_gateway.main]
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = "${local.name_prefix}-private-rt" }
+}
+
+resource "aws_route" "private_nat" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.main.id
+}
+
+resource "aws_route_table_association" "private" {
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
 }
 
 # --- Security Groups ---
@@ -323,13 +356,37 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.core_api.arn
+    type = var.acm_certificate_arn != "" ? "redirect" : "forward"
+
+    # When HTTPS is enabled, redirect HTTP → HTTPS
+    dynamic "redirect" {
+      for_each = var.acm_certificate_arn != "" ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+
+    # When no HTTPS, forward to web app
+    target_group_arn = var.acm_certificate_arn == "" ? aws_lb_target_group.web.arn : null
   }
 }
 
-# TODO: Add HTTPS listener with ACM certificate
-# resource "aws_lb_listener" "https" { ... }
+# HTTPS listener — only created when ACM certificate is provided
+resource "aws_lb_listener" "https" {
+  count             = var.acm_certificate_arn != "" ? 1 : 0
+  load_balancer_arn = aws_lb.main.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.acm_certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web.arn
+  }
+}
 
 resource "aws_lb_target_group" "core_api" {
   name        = "${local.name_prefix}-core-api-tg"

@@ -16,7 +16,7 @@ variable "environment" {
 variable "region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "project_name" {
@@ -25,12 +25,32 @@ variable "project_name" {
   default     = "poolmaster"
 }
 
+# --- Domain & SSL (optional — leave empty to skip DNS/HTTPS) ---
+
+variable "domain_name" {
+  description = "Root domain name (e.g., poolmaster.app). Leave empty to skip DNS/HTTPS."
+  type        = string
+  default     = ""
+}
+
+variable "acm_certificate_arn" {
+  description = "ACM certificate ARN for HTTPS. Leave empty to skip HTTPS listener."
+  type        = string
+  default     = ""
+}
+
+variable "route53_zone_id" {
+  description = "Route 53 hosted zone ID. Leave empty to skip DNS records."
+  type        = string
+  default     = ""
+}
+
 # --- Database ---
 
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.t3.medium"
+  default     = "db.t3.micro"
 }
 
 variable "db_allocated_storage" {
@@ -91,5 +111,5 @@ variable "vpc_cidr" {
 variable "availability_zones" {
   description = "List of availability zones"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = ["us-east-2a", "us-east-2b"]
 }
