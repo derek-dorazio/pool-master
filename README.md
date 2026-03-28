@@ -29,6 +29,18 @@ This starts Docker (Postgres, Redis, DynamoDB, Mailpit), runs migrations, seeds 
 
 See [docs/DEVELOPER-SETUP.md](docs/DEVELOPER-SETUP.md) for full setup instructions.
 
+## Testing
+
+```bash
+# Unit tests
+npm run test:unit
+
+# Smoke tests (requires npm run dev:start first)
+npm run test:smoke:api   # API smoke tests — hits all 5 services
+npm run test:smoke:e2e   # E2E browser tests — Playwright
+npm run test:smoke       # Both
+```
+
 ---
 
 ## Architecture

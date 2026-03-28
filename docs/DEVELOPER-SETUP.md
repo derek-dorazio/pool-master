@@ -210,6 +210,45 @@ npx jest tests/unit/core-api/permissions.test.ts
 
 Tests use **Jest** with **ts-jest**. All tests live in the top-level `tests/` directory (separate from application code). The `@poolmaster/shared/*` module alias is configured in `tests/jest.config.ts`.
 
+### Smoke Tests (End-to-End)
+
+Smoke tests verify the full stack is working. They require all services to be running first:
+
+```bash
+# Start everything
+npm run dev:start
+
+# Then in another terminal:
+npm run test:smoke:api   # API smoke tests — hits all 5 service health endpoints + key routes
+npm run test:smoke:e2e   # E2E browser tests — Playwright against the webapp
+npm run test:smoke       # Run both suites
+```
+
+**API smoke tests** (`tests/api/`) check:
+- Health endpoints for all 5 services
+- Core API: leagues, participants, search, discovery, age verification
+- Ingestion: provider registry
+- Notifications: notification list, preferences
+
+**E2E smoke tests** (`clients/web/e2e/`) check:
+- Landing page loads with CTA
+- Legal pages render (privacy, terms, cookies, responsible gaming)
+- Auth pages load with forms
+- Discovery pages load with search
+- Cookie banner appears and dismisses
+
+The API test setup automatically verifies all services are healthy before running. If a service is down, you'll get a clear error:
+
+```
+Core API is not running at http://localhost:3000/health.
+  Run "npm run dev:start" to start all services before running API tests.
+```
+
+To install Playwright browsers (first time only):
+```bash
+cd clients/web && npx playwright install
+```
+
 ---
 
 ## 7. Type Checking and Linting
