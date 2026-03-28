@@ -106,9 +106,18 @@ jobs:
           echo "sha_tag=${SHA}" >> $GITHUB_OUTPUT
           echo "prefix=${PREFIX}" >> $GITHUB_OUTPUT
 
+      # Check if ECR repos exist (skip push if infra not created yet)
+      - name: Check ECR repos exist
+        id: ecr-check
+        continue-on-error: true
+        run: |
+          aws ecr describe-repositories --repository-names poolmaster-qa/core-api --region ${{ env.AWS_REGION }} > /dev/null 2>&1
+          echo "exists=true" >> $GITHUB_OUTPUT
+
       # --- Backend Services ---
 
       - name: Build & push core-api
+        if: steps.ecr-check.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -121,6 +130,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build & push draft-service
+        if: steps.ecr-check.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -133,6 +143,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build & push scoring-service
+        if: steps.ecr-check.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -145,6 +156,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build & push ingestion-worker
+        if: steps.ecr-check.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -157,6 +169,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build & push notification-service
+        if: steps.ecr-check.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -171,6 +184,7 @@ jobs:
       # --- Web Clients ---
 
       - name: Build & push web app
+        if: steps.ecr-check.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -183,6 +197,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build & push admin app
+        if: steps.ecr-check.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -195,19 +210,33 @@ jobs:
           cache-to: type=gha,mode=max
 
       # --- Deploy to QA (force new deployment to pick up :latest) ---
+      # Gracefully skips if QA infrastructure hasn't been created yet
 
       - name: Deploy QA services
+        if: steps.ecr-check.outputs.exists == 'true'
+        continue-on-error: true
         run: |
-          for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web; do
-            echo "Deploying poolmaster-qa-${SERVICE}..."
-            aws ecs update-service \
-              --cluster poolmaster-qa-cluster \
-              --service poolmaster-qa-${SERVICE} \
-              --force-new-deployment \
-              --no-cli-pager || echo "Service poolmaster-qa-${SERVICE} not found (deploy infra first)"
-          done
+          if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web; do
+              echo "Deploying poolmaster-qa-${SERVICE}..."
+              aws ecs update-service \
+                --cluster poolmaster-qa-cluster \
+                --service poolmaster-qa-${SERVICE} \
+                --force-new-deployment \
+                --no-cli-pager || echo "  ⚠ Service not found (skipping)"
+            done
+          else
+            echo "QA cluster not found — skipping deploy. Run terraform apply first."
+          fi
+
+      - name: No ECR notice
+        if: steps.ecr-check.outputs.exists != 'true'
+        run: |
+          echo "### ⏭ ECR repos not found — image push skipped" >> $GITHUB_STEP_SUMMARY
+          echo "Run \`terraform apply -var-file=envs/qa.tfvars\` to create QA infrastructure first." >> $GITHUB_STEP_SUMMARY
 
       - name: Summary
+        if: steps.ecr-check.outputs.exists == 'true'
         run: |
           echo "### Docker Images Published to ECR + QA Deployed 🐳" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
