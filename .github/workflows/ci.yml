@@ -181,33 +181,47 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # --- Web Clients ---
+      # --- Web Clients → S3 + CloudFront ---
 
-      - name: Build & push web app
-        if: steps.ecr-check.outputs.exists == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: infrastructure/docker/Dockerfile.web
-          push: true
-          tags: |
-            ${{ steps.tags.outputs.prefix }}/web:latest
-            ${{ steps.tags.outputs.prefix }}/web:${{ steps.tags.outputs.sha_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build webapp
+        run: |
+          npm ci
+          npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+          cd clients/web && npx vite build
 
-      - name: Build & push admin app
-        if: steps.ecr-check.outputs.exists == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: infrastructure/docker/Dockerfile.admin
-          push: true
-          tags: |
-            ${{ steps.tags.outputs.prefix }}/admin:latest
-            ${{ steps.tags.outputs.prefix }}/admin:${{ steps.tags.outputs.sha_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Deploy webapp to S3 + invalidate CloudFront
+        continue-on-error: true
+        run: |
+          BUCKET="poolmaster-qa-webapp"
+          CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='poolmaster-qa webapp'].Id" --output text 2>/dev/null)
+          if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
+            aws s3 sync clients/web/dist/ "s3://${BUCKET}" --delete
+            if [ -n "$CF_ID" ]; then
+              aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
+            fi
+            echo "Webapp deployed to S3 + CloudFront invalidated"
+          else
+            echo "S3 bucket ${BUCKET} not found — run terraform apply first"
+          fi
+
+      - name: Build admin app
+        continue-on-error: true
+        run: cd clients/admin && npx vite build
+
+      - name: Deploy admin to S3 + invalidate CloudFront
+        continue-on-error: true
+        run: |
+          BUCKET="poolmaster-qa-admin"
+          CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='poolmaster-qa admin'].Id" --output text 2>/dev/null)
+          if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
+            aws s3 sync clients/admin/dist/ "s3://${BUCKET}" --delete
+            if [ -n "$CF_ID" ]; then
+              aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
+            fi
+            echo "Admin deployed to S3 + CloudFront invalidated"
+          else
+            echo "S3 bucket ${BUCKET} not found — run terraform apply first"
+          fi
 
       # --- Deploy to QA (force new deployment to pick up :latest) ---
       # Gracefully skips if QA infrastructure hasn't been created yet
@@ -217,7 +231,7 @@ jobs:
         continue-on-error: true
         run: |
           if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
-            for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web admin; do
+            for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service; do
               echo "Deploying poolmaster-qa-${SERVICE}..."
               aws ecs update-service \
                 --cluster poolmaster-qa-cluster \

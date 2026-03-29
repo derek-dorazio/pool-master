@@ -18,8 +18,33 @@ output "app_domain" {
 }
 
 output "app_url" {
-  description = "Full app URL (domain if configured, otherwise ALB DNS)"
-  value       = local.app_domain != "" ? "https://${local.app_domain}" : "http://${aws_lb.main.dns_name}"
+  description = "Full app URL (domain if configured, otherwise CloudFront domain)"
+  value       = local.app_domain != "" ? "https://${local.app_domain}" : "https://${aws_cloudfront_distribution.webapp.domain_name}"
+}
+
+output "admin_url" {
+  description = "Admin app URL"
+  value       = local.app_domain != "" ? "https://admin.${local.app_domain}" : "https://${aws_cloudfront_distribution.admin.domain_name}"
+}
+
+output "webapp_s3_bucket" {
+  description = "S3 bucket for webapp static files (for CI deploy)"
+  value       = aws_s3_bucket.webapp.id
+}
+
+output "admin_s3_bucket" {
+  description = "S3 bucket for admin static files (for CI deploy)"
+  value       = aws_s3_bucket.admin.id
+}
+
+output "webapp_cloudfront_id" {
+  description = "CloudFront distribution ID for webapp (for cache invalidation)"
+  value       = aws_cloudfront_distribution.webapp.id
+}
+
+output "admin_cloudfront_id" {
+  description = "CloudFront distribution ID for admin (for cache invalidation)"
+  value       = aws_cloudfront_distribution.admin.id
 }
 
 output "rds_endpoint" {

@@ -370,7 +370,6 @@ resource "aws_lb_listener" "http" {
   default_action {
     type = var.acm_certificate_arn != "" ? "redirect" : "forward"
 
-    # When HTTPS is enabled, redirect HTTP → HTTPS
     dynamic "redirect" {
       for_each = var.acm_certificate_arn != "" ? [1] : []
       content {
@@ -380,8 +379,8 @@ resource "aws_lb_listener" "http" {
       }
     }
 
-    # When no HTTPS, forward to web app
-    target_group_arn = var.acm_certificate_arn == "" ? aws_lb_target_group.web.arn : null
+    # When no HTTPS, forward to core-api (ALB only serves API now; frontends on CloudFront)
+    target_group_arn = var.acm_certificate_arn == "" ? aws_lb_target_group.core_api.arn : null
   }
 }
 
@@ -396,32 +395,13 @@ resource "aws_lb_listener" "https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.web.arn
+    target_group_arn = aws_lb_target_group.core_api.arn
   }
 }
 
 # =============================================================================
 # ALB Target Groups — one per ALB-facing service
 # =============================================================================
-
-resource "aws_lb_target_group" "web" {
-  name        = "${local.name_prefix}-web-tg"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
-  target_type = "ip"
-
-  health_check {
-    path                = "/"
-    healthy_threshold   = 2
-    unhealthy_threshold = 3
-    timeout             = 5
-    interval            = 30
-    matcher             = "200,304"
-  }
-
-  tags = { Service = "web" }
-}
 
 resource "aws_lb_target_group" "core_api" {
   name        = "${local.name_prefix}-core-api-tg"
@@ -810,152 +790,7 @@ resource "aws_ecs_service" "notification_service" {
   depends_on = [aws_lb_listener.http]
 }
 
-# --- Web App (React SPA via nginx) ---
-
-resource "aws_ecs_task_definition" "web" {
-  family                   = "${local.name_prefix}-web"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.ecs_cpu
-  memory                   = var.ecs_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name         = "web"
-    image        = "${aws_ecr_repository.services["web"].repository_url}:latest"
-    essential    = true
-    portMappings = [{ containerPort = 80, protocol = "tcp" }]
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.services["web"].name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "ecs"
-      }
-    }
-  }])
-}
-
-resource "aws_ecs_service" "web" {
-  name            = "${local.name_prefix}-web"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.web.arn
-  desired_count   = var.environment == "prod" ? 2 : 1
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.web.arn
-    container_name   = "web"
-    container_port   = 80
-  }
-
-  depends_on = [aws_lb_listener.http]
-}
-
-# --- Admin App (React SPA via nginx) ---
-
-resource "aws_lb_target_group" "admin" {
-  name        = "${local.name_prefix}-admin-tg"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
-  target_type = "ip"
-
-  health_check {
-    path                = "/"
-    healthy_threshold   = 2
-    unhealthy_threshold = 3
-    timeout             = 5
-    interval            = 30
-    matcher             = "200,304"
-  }
-
-  tags = { Service = "admin" }
-}
-
-resource "aws_lb_listener_rule" "admin" {
-  listener_arn = local.active_listener_arn
-  priority     = 90
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.admin.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/admin", "/admin/*"]
-    }
-  }
-}
-
-resource "aws_ecs_task_definition" "admin" {
-  family                   = "${local.name_prefix}-admin"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.ecs_cpu
-  memory                   = var.ecs_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name         = "admin"
-    image        = "${aws_ecr_repository.services["admin"].repository_url}:latest"
-    essential    = true
-    portMappings = [{ containerPort = 80, protocol = "tcp" }]
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.services["admin"].name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "ecs"
-      }
-    }
-  }])
-}
-
-resource "aws_ecs_service" "admin" {
-  name            = "${local.name_prefix}-admin"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.admin.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.admin.arn
-    container_name   = "admin"
-    container_port   = 80
-  }
-
-  depends_on = [aws_lb_listener.http]
-}
-
 # =============================================================================
-# Route 53 DNS (optional — only created when domain is configured)
+# Web App + Admin App — hosted via S3 + CloudFront (see cloudfront.tf)
+# No ECS services needed for static SPAs.
 # =============================================================================
-
-resource "aws_route53_record" "app" {
-  count   = var.route53_zone_id != "" && local.app_domain != "" ? 1 : 0
-  zone_id = var.route53_zone_id
-  name    = local.app_domain
-  type    = "A"
-
-  alias {
-    name                   = aws_lb.main.dns_name
-    zone_id                = aws_lb.main.zone_id
-    evaluate_target_health = true
-  }
-}
