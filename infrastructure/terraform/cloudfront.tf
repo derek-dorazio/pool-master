@@ -255,7 +255,9 @@ resource "aws_cloudfront_distribution" "admin" {
   comment             = "${local.name_prefix} admin"
   price_class         = "PriceClass_100"
 
-  aliases = local.app_domain != "" ? ["admin.${local.app_domain}"] : []
+  # Use qa-admin.domain.com (not admin.qa.domain.com) because wildcard cert
+  # *.domain.com only covers single-level subdomains
+  aliases = local.app_domain != "" ? ["${var.environment}-admin.${var.domain_name}"] : []
 
   viewer_certificate {
     acm_certificate_arn      = var.domain_name != "" ? aws_acm_certificate.cloudfront[0].arn : null
@@ -411,7 +413,7 @@ resource "aws_route53_record" "webapp_cdn" {
 resource "aws_route53_record" "admin_cdn" {
   count   = var.route53_zone_id != "" && local.app_domain != "" ? 1 : 0
   zone_id = var.route53_zone_id
-  name    = "admin.${local.app_domain}"
+  name    = "${var.environment}-admin.${var.domain_name}"
   type    = "A"
 
   alias {

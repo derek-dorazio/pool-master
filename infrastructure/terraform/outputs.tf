@@ -24,7 +24,7 @@ output "app_url" {
 
 output "admin_url" {
   description = "Admin app URL"
-  value       = local.app_domain != "" ? "https://admin.${local.app_domain}" : "https://${aws_cloudfront_distribution.admin.domain_name}"
+  value       = var.domain_name != "" ? "https://${var.environment}-admin.${var.domain_name}" : "https://${aws_cloudfront_distribution.admin.domain_name}"
 }
 
 output "webapp_s3_bucket" {
