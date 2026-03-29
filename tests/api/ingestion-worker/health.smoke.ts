@@ -1,3 +1,4 @@
+export {};
 /**
  * Ingestion module — smoke tests.
  */

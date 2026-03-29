@@ -1,3 +1,4 @@
+export {};
 /**
  * Notifications module — smoke tests.
  */

@@ -1,3 +1,4 @@
+export {};
 /**
  * Scoring module — smoke tests.
  */

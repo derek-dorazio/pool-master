@@ -1,3 +1,4 @@
+export {};
 /**
  * Drafts module — smoke tests.
  */

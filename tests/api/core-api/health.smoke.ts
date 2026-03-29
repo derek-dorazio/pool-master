@@ -1,3 +1,4 @@
+export {};
 /**
  * Core API — smoke tests.
  * Verifies core endpoints are responding correctly.
