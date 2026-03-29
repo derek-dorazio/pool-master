@@ -60,13 +60,7 @@ output "redis_endpoint" {
 output "ecr_repository_urls" {
   description = "ECR repository URLs for each service"
   value = {
-    core_api             = aws_ecr_repository.services["core-api"].repository_url
-    draft_service        = aws_ecr_repository.services["draft-service"].repository_url
-    scoring_service      = aws_ecr_repository.services["scoring-service"].repository_url
-    ingestion_worker     = aws_ecr_repository.services["ingestion-worker"].repository_url
-    notification_service = aws_ecr_repository.services["notification-service"].repository_url
-    web                  = aws_ecr_repository.services["web"].repository_url
-    admin                = aws_ecr_repository.services["admin"].repository_url
+    core_api = aws_ecr_repository.services["core-api"].repository_url
   }
 }
 
