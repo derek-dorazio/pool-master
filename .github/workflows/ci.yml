@@ -217,7 +217,7 @@ jobs:
         continue-on-error: true
         run: |
           if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
-            for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web; do
+            for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web admin; do
               echo "Deploying poolmaster-qa-${SERVICE}..."
               aws ecs update-service \
                 --cluster poolmaster-qa-cluster \

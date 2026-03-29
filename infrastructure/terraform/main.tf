@@ -859,6 +859,90 @@ resource "aws_ecs_service" "web" {
   depends_on = [aws_lb_listener.http]
 }
 
+# --- Admin App (React SPA via nginx) ---
+
+resource "aws_lb_target_group" "admin" {
+  name        = "${local.name_prefix}-admin-tg"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+    matcher             = "200,304"
+  }
+
+  tags = { Service = "admin" }
+}
+
+resource "aws_lb_listener_rule" "admin" {
+  listener_arn = local.active_listener_arn
+  priority     = 90
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.admin.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/admin", "/admin/*"]
+    }
+  }
+}
+
+resource "aws_ecs_task_definition" "admin" {
+  family                   = "${local.name_prefix}-admin"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.ecs_cpu
+  memory                   = var.ecs_memory
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name         = "admin"
+    image        = "${aws_ecr_repository.services["admin"].repository_url}:latest"
+    essential    = true
+    portMappings = [{ containerPort = 80, protocol = "tcp" }]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.services["admin"].name
+        "awslogs-region"        = var.region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
+resource "aws_ecs_service" "admin" {
+  name            = "${local.name_prefix}-admin"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.admin.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = aws_subnet.private[*].id
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.admin.arn
+    container_name   = "admin"
+    container_port   = 80
+  }
+
+  depends_on = [aws_lb_listener.http]
+}
+
 # =============================================================================
 # Route 53 DNS (optional — only created when domain is configured)
 # =============================================================================
