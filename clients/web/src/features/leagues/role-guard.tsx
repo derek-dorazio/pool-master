@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
+import { api } from '@/lib/api-client';
 
 type LeagueRole = 'OWNER' | 'COMMISSIONER' | 'MANAGER' | 'VIEWER';
 
@@ -26,11 +27,13 @@ function useMyLeagueRole(leagueId: string) {
   return useQuery({
     queryKey: ['leagues', leagueId, 'my-role'],
     queryFn: async (): Promise<LeagueRole> => {
-      // TODO: Replace with real API
-      // const membership = await api.get(`/v1/leagues/${leagueId}/members/me`);
-      // return membership.role;
-      await new Promise((r) => setTimeout(r, 100));
-      return 'COMMISSIONER'; // mock
+      try {
+        const membership = await api.get<{ role: string }>(`/leagues/${leagueId}/members/me`);
+        return (membership.role as LeagueRole) ?? 'VIEWER';
+      } catch {
+        // Fail secure — default to least privilege on error
+        return 'VIEWER';
+      }
     },
     enabled: !!user,
   });

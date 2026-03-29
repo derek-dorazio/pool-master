@@ -11,8 +11,11 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
+import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
 import type { AdminRole, AdminPermission } from '../core/admin-permissions';
+
+const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
 
 // ---------------------------------------------------------------------------
 // Admin context interface
@@ -61,21 +64,18 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
         .send({ error: 'UNAUTHORIZED', message: 'Empty bearer token' });
     }
 
-    // --- Token validation placeholder ---
-    // In production this will validate an SSO JWT (Okta / Google Workspace).
-    // For now we decode the token as a base64-encoded JSON payload containing
-    // { adminUserId: string } and look up the admin user in the database.
+    // Verify JWT token and extract admin user ID
     let adminUserId: string;
     try {
-      const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
-      adminUserId = decoded.adminUserId;
+      const decoded = jwt.verify(token, JWT_SECRET) as { sub?: string; adminUserId?: string };
+      adminUserId = decoded.sub ?? decoded.adminUserId ?? '';
       if (!adminUserId) {
-        throw new Error('Missing adminUserId in token payload');
+        throw new Error('Missing user ID in token payload');
       }
     } catch {
       return reply
         .status(401)
-        .send({ error: 'UNAUTHORIZED', message: 'Invalid admin token' });
+        .send({ error: 'UNAUTHORIZED', message: 'Invalid or expired admin token' });
     }
 
     // Look up admin user

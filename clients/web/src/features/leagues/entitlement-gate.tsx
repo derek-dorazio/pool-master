@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { api } from '@/lib/api-client';
 
 interface Entitlement {
   entitled: boolean;
@@ -20,10 +21,13 @@ function useEntitlement(entitlementKey: string) {
   return useQuery({
     queryKey: ['entitlements', entitlementKey],
     queryFn: async (): Promise<Entitlement> => {
-      // Free tier = always entitled
-      // TODO: Replace with real API when billing is enabled
-      // return api.get(`/v1/entitlements/check?key=${entitlementKey}`);
-      return { entitled: true };
+      try {
+        const data = await api.get<Record<string, Entitlement>>('/billing/entitlements');
+        return data[entitlementKey] ?? { entitled: true };
+      } catch {
+        // Fail open on network error — don't block users
+        return { entitled: true };
+      }
     },
     staleTime: 5 * 60 * 1000,
   });
