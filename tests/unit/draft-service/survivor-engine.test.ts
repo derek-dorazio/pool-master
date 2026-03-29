@@ -1,9 +1,9 @@
-import { SurvivorEngine } from '../../../packages/draft-service/src/engine/survivor-engine';
+import { SurvivorEngine } from '../../../packages/core-api/src/modules/drafts/engine/survivor-engine';
 import type {
   SurvivorState,
   SurvivorConfig,
   SurvivorEntryState,
-} from '../../../packages/draft-service/src/engine/survivor-engine';
+} from '../../../packages/core-api/src/modules/drafts/engine/survivor-engine';
 
 function createConfig(overrides: Partial<SurvivorConfig> = {}): SurvivorConfig {
   return {

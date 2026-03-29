@@ -49,21 +49,29 @@ npm run test:smoke       # Both
                     @poolmaster/shared
         Domain Types | Events | DB Ports | Utils
                          |
-    +-----------+--------+--------+-------------+
-    |           |        |        |             |
- core-api  draft-svc  scoring  ingestion  notification
-  :3000     :3001      :3002    :3003       :3004
+              ┌──────────┴──────────┐
+              │   core-api :3000    │
+              │   (modular monolith)│
+              ├─────────────────────┤
+              │ Leagues & Contests  │
+              │ Draft Engines       │
+              │ Scoring Engines     │
+              │ Notifications       │
+              │ Ingestion Workers   │
+              │ Admin & Billing     │
+              └─────────────────────┘
 ```
 
-Five Fastify + TypeScript microservices communicating via domain events over Redis Streams. PostgreSQL for relational data, Redis for caching and message brokering. Hexagonal architecture with repository port/adapter pattern.
+Fastify + TypeScript modular monolith. All modules run in a single process on port 3000, communicating via in-process domain events. PostgreSQL for relational data, Redis for caching. Hexagonal architecture with repository port/adapter pattern.
 
-| Service | Port | Responsibility |
-|---------|------|----------------|
-| **core-api** | 3000 | REST API gateway -- leagues, contests, members, picks, standings |
-| **draft-service** | 3001 | Draft engines -- snake, tiered, budget, survivor, pick'em, bracket |
-| **scoring-service** | 3002 | Score calculation -- 7 engines, 16 templates across 9 sports |
-| **ingestion-worker** | 3003 | Sports data polling from external providers |
-| **notification-service** | 3004 | Push, email, SMS notifications |
+| Module | Responsibility |
+|--------|----------------|
+| **auth, leagues, contests** | REST API -- leagues, contests, members, picks, standings |
+| **drafts** | Draft engines -- snake, tiered, budget, survivor, pick'em, bracket |
+| **scoring** | Score calculation -- 7 engines, 16 templates across 9 sports |
+| **ingestion** | Sports data polling from external providers (ESPN, OpenF1, PGA Tour) |
+| **notifications** | Push, email, in-app notifications with preferences and scheduling |
+| **admin, billing** | Platform admin, subscription management |
 
 ---
 
@@ -131,12 +139,8 @@ npm run format       # Prettier
 
 ```
 poolmaster/
-├── packages/           # Backend services + shared types
-│   ├── core-api/       # Main REST API (Fastify + Prisma)
-│   ├── draft-service/  # Draft engines
-│   ├── scoring-service/# Scoring engines + templates
-│   ├── ingestion-worker/
-│   ├── notification-service/
+├── packages/           # Backend + shared types
+│   ├── core-api/       # Modular monolith (all backend modules)
 │   └── shared/         # Domain types, DB ports, events
 ├── clients/            # Web (React), iOS (Swift), Android (Kotlin)
 ├── tests/              # All tests (separate from app code)

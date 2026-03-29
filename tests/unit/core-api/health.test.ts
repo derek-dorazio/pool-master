@@ -1,7 +1,9 @@
-import { buildApp } from '../../../packages/core-api/src/index';
+import Fastify from 'fastify';
+import { healthPlugin } from '../../../packages/core-api/src/plugins/health';
 
 describe('GET /health', () => {
-  const app = buildApp();
+  const app = Fastify();
+  app.register(healthPlugin);
 
   it('returns ok status', async () => {
     const res = await app.inject({ method: 'GET', url: '/health' });

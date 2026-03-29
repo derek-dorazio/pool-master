@@ -1,5 +1,5 @@
-import { PickEmEngine } from '../../../packages/draft-service/src/engine/pickem-engine';
-import type { PickEmState, PickEmConfig } from '../../../packages/draft-service/src/engine/pickem-engine';
+import { PickEmEngine } from '../../../packages/core-api/src/modules/drafts/engine/pickem-engine';
+import type { PickEmState, PickEmConfig } from '../../../packages/core-api/src/modules/drafts/engine/pickem-engine';
 
 function createConfig(overrides: Partial<PickEmConfig> = {}): PickEmConfig {
   return {

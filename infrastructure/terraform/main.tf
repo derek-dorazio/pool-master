@@ -52,25 +52,14 @@ locals {
   }
   app_domain = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
 
+  # After monolith consolidation: 1 backend service (core-api) + 2 frontends (S3/CloudFront)
   services = [
     "core-api",
-    "draft-service",
-    "scoring-service",
-    "ingestion-worker",
-    "notification-service",
-    "web",
-    "admin",
   ]
 
   # Port mapping for backend services
   service_ports = {
-    "core-api"             = 3000
-    "draft-service"        = 3001
-    "scoring-service"      = 3002
-    "ingestion-worker"     = 3003
-    "notification-service" = 3004
-    "web"                  = 80
-    "admin"                = 80
+    "core-api" = 3000
   }
 }
 
@@ -421,23 +410,7 @@ resource "aws_lb_target_group" "core_api" {
   tags = { Service = "core-api" }
 }
 
-resource "aws_lb_target_group" "notification" {
-  name        = "${local.name_prefix}-notif-tg"
-  port        = 3004
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
-  target_type = "ip"
-
-  health_check {
-    path                = "/health"
-    healthy_threshold   = 2
-    unhealthy_threshold = 3
-    timeout             = 5
-    interval            = 30
-  }
-
-  tags = { Service = "notification-service" }
-}
+## notification target group removed — notification routes now served by core-api monolith
 
 # =============================================================================
 # ALB Listener Rules — path-based routing
@@ -464,21 +437,7 @@ resource "aws_lb_listener_rule" "api" {
   }
 }
 
-resource "aws_lb_listener_rule" "notifications_api" {
-  listener_arn = local.active_listener_arn
-  priority     = 110
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.notification.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/api/v1/notifications*", "/api/v1/devices*", "/api/v1/test/email", "/api/v1/test/push"]
-    }
-  }
-}
+## notifications listener rule removed — all /api/* routes go to core-api monolith
 
 # =============================================================================
 # ECS — Cluster + IAM Roles
@@ -571,7 +530,14 @@ resource "aws_ecs_task_definition" "core_api" {
     image        = "${aws_ecr_repository.services["core-api"].repository_url}:latest"
     essential    = true
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
-    environment  = concat(local.common_env, [{ name = "PORT", value = "3000" }])
+    environment = concat(local.common_env, [
+      { name = "PORT", value = "3000" },
+      { name = "EMAIL_PROVIDER", value = "ses" },
+      { name = "AWS_REGION", value = var.region },
+      { name = "SES_FROM_EMAIL", value = "noreply@${var.domain_name != "" ? var.domain_name : "poolmaster.dev"}" },
+      { name = "ENVIRONMENT", value = var.environment },
+      { name = "AUTO_START_SCHEDULER", value = "true" },
+    ])
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -605,190 +571,7 @@ resource "aws_ecs_service" "core_api" {
   depends_on = [aws_lb_listener.http]
 }
 
-# --- Draft Service ---
-
-resource "aws_ecs_task_definition" "draft_service" {
-  family                   = "${local.name_prefix}-draft-service"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.ecs_cpu
-  memory                   = var.ecs_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name         = "draft-service"
-    image        = "${aws_ecr_repository.services["draft-service"].repository_url}:latest"
-    essential    = true
-    portMappings = [{ containerPort = 3001, protocol = "tcp" }]
-    environment  = concat(local.common_env, [{ name = "PORT", value = "3001" }])
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.services["draft-service"].name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "ecs"
-      }
-    }
-  }])
-}
-
-resource "aws_ecs_service" "draft_service" {
-  name            = "${local.name_prefix}-draft-service"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.draft_service.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-}
-
-# --- Scoring Service ---
-
-resource "aws_ecs_task_definition" "scoring_service" {
-  family                   = "${local.name_prefix}-scoring-service"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.ecs_cpu
-  memory                   = var.ecs_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name         = "scoring-service"
-    image        = "${aws_ecr_repository.services["scoring-service"].repository_url}:latest"
-    essential    = true
-    portMappings = [{ containerPort = 3002, protocol = "tcp" }]
-    environment  = concat(local.common_env, [{ name = "PORT", value = "3002" }])
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.services["scoring-service"].name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "ecs"
-      }
-    }
-  }])
-}
-
-resource "aws_ecs_service" "scoring_service" {
-  name            = "${local.name_prefix}-scoring-service"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.scoring_service.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-}
-
-# --- Ingestion Worker (internal only — no ALB) ---
-
-resource "aws_ecs_task_definition" "ingestion_worker" {
-  family                   = "${local.name_prefix}-ingestion-worker"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.ecs_cpu
-  memory                   = var.ecs_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name         = "ingestion-worker"
-    image        = "${aws_ecr_repository.services["ingestion-worker"].repository_url}:latest"
-    essential    = true
-    portMappings = [{ containerPort = 3003, protocol = "tcp" }]
-    environment = concat(local.common_env, [
-      { name = "PORT", value = "3003" },
-      { name = "AUTO_START_SCHEDULER", value = "true" },
-    ])
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.services["ingestion-worker"].name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "ecs"
-      }
-    }
-  }])
-}
-
-resource "aws_ecs_service" "ingestion_worker" {
-  name            = "${local.name_prefix}-ingestion-worker"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.ingestion_worker.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-}
-
-# --- Notification Service ---
-
-resource "aws_ecs_task_definition" "notification_service" {
-  family                   = "${local.name_prefix}-notification-service"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.ecs_cpu
-  memory                   = var.ecs_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([{
-    name         = "notification-service"
-    image        = "${aws_ecr_repository.services["notification-service"].repository_url}:latest"
-    essential    = true
-    portMappings = [{ containerPort = 3004, protocol = "tcp" }]
-    environment = concat(local.common_env, [
-      { name = "PORT", value = "3004" },
-      { name = "EMAIL_PROVIDER", value = "ses" },
-      { name = "AWS_REGION", value = var.region },
-      { name = "SES_FROM_EMAIL", value = "noreply@${var.domain_name != "" ? var.domain_name : "poolmaster.dev"}" },
-      { name = "ENVIRONMENT", value = var.environment },
-    ])
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.services["notification-service"].name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "ecs"
-      }
-    }
-  }])
-}
-
-resource "aws_ecs_service" "notification_service" {
-  name            = "${local.name_prefix}-notification-service"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.notification_service.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.notification.arn
-    container_name   = "notification-service"
-    container_port   = 3004
-  }
-
-  depends_on = [aws_lb_listener.http]
-}
+# Draft, scoring, ingestion, and notification services removed — merged into core-api monolith
 
 # =============================================================================
 # Web App + Admin App — hosted via S3 + CloudFront (see cloudfront.tf)

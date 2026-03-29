@@ -173,11 +173,13 @@ Two CloudFront distributions (separate S3 buckets):
 - [x] Route 53 A records pointing domains to CloudFront distributions
 - [x] OAC (Origin Access Control) for private S3 bucket access
 
-**Phase 2: Backend consolidation**
-- Merge core-api + draft + scoring + notification into one service
-- Create single Dockerfile (eliminates shared module resolution issue)
-- Update Terraform: 1 API service + 1 ingestion worker
-- Upgrade event bus from in-process to Redis pub/sub for ingestion → API communication
+**Phase 2: Backend consolidation** — DONE
+- [x] Merge core-api + draft + scoring + notification + ingestion into one monolith
+- [x] All modules under `packages/core-api/src/modules/` (drafts, scoring, notifications, ingestion)
+- [x] Single Dockerfile (eliminates shared module resolution issue)
+- [x] Terraform updated: 1 ECS service (core-api), removed 4 old services
+- [x] CI updated: builds 1 Docker image instead of 5
+- [x] Event bus stays in-process (natural for monolith)
 
 ---
 

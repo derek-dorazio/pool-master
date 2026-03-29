@@ -1,4 +1,4 @@
-import { InMemoryRateLimiter } from '../../../packages/notification-service/src/core/rate-limiter';
+import { InMemoryRateLimiter } from '../../../packages/core-api/src/modules/notifications/core/rate-limiter';
 
 describe('InMemoryRateLimiter', () => {
   let limiter: InMemoryRateLimiter;

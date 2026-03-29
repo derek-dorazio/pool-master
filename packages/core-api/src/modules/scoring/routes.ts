@@ -4,8 +4,8 @@
 
 import type { FastifyInstance } from 'fastify';
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
-import { getTemplate, listTemplates } from '../../templates/registry';
-import { validateStatKeys } from '../../engine/stat-schemas';
+import { getTemplate, listTemplates } from './templates/registry';
+import { validateStatKeys } from './engine/stat-schemas';
 import type { ScoringService } from './service';
 import {
   createGetLeaderboardHandler,

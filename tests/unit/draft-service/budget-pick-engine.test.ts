@@ -1,5 +1,5 @@
-import { BudgetPickEngine } from '../../../packages/draft-service/src/engine/budget-pick-engine';
-import type { BudgetPickState, BudgetParticipant } from '../../../packages/draft-service/src/engine/budget-pick-engine';
+import { BudgetPickEngine } from '../../../packages/core-api/src/modules/drafts/engine/budget-pick-engine';
+import type { BudgetPickState, BudgetParticipant } from '../../../packages/core-api/src/modules/drafts/engine/budget-pick-engine';
 
 const participants: BudgetParticipant[] = [
   { participantId: 'p1', cost: 30 },

@@ -12,7 +12,7 @@ import {
   getTemplatesForSport,
   getTemplatesForContestType,
   getTemplateById,
-} from '../../templates/selection-templates';
+} from './templates/selection-templates';
 
 export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Get the current draft state for a contest. */

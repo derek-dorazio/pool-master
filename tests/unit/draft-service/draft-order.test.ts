@@ -2,7 +2,7 @@ import {
   generateRandomOrder,
   validateCommissionerOrder,
   generateDraftOrder,
-} from '../../../packages/draft-service/src/engine/draft-order';
+} from '../../../packages/core-api/src/modules/drafts/engine/draft-order';
 
 describe('generateRandomOrder', () => {
   it('returns all entry IDs', () => {

@@ -1,40 +1,36 @@
-import Fastify from 'fastify';
-import { PrismaClient } from '@prisma/client';
-import { loadConfig } from './core/config';
-import { getDefaultPreferences } from './core/preference-service';
-import { createChannels } from './channels/channel-factory';
-import { NotificationDispatcher } from './core/dispatcher';
-import { InMemoryRateLimiter } from './core/rate-limiter';
-import { EventGrouper } from './core/event-grouper';
-import { ScheduledRunner } from './core/scheduled-runner';
-import { WeeklyDigestService } from './core/weekly-digest';
+// Notification routes — extracted from notification-service/src/index.ts
+import type { FastifyInstance } from 'fastify';
+import type { PrismaClient } from '@prisma/client';
 import type { NotificationEvent, NotificationChannel, NotificationPriority } from '@poolmaster/shared/events';
-import { registerPushTriggers } from './triggers/push-triggers';
+import type { NotificationDispatcher } from './core/dispatcher';
+import type { InMemoryRateLimiter } from './core/rate-limiter';
+import type { EventGrouper } from './core/event-grouper';
+import type { ScheduledRunner } from './core/scheduled-runner';
+import type { WeeklyDigestService } from './core/weekly-digest';
+import type { Channels } from './channels/channel-factory';
+import { getDefaultPreferences } from './core/preference-service';
 import crypto from 'node:crypto';
 
-export function buildApp() {
-  const app = Fastify({ logger: true });
-  const prisma = new PrismaClient();
-  const config = loadConfig();
-  const channels = createChannels(config, prisma);
-  const rateLimiter = new InMemoryRateLimiter();
-  const dispatcher = new NotificationDispatcher(prisma, channels, rateLimiter);
-  const eventGrouper = new EventGrouper();
-  const scheduledRunner = new ScheduledRunner(prisma, dispatcher);
-  const digestService = new WeeklyDigestService(prisma, channels);
+export interface NotificationModuleOpts {
+  prisma: PrismaClient;
+  channels: Channels;
+  dispatcher: NotificationDispatcher;
+  rateLimiter: InMemoryRateLimiter;
+  eventGrouper: EventGrouper;
+  scheduledRunner: ScheduledRunner;
+  digestService: WeeklyDigestService;
+}
 
-  // --- Health ---
-
-  app.get('/health', async () => ({
-    status: 'ok',
-    service: 'notification-service',
-    emailProvider: config.emailProvider,
-  }));
+export async function notificationsModule(
+  app: FastifyInstance,
+  opts: NotificationModuleOpts,
+): Promise<void> {
+  const { prisma, channels, dispatcher, eventGrouper, scheduledRunner, digestService } = opts;
 
   // --- In-App Notification Centre ---
 
   app.get<{ Querystring: { limit?: string; offset?: string; unreadOnly?: string } }>(
-    '/api/v1/notifications',
+    '/notifications',
     async (request) => {
       const userId = request.headers['x-user-id'] as string;
       return channels.inApp.getNotifications(userId, {
@@ -45,29 +41,29 @@ export function buildApp() {
     },
   );
 
-  app.get('/api/v1/notifications/unread-count', async (request) => {
+  app.get('/notifications/unread-count', async (request) => {
     const userId = request.headers['x-user-id'] as string;
     return { unreadCount: await channels.inApp.getUnreadCount(userId) };
   });
 
-  app.put<{ Params: { id: string } }>('/api/v1/notifications/:id/read', async (request) => {
+  app.put<{ Params: { id: string } }>('/notifications/:id/read', async (request) => {
     await channels.inApp.markAsRead(request.params.id);
     return { success: true };
   });
 
-  app.put('/api/v1/notifications/read-all', async (request) => {
+  app.put('/notifications/read-all', async (request) => {
     const userId = request.headers['x-user-id'] as string;
     return { markedRead: await channels.inApp.markAllAsRead(userId) };
   });
 
-  app.delete<{ Params: { id: string } }>('/api/v1/notifications/:id', async (request) => {
+  app.delete<{ Params: { id: string } }>('/notifications/:id', async (request) => {
     await channels.inApp.dismiss(request.params.id);
     return { success: true };
   });
 
   // --- Preferences ---
 
-  app.get('/api/v1/notifications/preferences', async (request) => {
+  app.get('/notifications/preferences', async (request) => {
     const userId = request.headers['x-user-id'] as string;
     const prefs = await prisma.notificationPreference.findUnique({ where: { userId } });
     if (!prefs) {
@@ -83,7 +79,7 @@ export function buildApp() {
   });
 
   app.put<{ Body: { doNotDisturb?: boolean; dndSchedule?: object; categories?: object } }>(
-    '/api/v1/notifications/preferences',
+    '/notifications/preferences',
     async (request) => {
       const userId = request.headers['x-user-id'] as string;
       const body = request.body;
@@ -110,7 +106,7 @@ export function buildApp() {
   // --- Unsubscribe (per-category opt-out) ---
 
   app.post<{ Params: { category: string } }>(
-    '/api/v1/notifications/unsubscribe/:category',
+    '/notifications/unsubscribe/:category',
     async (request) => {
       const userId = request.headers['x-user-id'] as string;
       const category = request.params.category;
@@ -138,7 +134,7 @@ export function buildApp() {
   // --- Device Registration ---
 
   app.post<{ Body: { platform: string; token: string; appVersion?: string; osVersion?: string; deviceModel?: string } }>(
-    '/api/v1/devices',
+    '/devices',
     async (request, reply) => {
       const userId = request.headers['x-user-id'] as string;
       const body = request.body;
@@ -152,7 +148,7 @@ export function buildApp() {
   );
 
   app.post<{ Body: { platform: string; token: string; appVersion?: string; osVersion?: string; deviceModel?: string } }>(
-    '/api/v1/devices/register',
+    '/devices/register',
     async (request, reply) => {
       const userId = request.headers['x-user-id'] as string;
       const body = request.body;
@@ -165,12 +161,12 @@ export function buildApp() {
     },
   );
 
-  app.delete<{ Params: { id: string } }>('/api/v1/devices/:id', async (request) => {
+  app.delete<{ Params: { id: string } }>('/devices/:id', async (request) => {
     await prisma.deviceRegistration.update({ where: { id: request.params.id }, data: { isActive: false } });
     return { success: true };
   });
 
-  app.get('/api/v1/devices', async (request) => {
+  app.get('/devices', async (request) => {
     const userId = request.headers['x-user-id'] as string;
     const devices = await prisma.deviceRegistration.findMany({
       where: { userId, isActive: true },
@@ -194,7 +190,7 @@ export function buildApp() {
       channels?: string[];
       action?: { type: string; screen: string; params: Record<string, string> };
     };
-  }>('/api/v1/notifications/dispatch', async (request) => {
+  }>('/notifications/dispatch', async (request) => {
     const body = request.body;
     const event: NotificationEvent = {
       id: crypto.randomUUID(),
@@ -212,7 +208,6 @@ export function buildApp() {
       action: body.action as NotificationEvent['action'] ?? { type: 'NAVIGATE', screen: 'home', params: {} },
     };
 
-    // Check if event should be grouped
     if (eventGrouper.isGroupable(event.type) && event.recipientUserIds?.length === 1) {
       const grouped = eventGrouper.add({
         id: event.id,
@@ -222,7 +217,6 @@ export function buildApp() {
         timestamp: new Date(),
       });
       if (grouped) {
-        // Window closed — send the grouped notification
         return dispatcher.dispatch({
           ...event,
           data: { ...event.data, count: grouped.count },
@@ -244,7 +238,7 @@ export function buildApp() {
       body: string;
       channels?: string[];
     };
-  }>('/api/v1/notifications/announce', async (request) => {
+  }>('/notifications/announce', async (request) => {
     const body = request.body;
     const event: NotificationEvent = {
       id: crypto.randomUUID(),
@@ -259,8 +253,6 @@ export function buildApp() {
       channels: (body.channels ?? ['PUSH', 'EMAIL', 'IN_APP']) as NotificationChannel[],
       action: { type: 'NAVIGATE', screen: 'league_feed', params: { leagueId: body.leagueId } },
     };
-    // Bypass preferences — dispatcher sends to all channels regardless
-    // The dispatcher already handles IN_APP without preference check
     return dispatcher.dispatch(event);
   });
 
@@ -274,7 +266,7 @@ export function buildApp() {
       sourceType: string;
       sourceId: string;
     };
-  }>('/api/v1/notifications/schedule', async (request) => {
+  }>('/notifications/schedule', async (request) => {
     const id = await scheduledRunner.schedule({
       eventType: request.body.eventType,
       fireAt: new Date(request.body.fireAt),
@@ -286,7 +278,7 @@ export function buildApp() {
   });
 
   app.delete<{ Params: { sourceType: string; sourceId: string } }>(
-    '/api/v1/notifications/schedule/:sourceType/:sourceId',
+    '/notifications/schedule/:sourceType/:sourceId',
     async (request) => {
       const count = await scheduledRunner.cancelForSource(request.params.sourceType, request.params.sourceId);
       return { cancelled: count };
@@ -296,7 +288,7 @@ export function buildApp() {
   // --- Weekly Digest ---
 
   app.post<{ Params: { leagueId: string } }>(
-    '/api/v1/notifications/digest/:leagueId',
+    '/notifications/digest/:leagueId',
     async (request) => {
       return digestService.sendDigest(request.params.leagueId);
     },
@@ -305,7 +297,7 @@ export function buildApp() {
   // --- Delivery Analytics ---
 
   app.get<{ Querystring: { days?: string } }>(
-    '/api/v1/notifications/analytics',
+    '/notifications/analytics',
     async (request) => {
       const days = parseInt(request.query.days ?? '7', 10);
       const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -350,63 +342,16 @@ export function buildApp() {
   // --- Test endpoints ---
 
   app.post<{ Body: { to: string; subject: string; text: string; html?: string } }>(
-    '/api/v1/test/email',
+    '/test/email',
     async (request) => channels.email.sendToUser(request.body.to, request.body.subject, request.body.text, request.body.html),
   );
 
   app.post<{ Body: { platform: string; token: string; title: string; body: string; data?: Record<string, string> } }>(
-    '/api/v1/test/push',
+    '/test/push',
     async (request) => channels.push.sendToDevice(
       request.body.platform as 'ios' | 'android',
       request.body.token,
       { title: request.body.title, body: request.body.body, data: request.body.data },
     ),
   );
-
-  // --- Lifecycle ---
-
-  app.addHook('onReady', async () => {
-    scheduledRunner.start();
-    app.log.info('Scheduled notification runner started');
-
-    registerPushTriggers(dispatcher);
-    app.log.info('Push notification triggers registered');
-
-    // Flush grouped events periodically
-    setInterval(() => {
-      const grouped = eventGrouper.flushExpired();
-      for (const g of grouped) {
-        dispatcher.dispatch({
-          id: crypto.randomUUID(),
-          type: g.eventType,
-          sourceService: 'event-grouper',
-          timestamp: new Date().toISOString(),
-          tenantId: '',
-          recipientUserIds: [g.userId],
-          data: { ...g.latestData, count: g.count },
-          priority: 'NORMAL',
-          action: { type: 'NAVIGATE', screen: 'home', params: {} },
-        });
-      }
-    }, 30_000);
-  });
-
-  app.addHook('onClose', async () => {
-    scheduledRunner.stop();
-  });
-
-  return app;
 }
-
-async function start(): Promise<void> {
-  const app = buildApp();
-  const config = loadConfig();
-  try {
-    await app.listen({ port: config.port, host: '0.0.0.0' });
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
-}
-
-start();

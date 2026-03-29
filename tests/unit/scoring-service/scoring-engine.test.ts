@@ -11,8 +11,8 @@ import {
   handleDNF,
   scoreEntry,
   scoreParticipant,
-} from '../../../packages/scoring-service/src/engine/scoring-engine';
-import type { ParticipantScoringData } from '../../../packages/scoring-service/src/engine/scoring-engine';
+} from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
+import type { ParticipantScoringData } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
 
 // --- Helpers ---
 

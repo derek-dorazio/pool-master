@@ -3,7 +3,7 @@ import {
   getPickPosition,
   generatePickSchedule,
   getEntryPickNumbers,
-} from '../../../packages/draft-service/src/engine/pick-order';
+} from '../../../packages/core-api/src/modules/drafts/engine/pick-order';
 
 describe('getRoundOrder', () => {
   it('returns ascending order for odd rounds', () => {

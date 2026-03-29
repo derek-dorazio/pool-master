@@ -1,4 +1,4 @@
-import { renderTemplate, renderNotification } from '../../../packages/notification-service/src/core/template-renderer';
+import { renderTemplate, renderNotification } from '../../../packages/core-api/src/modules/notifications/core/template-renderer';
 
 describe('TemplateRenderer', () => {
   describe('renderTemplate', () => {

@@ -129,58 +129,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build & push draft-service
-        if: steps.ecr-check.outputs.exists == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: infrastructure/docker/Dockerfile.draft-service
-          push: true
-          tags: |
-            ${{ steps.tags.outputs.prefix }}/draft-service:latest
-            ${{ steps.tags.outputs.prefix }}/draft-service:${{ steps.tags.outputs.sha_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build & push scoring-service
-        if: steps.ecr-check.outputs.exists == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: infrastructure/docker/Dockerfile.scoring-service
-          push: true
-          tags: |
-            ${{ steps.tags.outputs.prefix }}/scoring-service:latest
-            ${{ steps.tags.outputs.prefix }}/scoring-service:${{ steps.tags.outputs.sha_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build & push ingestion-worker
-        if: steps.ecr-check.outputs.exists == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: infrastructure/docker/Dockerfile.ingestion-worker
-          push: true
-          tags: |
-            ${{ steps.tags.outputs.prefix }}/ingestion-worker:latest
-            ${{ steps.tags.outputs.prefix }}/ingestion-worker:${{ steps.tags.outputs.sha_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build & push notification-service
-        if: steps.ecr-check.outputs.exists == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: infrastructure/docker/Dockerfile.notification-service
-          push: true
-          tags: |
-            ${{ steps.tags.outputs.prefix }}/notification-service:latest
-            ${{ steps.tags.outputs.prefix }}/notification-service:${{ steps.tags.outputs.sha_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
       # --- Web Clients → S3 + CloudFront ---
 
       - name: Build webapp
@@ -231,7 +179,7 @@ jobs:
         continue-on-error: true
         run: |
           if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
-            for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service; do
+            for SERVICE in core-api; do
               echo "Deploying poolmaster-qa-${SERVICE}..."
               aws ecs update-service \
                 --cluster poolmaster-qa-cluster \
@@ -256,10 +204,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Image | Tags |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| core-api | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| draft-service | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| scoring-service | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| ingestion-worker | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| notification-service | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| core-api (monolith) | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Web clients** deployed to S3 + CloudFront (not Docker)" >> $GITHUB_STEP_SUMMARY
+          echo "**Web clients** deployed to S3 + CloudFront" >> $GITHUB_STEP_SUMMARY

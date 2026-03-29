@@ -1,5 +1,5 @@
-import { SnakeDraftEngine } from '../../../packages/draft-service/src/engine/snake-draft-engine';
-import type { DraftState } from '../../../packages/draft-service/src/engine/snake-draft-engine';
+import { SnakeDraftEngine } from '../../../packages/core-api/src/modules/drafts/engine/snake-draft-engine';
+import type { DraftState } from '../../../packages/core-api/src/modules/drafts/engine/snake-draft-engine';
 
 function createDraftState(overrides: Partial<DraftState> = {}): DraftState {
   return {

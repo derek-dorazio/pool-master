@@ -1,22 +1,22 @@
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
-import { scoreBracket } from '../../../packages/scoring-service/src/engine/bracket-scoring';
+import { scoreBracket } from '../../../packages/core-api/src/modules/scoring/engine/bracket-scoring';
 import type {
   BracketMatchResult,
   BracketPredictionInput,
-} from '../../../packages/scoring-service/src/engine/bracket-scoring';
-import { scoreRotisserie } from '../../../packages/scoring-service/src/engine/rotisserie-scoring';
-import type { RotisserieEntryStats } from '../../../packages/scoring-service/src/engine/rotisserie-scoring';
+} from '../../../packages/core-api/src/modules/scoring/engine/bracket-scoring';
+import { scoreRotisserie } from '../../../packages/core-api/src/modules/scoring/engine/rotisserie-scoring';
+import type { RotisserieEntryStats } from '../../../packages/core-api/src/modules/scoring/engine/rotisserie-scoring';
 import {
   evaluateMatchup,
   calculateRecords,
   scoreHeadToHead,
-} from '../../../packages/scoring-service/src/engine/head-to-head-scoring';
-import type { Matchup, PeriodScores } from '../../../packages/scoring-service/src/engine/head-to-head-scoring';
+} from '../../../packages/core-api/src/modules/scoring/engine/head-to-head-scoring';
+import type { Matchup, PeriodScores } from '../../../packages/core-api/src/modules/scoring/engine/head-to-head-scoring';
 import {
   scoreStrokePlayParticipant,
   scoreStrokePlayEntry,
-} from '../../../packages/scoring-service/src/engine/stroke-play-scoring';
-import type { StrokePlayParticipant } from '../../../packages/scoring-service/src/engine/stroke-play-scoring';
+} from '../../../packages/core-api/src/modules/scoring/engine/stroke-play-scoring';
+import type { StrokePlayParticipant } from '../../../packages/core-api/src/modules/scoring/engine/stroke-play-scoring';
 
 // ========================================================================
 // 03-021: Bracket Scoring

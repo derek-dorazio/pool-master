@@ -1,5 +1,5 @@
-import { shouldDeliver, getEventCategory, getDefaultPreferences } from '../../../packages/notification-service/src/core/preference-service';
-import type { UserPreferences } from '../../../packages/notification-service/src/core/preference-service';
+import { shouldDeliver, getEventCategory, getDefaultPreferences } from '../../../packages/core-api/src/modules/notifications/core/preference-service';
+import type { UserPreferences } from '../../../packages/core-api/src/modules/notifications/core/preference-service';
 
 describe('PreferenceService', () => {
   describe('getEventCategory', () => {

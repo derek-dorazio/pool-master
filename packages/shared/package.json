@@ -7,23 +7,31 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./src/index.js"
+      "default": "./dist/src/index.js"
     },
     "./domain": {
       "types": "./domain/index.ts",
-      "default": "./domain/index.js"
+      "default": "./dist/domain/index.js"
+    },
+    "./domain/*": {
+      "types": "./domain/*.ts",
+      "default": "./dist/domain/*.js"
     },
     "./db": {
       "types": "./db/index.ts",
-      "default": "./db/index.js"
+      "default": "./dist/db/index.js"
     },
     "./events": {
       "types": "./events/index.ts",
-      "default": "./events/index.js"
+      "default": "./dist/events/index.js"
+    },
+    "./events/*": {
+      "types": "./events/*.ts",
+      "default": "./dist/events/*.js"
     },
     "./i18n": {
       "types": "./i18n/index.ts",
-      "default": "./i18n/index.js"
+      "default": "./dist/i18n/index.js"
     }
   },
   "scripts": {

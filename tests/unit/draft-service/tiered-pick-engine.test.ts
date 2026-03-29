@@ -1,5 +1,5 @@
-import { TieredPickEngine } from '../../../packages/draft-service/src/engine/tiered-pick-engine';
-import type { TieredPickState, TierDefinition } from '../../../packages/draft-service/src/engine/tiered-pick-engine';
+import { TieredPickEngine } from '../../../packages/core-api/src/modules/drafts/engine/tiered-pick-engine';
+import type { TieredPickState, TierDefinition } from '../../../packages/core-api/src/modules/drafts/engine/tiered-pick-engine';
 
 const tiers: TierDefinition[] = [
   { tierId: 't1', tierName: 'Tier 1', tierNumber: 1, picksRequired: 1, participantIds: ['p1', 'p2', 'p3'] },

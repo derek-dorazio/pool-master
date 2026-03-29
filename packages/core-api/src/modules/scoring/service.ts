@@ -2,9 +2,9 @@
  * ScoringService — reads from ScoreStore and returns formatted leaderboard data.
  */
 
-import type { ScoreStore, EntryContestScore, ParticipantEventScore } from '../../storage/score-store';
-import type { StandingsRollup, RollupResult } from '../../rollup/standings-rollup';
-import { assignRanks } from '../../rollup/standings-rollup';
+import type { ScoreStore, EntryContestScore, ParticipantEventScore } from './storage/score-store';
+import type { StandingsRollup, RollupResult } from './rollup/standings-rollup';
+import { assignRanks } from './rollup/standings-rollup';
 
 // --- Response Types ---
 

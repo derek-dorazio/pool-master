@@ -7,23 +7,23 @@
  */
 
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
-import { scoreParticipant, scoreEntry } from '../../../packages/scoring-service/src/engine/scoring-engine';
-import type { ParticipantScoringData } from '../../../packages/scoring-service/src/engine/scoring-engine';
-import { scoreBracket } from '../../../packages/scoring-service/src/engine/bracket-scoring';
-import type { BracketMatchResult, BracketPredictionInput } from '../../../packages/scoring-service/src/engine/bracket-scoring';
-import { scoreStrokePlayEntry } from '../../../packages/scoring-service/src/engine/stroke-play-scoring';
-import type { StrokePlayParticipant } from '../../../packages/scoring-service/src/engine/stroke-play-scoring';
-import { scoreRotisserie } from '../../../packages/scoring-service/src/engine/rotisserie-scoring';
-import { scoreHeadToHead } from '../../../packages/scoring-service/src/engine/head-to-head-scoring';
-import { NFL_TEMPLATES } from '../../../packages/scoring-service/src/templates/nfl';
-import { GOLF_TEMPLATES } from '../../../packages/scoring-service/src/templates/golf';
-import { NCAA_TEMPLATES } from '../../../packages/scoring-service/src/templates/ncaa';
-import { NBA_TEMPLATES } from '../../../packages/scoring-service/src/templates/nba';
-import { F1_TEMPLATES } from '../../../packages/scoring-service/src/templates/f1';
-import { NASCAR_TEMPLATES } from '../../../packages/scoring-service/src/templates/nascar';
-import { TENNIS_TEMPLATES } from '../../../packages/scoring-service/src/templates/tennis';
-import { HORSE_RACING_TEMPLATES } from '../../../packages/scoring-service/src/templates/horse-racing';
-import { SOCCER_TEMPLATES } from '../../../packages/scoring-service/src/templates/soccer';
+import { scoreParticipant, scoreEntry } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
+import type { ParticipantScoringData } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
+import { scoreBracket } from '../../../packages/core-api/src/modules/scoring/engine/bracket-scoring';
+import type { BracketMatchResult, BracketPredictionInput } from '../../../packages/core-api/src/modules/scoring/engine/bracket-scoring';
+import { scoreStrokePlayEntry } from '../../../packages/core-api/src/modules/scoring/engine/stroke-play-scoring';
+import type { StrokePlayParticipant } from '../../../packages/core-api/src/modules/scoring/engine/stroke-play-scoring';
+import { scoreRotisserie } from '../../../packages/core-api/src/modules/scoring/engine/rotisserie-scoring';
+import { scoreHeadToHead } from '../../../packages/core-api/src/modules/scoring/engine/head-to-head-scoring';
+import { NFL_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nfl';
+import { GOLF_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/golf';
+import { NCAA_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/ncaa';
+import { NBA_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nba';
+import { F1_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/f1';
+import { NASCAR_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nascar';
+import { TENNIS_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/tennis';
+import { HORSE_RACING_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/horse-racing';
+import { SOCCER_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/soccer';
 
 // ========================================================================
 // NFL — Patrick Mahomes, 2024 Super Bowl LVIII

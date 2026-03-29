@@ -6,8 +6,8 @@ import {
   extendPickDeadline,
   isPickExpired,
   transitionSession,
-} from '../../../packages/draft-service/src/engine/draft-session-manager';
-import type { SessionState } from '../../../packages/draft-service/src/engine/draft-session-manager';
+} from '../../../packages/core-api/src/modules/drafts/engine/draft-session-manager';
+import type { SessionState } from '../../../packages/core-api/src/modules/drafts/engine/draft-session-manager';
 
 function createSession(overrides: Partial<SessionState> = {}): SessionState {
   return {

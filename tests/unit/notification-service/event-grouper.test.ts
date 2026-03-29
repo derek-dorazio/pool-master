@@ -1,4 +1,4 @@
-import { EventGrouper } from '../../../packages/notification-service/src/core/event-grouper';
+import { EventGrouper } from '../../../packages/core-api/src/modules/notifications/core/event-grouper';
 
 describe('EventGrouper', () => {
   let grouper: EventGrouper;

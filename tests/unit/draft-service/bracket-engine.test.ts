@@ -1,5 +1,5 @@
-import { BracketEngine } from '../../../packages/draft-service/src/engine/bracket-engine';
-import type { BracketState, BracketConfig, MatchPrediction } from '../../../packages/draft-service/src/engine/bracket-engine';
+import { BracketEngine } from '../../../packages/core-api/src/modules/drafts/engine/bracket-engine';
+import type { BracketState, BracketConfig, MatchPrediction } from '../../../packages/core-api/src/modules/drafts/engine/bracket-engine';
 
 function createConfig(overrides: Partial<BracketConfig> = {}): BracketConfig {
   return {

@@ -3,17 +3,17 @@ import type { ScoringConfig, TiebreakerConfig } from '@poolmaster/shared/domain/
 import {
   evaluateTiebreaker,
   rankWithTiebreakers,
-} from '../../../packages/scoring-service/src/engine/tiebreaker';
-import type { TiebreakerData } from '../../../packages/scoring-service/src/engine/tiebreaker';
+} from '../../../packages/core-api/src/modules/scoring/engine/tiebreaker';
+import type { TiebreakerData } from '../../../packages/core-api/src/modules/scoring/engine/tiebreaker';
 import {
   STAT_SCHEMAS,
   getStatSchema,
   listSports,
   validateStatKeys,
-} from '../../../packages/scoring-service/src/engine/stat-schemas';
-import { scoreParticipant } from '../../../packages/scoring-service/src/engine/scoring-engine';
-import type { ParticipantScoringData } from '../../../packages/scoring-service/src/engine/scoring-engine';
-import { getTemplate, listTemplates } from '../../../packages/scoring-service/src/templates/registry';
+} from '../../../packages/core-api/src/modules/scoring/engine/stat-schemas';
+import { scoreParticipant } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
+import type { ParticipantScoringData } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
+import { getTemplate, listTemplates } from '../../../packages/core-api/src/modules/scoring/templates/registry';
 
 // ========================================================================
 // 03-017: Special Roster Slot Configuration

@@ -1,16 +1,16 @@
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
-import { SCORING_TEMPLATES, getTemplate, listTemplates } from '../../../packages/scoring-service/src/templates/registry';
-import { NFL_TEMPLATES } from '../../../packages/scoring-service/src/templates/nfl';
-import { GOLF_TEMPLATES } from '../../../packages/scoring-service/src/templates/golf';
-import { F1_TEMPLATES } from '../../../packages/scoring-service/src/templates/f1';
-import { NASCAR_TEMPLATES } from '../../../packages/scoring-service/src/templates/nascar';
-import { NCAA_TEMPLATES } from '../../../packages/scoring-service/src/templates/ncaa';
-import { NBA_TEMPLATES } from '../../../packages/scoring-service/src/templates/nba';
-import { TENNIS_TEMPLATES } from '../../../packages/scoring-service/src/templates/tennis';
-import { HORSE_RACING_TEMPLATES } from '../../../packages/scoring-service/src/templates/horse-racing';
-import { SOCCER_TEMPLATES } from '../../../packages/scoring-service/src/templates/soccer';
-import { scoreParticipant, scoreEntry } from '../../../packages/scoring-service/src/engine/scoring-engine';
-import type { ParticipantScoringData } from '../../../packages/scoring-service/src/engine/scoring-engine';
+import { SCORING_TEMPLATES, getTemplate, listTemplates } from '../../../packages/core-api/src/modules/scoring/templates/registry';
+import { NFL_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nfl';
+import { GOLF_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/golf';
+import { F1_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/f1';
+import { NASCAR_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nascar';
+import { NCAA_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/ncaa';
+import { NBA_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nba';
+import { TENNIS_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/tennis';
+import { HORSE_RACING_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/horse-racing';
+import { SOCCER_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/soccer';
+import { scoreParticipant, scoreEntry } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
+import type { ParticipantScoringData } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
 
 // ========================================================================
 // All templates must pass Zod validation
