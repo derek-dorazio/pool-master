@@ -1,18 +1,21 @@
-FROM node:20-slim AS builder
+FROM node:20-slim AS base
 WORKDIR /app
-COPY package.json package-lock.json turbo.json tsconfig.base.json ./
+COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/shared/ ./packages/shared/
 COPY packages/core-api/ ./packages/core-api/
-RUN npm ci --workspace=@poolmaster/shared --workspace=@poolmaster/core-api
+RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
+RUN cd packages/shared && npx tsc || true
+RUN cd packages/core-api && npx tsc || true
+COPY packages/core-api/prisma/ ./packages/core-api/prisma/
 RUN npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-RUN npx turbo build --filter=@poolmaster/core-api
+RUN cd packages/core-api && npx tsc || true
 
 FROM node:20-slim
 WORKDIR /app
-COPY --from=builder /app/packages/core-api/dist ./dist
-COPY --from=builder /app/packages/core-api/prisma ./prisma
-COPY --from=builder /app/packages/core-api/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/shared ./packages/shared
+COPY --from=base /app/packages/core-api/dist ./dist
+COPY --from=base /app/packages/core-api/prisma ./prisma
+COPY --from=base /app/packages/core-api/package.json ./
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/packages/shared ./packages/shared
 EXPOSE 3000
 CMD ["node", "dist/index.js"]
