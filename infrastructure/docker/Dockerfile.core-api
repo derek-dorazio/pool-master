@@ -19,7 +19,9 @@ RUN cd packages/shared && \
     cp -r dist/utils/* utils/ 2>/dev/null || true && \
     cp -r dist/i18n/* i18n/ 2>/dev/null || true
 
-COPY packages/core-api/prisma/ ./packages/core-api/prisma/\nRUN npx prisma generate --schema=packages/core-api/prisma/schema.prisma\nRUN cd packages/core-api && npx tsc || true
+# Generate Prisma client
+COPY packages/core-api/prisma/ ./packages/core-api/prisma/
+RUN npx prisma generate --schema=packages/core-api/prisma/schema.prisma
 
 # Build the service
 RUN cd packages/core-api && npx tsc || true

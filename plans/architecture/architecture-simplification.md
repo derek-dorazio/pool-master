@@ -142,9 +142,11 @@ CloudFront Distribution
 └── SSL: ACM certificate (already have it)
 ```
 
-Two CloudFront distributions:
-- `qa.ultimateofficepoolmanager.com` → S3 webapp bucket + ALB API origin
-- `qa.ultimateofficepoolmanager.com/admin` → S3 admin bucket (or same bucket with /admin prefix)
+Two CloudFront distributions (separate S3 buckets):
+- `qa.ultimateofficepoolmanager.com` → S3 `poolmaster-qa-webapp` bucket + ALB API origin (CF ID: E26IS80GXVX101)
+- `qa-admin.ultimateofficepoolmanager.com` → S3 `poolmaster-qa-admin` bucket + ALB API origin (CF ID: EIL9ZMESLX7H7)
+
+> Note: Admin uses `qa-admin.domain.com` (not `admin.qa.domain.com`) because wildcard cert `*.domain.com` only covers single-level subdomains.
 
 ---
 
@@ -162,12 +164,14 @@ Two CloudFront distributions:
 
 ### Implementation Phases
 
-**Phase 1: Frontend to S3 + CloudFront**
-- Create S3 buckets for webapp + admin
-- Create CloudFront distributions with API origin → ALB
-- Update CI to deploy via `aws s3 sync` instead of Docker build
-- Remove web + admin ECS services from Terraform
-- Fastest win — eliminates 2 Docker images and 2 ECS services immediately
+**Phase 1: Frontend to S3 + CloudFront** — DONE
+- [x] Create S3 buckets for webapp + admin (`poolmaster-qa-webapp`, `poolmaster-qa-admin`)
+- [x] Create CloudFront distributions with API origin → ALB (`cloudfront.tf`)
+- [x] Update CI to deploy via `aws s3 sync` instead of Docker build
+- [x] Remove web + admin ECS services from Terraform (`main.tf`)
+- [x] ACM cert auto-created in us-east-1 for CloudFront (separate from ALB cert in us-east-2)
+- [x] Route 53 A records pointing domains to CloudFront distributions
+- [x] OAC (Origin Access Control) for private S3 bucket access
 
 **Phase 2: Backend consolidation**
 - Merge core-api + draft + scoring + notification into one service

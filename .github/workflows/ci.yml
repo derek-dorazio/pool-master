@@ -261,5 +261,5 @@ jobs:
           echo "| scoring-service | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| ingestion-worker | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| notification-service | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| web | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| admin | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Web clients** deployed to S3 + CloudFront (not Docker)" >> $GITHUB_STEP_SUMMARY

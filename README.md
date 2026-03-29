@@ -169,19 +169,38 @@ poolmaster/
 
 ## Deployment
 
-AWS deployment via Terraform (ECS Fargate) + GitHub Actions CI/CD.
+AWS deployment via Terraform + GitHub Actions CI/CD.
 
 ```bash
 cd infrastructure/terraform
-cp terraform.tfvars.example terraform.tfvars    # Set db_password, domain (optional)
-terraform init
-terraform plan -var="environment=dev"
-terraform apply -var="environment=dev"
+terraform init -backend-config=envs/qa.backend.hcl
+terraform plan -var-file=envs/qa.tfvars
+terraform apply -var-file=envs/qa.tfvars
 ```
 
-Infrastructure: ECS Fargate (6 services), RDS PostgreSQL, ElastiCache Redis, ALB with path-based routing, CloudWatch alarms, ECR repositories. HTTPS and custom domain are optional (works with ALB DNS out of the box).
+### Infrastructure
 
-See [AWS Deployment Plan](plans/16-aws-deployment.md) for full details.
+| Component | Technology | Notes |
+|-----------|-----------|-------|
+| **Backend services** | ECS Fargate (5 services) | core-api, draft, scoring, ingestion, notification |
+| **Webapp + Admin** | S3 + CloudFront CDN | Global edge caching, SPA routing, API proxying via /api/* |
+| **Database** | RDS PostgreSQL 16 | Private subnet, db.t3.micro (QA) |
+| **Cache/Queue** | ElastiCache Redis 7 | cache.t3.micro |
+| **Load Balancer** | ALB | Path-based routing to ECS services |
+| **DNS** | Route 53 | `qa.ultimateofficepoolmanager.com`, `qa-admin.ultimateofficepoolmanager.com` |
+| **SSL** | ACM | Auto-validated wildcard cert for CloudFront (us-east-1) + ALB (us-east-2) |
+| **CI/CD** | GitHub Actions | Lint → Test → Build → ECR push → S3 sync → ECS deploy |
+| **IaC** | Terraform | Per-environment state (qa/staging/prod) |
+
+### Environments
+
+| Env | Deploy | Backend | Frontend |
+|-----|--------|---------|----------|
+| **QA** | Auto on push to main | ECS Fargate | S3 + CloudFront |
+| **Staging** | Manual workflow_dispatch | ECS Fargate | S3 + CloudFront |
+| **Prod** | Manual workflow_dispatch | ECS Fargate | S3 + CloudFront |
+
+See [AWS Deployment Plan](plans/16-aws-deployment.md) for full details and [Architecture Simplification](plans/architecture/architecture-simplification.md) for the CloudFront migration rationale.
 
 ---
 

@@ -85,7 +85,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | **Message Bus** | AWS EventBridge or SQS + SNS | Decouples services; fan-out for scoring, notifications |
 | **Real-Time Messaging** | Redis Streams | StatEvent stream for scoring engine, notification event bus |
 | **File Storage** | AWS S3 | Participant photos, share card images, data exports |
-| **CDN** | AWS CloudFront | Serve static assets, participant photos, share cards |
+| **CDN** | AWS CloudFront | Hosts webapp + admin SPAs (S3 origin), proxies /api/* to ALB, serves participant photos |
 | **CI/CD** | GitHub Actions (or equivalent) | Automated build, test, deploy pipeline |
 | **Monitoring** | CloudWatch + Sentry (or Datadog) | Metrics, alerting, error tracking |
 | **Monorepo** | Turborepo | Fast builds, shared packages, clean boundaries |

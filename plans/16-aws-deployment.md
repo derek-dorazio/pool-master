@@ -19,8 +19,8 @@ Deploy PoolMaster to AWS using ECS Fargate, RDS PostgreSQL, ElastiCache Redis, a
 | 16-007 | 2 | Configure Terraform remote state backend (S3 + DynamoDB) | Agent | Done | S3 bucket + DynamoDB lock table configured in main.tf backend block |
 | 16-008 | 2 | Add HTTPS listener to ALB with ACM certificate | Agent | Done | Conditional: created only when acm_certificate_arn is provided. HTTP redirects to HTTPS |
 | 16-009 | 2 | Add ECS task definitions for all 5 backend services | Agent | Done | core-api, draft-service, scoring-service, ingestion-worker, notification-service |
-| 16-010 | 2 | Add ECS task definition for webapp (nginx + static) | Agent | Done | Web SPA via nginx on port 80, ALB default route |
-| 16-011 | 2 | Add ALB target groups and listener rules for each service | Agent | Done | Path-based: /api/* → core-api, /api/v1/notifications* → notification-service, default → web |
+| 16-010 | 2 | Add ECS task definition for webapp (nginx + static) | Agent | Replaced | Moved to S3 + CloudFront (see architecture-simplification.md Phase 1) |
+| 16-011 | 2 | Add ALB target groups and listener rules for each service | Agent | Done | Path-based: /api/* → core-api, /api/v1/notifications* → notification-service. Default → core-api (web moved to CloudFront) |
 | 16-012 | 2 | Add ECR repositories for all 7 images | Agent | Done | Already existed in scaffolding (for_each on local.services) |
 | 16-013 | 2 | Wire secrets via AWS Secrets Manager | Agent | Deferred | DB password still in env vars. Move to Secrets Manager when prod-ready |
 | 16-014 | 2 | Add Route 53 A record alias pointing domain to ALB | Agent | Done | Conditional: created only when domain_name + route53_zone_id provided |
