@@ -356,20 +356,11 @@ resource "aws_lb_listener" "http" {
   port              = 80
   protocol          = "HTTP"
 
+  # Forward to core-api. CloudFront connects via HTTP (origin_protocol_policy = http-only).
+  # All external user traffic goes through CloudFront which handles HTTPS termination.
   default_action {
-    type = var.acm_certificate_arn != "" ? "redirect" : "forward"
-
-    dynamic "redirect" {
-      for_each = var.acm_certificate_arn != "" ? [1] : []
-      content {
-        port        = "443"
-        protocol    = "HTTPS"
-        status_code = "HTTP_301"
-      }
-    }
-
-    # When no HTTPS, forward to core-api (ALB only serves API now; frontends on CloudFront)
-    target_group_arn = var.acm_certificate_arn == "" ? aws_lb_target_group.core_api.arn : null
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.core_api.arn
   }
 }
 

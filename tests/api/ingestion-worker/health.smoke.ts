@@ -1,24 +1,12 @@
 /**
- * Ingestion Worker — smoke tests.
+ * Ingestion module — smoke tests.
  */
 
-const BASE = 'http://localhost:3003';
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 
-describe('Ingestion Worker Smoke Tests', () => {
-  it('GET /health returns ok with provider list', async () => {
-    const res = await fetch(`${BASE}/health`);
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.status).toBe('ok');
-    expect(body.providers).toBeDefined();
-    expect(body.supportedSports).toBeDefined();
-  });
-
-  it('GET /providers returns registered adapters', async () => {
-    const res = await fetch(`${BASE}/providers`);
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.providers).toBeDefined();
-    expect(body.providers.length).toBeGreaterThan(0);
+describe('Ingestion Smoke Tests', () => {
+  it('GET /api/v1/ingestion/providers is reachable (200 or 401)', async () => {
+    const res = await fetch(`${BASE}/api/v1/ingestion/providers`);
+    expect([200, 401]).toContain(res.status);
   });
 });

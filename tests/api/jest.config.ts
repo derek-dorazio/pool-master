@@ -10,7 +10,7 @@ const config: Config = {
   rootDir: '.',
   testMatch: ['**/*.smoke.ts'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', { tsconfig: '../tsconfig.json' }],
+    '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/../tsconfig.json' }],
   },
   setupFilesAfterEnv: ['./setup.ts'],
   testTimeout: 15_000,

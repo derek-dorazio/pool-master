@@ -1,48 +1,33 @@
 /**
- * API smoke test setup — verifies all services are running before tests execute.
+ * API smoke test setup — verifies the API is running before tests execute.
  *
- * Prerequisites: npm run dev:start (Docker + all services must be running)
+ * Set BASE_URL env var to test against a remote environment:
+ *   BASE_URL=https://qa.ultimateofficepoolmanager.com npm run test:smoke:api
+ *
+ * Default: http://localhost:3000 (local dev)
  */
 
-const SERVICES = [
-  { name: 'Core API', url: 'http://localhost:3000/health' },
-  { name: 'Draft Service', url: 'http://localhost:3001/health' },
-  { name: 'Scoring Service', url: 'http://localhost:3002/health' },
-  { name: 'Ingestion Worker', url: 'http://localhost:3003/health' },
-  { name: 'Notification Service', url: 'http://localhost:3004/health' },
-];
+export const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-async function checkService(name: string, url: string): Promise<void> {
+async function checkHealth(): Promise<void> {
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    const response = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(10000) });
     if (!response.ok) {
-      throw new Error(`${name} returned ${response.status}`);
+      throw new Error(`Health check returned ${response.status}`);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `${name} is not running at ${url}.\n` +
+      `API is not running at ${BASE_URL}/health.\n` +
       `  Error: ${message}\n` +
-      `  Run "npm run dev:start" to start all services before running API tests.`,
+      `  For local: run "npm run dev:start" first.\n` +
+      `  For remote: set BASE_URL=https://qa.ultimateofficepoolmanager.com`,
     );
   }
 }
 
 beforeAll(async () => {
-  console.log('Checking that all services are running...');
-  const results: string[] = [];
-
-  for (const service of SERVICES) {
-    try {
-      await checkService(service.name, service.url);
-      results.push(`  ✓ ${service.name}`);
-    } catch (err) {
-      results.push(`  ✗ ${service.name}`);
-      console.error(results.join('\n'));
-      throw err;
-    }
-  }
-
-  console.log(results.join('\n'));
-  console.log('All services healthy.\n');
+  console.log(`Running smoke tests against: ${BASE_URL}`);
+  await checkHealth();
+  console.log('  Health check passed.\n');
 }, 30_000);

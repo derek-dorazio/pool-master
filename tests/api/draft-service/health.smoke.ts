@@ -1,14 +1,12 @@
 /**
- * Draft Service — smoke tests.
+ * Drafts module — smoke tests.
  */
 
-const BASE = 'http://localhost:3001';
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 
-describe('Draft Service Smoke Tests', () => {
-  it('GET /health returns ok', async () => {
-    const res = await fetch(`${BASE}/health`);
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.status).toBe('ok');
+describe('Drafts Smoke Tests', () => {
+  it('GET /api/v1/drafts/templates is reachable (200 or 401)', async () => {
+    const res = await fetch(`${BASE}/api/v1/drafts/templates`);
+    expect([200, 401]).toContain(res.status);
   });
 });
