@@ -1,21 +1,44 @@
 FROM node:20-slim AS base
 WORKDIR /app
+
+# Copy root workspace files
 COPY package.json package-lock.json tsconfig.base.json ./
+
+# Copy shared package
 COPY packages/shared/ ./packages/shared/
+
+# Copy service package
 COPY packages/core-api/ ./packages/core-api/
+
+# Install all dependencies
 RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
+
+# Build shared package first
 RUN cd packages/shared && npx tsc || true
-RUN cd packages/core-api && npx tsc || true
+
 COPY packages/core-api/prisma/ ./packages/core-api/prisma/
 RUN npx prisma generate --schema=packages/core-api/prisma/schema.prisma
 RUN cd packages/core-api && npx tsc || true
 
+# Build the service
+RUN cd packages/core-api && npx tsc || true
+
+# --- Runtime ---
 FROM node:20-slim
 WORKDIR /app
+
+# Copy compiled service
 COPY --from=base /app/packages/core-api/dist ./dist
-COPY --from=base /app/packages/core-api/prisma ./prisma
 COPY --from=base /app/packages/core-api/package.json ./
+
+# Copy node_modules (for third-party deps)
 COPY --from=base /app/node_modules ./node_modules
+
+# Copy shared package (compiled) and link it in node_modules
 COPY --from=base /app/packages/shared ./packages/shared
+RUN mkdir -p node_modules/@poolmaster && ln -sf /app/packages/shared node_modules/@poolmaster/shared
+
+COPY --from=base /app/packages/core-api/prisma ./prisma
+
 EXPOSE 3000
 CMD ["node", "dist/index.js"]

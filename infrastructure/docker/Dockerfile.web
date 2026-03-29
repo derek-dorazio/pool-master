@@ -4,6 +4,7 @@ COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/shared/ ./packages/shared/
 COPY clients/web/ ./clients/web/
 RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
+RUN mkdir -p node_modules/@poolmaster && ln -sf /app/packages/shared node_modules/@poolmaster/shared
 RUN cd clients/web && npx vite build
 
 FROM nginx:alpine

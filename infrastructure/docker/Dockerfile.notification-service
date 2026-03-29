@@ -1,17 +1,42 @@
 FROM node:20-slim AS base
 WORKDIR /app
+
+# Copy root workspace files
 COPY package.json package-lock.json tsconfig.base.json ./
+
+# Copy shared package
 COPY packages/shared/ ./packages/shared/
+
+# Copy service package
 COPY packages/notification-service/ ./packages/notification-service/
+
+# Install all dependencies
 RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
+
+# Build shared package first
 RUN cd packages/shared && npx tsc || true
+
+
+
+# Build the service
 RUN cd packages/notification-service && npx tsc || true
 
+# --- Runtime ---
 FROM node:20-slim
 WORKDIR /app
+
+# Copy compiled service
 COPY --from=base /app/packages/notification-service/dist ./dist
 COPY --from=base /app/packages/notification-service/package.json ./
+
+# Copy node_modules (for third-party deps)
 COPY --from=base /app/node_modules ./node_modules
+
+# Copy shared package (compiled) and link it in node_modules
 COPY --from=base /app/packages/shared ./packages/shared
+RUN mkdir -p node_modules/@poolmaster && ln -sf /app/packages/shared node_modules/@poolmaster/shared
+
+
+
 EXPOSE 3004
 CMD ["node", "dist/index.js"]
