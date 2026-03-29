@@ -5,21 +5,23 @@ import { CookieBanner } from '@/components/cookie-banner';
 export function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b">
+      <header data-testid="public-header" className="border-b">
         <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary">
+          <Link to="/" data-testid="brand-link" className="flex items-center gap-2 text-xl font-bold text-primary">
             <Logo size={28} />
             Ultimate Pool Manager
           </Link>
           <nav className="flex items-center gap-4">
             <Link
               to="/login"
+              data-testid="login-link"
               className="text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               Log In
             </Link>
             <Link
               to="/register"
+              data-testid="register-link"
               className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Get Started
@@ -30,7 +32,7 @@ export function PublicLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t py-6">
+      <footer data-testid="public-footer" className="border-t py-6">
         <div className="container flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Ultimate Pool Manager

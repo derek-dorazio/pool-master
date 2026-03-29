@@ -9,8 +9,9 @@ describe('CookieBanner', () => {
 
   it('renders when no consent stored', () => {
     render(<CookieBanner />);
-    expect(screen.getByText('Accept All')).toBeInTheDocument();
-    expect(screen.getByText('Necessary Only')).toBeInTheDocument();
+    expect(screen.getByTestId('cookie-banner')).toBeInTheDocument();
+    expect(screen.getByTestId('cookie-accept-all')).toBeInTheDocument();
+    expect(screen.getByTestId('cookie-necessary')).toBeInTheDocument();
   });
 
   it('does not render when consent already stored', () => {
@@ -22,16 +23,16 @@ describe('CookieBanner', () => {
   it('hides after clicking Accept All', async () => {
     const user = userEvent.setup();
     render(<CookieBanner />);
-    await user.click(screen.getByText('Accept All'));
-    expect(screen.queryByText('Accept All')).not.toBeInTheDocument();
+    await user.click(screen.getByTestId('cookie-accept-all'));
+    expect(screen.queryByTestId('cookie-banner')).not.toBeInTheDocument();
     expect(localStorage.getItem('poolmaster_cookie_consent')).toBe('all');
   });
 
   it('hides after clicking Necessary Only', async () => {
     const user = userEvent.setup();
     render(<CookieBanner />);
-    await user.click(screen.getByText('Necessary Only'));
-    expect(screen.queryByText('Necessary Only')).not.toBeInTheDocument();
+    await user.click(screen.getByTestId('cookie-necessary'));
+    expect(screen.queryByTestId('cookie-banner')).not.toBeInTheDocument();
     expect(localStorage.getItem('poolmaster_cookie_consent')).toBe('necessary');
   });
 });

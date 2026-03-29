@@ -81,7 +81,7 @@ export function Component() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background px-4 pb-20 pt-24 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
+          <h1 data-testid="hero-heading" className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
             Run Your Pool{' '}
             <span className="text-primary">Like a Pro</span>
           </h1>
@@ -91,7 +91,7 @@ export function Component() {
           </p>
           <div className="mt-10">
             <Button asChild size="lg" className="text-base px-8 py-6">
-              <Link to="/register">Get Started Free</Link>
+              <Link to="/register" data-testid="hero-cta">Get Started Free</Link>
             </Button>
           </div>
         </div>
@@ -100,7 +100,7 @@ export function Component() {
       {/* Features */}
       <section className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-12 text-center text-3xl font-bold tracking-tight">
+          <h2 data-testid="features-heading" className="mb-12 text-center text-3xl font-bold tracking-tight">
             Everything you need to run your pool
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

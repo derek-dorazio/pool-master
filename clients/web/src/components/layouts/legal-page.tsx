@@ -39,7 +39,7 @@ export function LegalPage({ title, subtitle, lastUpdated, sections, children }: 
   return (
     <div className="container max-w-6xl py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        <h1 data-testid="legal-title" className="text-3xl font-bold tracking-tight">{title}</h1>
         <p className="mt-2 text-muted-foreground">{subtitle}</p>
         <p className="mt-1 text-xs text-muted-foreground">Last updated: {lastUpdated}</p>
       </div>

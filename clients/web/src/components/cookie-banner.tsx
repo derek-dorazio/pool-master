@@ -30,7 +30,7 @@ export function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-50 p-4">
+    <div data-testid="cookie-banner" className="fixed bottom-0 inset-x-0 z-50 p-4">
       <Card className="mx-auto max-w-2xl shadow-lg border">
         <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm">
@@ -45,11 +45,12 @@ export function CookieBanner() {
             <Button
               variant="outline"
               size="sm"
+              data-testid="cookie-necessary"
               onClick={() => accept('necessary')}
             >
               Necessary Only
             </Button>
-            <Button size="sm" onClick={() => accept('all')}>
+            <Button size="sm" data-testid="cookie-accept-all" onClick={() => accept('all')}>
               Accept All
             </Button>
           </div>

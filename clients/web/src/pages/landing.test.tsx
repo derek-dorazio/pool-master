@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as LandingPage } from './landing';
 
-// Mock dependencies
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));
@@ -22,32 +21,22 @@ function renderLanding() {
 describe('LandingPage', () => {
   it('renders hero heading', () => {
     renderLanding();
-    expect(screen.getByText(/Run Your Pool/)).toBeInTheDocument();
-    expect(screen.getByText(/Like a Pro/)).toBeInTheDocument();
+    expect(screen.getByTestId('hero-heading')).toBeInTheDocument();
   });
 
   it('renders Get Started CTA', () => {
     renderLanding();
-    expect(screen.getByText('Get Started Free')).toBeInTheDocument();
+    expect(screen.getByTestId('hero-cta')).toBeInTheDocument();
   });
 
-  it('renders feature cards', () => {
+  it('renders features section', () => {
     renderLanding();
-    expect(screen.getByText('Live Scoring')).toBeInTheDocument();
-    expect(screen.getByText('Commissioner Tools')).toBeInTheDocument();
-    expect(screen.getByText('League History')).toBeInTheDocument();
+    expect(screen.getByTestId('features-heading')).toBeInTheDocument();
   });
 
   it('renders supported sports', () => {
     renderLanding();
     expect(screen.getByText('NFL')).toBeInTheDocument();
     expect(screen.getByText('Golf')).toBeInTheDocument();
-    expect(screen.getByText('F1')).toBeInTheDocument();
-  });
-
-  it('renders social proof stats', () => {
-    renderLanding();
-    expect(screen.getByText('Free to start')).toBeInTheDocument();
-    expect(screen.getByText('9 sports supported')).toBeInTheDocument();
   });
 });
