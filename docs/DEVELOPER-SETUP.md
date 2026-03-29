@@ -167,25 +167,17 @@ Start all services in parallel:
 npm run dev
 ```
 
-Or start individual services:
+Or start the API directly:
 
 ```bash
-# Core API only
 npm run dev --workspace=@poolmaster/core-api
-
-# Scoring service only
-npm run dev --workspace=@poolmaster/scoring-service
 ```
 
-### Service Ports
+### Service Port
 
 | Service | Port | Description |
 |---------|------|-------------|
-| core-api | 3000 | Main REST API gateway |
-| draft-service | 3001 | Draft orchestration |
-| scoring-service | 3002 | Score calculation |
-| ingestion-worker | 3003 | Sports data ingestion |
-| notification-service | 3004 | Email/push/SMS |
+| core-api | 3000 | Monolith API (all modules: auth, leagues, contests, drafts, scoring, notifications, ingestion, admin) |
 
 ---
 
@@ -219,16 +211,15 @@ Smoke tests verify the full stack is working. They require all services to be ru
 npm run dev:start
 
 # Then in another terminal:
-npm run test:smoke:api   # API smoke tests — hits all 5 service health endpoints + key routes
+npm run test:smoke:api   # API smoke tests — hits health endpoint + key routes
 npm run test:smoke:e2e   # E2E browser tests — Playwright against the webapp
 npm run test:smoke       # Run both suites
 ```
 
 **API smoke tests** (`tests/api/`) check:
-- Health endpoints for all 5 services
-- Core API: leagues, participants, search, discovery, age verification
-- Ingestion: provider registry
-- Notifications: notification list, preferences
+- Health endpoint
+- Leagues, participants, search, discovery, age verification
+- Scoring templates, notification preferences
 
 **E2E smoke tests** (`clients/web/e2e/`) check:
 - Landing page loads with CTA
@@ -276,27 +267,24 @@ Build output goes to `dist/` in each package.
 
 ### Docker Build
 
-Build a specific service as a Docker image:
+Build the backend as a Docker image:
 
 ```bash
-docker build -f infrastructure/docker/Dockerfile.service \
-  --build-arg SERVICE=core-api \
-  -t poolmaster-core-api .
+docker build -f infrastructure/docker/Dockerfile.core-api -t poolmaster-core-api .
 ```
 
-The Dockerfile uses a multi-stage build: the build stage compiles TypeScript, and the runtime stage copies only the compiled output and `node_modules`.
+The Dockerfile uses a multi-stage build: builds shared + core-api TypeScript, then copies compiled output to a slim runtime image.
 
 ### Deploy to AWS
 
 ```bash
 cd infrastructure/terraform
-cp terraform.tfvars.example terraform.tfvars    # Set db_password
-terraform init                                   # First time only
-terraform plan -var="environment=dev"            # Review changes
-terraform apply -var="environment=dev"           # Create infrastructure
+terraform init -backend-config=envs/qa.backend.hcl
+terraform plan -var-file=envs/qa.tfvars
+terraform apply -var-file=envs/qa.tfvars
 ```
 
-This creates: ECS Fargate cluster (6 services), RDS PostgreSQL, ElastiCache Redis, ALB with path-based routing, ECR repositories, CloudWatch alarms. HTTPS and custom domain are optional — the app works via ALB DNS name without them.
+This creates: ECS Fargate (1 backend service), RDS PostgreSQL, ElastiCache Redis, ALB, S3 + CloudFront (webapp + admin), ECR repository, CloudWatch alarms.
 
 After `terraform apply`, run migrations:
 ```bash
@@ -312,17 +300,16 @@ See [AWS Deployment Plan](../plans/16-aws-deployment.md) for the full step-by-st
 ```
 poolmaster/
 ├── packages/
-│   ├── core-api/           # Fastify REST API (port 3000)
-│   ├── draft-service/      # Draft engines (port 3001)
-│   ├── scoring-service/    # Scoring engines (port 3002)
-│   ├── ingestion-worker/   # Data polling (port 3003)
-│   ├── notification-service/ # Notifications (port 3004)
+│   ├── core-api/            # Modular monolith (all backend modules on port 3000)
+│   │   └── src/modules/     # auth, leagues, contests, drafts, scoring,
+│   │                        # notifications, ingestion, admin, billing, ...
 │   ├── push-mock-server/    # APNs/FCM mock for local dev (port 3099)
-│   └── shared/             # Domain types, DB ports, events, utils
+│   └── shared/              # Domain types, DB ports, events, utils
 ├── clients/
-│   ├── web/                # React + TypeScript (not yet started)
-│   ├── ios/                # Swift + SwiftUI (not yet started)
-│   └── android/            # Kotlin + Jetpack Compose (not yet started)
+│   ├── web/                 # React + Vite + TailwindCSS
+│   ├── admin/               # Admin React app
+│   ├── ios/                 # Swift + SwiftUI (planned)
+│   └── android/             # Kotlin + Jetpack Compose (planned)
 ├── tests/                  # All tests (separate from app code)
 ├── infrastructure/
 │   ├── docker/             # Dockerfile, docker-compose.dev.yml
@@ -358,7 +345,7 @@ poolmaster/
 
 - **Hexagonal architecture** — services depend on repository port interfaces, not concrete implementations
 - **Multi-tenancy** — every row carries `tenant_id`, extracted from `x-tenant-id` header
-- **Event-driven** — services communicate via domain events (Redis Streams/SQS)
+- **Event-driven** — modules communicate via in-process domain events (EventBus)
 - **One export per file** — TypeScript modules follow single-export convention
 - **Tests separate from source** — all tests in `tests/`, never inside `src/`
 

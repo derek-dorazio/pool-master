@@ -36,7 +36,7 @@ See [docs/DEVELOPER-SETUP.md](docs/DEVELOPER-SETUP.md) for full setup instructio
 npm run test:unit
 
 # Smoke tests (requires npm run dev:start first)
-npm run test:smoke:api   # API smoke tests — hits all 5 services
+npm run test:smoke:api   # API smoke tests
 npm run test:smoke:e2e   # E2E browser tests — Playwright
 npm run test:smoke       # Both
 ```
@@ -154,12 +154,13 @@ poolmaster/
 ## Documentation
 
 ### Guides
+- [Architecture Overview](docs/ARCHITECTURE.md) — Components, dependencies, data flow
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
 - [Scoring & Configuration Guide](docs/scoring-and-configuration-guide.md) — End-user scoring configuration
 - [AWS Deployment Plan](plans/16-aws-deployment.md) — Full deployment plan with action items and status
 
 ### Code READMEs
-- [Backend Services](packages/README.md) — All 5 microservices, shared package, API routes, engines
+- [Backend Services](packages/README.md) — Monolith modules, shared package, API routes, engines
 - [Web App](clients/web/README.md) — React app features, pages, components, architecture
 
 ### Rules
@@ -186,7 +187,7 @@ terraform apply -var-file=envs/qa.tfvars
 
 | Component | Technology | Notes |
 |-----------|-----------|-------|
-| **Backend services** | ECS Fargate (5 services) | core-api, draft, scoring, ingestion, notification |
+| **Backend** | ECS Fargate (1 service) | core-api monolith (all modules in one process) |
 | **Webapp + Admin** | S3 + CloudFront CDN | Global edge caching, SPA routing, API proxying via /api/* |
 | **Database** | RDS PostgreSQL 16 | Private subnet, db.t3.micro (QA) |
 | **Cache/Queue** | ElastiCache Redis 7 | cache.t3.micro |
