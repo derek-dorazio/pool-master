@@ -1,20 +1,25 @@
 /**
  * Playwright config for E2E smoke tests.
- * Requires: npm run dev:start (full stack must be running)
+ *
+ * Local:  npm run dev:start, then: npx playwright test
+ * CI/QA:  PLAYWRIGHT_BASE_URL=https://qa.ultimateofficepoolmanager.com npx playwright test
  */
 
 import { defineConfig, devices } from '@playwright/test';
+
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173';
+const isRemote = baseURL.startsWith('https://');
 
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.smoke.ts',
   fullyParallel: false,
-  retries: 0,
+  retries: isRemote ? 1 : 0,
   timeout: 30_000,
   expect: { timeout: 10_000 },
 
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -26,11 +31,15 @@ export default defineConfig({
     },
   ],
 
-  /* Ensure the webapp is running before tests start */
-  webServer: {
-    command: 'echo "Webapp must already be running at http://localhost:5173"',
-    url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 5_000,
-  },
+  /* Only check local server when not targeting a remote URL */
+  ...(isRemote
+    ? {}
+    : {
+        webServer: {
+          command: 'echo "Webapp must already be running at http://localhost:5173"',
+          url: 'http://localhost:5173',
+          reuseExistingServer: true,
+          timeout: 5_000,
+        },
+      }),
 });
