@@ -1,20 +1,23 @@
 FROM node:20-slim AS base
 WORKDIR /app
 
-# Copy root workspace files
 COPY package.json package-lock.json tsconfig.base.json ./
-
-# Copy shared package
 COPY packages/shared/ ./packages/shared/
-
-# Copy service package
 COPY packages/draft-service/ ./packages/draft-service/
 
-# Install all dependencies
 RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
 
-# Build shared package first
+# Build shared package
 RUN cd packages/shared && npx tsc || true
+
+# Copy compiled JS back into source dirs so subpath imports resolve
+# e.g., require("@poolmaster/shared/domain") finds domain/index.js
+RUN cd packages/shared && \
+    cp -r dist/domain/* domain/ 2>/dev/null || true && \
+    cp -r dist/db/* db/ 2>/dev/null || true && \
+    cp -r dist/events/* events/ 2>/dev/null || true && \
+    cp -r dist/utils/* utils/ 2>/dev/null || true && \
+    cp -r dist/i18n/* i18n/ 2>/dev/null || true
 
 
 
@@ -25,14 +28,11 @@ RUN cd packages/draft-service && npx tsc || true
 FROM node:20-slim
 WORKDIR /app
 
-# Copy compiled service
 COPY --from=base /app/packages/draft-service/dist ./dist
 COPY --from=base /app/packages/draft-service/package.json ./
-
-# Copy node_modules (for third-party deps)
 COPY --from=base /app/node_modules ./node_modules
 
-# Copy shared package (compiled) and link it in node_modules
+# Copy shared with compiled JS in source dirs
 COPY --from=base /app/packages/shared ./packages/shared
 RUN mkdir -p node_modules/@poolmaster && ln -sf /app/packages/shared node_modules/@poolmaster/shared
 
