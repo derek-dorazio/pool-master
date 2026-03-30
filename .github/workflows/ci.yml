@@ -63,8 +63,14 @@ jobs:
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
 
-      - name: Run backend tests with coverage
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
+
+      - name: Run unit tests with coverage
         run: npx jest --config tests/jest.config.js --forceExit --ci --coverage
+
+      - name: Run integration tests
+        run: npx jest --config tests/integration/jest.config.js --forceExit --ci
 
       - name: Backend coverage summary
         if: always()

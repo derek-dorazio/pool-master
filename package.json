@@ -22,7 +22,7 @@
     "typecheck": "turbo run typecheck",
     "test": "jest --config tests/jest.config.js",
     "test:unit": "jest --config tests/jest.config.js tests/unit",
-    "test:integration": "jest --config tests/jest.config.js tests/integration",
+    "test:integration": "jest --config tests/integration/jest.config.js --forceExit",
     "test:api": "jest --config tests/jest.config.js tests/api",
     "test:smoke:api": "jest --config tests/api/jest.config.ts",
     "test:smoke:e2e": "cd clients/web && npx playwright test",
