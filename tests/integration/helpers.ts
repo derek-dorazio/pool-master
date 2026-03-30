@@ -32,6 +32,16 @@ import { searchModule } from '../../packages/core-api/src/modules/search/routes'
 import { complianceModule } from '../../packages/core-api/src/modules/compliance/routes';
 import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
+import { templatesModule } from '../../packages/core-api/src/modules/templates/routes';
+import { contestPoolModule } from '../../packages/core-api/src/modules/participants/pool-routes';
+import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
+import { loadConfig as loadNotifConfig } from '../../packages/core-api/src/modules/notifications/core/config';
+import { createChannels } from '../../packages/core-api/src/modules/notifications/channels/channel-factory';
+import { NotificationDispatcher } from '../../packages/core-api/src/modules/notifications/core/dispatcher';
+import { InMemoryRateLimiter } from '../../packages/core-api/src/modules/notifications/core/rate-limiter';
+import { EventGrouper } from '../../packages/core-api/src/modules/notifications/core/event-grouper';
+import { ScheduledRunner } from '../../packages/core-api/src/modules/notifications/core/scheduled-runner';
+import { WeeklyDigestService } from '../../packages/core-api/src/modules/notifications/core/weekly-digest';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const TEST_TENANT_ID = '00000000-0000-0000-0000-999999999999';
@@ -75,6 +85,23 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(complianceModule, { prefix: '/api/v1/account' });
   testApp.register(configModule, { prefix: '/api/v1/config' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
+  testApp.register(templatesModule, { prefix: '/api/v1/templates' });
+  testApp.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool' });
+
+  // Notification module (for notification persistence tests)
+  const notifConfig = loadNotifConfig();
+  const notifChannels = createChannels(notifConfig, prisma);
+  const rateLimiter = new InMemoryRateLimiter();
+  const dispatcher = new NotificationDispatcher(prisma, notifChannels, rateLimiter);
+  const eventGrouper = new EventGrouper();
+  const scheduledRunner = new ScheduledRunner(prisma, dispatcher);
+  const digestService = new WeeklyDigestService(prisma, notifChannels);
+
+  testApp.register(notificationsModule, {
+    prefix: '/api/v1',
+    prisma, channels: notifChannels, dispatcher, rateLimiter,
+    eventGrouper, scheduledRunner, digestService,
+  });
 
   await testApp.ready();
   return testApp;
