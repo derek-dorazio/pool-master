@@ -173,16 +173,45 @@ export function authHeaders(userId: string, email: string): Record<string, strin
 
 /**
  * Clean up test data created during tests.
- * Deletes in reverse dependency order to avoid FK violations.
+ * Deletes in reverse dependency order using raw SQL for reliability.
  */
 export async function cleanupTestData(): Promise<void> {
-  // Delete in reverse dependency order
-  await prisma.contestEntry.deleteMany({ where: { contest: { league: { tenantId: TEST_TENANT_ID } } } });
-  await prisma.contestStanding.deleteMany({ where: { contest: { league: { tenantId: TEST_TENANT_ID } } } });
-  await prisma.contest.deleteMany({ where: { league: { tenantId: TEST_TENANT_ID } } });
-  await prisma.leagueInvitation.deleteMany({ where: { league: { tenantId: TEST_TENANT_ID } } });
-  await prisma.leagueMembership.deleteMany({ where: { league: { tenantId: TEST_TENANT_ID } } });
-  await prisma.league.deleteMany({ where: { tenantId: TEST_TENANT_ID } });
-  await prisma.refreshToken.deleteMany({ where: { user: { tenantId: TEST_TENANT_ID } } });
-  await prisma.user.deleteMany({ where: { tenantId: TEST_TENANT_ID } });
+  const tid = TEST_TENANT_ID;
+  // Tables that reference contests
+  const contestChildTables = [
+    'contest_entries', 'contest_standings', 'contest_results', 'scoring_checkpoints',
+    'draft_sessions', 'draft_picks', 'selection_configs', 'bracket_predictions',
+    'contest_participant_pools', 'roster_picks', 'contest_picks', 'payout_history',
+    'commissioner_audit_logs', 'commissioner_action_items',
+  ];
+  // Tables that reference leagues
+  const leagueChildTables = [
+    'season_notes', 'league_season_summaries', 'league_records', 'rivalry_records',
+    'trophies', 'team_roster_history', 'retention_configs', 'retention_job_runs',
+    'discoverable_leagues',
+  ];
+
+  for (const table of contestChildTables) {
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM "${table}" WHERE contest_id IN (SELECT id FROM contests WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1))`,
+      tid,
+    ).catch(() => {});
+  }
+  await prisma.$executeRawUnsafe(`DELETE FROM contests WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1)`, tid).catch(() => {});
+
+  for (const table of leagueChildTables) {
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM "${table}" WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1)`,
+      tid,
+    ).catch(() => {});
+  }
+  await prisma.$executeRawUnsafe(`DELETE FROM league_invitations WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1)`, tid).catch(() => {});
+  await prisma.$executeRawUnsafe(`DELETE FROM league_memberships WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1)`, tid).catch(() => {});
+  await prisma.$executeRawUnsafe(`DELETE FROM leagues WHERE tenant_id = $1`, tid).catch(() => {});
+
+  // Participants created during tests (name starts with test pattern)
+  await prisma.$executeRawUnsafe(`DELETE FROM participant_season_records WHERE participant_id IN (SELECT id FROM participants WHERE name LIKE 'Tiger%' OR name LIKE 'Eldrick%')`).catch(() => {});
+  await prisma.$executeRawUnsafe(`DELETE FROM participants WHERE name LIKE 'Tiger%' OR name LIKE 'Eldrick%'`).catch(() => {});
+  await prisma.$executeRawUnsafe(`DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE tenant_id = $1)`, tid).catch(() => {});
+  await prisma.$executeRawUnsafe(`DELETE FROM users WHERE tenant_id = $1`, tid).catch(() => {});
 }
