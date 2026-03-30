@@ -115,6 +115,39 @@ jobs:
           " 2>/dev/null || echo "Coverage data not available"
           echo '```' >> $GITHUB_STEP_SUMMARY
 
+  # =========================================================================
+  # Admin Unit Tests + Coverage (Vitest)
+  # =========================================================================
+  test-admin:
+    runs-on: ubuntu-latest
+    needs: lint-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Run admin tests with coverage
+        run: cd clients/admin && npx vitest run --coverage
+
+      - name: Admin coverage summary
+        if: always()
+        run: |
+          echo "### Admin Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat clients/admin/coverage/coverage-summary.json 2>/dev/null | node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('/dev/stdin','utf8'));
+            const t = data.total;
+            console.log('Lines:      ' + t.lines.pct + '%');
+            console.log('Branches:   ' + t.branches.pct + '%');
+            console.log('Functions:  ' + t.functions.pct + '%');
+            console.log('Statements: ' + t.statements.pct + '%');
+          " 2>/dev/null || echo "Coverage data not available"
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
   build:
     runs-on: ubuntu-latest
     needs: lint-typecheck
@@ -133,7 +166,7 @@ jobs:
   # =========================================================================
   publish-images:
     runs-on: ubuntu-latest
-    needs: [test, test-webapp, build]
+    needs: [test, test-webapp, test-admin, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
