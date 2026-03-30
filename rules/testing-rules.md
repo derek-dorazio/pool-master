@@ -469,7 +469,15 @@ describe("Golf scoring against real data", () => {
 ## 11. Notification Testing
 
 ### Unit Tests
-Mock channel adapters directly with Jest mocks. Test the preference service, template renderer, and channel factory in isolation.
+Mock channel adapters directly with Jest mocks. Test the preference service, template renderer, rate limiter, event grouper, dispatcher, channels (InApp/Email/Push), scheduled runner, and weekly digest in isolation.
+
+**Test files in `tests/unit/notification-service/`:**
+- `preference-service.test.ts` — shouldDeliver, getEventCategory, DND logic
+- `template-renderer.test.ts` — {{variable}} substitution, renderNotification
+- `rate-limiter.test.ts` — per-channel limits, dedup, collapse windows
+- `event-grouper.test.ts` — event buffering and collapsing
+- `dispatcher.test.ts` — dispatch orchestration, preference suppression, rate limiting, delivery logging
+- `channels.test.ts` — InAppChannel CRUD, EmailChannel provider delegation, PushChannel device routing
 
 ### Integration Tests — Email
 1. Start Mailpit via docker-compose (SMTP on `localhost:1025`)
