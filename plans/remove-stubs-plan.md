@@ -191,9 +191,9 @@ Full audit of all code that is not implemented for real — using mocks, stubs, 
 | RS-010 | P2 | Replace billing in-memory stores with Prisma | Done | entitlement, usage, subscription, trial → Prisma; cancellation/dunning kept Map (no model) |
 | RS-011 | P2 | Replace admin in-memory stores with Prisma | Done | 8 services converted: flag, announcement, audit, impersonation, export, tenant, user, contest. Export keeps transient Map for job state but queries real DB data. All services accept PrismaClient via constructor. Shared instance created in routes.ts. |
 | RS-012 | P2 | ~~Replace event bus with Redis Streams~~ | Removed | Monolith architecture — in-process EventBus is correct, not a mock |
-| RS-013 | P2 | Replace score store in-memory Maps with Prisma/Postgres | Not Started | ScoreStore + ContestLookup use hardcoded mock data |
+| RS-013 | P2 | Replace score store in-memory Maps with Prisma/Postgres | Done | ScoreStore uses hybrid approach: Prisma for totals (ContestEntry.totalScore) and leaderboard queries, in-memory cache for transient timeline/breakdowns. ContestLookup queries ContestParticipantPool and RosterPick via Prisma. StandingsRollup persists to ContestStanding via upsert and updates ContestEntry.rank. All three classes accept PrismaClient via constructor; singletons moved inside buildApp(). |
 | RS-014 | P2 | Integrate real Stripe SDK | Not Started | Replace MockStripeClient (deferred until Stripe account ready) |
-| RS-015 | P2 | Wire ingestion callbacks + scoring consumer to DB | Not Started | onEvents/onParticipants/onRankings only log; ContestLookup uses mock data |
+| RS-015 | P2 | Wire ingestion callbacks + scoring consumer to DB | Done | IngestionPersistence class persists events/participants/rankings via Prisma upserts; callbacks wired in index.ts; ContestLookup still uses mock data (separate task) |
 | RS-016 | P2 | Replace history in-memory stores with Prisma | Done | RetentionService → Prisma RetentionConfig; SeasonNotesService → Prisma SeasonNote + Trophy |
 | RS-017 | P3 | Replace window.confirm() with modal dialogs | Done | Created ConfirmDialog + useConfirmDialog hook for web and admin apps; replaced all 11 instances |
 | RS-018 | P3 | Replace console.log() with real API calls in admin | Done | Replaced 15+ console.log handlers with adminApi calls in notifications, platform, templates, flags pages |

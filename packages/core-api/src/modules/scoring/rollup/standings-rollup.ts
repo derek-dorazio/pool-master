@@ -1,10 +1,9 @@
 /**
- * StandingsRollup — periodic job that reads totals from ScoreStore
- * and writes ranked standings to the SQL ContestStanding table.
- *
- * v1: logs standings and publishes events. Production will write to Prisma.
+ * StandingsRollup — periodic job that reads totals from ContestEntry
+ * and writes ranked standings to the ContestStanding table via Prisma.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import type { EventBus } from '@poolmaster/shared/events/event-bus';
 import type { ScoreStore } from '../storage/score-store';
 
@@ -27,23 +26,26 @@ export interface StandingEntry {
 export interface StandingsRollupDeps {
   eventBus: EventBus;
   scoreStore: ScoreStore;
+  prisma: PrismaClient;
 }
 
 // --- Rollup Class ---
 
 const DEFAULT_INTERVAL_MS = 30_000;
 
-/** Reads ScoreStore leaderboards, assigns ranks, and publishes standings updates. */
+/** Reads ScoreStore leaderboards, assigns ranks, and persists standings to Prisma. */
 export class StandingsRollup {
   private intervalHandle: ReturnType<typeof setInterval> | null = null;
   private activeContestIds: Set<string> = new Set();
   private previousRanks: Map<string, Map<string, number>> = new Map();
   private readonly eventBus: EventBus;
   private readonly scoreStore: ScoreStore;
+  private readonly prisma: PrismaClient;
 
   constructor(deps: StandingsRollupDeps) {
     this.eventBus = deps.eventBus;
     this.scoreStore = deps.scoreStore;
+    this.prisma = deps.prisma;
   }
 
   /** Register a contest for periodic rollup. */
@@ -64,6 +66,10 @@ export class StandingsRollup {
     const rankChanges = this.countRankChanges(contestId, standings);
     this.updatePreviousRanks(contestId, standings);
     const rolledUpAt = new Date();
+
+    // Persist standings to Prisma
+    await this.persistStandings(contestId, standings, rolledUpAt);
+
     await this.publishStandingsUpdated(contestId, standings, rolledUpAt);
     return {
       contestId,
@@ -108,6 +114,45 @@ export class StandingsRollup {
   /** Get the set of active contest IDs. */
   getActiveContestIds(): ReadonlySet<string> {
     return this.activeContestIds;
+  }
+
+  /** Persist standings to ContestStanding and update ContestEntry.rank via Prisma. */
+  private async persistStandings(
+    contestId: string,
+    standings: StandingEntry[],
+    rolledUpAt: Date,
+  ): Promise<void> {
+    await this.prisma.$transaction(
+      standings.map((s) =>
+        this.prisma.contestStanding.upsert({
+          where: {
+            contestId_entryId: { contestId, entryId: s.entryId },
+          },
+          create: {
+            contestId,
+            entryId: s.entryId,
+            rank: s.rank,
+            totalScore: s.totalScore,
+            lastUpdatedAt: rolledUpAt,
+          },
+          update: {
+            rank: s.rank,
+            totalScore: s.totalScore,
+            lastUpdatedAt: rolledUpAt,
+          },
+        }),
+      ),
+    );
+
+    // Update rank on ContestEntry for quick lookups
+    await this.prisma.$transaction(
+      standings.map((s) =>
+        this.prisma.contestEntry.update({
+          where: { id: s.entryId },
+          data: { rank: s.rank },
+        }),
+      ),
+    );
   }
 
   /** Count how many entries changed rank since last rollup. */

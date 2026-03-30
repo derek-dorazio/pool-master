@@ -9,6 +9,7 @@
  * 5. Publishes 'score.updated' events
  */
 
+import type { PrismaClient } from '@prisma/client';
 import type { StatEvent } from '@poolmaster/shared/events/scoring';
 import type { ScoringConfig } from '@poolmaster/shared/domain/scoring-config';
 import type { EventBus } from '@poolmaster/shared/events/event-bus';
@@ -32,29 +33,30 @@ export interface EntryInfo {
 
 // --- ContestLookup Service ---
 
-/** Resolves contests and entries for a given participant. */
+/** Resolves contests and entries for a given participant via Prisma. */
 export class ContestLookup {
-  private contestsByParticipant: Map<string, ContestInfo[]> = new Map();
-  private entriesByContestParticipant: Map<string, EntryInfo[]> = new Map();
+  private readonly prisma: PrismaClient;
 
-  /** Register a contest for a participant (used for testing / mock setup). */
-  registerContest(participantId: string, contest: ContestInfo): void {
-    const existing = this.contestsByParticipant.get(participantId) ?? [];
-    existing.push(contest);
-    this.contestsByParticipant.set(participantId, existing);
-  }
-
-  /** Register an entry for a contest+participant pair (used for testing / mock setup). */
-  registerEntry(contestId: string, participantId: string, entry: EntryInfo): void {
-    const key = `${contestId}#${participantId}`;
-    const existing = this.entriesByContestParticipant.get(key) ?? [];
-    existing.push(entry);
-    this.entriesByContestParticipant.set(key, existing);
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
   }
 
   /** Find active contests that include this participant. */
   async findActiveContestsForParticipant(participantId: string): Promise<ContestInfo[]> {
-    return this.contestsByParticipant.get(participantId) ?? [];
+    const poolEntries = await this.prisma.contestParticipantPool.findMany({
+      where: { participantId, isAvailable: true },
+      include: {
+        contest: true,
+      },
+    });
+
+    return poolEntries
+      .filter((pe) => pe.contest.status === 'ACTIVE' || pe.contest.status === 'LOCKED')
+      .map((pe) => ({
+        contestId: pe.contest.id,
+        scoringEngine: pe.contest.scoringEngine,
+        scoringRules: pe.contest.scoringRules as ScoringConfig,
+      }));
   }
 
   /** Find entries that include this participant within a contest. */
@@ -62,23 +64,31 @@ export class ContestLookup {
     contestId: string,
     participantId: string,
   ): Promise<EntryInfo[]> {
-    const key = `${contestId}#${participantId}`;
-    return this.entriesByContestParticipant.get(key) ?? [];
+    const picks = await this.prisma.rosterPick.findMany({
+      where: { participantId, entry: { contestId } },
+      include: { entry: true },
+    });
+
+    return picks.map((p) => ({
+      entryId: p.entry.id,
+      entryName: p.entry.name,
+      participantIds: [],
+    }));
   }
 
   /** Get the scoring config for a contest. */
   async getScoringConfig(contestId: string): Promise<ScoringConfig | undefined> {
-    for (const contests of this.contestsByParticipant.values()) {
-      const found = contests.find((c) => c.contestId === contestId);
-      if (found) return found.scoringRules;
-    }
-    return undefined;
+    const contest = await this.prisma.contest.findUnique({
+      where: { id: contestId },
+      select: { scoringRules: true },
+    });
+    if (!contest) return undefined;
+    return contest.scoringRules as ScoringConfig;
   }
 
-  /** Clear all registered data — useful for testing. */
+  /** No-op — retained for test compatibility. */
   clear(): void {
-    this.contestsByParticipant.clear();
-    this.entriesByContestParticipant.clear();
+    // No-op: Prisma-backed lookup has no local state to clear.
   }
 }
 

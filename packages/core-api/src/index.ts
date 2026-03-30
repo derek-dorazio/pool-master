@@ -37,7 +37,7 @@ import { socialModule } from './modules/social/routes';
 
 // Scoring module
 import { eventBus } from '@poolmaster/shared/events/event-bus';
-import { scoreStore } from './modules/scoring/storage/score-store';
+import { ScoreStore } from './modules/scoring/storage/score-store';
 import { subscribeStatEventConsumer, ContestLookup } from './modules/scoring/consumer/stat-event-consumer';
 import { StandingsRollup } from './modules/scoring/rollup/standings-rollup';
 import { ScoringService } from './modules/scoring/service';
@@ -61,15 +61,17 @@ import type { IngestionCallbacks, IngestionJobRecord } from './modules/ingestion
 import type { SportEvent, ProviderParticipant, ProviderRanking, ProviderStatEvent } from './modules/ingestion/core';
 import { OpenF1Adapter, OddsApiAdapter, EspnAdapter, PgaTourAdapter } from './modules/ingestion/adapters';
 import { ingestionModule } from './modules/ingestion/routes';
-
-// --- Scoring subsystem (module-level singletons) ---
-const contestLookup = new ContestLookup();
-const standingsRollup = new StandingsRollup({ eventBus, scoreStore });
-const scoringService = new ScoringService({ scoreStore, standingsRollup });
+import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
   const prisma = new PrismaClient();
+
+  // --- Scoring subsystem (Prisma-backed) ---
+  const scoreStore = new ScoreStore(prisma);
+  const contestLookup = new ContestLookup(prisma);
+  const standingsRollup = new StandingsRollup({ eventBus, scoreStore, prisma });
+  const scoringService = new ScoringService({ scoreStore, standingsRollup });
 
   // =========================================================================
   // Core plugins
@@ -158,15 +160,23 @@ export function buildApp() {
   registry.register(Sport.NCAA_BASKETBALL, new EspnAdapter(), 'PRIMARY');
   const oddsAdapter = new OddsApiAdapter();
 
+  const ingestionPersistence = new IngestionPersistence(prisma);
+
   const ingestionCallbacks: IngestionCallbacks = {
     async onEvents(events: SportEvent[]) {
       app.log.info({ count: events.length }, 'Ingested events');
+      const persisted = await ingestionPersistence.persistEvents(events);
+      app.log.info({ persisted }, 'Persisted sport events');
     },
     async onParticipants(participants: ProviderParticipant[]) {
       app.log.info({ count: participants.length }, 'Ingested participants');
+      const persisted = await ingestionPersistence.persistParticipants(participants);
+      app.log.info({ persisted }, 'Persisted participants');
     },
     async onRankings(rankings: ProviderRanking[]) {
       app.log.info({ count: rankings.length }, 'Ingested rankings');
+      const persisted = await ingestionPersistence.persistRankings(rankings);
+      app.log.info({ persisted }, 'Persisted rankings');
     },
     async onLiveScores(scores: ProviderStatEvent[]) {
       app.log.info({ count: scores.length }, 'Ingested live scores');
