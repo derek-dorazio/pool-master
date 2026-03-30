@@ -11,7 +11,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
 
   async findById(id: string, tenantId: string): Promise<League | null> {
     const row = await this.prisma.league.findFirst({
-      where: { id, tenantId },
+      where: { id, ...(tenantId ? { tenantId } : {}) },
     });
     return row ? mapToLeague(row) : null;
   }
