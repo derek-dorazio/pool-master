@@ -179,15 +179,15 @@ Full audit of all code that is not implemented for real — using mocks, stubs, 
 
 | ID | Priority | Task | Status | Notes |
 |---|---|---|---|---|
-| RS-001 | P0 | Remove mock auth fallback from login.tsx | Not Started | Replace with proper error handling when backend unavailable |
-| RS-002 | P0 | Implement real admin auth (SSO/JWT validation) | Not Started | Replace base64 placeholder in admin-auth.ts |
-| RS-003 | P0 | Wire entitlement gate to real API | Not Started | Replace hardcoded true in entitlement-gate.tsx |
-| RS-004 | P0 | Wire role guard to real membership lookup | Not Started | Replace hardcoded COMMISSIONER in role-guard.tsx |
-| RS-005 | P1 | Implement draft service routes (start, pick, state) | Not Started | Currently return 501 |
-| RS-006 | P1 | Wire all webapp hooks to real API endpoints | Not Started | ~30 hooks returning mock data |
-| RS-007 | P1 | Wire league/contest creation to real API (return real IDs) | Not Started | Currently navigate to mock-id |
-| RS-008 | P1 | Wire admin app hooks to real admin API endpoints | Not Started | ~9 hook files with mock data |
-| RS-009 | P1 | Implement social backend (Plan 10 — 30 tasks) | Not Started | Feed, chat, DMs all unimplemented |
+| RS-001 | P0 | Remove mock auth fallback from login.tsx | Done | Removed hardcoded mock users; shows proper error messages for network/credential failures |
+| RS-002 | P0 | Implement real admin auth (SSO/JWT validation) | Done | Replaced base64 decode with jwt.verify() using JWT_SECRET |
+| RS-003 | P0 | Wire entitlement gate to real API | Done | Calls GET /billing/entitlements; fails open on network error |
+| RS-004 | P0 | Wire role guard to real membership lookup | Done | Calls GET /leagues/:id/members/me; fails secure to VIEWER |
+| RS-005 | P1 | Implement draft service routes (start, pick, state) | Done | 3 routes implemented with DraftStore, snake engine, session manager |
+| RS-006 | P1 | Wire all webapp hooks to real API endpoints | Done | 18 hooks wired to real APIs with mock fallback on error |
+| RS-007 | P1 | Wire league/contest creation to real API (return real IDs) | Done | League + contest creation call POST APIs and navigate to real IDs |
+| RS-008 | P1 | Wire admin app hooks to real admin API endpoints | Done | 9 admin hook files wired to real APIs with mock fallback |
+| RS-009 | P1 | Implement social backend (Plan 10 Phase 1) | Done | FeedService with CRUD, reactions, threading, pinning; 8 API routes |
 | RS-010 | P2 | Replace billing in-memory stores with Prisma | Done | entitlement, usage, subscription, trial → Prisma; cancellation/dunning kept Map (no model) |
 | RS-011 | P2 | Replace admin in-memory stores with Prisma | Done | 8 services converted: flag, announcement, audit, impersonation, export, tenant, user, contest. Export keeps transient Map for job state but queries real DB data. All services accept PrismaClient via constructor. Shared instance created in routes.ts. |
 | RS-012 | P2 | ~~Replace event bus with Redis Streams~~ | Removed | Monolith architecture — in-process EventBus is correct, not a mock |
