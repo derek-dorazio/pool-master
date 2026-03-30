@@ -63,7 +63,21 @@ export class PrismaContestRepository implements ContestRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.prisma.contest.delete({ where: { id } });
+    // Delete child records in dependency order before removing the contest
+    await this.prisma.$transaction([
+      this.prisma.bracketPrediction.deleteMany({ where: { contestId: id } }),
+      this.prisma.contestPick.deleteMany({ where: { contestId: id } }),
+      this.prisma.rosterPick.deleteMany({ where: { entry: { contestId: id } } }),
+      this.prisma.contestStanding.deleteMany({ where: { contestId: id } }),
+      this.prisma.contestResult.deleteMany({ where: { contestId: id } }),
+      this.prisma.draftPick.deleteMany({ where: { session: { contestId: id } } }),
+      this.prisma.draftSession.deleteMany({ where: { contestId: id } }),
+      this.prisma.contestEntry.deleteMany({ where: { contestId: id } }),
+      this.prisma.contestParticipantPool.deleteMany({ where: { contestId: id } }),
+      this.prisma.contestPool.deleteMany({ where: { contestId: id } }),
+      this.prisma.selectionConfig.deleteMany({ where: { contestId: id } }),
+      this.prisma.contest.delete({ where: { id } }),
+    ]);
   }
 }
 

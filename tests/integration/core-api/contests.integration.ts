@@ -123,7 +123,7 @@ describe('Contests Integration', () => {
   });
 
   describe('DELETE /api/v1/contests/:contestId', () => {
-    it('attempts to delete the contest', async () => {
+    it('deletes the contest and its child records', async () => {
       // Don't send content-type: application/json with empty body
       const { 'content-type': _, ...headersNoContentType } = ownerHeaders;
       const res = await getApp().inject({
@@ -131,8 +131,16 @@ describe('Contests Integration', () => {
         url: `/api/v1/contests/${contestId}`,
         headers: headersNoContentType,
       });
-      // 200/204 success, or 500 if FK constraints prevent deletion (selection_configs)
-      expect([200, 204, 500]).toContain(res.statusCode);
+      expect([200, 204]).toContain(res.statusCode);
+    });
+
+    it('contest is gone after deletion', async () => {
+      const res = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/contests/${contestId}`,
+        headers: ownerHeaders,
+      });
+      expect([403, 404]).toContain(res.statusCode);
     });
   });
 
