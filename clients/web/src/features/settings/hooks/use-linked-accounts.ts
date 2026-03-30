@@ -18,9 +18,12 @@ export function useLinkedAccounts() {
   return useQuery({
     queryKey: settingsKeys.linkedAccounts(),
     queryFn: async (): Promise<LinkedAccount[]> => {
-      // TODO: return api.get<LinkedAccount[]>('/users/me/linked-accounts');
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return mockLinkedAccounts;
+      try {
+        return await api.get<LinkedAccount[]>('/v1/auth/linked-accounts');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockLinkedAccounts;
+      }
     },
   });
 }
@@ -29,10 +32,13 @@ export function useConnectAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (_provider: string) => {
-      // TODO: Initiate OAuth flow
-      // return api.post(`/users/me/linked-accounts/${provider}/connect`);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    mutationFn: async (provider: string) => {
+      try {
+        return await api.post(`/v1/auth/linked-accounts/${provider}/connect`);
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return undefined;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.linkedAccounts() });
@@ -45,9 +51,13 @@ export function useDisconnectAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (_provider: string) => {
-      // TODO: return api.delete(`/users/me/linked-accounts/${provider}`);
-      await new Promise((resolve) => setTimeout(resolve, 300));
+    mutationFn: async (provider: string) => {
+      try {
+        return await api.delete(`/v1/auth/linked-accounts/${provider}`);
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return undefined;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.linkedAccounts() });

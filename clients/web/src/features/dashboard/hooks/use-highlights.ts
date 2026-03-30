@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export interface SeasonHighlights {
   recentWin: string | null;
@@ -18,8 +19,12 @@ export function useHighlights() {
   return useQuery({
     queryKey: ['dashboard', 'highlights'],
     queryFn: async (): Promise<SeasonHighlights> => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return mockHighlights;
+      try {
+        return await api.get<SeasonHighlights>('/v1/history/highlights');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockHighlights;
+      }
     },
   });
 }

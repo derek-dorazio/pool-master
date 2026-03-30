@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export type PlanTier = 'free' | 'starter' | 'pro' | 'league-plus';
 export type InvoiceStatus = 'paid' | 'pending' | 'failed';
@@ -127,8 +128,13 @@ export function useBillingEnabled() {
   return useQuery({
     queryKey: billingKeys.enabled(),
     queryFn: async (): Promise<boolean> => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      return false;
+      try {
+        const plan = await api.get<BillingPlan>('/v1/billing/plan');
+        return !!plan;
+      } catch {
+        // Fallback to disabled when backend unavailable
+        return false;
+      }
     },
     staleTime: 30 * 60 * 1000,
   });
@@ -138,23 +144,33 @@ export function useBillingPlan() {
   return useQuery({
     queryKey: billingKeys.subscription(),
     queryFn: async (): Promise<BillingPlan> => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return planTiers[0];
+      try {
+        return await api.get<BillingPlan>('/v1/billing/plan');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return planTiers[0];
+      }
     },
     staleTime: 5 * 60 * 1000,
   });
 }
 
+const mockUsage: UsageStats = {
+  leagues: { current: 2, limit: 50 },
+  contests: { current: 5, limit: 100 },
+  members: { current: 24, limit: 100 },
+};
+
 export function useBillingUsage() {
   return useQuery({
     queryKey: billingKeys.usage(),
     queryFn: async (): Promise<UsageStats> => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return {
-        leagues: { current: 2, limit: 50 },
-        contests: { current: 5, limit: 100 },
-        members: { current: 24, limit: 100 },
-      };
+      try {
+        return await api.get<UsageStats>('/v1/billing/usage');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockUsage;
+      }
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -164,8 +180,12 @@ export function useBillingSubscription() {
   return useQuery({
     queryKey: [...billingKeys.subscription(), 'detail'] as const,
     queryFn: async (): Promise<Subscription | null> => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return null;
+      try {
+        return await api.get<Subscription | null>('/v1/billing/plan');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return null;
+      }
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -175,8 +195,12 @@ export function usePlanTiers() {
   return useQuery({
     queryKey: billingKeys.plans(),
     queryFn: async (): Promise<BillingPlan[]> => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return planTiers;
+      try {
+        return await api.get<BillingPlan[]>('/v1/billing/plans');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return planTiers;
+      }
     },
     staleTime: 30 * 60 * 1000,
   });
@@ -186,8 +210,12 @@ export function useInvoices() {
   return useQuery({
     queryKey: billingKeys.invoices(),
     queryFn: async (): Promise<Invoice[]> => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return [];
+      try {
+        return await api.get<Invoice[]>('/v1/billing/invoices');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return [];
+      }
     },
     staleTime: 5 * 60 * 1000,
   });

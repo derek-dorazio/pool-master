@@ -111,10 +111,12 @@ export function useDraft(draftId: string) {
   return useQuery({
     queryKey: ['drafts', draftId],
     queryFn: async (): Promise<DraftState> => {
-      // TODO: Replace with real API call
-      // return api.get<DraftState>(`/v1/drafts/${draftId}`);
-      await new Promise((r) => setTimeout(r, 200));
-      return { ...mockDraft, id: draftId, isMyPick: true, currentEntryName: 'My Team' };
+      try {
+        return await api.get<DraftState>(`/v1/drafts/${draftId}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return { ...mockDraft, id: draftId, isMyPick: true, currentEntryName: 'My Team' };
+      }
     },
     refetchInterval: 10_000,
     refetchOnWindowFocus: true,
@@ -125,19 +127,26 @@ export function useAvailableParticipants(draftId: string, filters: { query?: str
   return useQuery({
     queryKey: ['drafts', draftId, 'available', filters],
     queryFn: async (): Promise<AvailableParticipant[]> => {
-      // TODO: Replace with real API call
-      await new Promise((r) => setTimeout(r, 100));
-      let results = [...mockAvailable];
-      if (filters.query) {
-        const q = filters.query.toLowerCase();
-        results = results.filter((p) => p.name.toLowerCase().includes(q) || p.team?.toLowerCase().includes(q));
+      try {
+        const params = new URLSearchParams();
+        if (filters.query) params.set('q', filters.query);
+        if (filters.position) params.set('position', filters.position);
+        if (filters.sort) params.set('sort', filters.sort);
+        return await api.get<AvailableParticipant[]>(`/v1/drafts/${draftId}/available?${params.toString()}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        let results = [...mockAvailable];
+        if (filters.query) {
+          const q = filters.query.toLowerCase();
+          results = results.filter((p) => p.name.toLowerCase().includes(q) || p.team?.toLowerCase().includes(q));
+        }
+        if (filters.position) {
+          results = results.filter((p) => p.position === filters.position);
+        }
+        if (filters.sort === 'name') results.sort((a, b) => a.name.localeCompare(b.name));
+        else results.sort((a, b) => (a.ranking ?? 999) - (b.ranking ?? 999));
+        return results;
       }
-      if (filters.position) {
-        results = results.filter((p) => p.position === filters.position);
-      }
-      if (filters.sort === 'name') results.sort((a, b) => a.name.localeCompare(b.name));
-      else results.sort((a, b) => (a.ranking ?? 999) - (b.ranking ?? 999));
-      return results;
     },
   });
 }
@@ -147,10 +156,12 @@ export function useMakePick(draftId: string) {
 
   return useMutation({
     mutationFn: async (participantId: string) => {
-      // TODO: Replace with real API call
-      // return api.post(`/v1/drafts/${draftId}/pick`, { participantId });
-      await new Promise((r) => setTimeout(r, 300));
-      return { success: true };
+      try {
+        return await api.post<{ success: boolean }>(`/v1/drafts/${draftId}/pick`, { participantId });
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return { success: true };
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });

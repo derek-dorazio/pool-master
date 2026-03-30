@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 // ── Scoring Templates ──────────────────────────────────────────────────────────
 
@@ -23,7 +25,18 @@ const MOCK_SCORING_TEMPLATES: ScoringTemplate[] = [
 ];
 
 export function useScoringTemplates() {
-  return { data: MOCK_SCORING_TEMPLATES, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'config', 'scoring-templates'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<ScoringTemplate[]>('/v1/admin/config/scoring-templates');
+      } catch {
+        return MOCK_SCORING_TEMPLATES;
+      }
+    },
+  });
+
+  return { data: data ?? MOCK_SCORING_TEMPLATES, isLoading };
 }
 
 // ── Selection Templates ────────────────────────────────────────────────────────
@@ -47,7 +60,18 @@ const MOCK_SELECTION_TEMPLATES: SelectionTemplate[] = [
 ];
 
 export function useSelectionTemplates() {
-  return { data: MOCK_SELECTION_TEMPLATES, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'config', 'selection-templates'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<SelectionTemplate[]>('/v1/admin/config/selection-templates');
+      } catch {
+        return MOCK_SELECTION_TEMPLATES;
+      }
+    },
+  });
+
+  return { data: data ?? MOCK_SELECTION_TEMPLATES, isLoading };
 }
 
 // ── Push Triggers ──────────────────────────────────────────────────────────────
@@ -81,7 +105,18 @@ const MOCK_PUSH_TRIGGERS: PushTrigger[] = [
 ];
 
 export function usePushTriggers() {
-  return { data: MOCK_PUSH_TRIGGERS, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'config', 'push-triggers'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<PushTrigger[]>('/v1/admin/config/push-triggers');
+      } catch {
+        return MOCK_PUSH_TRIGGERS;
+      }
+    },
+  });
+
+  return { data: data ?? MOCK_PUSH_TRIGGERS, isLoading };
 }
 
 // ── Notification Templates ─────────────────────────────────────────────────────
@@ -106,7 +141,18 @@ const MOCK_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
 ];
 
 export function useNotificationTemplates() {
-  return { data: MOCK_NOTIFICATION_TEMPLATES, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'config', 'notification-templates'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<NotificationTemplate[]>('/v1/admin/config/notification-templates');
+      } catch {
+        return MOCK_NOTIFICATION_TEMPLATES;
+      }
+    },
+  });
+
+  return { data: data ?? MOCK_NOTIFICATION_TEMPLATES, isLoading };
 }
 
 // ── Channel Defaults ───────────────────────────────────────────────────────────
@@ -129,7 +175,18 @@ const MOCK_CHANNEL_DEFAULTS: ChannelDefault[] = [
 ];
 
 export function useChannelDefaults() {
-  return { data: MOCK_CHANNEL_DEFAULTS, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'config', 'channel-defaults'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<ChannelDefault[]>('/v1/admin/config/channel-defaults');
+      } catch {
+        return MOCK_CHANNEL_DEFAULTS;
+      }
+    },
+  });
+
+  return { data: data ?? MOCK_CHANNEL_DEFAULTS, isLoading };
 }
 
 // ── Rate Limits ────────────────────────────────────────────────────────────────
@@ -161,7 +218,18 @@ const MOCK_RATE_LIMITS: RateLimitConfig = {
 };
 
 export function useRateLimits() {
-  return { data: MOCK_RATE_LIMITS, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'config', 'rate-limits'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<RateLimitConfig>('/v1/admin/config/rate-limits');
+      } catch {
+        return MOCK_RATE_LIMITS;
+      }
+    },
+  });
+
+  return { data: data ?? MOCK_RATE_LIMITS, isLoading };
 }
 
 // ── Poll Intervals ─────────────────────────────────────────────────────────────

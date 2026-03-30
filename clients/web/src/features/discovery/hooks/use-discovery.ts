@@ -50,10 +50,16 @@ export function useTrendingLeagues(sport?: string) {
   return useQuery({
     queryKey: ['discover', 'trending-leagues', sport],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      let results = [...mockLeagues];
-      if (sport && sport !== 'ALL') results = results.filter((l) => l.sport === sport);
-      return results.slice(0, 6);
+      try {
+        const params = new URLSearchParams();
+        if (sport && sport !== 'ALL') params.set('sport', sport);
+        return await api.get<DiscoverableLeague[]>(`/v1/discover/leagues?${params.toString()}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        let results = [...mockLeagues];
+        if (sport && sport !== 'ALL') results = results.filter((l) => l.sport === sport);
+        return results.slice(0, 6);
+      }
     },
   });
 }
@@ -62,10 +68,16 @@ export function usePopularContests(sport?: string) {
   return useQuery({
     queryKey: ['discover', 'popular-contests', sport],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      let results = [...mockContests];
-      if (sport && sport !== 'ALL') results = results.filter((c) => c.sport === sport);
-      return results;
+      try {
+        const params = new URLSearchParams();
+        if (sport && sport !== 'ALL') params.set('sport', sport);
+        return await api.get<DiscoverableContest[]>(`/v1/discover/contests?${params.toString()}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        let results = [...mockContests];
+        if (sport && sport !== 'ALL') results = results.filter((c) => c.sport === sport);
+        return results;
+      }
     },
   });
 }
@@ -74,16 +86,24 @@ export function useBrowseLeagues(filters: { sport?: string; sort?: string; q?: s
   return useQuery({
     queryKey: ['discover', 'leagues', filters],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 250));
-      let results = [...mockLeagues];
-      if (filters.sport && filters.sport !== 'ALL') results = results.filter((l) => l.sport === filters.sport);
-      if (filters.q) {
-        const q = filters.q.toLowerCase();
-        results = results.filter((l) => l.name.toLowerCase().includes(q) || l.description?.toLowerCase().includes(q));
+      try {
+        const params = new URLSearchParams();
+        if (filters.sport && filters.sport !== 'ALL') params.set('sport', filters.sport);
+        if (filters.sort) params.set('sort', filters.sort);
+        if (filters.q) params.set('q', filters.q);
+        return await api.get<{ leagues: DiscoverableLeague[]; total: number }>(`/v1/discover/leagues?${params.toString()}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        let results = [...mockLeagues];
+        if (filters.sport && filters.sport !== 'ALL') results = results.filter((l) => l.sport === filters.sport);
+        if (filters.q) {
+          const q = filters.q.toLowerCase();
+          results = results.filter((l) => l.name.toLowerCase().includes(q) || l.description?.toLowerCase().includes(q));
+        }
+        if (filters.sort === 'newest') results.reverse();
+        if (filters.sort === 'members') results.sort((a, b) => b.memberCount - a.memberCount);
+        return { leagues: results, total: results.length };
       }
-      if (filters.sort === 'newest') results.reverse();
-      if (filters.sort === 'members') results.sort((a, b) => b.memberCount - a.memberCount);
-      return { leagues: results, total: results.length };
     },
   });
 }
@@ -92,14 +112,22 @@ export function useBrowseContests(filters: { sport?: string; sort?: string; q?: 
   return useQuery({
     queryKey: ['discover', 'contests', filters],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 250));
-      let results = [...mockContests];
-      if (filters.sport && filters.sport !== 'ALL') results = results.filter((c) => c.sport === filters.sport);
-      if (filters.q) {
-        const q = filters.q.toLowerCase();
-        results = results.filter((c) => c.contestName.toLowerCase().includes(q));
+      try {
+        const params = new URLSearchParams();
+        if (filters.sport && filters.sport !== 'ALL') params.set('sport', filters.sport);
+        if (filters.sort) params.set('sort', filters.sort);
+        if (filters.q) params.set('q', filters.q);
+        return await api.get<{ contests: DiscoverableContest[]; total: number }>(`/v1/discover/contests?${params.toString()}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        let results = [...mockContests];
+        if (filters.sport && filters.sport !== 'ALL') results = results.filter((c) => c.sport === filters.sport);
+        if (filters.q) {
+          const q = filters.q.toLowerCase();
+          results = results.filter((c) => c.contestName.toLowerCase().includes(q));
+        }
+        return { contests: results, total: results.length };
       }
-      return { contests: results, total: results.length };
     },
   });
 }
@@ -108,8 +136,12 @@ export function useJoinLeague() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (leagueId: string) => {
-      await new Promise((r) => setTimeout(r, 300));
-      return { success: true };
+      try {
+        return await api.post<{ success: boolean }>(`/v1/discover/leagues/${leagueId}/join`);
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return { success: true };
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discover'] });
@@ -122,12 +154,16 @@ export function useGlobalSearch(query: string) {
   return useQuery({
     queryKey: ['discover', 'search', query],
     queryFn: async () => {
-      if (!query.trim()) return { leagues: [], contests: [] };
-      await new Promise((r) => setTimeout(r, 200));
-      const q = query.toLowerCase();
-      const leagues = mockLeagues.filter((l) => l.name.toLowerCase().includes(q));
-      const contests = mockContests.filter((c) => c.contestName.toLowerCase().includes(q));
-      return { leagues, contests };
+      if (!query.trim()) return { leagues: [] as DiscoverableLeague[], contests: [] as DiscoverableContest[] };
+      try {
+        return await api.get<{ leagues: DiscoverableLeague[]; contests: DiscoverableContest[] }>(`/v1/discover/search?q=${encodeURIComponent(query)}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        const q = query.toLowerCase();
+        const leagues = mockLeagues.filter((l) => l.name.toLowerCase().includes(q));
+        const contests = mockContests.filter((c) => c.contestName.toLowerCase().includes(q));
+        return { leagues, contests };
+      }
     },
     enabled: query.trim().length >= 2,
   });

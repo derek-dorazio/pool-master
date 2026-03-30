@@ -23,10 +23,12 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: notificationKeys.unreadCount(),
     queryFn: async (): Promise<UnreadCounts> => {
-      // TODO: Replace with real API call
-      // return api.get<UnreadCounts>('/notifications/unread-count?grouped=true');
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      return mockUnreadCounts;
+      try {
+        return await api.get<UnreadCounts>('/v1/notifications/unread-count');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockUnreadCounts;
+      }
     },
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,

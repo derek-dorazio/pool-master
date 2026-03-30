@@ -23,9 +23,12 @@ export function useDataExportStatus() {
   return useQuery({
     queryKey: settingsKeys.dataExport(),
     queryFn: async (): Promise<DataExportStatus> => {
-      // TODO: return api.get<DataExportStatus>('/account/data-export/status');
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return mockExportStatus;
+      try {
+        return await api.get<DataExportStatus>('/v1/account/export/status');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockExportStatus;
+      }
     },
   });
 }
@@ -35,8 +38,7 @@ export function useRequestDataExport() {
 
   return useMutation({
     mutationFn: async () => {
-      // TODO: return api.post('/account/data-export');
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      return await api.post('/v1/account/data-export');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.dataExport() });

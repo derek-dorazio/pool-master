@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 export interface Contest {
   id: string;
@@ -233,31 +234,52 @@ export interface ContestFilters {
 }
 
 export function useContestList(filters: ContestFilters = {}) {
-  const data = useMemo(() => {
-    let result = [...MOCK_CONTESTS];
-    if (filters.tenant && filters.tenant !== 'All') {
-      result = result.filter((c) => c.tenant === filters.tenant);
-    }
-    if (filters.sport && filters.sport !== 'All') {
-      result = result.filter((c) => c.sport === filters.sport);
-    }
-    if (filters.status && filters.status !== 'All') {
-      result = result.filter((c) => c.status === filters.status);
-    }
-    if (filters.type && filters.type !== 'All') {
-      result = result.filter((c) => c.type === filters.type);
-    }
-    return result;
-  }, [filters.tenant, filters.sport, filters.status, filters.type]);
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'contests', filters],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams();
+        if (filters.tenant && filters.tenant !== 'All') params.set('tenant', filters.tenant);
+        if (filters.sport && filters.sport !== 'All') params.set('sport', filters.sport);
+        if (filters.status && filters.status !== 'All') params.set('status', filters.status);
+        if (filters.type && filters.type !== 'All') params.set('type', filters.type);
+        const query = params.toString();
+        return await adminApi.get<Contest[]>(`/v1/admin/contests${query ? `?${query}` : ''}`);
+      } catch {
+        let result = [...MOCK_CONTESTS];
+        if (filters.tenant && filters.tenant !== 'All') {
+          result = result.filter((c) => c.tenant === filters.tenant);
+        }
+        if (filters.sport && filters.sport !== 'All') {
+          result = result.filter((c) => c.sport === filters.sport);
+        }
+        if (filters.status && filters.status !== 'All') {
+          result = result.filter((c) => c.status === filters.status);
+        }
+        if (filters.type && filters.type !== 'All') {
+          result = result.filter((c) => c.type === filters.type);
+        }
+        return result;
+      }
+    },
+  });
 
-  return { data, isLoading: false };
+  return { data: data ?? MOCK_CONTESTS, isLoading };
 }
 
 export function useContestDetail(id: string) {
-  const data = useMemo(() => {
-    const contest = MOCK_CONTESTS.find((c) => c.id === id) ?? MOCK_CONTESTS[0];
-    return buildContestDetail(contest);
-  }, [id]);
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'contest', id],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<ContestDetail>(`/v1/admin/contests/${id}`);
+      } catch {
+        const contest = MOCK_CONTESTS.find((c) => c.id === id) ?? MOCK_CONTESTS[0];
+        return buildContestDetail(contest);
+      }
+    },
+  });
 
-  return { data, isLoading: false };
+  const fallback = buildContestDetail(MOCK_CONTESTS[0]);
+  return { data: data ?? fallback, isLoading };
 }

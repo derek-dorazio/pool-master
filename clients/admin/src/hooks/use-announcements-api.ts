@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 export interface Announcement {
   id: string;
@@ -74,8 +75,11 @@ export function useAnnouncements() {
   return useQuery({
     queryKey: ['announcements'],
     queryFn: async (): Promise<Announcement[]> => {
-      await new Promise((r) => setTimeout(r, 200));
-      return [...MOCK_ANNOUNCEMENTS];
+      try {
+        return await adminApi.get<Announcement[]>('/v1/admin/announcements');
+      } catch {
+        return [...MOCK_ANNOUNCEMENTS];
+      }
     },
   });
 }

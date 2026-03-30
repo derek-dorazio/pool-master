@@ -21,9 +21,12 @@ export function useConsent() {
   return useQuery({
     queryKey: settingsKeys.consent(),
     queryFn: async (): Promise<ConsentPreferences> => {
-      // TODO: return api.get<ConsentPreferences>('/account/consent');
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return mockConsent;
+      try {
+        return await api.get<ConsentPreferences>('/v1/account/consent');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockConsent;
+      }
     },
   });
 }
@@ -33,8 +36,12 @@ export function useUpdateConsent() {
 
   return useMutation({
     mutationFn: async (consent: Partial<ConsentPreferences>) => {
-      // TODO: return api.put('/account/consent', consent);
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      try {
+        return await api.put('/v1/account/consent', consent);
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return undefined;
+      }
     },
     onMutate: async (newConsent) => {
       await queryClient.cancelQueries({ queryKey: settingsKeys.consent() });

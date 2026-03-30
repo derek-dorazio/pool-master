@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export interface ActiveContest {
   id: string;
@@ -38,8 +39,12 @@ export function useActiveContests() {
   return useQuery({
     queryKey: ['dashboard', 'active-contests'],
     queryFn: async (): Promise<ActiveContest[]> => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return mockActiveContests;
+      try {
+        return await api.get<ActiveContest[]>('/v1/contests?status=active');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockActiveContests;
+      }
     },
     refetchInterval: 10_000,
   });

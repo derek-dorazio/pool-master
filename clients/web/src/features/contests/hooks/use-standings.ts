@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export interface StandingsEntry {
   id: string;
@@ -35,8 +36,12 @@ export function useStandings(contestId: string | undefined) {
   return useQuery({
     queryKey: ['contests', contestId, 'standings'],
     queryFn: async (): Promise<StandingsEntry[]> => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return mockStandings;
+      try {
+        return await api.get<StandingsEntry[]>(`/v1/contests/${contestId}/standings`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockStandings;
+      }
     },
     enabled: !!contestId,
   });

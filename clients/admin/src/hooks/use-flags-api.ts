@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 export type FlagType = 'Boolean' | 'Percentage' | 'Tenant List';
 
@@ -50,14 +51,33 @@ function buildFlagDetail(flag: FeatureFlag): FlagDetail {
 }
 
 export function useFlagList() {
-  return { data: MOCK_FLAGS, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'flags'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<FeatureFlag[]>('/v1/admin/flags');
+      } catch {
+        return MOCK_FLAGS;
+      }
+    },
+  });
+
+  return { data: data ?? MOCK_FLAGS, isLoading };
 }
 
 export function useFlagDetail(key: string) {
-  const data = useMemo(() => {
-    const flag = MOCK_FLAGS.find((f) => f.key === key) ?? MOCK_FLAGS[0];
-    return buildFlagDetail(flag);
-  }, [key]);
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'flag', key],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<FlagDetail>(`/v1/admin/flags/${key}`);
+      } catch {
+        const flag = MOCK_FLAGS.find((f) => f.key === key) ?? MOCK_FLAGS[0];
+        return buildFlagDetail(flag);
+      }
+    },
+  });
 
-  return { data, isLoading: false };
+  const fallback = buildFlagDetail(MOCK_FLAGS[0]);
+  return { data: data ?? fallback, isLoading };
 }

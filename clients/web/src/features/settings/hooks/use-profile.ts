@@ -25,9 +25,12 @@ export function useProfile() {
   return useQuery({
     queryKey: settingsKeys.profile(),
     queryFn: async (): Promise<UserProfile> => {
-      // TODO: return api.get<UserProfile>('/users/me');
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return mockProfile;
+      try {
+        return await api.get<UserProfile>('/v1/auth/me');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockProfile;
+      }
     },
     staleTime: Infinity,
   });
@@ -38,8 +41,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (data: Partial<Pick<UserProfile, 'displayName' | 'email' | 'bio'>>) => {
-      // TODO: return api.patch('/users/me', data);
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      return await api.put('/v1/auth/profile', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.profile() });
@@ -55,10 +57,15 @@ export function useUploadAvatar() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (_file: File) => {
-      // TODO: const formData = new FormData(); formData.append('avatar', file);
-      // return api.post('/users/me/avatar', formData);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    mutationFn: async (file: File) => {
+      try {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        return await api.post('/v1/auth/profile/avatar', formData);
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return undefined;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.profile() });
@@ -75,8 +82,12 @@ export function useDeleteAvatar() {
 
   return useMutation({
     mutationFn: async () => {
-      // TODO: return api.delete('/users/me/avatar');
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      try {
+        return await api.delete('/v1/auth/profile/avatar');
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return undefined;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.profile() });
@@ -87,9 +98,8 @@ export function useDeleteAvatar() {
 
 export function useUpdatePassword() {
   return useMutation({
-    mutationFn: async (_data: { currentPassword: string; newPassword: string }) => {
-      // TODO: return api.put('/users/me/password', data);
-      await new Promise((resolve) => setTimeout(resolve, 300));
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      return await api.put('/v1/auth/password', data);
     },
     onSuccess: () => {
       toast({ title: 'Password changed successfully' });

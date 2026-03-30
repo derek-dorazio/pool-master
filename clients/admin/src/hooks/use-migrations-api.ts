@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 export interface Migration {
   id: string;
@@ -120,8 +121,11 @@ export function useMigrations() {
   return useQuery({
     queryKey: ['migrations'],
     queryFn: async (): Promise<MigrationsData> => {
-      await new Promise((r) => setTimeout(r, 200));
-      return MOCK_DATA;
+      try {
+        return await adminApi.get<MigrationsData>('/v1/admin/migrations');
+      } catch {
+        return MOCK_DATA;
+      }
     },
   });
 }
@@ -130,9 +134,12 @@ export function useMigrationDetail(id: string) {
   return useQuery({
     queryKey: ['migration-detail', id],
     queryFn: async (): Promise<MigrationRun> => {
-      await new Promise((r) => setTimeout(r, 200));
-      const all = [...MOCK_DATA.activeRuns, ...MOCK_DATA.recentHistory];
-      return all.find((r) => r.id === id) ?? MOCK_DATA.activeRuns[0];
+      try {
+        return await adminApi.get<MigrationRun>(`/v1/admin/migrations/runs/${id}`);
+      } catch {
+        const all = [...MOCK_DATA.activeRuns, ...MOCK_DATA.recentHistory];
+        return all.find((r) => r.id === id) ?? MOCK_DATA.activeRuns[0];
+      }
     },
   });
 }

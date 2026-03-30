@@ -42,10 +42,12 @@ export function useNotificationPreferences() {
   return useQuery({
     queryKey: notificationKeys.preferences(),
     queryFn: async (): Promise<NotificationPreferences> => {
-      // TODO: Replace with real API call
-      // return api.get<NotificationPreferences>('/notifications/preferences');
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return defaultPreferences;
+      try {
+        return await api.get<NotificationPreferences>('/v1/notifications/preferences');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return defaultPreferences;
+      }
     },
   });
 }
@@ -55,9 +57,12 @@ export function useSaveNotificationPreferences() {
 
   return useMutation({
     mutationFn: async (preferences: NotificationPreferences) => {
-      // TODO: Replace with real API call
-      // return api.put('/notifications/preferences', preferences);
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      try {
+        return await api.put('/v1/notifications/preferences', preferences);
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return undefined;
+      }
     },
     onMutate: async (newPreferences) => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.preferences() });

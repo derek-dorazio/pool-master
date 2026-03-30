@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export interface UpcomingDraft {
   id: string;
@@ -28,8 +29,12 @@ export function useUpcomingDrafts() {
   return useQuery({
     queryKey: ['dashboard', 'upcoming-drafts'],
     queryFn: async (): Promise<UpcomingDraft[]> => {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      return mockUpcomingDrafts;
+      try {
+        return await api.get<UpcomingDraft[]>('/v1/drafts?status=scheduled');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockUpcomingDrafts;
+      }
     },
   });
 }

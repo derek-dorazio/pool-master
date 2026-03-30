@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 export type ProviderStatus = 'HEALTHY' | 'DEGRADED' | 'DOWN';
 
@@ -111,23 +112,57 @@ const MOCK_INGESTION_ERRORS: ProviderError[] = [
 ];
 
 export function useProviderList() {
-  return { data: MOCK_PROVIDERS, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'providers'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<Provider[]>('/v1/admin/providers/health');
+      } catch {
+        return MOCK_PROVIDERS;
+      }
+    },
+  });
+
+  return { data: data ?? MOCK_PROVIDERS, isLoading };
 }
 
 export function useProviderDetail(id: string) {
-  const data = useMemo(() => {
-    const provider = MOCK_PROVIDERS.find((p) => p.id === id) ?? MOCK_PROVIDERS[0];
-    return buildProviderDetail(provider);
-  }, [id]);
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'provider', id],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<ProviderDetail>(`/v1/admin/providers/${id}`);
+      } catch {
+        const provider = MOCK_PROVIDERS.find((p) => p.id === id) ?? MOCK_PROVIDERS[0];
+        return buildProviderDetail(provider);
+      }
+    },
+  });
 
-  return { data, isLoading: false };
+  const fallback = buildProviderDetail(MOCK_PROVIDERS[0]);
+  return { data: data ?? fallback, isLoading };
 }
 
 export function useIngestionJobs() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'ingestion'],
+    queryFn: async () => {
+      try {
+        return await adminApi.get<{ jobs: IngestionJob[]; errors: ProviderError[]; throughput: number }>('/v1/admin/providers/ingestion');
+      } catch {
+        return {
+          jobs: MOCK_JOBS,
+          errors: MOCK_INGESTION_ERRORS,
+          throughput: 1245,
+        };
+      }
+    },
+  });
+
   return {
-    jobs: MOCK_JOBS,
-    errors: MOCK_INGESTION_ERRORS,
-    throughput: 1245,
-    isLoading: false,
+    jobs: data?.jobs ?? MOCK_JOBS,
+    errors: data?.errors ?? MOCK_INGESTION_ERRORS,
+    throughput: data?.throughput ?? 1245,
+    isLoading,
   };
 }

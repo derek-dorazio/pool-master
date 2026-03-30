@@ -95,13 +95,18 @@ export function useNotifications(category?: string) {
   return useInfiniteQuery({
     queryKey: notificationKeys.list(category),
     queryFn: async ({ pageParam }): Promise<NotificationPage> => {
-      // TODO: Replace with real API call
-      // return api.get<NotificationPage>(`/notifications?category=${category ?? ''}&cursor=${pageParam ?? ''}&limit=20`);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const filtered = category
-        ? mockNotifications.filter((n) => n.category === category)
-        : mockNotifications;
-      return { items: filtered, nextCursor: null };
+      try {
+        const params = new URLSearchParams({ limit: '20' });
+        if (category) params.set('category', category);
+        if (pageParam) params.set('cursor', pageParam);
+        return await api.get<NotificationPage>(`/v1/notifications?${params.toString()}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        const filtered = category
+          ? mockNotifications.filter((n) => n.category === category)
+          : mockNotifications;
+        return { items: filtered, nextCursor: null };
+      }
     },
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

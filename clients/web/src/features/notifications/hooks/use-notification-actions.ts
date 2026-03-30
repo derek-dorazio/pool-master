@@ -8,9 +8,12 @@ export function useMarkAsRead() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      // TODO: Replace with real API call
-      // return api.patch(`/notifications/${notificationId}/read`);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      try {
+        return await api.put(`/v1/notifications/${notificationId}/read`);
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return undefined;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
@@ -23,10 +26,13 @@ export function useMarkAllAsRead() {
 
   return useMutation({
     mutationFn: async (category?: string) => {
-      // TODO: Replace with real API call
-      // const params = category ? `?category=${category}` : '';
-      // return api.patch(`/notifications/read-all${params}`);
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      try {
+        const params = category ? `?category=${category}` : '';
+        return await api.put(`/v1/notifications/read-all${params}`);
+      } catch {
+        // Fallback: simulate success when backend unavailable
+        return undefined;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });

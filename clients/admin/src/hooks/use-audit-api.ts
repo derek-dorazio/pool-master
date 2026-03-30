@@ -1,4 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 export interface AuditEntry {
   id: string;
@@ -197,34 +198,48 @@ export function useAuditLog(filters: AuditFilters) {
   return useQuery({
     queryKey: ['audit-log', filters],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      let filtered = [...MOCK_ENTRIES];
-      if (filters.admin && filters.admin !== 'All') {
-        filtered = filtered.filter((e) => e.admin === filters.admin);
-      }
-      if (filters.action && filters.action !== 'All') {
-        filtered = filtered.filter((e) => e.action === filters.action);
-      }
-      if (filters.resourceType && filters.resourceType !== 'All') {
-        filtered = filtered.filter((e) => e.resourceType === filters.resourceType);
-      }
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        filtered = filtered.filter(
-          (e) =>
-            e.description.toLowerCase().includes(q) ||
-            (e.reason && e.reason.toLowerCase().includes(q)),
+      try {
+        const params = new URLSearchParams();
+        if (filters.admin && filters.admin !== 'All') params.set('admin', filters.admin);
+        if (filters.action && filters.action !== 'All') params.set('action', filters.action);
+        if (filters.resourceType && filters.resourceType !== 'All') params.set('resourceType', filters.resourceType);
+        if (filters.search) params.set('search', filters.search);
+        if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+        if (filters.dateTo) params.set('dateTo', filters.dateTo);
+        params.set('page', String(filters.page));
+        const query = params.toString();
+        return await adminApi.get<{ entries: AuditEntry[]; total: number; page: number; pageSize: number; totalPages: number }>(
+          `/v1/admin/audit-log${query ? `?${query}` : ''}`,
         );
+      } catch {
+        let filtered = [...MOCK_ENTRIES];
+        if (filters.admin && filters.admin !== 'All') {
+          filtered = filtered.filter((e) => e.admin === filters.admin);
+        }
+        if (filters.action && filters.action !== 'All') {
+          filtered = filtered.filter((e) => e.action === filters.action);
+        }
+        if (filters.resourceType && filters.resourceType !== 'All') {
+          filtered = filtered.filter((e) => e.resourceType === filters.resourceType);
+        }
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          filtered = filtered.filter(
+            (e) =>
+              e.description.toLowerCase().includes(q) ||
+              (e.reason && e.reason.toLowerCase().includes(q)),
+          );
+        }
+        const pageSize = 50;
+        const start = (filters.page - 1) * pageSize;
+        return {
+          entries: filtered.slice(start, start + pageSize),
+          total: filtered.length,
+          page: filters.page,
+          pageSize,
+          totalPages: Math.max(1, Math.ceil(filtered.length / pageSize)),
+        };
       }
-      const pageSize = 50;
-      const start = (filters.page - 1) * pageSize;
-      return {
-        entries: filtered.slice(start, start + pageSize),
-        total: filtered.length,
-        page: filters.page,
-        pageSize,
-        totalPages: Math.max(1, Math.ceil(filtered.length / pageSize)),
-      };
     },
     placeholderData: keepPreviousData,
   });

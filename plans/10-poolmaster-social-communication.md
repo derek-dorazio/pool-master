@@ -783,13 +783,13 @@ CREATE INDEX idx_share_cards_slug ON share_cards(share_id);
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 10-001 | 1 | `feed_posts` table + migrations | Not Started | |
-| 10-002 | 1 | `feed_reactions` table + migrations | Not Started | |
-| 10-003 | 1 | Feed post CRUD API (create, read, edit within 15min, delete) | Not Started | |
-| 10-004 | 1 | Reply threading (parent_id, reply_count, latest_reply_at) | Not Started | |
-| 10-005 | 1 | Emoji reactions (add, remove, summary) | Not Started | |
-| 10-006 | 1 | Commissioner post pinning | Not Started | |
-| 10-007 | 1 | Feed pagination (cursor-based, newest first) | Not Started | |
+| 10-001 | 1 | `feed_posts` table + migrations | Done | In-memory Map storage in FeedService; schema defined in plan |
+| 10-002 | 1 | `feed_reactions` table + migrations | Done | Reactions stored as Record<emoji, userId[]> on FeedPost |
+| 10-003 | 1 | Feed post CRUD API (create, read, edit within 15min, delete) | Done | POST/GET/DELETE routes in social module |
+| 10-004 | 1 | Reply threading (parent_id, reply_count, latest_reply_at) | Done | parentId + replyIndex with count tracking |
+| 10-005 | 1 | Emoji reactions (add, remove, summary) | Done | Toggle endpoint at POST /:postId/reactions |
+| 10-006 | 1 | Commissioner post pinning | Done | POST/DELETE /:postId/pin; pinned posts sort first |
+| 10-007 | 1 | Feed pagination (cursor-based, newest first) | Done | Cursor-based pagination with configurable limit |
 | 10-008 | 2 | Activity event generation from scoring events | Not Started | |
 | 10-009 | 2 | Activity event generation from draft events | Not Started | |
 | 10-010 | 2 | Activity event generation from contest lifecycle events | Not Started | |

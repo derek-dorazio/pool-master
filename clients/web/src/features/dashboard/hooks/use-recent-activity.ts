@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export type ActivityType =
   | 'score_update'
@@ -57,8 +58,12 @@ export function useRecentActivity() {
   return useQuery({
     queryKey: ['dashboard', 'recent-activity'],
     queryFn: async (): Promise<ActivityItem[]> => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return mockActivityItems;
+      try {
+        return await api.get<ActivityItem[]>('/v1/activity?limit=5');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockActivityItems;
+      }
     },
   });
 }

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 export interface PlatformMetrics {
   activeTenants: { value: number; trend: number };
@@ -274,13 +275,25 @@ export function useAdminMetrics() {
   return useQuery({
     queryKey: ['admin', 'metrics'],
     queryFn: async () => {
-      await delay(200);
-      return {
-        metrics: mockMetrics,
-        services: mockServices,
-        alerts: mockAlerts,
-        audit: mockAudit,
-      };
+      try {
+        const [metricsData, servicesData] = await Promise.all([
+          adminApi.get<{ metrics: PlatformMetrics; alerts: Alert[]; audit: AuditEntry[] }>('/v1/admin/health/metrics'),
+          adminApi.get<ServiceHealth[]>('/v1/admin/health/services'),
+        ]);
+        return {
+          metrics: metricsData.metrics,
+          services: servicesData,
+          alerts: metricsData.alerts,
+          audit: metricsData.audit,
+        };
+      } catch {
+        return {
+          metrics: mockMetrics,
+          services: mockServices,
+          alerts: mockAlerts,
+          audit: mockAudit,
+        };
+      }
     },
   });
 }
@@ -299,39 +312,49 @@ export function useTenantList(filters: TenantFilters) {
   return useQuery({
     queryKey: ['admin', 'tenants', filters],
     queryFn: async () => {
-      await delay(200);
-      let filtered = [...mockTenants];
-
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        filtered = filtered.filter(
-          (t) => t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q),
+      try {
+        const params = new URLSearchParams();
+        if (filters.search) params.set('search', filters.search);
+        if (filters.plan && filters.plan !== 'All') params.set('plan', filters.plan);
+        if (filters.status && filters.status !== 'All') params.set('status', filters.status);
+        if (filters.page) params.set('page', String(filters.page));
+        if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
+        if (filters.sortBy) params.set('sortBy', filters.sortBy);
+        if (filters.sortDir) params.set('sortDir', filters.sortDir);
+        const query = params.toString();
+        return await adminApi.get<{ items: Tenant[]; total: number; page: number; pageSize: number; totalPages: number }>(
+          `/v1/admin/tenants${query ? `?${query}` : ''}`,
         );
+      } catch {
+        let filtered = [...mockTenants];
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          filtered = filtered.filter(
+            (t) => t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q),
+          );
+        }
+        if (filters.plan && filters.plan !== 'All') {
+          filtered = filtered.filter((t) => t.plan === filters.plan);
+        }
+        if (filters.status && filters.status !== 'All') {
+          filtered = filtered.filter((t) => t.status === filters.status);
+        }
+        if (filters.sortBy) {
+          const dir = filters.sortDir === 'desc' ? -1 : 1;
+          filtered.sort((a, b) => {
+            const aVal = a[filters.sortBy as keyof Tenant];
+            const bVal = b[filters.sortBy as keyof Tenant];
+            if (typeof aVal === 'number' && typeof bVal === 'number') return (aVal - bVal) * dir;
+            return String(aVal).localeCompare(String(bVal)) * dir;
+          });
+        }
+        const page = filters.page ?? 1;
+        const pageSize = filters.pageSize ?? 10;
+        const total = filtered.length;
+        const start = (page - 1) * pageSize;
+        const items = filtered.slice(start, start + pageSize);
+        return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
       }
-      if (filters.plan && filters.plan !== 'All') {
-        filtered = filtered.filter((t) => t.plan === filters.plan);
-      }
-      if (filters.status && filters.status !== 'All') {
-        filtered = filtered.filter((t) => t.status === filters.status);
-      }
-
-      if (filters.sortBy) {
-        const dir = filters.sortDir === 'desc' ? -1 : 1;
-        filtered.sort((a, b) => {
-          const aVal = a[filters.sortBy as keyof Tenant];
-          const bVal = b[filters.sortBy as keyof Tenant];
-          if (typeof aVal === 'number' && typeof bVal === 'number') return (aVal - bVal) * dir;
-          return String(aVal).localeCompare(String(bVal)) * dir;
-        });
-      }
-
-      const page = filters.page ?? 1;
-      const pageSize = filters.pageSize ?? 10;
-      const total = filtered.length;
-      const start = (page - 1) * pageSize;
-      const items = filtered.slice(start, start + pageSize);
-
-      return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
     },
   });
 }
@@ -340,8 +363,11 @@ export function useTenantDetail(id: string | undefined) {
   return useQuery({
     queryKey: ['admin', 'tenant', id],
     queryFn: async () => {
-      await delay(200);
-      return { ...mockTenantDetail, id: id ?? mockTenantDetail.id };
+      try {
+        return await adminApi.get<TenantDetail>(`/v1/admin/tenants/${id}`);
+      } catch {
+        return { ...mockTenantDetail, id: id ?? mockTenantDetail.id };
+      }
     },
     enabled: !!id,
   });
@@ -351,8 +377,11 @@ export function useUserSearch(query: string) {
   return useQuery({
     queryKey: ['admin', 'users', 'search', query],
     queryFn: async () => {
-      await delay(300);
-      return mockUserResults;
+      try {
+        return await adminApi.get<UserResult[]>(`/v1/admin/users?search=${encodeURIComponent(query)}`);
+      } catch {
+        return mockUserResults;
+      }
     },
     enabled: query.length > 0,
   });
@@ -362,8 +391,11 @@ export function useUserDetail(id: string | undefined) {
   return useQuery({
     queryKey: ['admin', 'user', id],
     queryFn: async () => {
-      await delay(200);
-      return { ...mockUserDetail, id: id ?? mockUserDetail.id };
+      try {
+        return await adminApi.get<UserDetail>(`/v1/admin/users/${id}`);
+      } catch {
+        return { ...mockUserDetail, id: id ?? mockUserDetail.id };
+      }
     },
     enabled: !!id,
   });

@@ -32,6 +32,9 @@ import { webhookModule } from './modules/billing/webhook-handler';
 // Draft module
 import { draftsModule } from './modules/drafts/routes';
 
+// Social module
+import { socialModule } from './modules/social/routes';
+
 // Scoring module
 import { eventBus } from '@poolmaster/shared/events/event-bus';
 import { scoreStore } from './modules/scoring/storage/score-store';
@@ -100,6 +103,11 @@ export function buildApp() {
   app.register(configModule, { prefix: '/api/v1/config' });
   app.register(billingModule, { prefix: '/api/v1/billing' });
   app.register(webhookModule, { prefix: '/api/v1' });
+
+  // =========================================================================
+  // Social module (from social/communication layer)
+  // =========================================================================
+  app.register(socialModule, { prefix: '/api/v1' });
 
   // =========================================================================
   // Draft module (from draft-service)

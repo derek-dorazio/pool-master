@@ -1,4 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api-client';
 
 export interface ServiceStatus {
   name: string;
@@ -60,8 +61,16 @@ export function useHealthDashboard() {
   return useQuery({
     queryKey: ['health-dashboard'],
     queryFn: async (): Promise<HealthDashboard> => {
-      await new Promise((r) => setTimeout(r, 200));
-      return { ...MOCK_HEALTH, lastRefreshed: new Date() };
+      try {
+        const [services, infrastructure, keyMetrics] = await Promise.all([
+          adminApi.get<ServiceStatus[]>('/v1/admin/health/services'),
+          adminApi.get<InfraMetric[]>('/v1/admin/health/infrastructure'),
+          adminApi.get<KeyMetric[]>('/v1/admin/health/metrics'),
+        ]);
+        return { services, infrastructure, keyMetrics, lastRefreshed: new Date() };
+      } catch {
+        return { ...MOCK_HEALTH, lastRefreshed: new Date() };
+      }
     },
     refetchInterval: 30_000,
   });
@@ -204,23 +213,35 @@ export function useErrorLog(filters: ErrorLogFilters) {
   return useQuery({
     queryKey: ['error-log', filters],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      let filtered = [...MOCK_ERRORS];
-      if (filters.service && filters.service !== 'All') {
-        filtered = filtered.filter((e) => e.service === filters.service);
+      try {
+        const params = new URLSearchParams();
+        if (filters.service && filters.service !== 'All') params.set('service', filters.service);
+        if (filters.severity && filters.severity !== 'All') params.set('severity', filters.severity);
+        if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+        if (filters.dateTo) params.set('dateTo', filters.dateTo);
+        params.set('page', String(filters.page));
+        const query = params.toString();
+        return await adminApi.get<{ entries: ErrorLogEntry[]; total: number; page: number; pageSize: number; totalPages: number }>(
+          `/v1/admin/health/errors${query ? `?${query}` : ''}`,
+        );
+      } catch {
+        let filtered = [...MOCK_ERRORS];
+        if (filters.service && filters.service !== 'All') {
+          filtered = filtered.filter((e) => e.service === filters.service);
+        }
+        if (filters.severity && filters.severity !== 'All') {
+          filtered = filtered.filter((e) => e.severity === filters.severity);
+        }
+        const pageSize = 5;
+        const start = (filters.page - 1) * pageSize;
+        return {
+          entries: filtered.slice(start, start + pageSize),
+          total: filtered.length,
+          page: filters.page,
+          pageSize,
+          totalPages: Math.ceil(filtered.length / pageSize),
+        };
       }
-      if (filters.severity && filters.severity !== 'All') {
-        filtered = filtered.filter((e) => e.severity === filters.severity);
-      }
-      const pageSize = 5;
-      const start = (filters.page - 1) * pageSize;
-      return {
-        entries: filtered.slice(start, start + pageSize),
-        total: filtered.length,
-        page: filters.page,
-        pageSize,
-        totalPages: Math.ceil(filtered.length / pageSize),
-      };
     },
     placeholderData: keepPreviousData,
   });
@@ -253,8 +274,11 @@ export function useAlertRules() {
   return useQuery({
     queryKey: ['alert-rules'],
     queryFn: async (): Promise<AlertRule[]> => {
-      await new Promise((r) => setTimeout(r, 200));
-      return [...MOCK_ALERTS];
+      try {
+        return await adminApi.get<AlertRule[]>('/v1/admin/health/alerts');
+      } catch {
+        return [...MOCK_ALERTS];
+      }
     },
   });
 }

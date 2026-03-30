@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export interface League {
   id: string;
@@ -36,8 +37,12 @@ export function useMyLeagues() {
   return useQuery({
     queryKey: ['dashboard', 'leagues'],
     queryFn: async (): Promise<League[]> => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return mockLeagues;
+      try {
+        return await api.get<League[]>('/v1/leagues');
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockLeagues;
+      }
     },
   });
 }

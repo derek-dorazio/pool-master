@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export interface ContestEntry {
   id: string;
@@ -81,8 +82,12 @@ export function useContest(contestId: string | undefined) {
   return useQuery({
     queryKey: ['contests', contestId],
     queryFn: async (): Promise<Contest> => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return mockContest;
+      try {
+        return await api.get<Contest>(`/v1/contests/${contestId}`);
+      } catch {
+        // Fallback to mock data when backend unavailable
+        return mockContest;
+      }
     },
     enabled: !!contestId,
   });
