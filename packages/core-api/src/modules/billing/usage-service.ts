@@ -1,10 +1,11 @@
 /**
- * UsageService — tracks resource usage per tenant.
+ * UsageService — tracks resource usage per tenant using Prisma TenantUsage table.
  *
  * All methods are gated by the billing_enabled feature flag.
  * When billing is OFF, usage is reported as 0 with unlimited limits.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import { isBillingEnabled } from './billing-feature-gate';
 
 // ---------------------------------------------------------------------------
@@ -27,92 +28,120 @@ export interface UsageTrackResult {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory storage (replaces Prisma TenantUsage table for now)
-// ---------------------------------------------------------------------------
-
-const usageStore: Map<string, UsageRecord> = new Map();
-
-function storageKey(tenantId: string, resource: UsageResource): string {
-  return `${tenantId}:${resource}`;
-}
-
-// ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
-/**
- * Increments or decrements usage count for a resource.
- * When billing is OFF, returns a no-op result.
- */
-export async function trackUsage(
-  tenantId: string,
-  resource: UsageResource,
-  delta: number,
-): Promise<UsageTrackResult> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
-    return { resource, previousCount: 0, newCount: 0 };
-  }
-  const key = storageKey(tenantId, resource);
-  const existing = usageStore.get(key);
-  const previousCount = existing?.currentCount ?? 0;
-  const newCount = Math.max(0, previousCount + delta);
-  usageStore.set(key, {
-    tenantId,
-    resource,
-    currentCount: newCount,
-    countedAt: new Date(),
-  });
-  return { resource, previousCount, newCount };
-}
+export class UsageService {
+  constructor(private readonly prisma: PrismaClient) {}
 
-/**
- * Returns the current usage count for a resource.
- * When billing is OFF, returns 0.
- */
-export async function getUsage(
-  tenantId: string,
-  resource: UsageResource,
-): Promise<number> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
-    return 0;
-  }
-  const key = storageKey(tenantId, resource);
-  const record = usageStore.get(key);
-  return record?.currentCount ?? 0;
-}
+  /**
+   * Increments or decrements usage count for a resource.
+   * When billing is OFF, returns a no-op result.
+   */
+  async trackUsage(
+    tenantId: string,
+    resource: UsageResource,
+    delta: number,
+  ): Promise<UsageTrackResult> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      return { resource, previousCount: 0, newCount: 0 };
+    }
 
-/**
- * Recounts usage from actual data (mock implementation).
- * When billing is OFF, returns zeroed counts.
- */
-export async function refreshAllUsage(
-  tenantId: string,
-): Promise<Map<UsageResource, number>> {
-  const billingOn = await isBillingEnabled(tenantId);
-  const results = new Map<UsageResource, number>();
-  if (!billingOn) {
-    results.set('LEAGUES', 0);
-    results.set('MEMBERS', 0);
-    results.set('CONTESTS', 0);
+    const existing = await this.prisma.tenantUsage.findUnique({
+      where: { tenantId_resource: { tenantId, resource } },
+    });
+
+    const previousCount = existing?.currentCount ?? 0;
+    const newCount = Math.max(0, previousCount + delta);
+
+    await this.prisma.tenantUsage.upsert({
+      where: { tenantId_resource: { tenantId, resource } },
+      create: {
+        tenantId,
+        resource,
+        currentCount: newCount,
+        countedAt: new Date(),
+      },
+      update: {
+        currentCount: newCount,
+        countedAt: new Date(),
+      },
+    });
+
+    return { resource, previousCount, newCount };
+  }
+
+  /**
+   * Returns the current usage count for a resource.
+   * When billing is OFF, returns 0.
+   */
+  async getUsage(
+    tenantId: string,
+    resource: UsageResource,
+  ): Promise<number> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      return 0;
+    }
+
+    const record = await this.prisma.tenantUsage.findUnique({
+      where: { tenantId_resource: { tenantId, resource } },
+    });
+
+    return record?.currentCount ?? 0;
+  }
+
+  /**
+   * Recounts usage from actual data by querying real tables.
+   * When billing is OFF, returns zeroed counts.
+   */
+  async refreshAllUsage(
+    tenantId: string,
+  ): Promise<Map<UsageResource, number>> {
+    const billingOn = await isBillingEnabled(tenantId);
+    const results = new Map<UsageResource, number>();
+    if (!billingOn) {
+      results.set('LEAGUES', 0);
+      results.set('MEMBERS', 0);
+      results.set('CONTESTS', 0);
+      return results;
+    }
+
+    // Count real data from the database
+    const [leagueCount, memberCount, contestCount] = await Promise.all([
+      this.prisma.league.count({ where: { tenantId } }),
+      this.prisma.leagueMembership.count({
+        where: { league: { tenantId } },
+      }),
+      this.prisma.contest.count({
+        where: { league: { tenantId } },
+      }),
+    ]);
+
+    const counts: Record<UsageResource, number> = {
+      LEAGUES: leagueCount,
+      MEMBERS: memberCount,
+      CONTESTS: contestCount,
+    };
+
+    for (const [resource, count] of Object.entries(counts) as [UsageResource, number][]) {
+      await this.prisma.tenantUsage.upsert({
+        where: { tenantId_resource: { tenantId, resource } },
+        create: {
+          tenantId,
+          resource,
+          currentCount: count,
+          countedAt: new Date(),
+        },
+        update: {
+          currentCount: count,
+          countedAt: new Date(),
+        },
+      });
+      results.set(resource, count);
+    }
+
     return results;
   }
-  // Mock: return realistic counts from hypothetical data
-  const mockCounts: Record<UsageResource, number> = {
-    LEAGUES: 2,
-    MEMBERS: 14,
-    CONTESTS: 5,
-  };
-  for (const [resource, count] of Object.entries(mockCounts) as [UsageResource, number][]) {
-    const key = storageKey(tenantId, resource);
-    usageStore.set(key, {
-      tenantId,
-      resource,
-      currentCount: count,
-      countedAt: new Date(),
-    });
-    results.set(resource, count);
-  }
-  return results;
 }

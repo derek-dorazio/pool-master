@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Member {
   id: string;
@@ -84,6 +85,7 @@ function RoleBadge({ role }: { role: Member['role'] }) {
 
 function MemberActions({ member }: { member: Member }) {
   const [open, setOpen] = useState(false);
+  const dialog = useConfirmDialog();
 
   if (!isCommissioner || member.role === 'commissioner') return null;
 
@@ -114,11 +116,16 @@ function MemberActions({ member }: { member: Member }) {
             </button>
             <button
               className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-accent"
-              onClick={() => {
-                if (window.confirm(`Remove ${member.name} from the league?`)) {
+              onClick={async () => {
+                setOpen(false);
+                const confirmed = await dialog.confirm(
+                  'Remove Member',
+                  `Remove ${member.name} from the league?`,
+                  { confirmLabel: 'Remove', variant: 'destructive' },
+                );
+                if (confirmed) {
                   toast({ title: 'Member removed', description: `${member.name} has been removed.` });
                 }
-                setOpen(false);
               }}
             >
               Remove
@@ -126,6 +133,15 @@ function MemberActions({ member }: { member: Member }) {
           </div>
         </>
       )}
+      <ConfirmDialog
+        open={dialog.open}
+        title={dialog.title}
+        description={dialog.description}
+        confirmLabel={dialog.confirmLabel}
+        variant={dialog.variant}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+      />
     </div>
   );
 }

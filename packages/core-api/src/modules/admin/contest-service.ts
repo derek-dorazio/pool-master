@@ -4,8 +4,11 @@
  * Provides contest search, detail views, force-close/reopen, score overrides,
  * standings and payout recalculation, and scoring re-ingestion.
  * All write operations are audit-logged.
+ *
+ * Persisted via Prisma to the contests table.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -107,153 +110,148 @@ export class ContestNotFoundError extends Error {
 // ---------------------------------------------------------------------------
 
 export class ContestService {
+  constructor(private readonly prisma: PrismaClient) {}
+
   /**
    * Searches contests with filters and pagination.
-   *
-   * Placeholder: returns mock data. Will query contests table via Prisma.
    */
   async searchContests(
     query: ContestSearchQuery,
   ): Promise<{ items: ContestListItem[]; total: number }> {
-    void query;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 25;
+    const skip = (page - 1) * pageSize;
 
-    // TODO: Replace with Prisma query against contests table
-    const mockItems: ContestListItem[] = [
-      {
-        id: 'contest-001',
-        name: 'Masters 2026 Pick Sheet',
-        leagueName: 'Golf Buddies League',
-        tenantName: "Tiger's Corner",
-        sport: 'golf',
-        contestType: 'pick_sheet',
-        selectionType: 'pick',
-        status: 'active',
-        entryCount: 24,
-        createdAt: new Date('2026-03-01'),
-      },
-      {
-        id: 'contest-002',
-        name: 'NFL Survivor Pool',
-        leagueName: 'Sunday Funday',
-        tenantName: "Tiger's Corner",
-        sport: 'nfl',
-        contestType: 'survivor',
-        selectionType: 'pick',
-        status: 'active',
-        entryCount: 48,
-        createdAt: new Date('2026-01-10'),
-      },
-      {
-        id: 'contest-003',
-        name: 'March Madness Bracket',
-        leagueName: 'Office Pool',
-        tenantName: 'Golf Crew',
-        sport: 'ncaa',
-        contestType: 'bracket',
-        selectionType: 'bracket',
-        status: 'closed',
-        entryCount: 64,
-        createdAt: new Date('2026-03-15'),
-      },
-      {
-        id: 'contest-004',
-        name: 'NBA Fantasy Draft',
-        leagueName: 'Hoops League',
-        tenantName: 'Golf Crew',
-        sport: 'nba',
-        contestType: 'fantasy_draft',
-        selectionType: 'draft',
-        status: 'active',
-        entryCount: 12,
-        createdAt: new Date('2026-02-20'),
-      },
-      {
-        id: 'contest-005',
-        name: 'Kentucky Derby Pick',
-        leagueName: 'Horse Racing Club',
-        tenantName: 'Acme Corp',
-        sport: 'horse_racing',
-        contestType: 'pick_sheet',
-        selectionType: 'pick',
-        status: 'pending',
-        entryCount: 8,
-        createdAt: new Date('2026-03-22'),
-      },
-      {
-        id: 'contest-006',
-        name: 'Premier League Weekly',
-        leagueName: 'Soccer Fans United',
-        tenantName: 'Acme Corp',
-        sport: 'soccer',
-        contestType: 'weekly',
-        selectionType: 'pick',
-        status: 'active',
-        entryCount: 32,
-        createdAt: new Date('2026-03-10'),
-      },
-    ];
+    const where: Record<string, unknown> = {};
 
-    return { items: mockItems, total: mockItems.length };
+    if (query.sport) where.sport = query.sport;
+    if (query.status) where.status = query.status.toUpperCase();
+    if (query.contestType) where.contestType = query.contestType;
+    if (query.selectionType) where.selectionType = query.selectionType;
+    if (query.leagueId) where.leagueId = query.leagueId;
+    if (query.tenantId) {
+      where.league = { tenantId: query.tenantId };
+    }
+
+    const [rows, total] = await Promise.all([
+      this.prisma.contest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+        include: {
+          league: {
+            select: {
+              name: true,
+              tenant: { select: { name: true } },
+            },
+          },
+          _count: { select: { entries: true } },
+        },
+      }),
+      this.prisma.contest.count({ where }),
+    ]);
+
+    const items: ContestListItem[] = rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      leagueName: row.league.name,
+      tenantName: row.league.tenant.name,
+      sport: row.sport ?? '',
+      contestType: row.contestType,
+      selectionType: row.selectionType,
+      status: row.status.toLowerCase(),
+      entryCount: row._count.entries,
+      createdAt: row.createdAt,
+    }));
+
+    return { items, total };
   }
 
   /**
    * Returns the full admin detail view for a single contest.
-   *
-   * Placeholder: returns mock data. Will aggregate from contests, entries,
-   * standings, and draft tables via Prisma.
    */
   async getContestAdminDetail(contestId: string): Promise<ContestAdminView> {
-    // TODO: Replace with Prisma queries
-    void contestId;
+    const contest = await this.prisma.contest.findUnique({
+      where: { id: contestId },
+      include: {
+        league: {
+          select: {
+            id: true,
+            name: true,
+            tenantId: true,
+            tenant: { select: { name: true } },
+          },
+        },
+        entries: {
+          include: {
+            membership: {
+              include: {
+                user: { select: { email: true } },
+              },
+            },
+          },
+          orderBy: { rank: 'asc' },
+        },
+        standings: {
+          orderBy: { rank: 'asc' },
+        },
+        draftSession: true,
+      },
+    });
 
-    const now = new Date();
+    if (!contest) {
+      throw new ContestNotFoundError(contestId);
+    }
+
+    // Build standings from contest entries (which have rank and totalScore)
+    const standings = contest.entries
+      .filter((e) => e.rank !== null)
+      .map((e) => ({
+        entryId: e.id,
+        entryName: e.name,
+        ownerEmail: e.membership.user.email,
+        rank: e.rank!,
+        totalScore: e.totalScore,
+      }));
+
+    // Draft status from draft session if present
+    const draftStatus = contest.draftSession
+      ? {
+          status: contest.draftSession.status,
+          currentPick: contest.draftSession.currentPickNumber,
+          totalPicks: contest.entries.length, // approximate from entry count
+          startedAt: contest.draftSession.startedAt ?? undefined,
+        }
+      : undefined;
 
     return {
-      id: contestId,
-      name: 'Masters 2026 Pick Sheet',
-      sport: 'golf',
-      contestType: 'pick_sheet',
-      selectionType: 'pick',
-      scoringEngine: 'golf-standard-v2',
-      status: 'active',
-      leagueName: 'Golf Buddies League',
-      leagueId: 'league-001',
-      tenantName: "Tiger's Corner",
-      tenantId: '00000000-0000-0000-0000-000000000001',
-      entryCount: 24,
-      startsAt: new Date('2026-04-10T08:00:00Z'),
-      endsAt: new Date('2026-04-13T20:00:00Z'),
-      lockAt: new Date('2026-04-10T12:00:00Z'),
-      createdAt: new Date('2026-03-01'),
-      standings: [
-        { entryId: 'entry-001', entryName: 'Alice Picks', ownerEmail: 'alice@example.com', rank: 1, totalScore: 145 },
-        { entryId: 'entry-002', entryName: 'Bob Picks', ownerEmail: 'bob@example.com', rank: 2, totalScore: 138 },
-        { entryId: 'entry-003', entryName: 'Charlie Picks', ownerEmail: 'charlie@example.com', rank: 3, totalScore: 132 },
-      ],
-      draftStatus: {
-        status: 'completed',
-        currentPick: 24,
-        totalPicks: 24,
-        startedAt: new Date('2026-03-28T19:00:00Z'),
-      },
+      id: contest.id,
+      name: contest.name,
+      sport: contest.sport ?? '',
+      contestType: contest.contestType,
+      selectionType: contest.selectionType,
+      scoringEngine: contest.scoringEngine,
+      status: contest.status.toLowerCase(),
+      leagueName: contest.league.name,
+      leagueId: contest.league.id,
+      tenantName: contest.league.tenant.name,
+      tenantId: contest.league.tenantId,
+      entryCount: contest.entries.length,
+      startsAt: contest.startsAt ?? undefined,
+      endsAt: contest.endsAt ?? undefined,
+      lockAt: contest.lockAt ?? undefined,
+      createdAt: contest.createdAt,
+      standings,
+      draftStatus,
       scoringFreshness: {
-        lastStatEvent: new Date(now.getTime() - 5 * 60_000),
+        lastStatEvent: undefined,
         isStale: false,
         staleMinutes: 0,
       },
-      statEventCount: 1_247,
-      correctionsApplied: 2,
-      overrides: [
-        {
-          id: 'override-001',
-          adminEmail: 'ops@poolmaster.com',
-          entryId: 'entry-003',
-          oldScore: 128,
-          newScore: 132,
-          reason: 'Scoring correction for missed birdie on hole 14',
-          createdAt: new Date('2026-03-25T14:30:00Z'),
-        },
-      ],
+      statEventCount: 0,
+      correctionsApplied: 0,
+      overrides: [],
     };
   }
 
@@ -266,7 +264,16 @@ export class ContestService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Update contest status to 'closed' via Prisma
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new ContestNotFoundError(contestId);
+
+    const beforeStatus = contest.status;
+
+    await this.prisma.contest.update({
+      where: { id: contestId },
+      data: { status: 'CLOSED' },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -274,7 +281,8 @@ export class ContestService {
       resourceType: 'CONTEST',
       resourceId: contestId,
       description: `Force-closed contest — reason: ${reason}`,
-      afterState: { status: 'closed' },
+      beforeState: { status: beforeStatus },
+      afterState: { status: 'CLOSED' },
       reason,
     });
   }
@@ -288,7 +296,16 @@ export class ContestService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Update contest status to 'active' via Prisma
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new ContestNotFoundError(contestId);
+
+    const beforeStatus = contest.status;
+
+    await this.prisma.contest.update({
+      where: { id: contestId },
+      data: { status: 'ACTIVE' },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -296,7 +313,8 @@ export class ContestService {
       resourceType: 'CONTEST',
       resourceId: contestId,
       description: `Reopened contest — reason: ${reason}`,
-      afterState: { status: 'active' },
+      beforeState: { status: beforeStatus },
+      afterState: { status: 'ACTIVE' },
       reason,
     });
   }
@@ -313,10 +331,23 @@ export class ContestService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Look up current score from database via Prisma
-    const oldScore = 128; // placeholder — will come from DB lookup
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new ContestNotFoundError(contestId);
 
-    // TODO: Update entry score via Prisma
+    const entry = await this.prisma.contestEntry.findFirst({
+      where: { id: entryId, contestId },
+    });
+    if (!entry) {
+      throw new Error(`Entry ${entryId} not found in contest ${contestId}`);
+    }
+
+    const oldScore = entry.totalScore;
+
+    await this.prisma.contestEntry.update({
+      where: { id: entryId },
+      data: { totalScore: newScore },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -339,15 +370,57 @@ export class ContestService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<RecalculationResult> {
-    // TODO: Trigger actual recalculation via scoring engine
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new ContestNotFoundError(contestId);
+
+    // Fetch all entries ordered by score descending
+    const entries = await this.prisma.contestEntry.findMany({
+      where: { contestId },
+      orderBy: { totalScore: 'desc' },
+    });
+
+    const rankChanges: { entryId: string; oldRank: number; newRank: number }[] = [];
+    let entriesAffected = 0;
+
+    // Assign new ranks and record changes
+    for (let i = 0; i < entries.length; i++) {
+      const newRank = i + 1;
+      const oldRank = entries[i].rank ?? 0;
+
+      if (oldRank !== newRank) {
+        rankChanges.push({ entryId: entries[i].id, oldRank, newRank });
+        entriesAffected++;
+      }
+
+      await this.prisma.contestEntry.update({
+        where: { id: entries[i].id },
+        data: { rank: newRank },
+      });
+
+      // Also upsert into contest_standings
+      await this.prisma.contestStanding.upsert({
+        where: {
+          contestId_entryId: { contestId, entryId: entries[i].id },
+        },
+        create: {
+          contestId,
+          entryId: entries[i].id,
+          rank: newRank,
+          totalScore: entries[i].totalScore,
+          lastUpdatedAt: new Date(),
+        },
+        update: {
+          rank: newRank,
+          totalScore: entries[i].totalScore,
+          lastUpdatedAt: new Date(),
+        },
+      });
+    }
+
     const result: RecalculationResult = {
       contestId,
-      entriesAffected: 3,
-      rankChanges: [
-        { entryId: 'entry-002', oldRank: 3, newRank: 2 },
-        { entryId: 'entry-003', oldRank: 2, newRank: 3 },
-        { entryId: 'entry-005', oldRank: 8, newRank: 6 },
-      ],
+      entriesAffected,
+      rankChanges,
       recalculatedAt: new Date(),
     };
 
@@ -357,10 +430,10 @@ export class ContestService {
       action: 'contest.recalculate_standings',
       resourceType: 'CONTEST',
       resourceId: contestId,
-      description: `Recalculated standings — ${result.entriesAffected} entries affected, ${result.rankChanges.length} rank changes`,
+      description: `Recalculated standings — ${entriesAffected} entries affected, ${rankChanges.length} rank changes`,
       afterState: {
-        entriesAffected: result.entriesAffected,
-        rankChanges: result.rankChanges,
+        entriesAffected,
+        rankChanges,
       },
     });
 
@@ -375,6 +448,9 @@ export class ContestService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new ContestNotFoundError(contestId);
+
     // TODO: Trigger payout recalculation via billing/payout engine
     await logAdminAction({
       adminUserId,
@@ -395,6 +471,9 @@ export class ContestService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new ContestNotFoundError(contestId);
+
     // TODO: Trigger re-ingestion via scoring-service
     await logAdminAction({
       adminUserId,

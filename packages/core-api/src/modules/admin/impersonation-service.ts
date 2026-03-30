@@ -4,8 +4,11 @@
  * Allows admins to start time-limited sessions where they view the app as a
  * specific tenant admin. All actions during impersonation are audit-logged.
  * Sessions auto-expire after 1 hour.
+ *
+ * Persisted via Prisma to the impersonation_sessions table.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -30,18 +33,8 @@ export interface ImpersonationSession {
 const SESSION_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
 // ---------------------------------------------------------------------------
-// In-memory store (placeholder for Prisma)
-// ---------------------------------------------------------------------------
-
-const activeSessions = new Map<string, ImpersonationSession>();
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function generateSessionId(): string {
-  return `imp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 function generateSessionToken(adminUserId: string, tenantId: string): string {
   // Placeholder: generates a mock JWT with impersonation claims.
@@ -62,6 +55,8 @@ function generateSessionToken(adminUserId: string, tenantId: string): string {
 // ---------------------------------------------------------------------------
 
 export class ImpersonationService {
+  constructor(private readonly prisma: PrismaClient) {}
+
   /**
    * Starts a new impersonation session for a given tenant.
    *
@@ -74,27 +69,23 @@ export class ImpersonationService {
     adminUserEmail: string,
   ): Promise<ImpersonationSession> {
     // End any existing active session for this admin
-    for (const [key, session] of activeSessions.entries()) {
-      if (session.adminUserId === adminUserId && session.isActive) {
-        session.isActive = false;
-        session.endedAt = new Date();
-        activeSessions.set(key, session);
-      }
-    }
+    await this.prisma.impersonationSession.updateMany({
+      where: { adminUserId, isActive: true },
+      data: { isActive: false, endedAt: new Date() },
+    });
 
     const now = new Date();
-    const session: ImpersonationSession = {
-      id: generateSessionId(),
-      adminUserId,
-      tenantId,
-      token: generateSessionToken(adminUserId, tenantId),
-      startedAt: now,
-      expiresAt: new Date(now.getTime() + SESSION_DURATION_MS),
-      isActive: true,
-    };
+    const expiresAt = new Date(now.getTime() + SESSION_DURATION_MS);
+    const token = generateSessionToken(adminUserId, tenantId);
 
-    // TODO: Insert into impersonation_sessions table via Prisma
-    activeSessions.set(session.id, session);
+    const row = await this.prisma.impersonationSession.create({
+      data: {
+        adminUserId,
+        tenantId,
+        startedAt: now,
+        isActive: true,
+      },
+    });
 
     await logAdminAction({
       adminUserId,
@@ -103,10 +94,18 @@ export class ImpersonationService {
       resourceType: 'TENANT',
       resourceId: tenantId,
       description: `Started impersonation session for tenant ${tenantId}`,
-      afterState: { sessionId: session.id, expiresAt: session.expiresAt.toISOString() },
+      afterState: { sessionId: row.id, expiresAt: expiresAt.toISOString() },
     });
 
-    return session;
+    return {
+      id: row.id,
+      adminUserId,
+      tenantId,
+      token,
+      startedAt: row.startedAt,
+      expiresAt,
+      isActive: true,
+    };
   }
 
   /**
@@ -116,30 +115,28 @@ export class ImpersonationService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    let found = false;
+    const active = await this.prisma.impersonationSession.findFirst({
+      where: { adminUserId, isActive: true },
+    });
 
-    for (const [key, session] of activeSessions.entries()) {
-      if (session.adminUserId === adminUserId && session.isActive) {
-        session.isActive = false;
-        session.endedAt = new Date();
-        activeSessions.set(key, session);
-        found = true;
-
-        await logAdminAction({
-          adminUserId,
-          adminUserEmail,
-          action: 'impersonation.end',
-          resourceType: 'TENANT',
-          resourceId: session.tenantId,
-          description: `Ended impersonation session ${session.id}`,
-          beforeState: { sessionId: session.id },
-        });
-      }
-    }
-
-    if (!found) {
+    if (!active) {
       throw new NoActiveSessionError(adminUserId);
     }
+
+    await this.prisma.impersonationSession.update({
+      where: { id: active.id },
+      data: { isActive: false, endedAt: new Date() },
+    });
+
+    await logAdminAction({
+      adminUserId,
+      adminUserEmail,
+      action: 'impersonation.end',
+      resourceType: 'TENANT',
+      resourceId: active.tenantId,
+      description: `Ended impersonation session ${active.id}`,
+      beforeState: { sessionId: active.id },
+    });
   }
 
   /**
@@ -147,27 +144,38 @@ export class ImpersonationService {
    */
   async getActiveSession(adminUserId: string): Promise<ImpersonationSession | null> {
     const now = new Date();
+    const expirationCutoff = new Date(now.getTime() - SESSION_DURATION_MS);
 
-    for (const session of activeSessions.values()) {
-      if (
-        session.adminUserId === adminUserId &&
-        session.isActive &&
-        session.expiresAt > now
-      ) {
-        return session;
-      }
+    // Auto-expire sessions that are past the 1-hour window
+    await this.prisma.impersonationSession.updateMany({
+      where: {
+        isActive: true,
+        startedAt: { lt: expirationCutoff },
+      },
+      data: { isActive: false, endedAt: now },
+    });
+
+    const session = await this.prisma.impersonationSession.findFirst({
+      where: { adminUserId, isActive: true },
+    });
+
+    if (!session) {
+      return null;
     }
 
-    // Auto-expire sessions that have passed their expiration
-    for (const [key, session] of activeSessions.entries()) {
-      if (session.isActive && session.expiresAt <= now) {
-        session.isActive = false;
-        session.endedAt = session.expiresAt;
-        activeSessions.set(key, session);
-      }
-    }
+    const expiresAt = new Date(session.startedAt.getTime() + SESSION_DURATION_MS);
+    const token = generateSessionToken(adminUserId, session.tenantId);
 
-    return null;
+    return {
+      id: session.id,
+      adminUserId: session.adminUserId,
+      tenantId: session.tenantId,
+      token,
+      startedAt: session.startedAt,
+      expiresAt,
+      endedAt: session.endedAt ?? undefined,
+      isActive: session.isActive,
+    };
   }
 }
 

@@ -12,9 +12,10 @@
  *   - Usage limits enforced per plan
  */
 
+import { PrismaClient } from '@prisma/client';
 import { FlagService, FlagNotFoundError } from '../admin/flag-service';
 
-const flagService = new FlagService();
+const flagService = new FlagService(new PrismaClient());
 
 /**
  * Resolves whether billing features are enabled globally or for a specific tenant.

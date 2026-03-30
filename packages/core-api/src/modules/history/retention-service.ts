@@ -40,21 +40,23 @@ const DEFAULT_RETENTION: RetentionConfig = {
 };
 
 export class RetentionService {
-  /**
-   * In-memory store for retention configs. Used until the Prisma client is
-   * regenerated with the RetentionConfig model.
-   */
-  private static readonly configStore = new Map<string, RetentionConfig>();
-
   constructor(private readonly prisma: PrismaClient) {}
 
   /** Get retention config for a league (returns defaults if not set). */
   async getConfig(leagueId: string): Promise<RetentionConfig> {
-    const stored = RetentionService.configStore.get(leagueId);
+    const stored = await this.prisma.retentionConfig.findUnique({
+      where: { leagueId },
+    });
     if (!stored) {
       return { ...DEFAULT_RETENTION, leagueId };
     }
-    return stored;
+    return {
+      leagueId: stored.leagueId,
+      contestResultRetention: stored.contestResultRetention,
+      rosterHistoryRetention: stored.rosterHistoryRetention,
+      activityLogRetention: stored.activityLogRetention,
+      payoutRecordRetention: stored.payoutRecordRetention,
+    };
   }
 
   /** Update retention config (commissioner only). */
@@ -72,7 +74,23 @@ export class RetentionService {
       payoutRecordRetention: config.payoutRecordRetention ?? existing.payoutRecordRetention,
     };
 
-    RetentionService.configStore.set(leagueId, merged);
+    await this.prisma.retentionConfig.upsert({
+      where: { leagueId },
+      create: {
+        leagueId,
+        contestResultRetention: merged.contestResultRetention,
+        rosterHistoryRetention: merged.rosterHistoryRetention,
+        activityLogRetention: merged.activityLogRetention,
+        payoutRecordRetention: merged.payoutRecordRetention,
+      },
+      update: {
+        contestResultRetention: merged.contestResultRetention,
+        rosterHistoryRetention: merged.rosterHistoryRetention,
+        activityLogRetention: merged.activityLogRetention,
+        payoutRecordRetention: merged.payoutRecordRetention,
+      },
+    });
+
     return merged;
   }
 

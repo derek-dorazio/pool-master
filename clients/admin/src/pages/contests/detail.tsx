@@ -10,6 +10,7 @@ import {
   CheckCircle, Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useContestDetail } from '@/hooks/use-contests-api';
 
 function statusColor(status: string) {
@@ -27,11 +28,17 @@ export function Component() {
   const { contestId } = useParams<{ contestId: string }>();
   const { data: contest } = useContestDetail(contestId ?? '');
   const [recalcResult, setRecalcResult] = useState<string | null>(null);
+  const dialog = useConfirmDialog();
 
   if (!contest) return null;
 
-  function confirmAction(label: string, callback?: () => void) {
-    if (window.confirm(`Are you sure you want to ${label}?`)) {
+  async function confirmAction(label: string, callback?: () => void) {
+    const confirmed = await dialog.confirm(
+      'Confirm Action',
+      `Are you sure you want to ${label}?`,
+      { confirmLabel: 'Confirm', variant: 'destructive' },
+    );
+    if (confirmed) {
       callback?.();
     }
   }
@@ -305,8 +312,12 @@ export function Component() {
               <CardContent className="space-y-2">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to recalculate standings?')) {
+                  onClick={async () => {
+                    const confirmed = await dialog.confirm(
+                      'Recalculate Standings',
+                      'Are you sure you want to recalculate standings?',
+                    );
+                    if (confirmed) {
                       setRecalcResult('3 rank changes');
                     }
                   }}
@@ -360,6 +371,16 @@ export function Component() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <ConfirmDialog
+        open={dialog.open}
+        title={dialog.title}
+        description={dialog.description}
+        confirmLabel={dialog.confirmLabel}
+        variant={dialog.variant}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+      />
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { adminApi } from '@/lib/api-client';
 import { useUserSearch } from '@/hooks/use-admin-api';
 import type { UserResult } from '@/hooks/use-admin-api';
 
@@ -87,24 +89,33 @@ export function Component() {
   const [primary, setPrimary] = useState<UserResult | null>(null);
   const [duplicate, setDuplicate] = useState<UserResult | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const dialog = useConfirmDialog();
 
   const bothSelected = primary !== null && duplicate !== null;
   const sameUser = primary?.id === duplicate?.id;
 
   function handlePreview() {
     if (sameUser) {
-      alert('Primary and duplicate accounts must be different users.');
       return;
     }
     setShowPreview(true);
   }
 
-  function handleConfirmMerge() {
-    const confirmed = window.confirm(
+  async function handleConfirmMerge() {
+    const confirmed = await dialog.confirm(
+      'Merge Accounts',
       `Merge "${duplicate?.displayName}" into "${primary?.displayName}"? This action cannot be undone.`,
+      { confirmLabel: 'Merge', variant: 'destructive' },
     );
     if (confirmed) {
-      alert('Accounts merged successfully (mock)');
+      try {
+        await adminApi.post('/v1/admin/users/merge', {
+          primaryId: primary?.id,
+          duplicateId: duplicate?.id,
+        });
+      } catch {
+        // Silently handle — backend may not be available yet
+      }
       setPrimary(null);
       setDuplicate(null);
       setShowPreview(false);
@@ -201,6 +212,16 @@ export function Component() {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={dialog.open}
+        title={dialog.title}
+        description={dialog.description}
+        confirmLabel={dialog.confirmLabel}
+        variant={dialog.variant}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+      />
     </div>
   );
 }

@@ -37,6 +37,9 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import type { EntitlementKey } from '@poolmaster/shared/domain';
 import { EntitlementService } from './entitlement-service';
+import { UsageService } from './usage-service';
+import { SubscriptionService } from './subscription-service';
+import { TrialService } from './trial-service';
 import { PlanChangeService } from './plan-change-service';
 import { CancellationService } from './cancellation-service';
 import { InvoiceService } from './invoice-service';
@@ -44,15 +47,7 @@ import { DunningService } from './dunning-service';
 import { RevenueAnalyticsService } from './revenue-analytics-service';
 import { EnterpriseService } from './enterprise-service';
 import { isBillingEnabled } from './billing-feature-gate';
-import {
-  createSubscription,
-  changePlan,
-  cancelSubscription as cancelSub,
-  resumeSubscription,
-  getSubscription,
-} from './subscription-service';
 import { stripeClient } from './stripe-service';
-import { startTrial, checkTrialStatus } from './trial-service';
 
 const ALL_ENTITLEMENT_KEYS: EntitlementKey[] = [
   'league.create',
@@ -72,7 +67,10 @@ const ALL_ENTITLEMENT_KEYS: EntitlementKey[] = [
 
 export async function billingModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
-  const entitlementService = new EntitlementService(prisma);
+  const usageService = new UsageService(prisma);
+  const entitlementService = new EntitlementService(prisma, usageService);
+  const subscriptionService = new SubscriptionService(prisma);
+  const trialService = new TrialService(prisma);
   const planChangeService = new PlanChangeService(prisma);
   const cancellationService = new CancellationService(prisma);
   const invoiceService = new InvoiceService(prisma);
@@ -205,7 +203,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     if (!planSlug || !cycle) {
       return reply.status(400).send({ error: 'INVALID_INPUT', message: 'planSlug and cycle are required.' });
     }
-    const subscription = await createSubscription({ tenantId, planSlug, cycle });
+    const subscription = await subscriptionService.createSubscription({ tenantId, planSlug, cycle });
     return reply.status(201).send({ subscription });
   });
 
@@ -229,7 +227,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     if (!planSlug) {
       return reply.status(400).send({ error: 'INVALID_INPUT', message: 'planSlug is required.' });
     }
-    const subscription = await changePlan(tenantId, planSlug);
+    const subscription = await subscriptionService.changePlan(tenantId, planSlug);
     return reply.send({ subscription });
   });
 
@@ -249,7 +247,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
         message: 'Billing features are not yet available.',
       });
     }
-    const subscription = await resumeSubscription(tenantId);
+    const subscription = await subscriptionService.resumeSubscription(tenantId);
     return reply.send({ subscription });
   });
 
@@ -262,7 +260,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     if (!tenantId) {
       return reply.status(401).send({ error: 'UNAUTHORIZED' });
     }
-    const subscription = await getSubscription(tenantId);
+    const subscription = await subscriptionService.getSubscription(tenantId);
     return reply.send({ subscription });
   });
 
@@ -282,7 +280,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
         message: 'Billing features are not yet available.',
       });
     }
-    const subscription = await getSubscription(tenantId);
+    const subscription = await subscriptionService.getSubscription(tenantId);
     if (!subscription.stripeCustomerId) {
       return reply.status(400).send({ error: 'NO_CUSTOMER', message: 'No Stripe customer found.' });
     }
@@ -308,7 +306,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
         message: 'Billing features are not yet available.',
       });
     }
-    const subscription = await getSubscription(tenantId);
+    const subscription = await subscriptionService.getSubscription(tenantId);
     if (!subscription.stripeCustomerId) {
       return reply.status(400).send({ error: 'NO_CUSTOMER', message: 'No Stripe customer found.' });
     }
@@ -337,7 +335,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       });
     }
     const { planSlug } = request.body as { planSlug?: string };
-    const trial = await startTrial(tenantId, planSlug ?? 'pro');
+    const trial = await trialService.startTrial(tenantId, planSlug ?? 'pro');
     return reply.status(201).send({ trial });
   });
 
@@ -350,7 +348,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     if (!tenantId) {
       return reply.status(401).send({ error: 'UNAUTHORIZED' });
     }
-    const status = await checkTrialStatus(tenantId);
+    const status = await trialService.checkTrialStatus(tenantId);
     return reply.send({ trial: status });
   });
 
@@ -484,7 +482,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     if (!body.reason) {
       return reply.status(400).send({ error: 'REASON_REQUIRED' });
     }
-    await cancelSub(tenantId, body.immediate ?? false);
+    await subscriptionService.cancelSubscription(tenantId, body.immediate ?? false);
     await cancellationService.cancel(tenantId, body.reason, body.feedback);
     return reply.send({ success: true });
   });

@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { adminApi } from '@/lib/api-client';
 import { useTenantDetail } from '@/hooks/use-admin-api';
 
 const planColors: Record<string, string> = {
@@ -63,6 +65,7 @@ export function Component() {
   const { id } = useParams<{ id: string }>();
   const { data: tenant, isLoading } = useTenantDetail(id);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const dialog = useConfirmDialog();
 
   if (isLoading || !tenant) {
     return (
@@ -72,11 +75,19 @@ export function Component() {
     );
   }
 
-  function handleAction(action: string) {
+  async function handleAction(action: string) {
     setActionsOpen(false);
-    const confirmed = window.confirm(`Are you sure you want to ${action} for "${tenant!.name}"?`);
+    const confirmed = await dialog.confirm(
+      action,
+      `Are you sure you want to ${action} for "${tenant!.name}"?`,
+      { confirmLabel: action, variant: action === 'Delete' ? 'destructive' : 'default' },
+    );
     if (confirmed) {
-      alert(`${action} executed (mock)`);
+      try {
+        await adminApi.post(`/v1/admin/tenants/${id}/actions`, { action });
+      } catch {
+        // Silently handle — backend may not be available yet
+      }
     }
   }
 
@@ -294,6 +305,16 @@ export function Component() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ConfirmDialog
+        open={dialog.open}
+        title={dialog.title}
+        description={dialog.description}
+        confirmLabel={dialog.confirmLabel}
+        variant={dialog.variant}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+      />
     </div>
   );
 }

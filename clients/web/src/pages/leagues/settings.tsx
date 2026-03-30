@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/card';
 import { CurrencySelect } from '@/components/ui/currency-select';
 import { toast } from '@/hooks/use-toast';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatCurrency } from '@/lib/format-currency';
 import { usePreferencesStore } from '@/stores/preferences-store';
 
@@ -58,14 +59,26 @@ export function Component() {
     toast({ title: 'New link generated', description: 'The old invite link is no longer valid.' });
   }
 
-  function handleArchive() {
-    if (window.confirm('Are you sure you want to archive this league? This cannot be undone.')) {
+  const dialog = useConfirmDialog();
+
+  async function handleArchive() {
+    const confirmed = await dialog.confirm(
+      'Archive League',
+      'Are you sure you want to archive this league? This cannot be undone.',
+      { confirmLabel: 'Archive', variant: 'destructive' },
+    );
+    if (confirmed) {
       toast({ title: 'League archived', description: 'The league has been archived.' });
     }
   }
 
-  function handleTransfer() {
-    if (window.confirm('Are you sure you want to transfer the commissioner role? You will lose admin privileges.')) {
+  async function handleTransfer() {
+    const confirmed = await dialog.confirm(
+      'Transfer Commissioner Role',
+      'Are you sure you want to transfer the commissioner role? You will lose admin privileges.',
+      { confirmLabel: 'Transfer', variant: 'destructive' },
+    );
+    if (confirmed) {
       toast({ title: 'Role transferred', description: 'Commissioner role has been transferred.' });
     }
   }
@@ -173,6 +186,16 @@ export function Component() {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={dialog.open}
+        title={dialog.title}
+        description={dialog.description}
+        confirmLabel={dialog.confirmLabel}
+        variant={dialog.variant}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+      />
     </div>
   );
 }

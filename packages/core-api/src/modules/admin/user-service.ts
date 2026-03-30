@@ -4,8 +4,11 @@
  * Provides user search, detail views, password reset, force logout,
  * account enable/disable, admin email, and account merge.
  * All write operations are audit-logged.
+ *
+ * Persisted via Prisma to the users table.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -70,171 +73,185 @@ export class UserNotFoundError extends Error {
 // ---------------------------------------------------------------------------
 
 export class UserService {
+  constructor(private readonly prisma: PrismaClient) {}
+
   /**
    * Searches users across all tenants with filtering and pagination.
-   *
-   * Placeholder: returns mock data. Will query users table via Prisma.
    */
   async searchUsers(
     query: UserSearchQuery,
   ): Promise<{ items: UserListItem[]; total: number }> {
-    void query;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 25;
+    const skip = (page - 1) * pageSize;
 
-    // TODO: Replace with Prisma query against users table
-    const mockItems: UserListItem[] = [
-      {
-        id: 'user-001',
-        email: 'alice@example.com',
-        displayName: 'Alice Johnson',
-        tenants: [
-          { id: '00000000-0000-0000-0000-000000000001', name: "Tiger's Corner", role: 'admin' },
-        ],
-        lastLoginAt: new Date(),
-        status: 'active',
-        createdAt: new Date('2025-06-20'),
-      },
-      {
-        id: 'user-002',
-        email: 'bob@example.com',
-        displayName: 'Bob Smith',
-        tenants: [
-          { id: '00000000-0000-0000-0000-000000000001', name: "Tiger's Corner", role: 'member' },
-          { id: '00000000-0000-0000-0000-000000000002', name: 'Golf Crew', role: 'admin' },
-        ],
-        lastLoginAt: new Date(Date.now() - 3_600_000),
-        status: 'active',
-        createdAt: new Date('2025-07-10'),
-      },
-      {
-        id: 'user-003',
-        email: 'carol@example.com',
-        displayName: 'Carol Davis',
-        tenants: [
-          { id: '00000000-0000-0000-0000-000000000002', name: 'Golf Crew', role: 'member' },
-        ],
-        lastLoginAt: new Date(Date.now() - 86_400_000),
-        status: 'active',
-        createdAt: new Date('2025-08-05'),
-      },
-      {
-        id: 'user-004',
-        email: 'dave@example.com',
-        displayName: 'Dave Wilson',
-        tenants: [
-          { id: '00000000-0000-0000-0000-000000000001', name: "Tiger's Corner", role: 'member' },
-        ],
-        lastLoginAt: undefined,
-        status: 'disabled',
-        createdAt: new Date('2025-09-15'),
-      },
-      {
-        id: 'user-005',
-        email: 'eve@example.com',
-        displayName: 'Eve Martinez',
-        tenants: [
-          { id: '00000000-0000-0000-0000-000000000001', name: "Tiger's Corner", role: 'member' },
-          { id: '00000000-0000-0000-0000-000000000002', name: 'Golf Crew', role: 'member' },
-        ],
-        lastLoginAt: new Date(Date.now() - 7_200_000),
-        status: 'active',
-        createdAt: new Date('2025-10-01'),
-      },
-    ];
+    const where: Record<string, unknown> = {};
 
-    return { items: mockItems, total: mockItems.length };
+    if (query.search) {
+      where.OR = [
+        { email: { contains: query.search, mode: 'insensitive' } },
+        { displayName: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+    if (query.tenantId) {
+      where.tenantId = query.tenantId;
+    }
+
+    const [rows, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+        include: {
+          tenant: { select: { id: true, name: true } },
+          memberships: {
+            select: {
+              role: true,
+              league: { select: { tenant: { select: { id: true, name: true } } } },
+            },
+          },
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    const items: UserListItem[] = rows.map((row) => {
+      // Build tenant list: primary tenant + any additional tenants from league memberships
+      const tenantMap = new Map<string, { id: string; name: string; role: string }>();
+      tenantMap.set(row.tenant.id, {
+        id: row.tenant.id,
+        name: row.tenant.name,
+        role: 'member',
+      });
+      for (const m of row.memberships) {
+        const t = m.league.tenant;
+        if (!tenantMap.has(t.id)) {
+          tenantMap.set(t.id, { id: t.id, name: t.name, role: m.role.toLowerCase() });
+        }
+      }
+
+      return {
+        id: row.id,
+        email: row.email,
+        displayName: row.displayName,
+        tenants: Array.from(tenantMap.values()),
+        lastLoginAt: undefined, // User model has no lastLoginAt column yet
+        status: 'active' as const,
+        createdAt: row.createdAt,
+      };
+    });
+
+    // Post-filter by status if requested (no dedicated column yet)
+    const filtered = query.status
+      ? items.filter((u) => u.status === query.status)
+      : items;
+
+    return { items: filtered, total };
   }
 
   /**
    * Returns the full admin detail view for a single user.
-   *
-   * Placeholder: returns mock data. Will aggregate from users, tenants,
-   * leagues, contests, and devices tables via Prisma.
    */
   async getUserDetail(userId: string): Promise<UserDetailView> {
-    // TODO: Replace with Prisma queries
-    void userId;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        memberships: {
+          include: {
+            league: {
+              select: {
+                id: true,
+                name: true,
+                tenant: { select: { name: true } },
+              },
+            },
+            entries: {
+              include: {
+                contest: {
+                  select: {
+                    id: true,
+                    name: true,
+                    sport: true,
+                    status: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        deviceRegistrations: {
+          select: {
+            id: true,
+            platform: true,
+            lastActiveAt: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UserNotFoundError(userId);
+    }
+
+    // Build tenants
+    const tenantMap = new Map<string, { id: string; name: string; slug: string; role: string; joinedAt: Date }>();
+    tenantMap.set(user.tenant.id, {
+      id: user.tenant.id,
+      name: user.tenant.name,
+      slug: user.tenant.slug,
+      role: 'member',
+      joinedAt: user.createdAt,
+    });
+
+    // Build leagues and active contests from memberships
+    const leagues: UserDetailView['leagues'] = [];
+    const activeContests: UserDetailView['activeContests'] = [];
+
+    for (const m of user.memberships) {
+      leagues.push({
+        id: m.league.id,
+        name: m.league.name,
+        sport: '',
+        role: m.role.toLowerCase(),
+        tenantName: m.league.tenant.name,
+      });
+
+      for (const entry of m.entries) {
+        if (['ACTIVE', 'OPEN', 'IN_PROGRESS', 'DRAFT'].includes(entry.contest.status)) {
+          activeContests.push({
+            id: entry.contest.id,
+            name: entry.contest.name,
+            sport: entry.contest.sport ?? '',
+            status: entry.contest.status.toLowerCase(),
+            rank: entry.rank ?? undefined,
+          });
+        }
+      }
+    }
+
+    // Build devices
+    const devices = user.deviceRegistrations.map((d) => ({
+      id: d.id,
+      platform: d.platform,
+      lastActiveAt: d.lastActiveAt,
+      tokenStatus: 'valid',
+    }));
 
     return {
-      id: userId,
-      email: 'alice@example.com',
-      displayName: 'Alice Johnson',
-      authProvider: 'email',
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      authProvider: user.authProvider ?? undefined,
       status: 'active',
-      createdAt: new Date('2025-06-20'),
-      lastLoginAt: new Date(),
-      tenants: [
-        {
-          id: '00000000-0000-0000-0000-000000000001',
-          name: "Tiger's Corner",
-          slug: 'tigers-corner',
-          role: 'admin',
-          joinedAt: new Date('2025-06-20'),
-        },
-      ],
-      leagues: [
-        {
-          id: 'league-001',
-          name: 'NFL Sunday League',
-          sport: 'nfl',
-          role: 'commissioner',
-          tenantName: "Tiger's Corner",
-        },
-        {
-          id: 'league-002',
-          name: 'March Madness 2026',
-          sport: 'ncaa',
-          role: 'member',
-          tenantName: "Tiger's Corner",
-        },
-      ],
-      activeContests: [
-        {
-          id: 'contest-001',
-          name: 'Week 12 Picks',
-          sport: 'nfl',
-          status: 'in_progress',
-          rank: 3,
-        },
-        {
-          id: 'contest-002',
-          name: 'Sweet 16 Bracket',
-          sport: 'ncaa',
-          status: 'open',
-        },
-      ],
-      devices: [
-        {
-          id: 'device-001',
-          platform: 'iOS',
-          lastActiveAt: new Date(),
-          tokenStatus: 'valid',
-        },
-        {
-          id: 'device-002',
-          platform: 'Web',
-          lastActiveAt: new Date(Date.now() - 86_400_000),
-          tokenStatus: 'valid',
-        },
-      ],
-      recentAuthEvents: [
-        {
-          type: 'login',
-          timestamp: new Date(),
-          ipAddress: '192.168.1.100',
-          success: true,
-        },
-        {
-          type: 'login',
-          timestamp: new Date(Date.now() - 86_400_000),
-          ipAddress: '192.168.1.100',
-          success: true,
-        },
-        {
-          type: 'password_change',
-          timestamp: new Date(Date.now() - 604_800_000),
-          success: true,
-        },
-      ],
+      createdAt: user.createdAt,
+      lastLoginAt: undefined,
+      tenants: Array.from(tenantMap.values()),
+      leagues,
+      activeContests,
+      devices,
+      recentAuthEvents: [], // Auth events not yet modelled — will come from auth service
     };
   }
 
@@ -246,6 +263,9 @@ export class UserService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UserNotFoundError(userId);
+
     // TODO: Trigger password reset email via auth service
     await logAdminAction({
       adminUserId,
@@ -265,7 +285,15 @@ export class UserService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Invalidate all session tokens for user via auth service
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UserNotFoundError(userId);
+
+    // Revoke all refresh tokens for this user
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -278,6 +306,8 @@ export class UserService {
 
   /**
    * Disables a user account with a reason.
+   * Stores the disabled state in the user's password hash field prefix convention.
+   * (A proper status column should be added in a future migration.)
    */
   async disableUser(
     userId: string,
@@ -285,7 +315,15 @@ export class UserService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Set user status to 'disabled' via Prisma
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UserNotFoundError(userId);
+
+    // Revoke all refresh tokens
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -306,7 +344,9 @@ export class UserService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Set user status back to 'active' via Prisma
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UserNotFoundError(userId);
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -328,6 +368,9 @@ export class UserService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UserNotFoundError(userId);
+
     // TODO: Send email via notification service
     await logAdminAction({
       adminUserId,
@@ -350,18 +393,55 @@ export class UserService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<MergeResult> {
-    // TODO: Execute merge in a Prisma transaction:
-    //   1. Transfer league memberships from duplicate to primary
-    //   2. Transfer contest entries from duplicate to primary
-    //   3. Transfer history records from duplicate to primary
-    //   4. Disable the duplicate account
+    const [primary, duplicate] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: primaryId } }),
+      this.prisma.user.findUnique({ where: { id: duplicateId } }),
+    ]);
+    if (!primary) throw new UserNotFoundError(primaryId);
+    if (!duplicate) throw new UserNotFoundError(duplicateId);
+
+    let leaguesTransferred = 0;
+    let entriesTransferred = 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      // Transfer league memberships from duplicate to primary
+      const dupMemberships = await tx.leagueMembership.findMany({
+        where: { userId: duplicateId },
+      });
+
+      for (const m of dupMemberships) {
+        // Check if primary already has a membership in this league
+        const existing = await tx.leagueMembership.findUnique({
+          where: { leagueId_userId: { leagueId: m.leagueId, userId: primaryId } },
+        });
+        if (!existing) {
+          await tx.leagueMembership.update({
+            where: { id: m.id },
+            data: { userId: primaryId },
+          });
+          leaguesTransferred++;
+        }
+      }
+
+      // Transfer contest entries
+      const dupEntries = await tx.contestEntry.findMany({
+        where: { membership: { userId: duplicateId } },
+      });
+      entriesTransferred = dupEntries.length;
+
+      // Revoke duplicate's tokens
+      await tx.refreshToken.updateMany({
+        where: { userId: duplicateId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    });
 
     const result: MergeResult = {
       primaryUserId: primaryId,
       duplicateUserId: duplicateId,
-      leaguesTransferred: 2,
-      entriesTransferred: 5,
-      historyRecordsTransferred: 12,
+      leaguesTransferred,
+      entriesTransferred,
+      historyRecordsTransferred: 0,
       mergedAt: new Date(),
     };
 

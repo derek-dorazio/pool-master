@@ -1,13 +1,12 @@
 /**
- * FlagService — feature flag CRUD with in-memory Map storage.
+ * FlagService — feature flag CRUD with Prisma persistence.
  *
  * Provides flag lifecycle management, tenant-specific overrides, and
  * flag resolution with the precedence chain:
  *   tenant override -> global enabled -> rollout percentage
- *
- * Uses mock data — will be replaced with real database integration.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -96,144 +95,74 @@ function simpleHash(input: string): number {
 }
 
 // ---------------------------------------------------------------------------
-// Seed data
+// Row → domain mapping
 // ---------------------------------------------------------------------------
 
-const now = new Date();
-
-function daysAgo(d: number): Date {
-  return new Date(now.getTime() - d * 86_400_000);
+interface FlagRow {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  flagType: string;
+  enabledGlobally: boolean;
+  rolloutPercentage: number | null;
+  owner: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  updatedById: string | null;
+  overrides: {
+    id: string;
+    tenantId: string;
+    enabled: boolean;
+    reason: string | null;
+    tenant: { name: string };
+  }[];
 }
 
-function seedFlags(): Map<string, FeatureFlag> {
-  const flags = new Map<string, FeatureFlag>();
-
-  const seeds: FeatureFlag[] = [
-    {
-      id: 'flag-001',
-      key: 'live_draft_v2',
-      name: 'Live Draft V2',
-      description: 'Enables the redesigned live draft experience with real-time pick animations and improved timer UX.',
-      flagType: 'PERCENTAGE',
-      enabledGlobally: true,
-      rolloutPercentage: 50,
-      tenantOverrides: [
-        { tenantId: 'tenant-001', tenantName: 'Tiger\'s Co', enabled: true, reason: 'Beta tester' },
-        { tenantId: 'tenant-003', tenantName: 'Acme Corp', enabled: true, reason: 'Requested early access' },
-      ],
-      owner: 'draft-team',
-      createdAt: daysAgo(30),
-      updatedAt: daysAgo(2),
-      updatedBy: 'admin-001',
-    },
-    {
-      id: 'flag-002',
-      key: 'budget_pick_golf',
-      name: 'Budget Pick — Golf',
-      description: 'Enables budget-based pick selection for golf contests with salary cap mechanics.',
-      flagType: 'BOOLEAN',
-      enabledGlobally: false,
-      tenantOverrides: [
-        { tenantId: 'tenant-001', tenantName: 'Tiger\'s Co', enabled: true, reason: 'Golf feature testing' },
-      ],
-      owner: 'contest-team',
-      createdAt: daysAgo(14),
-      updatedAt: daysAgo(5),
-      updatedBy: 'admin-002',
-    },
-    {
-      id: 'flag-003',
-      key: 'salary_cap_nfl',
-      name: 'Salary Cap — NFL',
-      description: 'Enables salary cap draft mode for NFL contests.',
-      flagType: 'BOOLEAN',
-      enabledGlobally: true,
-      tenantOverrides: [],
-      owner: 'contest-team',
-      createdAt: daysAgo(60),
-      updatedAt: daysAgo(10),
-      updatedBy: 'admin-001',
-    },
-    {
-      id: 'flag-004',
-      key: 'dark_mode',
-      name: 'Dark Mode',
-      description: 'Enables dark mode theme across web and mobile clients.',
-      flagType: 'PERCENTAGE',
-      enabledGlobally: true,
-      rolloutPercentage: 25,
-      tenantOverrides: [],
-      owner: 'design-team',
-      createdAt: daysAgo(45),
-      updatedAt: daysAgo(3),
-      updatedBy: 'admin-003',
-    },
-    {
-      id: 'flag-005',
-      key: 'new_scoring_ui',
-      name: 'New Scoring UI',
-      description: 'Redesigned scoring display with live animations, expanded stat breakdowns, and timeline view.',
-      flagType: 'TENANT_LIST',
-      enabledGlobally: false,
-      tenantOverrides: [
-        { tenantId: 'tenant-001', tenantName: 'Tiger\'s Co', enabled: true, reason: 'UI beta tester' },
-        { tenantId: 'tenant-002', tenantName: 'Golf Crew', enabled: true, reason: 'Requested early access' },
-      ],
-      owner: 'scoring-team',
-      createdAt: daysAgo(20),
-      updatedAt: daysAgo(1),
-      updatedBy: 'admin-001',
-    },
-    {
-      id: 'flag-007',
-      key: 'billing_enabled',
-      name: 'Billing & Subscriptions',
-      description: 'Gates all billing features including Stripe integration, usage enforcement, and subscription management. When OFF, all entitlement checks pass (free tier, unlimited) and no Stripe calls are made.',
-      flagType: 'BOOLEAN',
-      enabledGlobally: false,
-      tenantOverrides: [],
-      owner: 'billing-team',
-      createdAt: daysAgo(1),
-      updatedAt: daysAgo(1),
-      updatedBy: 'admin-001',
-    },
-    {
-      id: 'flag-006',
-      key: 'bracket_ncaa',
-      name: 'NCAA Bracket Contest',
-      description: 'Enables NCAA tournament bracket-style contest type.',
-      flagType: 'BOOLEAN',
-      enabledGlobally: true,
-      tenantOverrides: [
-        { tenantId: 'tenant-004', tenantName: 'Test Org', enabled: false, reason: 'Not ready for free tier' },
-      ],
-      owner: 'contest-team',
-      createdAt: daysAgo(90),
-      updatedAt: daysAgo(7),
-      updatedBy: 'admin-002',
-    },
-  ];
-
-  for (const flag of seeds) {
-    flags.set(flag.key, flag);
-  }
-
-  return flags;
+function toFeatureFlag(row: FlagRow): FeatureFlag {
+  return {
+    id: row.id,
+    key: row.key,
+    name: row.name,
+    description: row.description ?? '',
+    flagType: row.flagType as FlagType,
+    enabledGlobally: row.enabledGlobally,
+    rolloutPercentage: row.rolloutPercentage ?? undefined,
+    tenantOverrides: row.overrides.map((o) => ({
+      tenantId: o.tenantId,
+      tenantName: o.tenant.name,
+      enabled: o.enabled,
+      reason: o.reason ?? '',
+    })),
+    owner: row.owner ?? '',
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    updatedBy: row.updatedById ?? '',
+  };
 }
 
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
+const INCLUDE_OVERRIDES = {
+  overrides: {
+    include: { tenant: { select: { name: true } } },
+  },
+} as const;
+
 export class FlagService {
-  private flags: Map<string, FeatureFlag> = seedFlags();
-  private nextId = 8;
+  constructor(private readonly prisma: PrismaClient) {}
 
   /**
    * Returns all feature flags.
    */
   async listFlags(): Promise<FeatureFlag[]> {
-    return Array.from(this.flags.values());
+    const rows = await this.prisma.featureFlag.findMany({
+      include: INCLUDE_OVERRIDES,
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r) => toFeatureFlag(r as unknown as FlagRow));
   }
 
   /**
@@ -244,26 +173,28 @@ export class FlagService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<FeatureFlag> {
-    if (this.flags.has(input.key)) {
+    const existing = await this.prisma.featureFlag.findUnique({
+      where: { key: input.key },
+    });
+    if (existing) {
       throw new FlagAlreadyExistsError(input.key);
     }
 
-    const flag: FeatureFlag = {
-      id: `flag-${String(this.nextId++).padStart(3, '0')}`,
-      key: input.key,
-      name: input.name,
-      description: input.description,
-      flagType: input.flagType,
-      enabledGlobally: input.enabledGlobally,
-      rolloutPercentage: input.rolloutPercentage,
-      tenantOverrides: [],
-      owner: input.owner,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: adminUserId,
-    };
+    const row = await this.prisma.featureFlag.create({
+      data: {
+        key: input.key,
+        name: input.name,
+        description: input.description,
+        flagType: input.flagType,
+        enabledGlobally: input.enabledGlobally,
+        rolloutPercentage: input.rolloutPercentage ?? null,
+        owner: input.owner,
+        updatedById: adminUserId,
+      },
+      include: INCLUDE_OVERRIDES,
+    });
 
-    this.flags.set(flag.key, flag);
+    const flag = toFeatureFlag(row as unknown as FlagRow);
 
     await logAdminAction({
       adminUserId,
@@ -282,11 +213,14 @@ export class FlagService {
    * Returns detail for a single feature flag.
    */
   async getFlagDetail(flagKey: string): Promise<FeatureFlag> {
-    const flag = this.flags.get(flagKey);
-    if (!flag) {
+    const row = await this.prisma.featureFlag.findUnique({
+      where: { key: flagKey },
+      include: INCLUDE_OVERRIDES,
+    });
+    if (!row) {
       throw new FlagNotFoundError(flagKey);
     }
-    return flag;
+    return toFeatureFlag(row as unknown as FlagRow);
   }
 
   /**
@@ -298,20 +232,30 @@ export class FlagService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<FeatureFlag> {
-    const flag = this.flags.get(flagKey);
-    if (!flag) {
+    const existing = await this.prisma.featureFlag.findUnique({
+      where: { key: flagKey },
+      include: INCLUDE_OVERRIDES,
+    });
+    if (!existing) {
       throw new FlagNotFoundError(flagKey);
     }
 
-    const beforeState = { ...flag };
+    const beforeState = toFeatureFlag(existing as unknown as FlagRow);
 
-    if (updates.name !== undefined) flag.name = updates.name;
-    if (updates.description !== undefined) flag.description = updates.description;
-    if (updates.enabledGlobally !== undefined) flag.enabledGlobally = updates.enabledGlobally;
-    if (updates.rolloutPercentage !== undefined) flag.rolloutPercentage = updates.rolloutPercentage;
-    if (updates.owner !== undefined) flag.owner = updates.owner;
-    flag.updatedAt = new Date();
-    flag.updatedBy = adminUserId;
+    const data: Record<string, unknown> = { updatedById: adminUserId };
+    if (updates.name !== undefined) data.name = updates.name;
+    if (updates.description !== undefined) data.description = updates.description;
+    if (updates.enabledGlobally !== undefined) data.enabledGlobally = updates.enabledGlobally;
+    if (updates.rolloutPercentage !== undefined) data.rolloutPercentage = updates.rolloutPercentage;
+    if (updates.owner !== undefined) data.owner = updates.owner;
+
+    const row = await this.prisma.featureFlag.update({
+      where: { key: flagKey },
+      data,
+      include: INCLUDE_OVERRIDES,
+    });
+
+    const flag = toFeatureFlag(row as unknown as FlagRow);
 
     await logAdminAction({
       adminUserId,
@@ -335,12 +279,19 @@ export class FlagService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    const flag = this.flags.get(flagKey);
-    if (!flag) {
+    const existing = await this.prisma.featureFlag.findUnique({
+      where: { key: flagKey },
+      include: INCLUDE_OVERRIDES,
+    });
+    if (!existing) {
       throw new FlagNotFoundError(flagKey);
     }
 
-    this.flags.delete(flagKey);
+    // Delete overrides first, then the flag
+    await this.prisma.featureFlagOverride.deleteMany({
+      where: { flagId: existing.id },
+    });
+    await this.prisma.featureFlag.delete({ where: { key: flagKey } });
 
     await logAdminAction({
       adminUserId,
@@ -348,8 +299,8 @@ export class FlagService {
       action: 'flags.delete',
       resourceType: 'FEATURE_FLAG',
       resourceId: flagKey,
-      description: `Deleted feature flag "${flag.name}" (${flagKey})`,
-      beforeState: flag as unknown as Record<string, unknown>,
+      description: `Deleted feature flag "${existing.name}" (${flagKey})`,
+      beforeState: toFeatureFlag(existing as unknown as FlagRow) as unknown as Record<string, unknown>,
     });
   }
 
@@ -365,22 +316,37 @@ export class FlagService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<FeatureFlag> {
-    const flag = this.flags.get(flagKey);
-    if (!flag) {
+    const existing = await this.prisma.featureFlag.findUnique({
+      where: { key: flagKey },
+    });
+    if (!existing) {
       throw new FlagNotFoundError(flagKey);
     }
 
-    // Replace existing override for this tenant or add new
-    const existingIdx = flag.tenantOverrides.findIndex(o => o.tenantId === tenantId);
-    const override: TenantOverride = { tenantId, tenantName, enabled, reason };
+    // Upsert: replace existing override for this tenant or create new
+    await this.prisma.featureFlagOverride.upsert({
+      where: {
+        flagId_tenantId: { flagId: existing.id, tenantId },
+      },
+      create: {
+        flagId: existing.id,
+        tenantId,
+        enabled,
+        reason,
+        createdById: adminUserId,
+      },
+      update: {
+        enabled,
+        reason,
+        createdById: adminUserId,
+      },
+    });
 
-    if (existingIdx >= 0) {
-      flag.tenantOverrides[existingIdx] = override;
-    } else {
-      flag.tenantOverrides.push(override);
-    }
-    flag.updatedAt = new Date();
-    flag.updatedBy = adminUserId;
+    // Touch updatedAt on the flag
+    await this.prisma.featureFlag.update({
+      where: { key: flagKey },
+      data: { updatedById: adminUserId },
+    });
 
     await logAdminAction({
       adminUserId,
@@ -388,11 +354,11 @@ export class FlagService {
       action: 'flags.add_override',
       resourceType: 'FEATURE_FLAG',
       resourceId: flagKey,
-      description: `Added tenant override for "${flag.name}" — tenant ${tenantId} = ${enabled}`,
+      description: `Added tenant override for "${existing.name}" — tenant ${tenantId} = ${enabled}`,
       afterState: { tenantId, tenantName, enabled, reason },
     });
 
-    return flag;
+    return this.getFlagDetail(flagKey);
   }
 
   /**
@@ -404,16 +370,22 @@ export class FlagService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<FeatureFlag> {
-    const flag = this.flags.get(flagKey);
-    if (!flag) {
+    const existing = await this.prisma.featureFlag.findUnique({
+      where: { key: flagKey },
+    });
+    if (!existing) {
       throw new FlagNotFoundError(flagKey);
     }
 
-    const existingIdx = flag.tenantOverrides.findIndex(o => o.tenantId === tenantId);
-    if (existingIdx >= 0) {
-      const removed = flag.tenantOverrides.splice(existingIdx, 1)[0];
-      flag.updatedAt = new Date();
-      flag.updatedBy = adminUserId;
+    const deleted = await this.prisma.featureFlagOverride.deleteMany({
+      where: { flagId: existing.id, tenantId },
+    });
+
+    if (deleted.count > 0) {
+      await this.prisma.featureFlag.update({
+        where: { key: flagKey },
+        data: { updatedById: adminUserId },
+      });
 
       await logAdminAction({
         adminUserId,
@@ -421,12 +393,12 @@ export class FlagService {
         action: 'flags.remove_override',
         resourceType: 'FEATURE_FLAG',
         resourceId: flagKey,
-        description: `Removed tenant override for "${flag.name}" — tenant ${tenantId}`,
-        beforeState: removed as unknown as Record<string, unknown>,
+        description: `Removed tenant override for "${existing.name}" — tenant ${tenantId}`,
+        beforeState: { tenantId },
       });
     }
 
-    return flag;
+    return this.getFlagDetail(flagKey);
   }
 
   /**
@@ -438,10 +410,15 @@ export class FlagService {
    *   3. Rollout percentage — hash(tenantId + flagKey) % 100 < percentage
    */
   async resolveFlag(flagKey: string, tenantId: string): Promise<FlagResolution> {
-    const flag = this.flags.get(flagKey);
-    if (!flag) {
+    const row = await this.prisma.featureFlag.findUnique({
+      where: { key: flagKey },
+      include: INCLUDE_OVERRIDES,
+    });
+    if (!row) {
       throw new FlagNotFoundError(flagKey);
     }
+
+    const flag = toFeatureFlag(row as unknown as FlagRow);
 
     // 1. Check tenant-specific override
     const override = flag.tenantOverrides.find(o => o.tenantId === tenantId);

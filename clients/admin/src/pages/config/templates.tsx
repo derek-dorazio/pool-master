@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileCode2, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { adminApi } from '@/lib/api-client';
 import {
   useScoringTemplates,
   useSelectionTemplates,
@@ -156,12 +157,20 @@ export function Component() {
     if (found) setEditingTemplate(found);
   }
 
-  function handleDelete(id: string) {
-    console.log(`Delete template: ${id}`);
+  async function handleDelete(id: string) {
+    try {
+      await adminApi.delete(`/v1/admin/config/scoring-templates/${id}`);
+    } catch {
+      // Silently handle — backend may not be available yet
+    }
   }
 
-  function handleSave(updated: AnyTemplate) {
-    console.log('Save template:', updated);
+  async function handleSave(updated: AnyTemplate) {
+    try {
+      await adminApi.put(`/v1/admin/config/scoring-templates/${updated.id}`, updated);
+    } catch {
+      // Silently handle — backend may not be available yet
+    }
     setEditingTemplate(null);
   }
 

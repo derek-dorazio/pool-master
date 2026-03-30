@@ -80,7 +80,8 @@ const FEATURES_BY_PLAN: Record<string, string[]> = {
 };
 
 // ---------------------------------------------------------------------------
-// In-memory feedback store (until Prisma model is available)
+// In-memory feedback store
+// TODO: Add Prisma model for CancellationFeedback — no model exists in schema yet
 // ---------------------------------------------------------------------------
 
 const feedbackStore: Map<string, CancellationFeedback> = new Map();
@@ -156,6 +157,7 @@ export class CancellationService {
       monthsSubscribed: this.estimateMonthsSubscribed(),
       createdAt: new Date(),
     };
+    // TODO: Add Prisma model for CancellationFeedback — using in-memory Map for now
     feedbackStore.set(entry.id, entry);
     // In production, this would:
     // 1. Set cancel_at_period_end = true on the Stripe subscription
@@ -169,6 +171,7 @@ export class CancellationService {
   async listFeedback(
     page: number = 1,
   ): Promise<{ items: CancellationFeedback[]; total: number }> {
+    // TODO: Add Prisma model for CancellationFeedback — using in-memory Map for now
     const allItems = Array.from(feedbackStore.values())
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     const start = (page - 1) * ITEMS_PER_PAGE;

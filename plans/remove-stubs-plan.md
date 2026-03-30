@@ -188,13 +188,13 @@ Full audit of all code that is not implemented for real — using mocks, stubs, 
 | RS-007 | P1 | Wire league/contest creation to real API (return real IDs) | Not Started | Currently navigate to mock-id |
 | RS-008 | P1 | Wire admin app hooks to real admin API endpoints | Not Started | ~9 hook files with mock data |
 | RS-009 | P1 | Implement social backend (Plan 10 — 30 tasks) | Not Started | Feed, chat, DMs all unimplemented |
-| RS-010 | P2 | Replace billing in-memory stores with Prisma | Not Started | 11 Map stores → DB |
-| RS-011 | P2 | Replace admin in-memory stores with Prisma | Not Started | 7 Map stores → DB |
+| RS-010 | P2 | Replace billing in-memory stores with Prisma | Done | entitlement, usage, subscription, trial → Prisma; cancellation/dunning kept Map (no model) |
+| RS-011 | P2 | Replace admin in-memory stores with Prisma | Done | 8 services converted: flag, announcement, audit, impersonation, export, tenant, user, contest. Export keeps transient Map for job state but queries real DB data. All services accept PrismaClient via constructor. Shared instance created in routes.ts. |
 | RS-012 | P2 | Replace event bus with Redis Streams | Not Started | In-process → distributed |
 | RS-013 | P2 | Replace score store with DynamoDB | Not Started | In-memory → NoSQL |
 | RS-014 | P2 | Integrate real Stripe SDK | Not Started | Replace MockStripeClient |
 | RS-015 | P2 | Wire ingestion callbacks to DB persistence | Not Started | Currently only log |
-| RS-016 | P2 | Replace history in-memory stores with Prisma | Not Started | retention, season notes |
-| RS-017 | P3 | Replace window.confirm() with modal dialogs | Not Started | 11 instances |
-| RS-018 | P3 | Replace console.log() with real API calls in admin | Not Started | 15+ instances |
-| RS-019 | P3 | Wire billing enabled flag to real feature flag check | Not Started | Currently hardcoded false |
+| RS-016 | P2 | Replace history in-memory stores with Prisma | Done | RetentionService → Prisma RetentionConfig; SeasonNotesService → Prisma SeasonNote + Trophy |
+| RS-017 | P3 | Replace window.confirm() with modal dialogs | Done | Created ConfirmDialog + useConfirmDialog hook for web and admin apps; replaced all 11 instances |
+| RS-018 | P3 | Replace console.log() with real API calls in admin | Done | Replaced 15+ console.log handlers with adminApi calls in notifications, platform, templates, flags pages |
+| RS-019 | P3 | Wire billing enabled flag to real feature flag check | Done | Already wired: useBillingEnabled() calls api.get('/v1/billing/plan') with false fallback |

@@ -3,8 +3,11 @@
  *
  * Provides tenant listing, detail views, plan changes, suspension, credits,
  * trial extensions, and deletion. All write operations are audit-logged.
+ *
+ * Persisted via Prisma to the tenants table.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -77,103 +80,178 @@ export class TenantDeleteConfirmationError extends Error {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Derives a status string from the tenant's settings/plan.
+ * The Tenant model does not have a dedicated status column, so we derive it
+ * from the settings JSON (which may contain { suspended: true } or
+ * { trialEndsAt: "..." }).
+ */
+function deriveTenantStatus(
+  settings: Record<string, unknown>,
+  planTier: string,
+): 'active' | 'suspended' | 'trial' {
+  if (settings.suspended === true) return 'suspended';
+  if (
+    planTier.toLowerCase() === 'free' &&
+    settings.trialEndsAt &&
+    new Date(settings.trialEndsAt as string) > new Date()
+  ) {
+    return 'trial';
+  }
+  return 'active';
+}
+
+// ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class TenantService {
+  constructor(private readonly prisma: PrismaClient) {}
+
   /**
    * Lists tenants with search, filter, sort, and pagination.
-   *
-   * Placeholder: returns mock data. Will query tenants table via Prisma.
    */
   async listTenants(
     query: TenantListQuery,
   ): Promise<{ items: TenantListItem[]; total: number }> {
-    void query;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 25;
+    const skip = (page - 1) * pageSize;
 
-    // TODO: Replace with Prisma query against tenants table
-    const mockItems: TenantListItem[] = [
-      {
-        id: '00000000-0000-0000-0000-000000000001',
-        name: "Tiger's Corner",
-        slug: 'tigers-corner',
-        planTier: 'Pro',
-        memberCount: 45,
-        contestCount: 12,
-        leagueCount: 3,
-        status: 'active',
-        lastActiveAt: new Date(),
-        createdAt: new Date('2025-06-15'),
-      },
-      {
-        id: '00000000-0000-0000-0000-000000000002',
-        name: 'Golf Crew',
-        slug: 'golf-crew',
-        planTier: 'Starter',
-        memberCount: 18,
-        contestCount: 3,
-        leagueCount: 1,
-        status: 'active',
-        lastActiveAt: new Date(Date.now() - 3_600_000),
-        createdAt: new Date('2025-09-01'),
-      },
-      {
-        id: '00000000-0000-0000-0000-000000000003',
-        name: 'Test Org',
-        slug: 'test-org',
-        planTier: 'Free',
-        memberCount: 4,
-        contestCount: 0,
-        leagueCount: 0,
-        status: 'trial',
-        lastActiveAt: new Date(Date.now() - 259_200_000),
-        createdAt: new Date('2026-03-01'),
-      },
-    ];
+    const where: Record<string, unknown> = {};
 
-    return { items: mockItems, total: mockItems.length };
+    if (query.search) {
+      where.OR = [
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { slug: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+    if (query.planTier) {
+      where.planTier = query.planTier;
+    }
+
+    // Determine sort order
+    const sortDir = query.sortDir ?? 'desc';
+    let orderBy: Record<string, string> = { createdAt: sortDir };
+    if (query.sortBy === 'name') orderBy = { name: sortDir };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.tenant.findMany({
+        where,
+        orderBy,
+        skip,
+        take: pageSize,
+        include: {
+          _count: {
+            select: {
+              users: true,
+              leagues: true,
+            },
+          },
+        },
+      }),
+      this.prisma.tenant.count({ where }),
+    ]);
+
+    const items: TenantListItem[] = [];
+
+    for (const row of rows) {
+      const settings = (row.settings ?? {}) as Record<string, unknown>;
+      const contestCount = await this.prisma.contest.count({
+        where: { league: { tenantId: row.id } },
+      });
+
+      items.push({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        planTier: row.planTier,
+        memberCount: row._count.users,
+        contestCount,
+        leagueCount: row._count.leagues,
+        status: query.status ?? deriveTenantStatus(settings, row.planTier),
+        lastActiveAt: (settings.lastActiveAt as string)
+          ? new Date(settings.lastActiveAt as string)
+          : undefined,
+        createdAt: row.createdAt,
+      });
+    }
+
+    // If filtering by status, filter post-query (status is derived, not a column)
+    const filtered = query.status
+      ? items.filter((t) => t.status === query.status)
+      : items;
+
+    return { items: filtered, total };
   }
 
   /**
    * Returns the full admin detail view for a single tenant.
-   *
-   * Placeholder: returns mock data. Will aggregate from tenants, users,
-   * leagues, and contests tables via Prisma.
    */
   async getTenantDetail(tenantId: string): Promise<TenantDetailView> {
-    // TODO: Replace with Prisma queries
-    void tenantId;
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: {
+        _count: {
+          select: {
+            users: true,
+            leagues: true,
+          },
+        },
+      },
+    });
+
+    if (!tenant) {
+      throw new TenantNotFoundError(tenantId);
+    }
+
+    const settings = (tenant.settings ?? {}) as Record<string, unknown>;
+
+    const [contestCount, activeContestCount, recentMembers] = await Promise.all([
+      this.prisma.contest.count({
+        where: { league: { tenantId } },
+      }),
+      this.prisma.contest.count({
+        where: {
+          league: { tenantId },
+          status: { in: ['ACTIVE', 'OPEN', 'IN_PROGRESS'] },
+        },
+      }),
+      this.prisma.user.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          email: true,
+          displayName: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
     return {
       tenant: {
-        id: tenantId,
-        name: "Tiger's Corner",
-        slug: 'tigers-corner',
-        planTier: 'Pro',
-        settings: {},
-        createdAt: new Date('2025-06-15'),
-        updatedAt: new Date(),
+        id: tenant.id,
+        name: tenant.name,
+        slug: tenant.slug,
+        planTier: tenant.planTier,
+        settings,
+        createdAt: tenant.createdAt,
+        updatedAt: tenant.updatedAt,
       },
-      memberCount: 45,
-      leagueCount: 3,
-      contestCount: 12,
-      activeContestCount: 4,
-      status: 'active',
-      lastActiveAt: new Date(),
-      recentMembers: [
-        {
-          id: 'user-001',
-          email: 'alice@example.com',
-          displayName: 'Alice',
-          createdAt: new Date('2026-03-20'),
-        },
-        {
-          id: 'user-002',
-          email: 'bob@example.com',
-          displayName: 'Bob',
-          createdAt: new Date('2026-03-18'),
-        },
-      ],
+      memberCount: tenant._count.users,
+      leagueCount: tenant._count.leagues,
+      contestCount,
+      activeContestCount,
+      status: deriveTenantStatus(settings, tenant.planTier),
+      lastActiveAt: (settings.lastActiveAt as string)
+        ? new Date(settings.lastActiveAt as string)
+        : undefined,
+      recentMembers,
     };
   }
 
@@ -187,14 +265,24 @@ export class TenantService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Update tenant plan in database via Prisma
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new TenantNotFoundError(tenantId);
+
+    const beforePlan = tenant.planTier;
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { planTier },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
       action: 'tenant.change_plan',
       resourceType: 'TENANT',
       resourceId: tenantId,
-      description: `Changed tenant plan to ${planTier}`,
+      description: `Changed tenant plan from ${beforePlan} to ${planTier}`,
+      beforeState: { planTier: beforePlan },
       afterState: { planTier },
       reason,
     });
@@ -209,7 +297,19 @@ export class TenantService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Set tenant status to 'suspended' via Prisma
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new TenantNotFoundError(tenantId);
+
+    const settings = (tenant.settings ?? {}) as Record<string, unknown>;
+    settings.suspended = true;
+    settings.suspendedAt = new Date().toISOString();
+    settings.suspendReason = reason;
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { settings: settings as unknown as object },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -230,7 +330,19 @@ export class TenantService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Set tenant status back to 'active' via Prisma
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new TenantNotFoundError(tenantId);
+
+    const settings = (tenant.settings ?? {}) as Record<string, unknown>;
+    delete settings.suspended;
+    delete settings.suspendedAt;
+    delete settings.suspendReason;
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { settings: settings as unknown as object },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -252,7 +364,18 @@ export class TenantService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Record credit in billing system via Prisma
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new TenantNotFoundError(tenantId);
+
+    const settings = (tenant.settings ?? {}) as Record<string, unknown>;
+    const currentCredit = (settings.creditBalance as number) ?? 0;
+    settings.creditBalance = currentCredit + amount;
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { settings: settings as unknown as object },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -275,7 +398,21 @@ export class TenantService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Extend trial_ends_at in database via Prisma
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new TenantNotFoundError(tenantId);
+
+    const settings = (tenant.settings ?? {}) as Record<string, unknown>;
+    const currentEnd = settings.trialEndsAt
+      ? new Date(settings.trialEndsAt as string)
+      : new Date();
+    const newEnd = new Date(currentEnd.getTime() + days * 86_400_000);
+    settings.trialEndsAt = newEnd.toISOString();
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { settings: settings as unknown as object },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
@@ -298,25 +435,60 @@ export class TenantService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    // TODO: Fetch tenant name from database and verify confirmation matches
-    // For now, the handler-level validation ensures confirmation is non-empty.
-    // Once wired to Prisma, verify confirmation === tenant.name before proceeding.
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new TenantNotFoundError(tenantId);
 
-    const tenantName = confirmation; // placeholder — will come from DB lookup
-
-    if (confirmation !== tenantName) {
+    if (confirmation !== tenant.name) {
       throw new TenantDeleteConfirmationError();
     }
 
-    // TODO: Cascade-delete tenant data via Prisma transaction
+    // Cascade-delete in dependency order within a transaction
+    await this.prisma.$transaction(async (tx) => {
+      // Delete contest-related data
+      const leagues = await tx.league.findMany({
+        where: { tenantId },
+        select: { id: true },
+      });
+      const leagueIds = leagues.map((l) => l.id);
+
+      if (leagueIds.length > 0) {
+        const contests = await tx.contest.findMany({
+          where: { leagueId: { in: leagueIds } },
+          select: { id: true },
+        });
+        const contestIds = contests.map((c) => c.id);
+
+        if (contestIds.length > 0) {
+          await tx.contestStanding.deleteMany({ where: { contestId: { in: contestIds } } });
+          await tx.contestResult.deleteMany({ where: { contestId: { in: contestIds } } });
+          await tx.contestPick.deleteMany({ where: { contestId: { in: contestIds } } });
+          await tx.contestEntry.deleteMany({ where: { contestId: { in: contestIds } } });
+          await tx.contest.deleteMany({ where: { id: { in: contestIds } } });
+        }
+
+        await tx.leagueMembership.deleteMany({ where: { leagueId: { in: leagueIds } } });
+        await tx.league.deleteMany({ where: { id: { in: leagueIds } } });
+      }
+
+      // Delete users
+      await tx.user.deleteMany({ where: { tenantId } });
+
+      // Delete flag overrides and impersonation sessions
+      await tx.featureFlagOverride.deleteMany({ where: { tenantId } });
+      await tx.impersonationSession.deleteMany({ where: { tenantId } });
+
+      // Delete the tenant itself
+      await tx.tenant.delete({ where: { id: tenantId } });
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
       action: 'tenant.delete',
       resourceType: 'TENANT',
       resourceId: tenantId,
-      description: `Deleted tenant "${tenantName}"`,
-      beforeState: { tenantName },
+      description: `Deleted tenant "${tenant.name}"`,
+      beforeState: { tenantName: tenant.name },
     });
   }
 }

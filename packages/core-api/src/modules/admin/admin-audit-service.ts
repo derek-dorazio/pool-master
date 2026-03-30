@@ -3,7 +3,11 @@
  *
  * Every admin operation (tenant management, user actions, contest overrides, etc.)
  * is recorded here with full before/after state and the reason for the action.
+ *
+ * Persisted via Prisma to the admin_audit_log table.
  */
+
+import type { PrismaClient } from '@prisma/client';
 
 export interface AuditLogParams {
   adminUserId: string;
@@ -47,33 +51,125 @@ export interface AuditListQuery {
   pageSize?: number;
 }
 
+// ---------------------------------------------------------------------------
+// Singleton Prisma reference (set once via AdminAuditService constructor)
+// ---------------------------------------------------------------------------
+
+let _prisma: PrismaClient | null = null;
+
+/**
+ * Sets the shared PrismaClient used by the module-level logAdminAction helper.
+ */
+export function setAuditPrisma(prisma: PrismaClient): void {
+  _prisma = prisma;
+}
+
 /**
  * Logs an admin action to the immutable audit trail.
  *
- * Placeholder: logs to console. Will be wired to admin_audit_log table via Prisma.
+ * This is a module-level helper so every service can call it without
+ * needing its own reference to PrismaClient.
  */
 export async function logAdminAction(params: AuditLogParams): Promise<void> {
-  // TODO: Insert into admin_audit_log table via Prisma
-  console.info('[ADMIN_AUDIT]', {
-    action: params.action,
-    resourceType: params.resourceType,
-    resourceId: params.resourceId,
-    adminUserEmail: params.adminUserEmail,
-    description: params.description,
-    reason: params.reason,
-    timestamp: new Date().toISOString(),
+  if (!_prisma) {
+    // Fallback to console if Prisma not initialised yet (e.g. during tests)
+    console.warn('[ADMIN_AUDIT] PrismaClient not set — logging to console only');
+    console.info('[ADMIN_AUDIT]', {
+      action: params.action,
+      resourceType: params.resourceType,
+      resourceId: params.resourceId,
+      adminUserEmail: params.adminUserEmail,
+      description: params.description,
+      reason: params.reason,
+      timestamp: new Date().toISOString(),
+    });
+    return;
+  }
+
+  await _prisma.adminAuditEntry.create({
+    data: {
+      adminUserId: params.adminUserId,
+      adminUserEmail: params.adminUserEmail,
+      action: params.action,
+      resourceType: params.resourceType,
+      resourceId: params.resourceId,
+      description: params.description,
+      beforeState: params.beforeState
+        ? (params.beforeState as unknown as object)
+        : undefined,
+      afterState: params.afterState
+        ? (params.afterState as unknown as object)
+        : undefined,
+      reason: params.reason,
+      ipAddress: params.ipAddress ?? null,
+      userAgent: params.userAgent ?? null,
+    },
   });
 }
 
 /**
  * Retrieves audit log entries with filtering and pagination.
- *
- * Placeholder: returns empty result set. Will be wired to admin_audit_log table via Prisma.
  */
 export async function listAuditEntries(
   filters: AuditListQuery,
 ): Promise<{ items: AdminAuditEntry[]; total: number }> {
-  // TODO: Query admin_audit_log table via Prisma with filters
-  void filters;
-  return { items: [], total: 0 };
+  if (!_prisma) {
+    return { items: [], total: 0 };
+  }
+
+  const page = filters.page ?? 1;
+  const pageSize = filters.pageSize ?? 25;
+  const skip = (page - 1) * pageSize;
+
+  const where: Record<string, unknown> = {};
+
+  if (filters.adminUserId) {
+    where.adminUserId = filters.adminUserId;
+  }
+  if (filters.action) {
+    where.action = filters.action;
+  }
+  if (filters.resourceType) {
+    where.resourceType = filters.resourceType;
+  }
+  if (filters.resourceId) {
+    where.resourceId = filters.resourceId;
+  }
+  if (filters.startDate || filters.endDate) {
+    const createdAt: Record<string, Date> = {};
+    if (filters.startDate) createdAt.gte = filters.startDate;
+    if (filters.endDate) createdAt.lte = filters.endDate;
+    where.createdAt = createdAt;
+  }
+  if (filters.search) {
+    where.description = { contains: filters.search, mode: 'insensitive' };
+  }
+
+  const [rows, total] = await Promise.all([
+    _prisma.adminAuditEntry.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: pageSize,
+    }),
+    _prisma.adminAuditEntry.count({ where }),
+  ]);
+
+  const items: AdminAuditEntry[] = rows.map((r) => ({
+    id: r.id,
+    adminUserId: r.adminUserId,
+    adminUserEmail: r.adminUserEmail,
+    action: r.action,
+    resourceType: r.resourceType,
+    resourceId: r.resourceId,
+    description: r.description,
+    beforeState: r.beforeState as Record<string, unknown> | undefined,
+    afterState: r.afterState as Record<string, unknown> | undefined,
+    reason: r.reason ?? undefined,
+    ipAddress: r.ipAddress ?? '',
+    userAgent: r.userAgent ?? '',
+    timestamp: r.createdAt,
+  }));
+
+  return { items, total };
 }

@@ -77,6 +77,8 @@ const DEFAULT_CONFIG: DunningConfig = {
 
 // ---------------------------------------------------------------------------
 // In-memory dunning state
+// TODO: Add Prisma model for DunningEntry — no model exists in schema yet.
+// Could also be stored as a JSON column on TenantSubscription.
 // ---------------------------------------------------------------------------
 
 interface DunningEntry {
@@ -107,6 +109,7 @@ export class DunningService {
    * Handle a newly failed payment for a tenant.
    */
   async handlePaymentFailure(tenantId: string, invoiceId: string): Promise<void> {
+    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
     const entry: DunningEntry = {
       tenantId,
       invoiceId,
@@ -122,6 +125,7 @@ export class DunningService {
    * Get dunning status for a tenant.
    */
   async getDunningStatus(tenantId: string): Promise<DunningStatus> {
+    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
     const entry = dunningStore.get(tenantId);
     if (!entry || entry.isRecovered) {
       return {
@@ -154,6 +158,7 @@ export class DunningService {
    * Process scheduled retries for all tenants in dunning.
    */
   async processRetries(): Promise<RetryResult[]> {
+    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
     const results: RetryResult[] = [];
     const now = new Date();
     for (const [tenantId, entry] of dunningStore.entries()) {
@@ -186,6 +191,7 @@ export class DunningService {
    * Check and process escalations (grace -> degraded -> cancelled).
    */
   async processEscalations(): Promise<EscalationResult[]> {
+    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
     const results: EscalationResult[] = [];
     for (const [tenantId, entry] of dunningStore.entries()) {
       if (entry.isRecovered) {
@@ -227,6 +233,7 @@ export class DunningService {
    * Get aggregate recovery metrics.
    */
   async getRecoveryMetrics(): Promise<RecoveryMetrics> {
+    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
     let totalFailed = 0;
     let recovered = 0;
     let totalRecoveryDays = 0;

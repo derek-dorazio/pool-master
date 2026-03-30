@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Flag, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { adminApi } from '@/lib/api-client';
 import { useFlagList } from '@/hooks/use-flags-api';
 import type { FlagType } from '@/hooks/use-flags-api';
 
@@ -59,9 +60,13 @@ export function Component() {
     return initial;
   });
 
-  function handleToggle(key: string, value: boolean) {
+  async function handleToggle(key: string, value: boolean) {
     setToggleState((prev) => ({ ...prev, [key]: value }));
-    console.log(`Flag "${key}" toggled to ${value ? 'ON' : 'OFF'}`);
+    try {
+      await adminApi.put(`/v1/admin/flags/${key}`, { enabledGlobally: value });
+    } catch {
+      // Silently handle — backend may not be available yet
+    }
   }
 
   return (

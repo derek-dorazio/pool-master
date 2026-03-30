@@ -1,10 +1,10 @@
 /**
  * SeasonNotesService — commissioner-authored season notes and custom trophy awards.
  *
- * Uses in-memory storage until Prisma client is regenerated with SeasonNote model.
+ * Uses Prisma SeasonNote and Trophy models for persistence.
  */
 
-import crypto from 'node:crypto';
+import type { PrismaClient } from '@prisma/client';
 
 export interface SeasonNote {
   id: string;
@@ -27,10 +27,9 @@ export interface TrophyAward {
   createdAt: Date;
 }
 
-const notes = new Map<string, SeasonNote>();
-const trophies = new Map<string, TrophyAward>();
-
 export class SeasonNotesService {
+  constructor(private readonly prisma: PrismaClient) {}
+
   /** Add a markdown note to a season. */
   async addNote(
     leagueId: string,
@@ -38,38 +37,64 @@ export class SeasonNotesService {
     content: string,
     authorId: string,
   ): Promise<SeasonNote> {
-    const note: SeasonNote = {
-      id: crypto.randomUUID(),
-      leagueId,
-      season,
-      content,
-      authorId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const row = await this.prisma.seasonNote.create({
+      data: {
+        leagueId,
+        season,
+        content,
+        authorId,
+      },
+    });
+    return {
+      id: row.id,
+      leagueId: row.leagueId,
+      season: row.season,
+      content: row.content,
+      authorId: row.authorId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
     };
-    notes.set(note.id, note);
-    return note;
   }
 
   /** Get all notes for a league season. */
   async getNotes(leagueId: string, season: string): Promise<SeasonNote[]> {
-    return Array.from(notes.values())
-      .filter((n) => n.leagueId === leagueId && n.season === season)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const rows = await this.prisma.seasonNote.findMany({
+      where: { leagueId, season },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      leagueId: row.leagueId,
+      season: row.season,
+      content: row.content,
+      authorId: row.authorId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
   }
 
   /** Update a note's content. */
   async updateNote(noteId: string, content: string): Promise<SeasonNote> {
-    const note = notes.get(noteId);
-    if (!note) throw new Error(`Note ${noteId} not found`);
-    note.content = content;
-    note.updatedAt = new Date();
-    return note;
+    const row = await this.prisma.seasonNote.update({
+      where: { id: noteId },
+      data: { content },
+    });
+    return {
+      id: row.id,
+      leagueId: row.leagueId,
+      season: row.season,
+      content: row.content,
+      authorId: row.authorId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
   }
 
   /** Delete a note. */
   async deleteNote(noteId: string): Promise<void> {
-    notes.delete(noteId);
+    await this.prisma.seasonNote.delete({
+      where: { id: noteId },
+    });
   }
 
   /** Award a custom trophy to a league member. */
@@ -78,29 +103,56 @@ export class SeasonNotesService {
     season: string,
     trophy: { label: string; description?: string; recipientMemberId: string; awardedBy: string },
   ): Promise<TrophyAward> {
-    const award: TrophyAward = {
-      id: crypto.randomUUID(),
-      leagueId,
-      season,
-      label: trophy.label,
-      description: trophy.description,
-      recipientMemberId: trophy.recipientMemberId,
-      awardedBy: trophy.awardedBy,
-      createdAt: new Date(),
+    const row = await this.prisma.trophy.create({
+      data: {
+        leagueId,
+        leagueMembershipId: trophy.recipientMemberId,
+        trophyType: 'CUSTOM',
+        label: trophy.label,
+        description: trophy.description,
+        awardedBy: trophy.awardedBy,
+        awardedAt: new Date(),
+        seasonLabel: season,
+      },
+    });
+    return {
+      id: row.id,
+      leagueId: row.leagueId,
+      season: row.seasonLabel ?? season,
+      label: row.label,
+      description: row.description ?? undefined,
+      recipientMemberId: row.leagueMembershipId,
+      awardedBy: row.awardedBy ?? trophy.awardedBy,
+      createdAt: row.createdAt,
     };
-    trophies.set(award.id, award);
-    return award;
   }
 
   /** Get all custom trophies for a league, optionally filtered by season. */
   async getTrophies(leagueId: string, season?: string): Promise<TrophyAward[]> {
-    return Array.from(trophies.values())
-      .filter((t) => t.leagueId === leagueId && (!season || t.season === season))
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const rows = await this.prisma.trophy.findMany({
+      where: {
+        leagueId,
+        trophyType: 'CUSTOM',
+        ...(season ? { seasonLabel: season } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      leagueId: row.leagueId,
+      season: row.seasonLabel ?? '',
+      label: row.label,
+      description: row.description ?? undefined,
+      recipientMemberId: row.leagueMembershipId,
+      awardedBy: row.awardedBy ?? '',
+      createdAt: row.createdAt,
+    }));
   }
 
   /** Revoke a custom trophy. */
   async revokeTrophy(trophyId: string): Promise<void> {
-    trophies.delete(trophyId);
+    await this.prisma.trophy.delete({
+      where: { id: trophyId },
+    });
   }
 }

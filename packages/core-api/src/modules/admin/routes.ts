@@ -6,6 +6,8 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { PrismaClient } from '@prisma/client';
+import { setAuditPrisma } from './admin-audit-service';
 import { TenantService } from './tenant-service';
 import { createTenantHandlers } from './tenant-handler';
 import { UserService } from './user-service';
@@ -61,18 +63,25 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   // Apply admin auth to every route in this module
   fastify.addHook('preHandler', adminAuth);
 
+  // --- Shared Prisma client for all admin services ---
+  const prisma = new PrismaClient();
+
+  // Initialise the audit service's Prisma reference so that the module-level
+  // logAdminAction() helper can persist audit entries to the database.
+  setAuditPrisma(prisma);
+
   // --- Services ---
-  const tenantService = new TenantService();
-  const userService = new UserService();
-  const contestService = new ContestService();
+  const tenantService = new TenantService(prisma);
+  const userService = new UserService(prisma);
+  const contestService = new ContestService(prisma);
   const healthService = new HealthService();
   const providerService = new ProviderService();
-  const flagService = new FlagService();
-  const impersonationService = new ImpersonationService();
-  const announcementService = new AnnouncementService();
+  const flagService = new FlagService(prisma);
+  const impersonationService = new ImpersonationService(prisma);
+  const announcementService = new AnnouncementService(prisma);
   const migrationService = new MigrationService();
   const supportService = new SupportService();
-  const exportService = new ExportService();
+  const exportService = new ExportService(prisma);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
   const dunningConfigService = new DunningConfigService();

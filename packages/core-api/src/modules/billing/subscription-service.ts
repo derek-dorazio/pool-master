@@ -1,5 +1,6 @@
 /**
- * SubscriptionService — manages tenant subscription lifecycle.
+ * SubscriptionService — manages tenant subscription lifecycle using Prisma
+ * TenantSubscription table.
  *
  * All operations are gated by the billing_enabled feature flag.
  * When billing is OFF, returns free-tier stub data.
@@ -7,6 +8,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import type { PrismaClient } from '@prisma/client';
 import { isBillingEnabled } from './billing-feature-gate';
 import { stripeClient, type MockSubscription, type SubscriptionStatus } from './stripe-service';
 
@@ -44,13 +46,6 @@ interface SubscriptionCreateInput {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory subscription store
-// ---------------------------------------------------------------------------
-
-const subscriptionStore: Map<string, TenantSubscription> = new Map();
-const tenantCustomerMap: Map<string, string> = new Map();
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -58,33 +53,46 @@ function epochToDate(epoch: number): Date {
   return new Date(epoch * 1000);
 }
 
-function buildSubscription(
-  tenantId: string,
-  stripeCustomerId: string,
-  stripeSub: MockSubscription,
-  planSlug: string,
-  cycle: BillingCycle,
-): TenantSubscription {
+function toApiSubscription(row: {
+  id: string;
+  tenantId: string;
+  stripeCustomerId: string;
+  stripeSubscriptionId: string | null;
+  planTierSlug: string;
+  billingCycle: string;
+  status: string;
+  trialStart: Date | null;
+  trialEnd: Date | null;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  cancelledAt: Date | null;
+  cancelAtPeriodEnd: boolean;
+  paymentMethodLast4: string | null;
+  paymentMethodBrand: string | null;
+  currency: string;
+  createdAt: Date;
+  updatedAt: Date;
+}): TenantSubscription {
   const now = new Date();
   return {
-    id: randomUUID(),
-    tenantId,
-    stripeCustomerId,
-    stripeSubscriptionId: stripeSub.id,
-    planSlug,
-    billingCycle: cycle,
-    status: stripeSub.status,
-    trialStart: stripeSub.trial_start ? epochToDate(stripeSub.trial_start) : null,
-    trialEnd: stripeSub.trial_end ? epochToDate(stripeSub.trial_end) : null,
-    currentPeriodStart: epochToDate(stripeSub.current_period_start),
-    currentPeriodEnd: epochToDate(stripeSub.current_period_end),
-    cancelledAt: stripeSub.cancelled_at ? epochToDate(stripeSub.cancelled_at) : null,
-    cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-    paymentMethodLast4: null,
-    paymentMethodBrand: null,
-    currency: 'usd',
-    createdAt: now,
-    updatedAt: now,
+    id: row.id,
+    tenantId: row.tenantId,
+    stripeCustomerId: row.stripeCustomerId,
+    stripeSubscriptionId: row.stripeSubscriptionId,
+    planSlug: row.planTierSlug,
+    billingCycle: row.billingCycle as BillingCycle,
+    status: row.status as SubscriptionStatus,
+    trialStart: row.trialStart,
+    trialEnd: row.trialEnd,
+    currentPeriodStart: row.currentPeriodStart ?? now,
+    currentPeriodEnd: row.currentPeriodEnd ?? now,
+    cancelledAt: row.cancelledAt,
+    cancelAtPeriodEnd: row.cancelAtPeriodEnd,
+    paymentMethodLast4: row.paymentMethodLast4,
+    paymentMethodBrand: row.paymentMethodBrand,
+    currency: row.currency,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -129,164 +137,208 @@ const PLAN_TRIAL_DAYS: Record<string, number> = {
 };
 
 // ---------------------------------------------------------------------------
-// Service functions
+// Service
 // ---------------------------------------------------------------------------
 
-/**
- * Ensures a Stripe customer exists for the tenant and returns the customer ID.
- */
-async function ensureCustomer(tenantId: string): Promise<string> {
-  const existing = tenantCustomerMap.get(tenantId);
-  if (existing) {
-    return existing;
-  }
-  const customer = await stripeClient.customers.create({
-    email: `tenant-${tenantId.slice(0, 8)}@poolmaster.app`,
-    name: `Tenant ${tenantId.slice(0, 8)}`,
-    metadata: { tenantId },
-  });
-  tenantCustomerMap.set(tenantId, customer.id);
-  return customer.id;
-}
+export class SubscriptionService {
+  constructor(private readonly prisma: PrismaClient) {}
 
-/**
- * Creates a new subscription for a tenant.
- * Gated by billing_enabled flag.
- */
-export async function createSubscription(
-  input: SubscriptionCreateInput,
-): Promise<TenantSubscription> {
-  const billingOn = await isBillingEnabled(input.tenantId);
-  if (!billingOn) {
-    return freeTierSubscription(input.tenantId);
+  /**
+   * Ensures a Stripe customer exists for the tenant and returns the customer ID.
+   * Checks TenantSubscription for an existing stripeCustomerId first.
+   */
+  private async ensureCustomer(tenantId: string): Promise<string> {
+    const existing = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+      select: { stripeCustomerId: true },
+    });
+    if (existing) {
+      return existing.stripeCustomerId;
+    }
+    const customer = await stripeClient.customers.create({
+      email: `tenant-${tenantId.slice(0, 8)}@poolmaster.app`,
+      name: `Tenant ${tenantId.slice(0, 8)}`,
+      metadata: { tenantId },
+    });
+    return customer.id;
   }
-  const priceMap = PLAN_PRICE_MAP[input.planSlug];
-  if (!priceMap) {
-    throw new Error(`Unknown plan: ${input.planSlug}`);
-  }
-  const customerId = await ensureCustomer(input.tenantId);
-  const trialDays = PLAN_TRIAL_DAYS[input.planSlug] ?? 0;
-  const stripeSub = await stripeClient.subscriptions.create({
-    customer: customerId,
-    items: [{ price: priceMap[input.cycle] }],
-    trial_period_days: trialDays,
-  });
-  const subscription = buildSubscription(
-    input.tenantId,
-    customerId,
-    stripeSub,
-    input.planSlug,
-    input.cycle,
-  );
-  subscriptionStore.set(input.tenantId, subscription);
-  return subscription;
-}
 
-/**
- * Changes the plan for an existing subscription.
- * Gated by billing_enabled flag.
- */
-export async function changePlan(
-  tenantId: string,
-  newPlanSlug: string,
-): Promise<TenantSubscription> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
-    return freeTierSubscription(tenantId);
-  }
-  const existing = subscriptionStore.get(tenantId);
-  if (!existing || !existing.stripeSubscriptionId) {
-    throw new Error(`No active subscription for tenant: ${tenantId}`);
-  }
-  const priceMap = PLAN_PRICE_MAP[newPlanSlug];
-  if (!priceMap) {
-    throw new Error(`Unknown plan: ${newPlanSlug}`);
-  }
-  const stripeSub = await stripeClient.subscriptions.update(
-    existing.stripeSubscriptionId,
-    { items: [{ price: priceMap[existing.billingCycle] }] },
-  );
-  const updated: TenantSubscription = {
-    ...existing,
-    planSlug: newPlanSlug,
-    status: stripeSub.status,
-    updatedAt: new Date(),
-  };
-  subscriptionStore.set(tenantId, updated);
-  return updated;
-}
+  /**
+   * Creates a new subscription for a tenant.
+   * Gated by billing_enabled flag.
+   */
+  async createSubscription(
+    input: SubscriptionCreateInput,
+  ): Promise<TenantSubscription> {
+    const billingOn = await isBillingEnabled(input.tenantId);
+    if (!billingOn) {
+      return freeTierSubscription(input.tenantId);
+    }
+    const priceMap = PLAN_PRICE_MAP[input.planSlug];
+    if (!priceMap) {
+      throw new Error(`Unknown plan: ${input.planSlug}`);
+    }
+    const customerId = await this.ensureCustomer(input.tenantId);
+    const trialDays = PLAN_TRIAL_DAYS[input.planSlug] ?? 0;
+    const stripeSub = await stripeClient.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceMap[input.cycle] }],
+      trial_period_days: trialDays,
+    });
 
-/**
- * Cancels a subscription. If immediate=false, cancels at period end.
- * Gated by billing_enabled flag.
- */
-export async function cancelSubscription(
-  tenantId: string,
-  immediate: boolean,
-): Promise<TenantSubscription> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
-    return freeTierSubscription(tenantId);
-  }
-  const existing = subscriptionStore.get(tenantId);
-  if (!existing || !existing.stripeSubscriptionId) {
-    throw new Error(`No active subscription for tenant: ${tenantId}`);
-  }
-  const stripeSub = await stripeClient.subscriptions.cancel(
-    existing.stripeSubscriptionId,
-    { at_period_end: !immediate },
-  );
-  const updated: TenantSubscription = {
-    ...existing,
-    status: stripeSub.status,
-    cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-    cancelledAt: stripeSub.cancelled_at ? epochToDate(stripeSub.cancelled_at) : null,
-    updatedAt: new Date(),
-  };
-  subscriptionStore.set(tenantId, updated);
-  return updated;
-}
+    const row = await this.prisma.tenantSubscription.upsert({
+      where: { tenantId: input.tenantId },
+      create: {
+        tenantId: input.tenantId,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: stripeSub.id,
+        planTierSlug: input.planSlug,
+        billingCycle: input.cycle,
+        status: stripeSub.status,
+        trialStart: stripeSub.trial_start ? epochToDate(stripeSub.trial_start) : null,
+        trialEnd: stripeSub.trial_end ? epochToDate(stripeSub.trial_end) : null,
+        currentPeriodStart: epochToDate(stripeSub.current_period_start),
+        currentPeriodEnd: epochToDate(stripeSub.current_period_end),
+        cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+        cancelledAt: stripeSub.cancelled_at ? epochToDate(stripeSub.cancelled_at) : null,
+        currency: 'usd',
+      },
+      update: {
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: stripeSub.id,
+        planTierSlug: input.planSlug,
+        billingCycle: input.cycle,
+        status: stripeSub.status,
+        trialStart: stripeSub.trial_start ? epochToDate(stripeSub.trial_start) : null,
+        trialEnd: stripeSub.trial_end ? epochToDate(stripeSub.trial_end) : null,
+        currentPeriodStart: epochToDate(stripeSub.current_period_start),
+        currentPeriodEnd: epochToDate(stripeSub.current_period_end),
+        cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+        cancelledAt: stripeSub.cancelled_at ? epochToDate(stripeSub.cancelled_at) : null,
+      },
+    });
 
-/**
- * Resumes a subscription that was set to cancel at period end.
- * Gated by billing_enabled flag.
- */
-export async function resumeSubscription(
-  tenantId: string,
-): Promise<TenantSubscription> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
-    return freeTierSubscription(tenantId);
+    return toApiSubscription(row);
   }
-  const existing = subscriptionStore.get(tenantId);
-  if (!existing || !existing.stripeSubscriptionId) {
-    throw new Error(`No active subscription for tenant: ${tenantId}`);
-  }
-  const stripeSub = await stripeClient.subscriptions.update(
-    existing.stripeSubscriptionId,
-    { cancel_at_period_end: false },
-  );
-  const updated: TenantSubscription = {
-    ...existing,
-    status: stripeSub.status,
-    cancelAtPeriodEnd: false,
-    cancelledAt: null,
-    updatedAt: new Date(),
-  };
-  subscriptionStore.set(tenantId, updated);
-  return updated;
-}
 
-/**
- * Returns the current subscription for a tenant.
- * When billing is OFF, returns a free-tier stub.
- */
-export async function getSubscription(
-  tenantId: string,
-): Promise<TenantSubscription> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
-    return freeTierSubscription(tenantId);
+  /**
+   * Changes the plan for an existing subscription.
+   * Gated by billing_enabled flag.
+   */
+  async changePlan(
+    tenantId: string,
+    newPlanSlug: string,
+  ): Promise<TenantSubscription> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      return freeTierSubscription(tenantId);
+    }
+    const existing = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+    });
+    if (!existing || !existing.stripeSubscriptionId) {
+      throw new Error(`No active subscription for tenant: ${tenantId}`);
+    }
+    const priceMap = PLAN_PRICE_MAP[newPlanSlug];
+    if (!priceMap) {
+      throw new Error(`Unknown plan: ${newPlanSlug}`);
+    }
+    const stripeSub = await stripeClient.subscriptions.update(
+      existing.stripeSubscriptionId,
+      { items: [{ price: priceMap[existing.billingCycle as BillingCycle] }] },
+    );
+    const row = await this.prisma.tenantSubscription.update({
+      where: { tenantId },
+      data: {
+        planTierSlug: newPlanSlug,
+        status: stripeSub.status,
+      },
+    });
+    return toApiSubscription(row);
   }
-  return subscriptionStore.get(tenantId) ?? freeTierSubscription(tenantId);
+
+  /**
+   * Cancels a subscription. If immediate=false, cancels at period end.
+   * Gated by billing_enabled flag.
+   */
+  async cancelSubscription(
+    tenantId: string,
+    immediate: boolean,
+  ): Promise<TenantSubscription> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      return freeTierSubscription(tenantId);
+    }
+    const existing = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+    });
+    if (!existing || !existing.stripeSubscriptionId) {
+      throw new Error(`No active subscription for tenant: ${tenantId}`);
+    }
+    const stripeSub = await stripeClient.subscriptions.cancel(
+      existing.stripeSubscriptionId,
+      { at_period_end: !immediate },
+    );
+    const row = await this.prisma.tenantSubscription.update({
+      where: { tenantId },
+      data: {
+        status: stripeSub.status,
+        cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+        cancelledAt: stripeSub.cancelled_at ? epochToDate(stripeSub.cancelled_at) : null,
+      },
+    });
+    return toApiSubscription(row);
+  }
+
+  /**
+   * Resumes a subscription that was set to cancel at period end.
+   * Gated by billing_enabled flag.
+   */
+  async resumeSubscription(
+    tenantId: string,
+  ): Promise<TenantSubscription> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      return freeTierSubscription(tenantId);
+    }
+    const existing = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+    });
+    if (!existing || !existing.stripeSubscriptionId) {
+      throw new Error(`No active subscription for tenant: ${tenantId}`);
+    }
+    const stripeSub = await stripeClient.subscriptions.update(
+      existing.stripeSubscriptionId,
+      { cancel_at_period_end: false },
+    );
+    const row = await this.prisma.tenantSubscription.update({
+      where: { tenantId },
+      data: {
+        status: stripeSub.status,
+        cancelAtPeriodEnd: false,
+        cancelledAt: null,
+      },
+    });
+    return toApiSubscription(row);
+  }
+
+  /**
+   * Returns the current subscription for a tenant.
+   * When billing is OFF, returns a free-tier stub.
+   */
+  async getSubscription(
+    tenantId: string,
+  ): Promise<TenantSubscription> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      return freeTierSubscription(tenantId);
+    }
+    const row = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+    });
+    if (!row) {
+      return freeTierSubscription(tenantId);
+    }
+    return toApiSubscription(row);
+  }
 }

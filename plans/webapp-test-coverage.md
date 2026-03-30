@@ -54,20 +54,22 @@ Fastest to write — pure functions and state management. No DOM, no mocking.
 Test hook logic with `renderHook()` from React Testing Library. Mock API calls via TanStack Query's `QueryClient` wrapper.
 
 ### Webapp Hooks
-| Test File | Source | Key Tests |
-|-----------|--------|-----------|
-| `features/settings/hooks/use-profile.test.ts` | `use-profile.ts` | useProfile query, useUpdateProfile mutation, useUploadAvatar |
-| `features/notifications/hooks/use-notifications.test.ts` | `use-notifications.ts` | List query, filtering, pagination |
-| `features/notifications/hooks/use-notification-preferences.test.ts` | `use-notification-preferences.ts` | Fetch prefs, save prefs mutation |
-| `features/notifications/hooks/use-unread-count.test.ts` | `use-unread-count.ts` | Count query, refetch interval |
-| `features/notifications/hooks/use-notification-actions.test.ts` | `use-notification-actions.ts` | Mark read, dismiss mutations |
-| `features/billing/hooks/use-billing.test.ts` | `use-billing.ts` | Plan data, entitlements |
-| `features/discovery/hooks/use-discovery.test.ts` | `use-discovery.ts` | Browse queries |
-| `features/dashboard/hooks/use-active-contests.test.ts` | `use-active-contests.ts` | Active contests query |
-| `features/dashboard/hooks/use-highlights.test.ts` | `use-highlights.ts` | Season highlights query |
-| `features/dashboard/hooks/use-my-leagues.test.ts` | `use-my-leagues.ts` | Leagues summary query |
-| `features/dashboard/hooks/use-recent-activity.test.ts` | `use-recent-activity.ts` | Activity feed query |
-| `features/dashboard/hooks/use-upcoming-drafts.test.ts` | `use-upcoming-drafts.ts` | Upcoming drafts query |
+| Test File | Source | Key Tests | Status |
+|-----------|--------|-----------|--------|
+| `features/settings/hooks/use-profile.test.ts` | `use-profile.ts` | useProfile query, mock data shape | Done |
+| `features/notifications/hooks/use-notifications.test.ts` | `use-notifications.ts` | List query, filtering by category, pagination pages | Done |
+| `features/notifications/hooks/use-notification-preferences.test.ts` | `use-notification-preferences.ts` | Fetch prefs, save prefs mutation | |
+| `features/notifications/hooks/use-unread-count.test.ts` | `use-unread-count.ts` | Count query, grouped breakdown | Done |
+| `features/notifications/hooks/use-notification-actions.test.ts` | `use-notification-actions.ts` | Mark read, mark all read mutations | Done |
+| `features/billing/hooks/use-billing.test.ts` | `use-billing.ts` | Plan data, tier list, usage stats | Done |
+| `features/discovery/hooks/use-discovery.test.ts` | `use-discovery.ts` | Trending leagues, popular contests, sport filter | Done |
+| `features/dashboard/hooks/use-active-contests.test.ts` | `use-active-contests.ts` | Active contests query, mock data shape | Done |
+| `features/dashboard/hooks/use-highlights.test.ts` | `use-highlights.ts` | Season highlights query, season record shape | Done |
+| `features/dashboard/hooks/use-my-leagues.test.ts` | `use-my-leagues.ts` | Leagues summary query, mock data shape | Done |
+| `features/dashboard/hooks/use-recent-activity.test.ts` | `use-recent-activity.ts` | Activity feed query, mock data shape | Done |
+| `features/dashboard/hooks/use-upcoming-drafts.test.ts` | `use-upcoming-drafts.ts` | Upcoming drafts query, mock data shape | Done |
+| `features/contests/hooks/use-contest.test.ts` | `use-contest.ts` | Contest query, myEntry/topEntries, disabled when no id | Done |
+| `features/contests/hooks/use-standings.test.ts` | `use-standings.ts` | Standings entries, rank order, disabled when no id | Done |
 
 ### Admin Hooks
 | Test File | Source | Key Tests |

@@ -2,7 +2,7 @@
  * EntitlementService — single source of truth for "can this tenant do X?"
  *
  * Resolution order:
- *   1. Admin override (deferred — always falls through)
+ *   1. Admin override (from Prisma EntitlementOverride table)
  *   2. Feature flag (deferred — always falls through)
  *   3. Plan tier entitlements from PlanTier table
  *   4. For usage-limited entitlements, count usage vs limit
@@ -21,7 +21,7 @@ import {
   type UsageResult,
 } from '@poolmaster/shared/domain';
 import { isBillingEnabled } from './billing-feature-gate';
-import { getUsage as getTrackedUsage } from './usage-service';
+import type { UsageService } from './usage-service';
 
 // ---------------------------------------------------------------------------
 // In-memory cache for plan tier entitlements
@@ -69,70 +69,78 @@ const TIER_KEYS: Record<string, keyof PlanEntitlements> = {
 // Service
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// In-memory entitlement override store (replaces Prisma for now)
-// ---------------------------------------------------------------------------
-
-interface OverrideEntry {
-  entitlementKey: string;
-  overrideValue: unknown;
-  reason: string;
-  expiresAt: Date | null;
-}
-
-const overrideStore: Map<string, OverrideEntry> = new Map();
-
-function overrideKey(tenantId: string, entitlementKey: string): string {
-  return `${tenantId}:${entitlementKey}`;
-}
-
-// ---------------------------------------------------------------------------
-// Service
-// ---------------------------------------------------------------------------
-
 export class EntitlementService {
   private tierCache: Map<string, CachedTier> = new Map();
 
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly usageService?: UsageService,
+  ) {}
 
   /**
-   * Sets an entitlement override for a tenant.
+   * Sets an entitlement override for a tenant (persisted in Prisma).
    */
-  setOverride(
+  async setOverride(
     tenantId: string,
     entitlementKey: string,
     overrideValue: unknown,
     reason: string,
     expiresAt?: Date,
-  ): void {
-    overrideStore.set(overrideKey(tenantId, entitlementKey), {
-      entitlementKey,
-      overrideValue,
-      reason,
-      expiresAt: expiresAt ?? null,
+  ): Promise<void> {
+    await this.prisma.entitlementOverride.upsert({
+      where: {
+        tenantId_entitlementKey: { tenantId, entitlementKey },
+      },
+      create: {
+        tenantId,
+        entitlementKey,
+        overrideValue: overrideValue as any,
+        reason,
+        expiresAt: expiresAt ?? null,
+      },
+      update: {
+        overrideValue: overrideValue as any,
+        reason,
+        expiresAt: expiresAt ?? null,
+      },
     });
   }
 
   /**
    * Clears an entitlement override for a tenant.
    */
-  clearOverride(tenantId: string, entitlementKey: string): void {
-    overrideStore.delete(overrideKey(tenantId, entitlementKey));
+  async clearOverride(tenantId: string, entitlementKey: string): Promise<void> {
+    await this.prisma.entitlementOverride.deleteMany({
+      where: { tenantId, entitlementKey },
+    });
   }
 
   /**
    * Retrieves the override for a tenant+key, or null if none exists / expired.
    */
-  private getOverride(tenantId: string, entitlementKey: string): OverrideEntry | null {
-    const entry = overrideStore.get(overrideKey(tenantId, entitlementKey));
+  private async getOverride(
+    tenantId: string,
+    entitlementKey: string,
+  ): Promise<{ overrideValue: unknown; reason: string | null; expiresAt: Date | null } | null> {
+    const entry = await this.prisma.entitlementOverride.findUnique({
+      where: {
+        tenantId_entitlementKey: { tenantId, entitlementKey },
+      },
+    });
     if (!entry) {
       return null;
     }
     if (entry.expiresAt && entry.expiresAt < new Date()) {
-      overrideStore.delete(overrideKey(tenantId, entitlementKey));
+      await this.prisma.entitlementOverride.delete({
+        where: { id: entry.id },
+      });
       return null;
     }
-    return entry;
+    return {
+      overrideValue: entry.overrideValue,
+      reason: entry.reason,
+      expiresAt: entry.expiresAt,
+    };
   }
 
   /**
@@ -150,7 +158,7 @@ export class EntitlementService {
     }
 
     // Step 1: Admin override
-    const override = this.getOverride(tenantId, key);
+    const override = await this.getOverride(tenantId, key);
     if (override) {
       const value = override.overrideValue;
       if (typeof value === 'boolean') {
@@ -211,7 +219,9 @@ export class EntitlementService {
       ? (entitlements[limitField[resource]] as number)
       : -1;
 
-    const current = await getTrackedUsage(tenantId, resource);
+    const current = this.usageService
+      ? await this.usageService.getUsage(tenantId, resource)
+      : 0;
     const percentage = limit === -1 ? 0 : limit === 0 ? 100 : Math.round((current / limit) * 100);
 
     return { resource, current, limit, percentage };

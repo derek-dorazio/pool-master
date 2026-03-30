@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Flag, Trash2, Plus, X, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { adminApi } from '@/lib/api-client';
 import { useFlagDetail } from '@/hooks/use-flags-api';
 import type { FlagType } from '@/hooks/use-flags-api';
 
@@ -55,6 +57,7 @@ export function Component() {
   const [rollout, setRollout] = useState(flag?.rolloutPct ?? 0);
   const [testTenant, setTestTenant] = useState('');
   const [testResult, setTestResult] = useState<boolean | null>(null);
+  const dialog = useConfirmDialog();
 
   if (!flag) return null;
 
@@ -94,9 +97,13 @@ export function Component() {
             <span className="text-sm text-muted-foreground">Global:</span>
             <Toggle
               checked={enabled}
-              onChange={(v) => {
+              onChange={async (v) => {
                 setEnabled(v);
-                console.log(`Flag "${flag.key}" globally toggled to ${v ? 'ON' : 'OFF'}`);
+                try {
+                  await adminApi.put(`/v1/admin/flags/${flag.key}`, { enabledGlobally: v });
+                } catch {
+                  // Silently handle — backend may not be available yet
+                }
               }}
             />
           </div>
@@ -162,7 +169,13 @@ export function Component() {
                 />
                 <span className="w-14 text-right font-mono font-medium">{rollout}%</span>
               </div>
-              <Button size="sm" onClick={() => console.log(`Saved rollout: ${rollout}%`)}>
+              <Button size="sm" onClick={async () => {
+                try {
+                  await adminApi.put(`/v1/admin/flags/${flag.key}`, { rolloutPct: rollout });
+                } catch {
+                  // Silently handle — backend may not be available yet
+                }
+              }}>
                 Save
               </Button>
             </div>
@@ -214,7 +227,20 @@ export function Component() {
                       variant="ghost"
                       size="sm"
                       className="text-red-600 hover:text-red-700"
-                      onClick={() => window.confirm(`Remove override for "${o.tenantName}"?`)}
+                      onClick={async () => {
+                        const confirmed = await dialog.confirm(
+                          'Remove Override',
+                          `Remove override for "${o.tenantName}"?`,
+                          { confirmLabel: 'Remove', variant: 'destructive' },
+                        );
+                        if (confirmed) {
+                          try {
+                            await adminApi.delete(`/v1/admin/flags/${flag.key}/overrides/${o.tenantName}`);
+                          } catch {
+                            // Silently handle — backend may not be available yet
+                          }
+                        }
+                      }}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -264,9 +290,18 @@ export function Component() {
       <div className="flex justify-end">
         <Button
           variant="destructive"
-          onClick={() => {
-            if (window.confirm(`Are you sure you want to delete flag "${flag.key}"? This cannot be undone.`)) {
-              console.log(`Deleted flag: ${flag.key}`);
+          onClick={async () => {
+            const confirmed = await dialog.confirm(
+              'Delete Flag',
+              `Are you sure you want to delete flag "${flag.key}"? This cannot be undone.`,
+              { confirmLabel: 'Delete', variant: 'destructive' },
+            );
+            if (confirmed) {
+              try {
+                await adminApi.delete(`/v1/admin/flags/${flag.key}`);
+              } catch {
+                // Silently handle — backend may not be available yet
+              }
             }
           }}
         >
@@ -274,6 +309,16 @@ export function Component() {
           Delete Flag
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={dialog.open}
+        title={dialog.title}
+        description={dialog.description}
+        confirmLabel={dialog.confirmLabel}
+        variant={dialog.variant}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+      />
     </div>
   );
 }

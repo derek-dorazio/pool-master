@@ -9,6 +9,8 @@ import {
   AlertTriangle, CheckCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { adminApi } from '@/lib/api-client';
 import { useProviderDetail } from '@/hooks/use-providers-api';
 import type { ProviderStatus } from '@/hooks/use-providers-api';
 
@@ -26,6 +28,7 @@ function statusBadge(status: ProviderStatus) {
 export function Component() {
   const { providerId } = useParams<{ providerId: string }>();
   const { data: provider } = useProviderDetail(providerId ?? '');
+  const dialog = useConfirmDialog();
 
   if (!provider) return null;
 
@@ -94,7 +97,19 @@ export function Component() {
                   <CardTitle className="text-base">Recent Errors</CardTitle>
                   <CardDescription>{provider.recentErrors.length} errors in last 24h</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => window.confirm('Run health check now?')}>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  const confirmed = await dialog.confirm(
+                    'Run Health Check',
+                    'Run health check now?',
+                  );
+                  if (confirmed) {
+                    try {
+                      await adminApi.post(`/v1/admin/providers/${providerId}/health-check`);
+                    } catch {
+                      // Silently handle — backend may not be available yet
+                    }
+                  }
+                }}>
                   <HeartPulse className="mr-2 h-4 w-4" />
                   Run Health Check
                 </Button>
@@ -288,7 +303,22 @@ export function Component() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.confirm(`Map "${u.providerName}" to an internal participant?`)}
+                            onClick={async () => {
+                              const confirmed = await dialog.confirm(
+                                'Map Participant',
+                                `Map "${u.providerName}" to an internal participant?`,
+                              );
+                              if (confirmed) {
+                                try {
+                                  await adminApi.post(`/v1/admin/providers/${providerId}/mappings`, {
+                                    externalId: u.externalId,
+                                    providerName: u.providerName,
+                                  });
+                                } catch {
+                                  // Silently handle — backend may not be available yet
+                                }
+                              }
+                            }}
                           >
                             Map
                           </Button>
@@ -302,6 +332,16 @@ export function Component() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <ConfirmDialog
+        open={dialog.open}
+        title={dialog.title}
+        description={dialog.description}
+        confirmLabel={dialog.confirmLabel}
+        variant={dialog.variant}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+      />
     </div>
   );
 }

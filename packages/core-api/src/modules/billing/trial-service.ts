@@ -1,11 +1,13 @@
 /**
- * TrialService — manages 14-day trial lifecycle.
+ * TrialService — manages 14-day trial lifecycle using TenantSubscription
+ * with status='TRIALING'.
  *
  * All operations are gated by the billing_enabled feature flag.
  * When billing is OFF, trial endpoints return inactive status.
  */
 
 import { randomUUID } from 'crypto';
+import type { PrismaClient } from '@prisma/client';
 import { isBillingEnabled } from './billing-feature-gate';
 
 // ---------------------------------------------------------------------------
@@ -47,12 +49,6 @@ const TRIAL_DURATION_DAYS = 14;
 const REMINDER_THRESHOLDS = [3, 1];
 
 // ---------------------------------------------------------------------------
-// In-memory trial store
-// ---------------------------------------------------------------------------
-
-const trialStore: Map<string, TrialRecord> = new Map();
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -68,127 +64,206 @@ function daysBetween(start: Date, end: Date): number {
 }
 
 // ---------------------------------------------------------------------------
-// Service functions
+// Service
 // ---------------------------------------------------------------------------
 
-/**
- * Starts a 14-day trial for a tenant on the specified plan.
- * Gated by billing_enabled flag.
- */
-export async function startTrial(
-  tenantId: string,
-  planSlug: string,
-): Promise<TrialRecord> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
-    throw new Error('Billing is not enabled. Trials are unavailable.');
-  }
-  const existing = trialStore.get(tenantId);
-  if (existing && existing.status === 'ACTIVE') {
-    throw new Error(`Tenant ${tenantId} already has an active trial.`);
-  }
-  const now = new Date();
-  const trial: TrialRecord = {
-    id: randomUUID(),
-    tenantId,
-    planSlug,
-    startDate: now,
-    endDate: addDays(now, TRIAL_DURATION_DAYS),
-    convertedAt: null,
-    paymentMethodId: null,
-    status: 'ACTIVE',
-  };
-  trialStore.set(tenantId, trial);
-  return trial;
-}
+export class TrialService {
+  constructor(private readonly prisma: PrismaClient) {}
 
-/**
- * Returns the current trial status for a tenant.
- */
-export async function checkTrialStatus(tenantId: string): Promise<TrialStatus> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
+  /**
+   * Starts a 14-day trial for a tenant on the specified plan.
+   * Gated by billing_enabled flag.
+   */
+  async startTrial(
+    tenantId: string,
+    planSlug: string,
+  ): Promise<TrialRecord> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      throw new Error('Billing is not enabled. Trials are unavailable.');
+    }
+
+    // Check for existing active trial
+    const existing = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+    });
+    if (existing && existing.status === 'TRIALING') {
+      throw new Error(`Tenant ${tenantId} already has an active trial.`);
+    }
+
+    const now = new Date();
+    const endDate = addDays(now, TRIAL_DURATION_DAYS);
+
+    const row = await this.prisma.tenantSubscription.upsert({
+      where: { tenantId },
+      create: {
+        tenantId,
+        stripeCustomerId: '',
+        planTierSlug: planSlug,
+        billingCycle: 'MONTHLY',
+        status: 'TRIALING',
+        trialStart: now,
+        trialEnd: endDate,
+        currentPeriodStart: now,
+        currentPeriodEnd: endDate,
+        currency: 'usd',
+      },
+      update: {
+        planTierSlug: planSlug,
+        status: 'TRIALING',
+        trialStart: now,
+        trialEnd: endDate,
+        currentPeriodStart: now,
+        currentPeriodEnd: endDate,
+      },
+    });
+
     return {
-      isActive: false,
-      planSlug: null,
-      daysRemaining: 0,
-      startDate: null,
-      endDate: null,
-      status: 'NONE',
+      id: row.id,
+      tenantId: row.tenantId,
+      planSlug: row.planTierSlug,
+      startDate: row.trialStart!,
+      endDate: row.trialEnd!,
+      convertedAt: null,
+      paymentMethodId: null,
+      status: 'ACTIVE',
     };
   }
-  const trial = trialStore.get(tenantId);
-  if (!trial) {
+
+  /**
+   * Returns the current trial status for a tenant.
+   */
+  async checkTrialStatus(tenantId: string): Promise<TrialStatus> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      return {
+        isActive: false,
+        planSlug: null,
+        daysRemaining: 0,
+        startDate: null,
+        endDate: null,
+        status: 'NONE',
+      };
+    }
+
+    const row = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+    });
+
+    if (!row || !row.trialStart) {
+      return {
+        isActive: false,
+        planSlug: null,
+        daysRemaining: 0,
+        startDate: null,
+        endDate: null,
+        status: 'NONE',
+      };
+    }
+
+    const now = new Date();
+    let status: 'ACTIVE' | 'EXPIRED' | 'CONVERTED' | 'NONE';
+
+    if (row.status === 'TRIALING') {
+      if (row.trialEnd && now > row.trialEnd) {
+        // Trial expired — update status
+        await this.prisma.tenantSubscription.update({
+          where: { tenantId },
+          data: { status: 'PAST_DUE' },
+        });
+        status = 'EXPIRED';
+      } else {
+        status = 'ACTIVE';
+      }
+    } else if (row.status === 'ACTIVE') {
+      status = 'CONVERTED';
+    } else {
+      status = 'EXPIRED';
+    }
+
     return {
-      isActive: false,
-      planSlug: null,
-      daysRemaining: 0,
-      startDate: null,
-      endDate: null,
-      status: 'NONE',
+      isActive: status === 'ACTIVE',
+      planSlug: row.planTierSlug,
+      daysRemaining: status === 'ACTIVE' && row.trialEnd
+        ? daysBetween(now, row.trialEnd)
+        : 0,
+      startDate: row.trialStart,
+      endDate: row.trialEnd,
+      status,
     };
   }
-  const now = new Date();
-  if (trial.status === 'ACTIVE' && now > trial.endDate) {
-    trial.status = 'EXPIRED';
-    trialStore.set(tenantId, trial);
-  }
-  return {
-    isActive: trial.status === 'ACTIVE',
-    planSlug: trial.planSlug,
-    daysRemaining: trial.status === 'ACTIVE' ? daysBetween(now, trial.endDate) : 0,
-    startDate: trial.startDate,
-    endDate: trial.endDate,
-    status: trial.status,
-  };
-}
 
-/**
- * Converts a trial to a paid subscription by attaching a payment method.
- * Gated by billing_enabled flag.
- */
-export async function convertTrial(
-  tenantId: string,
-  paymentMethodId: string,
-): Promise<TrialRecord> {
-  const billingOn = await isBillingEnabled(tenantId);
-  if (!billingOn) {
-    throw new Error('Billing is not enabled. Trial conversion unavailable.');
-  }
-  const trial = trialStore.get(tenantId);
-  if (!trial) {
-    throw new Error(`No trial found for tenant: ${tenantId}`);
-  }
-  if (trial.status !== 'ACTIVE') {
-    throw new Error(`Trial is not active (status: ${trial.status})`);
-  }
-  trial.convertedAt = new Date();
-  trial.paymentMethodId = paymentMethodId;
-  trial.status = 'CONVERTED';
-  trialStore.set(tenantId, trial);
-  return trial;
-}
+  /**
+   * Converts a trial to a paid subscription by attaching a payment method.
+   * Gated by billing_enabled flag.
+   */
+  async convertTrial(
+    tenantId: string,
+    paymentMethodId: string,
+  ): Promise<TrialRecord> {
+    const billingOn = await isBillingEnabled(tenantId);
+    if (!billingOn) {
+      throw new Error('Billing is not enabled. Trial conversion unavailable.');
+    }
 
-/**
- * Returns tenants whose trial ends within the reminder thresholds (3d or 1d).
- */
-export async function getTrialReminders(): Promise<TrialReminder[]> {
-  const reminders: TrialReminder[] = [];
-  const now = new Date();
-  for (const trial of trialStore.values()) {
-    if (trial.status !== 'ACTIVE') {
-      continue;
+    const row = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+    });
+    if (!row) {
+      throw new Error(`No trial found for tenant: ${tenantId}`);
     }
-    const daysRemaining = daysBetween(now, trial.endDate);
-    const shouldRemind = REMINDER_THRESHOLDS.includes(daysRemaining);
-    if (shouldRemind) {
-      reminders.push({
-        tenantId: trial.tenantId,
-        planSlug: trial.planSlug,
-        daysRemaining,
-        endDate: trial.endDate,
-      });
+    if (row.status !== 'TRIALING') {
+      throw new Error(`Trial is not active (status: ${row.status})`);
     }
+
+    const now = new Date();
+    const updated = await this.prisma.tenantSubscription.update({
+      where: { tenantId },
+      data: {
+        status: 'ACTIVE',
+        paymentMethodLast4: paymentMethodId.slice(-4),
+      },
+    });
+
+    return {
+      id: updated.id,
+      tenantId: updated.tenantId,
+      planSlug: updated.planTierSlug,
+      startDate: updated.trialStart!,
+      endDate: updated.trialEnd!,
+      convertedAt: now,
+      paymentMethodId,
+      status: 'CONVERTED',
+    };
   }
-  return reminders;
+
+  /**
+   * Returns tenants whose trial ends within the reminder thresholds (3d or 1d).
+   */
+  async getTrialReminders(): Promise<TrialReminder[]> {
+    const trials = await this.prisma.tenantSubscription.findMany({
+      where: { status: 'TRIALING' },
+    });
+
+    const reminders: TrialReminder[] = [];
+    const now = new Date();
+
+    for (const trial of trials) {
+      if (!trial.trialEnd) {
+        continue;
+      }
+      const daysRemaining = daysBetween(now, trial.trialEnd);
+      const shouldRemind = REMINDER_THRESHOLDS.includes(daysRemaining);
+      if (shouldRemind) {
+        reminders.push({
+          tenantId: trial.tenantId,
+          planSlug: trial.planTierSlug,
+          daysRemaining,
+          endDate: trial.trialEnd,
+        });
+      }
+    }
+
+    return reminders;
+  }
 }

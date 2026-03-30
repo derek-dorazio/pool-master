@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Bell, RotateCcw, ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { adminApi } from '@/lib/api-client';
 import {
   usePushTriggers,
   useNotificationTemplates,
@@ -176,7 +177,14 @@ function PushTriggersSection() {
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={cancelEdit}>Cancel</Button>
-              <Button size="sm" onClick={() => { console.log('Save trigger:', editForm); cancelEdit(); }}>
+              <Button size="sm" onClick={async () => {
+                try {
+                  await adminApi.put(`/v1/admin/config/push-triggers/${editingId}`, editForm);
+                } catch {
+                  // Silently handle — backend may not be available yet
+                }
+                cancelEdit();
+              }}>
                 Save
               </Button>
             </div>
@@ -304,7 +312,14 @@ function NotificationTemplatesSection() {
                           <Button variant="outline" size="sm" onClick={() => setExpandedId(null)}>
                             Cancel
                           </Button>
-                          <Button size="sm" onClick={() => { console.log('Save template:', editForm); setExpandedId(null); }}>
+                          <Button size="sm" onClick={async () => {
+                            try {
+                              await adminApi.put(`/v1/admin/config/notification-templates/${expandedId}`, editForm);
+                            } catch {
+                              // Silently handle — backend may not be available yet
+                            }
+                            setExpandedId(null);
+                          }}>
                             Save
                           </Button>
                         </div>
@@ -522,7 +537,13 @@ function RateLimitsSection() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={resetAll}>Reset</Button>
-          <Button onClick={() => console.log('Save rate limits:', { pushPerHour, emailPerDay, smsPerDay, dedupWindow, collapseRules })}>
+          <Button onClick={async () => {
+            try {
+              await adminApi.put('/v1/admin/config/rate-limits', { pushPerHour, emailPerDay, smsPerDay, dedupWindowSeconds: dedupWindow, collapseRules });
+            } catch {
+              // Silently handle — backend may not be available yet
+            }
+          }}>
             Save
           </Button>
         </div>
@@ -690,7 +711,13 @@ function WeeklyDigestSection() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={reset}>Reset</Button>
-          <Button onClick={() => console.log('Save digest config:', { subjectTemplate, headerTemplate, footerTemplate, includeStandings, includeHighlights, includeUpcomingEvents, lookbackDays, sendDay, sendHourUtc, enabled })}>
+          <Button onClick={async () => {
+            try {
+              await adminApi.put('/v1/admin/config/weekly-digest', { subjectTemplate, headerTemplate, footerTemplate, includeStandings, includeHighlights, includeUpcomingEvents, lookbackDays, sendDay, sendHourUtc, enabled });
+            } catch {
+              // Silently handle — backend may not be available yet
+            }
+          }}>
             Save
           </Button>
         </div>

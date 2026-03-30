@@ -3,8 +3,11 @@
  *
  * Supports creating, scheduling, activating, and deactivating announcements
  * that display as banners or notifications to all platform users.
+ *
+ * Persisted via Prisma to the global_announcements table.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -73,67 +76,47 @@ export class AnnouncementNotFoundError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// Mock data store
+// Row → domain mapping
 // ---------------------------------------------------------------------------
 
-const announcements = new Map<string, Announcement>();
+interface AnnouncementRow {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  linkUrl: string | null;
+  linkText: string | null;
+  severity: string;
+  dismissable: boolean;
+  target: string;
+  targetTenantIds: string[];
+  startsAt: Date;
+  endsAt: Date | null;
+  isActive: boolean;
+  createdById: string;
+  createdAt: Date;
+}
 
-function seedMockData(): void {
-  if (announcements.size > 0) return;
-
-  const now = new Date();
-
-  const scheduled: Announcement = {
-    id: 'ann-001',
-    type: 'BANNER',
-    title: 'Scheduled maintenance tonight',
-    body: 'Platform will be unavailable from 2-4am UTC for scheduled maintenance.',
-    severity: 'WARNING',
-    dismissable: true,
-    target: 'ALL_USERS',
-    startsAt: new Date(now.getTime() + 6 * 3_600_000),
-    endsAt: new Date(now.getTime() + 10 * 3_600_000),
-    isActive: false,
-    createdBy: 'admin-001',
-    createdAt: new Date(now.getTime() - 86_400_000),
-    updatedAt: new Date(now.getTime() - 86_400_000),
+function toAnnouncement(row: AnnouncementRow): Announcement {
+  return {
+    id: row.id,
+    type: row.type as AnnouncementType,
+    title: row.title,
+    body: row.body,
+    linkUrl: row.linkUrl ?? undefined,
+    linkText: row.linkText ?? undefined,
+    severity: row.severity as AnnouncementSeverity,
+    dismissable: row.dismissable,
+    target: row.target as AnnouncementTarget,
+    targetTenantIds: row.targetTenantIds.length > 0 ? row.targetTenantIds : undefined,
+    startsAt: row.startsAt,
+    endsAt: row.endsAt ?? undefined,
+    isActive: row.isActive,
+    createdBy: row.createdById,
+    createdAt: row.createdAt,
+    // GlobalAnnouncement has no updatedAt column — use createdAt as fallback
+    updatedAt: row.createdAt,
   };
-
-  const featureInfo: Announcement = {
-    id: 'ann-002',
-    type: 'NOTIFICATION',
-    title: 'New feature: Salary Cap drafts',
-    body: 'Salary Cap drafts are now available! Create a new contest to try them out.',
-    linkUrl: '/contests/new',
-    linkText: 'Create contest',
-    severity: 'INFO',
-    dismissable: true,
-    target: 'ALL_USERS',
-    startsAt: new Date(now.getTime() - 3_600_000),
-    isActive: true,
-    createdBy: 'admin-001',
-    createdAt: new Date(now.getTime() - 3_600_000),
-    updatedAt: new Date(now.getTime() - 3_600_000),
-  };
-
-  const outage: Announcement = {
-    id: 'ann-003',
-    type: 'BANNER',
-    title: 'Data provider outage',
-    body: 'We are experiencing issues with our golf scoring data provider. Scores may be delayed.',
-    severity: 'CRITICAL',
-    dismissable: false,
-    target: 'ALL_USERS',
-    startsAt: new Date(now.getTime() - 1_800_000),
-    isActive: true,
-    createdBy: 'admin-002',
-    createdAt: new Date(now.getTime() - 1_800_000),
-    updatedAt: new Date(now.getTime() - 1_800_000),
-  };
-
-  announcements.set(scheduled.id, scheduled);
-  announcements.set(featureInfo.id, featureInfo);
-  announcements.set(outage.id, outage);
 }
 
 // ---------------------------------------------------------------------------
@@ -141,26 +124,25 @@ function seedMockData(): void {
 // ---------------------------------------------------------------------------
 
 export class AnnouncementService {
-  constructor() {
-    seedMockData();
-  }
+  constructor(private readonly prisma: PrismaClient) {}
 
   /**
    * Lists all announcements (active, scheduled, and expired).
    */
   async listAnnouncements(): Promise<Announcement[]> {
-    return Array.from(announcements.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-    );
+    const rows = await this.prisma.globalAnnouncement.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r) => toAnnouncement(r as unknown as AnnouncementRow));
   }
 
   /**
    * Returns a single announcement by ID.
    */
   async getAnnouncement(id: string): Promise<Announcement> {
-    const ann = announcements.get(id);
-    if (!ann) throw new AnnouncementNotFoundError(id);
-    return ann;
+    const row = await this.prisma.globalAnnouncement.findUnique({ where: { id } });
+    if (!row) throw new AnnouncementNotFoundError(id);
+    return toAnnouncement(row as unknown as AnnouncementRow);
   }
 
   /**
@@ -172,35 +154,33 @@ export class AnnouncementService {
     adminUserEmail: string,
   ): Promise<Announcement> {
     const now = new Date();
-    const id = `ann-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
-    const announcement: Announcement = {
-      id,
-      type: input.type,
-      title: input.title,
-      body: input.body,
-      linkUrl: input.linkUrl,
-      linkText: input.linkText,
-      severity: input.severity,
-      dismissable: input.dismissable ?? true,
-      target: input.target ?? 'ALL_USERS',
-      targetTenantIds: input.targetTenantIds,
-      startsAt: input.startsAt ? new Date(input.startsAt) : now,
-      endsAt: input.endsAt ? new Date(input.endsAt) : undefined,
-      isActive: false,
-      createdBy: adminUserId,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const row = await this.prisma.globalAnnouncement.create({
+      data: {
+        type: input.type,
+        title: input.title,
+        body: input.body,
+        linkUrl: input.linkUrl ?? null,
+        linkText: input.linkText ?? null,
+        severity: input.severity,
+        dismissable: input.dismissable ?? true,
+        target: input.target ?? 'ALL_USERS',
+        targetTenantIds: input.targetTenantIds ?? [],
+        startsAt: input.startsAt ? new Date(input.startsAt) : now,
+        endsAt: input.endsAt ? new Date(input.endsAt) : null,
+        isActive: false,
+        createdById: adminUserId,
+      },
+    });
 
-    announcements.set(id, announcement);
+    const announcement = toAnnouncement(row as unknown as AnnouncementRow);
 
     await logAdminAction({
       adminUserId,
       adminUserEmail,
       action: 'announcement.create',
       resourceType: 'ANNOUNCEMENT',
-      resourceId: id,
+      resourceId: row.id,
       description: `Created announcement: "${input.title}"`,
       afterState: { title: input.title, severity: input.severity, type: input.type },
     });
@@ -217,25 +197,27 @@ export class AnnouncementService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<Announcement> {
-    const existing = announcements.get(id);
+    const existing = await this.prisma.globalAnnouncement.findUnique({ where: { id } });
     if (!existing) throw new AnnouncementNotFoundError(id);
 
-    const updated: Announcement = {
-      ...existing,
-      title: input.title ?? existing.title,
-      body: input.body ?? existing.body,
-      linkUrl: input.linkUrl ?? existing.linkUrl,
-      linkText: input.linkText ?? existing.linkText,
-      severity: input.severity ?? existing.severity,
-      dismissable: input.dismissable ?? existing.dismissable,
-      target: input.target ?? existing.target,
-      targetTenantIds: input.targetTenantIds ?? existing.targetTenantIds,
-      startsAt: input.startsAt ? new Date(input.startsAt) : existing.startsAt,
-      endsAt: input.endsAt ? new Date(input.endsAt) : existing.endsAt,
-      updatedAt: new Date(),
-    };
+    const data: Record<string, unknown> = {};
+    if (input.title !== undefined) data.title = input.title;
+    if (input.body !== undefined) data.body = input.body;
+    if (input.linkUrl !== undefined) data.linkUrl = input.linkUrl;
+    if (input.linkText !== undefined) data.linkText = input.linkText;
+    if (input.severity !== undefined) data.severity = input.severity;
+    if (input.dismissable !== undefined) data.dismissable = input.dismissable;
+    if (input.target !== undefined) data.target = input.target;
+    if (input.targetTenantIds !== undefined) data.targetTenantIds = input.targetTenantIds;
+    if (input.startsAt !== undefined) data.startsAt = new Date(input.startsAt);
+    if (input.endsAt !== undefined) data.endsAt = new Date(input.endsAt);
 
-    announcements.set(id, updated);
+    const row = await this.prisma.globalAnnouncement.update({
+      where: { id },
+      data,
+    });
+
+    const announcement = toAnnouncement(row as unknown as AnnouncementRow);
 
     await logAdminAction({
       adminUserId,
@@ -243,12 +225,12 @@ export class AnnouncementService {
       action: 'announcement.update',
       resourceType: 'ANNOUNCEMENT',
       resourceId: id,
-      description: `Updated announcement: "${updated.title}"`,
+      description: `Updated announcement: "${announcement.title}"`,
       beforeState: { title: existing.title, severity: existing.severity },
-      afterState: { title: updated.title, severity: updated.severity },
+      afterState: { title: announcement.title, severity: announcement.severity },
     });
 
-    return updated;
+    return announcement;
   }
 
   /**
@@ -259,10 +241,10 @@ export class AnnouncementService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    const existing = announcements.get(id);
+    const existing = await this.prisma.globalAnnouncement.findUnique({ where: { id } });
     if (!existing) throw new AnnouncementNotFoundError(id);
 
-    announcements.delete(id);
+    await this.prisma.globalAnnouncement.delete({ where: { id } });
 
     await logAdminAction({
       adminUserId,
@@ -283,12 +265,13 @@ export class AnnouncementService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<Announcement> {
-    const existing = announcements.get(id);
+    const existing = await this.prisma.globalAnnouncement.findUnique({ where: { id } });
     if (!existing) throw new AnnouncementNotFoundError(id);
 
-    existing.isActive = true;
-    existing.updatedAt = new Date();
-    announcements.set(id, existing);
+    const row = await this.prisma.globalAnnouncement.update({
+      where: { id },
+      data: { isActive: true },
+    });
 
     await logAdminAction({
       adminUserId,
@@ -300,7 +283,7 @@ export class AnnouncementService {
       afterState: { isActive: true },
     });
 
-    return existing;
+    return toAnnouncement(row as unknown as AnnouncementRow);
   }
 
   /**
@@ -311,12 +294,13 @@ export class AnnouncementService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<Announcement> {
-    const existing = announcements.get(id);
+    const existing = await this.prisma.globalAnnouncement.findUnique({ where: { id } });
     if (!existing) throw new AnnouncementNotFoundError(id);
 
-    existing.isActive = false;
-    existing.updatedAt = new Date();
-    announcements.set(id, existing);
+    const row = await this.prisma.globalAnnouncement.update({
+      where: { id },
+      data: { isActive: false },
+    });
 
     await logAdminAction({
       adminUserId,
@@ -328,7 +312,7 @@ export class AnnouncementService {
       afterState: { isActive: false },
     });
 
-    return existing;
+    return toAnnouncement(row as unknown as AnnouncementRow);
   }
 
   /**
@@ -337,11 +321,19 @@ export class AnnouncementService {
    */
   async getActiveAnnouncements(): Promise<Announcement[]> {
     const now = new Date();
-    return Array.from(announcements.values()).filter((ann) => {
-      if (!ann.isActive) return false;
-      if (ann.startsAt > now) return false;
-      if (ann.endsAt && ann.endsAt < now) return false;
-      return true;
+
+    const rows = await this.prisma.globalAnnouncement.findMany({
+      where: {
+        isActive: true,
+        startsAt: { lte: now },
+        OR: [
+          { endsAt: null },
+          { endsAt: { gt: now } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
     });
+
+    return rows.map((r) => toAnnouncement(r as unknown as AnnouncementRow));
   }
 }
