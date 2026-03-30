@@ -300,11 +300,11 @@ This plan covers the user search, user detail, and user merge pages for the admi
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AU-001 | 1 | Build UserSearchBar with debounced cross-tenant search and URL param sync | Not Started | |
-| AU-002 | 1 | Build UserResultsTable with UserRow, status badges, tenant links, and pagination | Not Started | |
-| AU-003 | 2 | Build UserHeader and UserTabs shell with URL hash routing for tab state | Not Started | |
-| AU-004 | 2 | Build Overview tab (ProfileCard) and Tenants & Leagues tab (TenantMembershipTable with expandable rows) | Not Started | |
-| AU-005 | 2 | Build Contests tab (active + completed sections), Devices tab (DeviceTable) | Not Started | |
-| AU-006 | 2 | Build Auth Events tab (AuthEventLog) and Notifications tab (NotificationDeliveryLog with expandable rows) | Not Started | |
-| AU-007 | 3 | Build user action modals: ResetPassword, ForceLogout, DisableAccount, EnableAccount, SendAdminEmail | Not Started | |
-| AU-008 | 3 | Build MergeLayout with AccountPicker, MergePreview, ConflictWarning, and MergeResult components | Not Started | |
+| AU-001 | 1 | Build UserSearchBar with debounced cross-tenant search and URL param sync | Done | |
+| AU-002 | 1 | Build UserResultsTable with UserRow, status badges, tenant links, and pagination | Done | |
+| AU-003 | 2 | Build UserHeader and UserTabs shell with URL hash routing for tab state | Done | |
+| AU-004 | 2 | Build Overview tab (ProfileCard) and Tenants & Leagues tab (TenantMembershipTable with expandable rows) | Done | |
+| AU-005 | 2 | Build Contests tab (active + completed sections), Devices tab (DeviceTable) | Done | |
+| AU-006 | 2 | Build Auth Events tab (AuthEventLog) and Notifications tab (NotificationDeliveryLog with expandable rows) | Done | |
+| AU-007 | 3 | Build user action modals: ResetPassword, ForceLogout, DisableAccount, EnableAccount, SendAdminEmail | Partial | Actions use ConfirmDialog; full modal forms deferred |
+| AU-008 | 3 | Build MergeLayout with AccountPicker, MergePreview, ConflictWarning, and MergeResult components | Done | |

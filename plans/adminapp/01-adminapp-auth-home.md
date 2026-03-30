@@ -214,8 +214,8 @@ This plan covers the admin login flow (SSO + MFA) and the home dashboard page th
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AA-001 | 1 | Build AdminLoginForm with SSO provider buttons and OAuth redirect flow | Not Started | |
-| AA-002 | 1 | Build MFAChallenge component with 6-digit input, resend logic, attempt tracking, and error states | Not Started | |
-| AA-003 | 2 | Build Admin Home Dashboard layout with MetricCard row and ServiceHealthRow | Not Started | |
-| AA-004 | 2 | Build MetricCard component with value, trend indicator, sparkline, and click-through navigation | Not Started | |
-| AA-005 | 2 | Build AlertItem list, AuditPreview list, and QuickActionBar with polling integration | Not Started | |
+| AA-001 | 1 | Build AdminLoginForm with SSO provider buttons and OAuth redirect flow | Partial | Login form exists with mock SSO; real SSO/MFA not integrated |
+| AA-002 | 1 | Build MFAChallenge component with 6-digit input, resend logic, attempt tracking, and error states | Not Started | MFA challenge component not built |
+| AA-003 | 2 | Build Admin Home Dashboard layout with MetricCard row and ServiceHealthRow | Done | |
+| AA-004 | 2 | Build MetricCard component with value, trend indicator, sparkline, and click-through navigation | Done | |
+| AA-005 | 2 | Build AlertItem list, AuditPreview list, and QuickActionBar with polling integration | Done | |

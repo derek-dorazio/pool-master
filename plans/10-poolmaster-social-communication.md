@@ -794,7 +794,7 @@ CREATE INDEX idx_share_cards_slug ON share_cards(share_id);
 | 10-009 | 2 | Activity event generation from draft events | Not Started | |
 | 10-010 | 2 | Activity event generation from contest lifecycle events | Not Started | |
 | 10-011 | 2 | Event throttling (max lead changes/hour, batch draft picks) | Not Started | |
-| 10-012 | 2 | System post rendering in feed | Not Started | |
+| 10-012 | 2 | System post rendering in feed | Partial | automated-event-card.tsx display component exists, no generation logic |
 | 10-013 | 2 | Commissioner event type toggles (per league) | Not Started | |
 | 10-014 | 3 | WebSocket infrastructure for feed (shared with draft room) | Not Started | |
 | 10-015 | 3 | Real-time feed updates (new post, reaction) via WebSocket | Not Started | |

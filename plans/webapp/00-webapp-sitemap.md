@@ -307,15 +307,15 @@ This document defines the complete sitemap for the PoolMaster React web applicat
 | W-020 | 3 | Implement dashboard page | Done | 7 widgets with mock data, 10s/30s polling, responsive grid layout |
 | W-021 | 3 | Implement leagues list + creation wizard | Done | 8 league pages: list, 4-step wizard, detail with tabs, settings, members, feed, records, history |
 | W-022 | 3 | Implement contest detail + standings pages | Done | 6 contest pages: 7-step wizard, detail, standings, scoring, results, head-to-head |
-| W-023 | 3 | Implement draft room | Not Started | Most complex page |
-| W-024 | 4 | Implement league feed + social features | Not Started | |
-| W-025 | 4 | Implement notification centre + preferences | Not Started | |
-| W-026 | 4 | Implement settings pages | Not Started | |
-| W-027 | 4 | Implement billing pages | Not Started | |
-| W-028 | 4 | Implement discovery pages | Not Started | |
-| W-029 | 4 | Implement legal/compliance pages | Not Started | |
-| W-030 | 5 | Implement history & analytics pages | Not Started | |
-| W-031 | 5 | Implement share card public view | Not Started | |
+| W-023 | 3 | Implement draft room | Done | drafts/room.tsx implemented |
+| W-024 | 4 | Implement league feed + social features | Done | leagues/feed.tsx + social components |
+| W-025 | 4 | Implement notification centre + preferences | Done | notifications + preferences pages |
+| W-026 | 4 | Implement settings pages | Done | all settings pages |
+| W-027 | 4 | Implement billing pages | Done | billing pages |
+| W-028 | 4 | Implement discovery pages | Done | discovery pages |
+| W-029 | 4 | Implement legal/compliance pages | Done | legal/compliance pages |
+| W-030 | 5 | Implement history & analytics pages | Done | history + records pages |
+| W-031 | 5 | Implement share card public view | Done | share.tsx implemented |
 | W-032 | 5 | Cross-browser testing and accessibility audit | Not Started | |
 
 ---

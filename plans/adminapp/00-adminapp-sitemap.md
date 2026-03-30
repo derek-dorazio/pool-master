@@ -216,15 +216,15 @@ The admin dashboard is a **separate SPA** from the public webapp, accessible onl
 | A-009 | 1 | Create page plan: Announcements & Migrations | Done | [09-adminapp-announcements-migrations.md](09-adminapp-announcements-migrations.md) |
 | A-010 | 2 | Scaffold admin SPA with Vite + React Router | Done | Created clients/admin with Vite, React Router (basename=/admin), TanStack Query, Tailwind, 22 lazy-loaded route placeholders, all config files |
 | A-011 | 2 | Implement admin layout + sidebar + auth | Done | AdminLayout with 240px fixed sidebar (10 nav items with lucide icons, NavLink active state), top bar with health dot + user dropdown, auth guard redirect, impersonation banner placeholder; AdminLoginLayout for login page; AdminAuthStore with zustand |
-| A-012 | 3 | Implement tenant list + detail pages | Not Started | |
-| A-013 | 3 | Implement user search + detail pages | Not Started | |
-| A-014 | 3 | Implement contest browser + detail pages | Not Started | |
-| A-015 | 4 | Implement provider dashboard pages | Not Started | |
-| A-016 | 4 | Implement feature flag pages | Not Started | |
-| A-017 | 4 | Implement health dashboard pages | Not Started | |
-| A-018 | 4 | Implement audit log viewer | Not Started | |
-| A-019 | 5 | Implement announcements pages | Not Started | |
-| A-020 | 5 | Implement migration runner pages | Not Started | |
+| A-012 | 3 | Implement tenant list + detail pages | Done | All pages implemented with mock data hooks wired to real APIs |
+| A-013 | 3 | Implement user search + detail pages | Done | All pages implemented with mock data hooks wired to real APIs |
+| A-014 | 3 | Implement contest browser + detail pages | Done | All pages implemented with mock data hooks wired to real APIs |
+| A-015 | 4 | Implement provider dashboard pages | Done | All pages implemented with mock data hooks wired to real APIs |
+| A-016 | 4 | Implement feature flag pages | Done | All pages implemented with mock data hooks wired to real APIs |
+| A-017 | 4 | Implement health dashboard pages | Done | All pages implemented with mock data hooks wired to real APIs |
+| A-018 | 4 | Implement audit log viewer | Done | All pages implemented with mock data hooks wired to real APIs |
+| A-019 | 5 | Implement announcements pages | Done | All pages implemented with mock data hooks wired to real APIs |
+| A-020 | 5 | Implement migration runner pages | Done | All pages implemented with mock data hooks wired to real APIs |
 | A-021 | 5 | Implement configuration management pages | Done | Config hub, template management, notification config, platform config pages; use-config-api hooks with mock data; 4 new routes + sidebar nav item |
 
 ---

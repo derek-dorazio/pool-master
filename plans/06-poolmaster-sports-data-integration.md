@@ -746,8 +746,8 @@ CREATE INDEX idx_provider_health_log_time ON provider_health_log(provider_id, re
 | 06-008 | 1 | `ingestion_jobs` tracking table | Done | IngestionJob + ProviderHealthLog Prisma models |
 | 06-009 | 1 | Redis caching layer (scores, schedules, profiles) | Not Started | Deferred — ioredis scaffolded, cache layer needs implementation |
 | 06-010 | 2 | Live scoring ingestion worker with adaptive polling | Done | pollLiveScores + fetchEventResults on scheduler |
-| 06-011 | 2 | StatEvent normalisation and message bus publishing (Redis Streams) | Not Started | Deferred |
-| 06-012 | 2 | Scoring engine subscription to stat event stream | Not Started | Deferred |
+| 06-011 | 2 | StatEvent normalisation and message bus publishing (Redis Streams) | Done | score-publisher.ts transforms ProviderStatEvent → StatEvent |
+| 06-012 | 2 | Scoring engine subscription to stat event stream | Done | stat-event-consumer.ts subscribes and processes |
 | 06-013 | 2 | Stale score detection and UI staleness indicator | Not Started | Deferred |
 | 06-014 | 2 | Provider health monitoring (HEALTHY/DEGRADED/DOWN) | Done | Health checks every 5min, registry auto-failover |
 | 06-015 | 2 | `provider_health_log` table | Done | ProviderHealthLog Prisma model |

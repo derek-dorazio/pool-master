@@ -554,7 +554,7 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-009 | 1 | Prisma adapter for LeagueMembershipRepository | Done | `prisma-league-membership-repository.ts` in adapters |
 | 01-010 | 1 | DB migrations — run `prisma migrate dev` to generate initial migration | Done | CI pipeline runs `prisma migrate deploy` against test DB |
 | 01-011 | 1 | TenantContext Fastify hook (extract tenant from JWT/subdomain) | Done | Resolves tenant from JWT claim first, falls back to `x-tenant-id` header, returns 401 if missing. `tenant-context.ts` + `auth-guard.ts` plugin |
-| 01-012 | 1 | Core API — `POST /leagues` and `GET /leagues` end-to-end | In Progress | Route + handler stubs exist, needs Prisma wiring |
+| 01-012 | 1 | Core API — `POST /leagues` and `GET /leagues` end-to-end | Done | Leagues module fully implemented with routes, handlers, services, Prisma adapters |
 | 01-013 | 1 | CI/CD pipeline (GitHub Actions: lint, type check, test, build) | Done | `.github/workflows/ci.yml` — lint+typecheck, test (Postgres+Redis services), build |
 | 01-014 | 1 | Docker images for each service | Done | 7 Dockerfiles (5 services + web + admin), nginx.conf, docker-compose.yml |
 | 01-015 | 1 | ECS/EKS scaffolding (Terraform) | Done | `main.tf` (VPC, ECS Fargate, RDS, ElastiCache, ALB, ECR, CloudWatch), `variables.tf`, `outputs.tf` |

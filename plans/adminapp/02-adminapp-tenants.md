@@ -239,13 +239,13 @@ This plan covers the tenant list, tenant detail, and tenant action flows for the
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AT-001 | 1 | Build TenantTable with TenantRow, StatusBadge, PlanBadge, sortable columns, and pagination | Not Started | |
-| AT-002 | 1 | Build TenantFilters with plan tier, status, and date range dropdowns; URL param sync | Not Started | |
-| AT-003 | 2 | Build TenantHeader and TenantTabs shell with URL hash routing for tab state | Not Started | |
-| AT-004 | 2 | Build Overview tab: InfoCard, UsageCard with progress bars, RecentSignups mini-table | Not Started | |
-| AT-005 | 2 | Build Members tab: MemberTable with pagination and click-through to user detail | Not Started | |
-| AT-006 | 2 | Build Leagues and Contests tabs: LeagueTable, ContestTable with click-through navigation | Not Started | |
-| AT-007 | 3 | Build Billing tab: BillingCard, InvoiceTable (with Stripe placeholder) | Not Started | |
-| AT-008 | 3 | Build Activity tab (ActivityLog) and Health tab (HealthCard with sparklines) | Not Started | |
-| AT-009 | 3 | Build action modals: PlanChangeDialog, SuspendDialog, CreditDialog, ExtendTrialDialog, DeleteConfirmDialog | Not Started | |
-| AT-010 | 3 | Build ImpersonationLauncher with confirmation modal, token handling, and impersonation banner | Not Started | |
+| AT-001 | 1 | Build TenantTable with TenantRow, StatusBadge, PlanBadge, sortable columns, and pagination | Done | |
+| AT-002 | 1 | Build TenantFilters with plan tier, status, and date range dropdowns; URL param sync | Done | |
+| AT-003 | 2 | Build TenantHeader and TenantTabs shell with URL hash routing for tab state | Done | |
+| AT-004 | 2 | Build Overview tab: InfoCard, UsageCard with progress bars, RecentSignups mini-table | Done | |
+| AT-005 | 2 | Build Members tab: MemberTable with pagination and click-through to user detail | Done | |
+| AT-006 | 2 | Build Leagues and Contests tabs: LeagueTable, ContestTable with click-through navigation | Done | |
+| AT-007 | 3 | Build Billing tab: BillingCard, InvoiceTable (with Stripe placeholder) | Done | |
+| AT-008 | 3 | Build Activity tab (ActivityLog) and Health tab (HealthCard with sparklines) | Done | |
+| AT-009 | 3 | Build action modals: PlanChangeDialog, SuspendDialog, CreditDialog, ExtendTrialDialog, DeleteConfirmDialog | Partial | Action confirmations use ConfirmDialog; full modal forms deferred |
+| AT-010 | 3 | Build ImpersonationLauncher with confirmation modal, token handling, and impersonation banner | Not Started | Impersonation UI not implemented |

@@ -220,10 +220,10 @@ Provide admin staff with full visibility into any contest across all tenants. Ad
 | AC-006 | 3 | Build Scoring Data tab with `ScoringDataPanel` and `FreshnessIndicator` | Done | Freshness indicator (green/red), stat event count, re-ingest button |
 | AC-007 | 3 | Build Draft tab with `DraftLogTable` (pick log, auto-pick flag) | Done | Draft status card + 8 mock picks with auto-pick badge |
 | AC-008 | 3 | Build Overrides tab with `OverrideHistoryTable` | Done | 2 mock overrides with Override Score button |
-| AC-009 | 4 | Build `ScoreOverrideDialog` modal (entry selector, new score, reason) | Done | Simplified as window.confirm in Overrides tab — full modal deferred |
-| AC-010 | 4 | Build `RecalculateDialog` with standings diff preview | Done | Simplified with window.confirm, shows "3 rank changes" result |
-| AC-011 | 4 | Build `ForceCloseDialog` with irreversible warning | Done | Simplified as window.confirm in Admin Actions tab |
-| AC-012 | 4 | Build `ReopenContestDialog` | Done | Simplified as window.confirm in Admin Actions tab |
+| AC-009 | 4 | Build `ScoreOverrideDialog` modal (entry selector, new score, reason) | Partial | Simplified to ConfirmDialog |
+| AC-010 | 4 | Build `RecalculateDialog` with standings diff preview | Partial | Simplified to ConfirmDialog |
+| AC-011 | 4 | Build `ForceCloseDialog` with irreversible warning | Partial | Simplified to ConfirmDialog |
+| AC-012 | 4 | Build `ReopenContestDialog` | Partial | Simplified to ConfirmDialog |
 | AC-013 | 4 | Build Re-ingest Event Data action with confirmation and progress indicator | Done | window.confirm action card in Admin Actions tab |
 | AC-014 | 4 | Build Recalculate Payouts action with confirmation dialog | Done | window.confirm action card in Admin Actions tab |
 | AC-015 | 5 | Build History tab with contest-filtered audit log | Not Started | |

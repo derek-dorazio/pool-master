@@ -936,7 +936,7 @@ CREATE INDEX idx_delivery_user ON notification_delivery_log(user_id, created_at)
 | 09-023 | 5 | Weekly digest generation and email delivery | Done | WeeklyDigestService — standings, highlights, upcoming. POST /api/v1/notifications/digest/:leagueId |
 | 09-024 | 5 | `notification_delivery_log` table + analytics | Done | NotificationDeliveryLog Prisma model + GET /api/v1/notifications/analytics |
 | 09-025 | 5 | Delivery analytics dashboard (rates, suppression, engagement) | Done | Analytics endpoint: delivery rate, by-channel breakdown, suppression reasons |
-| 09-026 | 5 | Notification preference UI (granular per-category per-channel) | Not Started | Deferred — client UI work |
+| 09-026 | 5 | Notification preference UI (granular per-category per-channel) | Partial | UI components exist (preferences-matrix, channel-toggle) but not fully integrated |
 | 09-027 | 5 | Commissioner announcement bypass | Done | POST /api/v1/notifications/announce — bypasses preferences, sends to all league members |
 | 09-028 | 5 | SMS channel via Twilio (optional) | Not Started | Deferred — returns SUPPRESSED with CHANNEL_NOT_IMPLEMENTED |
 
