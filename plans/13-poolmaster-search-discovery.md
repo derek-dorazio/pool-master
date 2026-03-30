@@ -517,11 +517,7 @@ CREATE INDEX idx_discoverable_contests_draft ON discoverable_contests(draft_star
 | 13-012 | 3 | Quality controls (minimum members, activity, spam prevention) | Done | Auto-hide after 3 reports |
 | 13-013 | 3 | `discovery_reports` table + report mechanism | Done | DiscoveryReport model + POST /search/discover/report |
 | 13-014 | 3 | Discovery UI (browse, sort, join) | Not Started | Webapp UI — tracked in plans/webapp/ |
-| 13-015 | 4 | Elasticsearch cluster setup | Not Started | Deferred — PostgreSQL sufficient for launch |
-| 13-016 | 4 | Index mappings with analysers (name, phonetic, edge ngram) | Not Started | Deferred |
-| 13-017 | 4 | Real-time event-driven index sync | Not Started | Deferred |
-| 13-018 | 4 | Typo tolerance and phonetic matching | Not Started | Deferred |
-| 13-019 | 4 | Batch reindex tooling + admin reindex controls | Not Started | Deferred |
+| — | — | Deferred tasks moved to [plans/deferred/13-search-deferred.md](deferred/13-search-deferred.md) | — | See deferred file for details |
 
 ---
 

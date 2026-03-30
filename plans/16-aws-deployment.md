@@ -26,18 +26,7 @@ Deploy PoolMaster to AWS using ECS Fargate, RDS PostgreSQL, ElastiCache Redis, a
 | 16-014 | 2 | Add Route 53 A record alias pointing domain to ALB | Agent | Done | Conditional: created only when domain_name + route53_zone_id provided |
 | 16-015 | 2 | Add CloudWatch alarms (CPU, memory, 5xx rate) | Agent | Done | 7 alarms: ALB 5xx + latency, ECS CPU + memory, RDS CPU + storage + connections |
 | 16-016 | 2 | Update GitHub Actions to push to ECR instead of GHCR | Agent | Done | Uses aws-actions/configure-aws-credentials + amazon-ecr-login. Region: us-east-2 |
-| 16-017 | 3 | Run `terraform init` and `terraform plan` for staging | Derek | Not Started | Review plan output before applying |
-| 16-018 | 3 | Run `terraform apply` for staging environment | Derek | Not Started | Creates all AWS resources |
-| 16-019 | 3 | Run Prisma migrations against RDS endpoint | Agent | Not Started | One-time: `DATABASE_URL=<rds-endpoint> npx prisma migrate deploy` |
-| 16-020 | 3 | Run seed script against RDS | Derek | Not Started | `DATABASE_URL=<rds-endpoint> npx tsx prisma/seed.ts` |
-| 16-021 | 3 | Push first Docker images to ECR | Agent | Not Started | Can be manual push or triggered by GitHub Actions |
-| 16-022 | 3 | Verify all services healthy via ALB health checks | Derek | Not Started | Check ECS console — all tasks should be RUNNING |
-| 16-023 | 3 | Verify webapp loads at domain | Derek | Not Started | Open https://your-domain.com in browser |
-| 16-024 | 3 | Verify API endpoints via domain | Derek | Not Started | `curl https://your-domain.com/api/v1/health` |
-| 16-025 | 4 | Run `terraform apply` for production environment | Derek | Not Started | After staging is validated |
-| 16-026 | 4 | Configure production domain DNS | Derek | Not Started | Point production domain to production ALB |
-| 16-027 | 4 | Enable RDS multi-AZ for production | Agent | Not Started | Set `multi_az = true` in Terraform variables |
-| 16-028 | 4 | Enable RDS automated backups and point-in-time recovery | Agent | Not Started | Retention: 7 days |
+| — | — | Remaining 12 deployment tasks deferred to [plans/deferred/16-aws-deployment-deferred.md](deferred/16-aws-deployment-deferred.md) | — | Phases 3-4 waiting for application stability; see deferred file for details |
 
 ---
 

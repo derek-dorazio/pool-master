@@ -524,11 +524,7 @@ CREATE TABLE user_locale_preferences (
 | 14-013 | 3 | Integrate i18next in React Native app | Done | Repurposed: created server-side i18next setup in packages/shared/i18n/index.ts with initI18n(), t() helper, and i18next re-export. Preloads notifications, emails, activity namespaces. |
 | 14-014 | 3 | Server-side i18next for emails and notifications | Done | Added i18next dep to @poolmaster/shared package.json. Created locale files: en/notifications.json (draft, scoring, contest, league, social, account), en/emails.json (subjects, greeting, closing, CTAs), en/activity.json (feed strings). Updated tsconfig to include i18n dir. |
 | 14-015 | 3 | Pluralisation rules | Done | Added 4 new web locale namespaces: dashboard.json, leagues.json, contests.json, settings.json with _plural suffix keys for counts. Updated i18n.ts to register all 6 namespaces with compatibilityJSON v3 for plural support. |
-| 14-016 | 4 | Professional translation of string files (Spanish, French first) | Not Started | When needed |
-| 14-017 | 4 | Language picker in user settings | Not Started | |
-| 14-018 | 4 | RTL layout support (if Arabic/Hebrew added) | Not Started | |
-| 14-019 | 4 | Locale-specific email templates | Not Started | |
-| 14-020 | 4 | App Store / Play Store localised listings | Not Started | |
+| — | — | Deferred tasks moved to [plans/deferred/14-localisation-deferred.md](deferred/14-localisation-deferred.md) | — | See deferred file for details |
 
 ---
 

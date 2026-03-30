@@ -776,7 +776,6 @@ POST   /api/v1/admin/participants/import       # Bulk import
 | 05-001 | 1 | `participants` table + migrations (core schema) | Done | Prisma schema enriched with full profile fields, indexes |
 | 05-002 | 1 | `participant_season_records` table + migrations | Done | Prisma model + adapter + season record API endpoints |
 | 05-003 | 1 | Participant CRUD service + API endpoints | Done | Service, handler, routes at /api/v1/participants |
-| 05-004 | 1 | Ingestion integration (consume from sports data layer) | Not Started | Depends on 06-004 |
 | 05-005 | 1 | PostgreSQL full-text search on participants (`tsvector`) | Done | Case-insensitive search on name, firstName, lastName, shortName, teamAffiliation |
 | 05-006 | 1 | Provider ID mapping table and resolution | Done | ParticipantProviderMapping model + adapter + findByProvider |
 | 05-007 | 2 | `contest_participant_pools` table + migrations | Done | ContestPool Prisma model + adapter for pool config |
@@ -790,16 +789,13 @@ POST   /api/v1/admin/participants/import       # Bulk import
 | 05-015 | 3 | Commissioner price overrides | Done | PUT /pool/pricing/override/:participantId |
 | 05-016 | 3 | Tier auto-assignment (AUTO_RANKING, AUTO_PRICE) | Done | TierAssignmentEngine + POST /pool/tiers/assign |
 | 05-017 | 3 | Commissioner tier review and manual adjustments | Done | PUT /pool/tiers/:tierId/participants/:participantId |
-| 05-018 | 4 | Photo ingestion pipeline (download, resize, WebP, S3, CDN) | Not Started | Deferred — needs S3/CDN infrastructure |
 | 05-019 | 4 | Fallback image system per sport/position | Done | fallback-photos.ts with per-sport, per-position silhouette map |
-| 05-020 | 4 | Enhanced search — Elasticsearch migration (if needed) | Not Started | Deferred — PostgreSQL search sufficient for launch |
 | 05-021 | 4 | Faceted filtering (nationality, position, team, ranking) | Done | DraftSearchService returns facet counts |
 | 05-022 | 4 | Draft room search optimisation (< 100ms) | Done | GET /pool/search — in-memory filtering over pool participants |
 | 05-023 | 5 | Cross-provider participant matching (fuzzy name + sport) | Done | Levenshtein-based fuzzy matching with name normalisation (diacritics, Last/First) |
-| 05-024 | 5 | Manual resolution queue in admin dashboard | Not Started | Deferred — admin UI |
 | 05-025 | 5 | Participant merge tooling | Done | ParticipantMergeService — transfers mappings, external IDs, season records |
 | 05-026 | 5 | Form rating calculation engine | Done | Recency-weighted percentile-based form rating (0-100) with trend detection |
-| 05-027 | 5 | Season stat aggregation pipeline | Not Started | Deferred — needs sports data provider integration |
+| — | — | Deferred tasks moved to [plans/deferred/05-participant-data-deferred.md](deferred/05-participant-data-deferred.md) | — | See deferred file for details |
 
 ---
 

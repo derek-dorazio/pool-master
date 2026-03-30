@@ -938,7 +938,7 @@ CREATE INDEX idx_delivery_user ON notification_delivery_log(user_id, created_at)
 | 09-025 | 5 | Delivery analytics dashboard (rates, suppression, engagement) | Done | Analytics endpoint: delivery rate, by-channel breakdown, suppression reasons |
 | 09-026 | 5 | Notification preference UI (granular per-category per-channel) | Partial | UI components exist (preferences-matrix, channel-toggle) but not fully integrated |
 | 09-027 | 5 | Commissioner announcement bypass | Done | POST /api/v1/notifications/announce — bypasses preferences, sends to all league members |
-| 09-028 | 5 | SMS channel via Twilio (optional) | Not Started | Deferred — returns SUPPRESSED with CHANNEL_NOT_IMPLEMENTED |
+| — | — | Deferred tasks moved to [plans/deferred/09-notifications-deferred.md](deferred/09-notifications-deferred.md) | — | See deferred file for details |
 
 ---
 

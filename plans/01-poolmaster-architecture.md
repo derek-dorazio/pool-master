@@ -30,7 +30,7 @@
 | Subfolder | Scope |
 |---|---|
 | [webapp/](webapp/) | React web app — 14 plan files (auth, dashboard, leagues, contests, draft room, etc.) |
-| [ios-app/](ios-app/) | Native iOS (Swift/SwiftUI) — 9 plan files, 51 tasks (auth, navigation, draft room, push, social) |
+| [deferred/ios-app/](deferred/ios-app/) | Native iOS (Swift/SwiftUI) — 9 plan files, 51 tasks (DEFERRED — mobile after web platform complete) |
 
 ### Testing Plans
 
@@ -573,17 +573,12 @@ When opening this project in Claude Code, a productive first sprint is:
 | 01-028 | 4 | Polling endpoints with ETag/304 support (standings, draft, contest status) | Done | `etag-support.ts` plugin — MD5 hash ETag on GET responses, If-None-Match check returns 304, Cache-Control: no-cache. Registered globally in `index.ts`. Standings handlers set explicit poll headers. |
 | 01-029 | 4 | Configurable poll interval per surface (leaderboard, draft, notifications) | Done | `poll-config.ts` plugin — pattern-matched X-Poll-Interval/X-Poll-Interval-Unit headers on GET responses. `config/routes.ts` exposes `GET /api/v1/config/poll-intervals` for client startup. Standings: 10s, contest: 30s, notifications: 30s. |
 | 01-030 | 4 | Push notification service (APNs + FCM) | Done | Enhanced `push-channel.ts` with batch send, subtitle, category, priority, channelId, and invalid-token cleanup. Added `sendBatch` to both `ApnsPushProvider` and `FcmPushProvider`. Created `triggers/push-triggers.ts` with 15 event-to-push mappings (draft, scoring, contest, league) wired to EventBus. Added `GET /api/v1/devices` list route and `POST /api/v1/devices/register` alias. Registered triggers in `index.ts` onReady hook. |
-| 01-031 | — | ~~WebSocket/SSE for live draft room and leaderboards~~ | Deferred | Build when live synchronous drafts needed |
 | 01-032 | 5 | Budget pick selection + cost validation | Done | `budget-pick-engine.ts` — see 02-011 |
 | 01-033 | 5 | Tiered pick selection + tier enforcement | Done | `tiered-pick-engine.ts` — see 02-008 |
 | 01-034 | 5 | Survivor / pick'em pick submission flow | Done | `survivor-engine.ts`, `pickem-engine.ts` — see 02-014, 02-018 |
 | 01-035 | 6 | Bracket contest type (NCAA March Madness model) | Done | `bracket-engine.ts` — see 02-020 |
 | 01-036 | 6 | Knockout scoring logic | Done | Survivor engine handles elimination — see 02-014 to 02-017 |
-| 01-037 | 6 | Bracket visualisation API | Not Started | |
-| 01-038 | 7 | MySQL adapter + MongoDB adapter | Not Started | |
-| 01-039 | 7 | Tenant onboarding flow + Stripe billing hooks | Not Started | |
-| 01-040 | 7 | Commissioner dashboard | Not Started | |
-| 01-041 | 7 | Load testing and performance tuning | Not Started | |
+| — | — | Deferred tasks moved to [plans/deferred/01-architecture-deferred.md](deferred/01-architecture-deferred.md) | — | See deferred file for details |
 
 ---
 

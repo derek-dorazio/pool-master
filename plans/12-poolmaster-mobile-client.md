@@ -756,36 +756,7 @@ Key review guideline areas:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 12-001 | 1 | Expo project setup in `clients/mobile/` | Deferred | Deferred — mobile after web platform complete |
-| 12-002 | 1 | Shared API client package (`clients/shared/api-client/`) | Deferred | Deferred — mobile after web platform complete |
-| 12-003 | 1 | Authentication flow (login, register, token management) | Deferred | Deferred — mobile after web platform complete |
-| 12-004 | 1 | Secure token storage (Keychain iOS, EncryptedSharedPreferences Android) | Deferred | Deferred — mobile after web platform complete |
-| 12-005 | 1 | Navigation architecture (React Navigation: tabs, stacks) | Deferred | Deferred — mobile after web platform complete |
-| 12-006 | 1 | Home screen (league list, active contests) | Deferred | Deferred — mobile after web platform complete |
-| 12-007 | 1 | API version checking and minimum version enforcement | Deferred | Deferred — mobile after web platform complete |
-| 12-008 | 2 | League detail screen (members, settings) | Deferred | Deferred — mobile after web platform complete |
-| 12-009 | 2 | Contest list and detail screens | Deferred | Deferred — mobile after web platform complete |
-| 12-010 | 2 | Standings/leaderboard view | Deferred | Deferred — mobile after web platform complete |
-| 12-011 | 2 | Participant profile view | Deferred | Deferred — mobile after web platform complete |
-| 12-012 | 2 | Offline caching with SQLite (standings, rosters) | Deferred | Deferred — mobile after web platform complete |
-| 12-013 | 2 | Pull-to-refresh pattern | Deferred | Deferred — mobile after web platform complete |
-| 12-014 | 3 | Push notification registration (APNs + FCM via Expo) | Deferred | Deferred — mobile after web platform complete |
-| 12-015 | 3 | Notification handling (foreground toast, background, tap) | Deferred | Deferred — mobile after web platform complete |
-| 12-016 | 3 | In-app notification centre screen | Deferred | Deferred — mobile after web platform complete |
-| 12-017 | 3 | Deep linking setup (universal links, custom scheme) | Deferred | Deferred — mobile after web platform complete |
-| 12-018 | 3 | Notification → screen navigation mapping | Deferred | Deferred — mobile after web platform complete |
-| 12-019 | 4 | WebSocket connection management (connect, heartbeat, reconnect) | Deferred | Deferred — mobile after web platform complete |
-| 12-020 | 4 | Draft room UI (available list, queue, board, teams tabs) | Deferred | Deferred — mobile after web platform complete |
-| 12-021 | 4 | Pick submission flow with confirmation dialog | Deferred | Deferred — mobile after web platform complete |
-| 12-022 | 4 | Timer with haptic feedback and audio alerts | Deferred | Deferred — mobile after web platform complete |
-| 12-023 | 4 | Reconnection handling and full state recovery | Deferred | Deferred — mobile after web platform complete |
-| 12-024 | 4 | Landscape draft board view | Deferred | Deferred — mobile after web platform complete |
-| 12-025 | 5 | League activity feed (posts, replies, reactions) | Deferred | Deferred — mobile after web platform complete |
-| 12-026 | 5 | Contest chat | Deferred | Deferred — mobile after web platform complete |
-| 12-027 | 5 | Direct messaging | Deferred | Deferred — mobile after web platform complete |
-| 12-028 | 5 | Share card viewing and sharing | Deferred | Deferred — mobile after web platform complete |
-| 12-029 | 5 | Biometric authentication (Face ID, fingerprint) | Deferred | Deferred — mobile after web platform complete |
-| 12-030 | 5 | App Store submission preparation (Apple + Google) | Deferred | Deferred — mobile after web platform complete |
+| — | — | All 30 mobile client tasks deferred to [plans/deferred/12-mobile-client-deferred.md](deferred/12-mobile-client-deferred.md) | — | Mobile after web platform complete; see deferred file for details |
 
 ---
 
