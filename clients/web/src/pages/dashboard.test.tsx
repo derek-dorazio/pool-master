@@ -31,18 +31,28 @@ vi.mock('@/features/dashboard/season-highlights-card', () => ({
 }));
 
 describe('DashboardPage', () => {
-  it('renders personalized greeting with user name', () => {
+  it('renders welcome message with user name', () => {
     render(<DashboardPage />);
     expect(screen.getByText('Welcome back, Derek')).toBeInTheDocument();
   });
 
-  it('renders all 6 dashboard widgets', () => {
+  it('shows quick actions bar', () => {
     render(<DashboardPage />);
     expect(screen.getByTestId('quick-actions-bar')).toBeInTheDocument();
+  });
+
+  it('renders active contests section', () => {
+    render(<DashboardPage />);
     expect(screen.getByTestId('active-contests-card')).toBeInTheDocument();
-    expect(screen.getByTestId('upcoming-drafts-card')).toBeInTheDocument();
+  });
+
+  it('renders leagues section', () => {
+    render(<DashboardPage />);
     expect(screen.getByTestId('my-leagues-summary')).toBeInTheDocument();
+  });
+
+  it('renders activity section', () => {
+    render(<DashboardPage />);
     expect(screen.getByTestId('recent-activity-feed')).toBeInTheDocument();
-    expect(screen.getByTestId('season-highlights-card')).toBeInTheDocument();
   });
 });

@@ -75,4 +75,13 @@ describe('LoginPage', () => {
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/forgot-password');
   });
+
+  it('shows validation errors on empty submit', async () => {
+    const userEvent = (await import('@testing-library/user-event')).default;
+    const user = userEvent.setup();
+    renderLogin();
+    const submitBtn = screen.getByRole('button', { name: 'login.button' });
+    await user.click(submitBtn);
+    expect(await screen.findByText('Email is required')).toBeInTheDocument();
+  });
 });

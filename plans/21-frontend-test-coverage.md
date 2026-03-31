@@ -314,28 +314,28 @@ describe('MyComponent', () => {
 | FT-043 | 3 | Test admin UserSearch page | Done | 5 tests: search input, empty state, results after search, email/name rows, heading |
 | FT-044 | 3 | Test admin FlagList page | Done | 6 tests: flag names, monospace keys, toggle switches, create button, heading, type badges |
 | FT-045 | 3 | Test admin HealthDashboard page | Done | 6 tests: service table, status indicators, infra cards, key metrics, heading, metric details |
-| FT-046 | 4 | Test Dashboard page | Not Started | |
-| FT-047 | 4 | Test Login page | Not Started | |
-| FT-048 | 4 | Test Register page (multi-step) | Not Started | |
-| FT-049 | 4 | Test BillingOverview page | Not Started | |
-| FT-050 | 4 | Test PlanComparison page | Not Started | |
-| FT-051 | 4 | Test LeagueCreate page | Not Started | |
-| FT-052 | 4 | Test ContestCreate page | Not Started | |
-| FT-053 | 4 | Test ContestDetail page | Not Started | |
-| FT-054 | 4 | Test TimezoneSettings page | Not Started | |
-| FT-055 | 4 | Test PrivacySettings page | Not Started | |
-| FT-056 | 4 | Test admin TenantDetail page | Not Started | |
-| FT-057 | 4 | Test admin UserDetail page | Not Started | |
-| FT-058 | 4 | Test admin ContestDetail page | Not Started | |
-| FT-059 | 4 | Test admin FlagDetail page | Not Started | |
-| FT-060 | 4 | Test admin NotificationConfig page | Not Started | |
-| FT-061 | 4 | Test admin PlatformConfig page | Not Started | |
-| FT-062 | 4 | Test admin AuditLog page | Not Started | |
-| FT-063 | 5 | Integration: auth login → store → redirect flow | Not Started | |
-| FT-064 | 5 | Integration: league create wizard → API → navigate | Not Started | |
-| FT-065 | 5 | Integration: contest create wizard → API → navigate | Not Started | |
-| FT-066 | 5 | Integration: billing entitlement gate flow | Not Started | |
-| FT-067 | 5 | Integration: notification preferences toggle → save | Not Started | |
+| FT-046 | 4 | Test Dashboard page | Done | 5 tests: welcome message, quick actions bar, active contests, leagues, activity section |
+| FT-047 | 4 | Test Login page | Done | 6 tests: email/password inputs, Log In button, social login buttons, forgot password link, sign up link, validation error on empty submit |
+| FT-048 | 4 | Test Register page (multi-step) | Done | 4 tests: step 1 email/password/confirm fields, Next button, login link, 5-step progress indicators |
+| FT-049 | 4 | Test BillingOverview page | Done | 4 tests: current plan card, usage meters, disabled billing banner, Upgrade link |
+| FT-050 | 4 | Test PlanComparison page | Done | 4 tests: 4 plan cards, billing cycle toggle, FAQ section, Current Plan badge on active plan |
+| FT-051 | 4 | Test LeagueCreate page | Done | 4 tests: step indicator (Basics/Access/Review), name input, Next button, Back button disabled on step 1 |
+| FT-052 | 4 | Test ContestCreate page | Done | 4 tests: 7-step indicator, sport selector grid, Next button, step count display |
+| FT-053 | 4 | Test ContestDetail page | Done | 4 tests: contest name, status badge, standings snapshot, action buttons |
+| FT-054 | 4 | Test TimezoneSettings page | Done | 5 tests: timezone picker, date format options, time format options, format preview, Save button |
+| FT-055 | 4 | Test PrivacySettings page | Done | 3 tests: data export card, account deletion card, consent manager |
+| FT-056 | 4 | Test admin TenantDetail page | Done | 5 tests: tenant name, tabs (Overview/Members/Leagues/Contests/Activity), Actions dropdown, plan badge, status badge |
+| FT-057 | 4 | Test admin UserDetail page | Done | 5 tests: user name+email, tabs, Actions dropdown, status badge, user ID display |
+| FT-058 | 4 | Test admin ContestDetail page | Done | 5 tests: contest name, tabs (Standings/Scoring Data/Draft/Overrides/Admin Actions), sport badge, admin actions section, status badge |
+| FT-059 | 4 | Test admin FlagDetail page | Done | 5 tests: flag key, global toggle, rollout section, overrides table, resolution tester |
+| FT-060 | 4 | Test admin NotificationConfig page | Done | 4 tests: push triggers section, templates section, channel defaults section, rate limits section |
+| FT-061 | 4 | Test admin PlatformConfig page | Done | 4 tests: poll intervals section, ingestion schedule section, dunning section, retention section |
+| FT-062 | 4 | Test admin AuditLog page | Done | 5 tests: audit table with entries, filter bar, Export CSV button, timestamps+admin names, search input |
+| FT-063 | 5 | Integration: auth login → store → redirect flow | Done | 4 tests: token stored+user set, navigate to /dashboard, error message on rejection, validation on empty submit |
+| FT-064 | 5 | Integration: league create wizard → API → navigate | Done | 4 tests: POST with correct payload, navigate to new league, success toast, error toast |
+| FT-065 | 5 | Integration: contest create wizard → API → navigate | Done | 4 tests: sport+event selection, contest type, POST /v1/contests, navigate to new contest |
+| FT-066 | 5 | Integration: billing entitlement gate flow | Done | 5 tests: entitled renders children, not entitled shows upgrade, usage count, upgrade link, loading fail-open |
+| FT-067 | 5 | Integration: notification preferences toggle → save | Done | 5 tests: page heading, 6 categories displayed, channel headers, loading skeleton, error state |
 
 ---
 
