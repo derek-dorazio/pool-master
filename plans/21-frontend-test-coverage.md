@@ -304,16 +304,16 @@ describe('MyComponent', () => {
 | FT-033 | 3 | Test EntitlementGate component | Not Started | |
 | FT-034 | 3 | Test JoinLeaveFlow component | Not Started | |
 | FT-035 | 3 | Test NotificationBell component | Not Started | |
-| FT-036 | 3 | Test PostCard component | Not Started | |
-| FT-037 | 3 | Test ReactionBar component | Not Started | |
-| FT-038 | 3 | Test webapp ConfirmDialog component | Not Started | |
-| FT-039 | 3 | Test DualTimezone component | Not Started | |
-| FT-040 | 3 | Test RelativeTime component | Not Started | |
-| FT-041 | 3 | Test admin ConfirmDialog component | Not Started | |
-| FT-042 | 3 | Test admin TenantList page | Not Started | |
-| FT-043 | 3 | Test admin UserSearch page | Not Started | |
-| FT-044 | 3 | Test admin FlagList page | Not Started | |
-| FT-045 | 3 | Test admin HealthDashboard page | Not Started | |
+| FT-036 | 3 | Test PostCard component | Done | 6 tests: author/content, timestamp, reactions, reply count, singular reply, announcement styling |
+| FT-037 | 3 | Test ReactionBar component | Done | 4 tests: emoji buttons, counts, toggle handler, active highlighting |
+| FT-038 | 3 | Test webapp ConfirmDialog component | Done | 6 tests: open/close, title/desc, confirm/cancel callbacks, destructive variant, custom label |
+| FT-039 | 3 | Test DualTimezone component | Done | 4 tests: same tz single time, different tz both times, no abbr when same, Date object input |
+| FT-040 | 3 | Test RelativeTime component | Done | 5 tests: just now, minutes, hours, days, title attribute |
+| FT-041 | 3 | Test admin ConfirmDialog component | Done | 6 tests: same as webapp ConfirmDialog |
+| FT-042 | 3 | Test admin TenantList page | Done | 6 tests: tenant names, plan badges, status badges, search input, filter dropdowns, total count |
+| FT-043 | 3 | Test admin UserSearch page | Done | 5 tests: search input, empty state, results after search, email/name rows, heading |
+| FT-044 | 3 | Test admin FlagList page | Done | 6 tests: flag names, monospace keys, toggle switches, create button, heading, type badges |
+| FT-045 | 3 | Test admin HealthDashboard page | Done | 6 tests: service table, status indicators, infra cards, key metrics, heading, metric details |
 | FT-046 | 4 | Test Dashboard page | Not Started | |
 | FT-047 | 4 | Test Login page | Not Started | |
 | FT-048 | 4 | Test Register page (multi-step) | Not Started | |

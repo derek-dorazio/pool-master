@@ -70,4 +70,16 @@ describe('ActiveContestsCard', () => {
     renderWithRouter();
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
+
+  it('shows positive delta indicator for contests with delta > 0', () => {
+    renderWithRouter();
+    expect(screen.getByText('+2')).toBeInTheDocument();
+  });
+
+  it('links each contest to its detail page', () => {
+    renderWithRouter();
+    const links = screen.getAllByRole('link');
+    expect(links.some((l) => l.getAttribute('href') === '/contests/c1')).toBe(true);
+    expect(links.some((l) => l.getAttribute('href') === '/contests/c2')).toBe(true);
+  });
 });

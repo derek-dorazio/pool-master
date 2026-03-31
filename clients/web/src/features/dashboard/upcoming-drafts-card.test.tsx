@@ -69,4 +69,24 @@ describe('UpcomingDraftsCard', () => {
     renderWithRouter();
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
+
+  it('disables Enter Draft Room button when draft is more than 5 minutes away', () => {
+    renderWithRouter();
+    const buttons = screen.getAllByRole('button', { name: /Enter Draft Room/i });
+    buttons.forEach((btn) => {
+      expect(btn).toBeDisabled();
+    });
+  });
+
+  it('enables Enter Draft Room button when draft is within 5 minutes', () => {
+    const soonDate = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // 2 min from now
+    vi.mocked(useUpcomingDrafts).mockReturnValue({
+      data: [{ id: 'd3', name: 'Soon Draft', leagueName: 'Quick League', type: 'Snake', scheduledAt: soonDate }],
+      isLoading: false,
+    } as any);
+    renderWithRouter();
+    const link = screen.getByRole('link', { name: /Enter Draft Room/i });
+    expect(link).toBeInTheDocument();
+    expect(link.getAttribute('href')).toBe('/drafts/d3');
+  });
 });
