@@ -160,6 +160,88 @@ describe('ProviderRegistry', () => {
     const result = registry.getProvider('GOLF' as Sport);
     expect(result).toBe(primary);
   });
+
+  // --- Additional edge case tests (lines 60-88) ---
+
+  it('getAllProviders returns all registered providers with deduplication', () => {
+    const sharedProvider = createMockProvider({ providerId: 'espn-api' });
+    const nflProvider = createMockProvider({ providerId: 'nfl-api' });
+
+    // Register the same provider for two sports — should appear once in results
+    registry.register('GOLF' as Sport, sharedProvider, 'PRIMARY');
+    registry.register('NFL' as Sport, sharedProvider, 'FALLBACK');
+    registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
+
+    const all = registry.getAllProviders();
+    expect(all).toHaveLength(2);
+    const ids = all.map((p) => p.providerId);
+    expect(ids).toContain('espn-api');
+    expect(ids).toContain('nfl-api');
+  });
+
+  it('getHealthReport includes error count and last error time from updateHealth', () => {
+    const provider = createMockProvider({ providerId: 'degraded-api' });
+    registry.register('GOLF' as Sport, provider, 'PRIMARY');
+
+    const lastSuccess = new Date('2026-03-29T12:00:00Z');
+    registry.updateHealth('degraded-api', {
+      providerId: 'degraded-api',
+      status: 'DEGRADED',
+      errorRateLastHour: 0.35,
+      latencyMsP95: 2500,
+      lastSuccessfulPoll: lastSuccess,
+      message: 'High latency detected',
+    });
+
+    const report = registry.getHealthReport();
+    expect(report).toHaveLength(1);
+    expect(report[0].status).toBe('DEGRADED');
+    expect(report[0].errorRateLastHour).toBe(0.35);
+    expect(report[0].latencyMsP95).toBe(2500);
+    expect(report[0].lastSuccessfulPoll).toEqual(lastSuccess);
+    expect(report[0].message).toBe('High latency detected');
+  });
+
+  it('getProviderById returns the matching provider or null', () => {
+    const golfProvider = createMockProvider({ providerId: 'golf-stats' });
+    const nflProvider = createMockProvider({ providerId: 'nfl-stats' });
+
+    registry.register('GOLF' as Sport, golfProvider, 'PRIMARY');
+    registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
+
+    expect(registry.getProviderById('golf-stats')).toBe(golfProvider);
+    expect(registry.getProviderById('nfl-stats')).toBe(nflProvider);
+    expect(registry.getProviderById('nonexistent')).toBeNull();
+  });
+
+  it('getProvidersForSport returns PRIMARY and FALLBACK providers for a sport', () => {
+    const primary = createMockProvider({ providerId: 'primary-golf' });
+    const fallback = createMockProvider({ providerId: 'fallback-golf' });
+
+    registry.register('GOLF' as Sport, primary, 'PRIMARY');
+    registry.register('GOLF' as Sport, fallback, 'FALLBACK');
+
+    const providers = registry.getProvidersForSport('GOLF' as Sport);
+    expect(providers).toHaveLength(2);
+    expect(providers[0]).toBe(primary);
+    expect(providers[1]).toBe(fallback);
+  });
+
+  it('getSupportedSports returns unique sport list across all registrations', () => {
+    const sharedProvider = createMockProvider({ providerId: 'multi-sport-api' });
+
+    // Same provider registered for multiple sports, plus duplicates
+    registry.register('GOLF' as Sport, sharedProvider, 'PRIMARY');
+    registry.register('GOLF' as Sport, sharedProvider, 'FALLBACK');
+    registry.register('NFL' as Sport, sharedProvider, 'PRIMARY');
+    registry.register('NBA' as Sport, sharedProvider, 'PRIMARY');
+
+    const sports = registry.getSupportedSports();
+    expect(sports).toHaveLength(3);
+    expect(sports).toContain('GOLF');
+    expect(sports).toContain('NFL');
+    expect(sports).toContain('NBA');
+  });
 });
 
 // ---------------------------------------------------------------------------
