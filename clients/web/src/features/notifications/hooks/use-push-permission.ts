@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 type PushPermissionState = 'default' | 'granted' | 'denied' | 'unsupported';
 
@@ -9,11 +9,6 @@ export function usePushPermission() {
     }
     return Notification.permission;
   });
-
-  useEffect(() => {
-    if (permission === 'unsupported') return;
-    setPermission(Notification.permission);
-  }, [permission]);
 
   const requestPermission = useCallback(async (): Promise<PushPermissionState> => {
     if (permission === 'unsupported') return 'unsupported';

@@ -9,7 +9,7 @@ import { useContestList } from '@/hooks/use-contests-api';
 import type { Contest, ContestFilters } from '@/hooks/use-contests-api';
 
 const SPORTS = ['All', 'NFL', 'NBA', 'Golf', 'F1', 'NCAA', 'Soccer', 'Horse Racing', 'NASCAR'];
-const STATUSES = ['All', 'Open', 'Drafting', 'Active', 'Completed', 'Cancelled'];
+const STATUSES = ['All', 'OPEN', 'DRAFTING', 'ACTIVE', 'COMPLETED', 'CANCELLED'];
 const TYPES = ['All', 'Single Event', 'Season Long'];
 const TENANTS = ['All', 'Ultimate Pool Manager Pro', 'FanDraft', 'RaceFan'];
 
@@ -17,11 +17,11 @@ const PAGE_SIZE = 5;
 
 function statusColor(status: Contest['status']) {
   switch (status) {
-    case 'Open': return 'bg-blue-100 text-blue-800';
-    case 'Drafting': return 'bg-yellow-100 text-yellow-800';
-    case 'Active': return 'bg-green-100 text-green-800';
-    case 'Completed': return 'bg-gray-100 text-gray-800';
-    case 'Cancelled': return 'bg-red-100 text-red-800';
+    case 'OPEN': return 'bg-blue-100 text-blue-800';
+    case 'DRAFTING': return 'bg-yellow-100 text-yellow-800';
+    case 'ACTIVE': return 'bg-green-100 text-green-800';
+    case 'COMPLETED': return 'bg-gray-100 text-gray-800';
+    case 'CANCELLED': return 'bg-red-100 text-red-800';
   }
 }
 

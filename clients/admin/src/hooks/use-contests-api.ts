@@ -10,7 +10,7 @@ export interface Contest {
   sportEmoji: string;
   type: 'Single Event' | 'Season Long';
   selectionType: string;
-  status: 'Open' | 'Drafting' | 'Active' | 'Completed' | 'Cancelled';
+  status: 'OPEN' | 'DRAFTING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'LOCKED' | 'DRAFT';
   entries: number;
   maxEntries: number;
   created: string;
@@ -67,7 +67,7 @@ const MOCK_CONTESTS: Contest[] = [
     sportEmoji: '\uD83C\uDFC8',
     type: 'Single Event',
     selectionType: 'Pick',
-    status: 'Active',
+    status: 'ACTIVE',
     entries: 128,
     maxEntries: 256,
     created: '2026-03-01',
@@ -81,7 +81,7 @@ const MOCK_CONTESTS: Contest[] = [
     sportEmoji: '\uD83C\uDFC0',
     type: 'Season Long',
     selectionType: 'Draft',
-    status: 'Drafting',
+    status: 'DRAFTING',
     entries: 12,
     maxEntries: 12,
     created: '2026-02-15',
@@ -95,7 +95,7 @@ const MOCK_CONTESTS: Contest[] = [
     sportEmoji: '\u26F3',
     type: 'Single Event',
     selectionType: 'Pick',
-    status: 'Open',
+    status: 'OPEN',
     entries: 45,
     maxEntries: 100,
     created: '2026-03-10',
@@ -109,7 +109,7 @@ const MOCK_CONTESTS: Contest[] = [
     sportEmoji: '\uD83C\uDFCE\uFE0F',
     type: 'Season Long',
     selectionType: 'Draft',
-    status: 'Active',
+    status: 'ACTIVE',
     entries: 8,
     maxEntries: 10,
     created: '2026-01-20',
@@ -123,7 +123,7 @@ const MOCK_CONTESTS: Contest[] = [
     sportEmoji: '\uD83C\uDFC0',
     type: 'Single Event',
     selectionType: 'Bracket',
-    status: 'Completed',
+    status: 'COMPLETED',
     entries: 256,
     maxEntries: 256,
     created: '2026-03-15',
@@ -137,7 +137,7 @@ const MOCK_CONTESTS: Contest[] = [
     sportEmoji: '\u26BD',
     type: 'Single Event',
     selectionType: 'Pick',
-    status: 'Active',
+    status: 'ACTIVE',
     entries: 64,
     maxEntries: 128,
     created: '2026-02-28',
@@ -151,7 +151,7 @@ const MOCK_CONTESTS: Contest[] = [
     sportEmoji: '\uD83C\uDFC7',
     type: 'Single Event',
     selectionType: 'Pick',
-    status: 'Open',
+    status: 'OPEN',
     entries: 32,
     maxEntries: 50,
     created: '2026-03-20',
@@ -165,7 +165,7 @@ const MOCK_CONTESTS: Contest[] = [
     sportEmoji: '\uD83C\uDFCE\uFE0F',
     type: 'Single Event',
     selectionType: 'Survivor',
-    status: 'Cancelled',
+    status: 'CANCELLED',
     entries: 18,
     maxEntries: 50,
     created: '2026-02-01',
@@ -187,7 +187,7 @@ function buildContestDetail(contest: Contest): ContestDetail {
       { rank: 8, entryName: 'The Rookies', ownerEmail: 'hank@example.com', totalScore: 174 },
     ],
     draftStatus: {
-      status: 'In Progress',
+      status: 'ACTIVE',
       currentPick: 47,
       totalPicks: 96,
       started: '2026-03-22T14:00:00Z',
