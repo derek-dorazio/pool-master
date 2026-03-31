@@ -287,13 +287,13 @@ describe('MyComponent', () => {
 | FT-016 | 1 | Test admin use-config-api hooks (12 hooks) | Not Started | Largest single file |
 | FT-017 | 1 | Test admin use-contests-api hooks | Not Started | |
 | FT-018 | 1 | Test admin use-migrations-api hooks | Not Started | |
-| FT-019 | 2 | Test webapp api-client (HTTP methods, auth, errors) | Not Started | Foundation for all API calls |
-| FT-020 | 2 | Test timezones utility (search, regions) | Not Started | |
-| FT-021 | 2 | Test utils.ts cn() function | Not Started | Quick win |
-| FT-022 | 2 | Test i18n initialization | Not Started | |
-| FT-023 | 2 | Test admin api-client | Not Started | |
-| FT-024 | 2 | Test admin utils.ts | Not Started | Quick win |
-| FT-025 | 2 | Test admin query-client config | Not Started | Quick win |
+| FT-019 | 2 | Test webapp api-client (HTTP methods, auth, errors) | Done | 10 tests: GET/POST/PUT/DELETE, auth header, ApiError, 204 handling |
+| FT-020 | 2 | Test timezones utility (search, regions) | Done | 7 tests: data completeness, search, region grouping |
+| FT-021 | 2 | Test utils.ts cn() function | Done | 6 tests: merging, conditionals, Tailwind conflicts, arrays |
+| FT-022 | 2 | Test i18n initialization | Done | 6 tests: init, language, namespaces, translation, fallback |
+| FT-023 | 2 | Test admin api-client | Done | 8 tests: admin_token auth, HTTP methods, error handling |
+| FT-024 | 2 | Test admin utils.ts | Done | 6 tests: same cn() coverage as webapp |
+| FT-025 | 2 | Test admin query-client config | Done | 4 tests: QueryClient instance, staleTime, retry, refetch |
 | FT-026 | 3 | Test ActiveContestsCard component | Not Started | |
 | FT-027 | 3 | Test UpcomingDraftsCard component | Not Started | |
 | FT-028 | 3 | Test MyLeaguesSummary component | Not Started | |
