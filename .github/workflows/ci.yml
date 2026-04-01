@@ -305,13 +305,6 @@ jobs:
     needs: publish-images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -319,27 +312,79 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Run Prisma migrations against QA database
-        continue-on-error: true
+      - name: Run ECS migration task
+        id: run-migration
         run: |
-          RDS_ENDPOINT="${{ secrets.QA_RDS_ENDPOINT }}"
-          if [ -z "$RDS_ENDPOINT" ]; then
-            echo "⚠️ QA_RDS_ENDPOINT secret not set — skipping migrations"
+          SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
+          SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
+
+          if [ -z "$SUBNETS" ] || [ -z "$SG" ]; then
+            echo "⚠️ QA_PRIVATE_SUBNETS or QA_ECS_SECURITY_GROUP secret not set — skipping migrations"
+            echo "skipped=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-          echo "Attempting direct migration to QA RDS..."
-          export DATABASE_URL="postgresql://poolmaster:${{ secrets.QA_DB_PASSWORD }}@${RDS_ENDPOINT}:5432/poolmaster"
-          npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-          if npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma 2>&1; then
-            echo "✅ Migrations applied to QA database"
-          else
-            echo "⚠️ Direct connection failed (RDS likely in private subnet)"
-            echo "  Run migrations manually: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma"
-            echo "  Or enable RDS public access / add a bastion for CI"
+
+          echo "Starting migration task in ECS..."
+          TASK_ARN=$(aws ecs run-task \
+            --cluster poolmaster-qa-cluster \
+            --task-definition poolmaster-qa-migrate \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [ "$TASK_ARN" = "None" ] || [ -z "$TASK_ARN" ]; then
+            echo "::warning::Failed to start migration task — task definition may not exist yet. Run terraform apply first."
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            exit 0
           fi
 
+          echo "task_arn=${TASK_ARN}" >> $GITHUB_OUTPUT
+          echo "Migration task started: ${TASK_ARN}"
+
+      - name: Wait for migration to complete
+        if: steps.run-migration.outputs.skipped != 'true'
+        run: |
+          TASK_ARN="${{ steps.run-migration.outputs.task_arn }}"
+          CLUSTER="poolmaster-qa-cluster"
+
+          echo "Waiting for migration task to complete..."
+          for i in $(seq 1 40); do
+            STATUS=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
+              --query 'tasks[0].lastStatus' --output text)
+            echo "  Status: $STATUS (attempt $i/40)"
+
+            if [ "$STATUS" = "STOPPED" ]; then
+              EXIT_CODE=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
+                --query 'tasks[0].containers[0].exitCode' --output text)
+              REASON=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
+                --query 'tasks[0].containers[0].reason' --output text 2>/dev/null || echo "")
+
+              if [ "$EXIT_CODE" = "0" ]; then
+                echo "✅ Migration completed successfully"
+                exit 0
+              else
+                echo "❌ Migration failed with exit code: $EXIT_CODE"
+                [ -n "$REASON" ] && [ "$REASON" != "None" ] && echo "  Reason: $REASON"
+                # Fetch logs for debugging
+                TASK_ID=$(echo $TASK_ARN | awk -F'/' '{print $NF}')
+                echo "--- Migration Logs ---"
+                aws logs get-log-events \
+                  --log-group-name /ecs/poolmaster-qa/migrate \
+                  --log-stream-name "ecs/migrate/${TASK_ID}" \
+                  --query 'events[].message' --output text 2>/dev/null || echo "(no logs available)"
+                exit 1
+              fi
+            fi
+
+            sleep 15
+          done
+
+          echo "Migration task timed out after 10 minutes"
+          exit 1
+
       - name: Wait for ECS deployment to stabilize
-        run: sleep 60
+        run: sleep 30
 
   # =========================================================================
   # API Smoke Tests — run against live QA after deploy + migrate

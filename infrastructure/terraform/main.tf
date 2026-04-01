@@ -540,6 +540,43 @@ resource "aws_ecs_task_definition" "core_api" {
   }])
 }
 
+# --- Migration Task (one-shot, runs prisma migrate deploy) ---
+
+resource "aws_cloudwatch_log_group" "migrate" {
+  name              = "/ecs/${local.name_prefix}/migrate"
+  retention_in_days = var.environment == "prod" ? 30 : 7
+
+  tags = { Service = "migrate" }
+}
+
+resource "aws_ecs_task_definition" "migrate" {
+  family                   = "${local.name_prefix}-migrate"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "migrate"
+    image     = "${aws_ecr_repository.services["core-api"].repository_url}:latest"
+    essential = true
+    command   = ["npx", "prisma", "migrate", "deploy", "--schema", "prisma/schema.prisma"]
+    environment = [
+      { name = "DATABASE_URL", value = local.db_url },
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.migrate.name
+        "awslogs-region"        = var.region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
 resource "aws_ecs_service" "core_api" {
   name            = "${local.name_prefix}-core-api"
   cluster         = aws_ecs_cluster.main.id

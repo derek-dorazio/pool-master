@@ -89,3 +89,13 @@ output "ecs_security_group_id" {
   description = "ECS tasks security group ID"
   value       = aws_security_group.ecs_tasks.id
 }
+
+output "migrate_task_definition_family" {
+  description = "ECS task definition family for database migrations"
+  value       = aws_ecs_task_definition.migrate.family
+}
+
+output "migrate_task_definition_arn" {
+  description = "ECS task definition ARN for database migrations"
+  value       = aws_ecs_task_definition.migrate.arn
+}
