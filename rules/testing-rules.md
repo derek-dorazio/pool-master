@@ -504,4 +504,47 @@ See `rules/architecture-rules.md` section 8 for the full local dev infrastructur
 
 ---
 
-*PoolMaster Testing Rules v1.1*
+## 12. Schema Validation Tests
+
+### Purpose
+Catch Prisma schema drift (P2022/P2023) by performing a create+read+delete cycle on every Prisma model against the real database.
+
+**File:** `tests/integration/core-api/schema-validation.integration.ts`
+
+### When to Update
+- **Adding a new Prisma model** → Add a create+read+delete test
+- **Adding/removing columns** → Existing tests catch this automatically
+- **Running a migration** → Run schema validation tests to verify
+
+---
+
+## 13. API Contract Validation Tests
+
+### Purpose
+Catch frontend/backend drift by verifying API response shapes match what webapp and admin hooks expect.
+
+**Files:**
+- `tests/integration/core-api/api-contracts-web.integration.ts` — webapp contracts
+- `tests/integration/core-api/api-contracts-admin.integration.ts` — admin contracts
+
+### When to Update
+- **Changing a handler's response shape** → Update contract assertions
+- **Adding a new API endpoint** → Add a contract test
+- **Changing a hook's expected type** → Update contract test to match
+
+---
+
+## 14. Functional Smoke Tests
+
+### Purpose
+Test complete user journeys end-to-end via the API against live QA.
+
+**Location:** `tests/api/functional/*.smoke.ts` (8 suites, 52 tests)
+
+### When to Update
+- **Adding a new critical user flow** → Add a smoke test
+- **Changing an API response shape** → Update smoke test assertions
+
+---
+
+*PoolMaster Testing Rules v1.2*

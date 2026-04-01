@@ -36,6 +36,9 @@ Every model change requires updating these layers **in order**:
 - [ ] **Test factories** (`tests/factories/`) — add field with sensible default, accept overrides.
 - [ ] **Backend unit tests** (`tests/unit/`) — verify field in service create/update/get, validation.
 - [ ] **Backend integration tests** (`tests/integration/`) — verify field persists and retrieves end-to-end.
+- [ ] **Schema validation test** (`tests/integration/core-api/schema-validation.integration.ts`) — if adding a NEW model, add a create+read+delete test. If modifying an existing model, verify the existing test still passes (it will fail on schema drift automatically).
+- [ ] **API contract tests** (`tests/integration/core-api/api-contracts-web.integration.ts`) — if the field changes an API response shape, update the contract assertions. If adding a new endpoint, add a contract test.
+- [ ] **Admin contract tests** (`tests/integration/core-api/api-contracts-admin.integration.ts`) — same as above for admin endpoints.
 - [ ] **Webapp tests** (`clients/web/src/**/*.test.*`) — update mock data, verify rendering if user-facing.
 - [ ] **Admin tests** (`clients/admin/src/**/*.test.*`) — update mock data, verify rendering if admin-facing.
 - [ ] **Smoke tests** (`tests/api/functional/*.smoke.ts`) — add field to API flow tests if part of critical path.
@@ -110,6 +113,9 @@ Every model change requires updating these layers **in order**:
 | Missing migration for existing environments | QA smoke tests fail with P2022 | CI runs `prisma migrate deploy` automatically |
 | Enum values not matching | API returns values frontend doesn't handle | Use shared enums from `enums.ts` everywhere |
 | Test factory not updated | Tests use stale data shapes | Update factory defaults for every field change |
+| New model without schema validation test | Schema drift hides until runtime P2022 | Add create+read+delete test to `schema-validation.integration.ts` |
+| API response shape changed without contract test update | Webapp crashes on unexpected response | Update `api-contracts-web.integration.ts` assertions |
+| Handler wrapping changed (e.g., `{ league }` → bare) | Frontend hooks destructure incorrectly | Contract tests catch this automatically |
 
 ---
 
@@ -137,5 +143,8 @@ Every model change requires updating these layers **in order**:
 | Webapp tests | `clients/web/src/**/*.test.*` |
 | Admin tests | `clients/admin/src/**/*.test.*` |
 | Smoke tests | `tests/api/functional/*.smoke.ts` |
+| Schema validation | `tests/integration/core-api/schema-validation.integration.ts` |
+| API contracts (webapp) | `tests/integration/core-api/api-contracts-web.integration.ts` |
+| API contracts (admin) | `tests/integration/core-api/api-contracts-admin.integration.ts` |
 | Scoring templates | `packages/core-api/src/modules/scoring/templates/` |
 | Selection templates | `packages/core-api/src/modules/drafts/templates/` |
