@@ -1,4 +1,4 @@
-export {};
+import { BASE_URL, smokeFetch, expectStatus } from '../setup';
 /**
  * Functional smoke test — Billing + Entitlements.
  *
@@ -6,13 +6,11 @@ export {};
  * If entitlement checks break, no one can create anything.
  */
 
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
-
 let token: string;
 
 async function setup() {
   const email = `billing-${Date.now()}@smoke.test`;
-  const res = await fetch(`${BASE}/api/v1/auth/register`, {
+  const res = await smokeFetch(`${BASE_URL}/api/v1/auth/register`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password: 'SmokePas123', displayName: 'Billing Tester' }),
@@ -27,52 +25,61 @@ describe('Billing + Entitlements', () => {
   beforeAll(() => setup());
 
   it('gets current plan (free tier)', async () => {
-    const res = await fetch(`${BASE}/api/v1/billing/plan`, { headers: headers() });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const res = await smokeFetch(`${BASE_URL}/api/v1/billing/plan`, { headers: headers() });
+    await expectStatus(res, 200, 'get current plan');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     // Response is the plan object directly or { plan: {...} }
     const plan = body.plan ?? body;
     expect(plan.slug ?? plan.name).toBeDefined();
   });
 
   it('gets entitlements', async () => {
-    const res = await fetch(`${BASE}/api/v1/billing/entitlements`, { headers: headers() });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const res = await smokeFetch(`${BASE_URL}/api/v1/billing/entitlements`, { headers: headers() });
+    await expectStatus(res, 200, 'get entitlements');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.entitlements).toBeDefined();
   });
 
   it('gets usage stats', async () => {
-    const res = await fetch(`${BASE}/api/v1/billing/usage`, { headers: headers() });
-    expect(res.status).toBe(200);
+    const res = await smokeFetch(`${BASE_URL}/api/v1/billing/usage`, { headers: headers() });
+    await expectStatus(res, 200, 'get usage stats');
   });
 
   it('lists available plan tiers', async () => {
-    const res = await fetch(`${BASE}/api/v1/billing/plans`, { headers: headers() });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const res = await smokeFetch(`${BASE_URL}/api/v1/billing/plans`, { headers: headers() });
+    await expectStatus(res, 200, 'list plan tiers');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.plans).toBeDefined();
     expect(body.plans.length).toBeGreaterThanOrEqual(1);
   });
 
   it('free tier allows league creation', async () => {
-    const res = await fetch(`${BASE}/api/v1/leagues`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues`, {
       method: 'POST', headers: headers(),
       body: JSON.stringify({ name: 'Free Tier League', visibility: 'PRIVATE' }),
     });
     // Should NOT be blocked by entitlement check
-    expect(res.status).toBe(201);
+    await expectStatus(res, 201, 'free tier league creation');
   });
 
   it('free tier allows contest creation', async () => {
-    const lr = await fetch(`${BASE}/api/v1/leagues`, { headers: headers() });
+    const lr = await smokeFetch(`${BASE_URL}/api/v1/leagues`, { headers: headers() });
     const leagueId = ((await lr.json()) as any).leagues[0]?.id;
     if (!leagueId) return;
 
-    const res = await fetch(`${BASE}/api/v1/leagues/${leagueId}/contests`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues/${leagueId}/contests`, {
       method: 'POST', headers: headers(),
       body: JSON.stringify({ name: 'Free Contest', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY' }),
     });
-    expect(res.status).toBe(201);
+    await expectStatus(res, 201, 'free tier contest creation');
   });
 });

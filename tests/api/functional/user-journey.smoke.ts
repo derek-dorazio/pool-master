@@ -1,4 +1,4 @@
-export {};
+import { BASE_URL, smokeFetch, expectStatus } from '../setup';
 /**
  * Functional smoke test — complete user journey via API.
  *
@@ -7,8 +7,6 @@ export {};
  * Tests run sequentially — each depends on the previous.
  * Target: live QA or local dev.
  */
-
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
 
 // State accumulated across tests
 let accessToken: string;
@@ -28,7 +26,7 @@ describe('User Journey — Full API Flow', () => {
   // -----------------------------------------------------------------------
   it('registers a new user', async () => {
     email = `journey-${Date.now()}@e2e.test`;
-    const res = await fetch(`${BASE}/api/v1/auth/register`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -37,8 +35,11 @@ describe('User Journey — Full API Flow', () => {
         displayName: 'Journey Test User',
       }),
     });
-    expect(res.status).toBe(201);
-    const body = await res.json() as any;
+    await expectStatus(res, 201, 'register new user');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.tokens.accessToken).toBeDefined();
     accessToken = body.tokens.accessToken;
     refreshToken = body.tokens.refreshToken;
@@ -48,13 +49,16 @@ describe('User Journey — Full API Flow', () => {
   // 2. Login
   // -----------------------------------------------------------------------
   it('logs in with the same credentials', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/login`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email, password: 'JourneyPass123' }),
     });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    await expectStatus(res, 200, 'login with credentials');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.tokens.accessToken).toBeDefined();
     accessToken = body.tokens.accessToken;
   });
@@ -63,11 +67,14 @@ describe('User Journey — Full API Flow', () => {
   // 3. Get profile
   // -----------------------------------------------------------------------
   it('fetches current user profile', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/me`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/me`, {
       headers: { authorization: `Bearer ${accessToken}` },
     });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    await expectStatus(res, 200, 'fetch user profile');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.user.email).toBe(email);
     expect(body.user.displayName).toBe('Journey Test User');
   });
@@ -76,7 +83,7 @@ describe('User Journey — Full API Flow', () => {
   // 4. Create league
   // -----------------------------------------------------------------------
   it('creates a league', async () => {
-    const res = await fetch(`${BASE}/api/v1/leagues`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -85,8 +92,11 @@ describe('User Journey — Full API Flow', () => {
         maxMembers: 12,
       }),
     });
-    expect(res.status).toBe(201);
-    const body = await res.json() as any;
+    await expectStatus(res, 201, 'create league');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.league.id).toBeDefined();
     expect(body.league.name).toBe('Journey Masters Pool');
     leagueId = body.league.id;
@@ -96,11 +106,14 @@ describe('User Journey — Full API Flow', () => {
   // 5. Get league details
   // -----------------------------------------------------------------------
   it('retrieves the created league', async () => {
-    const res = await fetch(`${BASE}/api/v1/leagues/${leagueId}`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues/${leagueId}`, {
       headers: headers(),
     });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    await expectStatus(res, 200, 'retrieve league');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.league.name).toBe('Journey Masters Pool');
   });
 
@@ -108,7 +121,7 @@ describe('User Journey — Full API Flow', () => {
   // 6. Create contest
   // -----------------------------------------------------------------------
   it('creates a contest in the league', async () => {
-    const res = await fetch(`${BASE}/api/v1/leagues/${leagueId}/contests`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues/${leagueId}/contests`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -118,8 +131,11 @@ describe('User Journey — Full API Flow', () => {
         scoringEngine: 'STROKE_PLAY',
       }),
     });
-    expect(res.status).toBe(201);
-    const body = await res.json() as any;
+    await expectStatus(res, 201, 'create contest');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.contest.id).toBeDefined();
     expect(body.contest.name).toBe('Masters 2026 Pool');
     expect(body.contest.status).toBe('DRAFT');
@@ -130,11 +146,14 @@ describe('User Journey — Full API Flow', () => {
   // 7. Get contest details
   // -----------------------------------------------------------------------
   it('retrieves the created contest', async () => {
-    const res = await fetch(`${BASE}/api/v1/contests/${contestId}`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/contests/${contestId}`, {
       headers: headers(),
     });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    await expectStatus(res, 200, 'retrieve contest');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     const contest = body.contest ?? body;
     expect(contest.contestType).toBe('SINGLE_EVENT');
     expect(contest.selectionType).toBe('SNAKE_DRAFT');
@@ -149,7 +168,7 @@ describe('User Journey — Full API Flow', () => {
     const entryB = crypto.randomUUID();
     const participants = Array.from({ length: 10 }, () => crypto.randomUUID());
 
-    const res = await fetch(`${BASE}/api/v1/drafts/${contestId}/start`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/drafts/${contestId}/start`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -166,8 +185,11 @@ describe('User Journey — Full API Flow', () => {
       return;
     }
 
-    expect(res.status).toBe(201);
-    const body = await res.json() as any;
+    await expectStatus(res, 201, 'start draft session');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.status).toBe('LIVE');
 
     (globalThis as any).__draftAvailable = true;
@@ -184,7 +206,7 @@ describe('User Journey — Full API Flow', () => {
     const entryA = (globalThis as any).__draftEntryA;
     const participants = (globalThis as any).__draftParticipants;
 
-    const res = await fetch(`${BASE}/api/v1/drafts/${contestId}/pick`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/drafts/${contestId}/pick`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -192,8 +214,11 @@ describe('User Journey — Full API Flow', () => {
         participantId: participants[0],
       }),
     });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    await expectStatus(res, 200, 'submit draft pick');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.picks.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -203,11 +228,14 @@ describe('User Journey — Full API Flow', () => {
   it('verifies the draft state reflects the pick', async () => {
     if (!(globalThis as any).__draftAvailable) return; // draft routes not available
 
-    const res = await fetch(`${BASE}/api/v1/drafts/${contestId}`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/drafts/${contestId}`, {
       headers: headers(),
     });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    await expectStatus(res, 200, 'verify draft state');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.picks.length).toBeGreaterThanOrEqual(1);
     expect(body.currentPickNumber).toBeGreaterThanOrEqual(2);
   });

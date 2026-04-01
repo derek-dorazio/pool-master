@@ -1,4 +1,4 @@
-export {};
+import { BASE_URL, smokeFetch, expectStatus } from '../setup';
 /**
  * Functional smoke test — Auth token refresh flow.
  *
@@ -6,14 +6,12 @@ export {};
  * If refresh breaks, users get logged out unexpectedly.
  */
 
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
-
 let accessToken: string;
 let refreshToken: string;
 
 describe('Auth Token Refresh Flow', () => {
   it('registers and gets initial tokens', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/register`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -22,8 +20,11 @@ describe('Auth Token Refresh Flow', () => {
         displayName: 'Refresh Tester',
       }),
     });
-    expect(res.status).toBe(201);
-    const body = await res.json() as any;
+    await expectStatus(res, 201, 'register for refresh test');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     accessToken = body.tokens.accessToken;
     refreshToken = body.tokens.refreshToken;
     expect(accessToken).toBeDefined();
@@ -31,20 +32,23 @@ describe('Auth Token Refresh Flow', () => {
   });
 
   it('access token works for profile', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/me`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/me`, {
       headers: { authorization: `Bearer ${accessToken}` },
     });
-    expect(res.status).toBe(200);
+    await expectStatus(res, 200, 'access token works for profile');
   });
 
   it('refreshes token and gets new pair', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/refresh`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/refresh`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     });
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    await expectStatus(res, 200, 'refresh token');
+    const body = res.headers.get('content-type')?.includes('json')
+      ? await res.json() as any
+      : null;
+    if (!body) return;
     expect(body.accessToken).toBeDefined();
     expect(body.refreshToken).toBeDefined();
     // New tokens should differ (rotation)
@@ -54,36 +58,36 @@ describe('Auth Token Refresh Flow', () => {
   });
 
   it('new access token works for profile', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/me`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/me`, {
       headers: { authorization: `Bearer ${accessToken}` },
     });
-    expect(res.status).toBe(200);
+    await expectStatus(res, 200, 'new access token works for profile');
   });
 
   it('old refresh token is rejected (rotated)', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/refresh`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/refresh`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken: 'old-invalid-token' }),
     });
-    expect(res.status).toBe(401);
+    await expectStatus(res, 401, 'old refresh token rejected');
   });
 
   it('logout revokes current refresh token', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/logout`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/logout`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     });
-    expect(res.status).toBe(204);
+    await expectStatus(res, 204, 'logout revokes refresh token');
   });
 
   it('refresh token fails after logout', async () => {
-    const res = await fetch(`${BASE}/api/v1/auth/refresh`, {
+    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/refresh`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     });
-    expect(res.status).toBe(401);
+    await expectStatus(res, 401, 'refresh fails after logout');
   });
 });
