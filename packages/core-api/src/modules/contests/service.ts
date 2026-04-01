@@ -89,7 +89,7 @@ export class ContestService {
     }
     const contest = await this.contestRepo.create({
       leagueId: input.leagueId,
-      seasonId: input.seasonId ?? '',
+      seasonId: input.seasonId || undefined,
       name: input.name,
       status: ContestStatus.DRAFT,
       contestType: input.contestType,
