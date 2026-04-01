@@ -321,21 +321,16 @@ jobs:
 
       - name: Run Prisma migrations against QA database
         run: |
-          echo "Looking up RDS endpoint for poolmaster-qa-postgres in ${{ env.AWS_REGION }}..."
-          RDS_ENDPOINT=$(aws rds describe-db-instances \
-            --db-instance-identifier poolmaster-qa-postgres \
-            --region ${{ env.AWS_REGION }} \
-            --query 'DBInstances[0].Endpoint.Address' \
-            --output text 2>&1) || true
-          echo "RDS lookup result: '${RDS_ENDPOINT}'"
-          if [ -n "$RDS_ENDPOINT" ] && [ "$RDS_ENDPOINT" != "None" ] && [[ ! "$RDS_ENDPOINT" =~ "error" ]] && [[ ! "$RDS_ENDPOINT" =~ "Error" ]]; then
+          RDS_ENDPOINT="${{ secrets.QA_RDS_ENDPOINT }}"
+          if [ -n "$RDS_ENDPOINT" ]; then
+            echo "Using QA RDS endpoint from secret..."
             export DATABASE_URL="postgresql://poolmaster:${{ secrets.QA_DB_PASSWORD }}@${RDS_ENDPOINT}:5432/poolmaster"
             npx prisma generate --schema=packages/core-api/prisma/schema.prisma
             npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
             echo "✅ Migrations applied to QA database at ${RDS_ENDPOINT}"
           else
-            echo "⚠️ QA RDS not found or lookup error — skipping migrations"
-            echo "  Lookup returned: ${RDS_ENDPOINT}"
+            echo "⚠️ QA_RDS_ENDPOINT secret not set — skipping migrations"
+            echo "  Set QA_RDS_ENDPOINT to the RDS instance address (e.g. poolmaster-qa-postgres.xxxx.us-east-2.rds.amazonaws.com)"
           fi
 
       - name: Wait for ECS deployment to stabilize
