@@ -168,8 +168,8 @@ export class SurvivorEngine {
         (p) => p.period === period && p.isCorrect === false,
       );
 
-      let strikes = entry.strikes + wrongPicks.length;
-      let isEliminated = strikes > state.config.strikesBeforeElimination;
+      const strikes = entry.strikes + wrongPicks.length;
+      let isEliminated = strikes > state.config.strikesBeforeElimination; // eslint-disable-line prefer-const -- reassigned in picksPerPeriod branch
 
       if (state.config.picksPerPeriod > 1) {
         const allWrong = periodPicks.length === wrongPicks.length;

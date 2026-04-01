@@ -15,7 +15,6 @@ import { scoreStrokePlayEntry } from '../../../packages/core-api/src/modules/sco
 import type { StrokePlayParticipant } from '../../../packages/core-api/src/modules/scoring/engine/stroke-play-scoring';
 import { scoreRotisserie } from '../../../packages/core-api/src/modules/scoring/engine/rotisserie-scoring';
 import { scoreHeadToHead } from '../../../packages/core-api/src/modules/scoring/engine/head-to-head-scoring';
-import { NFL_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nfl';
 import { GOLF_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/golf';
 import { NCAA_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/ncaa';
 import { NBA_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nba';
@@ -24,16 +23,6 @@ import { NASCAR_TEMPLATES } from '../../../packages/core-api/src/modules/scoring
 import { TENNIS_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/tennis';
 import { HORSE_RACING_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/horse-racing';
 import { SOCCER_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/soccer';
-
-// ========================================================================
-// NFL — removed (no player-based scoring templates)
-// ========================================================================
-
-describe('NFL templates removed', () => {
-  it('NFL_TEMPLATES is empty', () => {
-    expect(Object.keys(NFL_TEMPLATES).length).toBe(0);
-  });
-});
 
 // ========================================================================
 // Golf — 2024 Masters: Scottie Scheffler
