@@ -298,9 +298,9 @@ jobs:
           echo "**Web clients** deployed to S3 + CloudFront" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
-  # API Smoke Tests — run against live QA after deploy
+  # QA Database Migrations — apply schema changes before smoke tests
   # =========================================================================
-  smoke-test:
+  migrate-qa:
     runs-on: ubuntu-latest
     needs: publish-images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -321,7 +321,6 @@ jobs:
 
       - name: Run Prisma migrations against QA database
         run: |
-          # Get RDS endpoint from Terraform state or AWS CLI
           RDS_ENDPOINT=$(aws rds describe-db-instances \
             --db-instance-identifier poolmaster-qa-postgres \
             --query 'DBInstances[0].Endpoint.Address' \
@@ -337,6 +336,21 @@ jobs:
 
       - name: Wait for ECS deployment to stabilize
         run: sleep 60
+
+  # =========================================================================
+  # API Smoke Tests — run against live QA after deploy + migrate
+  # =========================================================================
+  smoke-test:
+    runs-on: ubuntu-latest
+    needs: migrate-qa
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
 
       - name: Run smoke tests against QA
         id: smoke
