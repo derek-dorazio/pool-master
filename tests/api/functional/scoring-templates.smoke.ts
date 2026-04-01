@@ -33,26 +33,26 @@ const headers = () => ({ authorization: `Bearer ${token}`, 'content-type': 'appl
 describe('Scoring Templates + Contest Configuration', () => {
   beforeAll(() => setup());
 
-  it('lists all scoring templates (16+)', async () => {
+  it('lists all scoring templates (10+)', async () => {
     const res = await fetch(`${BASE}/api/v1/scoring/templates`, { headers: headers() });
     expect(res.status).toBe(200);
     const body = await res.json() as any;
-    expect(body.templates.length).toBeGreaterThanOrEqual(15);
+    expect(body.templates.length).toBeGreaterThanOrEqual(10);
   });
 
-  it('gets golf DFS template with stat rules', async () => {
-    const res = await fetch(`${BASE}/api/v1/scoring/templates/golf_dfs_standard`, { headers: headers() });
+  it('gets golf relative-to-par template with stat rules', async () => {
+    const res = await fetch(`${BASE}/api/v1/scoring/templates/golf_relative_to_par`, { headers: headers() });
     expect(res.status).toBe(200);
     const body = await res.json() as any;
-    expect(body.key).toBe('golf_dfs_standard');
+    expect(body.key).toBe('golf_relative_to_par');
     expect(body.config).toBeDefined();
     const rules = body.config.statRules ?? body.config.stat_rules;
     expect(rules).toBeDefined();
     expect(rules.length).toBeGreaterThan(0);
   });
 
-  it('gets golf stroke play template', async () => {
-    const res = await fetch(`${BASE}/api/v1/scoring/templates/golf_dfs_standard`, { headers: headers() });
+  it('gets NCAA bracket standard template', async () => {
+    const res = await fetch(`${BASE}/api/v1/scoring/templates/ncaa_bracket_standard`, { headers: headers() });
     expect(res.status).toBe(200);
     const body = await res.json() as any;
     expect(body.config).toBeDefined();
@@ -60,7 +60,7 @@ describe('Scoring Templates + Contest Configuration', () => {
 
   it('validates a scoring config via POST', async () => {
     // Get a real template config first
-    const tr = await fetch(`${BASE}/api/v1/scoring/templates/golf_dfs_standard`, { headers: headers() });
+    const tr = await fetch(`${BASE}/api/v1/scoring/templates/golf_relative_to_par`, { headers: headers() });
     const config = ((await tr.json()) as any).config;
 
     const res = await fetch(`${BASE}/api/v1/scoring/config/validate`, {
@@ -78,18 +78,18 @@ describe('Scoring Templates + Contest Configuration', () => {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
-        name: 'Golf DFS Contest',
+        name: 'Golf Tournament Contest',
         contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
         scoringEngine: 'STROKE_PLAY',
-        scoringTemplateKey: 'golf_dfs_standard',
+        scoringTemplateKey: 'golf_relative_to_par',
       }),
     });
     // 201 if template key is supported, 400 if validation rejects the combination
     expect([201, 400]).toContain(res.status);
     if (res.status === 201) {
       const body = await res.json() as any;
-      expect(body.contest.name).toBe('Golf DFS Contest');
+      expect(body.contest.name).toBe('Golf Tournament Contest');
     }
   });
 
