@@ -312,6 +312,29 @@ jobs:
           cache: 'npm'
       - run: npm ci
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run Prisma migrations against QA database
+        run: |
+          # Get RDS endpoint from Terraform state or AWS CLI
+          RDS_ENDPOINT=$(aws rds describe-db-instances \
+            --db-instance-identifier poolmaster-qa-postgres \
+            --query 'DBInstances[0].Endpoint.Address' \
+            --output text 2>/dev/null || echo "")
+          if [ -n "$RDS_ENDPOINT" ]; then
+            export DATABASE_URL="postgresql://poolmaster:${{ secrets.QA_DB_PASSWORD }}@${RDS_ENDPOINT}:5432/poolmaster"
+            npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+            npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
+            echo "✅ Migrations applied to QA database at ${RDS_ENDPOINT}"
+          else
+            echo "⚠️ QA RDS not found — skipping migrations"
+          fi
+
       - name: Wait for ECS deployment to stabilize
         run: sleep 60
 
