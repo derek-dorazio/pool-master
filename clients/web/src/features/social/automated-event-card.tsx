@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Zap, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { FeedPost } from './hooks/use-feed';

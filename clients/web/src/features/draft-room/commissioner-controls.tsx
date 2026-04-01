@@ -14,7 +14,7 @@ export function CommissionerControls({ draftId, draftStatus, isCommissioner }: C
   const queryClient = useQueryClient();
 
   const action = useMutation({
-    mutationFn: async (actionType: string) => {
+    mutationFn: async (_actionType: string) => {
       // TODO: Replace with real API calls
       // await api.post(`/v1/drafts/${draftId}/commissioner/${actionType}`);
       await new Promise((r) => setTimeout(r, 300));

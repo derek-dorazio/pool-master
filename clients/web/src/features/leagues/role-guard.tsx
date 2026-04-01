@@ -19,8 +19,6 @@ interface RoleGuardProps {
   children: React.ReactNode;
 }
 
-const ROLE_HIERARCHY: LeagueRole[] = ['OWNER', 'COMMISSIONER', 'MANAGER', 'VIEWER'];
-
 function useMyLeagueRole(leagueId: string) {
   const user = useAuthStore((s) => s.user);
 

@@ -18,11 +18,8 @@ const mockUsers = [
   { id: 'u-2', email: 'jane@beta.com', displayName: 'Jane Smith', tenants: ['Beta League', 'FanDraft'], lastLogin: new Date().toISOString(), status: 'Disabled' },
 ];
 
-let mockQuery = '';
-
 vi.mock('@/hooks/use-admin-api', () => ({
   useUserSearch: (query: string) => {
-    mockQuery = query;
     if (!query) return { data: undefined, isLoading: false, isFetched: false };
     return { data: mockUsers, isLoading: false, isFetched: true };
   },

@@ -7,10 +7,9 @@
  * Uses MockStripeClient for Stripe operations.
  */
 
-import { randomUUID } from 'crypto';
 import type { PrismaClient } from '@prisma/client';
 import { isBillingEnabled } from './billing-feature-gate';
-import { stripeClient, type MockSubscription, type SubscriptionStatus } from './stripe-service';
+import { stripeClient, type SubscriptionStatus } from './stripe-service';
 
 // ---------------------------------------------------------------------------
 // Types

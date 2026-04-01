@@ -1,4 +1,4 @@
-import { Play, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Play, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

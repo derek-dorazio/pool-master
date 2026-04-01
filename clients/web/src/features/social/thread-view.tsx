@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useReplies, useCreateReply, type FeedReply } from './hooks/use-feed';
+import { useReplies, useCreateReply } from './hooks/use-feed';
 import { ReactionBar } from './reaction-bar';
 import { Send } from 'lucide-react';
 

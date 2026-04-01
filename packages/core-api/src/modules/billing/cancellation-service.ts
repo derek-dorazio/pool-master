@@ -44,15 +44,6 @@ export interface CancellationFeedback {
 const DATA_RETENTION_DAYS = 90;
 const ITEMS_PER_PAGE = 20;
 
-const CANCELLATION_REASONS = [
-  'TOO_EXPENSIVE',
-  'NOT_ENOUGH_FEATURES',
-  'SWITCHING_TO_COMPETITOR',
-  'NO_LONGER_NEEDED',
-  'TECHNICAL_ISSUES',
-  'OTHER',
-] as const;
-
 const FEATURES_BY_PLAN: Record<string, string[]> = {
   starter: [
     'Up to 3 leagues',

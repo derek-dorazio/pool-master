@@ -138,20 +138,7 @@ export class TimelineService {
 
     if (!session) return null;
 
-    // Get contest results to compute hindsight value
-    const results = await this.prisma.contestResult.findMany({
-      where: { contestId },
-    });
-
-    // Get roster picks to find how each participant scored
-    const rosterPicks = await this.prisma.rosterPick.findMany({
-      where: { entry: { contestId } },
-      include: { entry: true },
-    });
-
-    // Build a map of participant final scores from entry scores and roster
-    // (simplified — in full version this would use per-participant scoring)
-    const entryScoreMap = new Map(results.map((r) => [r.entryId, r.totalScore]));
+    // TODO: compute hindsight value from contest results and roster picks
 
     const picks: DraftPickHistoryEntry[] = session.picks.map((pick) => ({
       pickNumber: pick.pickNumber,

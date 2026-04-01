@@ -2,7 +2,7 @@
  * History module — contest history endpoints.
  */
 
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { HistoryService } from './history-service';
 import { LeagueHistoryService } from './league-history-service';

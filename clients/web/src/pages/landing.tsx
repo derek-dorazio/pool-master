@@ -65,7 +65,7 @@ const stats = [
 ];
 
 export function Component() {
-  const { t } = useTranslation('common');
+  useTranslation('common');
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);

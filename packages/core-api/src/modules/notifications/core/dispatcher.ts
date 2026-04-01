@@ -51,7 +51,7 @@ function getDefaultChannels(): Record<string, NotificationChannel[]> {
   try {
     // Dynamic import avoids hard coupling — the admin module may not be loaded
     // in all deployment contexts (e.g. standalone notification worker).
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { getChannelDefaults } = require('../../../core-api/src/modules/admin/channel-config-service');
     const configured = getChannelDefaults();
     if (configured && Object.keys(configured).length > 0) {

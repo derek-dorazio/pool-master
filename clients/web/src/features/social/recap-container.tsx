@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import { useRecap } from './hooks/use-recap';
 
 function ChangeIndicator({ change }: { change: number }) {
@@ -16,7 +15,7 @@ function ChangeIndicator({ change }: { change: number }) {
 
 export function RecapContainer() {
   const { leagueId } = useParams<{ leagueId: string }>();
-  const [weekId, setWeekId] = useState('current');
+  const [weekId] = useState('current');
   const { data: recap, isLoading, isError, refetch } = useRecap(leagueId!, weekId);
 
   if (isLoading) {

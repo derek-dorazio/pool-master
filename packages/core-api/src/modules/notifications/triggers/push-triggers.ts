@@ -194,7 +194,7 @@ export function registerPushTriggers(dispatcher: NotificationDispatcher): void {
 }
 
 /** Determines the deep-link screen based on event type. */
-function resolveScreen(eventType: string, event: PushTriggerEvent): string {
+function resolveScreen(eventType: string, _event: PushTriggerEvent): string {
   if (eventType.startsWith('draft.')) return 'draft_room';
   if (eventType.startsWith('scoring.')) return 'contest_leaderboard';
   if (eventType.startsWith('contest.')) return 'contest_detail';

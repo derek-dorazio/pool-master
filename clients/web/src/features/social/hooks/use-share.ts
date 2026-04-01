@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
 import { socialKeys } from './query-keys';
 
 export interface ShareCardData {

@@ -45,7 +45,7 @@ export function computeAllPlayLuck(
   // For each member, compute expected wins across all contests
   const memberStats = new Map<string, { actualWins: number; expectedWins: number }>();
 
-  for (const [_contestId, contestResults] of byContest) {
+  for (const [, contestResults] of byContest) {
     const n = contestResults.length;
     if (n < 2) continue;
 
@@ -180,7 +180,7 @@ export class AnalyticsService {
     );
 
     // Compute percentiles
-    const luckScores = Array.from(luckMap.entries()).map(([memberId, stats]) => stats.luckScore);
+    const luckScores = Array.from(luckMap.entries()).map(([_memberId, stats]) => stats.luckScore);
     const sortedLuck = [...luckScores].sort((a, b) => a - b);
 
     return Array.from(luckMap.entries()).map(([memberId, stats]: [string, any]) => {
@@ -241,7 +241,7 @@ export class AnalyticsService {
       where: { leagueId },
     });
 
-    const memberships = await this.prisma.leagueMembership.findMany({
+    await this.prisma.leagueMembership.findMany({
       where: { leagueId },
       include: { user: true },
     });

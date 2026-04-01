@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { DraftState, DraftPick, DraftEntry } from './hooks/use-draft';
+import type { DraftState, DraftPick } from './hooks/use-draft';
 
 interface TierConfig {
   tierId: string;

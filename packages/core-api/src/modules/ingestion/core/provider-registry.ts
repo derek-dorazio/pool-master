@@ -90,7 +90,7 @@ export class ProviderRegistry {
 
   /** Updates health status for a provider. */
   updateHealth(providerId: string, health: ProviderHealthStatus): void {
-    for (const [key, reg] of this.providers) {
+    for (const [, reg] of this.providers) {
       if (reg.provider.providerId === providerId) {
         reg.health = health;
       }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { ChevronDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MobileStandingsEntry {

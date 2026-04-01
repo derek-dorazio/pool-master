@@ -26,7 +26,7 @@ export function CommissionerContestControls({ contestId, contestStatus, isCommis
   const queryClient = useQueryClient();
 
   const action = useMutation({
-    mutationFn: async (params: { action: string; data?: Record<string, unknown> }) => {
+    mutationFn: async (_params: { action: string; data?: Record<string, unknown> }) => {
       // TODO: Replace with real API
       await new Promise((r) => setTimeout(r, 300));
       return { success: true };

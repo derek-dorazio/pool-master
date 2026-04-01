@@ -7,7 +7,7 @@ const CONSENT_KEY = 'poolmaster_cookie_consent';
 type ConsentLevel = 'all' | 'necessary' | null;
 
 export function CookieBanner() {
-  const [consent, setConsent] = useState<ConsentLevel>(null);
+  const [, setConsent] = useState<ConsentLevel>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

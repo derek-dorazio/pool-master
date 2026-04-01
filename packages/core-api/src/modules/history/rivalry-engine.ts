@@ -37,7 +37,6 @@ export class RivalryEngine {
       where: { leagueId },
       include: { user: true },
     });
-    const memberNameMap = new Map(memberships.map((m) => [m.id, m.user.displayName]));
     const memberIds = memberships.map((m) => m.id);
 
     // Group results by contest

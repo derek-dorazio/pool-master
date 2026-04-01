@@ -11,7 +11,6 @@ describe('i18n', () => {
   });
 
   it('has "common" and "auth" namespaces loaded', () => {
-    const namespaces = i18n.options.ns;
     // namespaces could be an array or derived from resources
     const resourceNs = Object.keys(i18n.options.resources?.en ?? {});
     expect(resourceNs).toContain('common');

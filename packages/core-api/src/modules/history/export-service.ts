@@ -75,7 +75,6 @@ export class HistoryExportService {
     }
 
     // Resolve season names
-    const seasonIds = [...seasonContests.keys()].filter((k) => k !== 'unknown');
     const seasonSummaries = await this.prisma.leagueSeasonSummary.findMany({
       where: { leagueId },
     });

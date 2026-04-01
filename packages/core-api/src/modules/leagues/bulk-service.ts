@@ -9,7 +9,7 @@ import type {
   LeagueMembershipRepository,
   LeagueRepository,
 } from '@poolmaster/shared/db';
-import type { Contest, ContestTemplate, LeagueInvitation } from '@poolmaster/shared/domain';
+import type { Contest } from '@poolmaster/shared/domain';
 import { ContestStatus, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 

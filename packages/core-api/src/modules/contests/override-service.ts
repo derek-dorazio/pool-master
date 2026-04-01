@@ -11,7 +11,7 @@ import type {
   ContestStandingRepository,
   DraftSessionRepository,
 } from '@poolmaster/shared/db';
-import type { Contest, ContestStanding, DraftSession } from '@poolmaster/shared/domain';
+import type { Contest, DraftSession } from '@poolmaster/shared/domain';
 import { ContestStatus, DraftStatus } from '@poolmaster/shared/domain';
 
 export interface RecalculationResult {
@@ -42,7 +42,7 @@ export class OverrideService {
   // --- Draft Overrides (08-018, 08-019, 08-020) ---
 
   /** Undoes a draft pick within the configurable window (default 5 min). */
-  async undoPick(contestId: string, pickId: string, reason: string): Promise<void> {
+  async undoPick(contestId: string, pickId: string, _reason: string): Promise<void> {
     const session = await this.requireDraftSession(contestId);
     const picks = await this.draftSessionRepo.getPicks(session.id);
     const pick = picks.find((p) => p.id === pickId);
@@ -60,7 +60,7 @@ export class OverrideService {
   }
 
   /** Pauses a live draft. */
-  async pauseDraft(contestId: string, reason: string): Promise<void> {
+  async pauseDraft(contestId: string, _reason: string): Promise<void> {
     const session = await this.requireDraftSession(contestId);
     if (session.status !== DraftStatus.LIVE) {
       throw new OverrideError('Draft can only be paused when live');
@@ -103,7 +103,7 @@ export class OverrideService {
     contestId: string,
     entryId: string,
     adjustment: number,
-    reason: string,
+    _reason: string,
   ): Promise<void> {
     const entry = await this.entryRepo.findById(entryId);
     if (!entry || entry.contestId !== contestId) {
@@ -160,7 +160,7 @@ export class OverrideService {
   // --- Contest Lifecycle Overrides (08-023) ---
 
   /** Re-opens a completed contest. */
-  async reopenContest(contestId: string, tenantId: string, reason: string): Promise<Contest> {
+  async reopenContest(contestId: string, tenantId: string, _reason: string): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId, tenantId);
     if (!contest) {
       throw new OverrideError('Contest not found');
@@ -172,7 +172,7 @@ export class OverrideService {
   }
 
   /** Force-closes a contest. */
-  async closeContest(contestId: string, tenantId: string, reason: string): Promise<Contest> {
+  async closeContest(contestId: string, tenantId: string, _reason: string): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId, tenantId);
     if (!contest) {
       throw new OverrideError('Contest not found');
@@ -190,7 +190,7 @@ export class OverrideService {
     contestId: string,
     tenantId: string,
     newEnd: Date,
-    reason: string,
+    _reason: string,
   ): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId, tenantId);
     if (!contest) {
@@ -204,7 +204,7 @@ export class OverrideService {
     contestId: string,
     tenantId: string,
     newLock: Date,
-    reason: string,
+    _reason: string,
   ): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId, tenantId);
     if (!contest) {

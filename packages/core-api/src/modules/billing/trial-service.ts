@@ -6,7 +6,6 @@
  * When billing is OFF, trial endpoints return inactive status.
  */
 
-import { randomUUID } from 'crypto';
 import type { PrismaClient } from '@prisma/client';
 import { isBillingEnabled } from './billing-feature-gate';
 

@@ -42,7 +42,7 @@ export class InvitationService {
 
   /** Creates email invitations, skipping existing members and pending duplicates. */
   async sendEmailInvitations(input: SendInvitationsInput): Promise<SendInvitationsResult> {
-    const members = await this.membershipRepo.findByLeague(input.leagueId);
+    await this.membershipRepo.findByLeague(input.leagueId);
     const memberEmails = new Set<string>();
     // Note: we don't have email on membership directly; this is a simplification.
     // In a full implementation we'd join with users. For now, skip based on pending invites.

@@ -5,7 +5,7 @@
  * and MANUAL assignment modes.
  */
 
-import type { TierConfig, TierDefinition, TierAssignmentMode } from '@poolmaster/shared/domain';
+import type { TierConfig, TierDefinition } from '@poolmaster/shared/domain';
 
 export interface TierableParticipant {
   participantId: string;

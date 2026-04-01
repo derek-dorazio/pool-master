@@ -12,7 +12,6 @@ import type {
 } from '@poolmaster/shared/db';
 import type {
   Participant,
-  ContestParticipantPool,
   InjuryStatus,
 } from '@poolmaster/shared/domain';
 import type { Sport } from '@poolmaster/shared/domain';
@@ -92,7 +91,6 @@ export class DraftSearchService {
     }
 
     // Fetch all participant profiles for the pool
-    const participantIds = poolParticipants.map((pp) => pp.participantId);
     const participantMap = new Map<string, Participant>();
     for (const pp of poolParticipants) {
       const participant = await this.participantRepo.findById(pp.participantId);

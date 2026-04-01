@@ -3,9 +3,9 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowUp, ArrowDown, Minus, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useContest } from '@/features/contests/hooks/use-contest';
-import { useStandings, type StandingsEntry } from '@/features/contests/hooks/use-standings';
+import { useStandings } from '@/features/contests/hooks/use-standings';
 
 type SortKey = 'rank' | 'totalScore' | 'round1' | 'round2' | 'round3' | 'round4';
 type SortDir = 'asc' | 'desc';

@@ -6,7 +6,7 @@
  * Permission: platform.config
  */
 
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
 import type { DunningConfigService } from './dunning-config-service';

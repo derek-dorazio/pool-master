@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserPlus, LogOut, Clock, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api-client';
 
 type MembershipState = 'none' | 'pending' | 'member';
 
@@ -17,7 +16,7 @@ interface JoinLeagueButtonProps {
   membershipState: MembershipState;
 }
 
-export function JoinLeagueButton({ leagueId, joinPolicy, membershipState }: JoinLeagueButtonProps) {
+export function JoinLeagueButton({ leagueId: _leagueId, joinPolicy, membershipState }: JoinLeagueButtonProps) {
   const queryClient = useQueryClient();
 
   const join = useMutation({
@@ -69,7 +68,7 @@ interface LeaveLeagueButtonProps {
   onLeft?: () => void;
 }
 
-export function LeaveLeagueButton({ leagueId, leagueName, onLeft }: LeaveLeagueButtonProps) {
+export function LeaveLeagueButton({ leagueId: _leagueId, leagueName, onLeft }: LeaveLeagueButtonProps) {
   const [confirming, setConfirming] = useState(false);
   const queryClient = useQueryClient();
 

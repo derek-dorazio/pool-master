@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { PostCard } from './post-card';
 import type { FeedPost } from './hooks/use-feed';
 

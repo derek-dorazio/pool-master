@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
 import { socialKeys } from './query-keys';
 
 export interface Conversation {
@@ -71,7 +70,7 @@ export function useSendDirectMessage(conversationId: string) {
   });
 }
 
-export function useMarkConversationRead(conversationId: string) {
+export function useMarkConversationRead(_conversationId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {

@@ -5,8 +5,6 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { RenderedContent } from '../core/template-renderer';
-
 export interface InAppNotificationInput {
   userId: string;
   eventType: string;

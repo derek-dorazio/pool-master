@@ -413,7 +413,7 @@ function OverviewTab({ league }: { league: LeagueDetail }) {
   );
 }
 
-function ContestsTab({ leagueId }: { leagueId: string }) {
+function ContestsTab({ leagueId: _leagueId }: { leagueId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">

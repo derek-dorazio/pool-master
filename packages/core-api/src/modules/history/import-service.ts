@@ -198,7 +198,7 @@ export class ImportService {
           endDate: contest.endedAt ? new Date(contest.endedAt) : now,
           isImported: true,
           importedBy,
-        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        } as any,  
       });
 
       // Create ContestResult for each result

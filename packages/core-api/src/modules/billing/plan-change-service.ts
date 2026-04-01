@@ -50,13 +50,6 @@ const PLAN_MONTHLY_PRICES: Record<string, number> = {
   league_plus: 7900,
 };
 
-const PLAN_DISPLAY_ORDER: Record<string, number> = {
-  free: 0,
-  starter: 1,
-  pro: 2,
-  league_plus: 3,
-};
-
 // ---------------------------------------------------------------------------
 // Feature labels for downgrade comparison
 // ---------------------------------------------------------------------------

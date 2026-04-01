@@ -16,7 +16,6 @@ import type {
   ActionItem,
   CommissionerDashboard,
   Contest,
-  League,
   MemberActivityEvent,
   UpcomingEvent,
 } from '@poolmaster/shared/domain';

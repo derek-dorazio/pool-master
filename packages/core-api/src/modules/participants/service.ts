@@ -15,7 +15,7 @@ import type {
   InjuryStatus,
 } from '@poolmaster/shared/domain';
 import { InjuryStatusCode, ParticipantStatus } from '@poolmaster/shared/domain';
-import type { ParticipantType, Sport, FormTrend, MappingConfidence } from '@poolmaster/shared/domain';
+import type { ParticipantType, MappingConfidence } from '@poolmaster/shared/domain';
 
 // --- Input DTOs ---
 

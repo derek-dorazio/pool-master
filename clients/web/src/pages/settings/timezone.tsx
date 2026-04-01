@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { usePreferencesStore } from '@/stores/preferences-store';
-import { formatTime, getTimezoneAbbr } from '@/lib/format-time';
-import { TIMEZONES, getTimezonesByRegion, searchTimezones } from '@/lib/timezones';
+import { getTimezoneAbbr } from '@/lib/format-time';
+import { getTimezonesByRegion, searchTimezones } from '@/lib/timezones';
 import { cn } from '@/lib/utils';
 
 const AUTO_DETECT = '__auto__';

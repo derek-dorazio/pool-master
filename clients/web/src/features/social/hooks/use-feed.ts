@@ -1,5 +1,4 @@
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
 import { socialKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -97,7 +96,7 @@ const mockPinnedPost: FeedPost = {
 export function useFeed(leagueId: string) {
   return useInfiniteQuery({
     queryKey: socialKeys.feed(leagueId),
-    queryFn: async ({ pageParam }): Promise<FeedPage> => {
+    queryFn: async ({ pageParam: _pageParam }): Promise<FeedPage> => {
       // TODO: return api.get(`/api/leagues/${leagueId}/feed?cursor=${pageParam}&limit=20`);
       await new Promise((r) => setTimeout(r, 300));
       return { items: mockFeedItems, pinned: [mockPinnedPost], nextCursor: null };

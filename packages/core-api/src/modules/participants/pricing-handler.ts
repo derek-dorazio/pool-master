@@ -9,8 +9,7 @@ import {
   PricingLockedError,
   ParticipantNotInPoolForPricingError,
 } from './pricing-service';
-import type { PricingConfig, TierConfig, TierDefinition } from '@poolmaster/shared/domain';
-import type { Sport, TierAssignmentMode } from '@poolmaster/shared/domain';
+import type { PricingConfig, TierConfig, Sport, TierAssignmentMode } from '@poolmaster/shared/domain';
 
 export function createPricingHandlers(pricingService: PricingAndTierService) {
   return {

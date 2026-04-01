@@ -267,10 +267,6 @@ const mockUserDetail: UserDetail = {
   ],
 };
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export function useAdminMetrics() {
   return useQuery({
     queryKey: ['admin', 'metrics'],

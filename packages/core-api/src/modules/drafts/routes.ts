@@ -189,7 +189,6 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       // Check for auto-pick if timer expired
       if (isPickExpired(session)) {
         const currentEntryId = engine.getCurrentEntryId(state);
-        const takenIds = new Set(engine.getTakenParticipantIds(state));
         const queueEntries = draftQueue.getQueue(currentEntryId);
         const autoPickId = engine.resolveAutoPick(state, {
           entryId: currentEntryId,

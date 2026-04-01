@@ -11,27 +11,12 @@ import type {
 import type {
   ContestPool,
   PricingConfig,
-  PriceOverride,
   TierConfig,
-  TierDefinition,
 } from '@poolmaster/shared/domain';
-import type { Sport, TierAssignmentMode } from '@poolmaster/shared/domain';
 import { calculatePrices, type ParticipantPricingInput } from './pricing-engine';
 import { assignTiers, type TierableParticipant } from './tier-engine';
 
 // --- Default pricing config ---
-
-const DEFAULT_PRICING_CONFIG: Omit<PricingConfig, 'sport'> = {
-  totalBudget: 50000,
-  minPrice: 3000,
-  maxPrice: 15000,
-  priceIncrement: 100,
-  rankingWeight: 0.5,
-  formWeight: 0.3,
-  oddsWeight: 0.2,
-  seedWeight: 0,
-  manualOverrides: [],
-};
 
 // --- Service ---
 
@@ -95,8 +80,8 @@ export class PricingAndTierService {
     contestId: string,
     participantId: string,
     price: number,
-    reason: string,
-    setBy: string,
+    _reason: string,
+    _setBy: string,
   ): Promise<void> {
     const pool = await this.requirePool(contestId);
     if (pool.poolLocked) throw new PricingLockedError(contestId);

@@ -315,7 +315,7 @@ export function scoreParticipant(
         )
       : baseTotal;
 
-  const { score: dnfScore, excluded } = handleDNF(
+  const { score: dnfScore } = handleDNF(
     config,
     participant,
     multipliedTotal,

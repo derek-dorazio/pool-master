@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { createElement } from 'react';
-import { useAuthStore } from '@/stores/auth-store';
 
 // Radix Checkbox uses ResizeObserver which jsdom does not provide
 globalThis.ResizeObserver ??= class {
