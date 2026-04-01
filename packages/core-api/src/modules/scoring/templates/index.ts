@@ -5,7 +5,6 @@
  * based on industry-standard scoring from DraftKings, FanDuel, ESPN, CBS, etc.
  */
 
-export { NFL_TEMPLATES } from './nfl';
 export { GOLF_TEMPLATES } from './golf';
 export { F1_TEMPLATES } from './f1';
 export { NASCAR_TEMPLATES } from './nascar';
