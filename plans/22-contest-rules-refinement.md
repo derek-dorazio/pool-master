@@ -1,8 +1,8 @@
 # Ultimate Pool Manager — Contest Rules by Sport
 
-This document defines all contest types, selection methods, scoring rules, and special mechanics for each supported sport. 
+This document defines all contest types, selection methods, scoring rules, and special mechanics for each supported sport.
 
-This reflects the current state of the application configuration. But there are a number of changes desired to update the contest rules. These changes are indicated with <change - instructions for change> or <defer - comment> below. Please make a plan for immediate execution for the <change> requuests, and make a deferred-contest-rules.md plan and store in the "deferred" subfolder for any deferred contest types. 
+Deferred features (season-long fantasy, NFL player scoring, DFS, advanced stats) are documented in [plans/deferred/contest-rules-deferred.md](deferred/contest-rules-deferred.md).
 
 ---
 
@@ -27,8 +27,9 @@ This reflects the current state of the application configuration. But there are 
 
 | Type | Description |
 |---|---|
-| **SINGLE_EVENT** | One tournament or event (e.g., The Masters, March Madness) |
-| **SEASON_LONG** | Spans an entire season across multiple weeks/events |
+| **SINGLE_EVENT** | One tournament, race, or playoff series (e.g., The Masters, March Madness, F1 race) |
+
+> SEASON_LONG removed — all contests are single-event. Survivor and pick'em pools that span a season are treated as one "event" (enter once, no weekly management).
 
 ### Selection Types
 
@@ -43,24 +44,20 @@ This reflects the current state of the application configuration. But there are 
 
 ### Survivor Mechanics
 
-All survivor contests share these configurable options:
-
 | Option | Description |
 |---|---|
 | **Live Pick** | One pick per period, submitted before each begins |
 | **Locked Pick** | All picks submitted upfront before the event starts |
-| **One-and-Done** | Each team/player usable only once per season |
+| **One-and-Done** | Each team/player usable only once |
 | **Strikes** | 0 = instant elimination; 1-3 = allowed wrong picks before out |
-| **Double Pick** | Must pick 2 winners per period (both must win) |
-| **Buybacks** | Allow re-entry after elimination (configurable) |
 
-<change - defer double pick and buybacks for future phase>
+> Double pick and buybacks deferred to a future phase.
 
 ### Tiebreaker Rules
 
 - **Bracket contests:** Predicted championship game total score
 - **Survivor:** Highest cumulative score among remaining players
-- **Points-based:** Head-to-head record, then most recent week score
+- **Points-based:** Head-to-head record, then most recent round/week score
 
 ---
 
@@ -75,53 +72,38 @@ All survivor contests share these configurable options:
 - 4-10 tiers grouped by world ranking or odds
 - Pick 1 golfer per tier
 - Best N scores count (e.g., pick 6, use best 4)
-- Lowest combined strokes wins
+- Score is relative to par: birdie = -1, eagle = -2, bogey = +1, etc.
+- Lowest combined score wins
 - Non-exclusive (multiple managers can pick the same golfer)
-- <change score should be relative to par for the hole, thus 0 for par, -1 for birdie, -2 for eagle, +1 for bogey, +2 for double bogey, etc>
-- Missed cut = penalty score of 80 per missed round <change - remove, not necessary when scoring is relative to par. Players that miss cut will have a high score relative to par (such as +13) so will not be one of the best 4 scores, or will already have a high score contribution which is bad>
+- No missed-cut penalty needed — players who miss the cut already have high relative-to-par scores
 
 **Budget Pick Pool**
 - Each golfer priced based on ranking/odds
-- Pick 6-8 golfers within total budget <change - this should be configurable in admin settings>
+- Roster size configurable (e.g., 6-8 golfers within budget)
 - Best N scores count
-- Lowest combined strokes wins
-- <change score should be relative to par for the hole, thus 0 for par, -1 for birdie, -2 for eagle, +1 for bogey, +2 for double bogey, etc>
-
+- Score is relative to par
+- Lowest combined score wins
 
 **Snake Draft**
 - Exclusive pre-tournament snake draft
-- Each golfer's actual stroke total counts
-- <change score should be relative to par for the hole, thus 0 for par, -1 for birdie, -2 for eagle, +1 for bogey, +2 for double bogey, etc>
-- Missed cut = penalty score <change - remove, not necessary when scoring is relative to par. Players that miss cut will have a high score relative to par (such as +13) so will not be one of the best 4 scores, or will already have a high score contribution which is bad>
-- Lowest total combined strokes wins
+- Score is relative to par per hole
+- Lowest total combined score wins
 
+### Scoring: Relative to Par
 
-### Scoring: DFS Points
-
-| Stat | Points |
+| Result | Score |
 |---|---|
-| Hole-in-one | +10 |
-| Albatross (double eagle) | +8 |
-| Eagle | +5 |
-| Birdie | +3 |
-| Par | +0.5 |
-| Bogey | -0.5 |
-| Double bogey | -1 |
-| Triple bogey or worse | -1.5 |
+| Hole-in-one | -3 |
+| Albatross (double eagle) | -3 |
+| Eagle | -2 |
+| Birdie | -1 |
+| Par | 0 |
+| Bogey | +1 |
+| Double bogey | +2 |
+| Triple bogey or worse | +3 |
 
-**Position Bonuses:** 1st place = 30 pts, scaling down to Top 30 = 1 pt
-
-**Bonus Rules:**
-- 3+ consecutive birdies: +3 pts
-- Bogey-free round: +3 pts
-- Round of -5 or better: +5 pts
-
-### Scoring: Stroke Play
-
-- Total actual strokes count (lower is better) <change score should be relative to par for the hole, thus 0 for par, -1 for birdie, -2 for eagle, +1 for bogey, +2 for double bogey, etc>
-
-- Missed cut: 80 strokes per missed round <change - remove, not necessary when scoring is relative to par. Players that miss cut will have a high score relative to par (such as +13) so will not be one of the best 4 scores, or will already have a high score contribution which is bad>
-- Best N of M counting method (e.g., best 4 of 6 golfers)
+**Counting:** Best N of M (configurable). Lower is better.
+**Missed cut:** No penalty — player's high score naturally falls out of best N.
 
 ### Selection Templates
 
@@ -129,79 +111,38 @@ All survivor contests share these configurable options:
 |---|---|---|
 | Snake Draft (4 rounds) | SNAKE_DRAFT | 4 rounds, 120s per pick, async |
 | Tiered Pick 6 Use 4 | TIERED | 6 tiers, 1 per tier, best 4 count, odds-based |
-| Budget $50K | BUDGET_PICK | $50K budget, 6-golfer roster Use 4, odds-based pricing |
+| Budget $50K | BUDGET_PICK | $50K budget, 6-golfer roster, best 4 count, odds-based pricing |
 
 ---
 
 ## NFL
 
-**Contest Type:** SEASON_LONG
-**Selection Types:** Snake Draft, Pick'em, Survivor
+**Contest Type:** SINGLE_EVENT (team-based only)
+**Selection Types:** Pick'em, Survivor
+
+> NFL player-based fantasy scoring (PPR, Standard, Half-PPR) is deferred. Too many stat categories, and the market is already saturated by ESPN, Yahoo, DraftKings. NFL contests use team-based formats only.
 
 ### Contest Formats
-
-**Snake Draft (Fantasy)** <change remove weekly fantasy>
-- 15-round snake draft of individual players
-- Weekly scoring based on player stats
-- Standard, PPR, or Half-PPR scoring
 
 **Survivor Pool**
 - Pick one NFL team per week to win straight-up (no spread)
 - Wrong pick = eliminated
-- Each team usable only once per season
-- Configurable: strikes (0-3), double pick, buybacks
+- Each team usable only once
+- Configurable: strikes (0-3)
 
 **Confidence Pick'em**
 - Pick all game winners each week
 - Assign confidence points (16 = most confident, 1 = least)
 - More confident correct picks earn more points
 
-### Scoring: Standard (Non-PPR) <change remove weekly fantasy>
+### Scoring
 
-**Passing**
-| Stat | Points |
-|---|---|
-| Passing yards | 0.04 per yard (1 pt per 25 yards) |
-| Passing TD | +4 |
-| Interception thrown | -2 |
-| 2-point conversion (pass) | +2 |
+Team-based — no player stat scoring needed. Winners determined by game results.
 
-**Rushing**
-| Stat | Points |
-|---|---|
-| Rushing yards | 0.1 per yard (1 pt per 10 yards) |
-| Rushing TD | +6 |
-| 2-point conversion (rush) | +2 |
-| Fumble lost | -2 |
-
-**Receiving**
-| Stat | Points |
-|---|---|
-| Receiving yards | 0.1 per yard (1 pt per 10 yards) |
-| Receiving TD | +6 |
-| 2-point conversion (rec) | +2 |
-| Reception (PPR only) | +1 (or +0.5 for Half-PPR) |
-
-**Kicking**
-| Stat | Points |
-|---|---|
-| FG made (0-39 yards) | +3 |
-| FG made (40-49 yards) | +4 |
-| FG made (50+ yards) | +5 |
-| FG missed | -1 |
-| PAT made | +1 |
-| PAT missed | -1 |
-
-**Bonuses:**
-- 300+ passing yards: +3 pts
-- 100+ rushing yards: +3 pts
-- 100+ receiving yards: +3 pts
-
-### Selection Templates <change remove weekly fantasy>
+### Selection Templates
 
 | Template | Type | Config |
 |---|---|---|
-| Snake Draft (15 rounds) | SNAKE_DRAFT | 15 rounds, 60s per pick, live mode | 
 | Survivor | PICK_EM | 1 pick/week, one-and-done, 0 strikes |
 | Confidence Pick'em | PICK_EM | 16 picks/week, confidence-weighted |
 
@@ -209,19 +150,17 @@ All survivor contests share these configurable options:
 
 ## NBA
 
-**Contest Type:** SINGLE_EVENT, SEASON_LONG
-**Selection Types:** Snake Draft, Tiered, Budget Pick, Bracket Pick'em, Survivor
+**Contest Type:** SINGLE_EVENT (playoffs only)
+**Selection Types:** Tiered, Budget Pick, Bracket Pick'em, Survivor
+
+> Season-long NBA fantasy draft removed. Focus on playoff pools.
 
 ### Contest Formats
-
-**Playoffs Snake Draft**
-- Pre-playoffs exclusive draft of all 16 playoff teams
-- Points per series win with round multipliers (1x, 2x, 4x, 8x)
 
 **Playoffs Tiered Pool**
 - Tiers by seed: 1-2, 3-4, 5-6, 7-8
 - Pick 1 team per tier
-- Points per series win with round multipliers
+- Points per series win with round multipliers (1x, 2x, 4x, 8x)
 
 **Playoffs Budget Pool**
 - Favorites cost more; underdogs are cheap
@@ -239,25 +178,20 @@ All survivor contests share these configurable options:
 - Wrong pick = eliminated
 - Each team usable only once across playoffs
 
-### Scoring: Points League
+### Scoring: Simple Points
 
 | Stat | Points |
 |---|---|
 | Points scored | +1 |
-| Rebounds | +1.25 |
 | Assists | +1.5 |
-| Steals | +2 |
-| Blocks | +2 |
-| Three-pointers made | +0.5 |
-| Turnovers | -1 |
-| Double-double | +1.5 bonus |
-| Triple-double | +3 bonus |
+| Rebounds | +1.25 |
+
+> Advanced stats (steals, blocks, turnovers, double/triple-double bonuses) deferred.
 
 ### Selection Templates
 
 | Template | Type | Config |
 |---|---|---|
-| Snake Draft (12 rounds) | SNAKE_DRAFT | 12 rounds, 90s per pick, live mode |
 | Playoff Tiers | TIERED | 4 tiers by seed, 1 pick per tier |
 
 ---
@@ -265,7 +199,7 @@ All survivor contests share these configurable options:
 ## NCAA Basketball
 
 **Contest Type:** SINGLE_EVENT
-**Selection Types:** Snake Draft, Tiered, Budget Pick, Bracket Pick'em, Survivor
+**Selection Types:** Bracket Pick'em, Tiered, Budget Pick, Open Selection, Survivor
 
 ### Contest Formats
 
@@ -325,23 +259,18 @@ All survivor contests share these configurable options:
 
 ## F1 (Formula 1)
 
-**Contest Type:** SEASON_LONG
-**Selection Types:** Budget Pick, Pick'em
+**Contest Type:** SINGLE_EVENT (per-race)
+**Selection Types:** Budget Pick
+
+> Season-long F1 fantasy draft deferred. Focus on per-race pools.
 
 ### Contest Formats
 
-**Season Budget Pick**
-- Build a driver roster within budget each race
+**Race Budget Pick**
+- Build a driver roster within budget for a single race
 - Pricing based on world rankings
 
-**Season Snake Draft**
-- Draft drivers for the full season
-
-**Season Prediction Pick'em**
-- Predict race outcomes across the season
-- Optional confidence weighting
-
-### Scoring: DFS Captain
+### Scoring: Position + Stats
 
 **Finish Position Points**
 | Position | Points |
@@ -379,31 +308,25 @@ All survivor contests share these configurable options:
 
 | Template | Type | Config |
 |---|---|---|
-| Budget Weekly | BUDGET_PICK | $10M budget, 5-driver roster |
-| Season Snake | SNAKE_DRAFT | 3 rounds, 120s per pick, async |
+| Race Budget | BUDGET_PICK | $10M budget, 5-driver roster |
 
 ---
 
 ## Tennis
 
-**Contest Type:** SINGLE_EVENT, SEASON_LONG
-**Selection Types:** Snake Draft, Tiered, Budget Pick, Bracket Pick'em, Survivor
+**Contest Type:** SINGLE_EVENT
+**Selection Types:** Budget Pick, Bracket Pick'em
 
 ### Contest Formats
 
-**Grand Slam Squad Selection** (Snake, Tiered, or Budget)
+**Grand Slam Squad Selection** (Budget)
 - Build roster for a single tournament
 - Score based on rounds won and match stats
 
 **Grand Slam Bracket**
 - Predict tournament bracket from Round of 128
 
-**Survivor (QF Onward)**
-- Pick one player per round from quarterfinals onward
-- Wrong pick = eliminated
-- Each player usable only once
-
-### Scoring: Grand Slam DFS
+### Scoring: Tournament Position + Match Stats
 
 **Tournament Position Points**
 | Finish | Points |
@@ -435,14 +358,12 @@ All survivor contests share these configurable options:
 
 ## Soccer
 
-**Contest Type:** SINGLE_EVENT, SEASON_LONG
-**Selection Types:** Snake Draft, Tiered, Budget Pick, Bracket Pick'em
+**Contest Type:** SINGLE_EVENT (tournament/cup play)
+**Selection Types:** Bracket Pick'em
+
+> Season-long EPL fantasy draft removed. Focus on tournament brackets (Champions League, World Cup).
 
 ### Contest Formats
-
-**Season Snake Draft**
-- Draft individual players for a full league season
-- Weekly scoring from match stats
 
 **Champions League Bracket**
 - Predict UCL knockout bracket
@@ -451,64 +372,44 @@ All survivor contests share these configurable options:
 **Tournament Survivor**
 - Pick winners during knockout stage
 
-### Scoring: EPL DFS Standard
+### Scoring: Goals + Assists
 
-**Attacking**
 | Stat | Points |
 |---|---|
 | Goal scored | +6 |
 | Assist | +4 |
-| Shot on target | +0.5 |
-| Key pass | +0.5 |
-
-**Defending**
-| Stat | Points |
-|---|---|
-| Clean sheet (GK) | +6 |
-| Clean sheet (DEF) | +4 |
-| Tackle | +0.5 |
-| Interception | +0.5 |
-| Save | +1 |
-| Penalty save | +5 |
-
-**Penalties**
-| Stat | Points |
-|---|---|
 | Yellow card | -1 |
 | Red card | -3 |
 | Own goal | -2 |
-| Penalty missed | -2 |
+
+> Advanced stats (tackles, interceptions, saves, clean sheets) deferred — hard to source reliably.
 
 ### Selection Templates
 
 | Template | Type | Config |
 |---|---|---|
-| Season Snake (11 rounds) | SNAKE_DRAFT | 11 rounds, 90s per pick, live mode |
 | UCL Bracket | BRACKET_PICK_EM | Round values [2, 4, 8, 16], correct score bonus +3 |
 
 ---
 
 ## NASCAR
 
-**Contest Type:** SEASON_LONG
-**Selection Types:** Snake Draft, Pick'em (Survivor)
+**Contest Type:** SINGLE_EVENT (per-race)
+**Selection Types:** Snake Draft, Survivor
 
 ### Contest Formats
 
-**Season Snake Draft**
-- Draft drivers for the full season
-- Best 3 of 4 scores count per race weekend
+**Race Snake Draft**
+- Draft drivers for a single race
+- Best 3 of 4 scores count
 
-**Season Survivor**
+**Race Survivor**
 - Pick one driver per race to finish in top 10
 - Wrong pick = eliminated
-- Each driver usable only once per season
+- Each driver usable only once
 - 1 strike allowed before elimination
 
-**Season Pick'em**
-- Predict race outcomes across the season
-
-### Scoring: DFS Place Differential
+### Scoring: Position + Place Differential
 
 **Finish Position Points**
 | Position | Points |
@@ -537,14 +438,14 @@ All survivor contests share these configurable options:
 | Template | Type | Config |
 |---|---|---|
 | Snake Draft (4 rounds) | SNAKE_DRAFT | 4 rounds, 120s per pick, async, best 3 of 4 |
-| Season Survivor | PICK_EM | 1 pick/race, one-and-done, 1 strike |
+| Race Survivor | PICK_EM | 1 pick/race, one-and-done, 1 strike |
 
 ---
 
 ## Horse Racing
 
 **Contest Type:** SINGLE_EVENT
-**Selection Types:** Snake Draft, Tiered, Budget Pick, Bracket Pick'em
+**Selection Types:** Tiered, Budget Pick
 
 ### Contest Formats
 
@@ -555,12 +456,6 @@ All survivor contests share these configurable options:
 **Budget Pick Pool**
 - Each horse priced by odds
 - Build stable within salary cap
-
-**Snake Draft**
-- Exclusive pre-race draft of horses
-
-**Pick'em Bracket**
-- Predict race outcomes
 
 ### Scoring: Finish Position
 
@@ -586,6 +481,6 @@ All survivor contests share these configurable options:
 
 - Scoring templates: `packages/core-api/src/modules/scoring/templates/`
 - Selection templates: `packages/core-api/src/modules/drafts/templates/selection-templates.ts`
-- Contest structures specification: `plans/02a-poolmaster-contest-structures.md`
-- Scoring config schemas: `packages/shared/domain/scoring-config.ts`
+- Scoring config schema: `packages/shared/domain/scoring-config.ts`
 - Domain enums: `packages/shared/domain/enums.ts`
+- Deferred features: `plans/deferred/contest-rules-deferred.md`
