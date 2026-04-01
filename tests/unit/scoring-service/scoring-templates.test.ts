@@ -55,9 +55,22 @@ describe('Template registry', () => {
 // 03-008: NFL Templates
 // ========================================================================
 
-describe('NFL templates removed (deferred)', () => {
-  it('NFL_TEMPLATES is empty (player-based scoring deferred)', () => {
-    expect(Object.keys(NFL_TEMPLATES).length).toBe(0);
+describe('NFL templates', () => {
+  it('NFL_TEMPLATES has standard, PPR, and half-PPR templates', () => {
+    expect(Object.keys(NFL_TEMPLATES).length).toBe(3);
+    expect(NFL_TEMPLATES).toHaveProperty('nfl_standard');
+    expect(NFL_TEMPLATES).toHaveProperty('nfl_ppr');
+    expect(NFL_TEMPLATES).toHaveProperty('nfl_half_ppr');
+  });
+
+  it('nfl_ppr template has reception stat rule', () => {
+    const ppr = NFL_TEMPLATES.nfl_ppr;
+    expect(ppr.stat_rules.some((r: any) => r.stat_key === 'reception' && r.points_per_unit === 1)).toBe(true);
+  });
+
+  it('nfl_half_ppr template has 0.5 reception stat rule', () => {
+    const halfPpr = NFL_TEMPLATES.nfl_half_ppr;
+    expect(halfPpr.stat_rules.some((r: any) => r.stat_key === 'reception' && r.points_per_unit === 0.5)).toBe(true);
   });
 });
 
