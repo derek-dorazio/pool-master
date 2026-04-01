@@ -3,7 +3,6 @@
  */
 
 import type { ScoringConfig } from '@poolmaster/shared/domain/scoring-config';
-import { NFL_TEMPLATES } from './nfl';
 import { GOLF_TEMPLATES } from './golf';
 import { F1_TEMPLATES } from './f1';
 import { NASCAR_TEMPLATES } from './nascar';
@@ -14,7 +13,6 @@ import { HORSE_RACING_TEMPLATES } from './horse-racing';
 import { SOCCER_TEMPLATES } from './soccer';
 
 export const SCORING_TEMPLATES: Record<string, ScoringConfig> = {
-  ...NFL_TEMPLATES,
   ...GOLF_TEMPLATES,
   ...F1_TEMPLATES,
   ...NASCAR_TEMPLATES,

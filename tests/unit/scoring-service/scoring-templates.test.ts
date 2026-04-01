@@ -1,6 +1,5 @@
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
 import { SCORING_TEMPLATES, getTemplate, listTemplates } from '../../../packages/core-api/src/modules/scoring/templates/registry';
-import { NFL_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nfl';
 import { GOLF_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/golf';
 import { F1_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/f1';
 import { NASCAR_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/nascar';
@@ -48,16 +47,6 @@ describe('Template registry', () => {
     const list = listTemplates();
     expect(list.length).toBe(Object.keys(SCORING_TEMPLATES).length);
     expect(list.every((t) => t.key && t.sport)).toBe(true);
-  });
-});
-
-// ========================================================================
-// 03-008: NFL Templates
-// ========================================================================
-
-describe('NFL templates removed (deferred)', () => {
-  it('NFL_TEMPLATES is empty (player-based scoring deferred)', () => {
-    expect(Object.keys(NFL_TEMPLATES).length).toBe(0);
   });
 });
 

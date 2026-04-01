@@ -40,11 +40,11 @@ describe('Scoring Templates + Contest Configuration', () => {
     expect(body.templates.length).toBeGreaterThanOrEqual(15);
   });
 
-  it('gets NFL PPR template with stat rules', async () => {
-    const res = await fetch(`${BASE}/api/v1/scoring/templates/nfl_ppr`, { headers: headers() });
+  it('gets golf DFS template with stat rules', async () => {
+    const res = await fetch(`${BASE}/api/v1/scoring/templates/golf_dfs_standard`, { headers: headers() });
     expect(res.status).toBe(200);
     const body = await res.json() as any;
-    expect(body.key).toBe('nfl_ppr');
+    expect(body.key).toBe('golf_dfs_standard');
     expect(body.config).toBeDefined();
     const rules = body.config.statRules ?? body.config.stat_rules;
     expect(rules).toBeDefined();
@@ -60,7 +60,7 @@ describe('Scoring Templates + Contest Configuration', () => {
 
   it('validates a scoring config via POST', async () => {
     // Get a real template config first
-    const tr = await fetch(`${BASE}/api/v1/scoring/templates/nfl_ppr`, { headers: headers() });
+    const tr = await fetch(`${BASE}/api/v1/scoring/templates/golf_dfs_standard`, { headers: headers() });
     const config = ((await tr.json()) as any).config;
 
     const res = await fetch(`${BASE}/api/v1/scoring/config/validate`, {
@@ -78,18 +78,18 @@ describe('Scoring Templates + Contest Configuration', () => {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
-        name: 'NFL PPR Contest',
-        contestType: 'SEASON_LONG',
+        name: 'Golf DFS Contest',
+        contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
-        scoringEngine: 'STAT_ACCUMULATION',
-        scoringTemplateKey: 'nfl_ppr',
+        scoringEngine: 'STROKE_PLAY',
+        scoringTemplateKey: 'golf_dfs_standard',
       }),
     });
     // 201 if template key is supported, 400 if validation rejects the combination
     expect([201, 400]).toContain(res.status);
     if (res.status === 201) {
       const body = await res.json() as any;
-      expect(body.contest.name).toBe('NFL PPR Contest');
+      expect(body.contest.name).toBe('Golf DFS Contest');
     }
   });
 
