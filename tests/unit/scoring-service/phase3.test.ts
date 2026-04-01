@@ -347,14 +347,14 @@ describe('Stat schema validation', () => {
 describe('Template library', () => {
   it('lists all templates with sport info', () => {
     const templates = listTemplates();
-    expect(templates.length).toBeGreaterThanOrEqual(15);
+    expect(templates.length).toBeGreaterThanOrEqual(12);
 
     const sports = new Set(templates.map((t) => t.sport));
     expect(sports.size).toBeGreaterThanOrEqual(7);
   });
 
   it('getTemplate returns deep copy that can be modified', () => {
-    const original = getTemplate('nfl_ppr');
+    const original = getTemplate('golf_relative_to_par');
     expect(original).toBeDefined();
 
     // Template configs are plain objects — modifying a spread copy
@@ -362,7 +362,7 @@ describe('Template library', () => {
     const copy = { ...original!, stat_rules: [...original!.stat_rules] };
     copy.stat_rules.push({ stat_key: 'custom', points_per_unit: 99 });
 
-    const fresh = getTemplate('nfl_ppr');
+    const fresh = getTemplate('golf_relative_to_par');
     expect(fresh!.stat_rules).not.toContainEqual(
       expect.objectContaining({ stat_key: 'custom' }),
     );
@@ -377,8 +377,8 @@ describe('Template library', () => {
       bySport.set(t.sport, list);
     }
 
-    // NFL should have 3 templates
-    expect(bySport.get('NFL')?.length).toBe(3);
+    // NFL has 0 templates (player scoring deferred)
+    expect(bySport.get('NFL')?.length ?? 0).toBe(0);
     // NCAA should have 4
     expect(bySport.get('NCAA_BASKETBALL')?.length).toBe(4);
     // Golf should have 2

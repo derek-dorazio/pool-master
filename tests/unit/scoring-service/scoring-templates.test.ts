@@ -20,7 +20,8 @@ describe('All scoring templates pass schema validation', () => {
   const templateEntries = Object.entries(SCORING_TEMPLATES);
 
   it('registry contains all expected templates', () => {
-    expect(templateEntries.length).toBeGreaterThanOrEqual(15);
+    // NFL(0) + Golf(2) + F1(1) + NASCAR(1) + NCAA(4) + NBA(1) + Tennis(1) + Horse Racing(1) + Soccer(1) = 12
+    expect(templateEntries.length).toBeGreaterThanOrEqual(12);
   });
 
   it.each(templateEntries)('%s parses via ScoringConfigSchema', (key, config) => {
@@ -34,9 +35,9 @@ describe('All scoring templates pass schema validation', () => {
 
 describe('Template registry', () => {
   it('getTemplate returns config for valid key', () => {
-    const config = getTemplate('nfl_ppr');
+    const config = getTemplate('golf_relative_to_par');
     expect(config).toBeDefined();
-    expect(config!.sport).toBe('NFL');
+    expect(config!.sport).toBe('GOLF');
   });
 
   it('getTemplate returns undefined for invalid key', () => {
@@ -54,58 +55,9 @@ describe('Template registry', () => {
 // 03-008: NFL Templates
 // ========================================================================
 
-describe('NFL templates', () => {
-  it('standard has no reception stat', () => {
-    const std = NFL_TEMPLATES.nfl_standard_nonppr;
-    const hasReception = std.stat_rules.some((r) => r.stat_key === 'reception');
-    expect(hasReception).toBe(false);
-  });
-
-  it('PPR awards 1 pt per reception', () => {
-    const ppr = NFL_TEMPLATES.nfl_ppr;
-    const reception = ppr.stat_rules.find((r) => r.stat_key === 'reception');
-    expect(reception).toBeDefined();
-    expect(reception!.points_per_unit).toBe(1);
-  });
-
-  it('half-PPR awards 0.5 pts per reception', () => {
-    const halfPpr = NFL_TEMPLATES.nfl_half_ppr;
-    const reception = halfPpr.stat_rules.find((r) => r.stat_key === 'reception');
-    expect(reception).toBeDefined();
-    expect(reception!.points_per_unit).toBe(0.5);
-  });
-
-  it('scores a QB correctly with standard scoring', () => {
-    const config = ScoringConfigSchema.parse(NFL_TEMPLATES.nfl_standard_nonppr);
-    const qb: ParticipantScoringData = {
-      participantId: 'mahomes',
-      stats: {
-        passing_yards: 300,
-        passing_td: 3,
-        interception_thrown: 1,
-        rushing_yards: 30,
-      },
-      isDNF: false,
-    };
-    const result = scoreParticipant(config, qb);
-    // passing: 300*0.04=12, td: 3*4=12, int: -2, rushing: 30*0.1=3, bonus: 3 (300yd)
-    expect(result.statPoints).toBe(25);
-    expect(result.bonusPoints).toBe(3);
-    expect(result.finalScore).toBe(28);
-  });
-
-  it('PPR scores receptions', () => {
-    const config = ScoringConfigSchema.parse(NFL_TEMPLATES.nfl_ppr);
-    const wr: ParticipantScoringData = {
-      participantId: 'hill',
-      stats: { reception: 8, receiving_yards: 120, receiving_td: 1 },
-      isDNF: false,
-    };
-    const result = scoreParticipant(config, wr);
-    // receptions: 8*1=8, yards: 120*0.1=12, td: 6, bonus: 3 (100+ receiving)
-    expect(result.statPoints).toBe(26);
-    expect(result.bonusPoints).toBe(3);
-    expect(result.finalScore).toBe(29);
+describe('NFL templates removed (deferred)', () => {
+  it('NFL_TEMPLATES is empty (player-based scoring deferred)', () => {
+    expect(Object.keys(NFL_TEMPLATES).length).toBe(0);
   });
 });
 
@@ -114,48 +66,54 @@ describe('NFL templates', () => {
 // ========================================================================
 
 describe('Golf templates', () => {
-  it('DFS template awards birdie and position points', () => {
-    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_dfs_standard);
+  it('relative-to-par template scores birdies negative and bogeys positive', () => {
+    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_relative_to_par);
     const golfer: ParticipantScoringData = {
       participantId: 'scheffler',
-      stats: { birdie: 18, par: 40, bogey: 10, eagle: 2, bogey_free_round: 1 },
-      position: 1,
+      stats: { birdie: 18, par: 40, bogey: 10, eagle: 2 },
       isDNF: false,
     };
     const result = scoreParticipant(config, golfer);
-    // birdie: 18*3=54, par: 40*0.5=20, bogey: 10*-0.5=-5, eagle: 2*5=10
-    expect(result.statPoints).toBe(79);
-    expect(result.positionPoints).toBe(30); // 1st place
-    // bogey_free_round bonus: 3
-    expect(result.bonusPoints).toBe(3);
+    // birdie: 18*-1=-18, par: 40*0=0, bogey: 10*1=10, eagle: 2*-2=-4
+    expect(result.statPoints).toBe(-12);
+    expect(result.positionPoints).toBe(0); // no position rules
+    expect(result.bonusPoints).toBe(0); // no bonus rules
   });
 
   it('stroke play uses BEST_N and lower_is_better', () => {
-    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_stroke_pick6_use4);
+    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_pick6_use4);
     expect(config.counting_method).toBe('BEST_N');
     expect(config.best_n).toBe(4);
     expect(config.lower_is_better).toBe(true);
-    expect(config.dnf_handling).toBe('MISSED_CUT_SCORE');
-    expect(config.missed_event_score).toBe(80);
+    expect(config.dnf_handling).toBe('ZERO');
   });
 
-  it('stroke play scores a roster with missed cut', () => {
-    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_stroke_pick6_use4);
+  it('stroke play scores a roster with relative-to-par stats', () => {
+    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_pick6_use4);
     const golfers: ParticipantScoringData[] = [
-      { participantId: 'g1', stats: { total_strokes: 280 }, isDNF: false },
-      { participantId: 'g2', stats: { total_strokes: 275 }, isDNF: false },
-      { participantId: 'g3', stats: { total_strokes: 290 }, isDNF: false },
-      { participantId: 'g4', stats: { total_strokes: 285 }, isDNF: false },
-      { participantId: 'g5', stats: { total_strokes: 140 }, isDNF: false, isMissedCut: true },
-      { participantId: 'g6', stats: { total_strokes: 282 }, isDNF: false },
+      // Good golfer: lots of birdies, few bogeys -> low (negative) score
+      { participantId: 'g1', stats: { birdie: 15, par: 45, bogey: 8, eagle: 1 }, isDNF: false },
+      // Great golfer: most birdies
+      { participantId: 'g2', stats: { birdie: 20, par: 40, bogey: 6, eagle: 2 }, isDNF: false },
+      // Average golfer
+      { participantId: 'g3', stats: { birdie: 10, par: 48, bogey: 12, eagle: 0 }, isDNF: false },
+      // Decent golfer
+      { participantId: 'g4', stats: { birdie: 12, par: 46, bogey: 10, eagle: 1 }, isDNF: false },
+      // Missed cut (ZERO dnf handling -> score 0)
+      { participantId: 'g5', stats: { birdie: 5, par: 20, bogey: 8 }, isDNF: false, isMissedCut: true },
+      // Solid golfer
+      { participantId: 'g6', stats: { birdie: 14, par: 44, bogey: 9, eagle: 1 }, isDNF: false },
     ];
     const result = scoreEntry(config, golfers);
-    // g5 missed cut → 80 strokes (missed_event_score)
-    // Best 4 (lowest): 80(g5), 275(g2), 280(g1), 282(g6) = 917
-    // Wait - g5 isMissedCut=true so handleDNF applies: score=80
-    // Sorted ascending: 80, 275, 280, 282, 285, 290
-    // Best 4 lowest: 80 + 275 + 280 + 282 = 917
-    expect(result.totalScore).toBe(917);
+    // g1: 15*-1 + 45*0 + 8*1 + 1*-2 = -15+8-2 = -9
+    // g2: 20*-1 + 40*0 + 6*1 + 2*-2 = -20+6-4 = -18
+    // g3: 10*-1 + 48*0 + 12*1 + 0 = -10+12 = 2
+    // g4: 12*-1 + 46*0 + 10*1 + 1*-2 = -12+10-2 = -4
+    // g5: missed cut -> ZERO dnf handling -> score 0
+    // g6: 14*-1 + 44*0 + 9*1 + 1*-2 = -14+9-2 = -7
+    // lower_is_better: sorted ascending: -18(g2), -9(g1), -7(g6), -4(g4), 0(g5), 2(g3)
+    // Best 4 (lowest): -18 + -9 + -7 + -4 = -38
+    expect(result.totalScore).toBe(-38);
     expect(result.countingParticipantIds).toHaveLength(4);
   });
 });
@@ -181,8 +139,8 @@ describe('F1 template', () => {
     };
     const result = scoreParticipant(config, driver);
     // position: 25
-    // laps_led: 30*0.1=3, classified: 1, fastest: 1, teammate: 3 → stat=8
-    // spots_gained 3 → bonus: 2 (3-4 range)
+    // laps_led: 30*0.1=3, classified: 1, fastest: 1, teammate: 3 -> stat=8
+    // spots_gained 3 -> bonus: 2 (3-4 range)
     expect(result.positionPoints).toBe(25);
     expect(result.statPoints).toBe(8);
     expect(result.bonusPoints).toBe(2);
@@ -236,7 +194,7 @@ describe('NASCAR template', () => {
     const result = scoreParticipant(config, driver);
     // position: 45
     // place_diff: 10, laps_led: 50*0.25=12.5, fastest: 3*0.45=1.35, stage: 4, led_most: 2
-    // bonus: laps_led>=1 → 2
+    // bonus: laps_led>=1 -> 2
     expect(result.positionPoints).toBe(45);
     expect(result.bonusPoints).toBe(2);
   });
@@ -285,26 +243,26 @@ describe('NCAA bracket templates', () => {
 // ========================================================================
 
 describe('NBA template', () => {
-  it('points league scores a stat line', () => {
-    const config = ScoringConfigSchema.parse(NBA_TEMPLATES.nba_points_league);
+  it('nba_simple has 3 stat rules (points, assists, rebounds)', () => {
+    const config = ScoringConfigSchema.parse(NBA_TEMPLATES.nba_simple);
+    expect(config.stat_rules).toHaveLength(3);
+  });
+
+  it('simple scoring scores a stat line', () => {
+    const config = ScoringConfigSchema.parse(NBA_TEMPLATES.nba_simple);
     const player: ParticipantScoringData = {
       participantId: 'jokic',
       stats: {
         points: 30,
         rebounds: 12,
         assists: 10,
-        steals: 2,
-        blocks: 1,
-        three_pointer_made: 3,
-        turnover: 4,
-        triple_double: 1,
       },
       isDNF: false,
     };
     const result = scoreParticipant(config, player);
-    // pts: 30, reb: 12*1.25=15, ast: 10*1.5=15, stl: 2*2=4, blk: 1*2=2
-    // 3pm: 3*0.5=1.5, to: 4*-1=-4, triple_double: 3
-    expect(result.statPoints).toBe(66.5);
+    // pts: 30*1=30, reb: 12*1.25=15, ast: 10*1.5=15
+    // Total: 30 + 15 + 15 = 60
+    expect(result.statPoints).toBe(60);
   });
 });
 
@@ -392,36 +350,25 @@ describe('Horse racing template', () => {
 // ========================================================================
 
 describe('Soccer/EPL template', () => {
+  it('soccer_goals_assists has 5 stat rules (goals, assists, yellow, red, own goal)', () => {
+    const config = ScoringConfigSchema.parse(SOCCER_TEMPLATES.soccer_goals_assists);
+    expect(config.stat_rules).toHaveLength(5);
+  });
+
   it('scores a forward with goals and assists', () => {
-    const config = ScoringConfigSchema.parse(SOCCER_TEMPLATES.epl_dfs_standard);
+    const config = ScoringConfigSchema.parse(SOCCER_TEMPLATES.soccer_goals_assists);
     const forward: ParticipantScoringData = {
       participantId: 'haaland',
       stats: {
         goal_scored: 2,
         assist: 1,
-        shot_on_target: 4,
         yellow_card: 1,
       },
       isDNF: false,
     };
     const result = scoreParticipant(config, forward);
-    // goals: 2*6=12, assist: 4, sot: 4*0.5=2, yellow: -1
-    expect(result.statPoints).toBe(17);
-  });
-
-  it('scores a goalkeeper with clean sheet and saves', () => {
-    const config = ScoringConfigSchema.parse(SOCCER_TEMPLATES.epl_dfs_standard);
-    const gk: ParticipantScoringData = {
-      participantId: 'raya',
-      stats: {
-        clean_sheet_gk: 1,
-        save: 5,
-        penalty_save: 1,
-      },
-      isDNF: false,
-    };
-    const result = scoreParticipant(config, gk);
-    // clean_sheet: 6, saves: 5*1=5, pen_save: 5
-    expect(result.statPoints).toBe(16);
+    // goals: 2*6=12, assist: 1*4=4, yellow: 1*-1=-1
+    // Total: 12 + 4 - 1 = 15
+    expect(result.statPoints).toBe(15);
   });
 });

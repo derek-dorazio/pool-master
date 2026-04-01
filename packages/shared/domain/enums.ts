@@ -80,7 +80,7 @@ export type PoolType = (typeof PoolType)[keyof typeof PoolType];
 
 export const ContestType = {
   SINGLE_EVENT: 'SINGLE_EVENT',
-  SEASON_LONG: 'SEASON_LONG',
+  // SEASON_LONG removed — deferred (see plans/deferred/contest-rules-deferred.md)
 } as const;
 export type ContestType = (typeof ContestType)[keyof typeof ContestType];
 

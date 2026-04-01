@@ -48,7 +48,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
         required: ['name', 'contestType', 'selectionType', 'scoringEngine'],
         properties: {
           name: { type: 'string', minLength: 1, maxLength: 200 },
-          contestType: { type: 'string', enum: ['SINGLE_EVENT', 'SEASON_LONG'] },
+          contestType: { type: 'string', enum: ['SINGLE_EVENT'] },
           selectionType: {
             type: 'string',
             enum: ['SNAKE_DRAFT', 'TIERED', 'BUDGET_PICK', 'OPEN_SELECTION', 'PICK_EM', 'BRACKET_PICK_EM'],

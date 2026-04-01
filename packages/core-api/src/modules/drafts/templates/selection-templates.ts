@@ -53,22 +53,13 @@ export const SELECTION_TEMPLATES: SelectionTemplate[] = [
     config: { budget: 5000000, rosterSize: 6, pricingMethod: 'ODDS', isExclusive: false },
   },
 
-  // --- NFL ---
-  {
-    id: 'nfl-snake-15rd',
-    name: 'NFL Snake Draft (15 rounds)',
-    description: 'Standard 15-round snake draft for fantasy football. Live or async mode.',
-    sport: 'NFL',
-    contestType: 'SEASON_LONG',
-    selectionType: 'SNAKE_DRAFT',
-    config: { rounds: 15, timePerPickSeconds: 60, draftMode: 'LIVE', autoPickPolicy: 'QUEUE_THEN_BEST' },
-  },
+  // --- NFL (team-based only — player fantasy deferred) ---
   {
     id: 'nfl-survivor',
     name: 'NFL Survivor Pool',
     description: 'Pick one team per week to win. Survive or go home. Each team usable only once.',
     sport: 'NFL',
-    contestType: 'SEASON_LONG',
+    contestType: 'SINGLE_EVENT',
     selectionType: 'PICK_EM',
     config: { picksPerPeriod: 1, oneEntityPerSeason: true, strikesBeforeElimination: 0 },
   },
@@ -77,7 +68,7 @@ export const SELECTION_TEMPLATES: SelectionTemplate[] = [
     name: 'NFL Confidence Pick\'em',
     description: 'Pick winners for all games each week. Assign confidence points to weight your picks.',
     sport: 'NFL',
-    contestType: 'SEASON_LONG',
+    contestType: 'SINGLE_EVENT',
     selectionType: 'PICK_EM',
     config: { confidenceWeighted: true, picksPerPeriod: 16 },
   },
@@ -116,16 +107,7 @@ export const SELECTION_TEMPLATES: SelectionTemplate[] = [
     },
   },
 
-  // --- NBA ---
-  {
-    id: 'nba-snake-12rd',
-    name: 'NBA Snake Draft (12 rounds)',
-    description: 'Season-long NBA fantasy with 12-round snake draft.',
-    sport: 'NBA',
-    contestType: 'SEASON_LONG',
-    selectionType: 'SNAKE_DRAFT',
-    config: { rounds: 12, timePerPickSeconds: 90, draftMode: 'LIVE', autoPickPolicy: 'QUEUE_THEN_BEST' },
-  },
+  // --- NBA (season-long fantasy removed — playoffs only) ---
   {
     id: 'nba-playoff-tiers',
     name: 'NBA Playoff Tiers',
@@ -146,15 +128,7 @@ export const SELECTION_TEMPLATES: SelectionTemplate[] = [
     selectionType: 'BUDGET_PICK',
     config: { budget: 10000000, rosterSize: 5, pricingMethod: 'WORLD_RANKING', isExclusive: false },
   },
-  {
-    id: 'f1-season-snake',
-    name: 'F1 Season-Long Snake Draft',
-    description: 'Draft drivers for the full F1 season. Points accumulate across all races.',
-    sport: 'F1',
-    contestType: 'SEASON_LONG',
-    selectionType: 'SNAKE_DRAFT',
-    config: { rounds: 3, timePerPickSeconds: 120, draftMode: 'ASYNC' },
-  },
+  // f1-season-snake removed — season-long fantasy deferred
 
   // --- Tennis ---
   {
@@ -176,16 +150,7 @@ export const SELECTION_TEMPLATES: SelectionTemplate[] = [
     config: { roundValues: [1, 2, 4, 8, 16, 32, 64], startRound: 'ROUND_OF_128' },
   },
 
-  // --- Soccer ---
-  {
-    id: 'soccer-season-snake',
-    name: 'EPL Season-Long Snake Draft',
-    description: 'Draft players for the Premier League season. Weekly stat accumulation scoring.',
-    sport: 'SOCCER',
-    contestType: 'SEASON_LONG',
-    selectionType: 'SNAKE_DRAFT',
-    config: { rounds: 11, timePerPickSeconds: 90, draftMode: 'LIVE', autoPickPolicy: 'QUEUE_THEN_BEST' },
-  },
+  // --- Soccer (season-long fantasy removed — tournament pools only) ---
   {
     id: 'soccer-ucl-bracket',
     name: 'Champions League Bracket',
@@ -211,7 +176,7 @@ export const SELECTION_TEMPLATES: SelectionTemplate[] = [
     name: 'NASCAR Season Survivor',
     description: 'Pick one driver per race to finish in the top 10. Eliminated if they don\'t.',
     sport: 'NASCAR',
-    contestType: 'SEASON_LONG',
+    contestType: 'SINGLE_EVENT',
     selectionType: 'PICK_EM',
     config: { picksPerPeriod: 1, oneEntityPerSeason: true, strikesBeforeElimination: 1 },
   },

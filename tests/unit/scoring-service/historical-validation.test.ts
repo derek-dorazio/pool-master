@@ -3,7 +3,7 @@
  * known real-world results to ensure scoring accuracy.
  *
  * Per testing-rules.md §8: Sport-specific tests should validate
- * against known real-world results (Masters golf, NFL stats, etc.).
+ * against known real-world results (Masters golf, NBA stats, etc.).
  */
 
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
@@ -26,84 +26,12 @@ import { HORSE_RACING_TEMPLATES } from '../../../packages/core-api/src/modules/s
 import { SOCCER_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/soccer';
 
 // ========================================================================
-// NFL — Patrick Mahomes, 2024 Super Bowl LVIII
-// Mahomes: 333 passing yards, 2 passing TDs, 0 INTs, 66 rushing yards, 0 rushing TDs
+// NFL — removed (no player-based scoring templates)
 // ========================================================================
 
-describe('NFL historical: Mahomes Super Bowl LVIII (2024)', () => {
-  const mahomesStats: ParticipantScoringData = {
-    participantId: 'mahomes',
-    stats: {
-      passing_yards: 333,
-      passing_td: 2,
-      interception_thrown: 0,
-      rushing_yards: 66,
-      rushing_td: 0,
-      fumble_lost: 0,
-    },
-    isDNF: false,
-  };
-
-  it('standard scoring', () => {
-    const config = ScoringConfigSchema.parse(NFL_TEMPLATES.nfl_standard_nonppr);
-    const result = scoreParticipant(config, mahomesStats);
-    // passing: 333 * 0.04 = 13.32 → floor(333/1)*0.04*1 = 13.32
-    // passing_td: 2 * 4 = 8
-    // rushing: 66 * 0.1 = 6.6
-    // bonus: 300+ passing yards = 3
-    // Total stat: 13.32 + 8 + 6.6 = 27.92
-    expect(result.statPoints).toBeCloseTo(27.92, 1);
-    expect(result.bonusPoints).toBe(3);
-    expect(result.finalScore).toBeCloseTo(30.92, 1);
-  });
-
-  it('PPR scoring (same — QBs unaffected by PPR)', () => {
-    const config = ScoringConfigSchema.parse(NFL_TEMPLATES.nfl_ppr);
-    const result = scoreParticipant(config, mahomesStats);
-    // No receptions, so PPR makes no difference for a QB
-    expect(result.statPoints).toBeCloseTo(27.92, 1);
-  });
-});
-
-describe('NFL historical: Tyreek Hill, 2023 Week 1 (PPR)', () => {
-  // Hill vs LAC Week 1 2023: 11 receptions, 215 rec yards, 2 rec TDs
-  const hillStats: ParticipantScoringData = {
-    participantId: 'hill',
-    stats: {
-      reception: 11,
-      receiving_yards: 215,
-      receiving_td: 2,
-    },
-    isDNF: false,
-  };
-
-  it('PPR scoring', () => {
-    const config = ScoringConfigSchema.parse(NFL_TEMPLATES.nfl_ppr);
-    const result = scoreParticipant(config, hillStats);
-    // receptions: 11 * 1 = 11
-    // rec_yards: 215 * 0.1 = 21.5
-    // rec_td: 2 * 6 = 12
-    // bonus: 100+ receiving yards = 3
-    expect(result.statPoints).toBeCloseTo(44.5, 1);
-    expect(result.bonusPoints).toBe(3);
-    expect(result.finalScore).toBeCloseTo(47.5, 1);
-  });
-
-  it('half-PPR scoring', () => {
-    const config = ScoringConfigSchema.parse(NFL_TEMPLATES.nfl_half_ppr);
-    const result = scoreParticipant(config, hillStats);
-    // receptions: 11 * 0.5 = 5.5
-    // rec_yards: 21.5, rec_td: 12 → stat: 39
-    expect(result.statPoints).toBeCloseTo(39, 1);
-    expect(result.finalScore).toBeCloseTo(42, 1);
-  });
-
-  it('standard (no PPR) scoring', () => {
-    const config = ScoringConfigSchema.parse(NFL_TEMPLATES.nfl_standard_nonppr);
-    const result = scoreParticipant(config, hillStats);
-    // No reception points: yards(21.5) + td(12) = 33.5
-    expect(result.statPoints).toBeCloseTo(33.5, 1);
-    expect(result.finalScore).toBeCloseTo(36.5, 1);
+describe('NFL templates removed', () => {
+  it('NFL_TEMPLATES is empty', () => {
+    expect(Object.keys(NFL_TEMPLATES).length).toBe(0);
   });
 });
 
@@ -113,9 +41,9 @@ describe('NFL historical: Tyreek Hill, 2023 Week 1 (PPR)', () => {
 // ========================================================================
 
 describe('Golf historical: 2024 Masters — Scheffler', () => {
-  it('DFS scoring — birdies, eagles, position', () => {
-    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_dfs_standard);
-    // Approximate stat line for a -11 tournament
+  it('relative-to-par scoring — birdies, eagles, bogeys', () => {
+    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_relative_to_par);
+    // Approximate hole-by-hole breakdown for a -11 tournament
     const scheffler: ParticipantScoringData = {
       participantId: 'scheffler',
       stats: {
@@ -125,19 +53,20 @@ describe('Golf historical: 2024 Masters — Scheffler', () => {
         bogey: 8,
         double_bogey: 0,
       },
-      position: 1,
       isDNF: false,
     };
 
     const result = scoreParticipant(config, scheffler);
-    // birdie: 21*3=63, eagle: 1*5=5, par: 42*0.5=21, bogey: 8*-0.5=-4
-    expect(result.statPoints).toBe(85);
-    expect(result.positionPoints).toBe(30); // 1st place
-    expect(result.finalScore).toBe(115);
+    // birdie: 21*-1=-21, eagle: 1*-2=-2, par: 42*0=0, bogey: 8*1=8, double_bogey: 0*2=0
+    // Total: -21 + -2 + 0 + 8 = -15
+    expect(result.statPoints).toBe(-15);
+    expect(result.positionPoints).toBe(0); // no position rules
+    expect(result.bonusPoints).toBe(0); // no bonus rules
+    expect(result.finalScore).toBe(-15);
   });
 
   it('stroke play office pool — pick 6 use best 4', () => {
-    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_stroke_pick6_use4);
+    const config = ScoringConfigSchema.parse(GOLF_TEMPLATES.golf_pick6_use4);
 
     const golfers: StrokePlayParticipant[] = [
       // Made cut
@@ -145,18 +74,20 @@ describe('Golf historical: 2024 Masters — Scheffler', () => {
       { participantId: 'morikawa', roundStrokes: [70, 69, 73, 69], madecut: true, withdrew: false, totalRounds: 4 },
       { participantId: 'dechambeau', roundStrokes: [69, 72, 71, 73], madecut: true, withdrew: false, totalRounds: 4 },
       { participantId: 'rahm', roundStrokes: [72, 73, 71, 72], madecut: true, withdrew: false, totalRounds: 4 },
-      // Missed cut
+      // Missed cut — ZERO dnf handling, no penalty rounds added, only played rounds count
       { participantId: 'mcilroy', roundStrokes: [76, 77], madecut: false, withdrew: false, totalRounds: 4 },
       { participantId: 'woods', roundStrokes: [73, 77], madecut: false, withdrew: false, totalRounds: 4 },
     ];
 
     const result = scoreStrokePlayEntry(config, golfers);
+    // With ZERO dnf_handling: missed cut golfers only sum played rounds
+    // mcilroy: 76+77=153, woods: 73+77=150
     // scheffler: 277, morikawa: 281, dechambeau: 285, rahm: 288
-    // mcilroy: 76+77+80+80=313, woods: 73+77+80+80=310
-    // Best 4: 277 + 281 + 285 + 288 = 1131
+    // Sorted ascending: 150, 153, 277, 281, 285, 288
+    // Best 4 (lowest): 150 + 153 + 277 + 281 = 861
     expect(result.countingParticipants).toHaveLength(4);
-    expect(result.totalStrokes).toBe(1131);
-    expect(result.countingParticipants[0].participantId).toBe('scheffler');
+    expect(result.totalStrokes).toBe(861);
+    expect(result.countingParticipants[0].participantId).toBe('woods');
   });
 });
 
@@ -190,9 +121,9 @@ describe('NCAA Bracket historical: 2024 March Madness', () => {
     ];
 
     const result = scoreBracket(config, predictions, results);
-    // Round 1: 4 correct × 1pt = 4
-    // Round 2: 1 correct × 2pt = 2
-    // Round 6: 1 correct × 32pt = 32
+    // Round 1: 4 correct x 1pt = 4
+    // Round 2: 1 correct x 2pt = 2
+    // Round 6: 1 correct x 32pt = 32
     // Total: 38
     expect(result.correctPicks).toBe(6);
     expect(result.totalScore).toBe(38);
@@ -224,8 +155,8 @@ describe('NCAA Bracket historical: 2024 March Madness', () => {
     const favResult = scoreBracket(config, favPrediction, results);
     const upsetResult = scoreBracket(config, upsetPrediction, results);
 
-    // 1-seed: round1(1) × seed(1) = 1
-    // 14-seed: round1(1) × seed(14) = 14
+    // 1-seed: round1(1) x seed(1) = 1
+    // 14-seed: round1(1) x seed(14) = 14
     expect(favResult.totalScore).toBe(1);
     expect(upsetResult.totalScore).toBe(14);
   });
@@ -246,33 +177,28 @@ describe('NCAA Bracket historical: 2024 March Madness', () => {
 
 // ========================================================================
 // NBA — Nikola Jokic triple-double: 2024 WCF Game 4
-// 33 points, 14 rebounds, 14 assists, 2 steals, 1 block, 3 3PM, 3 turnovers
+// 33 points, 14 rebounds, 14 assists
+// (steals, blocks, turnovers, triple-double no longer scored in nba_simple)
 // ========================================================================
 
 describe('NBA historical: Jokic triple-double, 2024 WCF', () => {
-  it('points league scoring', () => {
-    const config = ScoringConfigSchema.parse(NBA_TEMPLATES.nba_points_league);
+  it('simple scoring (points, assists, rebounds only)', () => {
+    const config = ScoringConfigSchema.parse(NBA_TEMPLATES.nba_simple);
     const jokic: ParticipantScoringData = {
       participantId: 'jokic',
       stats: {
         points: 33,
         rebounds: 14,
         assists: 14,
-        steals: 2,
-        blocks: 1,
-        three_pointer_made: 3,
-        turnover: 3,
-        triple_double: 1,
       },
       isDNF: false,
     };
 
     const result = scoreParticipant(config, jokic);
-    // pts: 33, reb: 14*1.25=17.5, ast: 14*1.5=21, stl: 2*2=4, blk: 1*2=2
-    // 3pm: 3*0.5=1.5, to: 3*-1=-3, triple_double: 1*3=3
-    // Total: 33+17.5+21+4+2+1.5-3+3 = 79
-    expect(result.statPoints).toBe(79);
-    expect(result.finalScore).toBe(79);
+    // pts: 33*1=33, reb: 14*1.25=17.5, ast: 14*1.5=21
+    // Total: 33 + 17.5 + 21 = 71.5
+    expect(result.statPoints).toBe(71.5);
+    expect(result.finalScore).toBe(71.5);
   });
 });
 
@@ -315,10 +241,10 @@ describe('NBA rotisserie historical scenario', () => {
 });
 
 // ========================================================================
-// NFL Head-to-Head — 3-week fantasy matchup scenario
+// Head-to-Head — 3-week fantasy matchup scenario
 // ========================================================================
 
-describe('NFL head-to-head historical scenario', () => {
+describe('Head-to-head historical scenario', () => {
   it('scores a 4-team, 3-week round-robin', () => {
     const matchups = [
       { period: 1, entryIdA: 'team1', entryIdB: 'team2' },
@@ -344,7 +270,7 @@ describe('NFL head-to-head historical scenario', () => {
 
     expect(standings).toHaveLength(4);
 
-    // team1: beat team2(W1), beat team3(W2), beat team4(W3) → 3-0
+    // team1: beat team2(W1), beat team3(W2), beat team4(W3) -> 3-0
     const team1 = standings.find((s) => s.entryId === 'team1')!;
     expect(team1.wins).toBe(3);
     expect(team1.losses).toBe(0);
@@ -370,7 +296,7 @@ describe('F1 historical: Verstappen 2024 Bahrain GP', () => {
         classified_finish: 1,
         fastest_lap: 1,
         beat_teammate: 1,
-        // Started P1, finished P1 → 0 spots gained
+        // Started P1, finished P1 -> 0 spots gained
       },
       position: 1,
       isDNF: false,
@@ -421,7 +347,7 @@ describe('NASCAR historical scenario: race winner', () => {
     const result = scoreParticipant(config, larson);
     // position: 45 (1st)
     // place_diff: 4*1=4, laps_led: 20*0.25=5, fastest: 2*0.45=0.9, stage: 1*4=4
-    // bonus: laps_led>=1 → 2
+    // bonus: laps_led>=1 -> 2
     expect(result.positionPoints).toBe(45);
     expect(result.statPoints).toBeCloseTo(13.9, 1);
     expect(result.bonusPoints).toBe(2);
@@ -482,45 +408,28 @@ describe('Horse Racing historical scenario', () => {
 
 // ========================================================================
 // EPL Soccer — Erling Haaland typical gameweek
-// 2 goals, 0 assists, 5 shots on target, 1 yellow card
+// 2 goals, 0 assists, 1 yellow card
+// (shot_on_target, key_pass no longer scored in soccer_goals_assists)
 // ========================================================================
 
 describe('EPL historical: Haaland typical gameweek', () => {
   it('scores a high-scoring forward', () => {
-    const config = ScoringConfigSchema.parse(SOCCER_TEMPLATES.epl_dfs_standard);
+    const config = ScoringConfigSchema.parse(SOCCER_TEMPLATES.soccer_goals_assists);
     const haaland: ParticipantScoringData = {
       participantId: 'haaland',
       stats: {
         goal_scored: 2,
         assist: 0,
-        shot_on_target: 5,
-        key_pass: 1,
         yellow_card: 1,
       },
       isDNF: false,
     };
 
     const result = scoreParticipant(config, haaland);
-    // goals: 2*6=12, sot: 5*0.5=2.5, key_pass: 1*0.5=0.5, yellow: 1*-1=-1
-    expect(result.statPoints).toBe(14);
-    expect(result.finalScore).toBe(14);
-  });
-
-  it('scores a clean-sheet goalkeeper', () => {
-    const config = ScoringConfigSchema.parse(SOCCER_TEMPLATES.epl_dfs_standard);
-    const ederson: ParticipantScoringData = {
-      participantId: 'ederson',
-      stats: {
-        clean_sheet_gk: 1,
-        save: 4,
-        penalty_save: 0,
-      },
-      isDNF: false,
-    };
-
-    const result = scoreParticipant(config, ederson);
-    // clean_sheet: 6, saves: 4*1=4
-    expect(result.statPoints).toBe(10);
+    // goals: 2*6=12, assist: 0*4=0, yellow: 1*-1=-1
+    // Total: 12 + 0 - 1 = 11
+    expect(result.statPoints).toBe(11);
+    expect(result.finalScore).toBe(11);
   });
 });
 
