@@ -41,6 +41,48 @@ See `rules/workflow-rules.md` for the full task tracking protocol.
 - `packages/README.md` — Backend services and shared package reference
 - `clients/web/README.md` — Webapp features, pages, and components
 
+## Pre-Commit Quality Gates
+
+**You MUST pass ALL of these checks before committing ANY changes. No exceptions.**
+
+### Required checks (run in this order):
+
+1. **TypeScript typecheck:** `npx turbo typecheck --force`
+   - All packages must pass with zero errors
+   - If typecheck fails, fix the errors — do NOT commit broken types
+
+2. **ESLint:** `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+   - Fix all errors before committing
+   - Warnings are acceptable but errors are not
+
+3. **Backend unit tests:** `npx jest --config tests/jest.config.js --forceExit`
+   - All tests must pass — zero failures
+   - If a test fails, investigate and fix the root cause
+
+4. **Webapp tests:** `cd clients/web && npx vitest run`
+   - All test suites must pass
+
+5. **Admin tests:** `cd clients/admin && npx vitest run`
+   - All test suites must pass
+
+### Rules:
+
+- **NEVER commit code that fails typecheck, lint, or tests**
+- **NEVER comment out, skip, or delete failing tests to make the build pass** — find and fix the underlying defect instead
+- **NEVER use `@ts-ignore` or `as any` to silence type errors** unless there is a genuine need (e.g., mocking in tests)
+- If you cannot determine the correct fix, **ask the user** before committing
+- If a test failure reveals a real defect in application code, fix the application code
+- If a test failure reveals a bad test (wrong assertion, stale mock data), fix the test
+- If you are unsure whether the fix belongs in the test or the application, **ask the user**
+
+### What you cannot test locally (CI-only):
+
+- Smoke tests (`tests/api/functional/`) — run against deployed QA environment
+- E2E tests (Playwright) — run against deployed QA environment
+- Docker image builds — run in CI publish-images job
+
+These are acceptable to fail in CI due to environment issues, but code-level defects in these test files should still be caught by typecheck.
+
 ## Project Structure
 
 - `packages/` — Backend services (Fastify + TypeScript) and shared domain types
