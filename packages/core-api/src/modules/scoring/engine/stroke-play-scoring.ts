@@ -7,6 +7,7 @@
  */
 
 import type { ScoringConfig } from '@poolmaster/shared/domain/scoring-config';
+import { DNFHandling, CountingMethod } from '@poolmaster/shared/domain/scoring-config';
 
 /** Stroke data for a single participant across rounds. */
 export interface StrokePlayParticipant {
@@ -51,11 +52,11 @@ export function scoreStrokePlayParticipant(
     const roundsMissed = participant.totalRounds - roundsPlayed;
     missedCutRounds = roundsMissed;
 
-    if (dnfHandling === 'MISSED_CUT_SCORE') {
+    if (dnfHandling === DNFHandling.enum.MISSED_CUT_SCORE) {
       for (let i = 0; i < roundsMissed; i++) {
         roundStrokes.push(missedCutScore);
       }
-    } else if (dnfHandling === 'EXCLUDE') {
+    } else if (dnfHandling === DNFHandling.enum.EXCLUDE) {
       return {
         participantId: participant.participantId,
         roundStrokes,
@@ -99,9 +100,9 @@ export function scoreStrokePlayEntry(
 
   // Apply counting method
   let counting: StrokePlayResult[];
-  if (config.counting_method === 'BEST_N' && config.best_n !== undefined) {
+  if (config.counting_method === CountingMethod.enum.BEST_N && config.best_n !== undefined) {
     counting = sorted.slice(0, config.best_n);
-  } else if (config.counting_method === 'DROP_LOWEST_N' && config.drop_lowest_n !== undefined) {
+  } else if (config.counting_method === CountingMethod.enum.DROP_LOWEST_N && config.drop_lowest_n !== undefined) {
     // Drop worst N (highest stroke totals)
     counting = sorted.slice(0, sorted.length - config.drop_lowest_n);
   } else {

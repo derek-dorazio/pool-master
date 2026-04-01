@@ -5,6 +5,8 @@
  * swap to Redis-backed counters.
  */
 
+import { NotificationChannel } from '@poolmaster/shared/domain/enums';
+
 export interface RateLimitConfig {
   pushPerHour: number;
   emailPerDay: number;
@@ -54,23 +56,23 @@ export class InMemoryRateLimiter implements RateLimiter {
     const now = Date.now();
 
     // Channel-level rate limits
-    if (channel === 'PUSH') {
+    if (channel === NotificationChannel.PUSH) {
       const pushInLastHour = entries.filter(
-        (e) => e.channel === 'PUSH' && now - e.timestamp < 3600_000,
+        (e) => e.channel === NotificationChannel.PUSH && now - e.timestamp < 3600_000,
       ).length;
       if (pushInLastHour >= this.config.pushPerHour) return false;
     }
 
-    if (channel === 'EMAIL') {
+    if (channel === NotificationChannel.EMAIL) {
       const emailToday = entries.filter(
-        (e) => e.channel === 'EMAIL' && now - e.timestamp < 86400_000,
+        (e) => e.channel === NotificationChannel.EMAIL && now - e.timestamp < 86400_000,
       ).length;
       if (emailToday >= this.config.emailPerDay) return false;
     }
 
-    if (channel === 'SMS') {
+    if (channel === NotificationChannel.SMS) {
       const smsToday = entries.filter(
-        (e) => e.channel === 'SMS' && now - e.timestamp < 86400_000,
+        (e) => e.channel === NotificationChannel.SMS && now - e.timestamp < 86400_000,
       ).length;
       if (smsToday >= this.config.smsPerDay) return false;
     }

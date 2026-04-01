@@ -7,6 +7,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import { SubscriptionStatus } from '@poolmaster/shared/domain/enums';
 import { isBillingEnabled } from './billing-feature-gate';
 
 // ---------------------------------------------------------------------------
@@ -86,7 +87,7 @@ export class TrialService {
     const existing = await this.prisma.tenantSubscription.findUnique({
       where: { tenantId },
     });
-    if (existing && existing.status === 'TRIALING') {
+    if (existing && existing.status === SubscriptionStatus.TRIALING) {
       throw new Error(`Tenant ${tenantId} already has an active trial.`);
     }
 
@@ -100,7 +101,7 @@ export class TrialService {
         stripeCustomerId: '',
         planTierSlug: planSlug,
         billingCycle: 'MONTHLY',
-        status: 'TRIALING',
+        status: SubscriptionStatus.TRIALING,
         trialStart: now,
         trialEnd: endDate,
         currentPeriodStart: now,
@@ -109,7 +110,7 @@ export class TrialService {
       },
       update: {
         planTierSlug: planSlug,
-        status: 'TRIALING',
+        status: SubscriptionStatus.TRIALING,
         trialStart: now,
         trialEnd: endDate,
         currentPeriodStart: now,
@@ -163,18 +164,18 @@ export class TrialService {
     const now = new Date();
     let status: 'ACTIVE' | 'EXPIRED' | 'CONVERTED' | 'NONE';
 
-    if (row.status === 'TRIALING') {
+    if (row.status === SubscriptionStatus.TRIALING) {
       if (row.trialEnd && now > row.trialEnd) {
         // Trial expired — update status
         await this.prisma.tenantSubscription.update({
           where: { tenantId },
-          data: { status: 'PAST_DUE' },
+          data: { status: SubscriptionStatus.PAST_DUE },
         });
         status = 'EXPIRED';
       } else {
         status = 'ACTIVE';
       }
-    } else if (row.status === 'ACTIVE') {
+    } else if (row.status === SubscriptionStatus.ACTIVE) {
       status = 'CONVERTED';
     } else {
       status = 'EXPIRED';
@@ -211,7 +212,7 @@ export class TrialService {
     if (!row) {
       throw new Error(`No trial found for tenant: ${tenantId}`);
     }
-    if (row.status !== 'TRIALING') {
+    if (row.status !== SubscriptionStatus.TRIALING) {
       throw new Error(`Trial is not active (status: ${row.status})`);
     }
 
@@ -219,7 +220,7 @@ export class TrialService {
     const updated = await this.prisma.tenantSubscription.update({
       where: { tenantId },
       data: {
-        status: 'ACTIVE',
+        status: SubscriptionStatus.ACTIVE,
         paymentMethodLast4: paymentMethodId.slice(-4),
       },
     });
@@ -241,7 +242,7 @@ export class TrialService {
    */
   async getTrialReminders(): Promise<TrialReminder[]> {
     const trials = await this.prisma.tenantSubscription.findMany({
-      where: { status: 'TRIALING' },
+      where: { status: SubscriptionStatus.TRIALING },
     });
 
     const reminders: TrialReminder[] = [];

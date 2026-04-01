@@ -4,6 +4,7 @@
  */
 
 import type { NotificationCategory, NotificationChannel } from '@poolmaster/shared/events';
+import { NotificationChannel as NotificationChannelEnum } from '@poolmaster/shared/domain/enums';
 
 export interface CategoryPreference {
   enabled: boolean;
@@ -60,10 +61,10 @@ export function shouldDeliver(
   preferences?: UserPreferences,
 ): boolean {
   // In-app is always delivered
-  if (channel === 'IN_APP') return true;
+  if (channel === NotificationChannelEnum.IN_APP) return true;
 
   // Global DND blocks push and SMS (not email or in-app)
-  if (preferences?.doNotDisturb && (channel === 'PUSH' || channel === 'SMS')) {
+  if (preferences?.doNotDisturb && (channel === NotificationChannelEnum.PUSH || channel === NotificationChannelEnum.SMS)) {
     // Check DND schedule if configured
     if (preferences.dndSchedule?.enabled) {
       if (isInDndWindow(preferences.dndSchedule)) return false;

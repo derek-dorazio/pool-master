@@ -19,6 +19,7 @@ import type {
   MemberActivityEvent,
   UpcomingEvent,
 } from '@poolmaster/shared/domain';
+import { InvitationStatus } from '@poolmaster/shared/domain/enums';
 
 export class DashboardService {
   constructor(
@@ -41,7 +42,7 @@ export class DashboardService {
       this.invitationRepo.findByLeague(leagueId),
       this.actionItemRepo.findUnresolved(leagueId),
     ]);
-    const pendingInvites = invitations.filter((i) => i.status === 'PENDING').length;
+    const pendingInvites = invitations.filter((i) => i.status === InvitationStatus.PENDING).length;
     const recentMemberActivity = buildRecentActivity(members);
     const upcomingEvents = buildUpcomingEvents(contests);
     return {

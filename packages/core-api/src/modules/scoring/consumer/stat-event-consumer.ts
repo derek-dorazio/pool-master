@@ -16,6 +16,7 @@ import type { EventBus } from '@poolmaster/shared/events/event-bus';
 import type { ScoreBreakdown } from '../engine/scoring-engine';
 import { scoreParticipant } from '../engine/scoring-engine';
 import type { ScoreStore } from '../storage/score-store';
+import { ContestStatus } from '@poolmaster/shared/domain/enums';
 
 // --- Lookup Types ---
 
@@ -51,7 +52,7 @@ export class ContestLookup {
     });
 
     return poolEntries
-      .filter((pe) => pe.contest.status === 'ACTIVE' || pe.contest.status === 'LOCKED')
+      .filter((pe) => pe.contest.status === ContestStatus.ACTIVE || pe.contest.status === ContestStatus.LOCKED)
       .map((pe) => ({
         contestId: pe.contest.id,
         scoringEngine: pe.contest.scoringEngine,

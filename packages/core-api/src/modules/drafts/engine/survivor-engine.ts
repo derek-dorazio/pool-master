@@ -19,7 +19,7 @@
  *          SOC-5, TEN-5, UFC-5
  */
 
-import type { SurvivorStyle } from '@poolmaster/shared/domain';
+import { SurvivorStyle } from '@poolmaster/shared/domain/enums';
 
 // --- Types ---
 
@@ -80,11 +80,11 @@ export class SurvivorEngine {
       return { valid: false, reason: 'Entry has been eliminated' };
     }
 
-    if (state.config.survivorStyle === 'LIVE_PICK' && period !== state.currentPeriod) {
+    if (state.config.survivorStyle === SurvivorStyle.LIVE_PICK && period !== state.currentPeriod) {
       return { valid: false, reason: `Can only pick for current period (${state.currentPeriod})` };
     }
 
-    if (state.config.survivorStyle === 'LOCKED_PICK' && state.currentPeriod > 1) {
+    if (state.config.survivorStyle === SurvivorStyle.LOCKED_PICK && state.currentPeriod > 1) {
       return { valid: false, reason: 'All picks must be submitted before period 1 (locked mode)' };
     }
 

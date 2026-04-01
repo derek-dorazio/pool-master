@@ -9,6 +9,7 @@ import type { ScheduledRunner } from './core/scheduled-runner';
 import type { WeeklyDigestService } from './core/weekly-digest';
 import type { Channels } from './channels/channel-factory';
 import { getDefaultPreferences } from './core/preference-service';
+import { DeliveryStatus } from '@poolmaster/shared/domain/enums';
 import crypto from 'node:crypto';
 
 export interface NotificationModuleOpts {
@@ -307,21 +308,21 @@ export async function notificationsModule(
       });
 
       const total = logs.length;
-      const sent = logs.filter((l: any) => l.status === 'SENT').length;
-      const suppressed = logs.filter((l: any) => l.status === 'SUPPRESSED').length;
-      const failed = logs.filter((l: any) => l.status === 'FAILED').length;
+      const sent = logs.filter((l: any) => l.status === DeliveryStatus.SENT).length;
+      const suppressed = logs.filter((l: any) => l.status === DeliveryStatus.SUPPRESSED).length;
+      const failed = logs.filter((l: any) => l.status === DeliveryStatus.FAILED).length;
 
       const byChannel: Record<string, { sent: number; suppressed: number; failed: number }> = {};
       for (const log of logs) {
         const ch = byChannel[log.channel] ?? { sent: 0, suppressed: 0, failed: 0 };
-        if (log.status === 'SENT') ch.sent++;
-        else if (log.status === 'SUPPRESSED') ch.suppressed++;
-        else if (log.status === 'FAILED') ch.failed++;
+        if (log.status === DeliveryStatus.SENT) ch.sent++;
+        else if (log.status === DeliveryStatus.SUPPRESSED) ch.suppressed++;
+        else if (log.status === DeliveryStatus.FAILED) ch.failed++;
         byChannel[log.channel] = ch;
       }
 
       const suppressionReasons: Record<string, number> = {};
-      for (const log of logs.filter((l: any) => l.status === 'SUPPRESSED')) {
+      for (const log of logs.filter((l: any) => l.status === DeliveryStatus.SUPPRESSED)) {
         const reason = log.suppressionReason ?? 'UNKNOWN';
         suppressionReasons[reason] = (suppressionReasons[reason] ?? 0) + 1;
       }
