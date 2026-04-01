@@ -10,6 +10,7 @@ Read the rules files in `rules/` before doing any implementation work:
 - `rules/swift-rules.md` — iOS: SwiftUI, Observation framework
 - `rules/android-rules.md` — Android: Kotlin, Jetpack Compose, Hilt
 - `rules/testing-rules.md` — Test strategy, coverage, CI pipeline
+- `rules/model-change-rules.md` — **Required checklist for ANY data model change** (schema → migration → types → adapters → services → routes → hooks → tests)
 - `rules/workflow-rules.md` — **Action plan tracking (read this first)**
 
 ## Workflow: Action Plan Tracking
