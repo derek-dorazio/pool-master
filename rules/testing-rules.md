@@ -547,4 +547,59 @@ Test complete user journeys end-to-end via the API against live QA.
 
 ---
 
-*PoolMaster Testing Rules v1.2*
+## 15. Boundary Contract Tests — Enums, Events, Templates
+
+### Purpose
+Catch silent drift between system boundaries where two sides use the same values but are maintained separately. String-based enum values, event types, and template configs can drift without compile-time errors — these tests catch the drift at test time.
+
+### Test Suites
+
+| Test File | Boundary | What It Catches |
+|-----------|----------|-----------------|
+| `tests/unit/shared/enum-consistency.test.ts` | Route JSON schemas ↔ domain enums | Hardcoded `enum: [...]` in routes drifting from `enums.ts` |
+| `tests/unit/shared/event-bus-contracts.test.ts` | EventBus publishers ↔ subscribers | Event type string typos, duplicates, naming violations |
+| `tests/unit/shared/template-consistency.test.ts` | Templates ↔ domain enums | Templates using invalid sport/type/engine values |
+| `tests/unit/shared/scoring-config-validation.test.ts` | Templates ↔ Zod schema | Templates violating `ScoringConfigSchema` |
+
+### When to Update
+
+**Enum changes** (`enums.ts`):
+- Adding a new value → `enum-consistency.test.ts` will fail if route schemas don't include it. Update routes AND the test.
+- Removing a value → `template-consistency.test.ts` will fail if any template still uses it. Remove from templates too.
+
+**Event type changes** (`events/*.ts`):
+- Adding/renaming an event → `event-bus-contracts.test.ts` validates naming convention. Update publishers and subscribers to match.
+- Typo in event type string → test catches it via uniqueness and format checks.
+
+**Template changes** (scoring or selection):
+- New template → `template-consistency.test.ts` auto-validates via `it.each`. No manual test update needed.
+- Template with invalid enum value → `template-consistency.test.ts` fails immediately.
+- Template with invalid config → `scoring-config-validation.test.ts` fails on Zod parse.
+
+**Route schema changes**:
+- Adding enum value to route → `enum-consistency.test.ts` verifies it matches `enums.ts`.
+- Removing enum value from route → test verifies all remaining values are valid.
+
+### How to Run
+```bash
+npx jest --config tests/jest.config.js --testPathPattern="enum-consistency|event-bus-contracts|template-consistency|scoring-config-validation"
+```
+
+---
+
+## Complete Contract Test Matrix
+
+| # | Boundary | Test File | Tests | Risk Level |
+|---|----------|-----------|-------|------------|
+| 1 | Schema ↔ Database | `schema-validation.integration.ts` | 42 | P2022/P2023 runtime errors |
+| 2 | Frontend ↔ Backend API | `api-contracts-web.integration.ts` | 25 | Webapp crashes |
+| 3 | Admin ↔ Backend API | `api-contracts-admin.integration.ts` | 5 | Admin crashes |
+| 4 | Route schemas ↔ Domain enums | `enum-consistency.test.ts` | 10 | Silent 400 rejections |
+| 5 | EventBus publishers ↔ subscribers | `event-bus-contracts.test.ts` | 5 | Silent event drops |
+| 6 | Templates ↔ Domain enums | `template-consistency.test.ts` | 15 | Invalid template values |
+| 7 | Templates ↔ Zod schema | `scoring-config-validation.test.ts` | 12 | Template parse failures |
+| | **Total** | | **114** | |
+
+---
+
+*PoolMaster Testing Rules v1.3*

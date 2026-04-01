@@ -43,10 +43,26 @@ Every model change requires updating these layers **in order**:
 - [ ] **Admin tests** (`clients/admin/src/**/*.test.*`) — update mock data, verify rendering if admin-facing.
 - [ ] **Smoke tests** (`tests/api/functional/*.smoke.ts`) — add field to API flow tests if part of critical path.
 
+### Enum & Constant Changes (required when adding/removing enum values)
+
+- [ ] **Domain enums** (`packages/shared/domain/enums.ts`) — add/remove value using `as const` pattern.
+- [ ] **Route JSON schemas** — update hardcoded `enum: [...]` arrays in all affected route files to match.
+- [ ] **Enum consistency test** (`tests/unit/shared/enum-consistency.test.ts`) — will catch route↔enum drift automatically. Run to verify.
+- [ ] **Template consistency test** (`tests/unit/shared/template-consistency.test.ts`) — will catch template↔enum drift. Run to verify.
+- [ ] **Frontend constants** — if webapp/admin has hardcoded copies of enum values (e.g., sport filter lists), update those too.
+
+### Event Type Changes (required when adding/modifying event types)
+
+- [ ] **Event definitions** (`packages/shared/events/*.ts`) — add/modify the event type constant.
+- [ ] **Publishers** — update any `eventBus.publish('event.type', ...)` calls.
+- [ ] **Subscribers** — update any `eventBus.subscribe('event.type', ...)` calls.
+- [ ] **EventBus contract test** (`tests/unit/shared/event-bus-contracts.test.ts`) — will catch naming convention violations and duplicate types. Run to verify.
+
 ### Templates (only if field affects scoring or draft config)
 
-- [ ] **Scoring templates** (`packages/core-api/src/modules/scoring/templates/`) — update if field changes scoring behavior.
+- [ ] **Scoring templates** (`packages/core-api/src/modules/scoring/templates/`) — update if field changes scoring behavior. Template consistency and Zod validation tests will catch invalid values.
 - [ ] **Selection templates** (`packages/core-api/src/modules/drafts/templates/`) — update if field changes draft/selection config.
+- [ ] **Scoring config validation test** (`tests/unit/shared/scoring-config-validation.test.ts`) — will catch templates that violate the Zod schema. Run to verify.
 
 ---
 
@@ -116,6 +132,11 @@ Every model change requires updating these layers **in order**:
 | New model without schema validation test | Schema drift hides until runtime P2022 | Add create+read+delete test to `schema-validation.integration.ts` |
 | API response shape changed without contract test update | Webapp crashes on unexpected response | Update `api-contracts-web.integration.ts` assertions |
 | Handler wrapping changed (e.g., `{ league }` → bare) | Frontend hooks destructure incorrectly | Contract tests catch this automatically |
+| Enum value added but route schema not updated | API rejects valid requests with 400 | Enum consistency test catches this — update route `enum: [...]` arrays |
+| Enum value removed but route schema still accepts it | Invalid values reach the service layer | Enum consistency test catches this |
+| Event type string typo in publisher or subscriber | Events silently dropped, notifications never sent | EventBus contract test catches naming violations |
+| Scoring template uses invalid enum value | Template rejected at runtime by Zod | Template consistency + scoring config validation tests catch this |
+| Frontend sport filter list out of date | Users can't filter/create for new sports | Keep frontend constants in sync with `enums.ts` |
 
 ---
 
@@ -146,5 +167,9 @@ Every model change requires updating these layers **in order**:
 | Schema validation | `tests/integration/core-api/schema-validation.integration.ts` |
 | API contracts (webapp) | `tests/integration/core-api/api-contracts-web.integration.ts` |
 | API contracts (admin) | `tests/integration/core-api/api-contracts-admin.integration.ts` |
+| Enum consistency | `tests/unit/shared/enum-consistency.test.ts` |
+| EventBus contracts | `tests/unit/shared/event-bus-contracts.test.ts` |
+| Template consistency | `tests/unit/shared/template-consistency.test.ts` |
+| Scoring config validation | `tests/unit/shared/scoring-config-validation.test.ts` |
 | Scoring templates | `packages/core-api/src/modules/scoring/templates/` |
 | Selection templates | `packages/core-api/src/modules/drafts/templates/` |
