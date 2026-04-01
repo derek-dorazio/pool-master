@@ -18,7 +18,6 @@ describe('usePushPermission', () => {
   }
 
   function removeNotification() {
-    // @ts-expect-error — intentionally removing for test
     delete (globalThis as Record<string, unknown>).Notification;
   }
 

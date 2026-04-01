@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { createElement } from 'react';
+import React from 'react';
 
 vi.mock('react-router-dom', () => ({
-  Link: ({ children, to }: any) => createElement('a', { href: to }, children),
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -24,9 +24,9 @@ describe('Billing Entitlement Gate Flow', () => {
     } as any);
 
     render(
-      createElement(EntitlementGate, { entitlementKey: 'league.create' },
-        createElement('p', null, 'Create League Button'),
-      ),
+      <EntitlementGate entitlementKey="league.create">
+        <p>Create League Button</p>
+      </EntitlementGate>,
     );
 
     expect(screen.getByText('Create League Button')).toBeInTheDocument();
@@ -45,9 +45,9 @@ describe('Billing Entitlement Gate Flow', () => {
     } as any);
 
     render(
-      createElement(EntitlementGate, { entitlementKey: 'league.create' },
-        createElement('p', null, 'Create League Button'),
-      ),
+      <EntitlementGate entitlementKey="league.create">
+        <p>Create League Button</p>
+      </EntitlementGate>,
     );
 
     expect(screen.queryByText('Create League Button')).not.toBeInTheDocument();
@@ -67,9 +67,9 @@ describe('Billing Entitlement Gate Flow', () => {
     } as any);
 
     render(
-      createElement(EntitlementGate, { entitlementKey: 'league.create' },
-        createElement('p', null, 'Gated Content'),
-      ),
+      <EntitlementGate entitlementKey="league.create">
+        <p>Gated Content</p>
+      </EntitlementGate>,
     );
 
     expect(screen.getByText(/3 \/ 3/)).toBeInTheDocument();
@@ -85,9 +85,9 @@ describe('Billing Entitlement Gate Flow', () => {
     } as any);
 
     render(
-      createElement(EntitlementGate, { entitlementKey: 'league.create' },
-        createElement('p', null, 'Gated Content'),
-      ),
+      <EntitlementGate entitlementKey="league.create">
+        <p>Gated Content</p>
+      </EntitlementGate>,
     );
 
     const upgradeLink = screen.getByRole('link', { name: /Upgrade Plan/i });
@@ -102,9 +102,9 @@ describe('Billing Entitlement Gate Flow', () => {
     } as any);
 
     render(
-      createElement(EntitlementGate, { entitlementKey: 'league.create' },
-        createElement('p', null, 'Gated Content'),
-      ),
+      <EntitlementGate entitlementKey="league.create">
+        <p>Gated Content</p>
+      </EntitlementGate>,
     );
 
     expect(screen.getByText('Gated Content')).toBeInTheDocument();
