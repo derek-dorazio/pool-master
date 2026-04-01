@@ -278,3 +278,93 @@ export const WeekDay = {
   SUNDAY: 'SUNDAY',
 } as const;
 export type WeekDay = (typeof WeekDay)[keyof typeof WeekDay];
+
+// --- Subscription / Billing ---
+
+export const SubscriptionStatus = {
+  ACTIVE: 'ACTIVE',
+  TRIALING: 'TRIALING',
+  CONVERTED: 'CONVERTED',
+  EXPIRED: 'EXPIRED',
+  PAST_DUE: 'PAST_DUE',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type SubscriptionStatus = (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
+
+// --- Notification Delivery ---
+
+export const DeliveryStatus = {
+  SENT: 'SENT',
+  SUPPRESSED: 'SUPPRESSED',
+  FAILED: 'FAILED',
+  PENDING: 'PENDING',
+} as const;
+export type DeliveryStatus = (typeof DeliveryStatus)[keyof typeof DeliveryStatus];
+
+export const NotificationChannel = {
+  EMAIL: 'EMAIL',
+  PUSH: 'PUSH',
+  SMS: 'SMS',
+  IN_APP: 'IN_APP',
+} as const;
+export type NotificationChannel = (typeof NotificationChannel)[keyof typeof NotificationChannel];
+
+// --- Draft ---
+
+export const AutoPickPolicy = {
+  QUEUE_THEN_BEST: 'QUEUE_THEN_BEST',
+  BEST_AVAILABLE: 'BEST_AVAILABLE',
+  RANDOM: 'RANDOM',
+} as const;
+export type AutoPickPolicy = (typeof AutoPickPolicy)[keyof typeof AutoPickPolicy];
+
+// --- Tier Assignment ---
+
+export const TierAssignmentMode = {
+  AUTO_RANKING: 'AUTO_RANKING',
+  AUTO_PRICE: 'AUTO_PRICE',
+  MANUAL: 'MANUAL',
+} as const;
+export type TierAssignmentMode = (typeof TierAssignmentMode)[keyof typeof TierAssignmentMode];
+
+// --- Admin ---
+
+export const AdminRole = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  OPERATIONS: 'OPERATIONS',
+  SUPPORT: 'SUPPORT',
+  DATA_OPS: 'DATA_OPS',
+  VIEWER: 'VIEWER',
+} as const;
+export type AdminRole = (typeof AdminRole)[keyof typeof AdminRole];
+
+export const ActionItemPriority = {
+  HIGH: 'HIGH',
+  MEDIUM: 'MEDIUM',
+  LOW: 'LOW',
+} as const;
+export type ActionItemPriority = (typeof ActionItemPriority)[keyof typeof ActionItemPriority];
+
+// --- Announcements ---
+
+export const AnnouncementType = {
+  BANNER: 'BANNER',
+  NOTIFICATION: 'NOTIFICATION',
+  BOTH: 'BOTH',
+} as const;
+export type AnnouncementType = (typeof AnnouncementType)[keyof typeof AnnouncementType];
+
+export const AnnouncementTarget = {
+  ALL_USERS: 'ALL_USERS',
+  ALL_TENANTS: 'ALL_TENANTS',
+  SPECIFIC_TENANTS: 'SPECIFIC_TENANTS',
+} as const;
+export type AnnouncementTarget = (typeof AnnouncementTarget)[keyof typeof AnnouncementTarget];
+
+export const Severity = {
+  INFO: 'INFO',
+  WARNING: 'WARNING',
+  CRITICAL: 'CRITICAL',
+  ERROR: 'ERROR',
+} as const;
+export type Severity = (typeof Severity)[keyof typeof Severity];

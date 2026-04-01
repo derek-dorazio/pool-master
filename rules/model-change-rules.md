@@ -13,7 +13,7 @@ Every model change requires updating these layers **in order**:
 - [ ] **Prisma schema** (`packages/core-api/prisma/schema.prisma`) — add/modify field with `@map()`, `@default()`, `@db.*` type
 - [ ] **Migration** (`packages/core-api/prisma/migrations/`) — run `npx prisma migrate dev --name <description>` to generate SQL. Use `IF NOT EXISTS` for safety. **Never modify existing migrations.**
 - [ ] **Domain types** (`packages/shared/domain/types.ts`) — update the interface to match the schema. Use proper TypeScript types, not `any`.
-- [ ] **Enums** (`packages/shared/domain/enums.ts`) — add enum if the field has restricted values. Use `as const` pattern.
+- [ ] **Enums** (`packages/shared/domain/enums.ts`) — add enum if the field has restricted values. Use `as const` pattern. **Never use bare string literals** — always define an enum for 3+ states, or use a boolean for dual states (active/inactive → `isActive: boolean`).
 - [ ] **Repository adapter** (`packages/core-api/src/adapters/prisma-*-repository.ts`) — update `mapTo*()`, `create()`, `update()` methods.
 - [ ] **Service layer** (`packages/core-api/src/modules/*/service.ts`) — update `Create*Input`, `Update*Input` interfaces. Add validation.
 - [ ] **Route handler** (`packages/core-api/src/modules/*/handler.ts`) — extract field from `request.body`, pass to service.
