@@ -179,5 +179,13 @@ This is a **modern React application** with the following characteristics:
 - **Preloading** critical resources
 - **Loading priorities** (above-fold first)
 
+## API Integration
+
+- **Hooks MUST import response types from `@poolmaster/shared/dto`** — NEVER define local interfaces for API response shapes. The DTO package is the single source of truth for API contracts.
+- **API calls MUST be typed with shared DTOs:** `api.get<LeagueListResponse>(...)`. This ensures type safety flows from backend schema through to component props.
+- **If a DTO doesn't exist for your endpoint, create one in `packages/shared/dto/` FIRST** before writing the hook. Do not work around a missing DTO with a local type.
+- **Use `clientPath(API_ROUTES.xxx)` for API paths** — NEVER hardcode path strings in hooks or components. See `@poolmaster/shared/api-routes` for the route registry.
+- **NEVER write try/catch blocks in hooks that return mock data on failure.** This silently hides API errors (path mismatches, schema drift). Let errors propagate to error boundaries or toast handlers at the component layer.
+
 **Reference**
 Refer to React official documentation and modern React patterns for best practices.

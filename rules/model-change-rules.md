@@ -20,6 +20,14 @@ Every model change requires updating these layers **in order**:
 - [ ] **Route schema** (`packages/core-api/src/modules/*/routes.ts`) — add field to JSON schema with type, format, enum, required.
 - [ ] **Seed data** (`packages/core-api/prisma/seed.ts`) — add field to seeded records.
 
+### DTO & Mapper Layer (required for any API-facing change)
+
+- [ ] **DTO schema** (`packages/shared/dto/{module}.dto.ts`) — create or update the Zod-based DTO schema to include the new/changed field. Use `z.string().datetime()` for dates.
+- [ ] **Mapper** (`packages/core-api/src/mappers/{module}.mapper.ts`) — create or update the mapper function that converts domain entities to DTOs. Ensure the new field is mapped correctly.
+- [ ] **Route `schema.response`** — update the route's `schema.response` with JSON Schema derived from the DTO using `zodToJsonSchema()`. This keeps the OpenAPI spec accurate.
+- [ ] **Frontend hooks** — update hooks to use the new/updated DTO types imported from `@poolmaster/shared/dto`. Remove any locally defined response interfaces that the DTO now covers.
+- [ ] **Regenerate OpenAPI spec** — verify the updated route schema appears correctly in the auto-generated docs at `/docs`.
+
 ### Frontend — Webapp (required if field is user-facing or returned from API)
 
 - [ ] **Hooks** (`clients/web/src/features/*/hooks/*.ts`) — update response interface and mock data fallback.
@@ -148,6 +156,8 @@ Every model change requires updating these layers **in order**:
 | Migrations | `packages/core-api/prisma/migrations/` |
 | Domain types | `packages/shared/domain/types.ts` |
 | Enums | `packages/shared/domain/enums.ts` |
+| DTOs | `packages/shared/dto/{module}.dto.ts` |
+| Mappers | `packages/core-api/src/mappers/{module}.mapper.ts` |
 | Adapters | `packages/core-api/src/adapters/prisma-*-repository.ts` |
 | Services | `packages/core-api/src/modules/*/service.ts` |
 | Handlers | `packages/core-api/src/modules/*/handler.ts` |

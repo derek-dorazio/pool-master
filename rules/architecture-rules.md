@@ -210,6 +210,7 @@ poolmaster/
 │   │   └── ...
 │   └── shared/
 │       ├── domain/                # Shared TypeScript domain types & interfaces
+│       ├── dto/                   # Zod-based DTO schemas (API contract layer)
 │       ├── db/                    # Repository port interfaces
 │       ├── events/                # Event schema definitions (shared message contracts)
 │       └── utils/                 # Shared utilities
@@ -260,6 +261,19 @@ poolmaster/
 - All times stored in **UTC** in the database
 - Monetary values stored in **smallest unit** (cents) as integers
 - Soft deletes where audit trail matters; hard deletes where data privacy requires it
+
+### DTO Layer
+
+The data flow through the system follows a strict layering:
+
+```
+Prisma Schema → Domain Entities → DTOs (packages/shared/dto/) → JSON Responses → Frontend
+```
+
+- **DTOs are the API contract.** They live in `packages/shared/dto/` and are defined as Zod schemas. DTOs define the exact shape of data that crosses the API boundary.
+- **Backend handlers NEVER return Prisma types or domain entities directly.** All API responses are mapped through dedicated mappers in `packages/core-api/src/mappers/` before being sent to the client.
+- **Frontend hooks NEVER define local response interfaces.** All response types are imported from `@poolmaster/shared/dto`.
+- **OpenAPI spec is auto-generated** from route schemas via `@fastify/swagger` and served at `/docs`. Route schemas are derived from DTO Zod schemas using `zodToJsonSchema()`.
 
 ### API
 

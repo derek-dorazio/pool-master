@@ -203,6 +203,12 @@ return await api.get('/v1/contests');
 
 See `plans/23-msw-test-migration.md` for the full migration plan.
 
+### DTO Contract Validation
+
+- **Contract tests MUST validate responses against DTO Zod schemas** using `.safeParse()`. This catches drift between what the backend actually returns and what the DTO declares as the contract.
+- **Every new endpoint MUST have a contract test** that parses the response through the corresponding DTO schema. Add to `tests/integration/core-api/api-contracts-web.integration.ts` or `api-contracts-admin.integration.ts`.
+- **Test mock data MUST satisfy DTO schemas.** Import types from `@poolmaster/shared/dto` and validate mock data with `.safeParse()` to ensure mocks stay in sync with the real contract.
+
 ---
 
 ## 5. Test Data Strategy

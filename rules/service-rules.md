@@ -131,6 +131,12 @@ Basic Principles:
   - Use dotenv or a similar library to manage environment variables.
   - Store sensitive information in environment variables (like DB_URL).
 
+DTO Mapping and OpenAPI:
+- Every new route handler MUST map domain entities to DTOs via a mapper in `packages/core-api/src/mappers/` before calling `reply.send()`. Never return raw Prisma types or domain entities directly from a handler.
+- Every route MUST define `schema.response` with JSON Schema derived from DTO Zod schemas using `zodToJsonSchema()`. This ensures response validation and drives the OpenAPI spec.
+- Every route MUST include `tags`, `operationId`, and `summary` in its schema for OpenAPI documentation. Tags group endpoints by domain; operationId must be unique across the API.
+- DTO Zod schemas use `z.string().datetime()` for date fields — never `Date` objects over the wire. All dates are serialized as ISO 8601 strings in API responses.
+
 Testing:
 - Use the Jest framework for unit and integration tests.
 - Write unit tests for every service and handler.
