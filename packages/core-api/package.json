@@ -10,18 +10,20 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@poolmaster/shared": "*",
-    "fastify": "^5.0.0",
-    "fastify-plugin": "^5.0.0",
-    "@prisma/client": "^6.0.0",
-    "bcryptjs": "^2.4.3",
-    "ioredis": "^5.4.0",
-    "jsonwebtoken": "^9.0.0",
-    "uuid": "^10.0.0",
     "@aws-sdk/client-ses": "^3.600.0",
     "@aws-sdk/client-sns": "^3.600.0",
     "@aws-sdk/client-sqs": "^3.600.0",
-    "nodemailer": "^6.9.0"
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.5",
+    "@poolmaster/shared": "*",
+    "@prisma/client": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "fastify": "^5.0.0",
+    "fastify-plugin": "^5.0.0",
+    "ioredis": "^5.4.0",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^6.9.0",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

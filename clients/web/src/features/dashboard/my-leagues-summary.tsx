@@ -7,7 +7,7 @@ import { useMyLeagues } from './hooks/use-my-leagues';
 const MAX_DISPLAYED = 6;
 
 export function MyLeaguesSummary() {
-  const { data: leagues, isLoading, isError } = useMyLeagues();
+  const { data: leagues, isLoading } = useMyLeagues();
 
   const displayed = Array.isArray(leagues) ? leagues.slice(0, MAX_DISPLAYED) : [];
   const hasMore = displayed.length >= MAX_DISPLAYED;

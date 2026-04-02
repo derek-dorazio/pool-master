@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 
 // Core plugins
 import { healthPlugin } from './plugins/health';
+import { swaggerPlugin } from './plugins/swagger';
 import { authGuard } from './plugins/auth-guard';
 import { tenantPlugin } from './core/tenant-context';
 import { etagPlugin } from './plugins/etag-support';
@@ -76,6 +77,7 @@ export function buildApp() {
   // =========================================================================
   // Core plugins
   // =========================================================================
+  app.register(swaggerPlugin);
   app.register(healthPlugin);
   app.register(etagPlugin);
   app.register(pollConfigPlugin);

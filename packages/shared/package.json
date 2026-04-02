@@ -36,6 +36,14 @@
     "./api-routes": {
       "types": "./api-routes.ts",
       "default": "./dist/api-routes.js"
+    },
+    "./dto": {
+      "types": "./dto/index.ts",
+      "default": "./dist/dto/index.js"
+    },
+    "./dto/*": {
+      "types": "./dto/*.ts",
+      "default": "./dist/dto/*.js"
     }
   },
   "scripts": {
@@ -45,7 +53,8 @@
   },
   "dependencies": {
     "i18next": "^23.12.0",
-    "zod": "^3.23.0"
+    "zod": "^3.23.0",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "typescript": "^5.5.0"
