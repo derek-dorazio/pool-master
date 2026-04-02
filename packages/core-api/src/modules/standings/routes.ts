@@ -9,10 +9,6 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import {
-  zodToJsonSchema,
-  StandingsResponseSchema,
-} from '@poolmaster/shared/dto';
 import { StandingsService } from './service';
 import { createStandingsHandlers } from './handler';
 

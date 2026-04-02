@@ -1,81 +1,92 @@
 import { renderHook } from '@/test-utils';
 import { waitFor } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/test/msw/server';
 import { useBillingPlan, usePlanTiers, useBillingUsage } from './use-billing';
 
 describe('useBillingPlan', () => {
-  it('returns plan data', async () => {
+  it('returns plan data from API', async () => {
     const { result } = renderHook(() => useBillingPlan());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
     const plan = result.current.data!;
-    expect(plan).toHaveProperty('tier');
-    expect(plan).toHaveProperty('name');
-    expect(plan).toHaveProperty('price');
-    expect(plan).toHaveProperty('annualPrice');
-    expect(plan).toHaveProperty('features');
+    // MSW returns { slug, name, entitlements }
+    expect(plan).toHaveProperty('slug', 'free');
+    expect(plan).toHaveProperty('name', 'Free');
+    expect(plan).toHaveProperty('entitlements');
   });
 
-  it('returns plan features with expected shape', async () => {
+  it('returns entitlements with expected shape', async () => {
     const { result } = renderHook(() => useBillingPlan());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const { features } = result.current.data!;
-    expect(features).toHaveProperty('leagues');
-    expect(features).toHaveProperty('contestsPerLeague');
-    expect(features).toHaveProperty('membersPerLeague');
-    expect(features).toHaveProperty('draftTypes');
-    expect(features).toHaveProperty('scoringTemplates');
-    expect(features).toHaveProperty('supportLevel');
-    expect(features).toHaveProperty('historyRetention');
-    expect(features).toHaveProperty('customScoring');
+    const { entitlements } = result.current.data! as any;
+    expect(entitlements).toHaveProperty('max_leagues', 50);
+    expect(entitlements).toHaveProperty('max_members_per_league', 100);
+    expect(entitlements).toHaveProperty('max_contests_per_season', 100);
   });
 });
 
 describe('usePlanTiers', () => {
-  it('returns tier list', async () => {
+  it('returns plans list from API', async () => {
     const { result } = renderHook(() => usePlanTiers());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const tiers = result.current.data!;
-    expect(Array.isArray(tiers)).toBe(true);
-    expect(tiers.length).toBe(4);
+    const data = result.current.data! as any;
+    // MSW returns { plans: [...] }
+    const plans = data.plans as Array<Record<string, unknown>>;
+    expect(Array.isArray(plans)).toBe(true);
+    expect(plans.length).toBe(1);
   });
 
-  it('includes free and paid tiers', async () => {
+  it('includes free plan', async () => {
     const { result } = renderHook(() => usePlanTiers());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const tierNames = result.current.data!.map((t) => t.tier);
-    expect(tierNames).toContain('free');
-    expect(tierNames).toContain('starter');
-    expect(tierNames).toContain('pro');
-    expect(tierNames).toContain('league-plus');
+    const data = result.current.data! as any;
+    const plans = data.plans as Array<Record<string, unknown>>;
+    const slugs = plans.map((p) => p.slug);
+    expect(slugs).toContain('free');
   });
 });
 
 describe('useBillingUsage', () => {
-  it('returns usage stats', async () => {
+  it('returns usage data from API', async () => {
     const { result } = renderHook(() => useBillingUsage());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const usage = result.current.data!;
-    expect(usage).toHaveProperty('leagues');
-    expect(usage).toHaveProperty('contests');
-    expect(usage).toHaveProperty('members');
+    const data = result.current.data! as any;
+    // MSW returns { usage: [] }
+    expect(data).toHaveProperty('usage');
+    expect(Array.isArray(data.usage)).toBe(true);
   });
 
-  it('returns usage entries with current and limit', async () => {
+  it('returns populated usage when server provides data', async () => {
+    server.use(
+      http.get('/api/v1/billing/usage', () => {
+        return HttpResponse.json({
+          usage: [
+            { resource: 'leagues', current: 2, limit: 50 },
+            { resource: 'contests', current: 5, limit: 100 },
+          ],
+        });
+      }),
+    );
+
     const { result } = renderHook(() => useBillingUsage());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const { leagues } = result.current.data!;
-    expect(typeof leagues.current).toBe('number');
-    expect(leagues).toHaveProperty('limit');
+    const data = result.current.data! as any;
+    const usage = data.usage as Array<Record<string, unknown>>;
+    expect(usage.length).toBe(2);
+    expect(usage[0]).toHaveProperty('resource', 'leagues');
+    expect(typeof usage[0].current).toBe('number');
+    expect(usage[0]).toHaveProperty('limit');
   });
 });

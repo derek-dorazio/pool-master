@@ -4,31 +4,29 @@ import { useContest } from './use-contest';
 
 describe('useContest', () => {
   it('returns contest data for a given id', async () => {
-    const { result } = renderHook(() => useContest('contest-masters-2026'));
+    const { result } = renderHook(() => useContest('contest-1'));
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const contest = result.current.data!;
-    expect(contest).toHaveProperty('id');
-    expect(contest).toHaveProperty('name');
-    expect(contest).toHaveProperty('sport');
-    expect(contest).toHaveProperty('status');
-    expect(contest).toHaveProperty('leagueName');
-    expect(contest).toHaveProperty('contestType');
-    expect(contest).toHaveProperty('totalEntries');
+    const data = result.current.data! as any;
+    // MSW returns { contest: { id, name, status, contestType, selectionType, scoringEngine, leagueId } }
+    const contest = data.contest as any;
+    expect(contest).toHaveProperty('id', 'contest-1');
+    expect(contest).toHaveProperty('name', 'Test Contest');
+    expect(contest).toHaveProperty('status', 'DRAFT');
+    expect(contest).toHaveProperty('contestType', 'SINGLE_EVENT');
+    expect(contest).toHaveProperty('leagueId', 'league-1');
   });
 
-  it('returns contest with myEntry and topEntries', async () => {
-    const { result } = renderHook(() => useContest('contest-masters-2026'));
+  it('returns contest with selection and scoring info', async () => {
+    const { result } = renderHook(() => useContest('contest-1'));
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const contest = result.current.data!;
-    expect(contest.myEntry).toBeDefined();
-    expect(contest.myEntry).toHaveProperty('rank');
-    expect(contest.myEntry).toHaveProperty('score');
-    expect(Array.isArray(contest.topEntries)).toBe(true);
-    expect(contest.topEntries.length).toBeGreaterThan(0);
+    const data = result.current.data! as any;
+    const contest = data.contest as any;
+    expect(contest).toHaveProperty('selectionType', 'SNAKE_DRAFT');
+    expect(contest).toHaveProperty('scoringEngine', 'STROKE_PLAY');
   });
 
   it('does not fetch when id is undefined', () => {

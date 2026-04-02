@@ -26,11 +26,6 @@ import { createMemberHandlers } from './member-handler';
 import { createDashboardHandlers } from './dashboard-handler';
 import { createAuditHandlers } from './audit-handler';
 import { createBulkHandlers } from './bulk-handler';
-import {
-  zodToJsonSchema,
-  LeagueResponseSchema,
-  LeagueListResponseSchema,
-} from '@poolmaster/shared/dto';
 
 export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();

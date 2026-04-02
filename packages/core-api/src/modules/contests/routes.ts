@@ -7,11 +7,6 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
-  zodToJsonSchema,
-  ContestResponseSchema,
-  ContestListResponseSchema,
-} from '@poolmaster/shared/dto';
-import {
   PrismaContestRepository,
   PrismaSelectionConfigRepository,
   PrismaLeagueMembershipRepository,

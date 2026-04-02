@@ -10,10 +10,6 @@ import type { WeeklyDigestService } from './core/weekly-digest';
 import type { Channels } from './channels/channel-factory';
 import { getDefaultPreferences } from './core/preference-service';
 import { DeliveryStatus } from '@poolmaster/shared/domain';
-import {
-  zodToJsonSchema,
-  NotificationListResponseSchema,
-} from '@poolmaster/shared/dto';
 import crypto from 'node:crypto';
 
 export interface NotificationModuleOpts {

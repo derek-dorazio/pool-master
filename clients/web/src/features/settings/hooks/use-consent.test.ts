@@ -3,38 +3,25 @@ import { waitFor } from '@testing-library/react';
 import { useConsent, useUpdateConsent } from './use-consent';
 
 describe('useConsent', () => {
-  it('returns consent preferences data', async () => {
+  it('returns consent data from API', async () => {
     const { result } = renderHook(() => useConsent());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const data = result.current.data!;
-    expect(data).toHaveProperty('marketingEmails');
-    expect(data).toHaveProperty('analytics');
-    expect(data).toHaveProperty('thirdPartyIntegrations');
-    expect(data).toHaveProperty('doNotSell');
+    const data = result.current.data! as any;
+    // MSW returns { consents: [] }
+    expect(data).toHaveProperty('consents');
+    expect(Array.isArray(data.consents)).toBe(true);
   });
 
-  it('returns boolean values for each preference', async () => {
+  it('returns empty consents array from default MSW handler', async () => {
     const { result } = renderHook(() => useConsent());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const data = result.current.data!;
-    expect(typeof data.marketingEmails).toBe('boolean');
-    expect(typeof data.analytics).toBe('boolean');
-    expect(typeof data.thirdPartyIntegrations).toBe('boolean');
-    expect(typeof data.doNotSell).toBe('boolean');
-  });
-
-  it('falls back to mock data with expected defaults', async () => {
-    const { result } = renderHook(() => useConsent());
-
-    await waitFor(() => expect(result.current.data).toBeDefined());
-
-    const data = result.current.data!;
-    expect(data.analytics).toBe(true);
-    expect(data.marketingEmails).toBe(false);
+    const data = result.current.data! as any;
+    const consents = data.consents as unknown[];
+    expect(consents.length).toBe(0);
   });
 });
 

@@ -5,10 +5,6 @@
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import {
-  zodToJsonSchema,
-  ParticipantListResponseSchema,
-} from '@poolmaster/shared/dto';
-import {
   PrismaParticipantRepository,
   PrismaParticipantSeasonRecordRepository,
   PrismaParticipantProviderMappingRepository,

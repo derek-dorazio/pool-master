@@ -4,10 +4,6 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import {
-  zodToJsonSchema,
-  SearchResultsResponseSchema,
-} from '@poolmaster/shared/dto';
 import { SearchService } from './search-service';
 
 export async function searchModule(fastify: FastifyInstance): Promise<void> {
