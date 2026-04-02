@@ -6,6 +6,33 @@
 # CloudFront uses Origin Access Control (OAC) to read from them.
 # -----------------------------------------------------------------------------
 
+# --- CloudFront Function for SPA routing ---
+#
+# Rewrites requests to /index.html for client-side routing. Applied ONLY to
+# the S3 default behavior, so API responses (403, 404, etc.) pass through
+# untouched. This replaces the custom_error_response approach which was
+# global and intercepted API error responses.
+
+resource "aws_cloudfront_function" "spa_rewrite" {
+  name    = "${local.name_prefix}-spa-rewrite"
+  runtime = "cloudfront-js-2.0"
+  comment = "SPA routing: rewrite non-file URIs to /index.html"
+  publish = true
+
+  code = <<-EOF
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+      // If the URI has a file extension (e.g. .js, .css, .png), serve it as-is.
+      // Otherwise, rewrite to /index.html for SPA client-side routing.
+      if (!uri.includes('.')) {
+        request.uri = '/index.html';
+      }
+      return request;
+    }
+  EOF
+}
+
 # --- Provider alias for us-east-1 (CloudFront cert requirement) ---
 
 provider "aws" {
@@ -156,7 +183,7 @@ resource "aws_cloudfront_distribution" "webapp" {
     }
   }
 
-  # Default behavior: S3 static files
+  # Default behavior: S3 static files with SPA rewrite
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
@@ -174,6 +201,13 @@ resource "aws_cloudfront_distribution" "webapp" {
     min_ttl     = 0
     default_ttl = 86400
     max_ttl     = 31536000
+
+    # SPA routing via CloudFront Function (replaces custom_error_response
+    # which was global and intercepted API 403/404 responses)
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_rewrite.arn
+    }
   }
 
   # /api/* behavior: proxy to ALB (no caching)
@@ -218,20 +252,9 @@ resource "aws_cloudfront_distribution" "webapp" {
     max_ttl     = 0
   }
 
-  # SPA routing: 403/404 → /index.html
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 10
-  }
-
-  custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 10
-  }
+  # NOTE: custom_error_response blocks removed — SPA routing is now handled
+  # by the CloudFront Function on the default behavior, which only affects
+  # S3 requests and leaves API responses (403, 404, etc.) untouched.
 
   restrictions {
     geo_restriction {
@@ -301,6 +324,11 @@ resource "aws_cloudfront_distribution" "admin" {
     min_ttl     = 0
     default_ttl = 86400
     max_ttl     = 31536000
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_rewrite.arn
+    }
   }
 
   ordered_cache_behavior {
@@ -322,20 +350,6 @@ resource "aws_cloudfront_distribution" "admin" {
     min_ttl     = 0
     default_ttl = 0
     max_ttl     = 0
-  }
-
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 10
-  }
-
-  custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 10
   }
 
   restrictions {
