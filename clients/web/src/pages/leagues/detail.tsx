@@ -9,7 +9,6 @@ import {
   Plus,
   UserPlus,
   MessageSquare,
-  CalendarClock,
   Flame,
   Star,
   Target,
@@ -18,8 +17,8 @@ import {
   Calendar,
   ChevronDown,
   ChevronRight,
-  Heart,
   Send,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,273 +31,129 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api-client';
+import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import type { LeagueDetailDto, LeagueResponse, LeagueMemberDto, LeagueMembersResponse } from '@poolmaster/shared/dto';
+import type { ContestSummaryDto } from '@poolmaster/shared/dto';
 
-interface LeagueDetail {
-  id: string;
-  name: string;
-  memberCount: number;
-  commissioner: string;
-  isCommissioner: boolean;
-  description: string;
-  contests: Array<{
-    id: string;
-    name: string;
-    status: 'active' | 'upcoming' | 'completed';
-    standings: Array<{ name: string; points: number }>;
-  }>;
-  members: Array<{ id: string; name: string; role: string }>;
-  feedItems: Array<{
-    id: string;
-    type: 'event' | 'post';
-    author: string;
-    content: string;
-    timestamp: string;
-  }>;
-  nextDraft: { contestName: string; date: string } | null;
-}
-
-const mockLeague: LeagueDetail = {
-  id: 'league-1',
-  name: 'Sunday Gridiron League',
-  memberCount: 12,
-  commissioner: 'Mike Johnson',
-  isCommissioner: true,
-  description: 'A competitive NFL pool for friends and family. Weekly picks, survivor pools, and more.',
-  contests: [
-    {
-      id: 'contest-1',
-      name: 'Week 14 Pick\'em',
-      status: 'active',
-      standings: [
-        { name: 'Sarah K.', points: 87 },
-        { name: 'Dan M.', points: 82 },
-        { name: 'You', points: 79 },
-      ],
-    },
-    {
-      id: 'contest-2',
-      name: 'Survivor Pool 2025',
-      status: 'active',
-      standings: [
-        { name: 'You', points: 12 },
-        { name: 'Chris P.', points: 12 },
-        { name: 'Amy L.', points: 11 },
-      ],
-    },
-  ],
-  members: [
-    { id: 'm1', name: 'Mike Johnson', role: 'commissioner' },
-    { id: 'm2', name: 'Sarah Kim', role: 'member' },
-    { id: 'm3', name: 'Dan Miller', role: 'member' },
-    { id: 'm4', name: 'Chris Park', role: 'member' },
-    { id: 'm5', name: 'Amy Lee', role: 'member' },
-    { id: 'm6', name: 'Tom Brown', role: 'member' },
-    { id: 'm7', name: 'Lisa Chen', role: 'member' },
-    { id: 'm8', name: 'Jake Wilson', role: 'member' },
-  ],
-  feedItems: [
-    {
-      id: 'f1',
-      type: 'event',
-      author: 'System',
-      content: 'Week 14 Pick\'em is now live — make your picks!',
-      timestamp: '2 hours ago',
-    },
-    {
-      id: 'f2',
-      type: 'post',
-      author: 'Sarah K.',
-      content: 'Who else is taking the Chiefs this week? Bold move!',
-      timestamp: '5 hours ago',
-    },
-    {
-      id: 'f3',
-      type: 'event',
-      author: 'System',
-      content: 'Dan M. locked in all 16 picks for the week.',
-      timestamp: '1 day ago',
-    },
-  ],
-  nextDraft: {
-    contestName: 'Playoff Fantasy Draft',
-    date: '2026-04-05T18:00:00Z',
-  },
-};
-
-const mockContests = [
-  {
-    id: 'contest-1',
-    name: 'Week 14 Pick\'em',
-    sport: 'NFL',
-    type: 'Pick\'em',
-    status: 'active' as const,
-    entries: 12,
-    startDate: 'Dec 8, 2025',
-  },
-  {
-    id: 'contest-2',
-    name: 'Survivor Pool 2025',
-    sport: 'NFL',
-    type: 'Survivor',
-    status: 'active' as const,
-    entries: 10,
-    startDate: 'Sep 7, 2025',
-  },
-  {
-    id: 'contest-3',
-    name: 'Playoff Fantasy Draft',
-    sport: 'NFL',
-    type: 'Fantasy',
-    status: 'open' as const,
-    entries: 4,
-    startDate: 'Apr 5, 2026',
-  },
-  {
-    id: 'contest-4',
-    name: 'March Madness Bracket',
-    sport: 'NCAA',
-    type: 'Bracket',
-    status: 'completed' as const,
-    entries: 12,
-    startDate: 'Mar 19, 2026',
-  },
-];
-
-const contestStatusStyles: Record<string, string> = {
-  open: 'bg-green-100 text-green-800 border-green-200',
-  drafting: 'bg-purple-100 text-purple-800 border-purple-200',
-  active: 'bg-blue-100 text-blue-800 border-blue-200',
-  completed: 'bg-gray-100 text-gray-800 border-gray-200',
-};
-
-const mockMembersDetail = [
-  { id: 'm1', name: 'Mike Johnson', initials: 'MJ', role: 'commissioner' as const, joinDate: 'Aug 15, 2025' },
-  { id: 'm2', name: 'Sarah Kim', initials: 'SK', role: 'member' as const, joinDate: 'Aug 16, 2025' },
-  { id: 'm3', name: 'Dan Miller', initials: 'DM', role: 'member' as const, joinDate: 'Aug 20, 2025' },
-  { id: 'm4', name: 'Chris Park', initials: 'CP', role: 'member' as const, joinDate: 'Sep 1, 2025' },
-  { id: 'm5', name: 'Amy Lee', initials: 'AL', role: 'member' as const, joinDate: 'Sep 5, 2025' },
-  { id: 'm6', name: 'Tom Brown', initials: 'TB', role: 'member' as const, joinDate: 'Oct 12, 2025' },
-  { id: 'm7', name: 'Lisa Chen', initials: 'LC', role: 'member' as const, joinDate: 'Nov 3, 2025' },
-  { id: 'm8', name: 'Jake Wilson', initials: 'JW', role: 'member' as const, joinDate: 'Nov 20, 2025' },
-];
-
-const mockFeedItems = [
-  {
-    id: 'f1',
-    type: 'announcement' as const,
-    author: 'Mike Johnson',
-    initials: 'MJ',
-    content: 'Reminder: Playoff Fantasy Draft is scheduled for April 5th at 6 PM. Make sure you\'re available!',
-    timestamp: '1 hour ago',
-    likes: 5,
-  },
-  {
-    id: 'f2',
-    type: 'post' as const,
-    author: 'Sarah Kim',
-    initials: 'SK',
-    content: 'Who else is taking the Chiefs this week? Bold move!',
-    timestamp: '5 hours ago',
-    likes: 3,
-  },
-  {
-    id: 'f3',
-    type: 'event' as const,
-    author: 'System',
-    initials: 'S',
-    content: 'Draft completed for Playoff Fantasy Draft. 12 participants made their picks.',
-    timestamp: '1 day ago',
-    likes: 0,
-  },
-  {
-    id: 'f4',
-    type: 'event' as const,
-    author: 'System',
-    initials: 'S',
-    content: 'Scores updated for Week 14 Pick\'em. Sarah K. takes the lead with 87 points!',
-    timestamp: '2 days ago',
-    likes: 0,
-  },
-  {
-    id: 'f5',
-    type: 'event' as const,
-    author: 'System',
-    initials: 'S',
-    content: 'Jake Wilson joined the league. Welcome!',
-    timestamp: '3 days ago',
-    likes: 2,
-  },
-  {
-    id: 'f6',
-    type: 'post' as const,
-    author: 'Dan Miller',
-    initials: 'DM',
-    content: 'Just locked in all 16 picks. Feeling confident this week.',
-    timestamp: '4 days ago',
-    likes: 1,
-  },
-];
-
-const mockRecords = [
-  { id: 'r1', name: 'Best Weekly Score', holder: 'Sarah Kim', value: '15/16 correct', icon: 'trophy' as const, date: 'Week 8, 2025' },
-  { id: 'r2', name: 'Most Contest Wins', holder: 'Dan Miller', value: '7 wins', icon: 'award' as const, date: 'All-time' },
-  { id: 'r3', name: 'Longest Win Streak', holder: 'Mike Johnson', value: '4 weeks', icon: 'flame' as const, date: 'Weeks 5-8, 2025' },
-  { id: 'r4', name: 'Best Draft Pick', holder: 'Chris Park', value: 'Patrick Mahomes (Rd 3)', icon: 'star' as const, date: 'Draft 2025' },
-  { id: 'r5', name: 'Highest Season Score', holder: 'Sarah Kim', value: '187 points', icon: 'trending' as const, date: '2025 Season' },
-  { id: 'r6', name: 'Most Accurate Picker', holder: 'Amy Lee', value: '72% accuracy', icon: 'target' as const, date: '2025 Season' },
-];
-
-const recordIconMap = {
-  trophy: Trophy,
-  flame: Flame,
-  star: Star,
-  target: Target,
-  trending: TrendingUp,
-  award: Award,
-};
-
-const mockSeasons = [
-  {
-    id: 's1',
-    name: '2025-26 Season',
-    contestResults: [
-      { id: 'cr1', name: 'Week 14 Pick\'em', winner: 'Sarah Kim', score: '14/16 correct', date: 'Dec 8, 2025' },
-      { id: 'cr2', name: 'Survivor Pool 2025', winner: 'Dan Miller', score: 'Survived 13 weeks', date: 'Nov 30, 2025' },
-      { id: 'cr3', name: 'Fantasy Draft League', winner: 'Chris Park', score: '1,247 total points', date: 'Jan 15, 2026' },
-    ],
-  },
-  {
-    id: 's2',
-    name: '2024-25 Season',
-    contestResults: [
-      { id: 'cr4', name: 'Season-Long Pick\'em', winner: 'Mike Johnson', score: '178/256 correct', date: 'Feb 10, 2025' },
-      { id: 'cr5', name: 'Playoff Bracket Challenge', winner: 'Amy Lee', score: '8/11 correct', date: 'Feb 9, 2025' },
-      { id: 'cr6', name: 'Survivor Pool 2024', winner: 'Tom Brown', score: 'Survived 11 weeks', date: 'Nov 24, 2024' },
-    ],
-  },
-  {
-    id: 's3',
-    name: '2023-24 Season',
-    contestResults: [
-      { id: 'cr7', name: 'Season-Long Pick\'em', winner: 'Sarah Kim', score: '182/256 correct', date: 'Feb 11, 2024' },
-      { id: 'cr8', name: 'Survivor Pool 2023', winner: 'Dan Miller', score: 'Survived 15 weeks', date: 'Dec 17, 2023' },
-    ],
-  },
-];
+// ---------------------------------------------------------------------------
+// Hooks
+// ---------------------------------------------------------------------------
 
 function useLeagueDetail(leagueId: string) {
   return useQuery({
     queryKey: ['league', leagueId],
-    queryFn: async () => mockLeague,
-    initialData: mockLeague,
+    queryFn: async (): Promise<LeagueDetailDto> => {
+      const res = await api.get<LeagueResponse>(clientPath(API_ROUTES.leagues.detail(leagueId)));
+      return res.league;
+    },
   });
 }
 
-function OverviewTab({ league }: { league: LeagueDetail }) {
+function useLeagueContests(leagueId: string) {
+  return useQuery({
+    queryKey: ['league-contests', leagueId],
+    queryFn: async (): Promise<ContestSummaryDto[]> => {
+      const res = await api.get<{ contests: ContestSummaryDto[] }>(
+        clientPath(API_ROUTES.leagues.contests(leagueId)),
+      );
+      return res.contests;
+    },
+  });
+}
+
+function useLeagueMembers(leagueId: string) {
+  return useQuery({
+    queryKey: ['league-members', leagueId],
+    queryFn: async (): Promise<LeagueMemberDto[]> => {
+      const res = await api.get<LeagueMembersResponse>(
+        clientPath(API_ROUTES.leagues.members(leagueId)),
+      );
+      return res.members;
+    },
+  });
+}
+
+interface RecordItem {
+  id: string;
+  category: string;
+  holderName: string;
+  value: string;
+  season?: string;
+}
+
+function useLeagueRecords(leagueId: string) {
+  return useQuery({
+    queryKey: ['league-records', leagueId],
+    queryFn: async (): Promise<RecordItem[]> => {
+      const res = await api.get<{ records: RecordItem[] }>(
+        clientPath(`/api/v1/leagues/${leagueId}/history/records`),
+      );
+      return res.records;
+    },
+  });
+}
+
+interface SeasonSummary {
+  id: string;
+  season: string;
+  year: number;
+  contestCount: number;
+  results?: Array<{
+    id: string;
+    contestName: string;
+    winnerName: string;
+    score: string;
+    date: string;
+  }>;
+}
+
+function useLeagueSeasons(leagueId: string) {
+  return useQuery({
+    queryKey: ['league-seasons', leagueId],
+    queryFn: async (): Promise<SeasonSummary[]> => {
+      const res = await api.get<{ seasons: SeasonSummary[] }>(
+        clientPath(`/api/v1/leagues/${leagueId}/history/seasons`),
+      );
+      return res.seasons;
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Status style map
+// ---------------------------------------------------------------------------
+
+const contestStatusStyles: Record<string, string> = {
+  OPEN: 'bg-green-100 text-green-800 border-green-200',
+  DRAFTING: 'bg-purple-100 text-purple-800 border-purple-200',
+  ACTIVE: 'bg-blue-100 text-blue-800 border-blue-200',
+  COMPLETED: 'bg-gray-100 text-gray-800 border-gray-200',
+};
+
+
+function getRecordIcon(category: string) {
+  const lower = category.toLowerCase();
+  if (lower.includes('streak')) return Flame;
+  if (lower.includes('draft')) return Star;
+  if (lower.includes('accura')) return Target;
+  if (lower.includes('score') || lower.includes('season')) return TrendingUp;
+  if (lower.includes('win')) return Award;
+  return Trophy;
+}
+
+// ---------------------------------------------------------------------------
+// Tab components
+// ---------------------------------------------------------------------------
+
+function OverviewTab({ league, leagueId }: { league: LeagueDetailDto; leagueId: string }) {
+  const { data: contests = [] } = useLeagueContests(leagueId);
+  const isCommissioner = league.role === 'commissioner';
+
   return (
     <div className="space-y-6">
       {/* Commissioner quick actions */}
-      {league.isCommissioner && (
+      {isCommissioner && (
         <div className="flex gap-3">
           <Button size="sm" asChild>
             <Link to="/contests/create">
@@ -321,99 +176,53 @@ function OverviewTab({ league }: { league: LeagueDetail }) {
           <Trophy className="h-5 w-5" />
           Active Contests
         </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {league.contests.map((contest) => (
-            <Card key={contest.id}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">
-                    <Link
-                      to={`/contests/${contest.id}`}
-                      className="hover:underline"
-                    >
-                      {contest.name}
-                    </Link>
-                  </CardTitle>
-                  <Badge variant="secondary" className="text-xs capitalize">
-                    {contest.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1">
-                  {contest.standings.map((s, i) => (
-                    <div
-                      key={s.name}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span className="text-muted-foreground">
-                        {i + 1}. {s.name}
-                      </span>
-                      <span className="font-medium">{s.points} pts</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {contests.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No active contests.</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {contests.map((contest) => (
+              <Card key={contest.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">
+                      <Link
+                        to={`/contests/${contest.id}`}
+                        className="hover:underline"
+                      >
+                        {contest.name}
+                      </Link>
+                    </CardTitle>
+                    <Badge variant="secondary" className="text-xs capitalize">
+                      {contest.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">
+                    {contest.entryCount ?? 0} entries
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Next draft */}
-      {league.nextDraft && (
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <CalendarClock className="h-8 w-8 text-muted-foreground" />
-            <div>
-              <div className="font-semibold">{league.nextDraft.contestName}</div>
-              <div className="text-sm text-muted-foreground">
-                Draft scheduled for{' '}
-                {new Date(league.nextDraft.date).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recent feed */}
+      {/* Recent activity placeholder */}
       <div className="space-y-3">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
           Recent Activity
         </h3>
-        <div className="space-y-2">
-          {league.feedItems.map((item) => (
-            <div key={item.id} className="flex gap-3 rounded-lg border p-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                {item.author[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm">
-                  <span className="font-medium">{item.author}</span>{' '}
-                  <span className="text-muted-foreground">{item.content}</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {item.timestamp}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/leagues/${league.id}/feed`}>View all activity</Link>
-        </Button>
+        <p className="text-muted-foreground text-sm">No recent activity to show.</p>
       </div>
     </div>
   );
 }
 
-function ContestsTab({ leagueId: _leagueId }: { leagueId: string }) {
+function ContestsTab({ leagueId }: { leagueId: string }) {
+  const { data: contests = [], isLoading } = useLeagueContests(leagueId);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -425,7 +234,9 @@ function ContestsTab({ leagueId: _leagueId }: { leagueId: string }) {
           </Link>
         </Button>
       </div>
-      {mockContests.length === 0 ? (
+      {isLoading ? (
+        <p className="text-muted-foreground text-sm py-8 text-center">Loading contests...</p>
+      ) : contests.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Trophy className="h-8 w-8 text-muted-foreground mb-3" />
           <p className="text-muted-foreground">No contests yet. Create your first contest!</p>
@@ -438,7 +249,6 @@ function ContestsTab({ leagueId: _leagueId }: { leagueId: string }) {
                 <thead>
                   <tr className="border-b text-left text-sm text-muted-foreground">
                     <th className="p-4 font-medium">Contest</th>
-                    <th className="p-4 font-medium hidden sm:table-cell">Sport</th>
                     <th className="p-4 font-medium hidden md:table-cell">Type</th>
                     <th className="p-4 font-medium">Status</th>
                     <th className="p-4 font-medium hidden sm:table-cell">Entries</th>
@@ -446,7 +256,7 @@ function ContestsTab({ leagueId: _leagueId }: { leagueId: string }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockContests.map((contest) => (
+                  {contests.map((contest) => (
                     <tr key={contest.id} className="border-b last:border-0">
                       <td className="p-4">
                         <Link
@@ -456,22 +266,21 @@ function ContestsTab({ leagueId: _leagueId }: { leagueId: string }) {
                           {contest.name}
                         </Link>
                       </td>
-                      <td className="p-4 hidden sm:table-cell">
-                        <Badge variant="outline">{contest.sport}</Badge>
-                      </td>
                       <td className="p-4 text-sm text-muted-foreground hidden md:table-cell">
-                        {contest.type}
+                        {contest.contestType}
                       </td>
                       <td className="p-4">
-                        <Badge className={cn('capitalize', contestStatusStyles[contest.status])}>
+                        <Badge className={cn('capitalize', contestStatusStyles[contest.status] ?? 'bg-gray-100 text-gray-800')}>
                           {contest.status}
                         </Badge>
                       </td>
                       <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">
-                        {contest.entries}
+                        {contest.entryCount ?? 0}
                       </td>
                       <td className="p-4 text-sm text-muted-foreground hidden md:table-cell">
-                        {contest.startDate}
+                        {contest.startsAt
+                          ? new Date(contest.startsAt).toLocaleDateString()
+                          : '-'}
                       </td>
                     </tr>
                   ))}
@@ -486,10 +295,12 @@ function ContestsTab({ leagueId: _leagueId }: { leagueId: string }) {
 }
 
 function MembersTab({ leagueId }: { leagueId: string }) {
+  const { data: members = [], isLoading } = useLeagueMembers(leagueId);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{mockMembersDetail.length} Members</h3>
+        <h3 className="text-lg font-semibold">{members.length} Members</h3>
         <Button size="sm" variant="outline" asChild>
           <Link to={`/leagues/${leagueId}/members`}>
             <UserPlus className="h-4 w-4 mr-1" />
@@ -497,54 +308,70 @@ function MembersTab({ leagueId }: { leagueId: string }) {
           </Link>
         </Button>
       </div>
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b text-left text-sm text-muted-foreground">
-                  <th className="p-4 font-medium">Member</th>
-                  <th className="p-4 font-medium">Role</th>
-                  <th className="p-4 font-medium hidden sm:table-cell">Joined</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockMembersDetail.map((member) => (
-                  <tr key={member.id} className="border-b last:border-0">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-sm">
-                          {member.initials}
-                        </div>
-                        <div>
-                          <div className="font-medium">{member.name}</div>
-                          <div className="text-xs text-muted-foreground sm:hidden">
-                            {member.joinDate}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge
-                        className={cn(
-                          member.role === 'commissioner'
-                            ? 'bg-amber-100 text-amber-800 border-amber-200'
-                            : 'bg-blue-100 text-blue-800 border-blue-200',
-                        )}
-                      >
-                        {member.role === 'commissioner' ? 'Commissioner' : 'Member'}
-                      </Badge>
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">
-                      {member.joinDate}
-                    </td>
+      {isLoading ? (
+        <p className="text-muted-foreground text-sm py-8 text-center">Loading members...</p>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-sm text-muted-foreground">
+                    <th className="p-4 font-medium">Member</th>
+                    <th className="p-4 font-medium">Role</th>
+                    <th className="p-4 font-medium hidden sm:table-cell">Joined</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {members.map((member) => {
+                    const initials = member.displayName
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase();
+                    return (
+                      <tr key={member.id} className="border-b last:border-0">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-sm">
+                              {initials}
+                            </div>
+                            <div>
+                              <div className="font-medium">{member.displayName}</div>
+                              {member.joinedAt && (
+                                <div className="text-xs text-muted-foreground sm:hidden">
+                                  {new Date(member.joinedAt).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <Badge
+                            className={cn(
+                              member.role === 'commissioner'
+                                ? 'bg-amber-100 text-amber-800 border-amber-200'
+                                : 'bg-blue-100 text-blue-800 border-blue-200',
+                            )}
+                          >
+                            {member.role === 'commissioner' ? 'Commissioner' : 'Member'}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">
+                          {member.joinedAt
+                            ? new Date(member.joinedAt).toLocaleDateString()
+                            : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -570,59 +397,34 @@ function FeedTab() {
         </CardContent>
       </Card>
 
-      {/* Feed items */}
-      <div className="space-y-3">
-        {mockFeedItems.map((item) => (
-          <Card key={item.id}>
-            <CardContent className="p-4">
-              <div className="flex gap-3">
-                <div className={cn(
-                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-medium text-sm',
-                  item.type === 'event' ? 'bg-blue-100 text-blue-700' :
-                  item.type === 'announcement' ? 'bg-amber-100 text-amber-700' :
-                  'bg-muted',
-                )}>
-                  {item.initials}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{item.author}</span>
-                    {item.type === 'announcement' && (
-                      <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-xs">
-                        Announcement
-                      </Badge>
-                    )}
-                    {item.type === 'event' && (
-                      <Badge variant="secondary" className="text-xs">Event</Badge>
-                    )}
-                  </div>
-                  <p className="text-sm mt-1">{item.content}</p>
-                  <div className="flex items-center gap-4 mt-2">
-                    <span className="text-xs text-muted-foreground">{item.timestamp}</span>
-                    {item.likes > 0 && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Heart className="h-3 w-3" />
-                        {item.likes}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Empty state — feed API not yet wired */}
+      <p className="text-muted-foreground text-sm text-center py-8">No posts yet. Be the first to share!</p>
     </div>
   );
 }
 
-function RecordsTab() {
+function RecordsTab({ leagueId }: { leagueId: string }) {
+  const { data: records = [], isLoading } = useLeagueRecords(leagueId);
+
+  if (isLoading) {
+    return <p className="text-muted-foreground text-sm py-8 text-center">Loading records...</p>;
+  }
+
+  if (records.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">League Records</h3>
+        <p className="text-muted-foreground text-sm">No records yet. Play some contests to earn records!</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">League Records</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {mockRecords.map((record) => {
-          const Icon = recordIconMap[record.icon];
+        {records.map((record) => {
+          const Icon = getRecordIcon(record.category);
           return (
             <Card key={record.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
@@ -630,16 +432,18 @@ function RecordsTab() {
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Icon className="h-4 w-4" />
                   </div>
-                  <CardTitle className="text-base">{record.name}</CardTitle>
+                  <CardTitle className="text-base">{record.category}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-1">
                   <div className="text-lg font-bold">{record.value}</div>
                   <div className="text-sm text-muted-foreground">
-                    Held by <span className="font-medium text-foreground">{record.holder}</span>
+                    Held by <span className="font-medium text-foreground">{record.holderName}</span>
                   </div>
-                  <div className="text-xs text-muted-foreground">{record.date}</div>
+                  {record.season && (
+                    <div className="text-xs text-muted-foreground">{record.season}</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -650,7 +454,7 @@ function RecordsTab() {
   );
 }
 
-function SeasonAccordion({ season }: { season: typeof mockSeasons[number] }) {
+function SeasonAccordion({ season }: { season: SeasonSummary }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -662,9 +466,9 @@ function SeasonAccordion({ season }: { season: typeof mockSeasons[number] }) {
         <div className="flex items-center gap-3">
           <Calendar className="h-5 w-5 text-muted-foreground" />
           <div>
-            <div className="font-semibold">{season.name}</div>
+            <div className="font-semibold">{season.season}</div>
             <div className="text-sm text-muted-foreground">
-              {season.contestResults.length} contest{season.contestResults.length !== 1 ? 's' : ''}
+              {season.contestCount} contest{season.contestCount !== 1 ? 's' : ''}
             </div>
           </div>
         </div>
@@ -677,26 +481,30 @@ function SeasonAccordion({ season }: { season: typeof mockSeasons[number] }) {
       {open && (
         <CardContent className="pt-0 pb-4">
           <div className="space-y-3 border-t pt-4">
-            {season.contestResults.map((result) => (
-              <div
-                key={result.id}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                    <Trophy className="h-4 w-4" />
+            {(season.results ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No results available for this season.</p>
+            ) : (
+              season.results!.map((result) => (
+                <div
+                  key={result.id}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                      <Trophy className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">{result.contestName}</div>
+                      <div className="text-xs text-muted-foreground">{result.date}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-medium text-sm">{result.name}</div>
-                    <div className="text-xs text-muted-foreground">{result.date}</div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">{result.winnerName}</div>
+                    <Badge variant="secondary" className="text-xs">{result.score}</Badge>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium">{result.winner}</div>
-                  <Badge variant="secondary" className="text-xs">{result.score}</Badge>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       )}
@@ -704,12 +512,27 @@ function SeasonAccordion({ season }: { season: typeof mockSeasons[number] }) {
   );
 }
 
-function HistoryTab() {
+function HistoryTab({ leagueId }: { leagueId: string }) {
+  const { data: seasons = [], isLoading } = useLeagueSeasons(leagueId);
+
+  if (isLoading) {
+    return <p className="text-muted-foreground text-sm py-8 text-center">Loading history...</p>;
+  }
+
+  if (seasons.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">League History</h3>
+        <p className="text-muted-foreground text-sm">No seasons completed yet.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">League History</h3>
       <div className="space-y-3">
-        {mockSeasons.map((season) => (
+        {seasons.map((season) => (
           <SeasonAccordion key={season.id} season={season} />
         ))}
       </div>
@@ -717,11 +540,33 @@ function HistoryTab() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
 export function Component() {
   const { leagueId } = useParams<{ leagueId: string }>();
-  const { data: league } = useLeagueDetail(leagueId!);
+  const { data: league, isLoading, isError } = useLeagueDetail(leagueId!);
 
-  if (!league) return null;
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Failed to load league</h2>
+        <p className="text-muted-foreground">Something went wrong. Please try again later.</p>
+      </div>
+    );
+  }
+
+  if (isLoading || !league) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-muted-foreground">Loading league...</p>
+      </div>
+    );
+  }
+
+  const isCommissioner = league.role === 'commissioner';
 
   return (
     <div className="space-y-6">
@@ -734,11 +579,10 @@ export function Component() {
               <Users className="h-3.5 w-3.5" />
               {league.memberCount} members
             </span>
-            <span>Commissioner: {league.commissioner}</span>
           </div>
         </div>
         <div>
-          {league.isCommissioner ? (
+          {isCommissioner ? (
             <Button variant="outline" asChild>
               <Link to={`/leagues/${league.id}/settings`}>
                 <Settings className="h-4 w-4 mr-2" />
@@ -766,7 +610,7 @@ export function Component() {
         </TabsList>
 
         <TabsContent value="overview">
-          <OverviewTab league={league} />
+          <OverviewTab league={league} leagueId={leagueId!} />
         </TabsContent>
         <TabsContent value="contests">
           <ContestsTab leagueId={league.id} />
@@ -778,10 +622,10 @@ export function Component() {
           <FeedTab />
         </TabsContent>
         <TabsContent value="records">
-          <RecordsTab />
+          <RecordsTab leagueId={league.id} />
         </TabsContent>
         <TabsContent value="history">
-          <HistoryTab />
+          <HistoryTab leagueId={league.id} />
         </TabsContent>
       </Tabs>
     </div>

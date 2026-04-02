@@ -7,8 +7,8 @@ import {
   List,
   Users,
   Trophy,
-  Clock,
   Search,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,73 +18,26 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api-client';
+import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import type { LeagueListResponse, LeagueSummaryDto } from '@poolmaster/shared/dto';
 
 type SortOption = 'activity' | 'name' | 'created';
 type ViewMode = 'grid' | 'list';
 
-interface League {
-  id: string;
-  name: string;
-  role: 'commissioner' | 'member';
-  memberCount: number;
-  activeContests: number;
-  lastActive: string;
-  lastActiveDate: Date;
-  createdAt: Date;
-}
-
-const mockLeagues: League[] = [
-  {
-    id: 'league-1',
-    name: 'Sunday Gridiron League',
-    role: 'commissioner',
-    memberCount: 12,
-    activeContests: 2,
-    lastActive: '2 hours ago',
-    lastActiveDate: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    createdAt: new Date('2025-08-15'),
-  },
-  {
-    id: 'league-2',
-    name: 'Hoop Dreams',
-    role: 'member',
-    memberCount: 8,
-    activeContests: 1,
-    lastActive: '1 day ago',
-    lastActiveDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    createdAt: new Date('2025-10-01'),
-  },
-  {
-    id: 'league-3',
-    name: 'Fairway Legends',
-    role: 'member',
-    memberCount: 16,
-    activeContests: 3,
-    lastActive: '5 minutes ago',
-    lastActiveDate: new Date(Date.now() - 5 * 60 * 1000),
-    createdAt: new Date('2025-03-10'),
-  },
-  {
-    id: 'league-4',
-    name: 'Pit Lane Picks',
-    role: 'commissioner',
-    memberCount: 6,
-    activeContests: 0,
-    lastActive: '3 days ago',
-    lastActiveDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    createdAt: new Date('2026-01-20'),
-  },
-];
-
 function useLeagues() {
   return useQuery({
     queryKey: ['leagues'],
-    queryFn: async () => mockLeagues,
-    initialData: mockLeagues,
+    queryFn: async (): Promise<LeagueSummaryDto[]> => {
+      const res = await api.get<LeagueListResponse>(clientPath(API_ROUTES.leagues.list));
+      return res.leagues;
+    },
   });
 }
 
-function LeagueCard({ league, viewMode }: { league: League; viewMode: ViewMode }) {
+function LeagueCard({ league, viewMode }: { league: LeagueSummaryDto; viewMode: ViewMode }) {
+  const isCommissioner = league.role === 'commissioner';
+
   if (viewMode === 'list') {
     return (
       <Card>
@@ -99,12 +52,12 @@ function LeagueCard({ league, viewMode }: { league: League; viewMode: ViewMode }
               </Link>
               <Badge
                 className={cn(
-                  league.role === 'commissioner'
+                  isCommissioner
                     ? 'bg-amber-100 text-amber-800 border-amber-200'
                     : 'bg-blue-100 text-blue-800 border-blue-200',
                 )}
               >
-                {league.role === 'commissioner' ? 'Commissioner' : 'Member'}
+                {isCommissioner ? 'Commissioner' : 'Member'}
               </Badge>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
@@ -114,11 +67,7 @@ function LeagueCard({ league, viewMode }: { league: League; viewMode: ViewMode }
               </span>
               <span className="flex items-center gap-1">
                 <Trophy className="h-3.5 w-3.5" />
-                {league.activeContests} active contests
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {league.lastActive}
+                {league.activeContestCount} active contests
               </span>
             </div>
           </div>
@@ -133,12 +82,12 @@ function LeagueCard({ league, viewMode }: { league: League; viewMode: ViewMode }
         <div className="flex items-start justify-between mb-3">
           <Badge
             className={cn(
-              league.role === 'commissioner'
+              isCommissioner
                 ? 'bg-amber-100 text-amber-800 border-amber-200'
                 : 'bg-blue-100 text-blue-800 border-blue-200',
             )}
           >
-            {league.role === 'commissioner' ? 'Commissioner' : 'Member'}
+            {isCommissioner ? 'Commissioner' : 'Member'}
           </Badge>
         </div>
         <Link
@@ -154,11 +103,7 @@ function LeagueCard({ league, viewMode }: { league: League; viewMode: ViewMode }
           </div>
           <div className="flex items-center gap-1.5">
             <Trophy className="h-3.5 w-3.5" />
-            <span>{league.activeContests} active contests</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
-            <span>{league.lastActive}</span>
+            <span>{league.activeContestCount} active contests</span>
           </div>
         </div>
       </CardContent>
@@ -189,20 +134,37 @@ function EmptyState() {
 }
 
 export function Component() {
-  const { data: leagues = [] } = useLeagues();
-  const [sortBy, setSortBy] = useState<SortOption>('activity');
+  const { data: leagues = [], isLoading, isError } = useLeagues();
+  const [sortBy, setSortBy] = useState<SortOption>('name');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Failed to load leagues</h2>
+        <p className="text-muted-foreground">Something went wrong. Please try again later.</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-muted-foreground">Loading leagues...</p>
+      </div>
+    );
+  }
 
   const filteredLeagues = [...leagues].sort((a, b) => {
     switch (sortBy) {
-      case 'activity':
-        return b.lastActiveDate.getTime() - a.lastActiveDate.getTime();
       case 'name':
         return a.name.localeCompare(b.name);
       case 'created':
-        return b.createdAt.getTime() - a.createdAt.getTime();
+        return (b.createdAt ?? '').localeCompare(a.createdAt ?? '');
+      case 'activity':
       default:
-        return 0;
+        return a.name.localeCompare(b.name);
     }
   });
 

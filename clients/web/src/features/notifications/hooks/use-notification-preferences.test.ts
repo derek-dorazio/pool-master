@@ -43,14 +43,12 @@ describe('useNotificationPreferences', () => {
     expect(spy).toHaveBeenCalledWith('/v1/notifications/preferences');
   });
 
-  it('returns fallback preferences when API fails', async () => {
-    vi.spyOn(api, 'get').mockRejectedValueOnce(new Error('Network'));
+  it('propagates error when API fails', async () => {
+    vi.spyOn(api, 'get').mockRejectedValue(new Error('Network'));
     const { result } = renderHook(() => useNotificationPreferences());
 
-    await waitFor(() => expect(result.current.data).toBeDefined());
-    expect(result.current.data!.categories).toHaveProperty('draft');
-    expect(result.current.data!.categories).toHaveProperty('scoring');
-    expect(result.current.data!.dnd).toHaveProperty('enabled');
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
   });
 
   it('returns categories with channel toggles', async () => {
@@ -102,7 +100,7 @@ describe('useSaveNotificationPreferences', () => {
     await waitFor(() => expect(result.current.save.isSuccess).toBe(true));
   });
 
-  it('handles API failure gracefully with fallback', async () => {
+  it('propagates mutation error when API fails', async () => {
     vi.spyOn(api, 'put').mockRejectedValueOnce(new Error('Server error'));
     vi.spyOn(api, 'get').mockResolvedValueOnce(mockPreferences);
     const { result } = renderHook(() => {
@@ -113,7 +111,6 @@ describe('useSaveNotificationPreferences', () => {
 
     await waitFor(() => expect(result.current.prefs.data).toBeDefined());
     result.current.save.mutate(mockPreferences);
-    // Mutation catches the error internally and returns undefined
-    await waitFor(() => expect(result.current.save.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.save.isError).toBe(true));
   });
 });

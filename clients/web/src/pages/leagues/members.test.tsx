@@ -10,22 +10,38 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+const mockMembers = [
+  { id: 'm1', userId: 'u1', displayName: 'Mike Johnson', role: 'commissioner', joinedAt: '2025-08-15T00:00:00Z' },
+  { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'co-commissioner', joinedAt: '2025-08-16T00:00:00Z' },
+  { id: 'm3', userId: 'u3', displayName: 'Dan Miller', role: 'member', joinedAt: '2025-08-20T00:00:00Z' },
+];
+
+const mockLeague = {
+  id: 'league-1',
+  name: 'Test League',
+  memberCount: 3,
+  activeContestCount: 0,
+  visibility: 'PRIVATE',
+  role: 'commissioner',
+};
+
 vi.mock('@tanstack/react-query', async () => {
   const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
   return {
     ...actual,
-    useQuery: () => ({
-      data: {
-        members: [
-          { id: 'm1', name: 'Mike Johnson', initials: 'MJ', role: 'commissioner', joinDate: 'Aug 15, 2025', email: 'mike@example.com' },
-          { id: 'm2', name: 'Sarah Kim', initials: 'SK', role: 'co-commissioner', joinDate: 'Aug 16, 2025', email: 'sarah@example.com' },
-          { id: 'm3', name: 'Dan Miller', initials: 'DM', role: 'member', joinDate: 'Aug 20, 2025', email: 'dan@example.com' },
-        ],
-        pendingInvites: [],
-      },
-      isLoading: false,
-      error: null,
-    }),
+    useQuery: (options: { queryKey: string[] }) => {
+      const key = options.queryKey[0];
+      if (key === 'league-members') {
+        return { data: mockMembers, isLoading: false, isError: false, error: null };
+      }
+      if (key === 'league') {
+        return { data: mockLeague, isLoading: false, isError: false, error: null };
+      }
+      if (key === 'league-invite-link') {
+        return { data: 'https://poolmaster.app/join/abc123xyz', isLoading: false, isError: false, error: null };
+      }
+      return { data: undefined, isLoading: false, isError: false, error: null };
+    },
   };
 });
 

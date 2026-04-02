@@ -192,12 +192,22 @@ export const searchHandlers = [
     return HttpResponse.json({ participants: [], total: 0, facets: {} });
   }),
 
-  http.get('/api/v1/search/leagues', () => {
-    return HttpResponse.json({ leagues: [], total: 0 });
+  http.get('/api/v1/search/leagues', ({ request }) => {
+    const url = new URL(request.url);
+    const sport = url.searchParams.get('sport');
+    const leagues = [
+      { id: 'l1', name: 'Masters Pool 2026', description: 'Annual Masters tournament pool', sport: 'GOLF', memberCount: 14, maxMembers: 20, activeContestCount: 1, activityLevel: 'HIGH', joinPolicy: 'OPEN', commissionerName: 'Dave' },
+      { id: 'l2', name: 'NFL Survivor League', description: 'Pick one team per week', sport: 'NFL', memberCount: 32, maxMembers: null, activeContestCount: 0, activityLevel: 'MEDIUM', joinPolicy: 'OPEN', commissionerName: 'Mike' },
+    ];
+    const filtered = sport ? leagues.filter((l) => l.sport === sport) : leagues;
+    return HttpResponse.json({ leagues: filtered, total: filtered.length });
   }),
 
   http.get('/api/v1/search/contests', () => {
-    return HttpResponse.json({ contests: [], total: 0 });
+    const contests = [
+      { id: 'c1', leagueName: 'Masters Pool 2026', contestName: 'The Masters — Pick 6', sport: 'GOLF', eventName: 'The Masters 2026', draftType: 'SNAKE', memberCount: 10, maxMembers: 20, entryFee: null, prizePool: null, draftStart: null, lockTime: null, status: 'OPEN' },
+    ];
+    return HttpResponse.json({ contests, total: contests.length });
   }),
 ];
 

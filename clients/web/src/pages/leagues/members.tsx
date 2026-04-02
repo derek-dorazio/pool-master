@@ -6,8 +6,8 @@ import {
   MoreHorizontal,
   Copy,
   Mail,
-  RefreshCw,
   X,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,48 +22,45 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { api } from '@/lib/api-client';
+import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import type { LeagueMemberDto, LeagueMembersResponse, LeagueResponse } from '@poolmaster/shared/dto';
 
-interface Member {
-  id: string;
-  name: string;
-  initials: string;
-  role: 'commissioner' | 'co-commissioner' | 'member';
-  joinDate: string;
-  email: string;
-}
-
-interface PendingInvite {
-  id: string;
-  email: string;
-  sentAt: string;
-}
-
-const mockMembers: Member[] = [
-  { id: 'm1', name: 'Mike Johnson', initials: 'MJ', role: 'commissioner', joinDate: 'Aug 15, 2025', email: 'mike@example.com' },
-  { id: 'm2', name: 'Sarah Kim', initials: 'SK', role: 'co-commissioner', joinDate: 'Aug 16, 2025', email: 'sarah@example.com' },
-  { id: 'm3', name: 'Dan Miller', initials: 'DM', role: 'member', joinDate: 'Aug 20, 2025', email: 'dan@example.com' },
-  { id: 'm4', name: 'Chris Park', initials: 'CP', role: 'member', joinDate: 'Sep 1, 2025', email: 'chris@example.com' },
-  { id: 'm5', name: 'Amy Lee', initials: 'AL', role: 'member', joinDate: 'Sep 5, 2025', email: 'amy@example.com' },
-  { id: 'm6', name: 'Tom Brown', initials: 'TB', role: 'member', joinDate: 'Oct 12, 2025', email: 'tom@example.com' },
-];
-
-const mockPendingInvites: PendingInvite[] = [
-  { id: 'inv1', email: 'jessica@example.com', sentAt: 'Mar 20, 2026' },
-  { id: 'inv2', email: 'ryan@example.com', sentAt: 'Mar 22, 2026' },
-];
-
-const isCommissioner = true;
-const inviteLink = 'https://poolmaster.app/join/abc123xyz';
-
-function useMembersData(leagueId: string) {
+function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
-    queryFn: async () => ({ members: mockMembers, pendingInvites: mockPendingInvites }),
-    initialData: { members: mockMembers, pendingInvites: mockPendingInvites },
+    queryFn: async (): Promise<LeagueMemberDto[]> => {
+      const res = await api.get<LeagueMembersResponse>(
+        clientPath(API_ROUTES.leagues.members(leagueId)),
+      );
+      return res.members;
+    },
   });
 }
 
-function RoleBadge({ role }: { role: Member['role'] }) {
+function useLeagueDetail(leagueId: string) {
+  return useQuery({
+    queryKey: ['league', leagueId],
+    queryFn: async () => {
+      const res = await api.get<LeagueResponse>(clientPath(API_ROUTES.leagues.detail(leagueId)));
+      return res.league;
+    },
+  });
+}
+
+function useInviteLink(leagueId: string) {
+  return useQuery({
+    queryKey: ['league-invite-link', leagueId],
+    queryFn: async (): Promise<string> => {
+      const res = await api.get<{ inviteLink: string }>(
+        clientPath(API_ROUTES.leagues.inviteLink(leagueId)),
+      );
+      return res.inviteLink;
+    },
+  });
+}
+
+function RoleBadge({ role }: { role: string }) {
   return (
     <Badge
       className={cn(
@@ -83,7 +80,7 @@ function RoleBadge({ role }: { role: Member['role'] }) {
   );
 }
 
-function MemberActions({ member }: { member: Member }) {
+function MemberActions({ member, isCommissioner }: { member: LeagueMemberDto; isCommissioner: boolean }) {
   const [open, setOpen] = useState(false);
   const dialog = useConfirmDialog();
 
@@ -108,7 +105,7 @@ function MemberActions({ member }: { member: Member }) {
             <button
               className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
               onClick={() => {
-                toast({ title: 'Role changed', description: `${member.name} is now a Co-Commissioner.` });
+                toast({ title: 'Role changed', description: `${member.displayName} is now a Co-Commissioner.` });
                 setOpen(false);
               }}
             >
@@ -120,11 +117,11 @@ function MemberActions({ member }: { member: Member }) {
                 setOpen(false);
                 const confirmed = await dialog.confirm(
                   'Remove Member',
-                  `Remove ${member.name} from the league?`,
+                  `Remove ${member.displayName} from the league?`,
                   { confirmLabel: 'Remove', variant: 'destructive' },
                 );
                 if (confirmed) {
-                  toast({ title: 'Member removed', description: `${member.name} has been removed.` });
+                  toast({ title: 'Member removed', description: `${member.displayName} has been removed.` });
                 }
               }}
             >
@@ -148,12 +145,13 @@ function MemberActions({ member }: { member: Member }) {
 
 export function Component() {
   const { leagueId } = useParams<{ leagueId: string }>();
-  const { data } = useMembersData(leagueId!);
+  const { data: members = [], isLoading, isError } = useLeagueMembers(leagueId!);
+  const { data: league } = useLeagueDetail(leagueId!);
+  const { data: inviteLink = '' } = useInviteLink(leagueId!);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
 
-  const members = data?.members ?? [];
-  const pendingInvites = data?.pendingInvites ?? [];
+  const isCommissioner = league?.role === 'commissioner';
 
   function handleSendInvite() {
     if (inviteEmail) {
@@ -166,6 +164,24 @@ export function Component() {
   function copyInviteLink() {
     navigator.clipboard.writeText(inviteLink).catch(() => {});
     toast({ title: 'Copied!', description: 'Invite link copied to clipboard.' });
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Failed to load members</h2>
+        <p className="text-muted-foreground">Something went wrong. Please try again later.</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-muted-foreground">Loading members...</p>
+      </div>
+    );
   }
 
   return (
@@ -250,88 +266,51 @@ export function Component() {
                 </tr>
               </thead>
               <tbody>
-                {members.map((member) => (
-                  <tr key={member.id} className="border-b last:border-0">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-sm">
-                          {member.initials}
-                        </div>
-                        <div>
-                          <div className="font-medium">{member.name}</div>
-                          <div className="text-xs text-muted-foreground sm:hidden">
-                            {member.joinDate}
+                {members.map((member) => {
+                  const initials = member.displayName
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase();
+                  return (
+                    <tr key={member.id} className="border-b last:border-0">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-sm">
+                            {initials}
+                          </div>
+                          <div>
+                            <div className="font-medium">{member.displayName}</div>
+                            {member.joinedAt && (
+                              <div className="text-xs text-muted-foreground sm:hidden">
+                                {new Date(member.joinedAt).toLocaleDateString()}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <RoleBadge role={member.role} />
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">
-                      {member.joinDate}
-                    </td>
-                    {isCommissioner && (
-                      <td className="p-4">
-                        <MemberActions member={member} />
                       </td>
-                    )}
-                  </tr>
-                ))}
+                      <td className="p-4">
+                        <RoleBadge role={member.role} />
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">
+                        {member.joinedAt
+                          ? new Date(member.joinedAt).toLocaleDateString()
+                          : '-'}
+                      </td>
+                      {isCommissioner && (
+                        <td className="p-4">
+                          <MemberActions member={member} isCommissioner={isCommissioner} />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
-
-      {/* Pending invitations (commissioner only) */}
-      {isCommissioner && pendingInvites.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Pending Invitations</CardTitle>
-            <CardDescription>{pendingInvites.length} pending invites</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y">
-              {pendingInvites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className="flex items-center justify-between p-4"
-                >
-                  <div>
-                    <div className="font-medium text-sm">{invite.email}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Sent {invite.sentAt}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        toast({ title: 'Invite resent', description: `Resent to ${invite.email}.` })
-                      }
-                    >
-                      <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                      Resend
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() =>
-                        toast({ title: 'Invite revoked', description: `Invite to ${invite.email} revoked.` })
-                      }
-                    >
-                      Revoke
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

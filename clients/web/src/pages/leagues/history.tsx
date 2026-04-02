@@ -1,113 +1,44 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, ChevronRight, Trophy, Calendar } from 'lucide-react';
+import { ChevronDown, ChevronRight, Trophy, Calendar, AlertCircle } from 'lucide-react';
 import {
   Card,
   CardContent,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { api } from '@/lib/api-client';
+import { clientPath } from '@poolmaster/shared/api-routes';
 
 interface ContestResult {
   id: string;
-  name: string;
-  winner: string;
+  contestName: string;
+  winnerName: string;
   score: string;
   date: string;
 }
 
-interface Season {
+interface SeasonSummary {
   id: string;
-  name: string;
-  contestResults: ContestResult[];
+  season: string;
+  year: number;
+  contestCount: number;
+  results?: ContestResult[];
 }
-
-const mockSeasons: Season[] = [
-  {
-    id: 's1',
-    name: '2025-26 Season',
-    contestResults: [
-      {
-        id: 'cr1',
-        name: 'Week 14 Pick\'em',
-        winner: 'Sarah Kim',
-        score: '14/16 correct',
-        date: 'Dec 8, 2025',
-      },
-      {
-        id: 'cr2',
-        name: 'Survivor Pool 2025',
-        winner: 'Dan Miller',
-        score: 'Survived 13 weeks',
-        date: 'Nov 30, 2025',
-      },
-      {
-        id: 'cr3',
-        name: 'Fantasy Draft League',
-        winner: 'Chris Park',
-        score: '1,247 total points',
-        date: 'Jan 15, 2026',
-      },
-    ],
-  },
-  {
-    id: 's2',
-    name: '2024-25 Season',
-    contestResults: [
-      {
-        id: 'cr4',
-        name: 'Season-Long Pick\'em',
-        winner: 'Mike Johnson',
-        score: '178/256 correct',
-        date: 'Feb 10, 2025',
-      },
-      {
-        id: 'cr5',
-        name: 'Playoff Bracket Challenge',
-        winner: 'Amy Lee',
-        score: '8/11 correct',
-        date: 'Feb 9, 2025',
-      },
-      {
-        id: 'cr6',
-        name: 'Survivor Pool 2024',
-        winner: 'Tom Brown',
-        score: 'Survived 11 weeks',
-        date: 'Nov 24, 2024',
-      },
-    ],
-  },
-  {
-    id: 's3',
-    name: '2023-24 Season',
-    contestResults: [
-      {
-        id: 'cr7',
-        name: 'Season-Long Pick\'em',
-        winner: 'Sarah Kim',
-        score: '182/256 correct',
-        date: 'Feb 11, 2024',
-      },
-      {
-        id: 'cr8',
-        name: 'Survivor Pool 2023',
-        winner: 'Dan Miller',
-        score: 'Survived 15 weeks',
-        date: 'Dec 17, 2023',
-      },
-    ],
-  },
-];
 
 function useHistory(leagueId: string) {
   return useQuery({
     queryKey: ['league-history', leagueId],
-    queryFn: async () => mockSeasons,
-    initialData: mockSeasons,
+    queryFn: async (): Promise<SeasonSummary[]> => {
+      const res = await api.get<{ seasons: SeasonSummary[] }>(
+        clientPath(`/api/v1/leagues/${leagueId}/history/seasons`),
+      );
+      return res.seasons;
+    },
   });
 }
 
-function SeasonAccordion({ season }: { season: Season }) {
+function SeasonAccordion({ season }: { season: SeasonSummary }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -119,9 +50,9 @@ function SeasonAccordion({ season }: { season: Season }) {
         <div className="flex items-center gap-3">
           <Calendar className="h-5 w-5 text-muted-foreground" />
           <div>
-            <div className="font-semibold">{season.name}</div>
+            <div className="font-semibold">{season.season}</div>
             <div className="text-sm text-muted-foreground">
-              {season.contestResults.length} contest{season.contestResults.length !== 1 ? 's' : ''}
+              {season.contestCount} contest{season.contestCount !== 1 ? 's' : ''}
             </div>
           </div>
         </div>
@@ -134,30 +65,34 @@ function SeasonAccordion({ season }: { season: Season }) {
       {open && (
         <CardContent className="pt-0 pb-4">
           <div className="space-y-3 border-t pt-4">
-            {season.contestResults.map((result) => (
-              <div
-                key={result.id}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                    <Trophy className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">{result.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {result.date}
+            {(season.results ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No results available for this season.</p>
+            ) : (
+              season.results!.map((result) => (
+                <div
+                  key={result.id}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                      <Trophy className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">{result.contestName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {result.date}
+                      </div>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">{result.winnerName}</div>
+                    <Badge variant="secondary" className="text-xs">
+                      {result.score}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium">{result.winner}</div>
-                  <Badge variant="secondary" className="text-xs">
-                    {result.score}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       )}
@@ -167,7 +102,25 @@ function SeasonAccordion({ season }: { season: Season }) {
 
 export function Component() {
   const { leagueId } = useParams<{ leagueId: string }>();
-  const { data: seasons = [] } = useHistory(leagueId!);
+  const { data: seasons = [], isLoading, isError } = useHistory(leagueId!);
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Failed to load history</h2>
+        <p className="text-muted-foreground">Something went wrong. Please try again later.</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-muted-foreground">Loading history...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -176,11 +129,15 @@ export function Component() {
         Past seasons and contest results. Expand a season to see the details.
       </p>
 
-      <div className="space-y-3">
-        {seasons.map((season) => (
-          <SeasonAccordion key={season.id} season={season} />
-        ))}
-      </div>
+      {seasons.length === 0 ? (
+        <p className="text-muted-foreground text-sm">No seasons completed yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {seasons.map((season) => (
+            <SeasonAccordion key={season.id} season={season} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

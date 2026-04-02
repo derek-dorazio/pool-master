@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
 import { notificationKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -21,33 +22,13 @@ export interface NotificationPreferences {
   dnd: DndSettings;
 }
 
-const defaultPreferences: NotificationPreferences = {
-  categories: {
-    draft: { inApp: true, push: true, email: false },
-    scoring: { inApp: true, push: true, email: true },
-    contest: { inApp: true, push: false, email: true },
-    league: { inApp: true, push: false, email: false },
-    social: { inApp: true, push: false, email: false },
-    account: { inApp: true, push: false, email: true },
-  },
-  dnd: {
-    enabled: false,
-    startTime: '22:00',
-    endTime: '07:00',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  },
-};
-
 export function useNotificationPreferences() {
   return useQuery({
     queryKey: notificationKeys.preferences(),
     queryFn: async (): Promise<NotificationPreferences> => {
-      try {
-        return await api.get<NotificationPreferences>('/v1/notifications/preferences');
-      } catch {
-        // Fallback to mock data when backend unavailable
-        return defaultPreferences;
-      }
+      return await api.get<NotificationPreferences>(
+        clientPath(API_ROUTES.notifications.preferences),
+      );
     },
   });
 }
@@ -57,12 +38,7 @@ export function useSaveNotificationPreferences() {
 
   return useMutation({
     mutationFn: async (preferences: NotificationPreferences) => {
-      try {
-        return await api.put('/v1/notifications/preferences', preferences);
-      } catch {
-        // Fallback: simulate success when backend unavailable
-        return undefined;
-      }
+      return await api.put(clientPath(API_ROUTES.notifications.preferences), preferences);
     },
     onMutate: async (newPreferences) => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.preferences() });

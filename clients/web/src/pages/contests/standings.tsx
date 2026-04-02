@@ -74,7 +74,8 @@ function SortHeader({
 export function Component() {
   const { contestId } = useParams();
   const { data: contest } = useContest(contestId);
-  const { data: standings, isLoading } = useStandings(contestId);
+  const { data: standingsResponse, isLoading } = useStandings(contestId);
+  const standings = standingsResponse?.standings;
   const [sortKey, setSortKey] = useState<SortKey>('rank');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 

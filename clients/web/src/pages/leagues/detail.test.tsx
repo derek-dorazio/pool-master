@@ -19,56 +19,56 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+const mockContests = [
+  {
+    id: 'contest-1',
+    name: 'Week 14 Pick\'em',
+    status: 'active',
+  },
+  {
+    id: 'contest-2',
+    name: 'Survivor Pool 2025',
+    status: 'active',
+  },
+];
+
+const mockMembers = [
+  { id: 'm1', userId: 'u1', displayName: 'Mike Johnson', role: 'commissioner' },
+  { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'member' },
+];
+
 vi.mock('@tanstack/react-query', async () => {
   const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
   return {
     ...actual,
-    useQuery: () => ({
-      data: {
-        ...mockLeague,
-        name: 'Masters Pool',
-        memberCount: 8,
-        commissioner: 'Mike Johnson',
-        isCommissioner: true,
-        description: 'A competitive pool league.',
-        contests: [
-          {
-            id: 'contest-1',
-            name: 'Week 14 Pick\'em',
-            status: 'active',
-            standings: [
-              { name: 'Sarah K.', points: 87 },
-              { name: 'Dan M.', points: 82 },
-            ],
-          },
-          {
-            id: 'contest-2',
-            name: 'Survivor Pool 2025',
-            status: 'active',
-            standings: [
-              { name: 'You', points: 12 },
-              { name: 'Chris P.', points: 12 },
-            ],
-          },
-        ],
-        members: [
-          { id: 'm1', name: 'Mike Johnson', role: 'commissioner' },
-          { id: 'm2', name: 'Sarah Kim', role: 'member' },
-        ],
-        feedItems: [
-          {
-            id: 'f1',
-            type: 'event',
-            author: 'System',
-            content: 'Week 14 is now live',
-            timestamp: '2 hours ago',
-          },
-        ],
-        nextDraft: null,
-      },
-      isLoading: false,
-      error: null,
-    }),
+    useQuery: (options: { queryKey: string[] }) => {
+      const key = options.queryKey[0];
+      if (key === 'league-contests') {
+        return { data: mockContests, isLoading: false, isError: false, error: null };
+      }
+      if (key === 'league-members') {
+        return { data: mockMembers, isLoading: false, isError: false, error: null };
+      }
+      if (key === 'league-records') {
+        return { data: [], isLoading: false, isError: false, error: null };
+      }
+      if (key === 'league-seasons') {
+        return { data: [], isLoading: false, isError: false, error: null };
+      }
+      // Default: league detail
+      return {
+        data: {
+          ...mockLeague,
+          name: 'Masters Pool',
+          memberCount: 8,
+          role: 'commissioner',
+          description: 'A competitive pool league.',
+        },
+        isLoading: false,
+        isError: false,
+        error: null,
+      };
+    },
   };
 });
 
