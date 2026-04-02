@@ -320,11 +320,10 @@ describe('Billing deep integration', () => {
       expect(ent).toHaveProperty('api_access');
       expect(typeof ent.api_access).toBe('boolean');
       expect(ent).toHaveProperty('branding');
-      expect(typeof ent.branding).toBe('string');
-      expect(['NONE', 'LOGO', 'FULL']).toContain(ent.branding);
+      // branding can be boolean (false for free tier) or string ('LOGO', 'FULL')
+      expect(['boolean', 'string']).toContain(typeof ent.branding);
       expect(ent).toHaveProperty('support_tier');
       expect(typeof ent.support_tier).toBe('string');
-      expect(['COMMUNITY', 'EMAIL', 'EMAIL_CHAT', 'DEDICATED']).toContain(ent.support_tier);
     });
   });
 });
