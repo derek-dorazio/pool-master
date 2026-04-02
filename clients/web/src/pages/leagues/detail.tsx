@@ -31,9 +31,8 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api-client';
-import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
-import type { LeagueDetailDto, LeagueResponse, LeagueMemberDto, LeagueMembersResponse } from '@poolmaster/shared/dto';
+import { client, getLeague, listContests, getLeagueRecords, getSeasonSummaries } from '@/lib/api';
+import type { LeagueDetailDto, LeagueMemberDto, LeagueMembersResponse } from '@poolmaster/shared/dto';
 import type { ContestSummaryDto } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
@@ -44,8 +43,9 @@ function useLeagueDetail(leagueId: string) {
   return useQuery({
     queryKey: ['league', leagueId],
     queryFn: async (): Promise<LeagueDetailDto> => {
-      const res = await api.get<LeagueResponse>(clientPath(API_ROUTES.leagues.detail(leagueId)));
-      return res.league;
+      const { data, error } = await getLeague({ client, path: { id: leagueId } });
+      if (error) throw error;
+      return (data as any).league;
     },
   });
 }
@@ -54,10 +54,9 @@ function useLeagueContests(leagueId: string) {
   return useQuery({
     queryKey: ['league-contests', leagueId],
     queryFn: async (): Promise<ContestSummaryDto[]> => {
-      const res = await api.get<{ contests: ContestSummaryDto[] }>(
-        clientPath(API_ROUTES.leagues.contests(leagueId)),
-      );
-      return res.contests;
+      const { data, error } = await listContests({ client, path: { id: leagueId } });
+      if (error) throw error;
+      return (data as any).contests;
     },
   });
 }
@@ -66,10 +65,11 @@ function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const res = await api.get<LeagueMembersResponse>(
-        clientPath(API_ROUTES.leagues.members(leagueId)),
-      );
-      return res.members;
+      const { data, error } = await client.get<LeagueMembersResponse>({
+        url: `/api/v1/leagues/${leagueId}/members`,
+      });
+      if (error) throw error;
+      return data?.members ?? [];
     },
   });
 }
@@ -86,10 +86,9 @@ function useLeagueRecords(leagueId: string) {
   return useQuery({
     queryKey: ['league-records', leagueId],
     queryFn: async (): Promise<RecordItem[]> => {
-      const res = await api.get<{ records: RecordItem[] }>(
-        clientPath(`/api/v1/leagues/${leagueId}/history/records`),
-      );
-      return res.records;
+      const { data, error } = await getLeagueRecords({ client, path: { id: leagueId } });
+      if (error) throw error;
+      return (data as any).records ?? [];
     },
   });
 }
@@ -112,10 +111,9 @@ function useLeagueSeasons(leagueId: string) {
   return useQuery({
     queryKey: ['league-seasons', leagueId],
     queryFn: async (): Promise<SeasonSummary[]> => {
-      const res = await api.get<{ seasons: SeasonSummary[] }>(
-        clientPath(`/api/v1/leagues/${leagueId}/history/seasons`),
-      );
-      return res.seasons;
+      const { data, error } = await getSeasonSummaries({ client, path: { id: leagueId } });
+      if (error) throw error;
+      return (data as any).seasons ?? [];
     },
   });
 }

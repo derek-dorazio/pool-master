@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { client, typedData } from '@/lib/api-client-generated';
+import { client } from '@/lib/api';
 
 export interface DiscoverableLeague {
   id: string;
@@ -41,16 +40,31 @@ interface ContestsResponse {
   total: number;
 }
 
+async function fetchDiscoverLeagues(query: Record<string, string>) {
+  const { data, error } = await client.get<LeaguesResponse>({
+    url: '/api/v1/search/discover/leagues',
+    query,
+  });
+  if (error) throw error;
+  return data as LeaguesResponse;
+}
+
+async function fetchDiscoverContests(query: Record<string, string>) {
+  const { data, error } = await client.get<ContestsResponse>({
+    url: '/api/v1/search/discover/contests',
+    query,
+  });
+  if (error) throw error;
+  return data as ContestsResponse;
+}
+
 export function useTrendingLeagues(sport?: string) {
   return useQuery({
     queryKey: ['discover', 'trending-leagues', sport],
     queryFn: async () => {
       const query: Record<string, string> = {};
       if (sport && sport !== 'ALL') query.sport = sport;
-      const result = await client.GET('/api/v1/search/discover/leagues', {
-        params: { query } as never,
-      });
-      const response = await typedData<LeaguesResponse>(result);
+      const response = await fetchDiscoverLeagues(query);
       return response.leagues;
     },
   });
@@ -62,10 +76,7 @@ export function usePopularContests(sport?: string) {
     queryFn: async () => {
       const query: Record<string, string> = {};
       if (sport && sport !== 'ALL') query.sport = sport;
-      const result = await client.GET('/api/v1/search/discover/contests', {
-        params: { query } as never,
-      });
-      const response = await typedData<ContestsResponse>(result);
+      const response = await fetchDiscoverContests(query);
       return response.contests;
     },
   });
@@ -79,10 +90,7 @@ export function useBrowseLeagues(filters: { sport?: string; sort?: string; q?: s
       if (filters.sport && filters.sport !== 'ALL') query.sport = filters.sport;
       if (filters.sort) query.sort = filters.sort;
       if (filters.q) query.q = filters.q;
-      const result = await client.GET('/api/v1/search/discover/leagues', {
-        params: { query } as never,
-      });
-      return typedData<LeaguesResponse>(result);
+      return fetchDiscoverLeagues(query);
     },
   });
 }
@@ -95,10 +103,7 @@ export function useBrowseContests(filters: { sport?: string; sort?: string; q?: 
       if (filters.sport && filters.sport !== 'ALL') query.sport = filters.sport;
       if (filters.sort) query.sort = filters.sort;
       if (filters.q) query.q = filters.q;
-      const result = await client.GET('/api/v1/search/discover/contests', {
-        params: { query } as never,
-      });
-      return typedData<ContestsResponse>(result);
+      return fetchDiscoverContests(query);
     },
   });
 }
@@ -106,11 +111,13 @@ export function useBrowseContests(filters: { sport?: string; sort?: string; q?: 
 export function useJoinLeague() {
   const queryClient = useQueryClient();
   return useMutation({
-    // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
     mutationFn: async (leagueId: string) => {
-      return await api.post<{ success: boolean }>(
-        `/v1/search/discover/leagues/${leagueId}/join`,
-      );
+      const { data, error } = await client.post({
+        url: '/api/v1/search/discover/leagues/{leagueId}/join',
+        path: { leagueId },
+      });
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discover'] });
@@ -124,13 +131,10 @@ export function useGlobalSearch(query: string) {
     queryKey: ['discover', 'search', query],
     queryFn: async () => {
       if (!query.trim()) return { leagues: [] as DiscoverableLeague[], contests: [] as DiscoverableContest[] };
-      const params = { query: { q: query } } as never;
-      const [leagueRes, contestRes] = await Promise.all([
-        client.GET('/api/v1/search/discover/leagues', { params }),
-        client.GET('/api/v1/search/discover/contests', { params }),
+      const [leagueData, contestData] = await Promise.all([
+        fetchDiscoverLeagues({ q: query }),
+        fetchDiscoverContests({ q: query }),
       ]);
-      const leagueData = await typedData<LeaguesResponse>(leagueRes);
-      const contestData = await typedData<ContestsResponse>(contestRes);
       return {
         leagues: leagueData.leagues,
         contests: contestData.contests,

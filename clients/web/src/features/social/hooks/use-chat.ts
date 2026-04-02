@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 import { socialKeys } from './query-keys';
 
 export interface ChatMessage {
@@ -16,8 +16,13 @@ export function useChatMessages(contestId: string) {
   return useQuery({
     queryKey: socialKeys.chat(contestId),
     queryFn: async (): Promise<ChatMessage[]> => {
-      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
-      return await api.get<ChatMessage[]>(`/v1/social/contests/${contestId}/chat?limit=50`);
+      const { data, error } = await client.get<ChatMessage[]>({
+        url: '/api/v1/social/contests/{contestId}/chat',
+        path: { contestId },
+        query: { limit: '50' },
+      });
+      if (error) throw error;
+      return data as ChatMessage[];
     },
   });
 }
@@ -26,8 +31,14 @@ export function useSendChatMessage(contestId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (content: string) => {
-      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
-      return await api.post(`/v1/social/contests/${contestId}/chat`, { content });
+      const { data, error } = await client.post({
+        url: '/api/v1/social/contests/{contestId}/chat',
+        path: { contestId },
+        body: { content },
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: socialKeys.chat(contestId) });

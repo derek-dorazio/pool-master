@@ -6,6 +6,13 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
+  zodToJsonSchema,
+  LeagueListResponseSchema,
+  LeagueResponseSchema,
+  LeagueMembersResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
+import {
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
@@ -69,7 +76,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'List leagues for the current user',
       operationId: 'listLeagues',
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(LeagueListResponseSchema) },
     },
     handler: league.listLeagues,
   });
@@ -90,7 +97,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           settings: { type: 'object' },
         },
       },
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 201: zodToJsonSchema(LeagueResponseSchema) },
     },
     handler: league.createLeague,
   });
@@ -100,7 +107,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get league details by ID',
       operationId: 'getLeague',
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(LeagueResponseSchema) },
     },
     handler: league.getLeague,
   });
@@ -126,6 +133,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           currency: { type: 'string' },
         },
       },
+      response: { 200: zodToJsonSchema(LeagueResponseSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_SETTINGS_EDIT),
     handler: league.updateSettings,
@@ -151,6 +159,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           message: { type: 'string', maxLength: 500 },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
     handler: invitation.sendInvitations,
@@ -168,6 +177,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           maxUses: { type: 'integer', minimum: 0 },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
     handler: invitation.generateInviteLink,
@@ -178,6 +188,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Revoke an invite link',
       operationId: 'revokeInviteLink',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
     handler: invitation.revokeInviteLink,
@@ -198,6 +209,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           permissions: { type: 'array', items: { type: 'string' } },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requirePermission(
       membershipRepo,
@@ -211,6 +223,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Remove a member from the league',
       operationId: 'removeMember',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_REMOVE),
     handler: member.removeMember,
@@ -228,6 +241,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           newOwnerId: { type: 'string', minLength: 1 },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requireOwner(membershipRepo),
     handler: member.transferOwnership,
@@ -240,6 +254,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get commissioner dashboard for a league',
       operationId: 'getLeagueDashboard',
+      response: { 200: zodToJsonSchema(LeagueResponseSchema) },
     },
     handler: dashboard.getDashboard,
   });
@@ -249,6 +264,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Resolve a commissioner action item',
       operationId: 'resolveActionItem',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: dashboard.resolveActionItem,
   });
@@ -260,6 +276,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get audit log for a league',
       operationId: 'getLeagueAuditLog',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: audit.getLeagueAuditLog,
   });
@@ -269,6 +286,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get audit log for a specific member',
       operationId: 'getMemberAuditLog',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: audit.getMemberAuditLog,
   });
@@ -301,6 +319,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
     handler: bulk.bulkCreateContests,
@@ -319,6 +338,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           seasonId: { type: 'string' },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
     handler: bulk.copySeason,
@@ -349,6 +369,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
     handler: bulk.importMembers,

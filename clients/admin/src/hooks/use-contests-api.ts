@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { adminApi } from '@/lib/api-client';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain';
+import { client, adminListContests, adminGetContestDetail } from '@/lib/api';
+import { ContestStatus } from '@poolmaster/shared/domain';
 
 export interface Contest {
   id: string;
@@ -58,175 +58,6 @@ export interface ContestDetail extends Contest {
   corrections: number;
 }
 
-const MOCK_CONTESTS: Contest[] = [
-  {
-    id: 'c-001',
-    name: 'NFL Sunday Showdown',
-    league: 'NFL League Alpha',
-    tenant: 'Ultimate Pool Manager Pro',
-    sport: Sport.NFL,
-    sportEmoji: '\uD83C\uDFC8',
-    type: 'Single Event',
-    selectionType: 'Pick',
-    status: ContestStatus.ACTIVE,
-    entries: 128,
-    maxEntries: 256,
-    created: '2026-03-01',
-  },
-  {
-    id: 'c-002',
-    name: 'NBA Season Fantasy',
-    league: 'Hoops Central',
-    tenant: 'Ultimate Pool Manager Pro',
-    sport: Sport.NBA,
-    sportEmoji: '\uD83C\uDFC0',
-    type: 'Season Long',
-    selectionType: 'Draft',
-    status: ContestStatus.DRAFTING,
-    entries: 12,
-    maxEntries: 12,
-    created: '2026-02-15',
-  },
-  {
-    id: 'c-003',
-    name: 'Masters 2026 Pool',
-    league: 'Golf Majors',
-    tenant: 'FanDraft',
-    sport: Sport.GOLF,
-    sportEmoji: '\u26F3',
-    type: 'Single Event',
-    selectionType: 'Pick',
-    status: ContestStatus.OPEN,
-    entries: 45,
-    maxEntries: 100,
-    created: '2026-03-10',
-  },
-  {
-    id: 'c-004',
-    name: 'F1 Constructor Cup',
-    league: 'F1 Predictions',
-    tenant: 'RaceFan',
-    sport: Sport.F1,
-    sportEmoji: '\uD83C\uDFCE\uFE0F',
-    type: 'Season Long',
-    selectionType: 'Draft',
-    status: ContestStatus.ACTIVE,
-    entries: 8,
-    maxEntries: 10,
-    created: '2026-01-20',
-  },
-  {
-    id: 'c-005',
-    name: 'March Madness Bracket',
-    league: 'NCAA Tourney',
-    tenant: 'Ultimate Pool Manager Pro',
-    sport: Sport.NCAA_BASKETBALL,
-    sportEmoji: '\uD83C\uDFC0',
-    type: 'Single Event',
-    selectionType: 'Bracket',
-    status: ContestStatus.COMPLETED,
-    entries: 256,
-    maxEntries: 256,
-    created: '2026-03-15',
-  },
-  {
-    id: 'c-006',
-    name: 'Premier League Weekly',
-    league: 'Soccer Central',
-    tenant: 'FanDraft',
-    sport: Sport.SOCCER,
-    sportEmoji: '\u26BD',
-    type: 'Single Event',
-    selectionType: 'Pick',
-    status: ContestStatus.ACTIVE,
-    entries: 64,
-    maxEntries: 128,
-    created: '2026-02-28',
-  },
-  {
-    id: 'c-007',
-    name: 'Kentucky Derby 2026',
-    league: 'Horse Racing Elite',
-    tenant: 'RaceFan',
-    sport: Sport.HORSE_RACING,
-    sportEmoji: '\uD83C\uDFC7',
-    type: 'Single Event',
-    selectionType: 'Pick',
-    status: ContestStatus.OPEN,
-    entries: 32,
-    maxEntries: 50,
-    created: '2026-03-20',
-  },
-  {
-    id: 'c-008',
-    name: 'Daytona Survivor Pool',
-    league: 'NASCAR Pools',
-    tenant: 'Ultimate Pool Manager Pro',
-    sport: Sport.NASCAR,
-    sportEmoji: '\uD83C\uDFCE\uFE0F',
-    type: 'Single Event',
-    selectionType: 'Survivor',
-    status: ContestStatus.CANCELLED,
-    entries: 18,
-    maxEntries: 50,
-    created: '2026-02-01',
-  },
-];
-
-function buildContestDetail(contest: Contest): ContestDetail {
-  return {
-    ...contest,
-    description: `A ${contest.type.toLowerCase()} contest for ${contest.sport} fans.`,
-    standings: [
-      { rank: 1, entryName: 'Dream Team', ownerEmail: 'alice@example.com', totalScore: 245 },
-      { rank: 2, entryName: 'Underdogs', ownerEmail: 'bob@example.com', totalScore: 232 },
-      { rank: 3, entryName: 'All Stars', ownerEmail: 'carol@example.com', totalScore: 228 },
-      { rank: 4, entryName: 'Comeback Kids', ownerEmail: 'dave@example.com', totalScore: 215 },
-      { rank: 5, entryName: 'The Analysts', ownerEmail: 'emma@example.com', totalScore: 209 },
-      { rank: 6, entryName: 'Lucky Picks', ownerEmail: 'frank@example.com', totalScore: 198 },
-      { rank: 7, entryName: 'Dark Horses', ownerEmail: 'grace@example.com', totalScore: 187 },
-      { rank: 8, entryName: 'The Rookies', ownerEmail: 'hank@example.com', totalScore: 174 },
-    ],
-    draftStatus: {
-      status: 'ACTIVE',
-      currentPick: 47,
-      totalPicks: 96,
-      started: '2026-03-22T14:00:00Z',
-    },
-    picks: [
-      { round: 1, pick: 1, participant: 'Patrick Mahomes', owner: 'alice@example.com', autoPicked: false, time: '14:00:12' },
-      { round: 1, pick: 2, participant: 'Nikola Jokic', owner: 'bob@example.com', autoPicked: false, time: '14:01:45' },
-      { round: 1, pick: 3, participant: 'Scottie Scheffler', owner: 'carol@example.com', autoPicked: true, time: '14:03:00' },
-      { round: 1, pick: 4, participant: 'Max Verstappen', owner: 'dave@example.com', autoPicked: false, time: '14:04:22' },
-      { round: 2, pick: 5, participant: 'Travis Kelce', owner: 'dave@example.com', autoPicked: false, time: '14:05:10' },
-      { round: 2, pick: 6, participant: 'Luka Doncic', owner: 'carol@example.com', autoPicked: false, time: '14:06:33' },
-      { round: 2, pick: 7, participant: 'Rory McIlroy', owner: 'bob@example.com', autoPicked: true, time: '14:08:00' },
-      { round: 2, pick: 8, participant: 'Lewis Hamilton', owner: 'alice@example.com', autoPicked: false, time: '14:09:15' },
-    ],
-    overrides: [
-      {
-        admin: 'admin@poolmaster.io',
-        entry: 'Dream Team',
-        oldScore: 240,
-        newScore: 245,
-        reason: 'Stat correction: missed touchdown',
-        date: '2026-03-24',
-      },
-      {
-        admin: 'admin@poolmaster.io',
-        entry: 'Lucky Picks',
-        oldScore: 202,
-        newScore: 198,
-        reason: 'Duplicate scoring event removed',
-        date: '2026-03-23',
-      },
-    ],
-    lastStatEvent: '2 minutes ago',
-    statEventsProcessed: 1245,
-    corrections: 3,
-  };
-}
-
 export interface ContestFilters {
   tenant?: string;
   sport?: string;
@@ -235,52 +66,26 @@ export interface ContestFilters {
 }
 
 export function useContestList(filters: ContestFilters = {}) {
-  const { data, isLoading } = useQuery({
+  return useQuery({
     queryKey: ['admin', 'contests', filters],
     queryFn: async () => {
-      try {
-        const params = new URLSearchParams();
-        if (filters.tenant && filters.tenant !== 'All') params.set('tenant', filters.tenant);
-        if (filters.sport && filters.sport !== 'All') params.set('sport', filters.sport);
-        if (filters.status && filters.status !== 'All') params.set('status', filters.status);
-        if (filters.type && filters.type !== 'All') params.set('type', filters.type);
-        const query = params.toString();
-        return await adminApi.get<Contest[]>(`/v1/admin/contests${query ? `?${query}` : ''}`);
-      } catch {
-        let result = [...MOCK_CONTESTS];
-        if (filters.tenant && filters.tenant !== 'All') {
-          result = result.filter((c) => c.tenant === filters.tenant);
-        }
-        if (filters.sport && filters.sport !== 'All') {
-          result = result.filter((c) => c.sport === filters.sport);
-        }
-        if (filters.status && filters.status !== 'All') {
-          result = result.filter((c) => c.status === filters.status);
-        }
-        if (filters.type && filters.type !== 'All') {
-          result = result.filter((c) => c.type === filters.type);
-        }
-        return result;
-      }
+      const query: Record<string, string> = {};
+      if (filters.tenant && filters.tenant !== 'All') query.tenant = filters.tenant;
+      if (filters.sport && filters.sport !== 'All') query.sport = filters.sport;
+      if (filters.status && filters.status !== 'All') query.status = filters.status;
+      if (filters.type && filters.type !== 'All') query.type = filters.type;
+      const { data } = await adminListContests({ client, query });
+      return data;
     },
   });
-
-  return { data: data ?? MOCK_CONTESTS, isLoading };
 }
 
 export function useContestDetail(id: string) {
-  const { data, isLoading } = useQuery({
+  return useQuery({
     queryKey: ['admin', 'contest', id],
     queryFn: async () => {
-      try {
-        return await adminApi.get<ContestDetail>(`/v1/admin/contests/${id}`);
-      } catch {
-        const contest = MOCK_CONTESTS.find((c) => c.id === id) ?? MOCK_CONTESTS[0];
-        return buildContestDetail(contest);
-      }
+      const { data } = await adminGetContestDetail({ client, path: { contestId: id } });
+      return data;
     },
   });
-
-  const fallback = buildContestDetail(MOCK_CONTESTS[0]);
-  return { data: data ?? fallback, isLoading };
 }

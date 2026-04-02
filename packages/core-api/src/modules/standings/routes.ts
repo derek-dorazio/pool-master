@@ -9,6 +9,11 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import {
+  zodToJsonSchema,
+  StandingsResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
 import { StandingsService } from './service';
 import { createStandingsHandlers } from './handler';
 
@@ -31,7 +36,7 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
           sortBy: { type: 'string', enum: ['rank', 'score', 'name'] },
         },
       },
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(StandingsResponseSchema) },
     },
     handler: handlers.getStandings,
   });
@@ -48,6 +53,7 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
           topN: { type: 'string' },
         },
       },
+      response: { 200: zodToJsonSchema(StandingsResponseSchema) },
     },
     handler: handlers.getSummary,
   });
@@ -58,6 +64,7 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Standings'],
       summary: 'Get the current user\'s entry with rank context',
       operationId: 'getMyStandingsEntry',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.getMyEntry,
   });

@@ -22,18 +22,18 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { api } from '@/lib/api-client';
-import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
-import type { LeagueMemberDto, LeagueMembersResponse, LeagueResponse } from '@poolmaster/shared/dto';
+import { client, getLeague, generateInviteLink } from '@/lib/api';
+import type { LeagueMemberDto, LeagueMembersResponse } from '@poolmaster/shared/dto';
 
 function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const res = await api.get<LeagueMembersResponse>(
-        clientPath(API_ROUTES.leagues.members(leagueId)),
-      );
-      return res.members;
+      const { data, error } = await client.get<LeagueMembersResponse>({
+        url: `/api/v1/leagues/${leagueId}/members`,
+      });
+      if (error) throw error;
+      return data?.members ?? [];
     },
   });
 }
@@ -42,8 +42,9 @@ function useLeagueDetail(leagueId: string) {
   return useQuery({
     queryKey: ['league', leagueId],
     queryFn: async () => {
-      const res = await api.get<LeagueResponse>(clientPath(API_ROUTES.leagues.detail(leagueId)));
-      return res.league;
+      const { data, error } = await getLeague({ client, path: { id: leagueId } });
+      if (error) throw error;
+      return (data as any).league;
     },
   });
 }
@@ -52,10 +53,9 @@ function useInviteLink(leagueId: string) {
   return useQuery({
     queryKey: ['league-invite-link', leagueId],
     queryFn: async (): Promise<string> => {
-      const res = await api.get<{ inviteLink: string }>(
-        clientPath(API_ROUTES.leagues.inviteLink(leagueId)),
-      );
-      return res.inviteLink;
+      const { data, error } = await generateInviteLink({ client, path: { id: leagueId } });
+      if (error) throw error;
+      return (data as any).inviteLink;
     },
   });
 }

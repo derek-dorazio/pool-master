@@ -4,7 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Server, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { adminApi } from '@/lib/api-client';
+import {
+  client,
+  adminUpdatePollIntervals,
+  adminUpdateIngestionSchedule,
+  adminUpdateDunningConfig,
+  adminUpdateRetentionDefaults,
+  adminGetTenantRetentionOverride,
+  adminClearTenantRetentionOverride,
+  adminSetTenantRetentionOverride,
+} from '@/lib/api';
 import { Sport } from '@poolmaster/shared/domain';
 import {
   usePollIntervals,
@@ -107,11 +116,7 @@ function PollIntervalsSection() {
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={reset}>Reset</Button>
           <Button onClick={async () => {
-            try {
-              await adminApi.put('/v1/admin/config/poll-intervals', values);
-            } catch {
-              // Silently handle — backend may not be available yet
-            }
+            await adminUpdatePollIntervals({ client, body: values });
           }}>Save</Button>
         </div>
       </CardContent>
@@ -312,11 +317,7 @@ function IngestionScheduleSection() {
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={reset}>Reset</Button>
           <Button onClick={async () => {
-            try {
-              await adminApi.put('/v1/admin/config/ingestion-schedule', { healthCheckMin, scheduleSyncHrs, participantSyncHrs, rankingSyncHrs, liveScorePollingSeconds: liveScorePolling, sportOverrides: overrides });
-            } catch {
-              // Silently handle — backend may not be available yet
-            }
+            await adminUpdateIngestionSchedule({ client, body: { healthCheckIntervalMinutes: healthCheckMin, scheduleSyncIntervalHours: scheduleSyncHrs, participantSyncIntervalHours: participantSyncHrs, rankingSyncIntervalHours: rankingSyncHrs, liveScorePollingIntervalSeconds: liveScorePolling } });
           }}>
             Save
           </Button>
@@ -482,11 +483,7 @@ function DunningScheduleSection() {
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={reset}>Reset</Button>
           <Button onClick={async () => {
-            try {
-              await adminApi.put('/v1/admin/config/dunning', { retryAttempts, gracePeriodDays: gracePeriod, degradedPeriodDays: degradedPeriod, cancellationThresholdDays: cancellationThreshold, notifyOnRetry, notifyOnGraceStart, notifyOnDegradation, notifyBeforeCancellation });
-            } catch {
-              // Silently handle — backend may not be available yet
-            }
+            await adminUpdateDunningConfig({ client, body: { retryAttempts: retryAttempts.map((r) => ({ daysAfterFailure: r.day, action: r.action })), gracePeriodDays: gracePeriod, degradedPeriodDays: degradedPeriod, cancellationDays: cancellationThreshold, notifyOnRetry, notifyOnGracePeriodStart: notifyOnGraceStart, notifyOnDegradation, notifyBeforeCancellation } });
           }}>
             Save
           </Button>
@@ -537,20 +534,12 @@ function RetentionDefaultsSection() {
 
   async function lookupTenant() {
     if (!tenantId.trim()) return;
-    try {
-      const override = await adminApi.get<RetentionDefaultsConfig | null>(`/v1/admin/config/retention/tenants/${tenantId}`);
-      setTenantOverride(override);
-    } catch {
-      setTenantOverride(null);
-    }
+    const { data: override } = await adminGetTenantRetentionOverride({ client, path: { tenantId } });
+    setTenantOverride(override ?? null);
   }
 
   async function clearTenantOverride() {
-    try {
-      await adminApi.delete(`/v1/admin/config/retention/tenants/${tenantId}`);
-    } catch {
-      // Silently handle — backend may not be available yet
-    }
+    await adminClearTenantRetentionOverride({ client, path: { tenantId } });
     setTenantOverride(null);
   }
 
@@ -661,10 +650,8 @@ function RetentionDefaultsSection() {
                     <Button
                       size="sm"
                       onClick={async () => {
-                        try {
-                          await adminApi.put(`/v1/admin/config/retention/tenants/${tenantId}`, tenantOverride);
-                        } catch {
-                          // Silently handle — backend may not be available yet
+                        if (tenantOverride) {
+                          await adminSetTenantRetentionOverride({ client, path: { tenantId }, body: tenantOverride });
                         }
                       }}
                     >
@@ -680,11 +667,7 @@ function RetentionDefaultsSection() {
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={reset}>Reset</Button>
           <Button onClick={async () => {
-            try {
-              await adminApi.put('/v1/admin/config/retention', values);
-            } catch {
-              // Silently handle — backend may not be available yet
-            }
+            await adminUpdateRetentionDefaults({ client, body: values });
           }}>Save</Button>
         </div>
       </CardContent>

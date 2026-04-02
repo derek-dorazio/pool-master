@@ -7,6 +7,12 @@
 
 import type { FastifyInstance } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
+import {
+  zodToJsonSchema,
+  DraftStateResponseSchema,
+  DraftPickResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
 import crypto from 'node:crypto';
 import {
   SELECTION_TEMPLATES,
@@ -59,6 +65,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
+      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -99,6 +106,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           autoPickPolicy: { type: 'string', enum: ['QUEUE_THEN_BEST', 'BEST_AVAILABLE', 'RANDOM'] },
         },
       },
+      response: { 201: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -175,6 +183,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           participantId: { type: 'string', format: 'uuid' },
         },
       },
+      response: { 200: zodToJsonSchema(DraftPickResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -261,6 +270,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
+      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -279,6 +289,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
+      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -304,6 +315,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           additionalSeconds: { type: 'number', minimum: 1, maximum: 3600 },
         },
       },
+      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -326,6 +338,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           contestType: { type: 'string' },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const { sport, contestType } = request.query as {
@@ -354,6 +367,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['templateId'],
         properties: { templateId: { type: 'string' } },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const { templateId } = request.params as { templateId: string };

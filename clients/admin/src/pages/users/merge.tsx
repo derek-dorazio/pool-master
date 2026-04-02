@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { adminApi } from '@/lib/api-client';
+import { client, adminMergeUsers } from '@/lib/api';
 import { useUserSearch } from '@/hooks/use-admin-api';
 import type { UserResult } from '@/hooks/use-admin-api';
 
@@ -106,15 +106,8 @@ export function Component() {
       `Merge "${duplicate?.displayName}" into "${primary?.displayName}"? This action cannot be undone.`,
       { confirmLabel: 'Merge', variant: 'destructive' },
     );
-    if (confirmed) {
-      try {
-        await adminApi.post('/v1/admin/users/merge', {
-          primaryId: primary?.id,
-          duplicateId: duplicate?.id,
-        });
-      } catch {
-        // Silently handle — backend may not be available yet
-      }
+    if (confirmed && primary && duplicate) {
+      await adminMergeUsers({ client, body: { primaryId: primary.id, duplicateId: duplicate.id } });
       setPrimary(null);
       setDuplicate(null);
       setShowPreview(false);

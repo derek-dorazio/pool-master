@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 import { socialKeys } from './query-keys';
 
 export interface ShareCardData {
@@ -22,8 +22,12 @@ export function useShareCard(shareId: string) {
   return useQuery({
     queryKey: socialKeys.share(shareId),
     queryFn: async (): Promise<ShareCardData> => {
-      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
-      return await api.get<ShareCardData>(`/v1/social/shares/${shareId}`);
+      const { data, error } = await client.get<ShareCardData>({
+        url: '/api/v1/social/shares/{shareId}',
+        path: { shareId },
+      });
+      if (error) throw error;
+      return data as ShareCardData;
     },
   });
 }

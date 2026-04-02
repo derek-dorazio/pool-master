@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { adminApi } from '@/lib/api-client';
+import {
+  client,
+  adminResetPassword,
+  adminForceLogout,
+  adminDisableUser,
+  adminSendEmail,
+} from '@/lib/api';
 import { useUserDetail } from '@/hooks/use-admin-api';
 
 const statusColors: Record<string, string> = {
@@ -82,11 +88,20 @@ export function Component() {
       `Are you sure you want to ${action} for "${user!.displayName}"?`,
       { confirmLabel: action, variant: action === 'Disable Account' ? 'destructive' : 'default' },
     );
-    if (confirmed) {
-      try {
-        await adminApi.post(`/v1/admin/users/${id}/actions`, { action });
-      } catch {
-        // Silently handle — backend may not be available yet
+    if (confirmed && id) {
+      switch (action) {
+        case 'Reset Password':
+          await adminResetPassword({ client, path: { userId: id } });
+          break;
+        case 'Force Logout':
+          await adminForceLogout({ client, path: { userId: id } });
+          break;
+        case 'Disable Account':
+          await adminDisableUser({ client, path: { userId: id }, body: { reason: 'Admin action' } });
+          break;
+        case 'Send Email':
+          await adminSendEmail({ client, path: { userId: id }, body: { subject: '', body: '' } });
+          break;
       }
     }
   }

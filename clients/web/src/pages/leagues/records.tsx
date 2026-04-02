@@ -8,8 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api-client';
-import { clientPath } from '@poolmaster/shared/api-routes';
+import { client, getLeagueRecords } from '@/lib/api';
 
 interface RecordItem {
   id: string;
@@ -33,10 +32,9 @@ function useRecords(leagueId: string) {
   return useQuery({
     queryKey: ['league-records', leagueId],
     queryFn: async (): Promise<RecordItem[]> => {
-      const res = await api.get<{ records: RecordItem[] }>(
-        clientPath(`/api/v1/leagues/${leagueId}/history/records`),
-      );
-      return res.records;
+      const { data, error } = await getLeagueRecords({ client, path: { id: leagueId } });
+      if (error) throw error;
+      return (data as any).records ?? [];
     },
   });
 }

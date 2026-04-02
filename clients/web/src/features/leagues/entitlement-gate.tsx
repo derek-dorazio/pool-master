@@ -1,5 +1,5 @@
 /**
- * EntitlementGate — checks plan entitlements before allowing league creation or other gated actions.
+ * EntitlementGate -- checks plan entitlements before allowing league creation or other gated actions.
  * For the free launch tier, all entitlements pass. This component is wired for when billing is enabled.
  */
 
@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { api } from '@/lib/api-client';
+import { client, getEntitlements } from '@/lib/api';
 
 interface Entitlement {
   entitled: boolean;
@@ -21,13 +21,10 @@ function useEntitlement(entitlementKey: string) {
   return useQuery({
     queryKey: ['entitlements', entitlementKey],
     queryFn: async (): Promise<Entitlement> => {
-      try {
-        const data = await api.get<Record<string, Entitlement>>('/billing/entitlements');
-        return data[entitlementKey] ?? { entitled: true };
-      } catch {
-        // Fail open on network error — don't block users
-        return { entitled: true };
-      }
+      const { data, error } = await getEntitlements({ client });
+      if (error) throw error;
+      const entitlements = data as unknown as Record<string, Entitlement>;
+      return entitlements[entitlementKey] ?? { entitled: true };
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -48,7 +45,7 @@ export function EntitlementGate({ entitlementKey, children, fallback }: Entitlem
 
   if (entitlement?.entitled) return <>{children}</>;
 
-  // Not entitled — show upgrade prompt
+  // Not entitled -- show upgrade prompt
   return (
     <>
       {fallback ?? (

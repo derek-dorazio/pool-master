@@ -5,6 +5,11 @@
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import {
+  zodToJsonSchema,
+  ParticipantListResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
+import {
   PrismaParticipantRepository,
   PrismaParticipantSeasonRecordRepository,
   PrismaParticipantProviderMappingRepository,
@@ -46,7 +51,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           offset: { type: 'string' },
         },
       },
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(ParticipantListResponseSchema) },
     },
     handler: handler.searchParticipants,
   });
@@ -58,6 +63,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Get a participant by ID',
       operationId: 'getParticipant',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.getParticipant,
   });
@@ -85,6 +91,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           externalIds: { type: 'object' },
         },
       },
+      response: { 201: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.createParticipant,
   });
@@ -94,6 +101,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Update a participant',
       operationId: 'updateParticipant',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -122,6 +130,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Get all season records for a participant',
       operationId: 'getParticipantSeasonRecords',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.getSeasonRecords,
   });
@@ -131,6 +140,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Get a specific season record for a participant',
       operationId: 'getParticipantSeasonRecord',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.getSeasonRecord,
   });

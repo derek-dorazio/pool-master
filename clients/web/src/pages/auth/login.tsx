@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Logo } from '@/components/ui/logo';
-import { client } from '@/lib/api-client-generated';
+import { client, loginUser } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
 const loginSchema = z.object({
@@ -53,7 +53,8 @@ export function Component() {
   async function onSubmit(data: LoginForm) {
     setServerError('');
     try {
-      const { data: res, error } = await client.POST('/api/v1/auth/login', {
+      const { data: res, error } = await loginUser({
+        client,
         body: {
           email: data.email,
           password: data.password,

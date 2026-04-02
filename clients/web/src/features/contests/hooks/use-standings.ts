@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { client, typedData } from '@/lib/api-client-generated';
+import { client, getStandings } from '@/lib/api';
 
 export interface StandingsEntry {
   id: string;
@@ -27,10 +27,9 @@ export function useStandings(contestId: string | undefined) {
   return useQuery({
     queryKey: ['contests', contestId, 'standings'],
     queryFn: async (): Promise<StandingsResponse> => {
-      const result = await client.GET('/api/v1/contests/{contestId}/standings/', {
-        params: { path: { contestId: contestId! } },
-      });
-      return typedData<StandingsResponse>(result);
+      const { data, error } = await getStandings({ client, path: { contestId: contestId! } });
+      if (error) throw error;
+      return data as unknown as StandingsResponse;
     },
     enabled: !!contestId,
   });

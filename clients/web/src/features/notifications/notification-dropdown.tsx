@@ -7,7 +7,7 @@ import { NotificationItem } from './notification-item';
 import { useMarkAllAsRead } from './hooks/use-notification-actions';
 import { notificationKeys } from './hooks/query-keys';
 import { useNotificationUiStore } from '@/stores/notification-ui-store';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 import type { Notification } from './hooks/use-notifications';
 
 interface NotificationPage {
@@ -23,8 +23,14 @@ export function NotificationDropdown() {
 
   const { data, isLoading } = useQuery({
     queryKey: notificationKeys.unreadList(),
-    queryFn: () =>
-      api.get<NotificationPage>('/v1/notifications?status=unread&limit=5'),
+    queryFn: async () => {
+      const { data, error } = await client.get<NotificationPage>({
+        url: '/api/v1/notifications',
+        query: { status: 'unread', limit: '5' },
+      });
+      if (error) throw error;
+      return data as NotificationPage;
+    },
     staleTime: 10_000,
     enabled: isOpen,
   });

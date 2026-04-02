@@ -10,7 +10,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { adminApi } from '@/lib/api-client';
+import {
+  client,
+  adminTriggerHealthCheck,
+  adminMapParticipant,
+} from '@/lib/api';
 import { useProviderDetail } from '@/hooks/use-providers-api';
 import type { ProviderStatus } from '@/hooks/use-providers-api';
 
@@ -102,12 +106,8 @@ export function Component() {
                     'Run Health Check',
                     'Run health check now?',
                   );
-                  if (confirmed) {
-                    try {
-                      await adminApi.post(`/v1/admin/providers/${providerId}/health-check`);
-                    } catch {
-                      // Silently handle — backend may not be available yet
-                    }
+                  if (confirmed && providerId) {
+                    await adminTriggerHealthCheck({ client, path: { providerId } });
                   }
                 }}>
                   <HeartPulse className="mr-2 h-4 w-4" />
@@ -309,14 +309,7 @@ export function Component() {
                                 `Map "${u.providerName}" to an internal participant?`,
                               );
                               if (confirmed) {
-                                try {
-                                  await adminApi.post(`/v1/admin/providers/${providerId}/mappings`, {
-                                    externalId: u.externalId,
-                                    providerName: u.providerName,
-                                  });
-                                } catch {
-                                  // Silently handle — backend may not be available yet
-                                }
+                                await adminMapParticipant({ client, body: { externalId: u.externalId, internalId: u.providerName } });
                               }
                             }}
                           >

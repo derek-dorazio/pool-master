@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { client, typedData } from '@/lib/api-client-generated';
+import { client } from '@/lib/api';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -14,8 +14,11 @@ export function useConsent() {
   return useQuery({
     queryKey: settingsKeys.consent(),
     queryFn: async (): Promise<ConsentPreferences> => {
-      const result = await client.GET('/api/v1/account/consent');
-      return typedData<ConsentPreferences>(result);
+      const { data, error } = await client.get<ConsentPreferences>({
+        url: '/api/v1/account/consent',
+      });
+      if (error) throw error;
+      return data as ConsentPreferences;
     },
   });
 }
@@ -25,11 +28,12 @@ export function useUpdateConsent() {
 
   return useMutation({
     mutationFn: async (consent: Partial<ConsentPreferences>) => {
-      const result: any = await client.POST('/api/v1/account/consent', {
-        body: consent as never,
+      const { error } = await client.post({
+        url: '/api/v1/account/consent',
+        body: consent,
+        headers: { 'Content-Type': 'application/json' },
       });
-      if (result.error) throw result.error;
-      if (!result.response.ok) throw new Error(`Request failed: ${result.response.status}`);
+      if (error) throw error;
     },
     onMutate: async (newConsent) => {
       await queryClient.cancelQueries({ queryKey: settingsKeys.consent() });

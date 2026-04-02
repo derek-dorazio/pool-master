@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Trophy, Target, Flame, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { api } from '@/lib/api-client';
+import { client, getMemberStats } from '@/lib/api';
 
 interface PersonalStats {
   totalContests: number;
@@ -20,8 +20,11 @@ interface PersonalStats {
 function usePersonalStats(leagueId: string, memberId: string) {
   return useQuery({
     queryKey: ['history', 'personal-stats', leagueId, memberId],
-    queryFn: () =>
-      api.get<PersonalStats>(`/v1/leagues/${leagueId}/members/${memberId}/stats`),
+    queryFn: async () => {
+      const { data, error } = await getMemberStats({ client, path: { id: leagueId, mid: memberId } });
+      if (error) throw error;
+      return data as unknown as PersonalStats;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import { api } from '@/lib/api-client';
+import { client, getDraftState } from '@/lib/api';
 
 interface DraftRecap {
   id: string;
@@ -27,7 +27,14 @@ export function Component() {
 
   const { data: recap, isLoading } = useQuery({
     queryKey: ['drafts', draftId, 'recap'],
-    queryFn: () => api.get<DraftRecap>(`/v1/drafts/${draftId}`),
+    queryFn: async () => {
+      const { data, error } = await getDraftState({
+        client,
+        path: { contestId: draftId! },
+      });
+      if (error) throw error;
+      return data as unknown as DraftRecap;
+    },
     staleTime: 5 * 60 * 1000,
   });
 

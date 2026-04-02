@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 
 export type ActivityType =
   | 'score_update'
@@ -20,9 +20,12 @@ export function useRecentActivity() {
   return useQuery({
     queryKey: ['dashboard', 'recent-activity'],
     queryFn: async (): Promise<ActivityItem[]> => {
-      // TODO: migrate to client.GET when /api/v1/activity?limit=5 is in the OpenAPI spec
-      const res = await api.get<ActivityItem[] | { items: ActivityItem[] }>('/v1/activity?limit=5');
-      return Array.isArray(res) ? res : res.items ?? [];
+      const { data, error } = await client.get<ActivityItem[] | { items: ActivityItem[] }>({
+        url: '/api/v1/activity',
+        query: { limit: '5' },
+      });
+      if (error) throw error;
+      return Array.isArray(data) ? data : (data as { items: ActivityItem[] }).items ?? [];
     },
   });
 }

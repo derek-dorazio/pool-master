@@ -27,10 +27,16 @@
     "test:smoke:api": "jest --config tests/api/jest.config.ts",
     "test:smoke:e2e": "cd clients/web && npx playwright test",
     "test:smoke": "npm run test:smoke:api && npm run test:smoke:e2e",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "api:export": "npx tsx packages/core-api/scripts/export-openapi.ts",
+    "api:generate": "npx @hey-api/openapi-ts -f packages/shared/openapi-ts.config.ts",
+    "api:validate": "npx tsx scripts/validate-openapi-spec.ts",
+    "api:refresh": "npm run api:export && npm run api:generate"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@hey-api/client-fetch": "^0.13.1",
+    "@hey-api/openapi-ts": "^0.95.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "eslint": "^9.0.0",

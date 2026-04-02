@@ -4,6 +4,7 @@
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import { zodToJsonSchema, ContestPoolResponseSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import {
   PrismaContestPoolRepository,
   PrismaContestParticipantPoolRepository,
@@ -37,6 +38,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Create a contest participant pool',
       operationId: 'createContestPool',
+      response: { 201: zodToJsonSchema(ContestPoolResponseSchema) },
       body: {
         type: 'object',
         required: ['sport', 'poolType'],
@@ -56,7 +58,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Get the contest participant pool',
       operationId: 'getContestPool',
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(ContestPoolResponseSchema) },
     },
     handler: handler.getPool,
   });
@@ -66,6 +68,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Update the contest participant pool',
       operationId: 'updateContestPool',
+      response: { 200: zodToJsonSchema(ContestPoolResponseSchema) },
       body: {
         type: 'object',
         properties: {
@@ -85,6 +88,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Resolve the pool from an external data source',
       operationId: 'resolveContestPool',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.resolvePool,
   });
@@ -94,6 +98,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Refresh pool participant data',
       operationId: 'refreshContestPool',
+      response: { 200: zodToJsonSchema(ContestPoolResponseSchema) },
     },
     handler: handler.refreshPool,
   });
@@ -103,6 +108,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Lock the pool to prevent further changes',
       operationId: 'lockContestPool',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.lockPool,
   });
@@ -114,6 +120,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Exclude a participant from the pool',
       operationId: 'excludePoolParticipant',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.excludeParticipant,
   });
@@ -123,6 +130,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Restore an excluded participant to the pool',
       operationId: 'restorePoolParticipant',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.removeExclusion,
   });
@@ -132,6 +140,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Mark a pool participant as unavailable',
       operationId: 'markPoolParticipantUnavailable',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['reason'],
@@ -148,6 +157,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Mark a pool participant as available',
       operationId: 'markPoolParticipantAvailable',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handler.markAvailable,
   });
@@ -159,6 +169,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Calculate prices for pool participants',
       operationId: 'calculatePoolPricing',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['sport', 'totalBudget', 'minPrice', 'maxPrice', 'priceIncrement', 'rankingWeight', 'formWeight', 'oddsWeight'],
@@ -194,6 +205,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Apply a manual price override for a participant',
       operationId: 'applyPoolPriceOverride',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['price', 'reason'],
@@ -213,6 +225,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Assign participants to tiers',
       operationId: 'assignPoolTiers',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['sport', 'assignmentMode', 'tiers'],
@@ -247,6 +260,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Move a participant to a different tier',
       operationId: 'moveParticipantTier',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: pricing.moveParticipantTier,
   });
@@ -258,6 +272,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Search pool participants for the draft room',
       operationId: 'searchPoolParticipants',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       querystring: {
         type: 'object',
         properties: {

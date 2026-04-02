@@ -10,6 +10,11 @@ import type { WeeklyDigestService } from './core/weekly-digest';
 import type { Channels } from './channels/channel-factory';
 import { getDefaultPreferences } from './core/preference-service';
 import { DeliveryStatus } from '@poolmaster/shared/domain';
+import {
+  zodToJsonSchema,
+  NotificationListResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
 import crypto from 'node:crypto';
 
 export interface NotificationModuleOpts {
@@ -37,7 +42,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'List in-app notifications for current user',
         operationId: 'listNotifications',
-        // TODO: add response schema after handler uses DTO mappers
+        response: { 200: zodToJsonSchema(NotificationListResponseSchema) },
       },
     },
     async (request) => {
@@ -55,6 +60,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Get unread notification count',
       operationId: 'getUnreadNotificationCount',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const userId = request.headers['x-user-id'] as string;
@@ -67,6 +73,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Mark a notification as read',
       operationId: 'markNotificationRead',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       await channels.inApp.markAsRead(request.params.id);
@@ -79,6 +86,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Mark all notifications as read',
       operationId: 'markAllNotificationsRead',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const userId = request.headers['x-user-id'] as string;
@@ -91,6 +99,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Dismiss a notification',
       operationId: 'dismissNotification',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       await channels.inApp.dismiss(request.params.id);
@@ -105,6 +114,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Get notification preferences for current user',
       operationId: 'getNotificationPreferences',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const userId = request.headers['x-user-id'] as string;
@@ -129,6 +139,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Update notification preferences',
         operationId: 'updateNotificationPreferences',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request) => {
@@ -163,6 +174,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Unsubscribe from a notification category',
         operationId: 'unsubscribeNotificationCategory',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request) => {
@@ -198,6 +210,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Register a device for push notifications',
         operationId: 'registerDevice',
+        response: { 201: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request, reply) => {
@@ -219,6 +232,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Register a device for push notifications (alias)',
         operationId: 'registerDeviceAlias',
+        response: { 201: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request, reply) => {
@@ -238,6 +252,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Deactivate a registered device',
       operationId: 'deactivateDevice',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       await prisma.deviceRegistration.update({ where: { id: request.params.id }, data: { isActive: false } });
@@ -250,6 +265,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'List registered devices for current user',
       operationId: 'listDevices',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const userId = request.headers['x-user-id'] as string;
@@ -281,6 +297,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Dispatch a notification event',
       operationId: 'dispatchNotification',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const body = request.body;
@@ -336,6 +353,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Send commissioner announcement to a league',
       operationId: 'sendAnnouncement',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const body = request.body;
@@ -371,6 +389,7 @@ export async function notificationsModule(
       tags: ['Notifications'],
       summary: 'Schedule a notification for future delivery',
       operationId: 'scheduleNotification',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const id = await scheduledRunner.schedule({
@@ -391,6 +410,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Cancel scheduled notifications for a source',
         operationId: 'cancelScheduledNotifications',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request) => {
@@ -408,6 +428,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Trigger weekly digest for a league',
         operationId: 'triggerWeeklyDigest',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request) => {
@@ -424,6 +445,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Get notification delivery analytics',
         operationId: 'getNotificationAnalytics',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request) => {
@@ -476,6 +498,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Send a test email',
         operationId: 'sendTestEmail',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request) => channels.email.sendToUser(request.body.to, request.body.subject, request.body.text, request.body.html),
@@ -488,6 +511,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'Send a test push notification',
         operationId: 'sendTestPush',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request) => channels.push.sendToDevice(

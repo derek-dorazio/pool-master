@@ -7,7 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Flag, Trash2, Plus, X, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { adminApi } from '@/lib/api-client';
+import {
+  client,
+  adminUpdateFlag,
+  adminDeleteFlag,
+  adminRemoveFlagOverride,
+} from '@/lib/api';
 import { useFlagDetail } from '@/hooks/use-flags-api';
 import type { FlagType } from '@/hooks/use-flags-api';
 
@@ -99,11 +104,7 @@ export function Component() {
               checked={enabled}
               onChange={async (v) => {
                 setEnabled(v);
-                try {
-                  await adminApi.put(`/v1/admin/flags/${flag.key}`, { enabledGlobally: v });
-                } catch {
-                  // Silently handle — backend may not be available yet
-                }
+                await adminUpdateFlag({ client, path: { flagKey: flag.key }, body: { enabledGlobally: v } });
               }}
             />
           </div>
@@ -170,11 +171,7 @@ export function Component() {
                 <span className="w-14 text-right font-mono font-medium">{rollout}%</span>
               </div>
               <Button size="sm" onClick={async () => {
-                try {
-                  await adminApi.put(`/v1/admin/flags/${flag.key}`, { rolloutPct: rollout });
-                } catch {
-                  // Silently handle — backend may not be available yet
-                }
+                await adminUpdateFlag({ client, path: { flagKey: flag.key }, body: { rolloutPercentage: rollout } });
               }}>
                 Save
               </Button>
@@ -234,11 +231,7 @@ export function Component() {
                           { confirmLabel: 'Remove', variant: 'destructive' },
                         );
                         if (confirmed) {
-                          try {
-                            await adminApi.delete(`/v1/admin/flags/${flag.key}/overrides/${o.tenantName}`);
-                          } catch {
-                            // Silently handle — backend may not be available yet
-                          }
+                          await adminRemoveFlagOverride({ client, path: { flagKey: flag.key, tenantId: o.tenantName } });
                         }
                       }}
                     >
@@ -297,11 +290,7 @@ export function Component() {
               { confirmLabel: 'Delete', variant: 'destructive' },
             );
             if (confirmed) {
-              try {
-                await adminApi.delete(`/v1/admin/flags/${flag.key}`);
-              } catch {
-                // Silently handle — backend may not be available yet
-              }
+              await adminDeleteFlag({ client, path: { flagKey: flag.key } });
             }
           }}
         >

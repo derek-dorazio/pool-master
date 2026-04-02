@@ -5,6 +5,11 @@
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { SearchService } from './search-service';
+import {
+  zodToJsonSchema,
+  SearchResultsResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
 
 export async function searchModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -43,7 +48,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
           offset: { type: 'string' },
         },
       },
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(SearchResultsResponseSchema) },
     },
     handler: async (request) => {
       const qs = request.query;
@@ -76,6 +81,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Search'],
       summary: 'Discover public leagues',
       operationId: 'discoverLeagues',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const qs = request.query;
@@ -104,6 +110,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Search'],
       summary: 'Discover open contests',
       operationId: 'discoverContests',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const qs = request.query;
@@ -126,6 +133,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Search'],
       summary: 'Report a league or contest',
       operationId: 'reportDiscoveryEntity',
+      response: { 201: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['entityType', 'entityId', 'reason'],

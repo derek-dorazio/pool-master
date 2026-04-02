@@ -36,6 +36,53 @@ async function main() {
     process.exit(1);
   }
 
+  // Resolve local $ref pointers that @fastify/swagger creates when identical
+  // sub-schemas are reused.  These local refs (e.g. "#/properties/activeTenants")
+  // are relative to the individual schema node, not the spec root, so
+  // openapi-typescript and @hey-api cannot follow them.
+  function resolveRefs(node: unknown, schemaRoot: unknown): unknown {
+    if (node === null || typeof node !== 'object') return node;
+    if (Array.isArray(node)) return node.map((i) => resolveRefs(i, schemaRoot));
+    const obj = node as Record<string, unknown>;
+    if (typeof obj.$ref === 'string' && (obj.$ref as string).startsWith('#/')) {
+      const parts = (obj.$ref as string).slice(2).split('/');
+      let target: unknown = schemaRoot;
+      for (const p of parts) {
+        if (target === null || typeof target !== 'object') return obj;
+        target = (target as Record<string, unknown>)[p];
+      }
+      return resolveRefs(target, schemaRoot);
+    }
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      out[k] = resolveRefs(v, schemaRoot);
+    }
+    return out;
+  }
+
+  // Walk every operation's schema objects and resolve local $refs
+  for (const methods of Object.values(spec.paths ?? {})) {
+    for (const op of Object.values(methods as Record<string, any>)) {
+      if (!op || typeof op !== 'object') continue;
+      // Resolve refs in request body schemas
+      if (op.requestBody?.content) {
+        for (const media of Object.values(op.requestBody.content as Record<string, any>)) {
+          if (media?.schema) media.schema = resolveRefs(media.schema, media.schema);
+        }
+      }
+      // Resolve refs in response schemas
+      if (op.responses) {
+        for (const resp of Object.values(op.responses as Record<string, any>)) {
+          if (resp?.content) {
+            for (const media of Object.values(resp.content as Record<string, any>)) {
+              if (media?.schema) media.schema = resolveRefs(media.schema, media.schema);
+            }
+          }
+        }
+      }
+    }
+  }
+
   const outPath = resolve(__dirname, '../../../packages/shared/generated/openapi.json');
   writeFileSync(outPath, JSON.stringify(spec, null, 2) + '\n');
 

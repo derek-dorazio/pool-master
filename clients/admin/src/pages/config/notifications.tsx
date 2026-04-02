@@ -5,7 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Bell, RotateCcw, ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { adminApi } from '@/lib/api-client';
+import {
+  client,
+  adminUpdatePushTrigger,
+  adminUpdateNotificationTemplate,
+  adminUpdateRateLimitConfig,
+  adminUpdateDigestConfig,
+} from '@/lib/api';
 import {
   usePushTriggers,
   useNotificationTemplates,
@@ -178,10 +184,11 @@ function PushTriggersSection() {
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={cancelEdit}>Cancel</Button>
               <Button size="sm" onClick={async () => {
-                try {
-                  await adminApi.put(`/v1/admin/config/push-triggers/${editingId}`, editForm);
-                } catch {
-                  // Silently handle — backend may not be available yet
+                if (editingId) {
+                  const trigger = triggers.find((t) => t.id === editingId);
+                  if (trigger) {
+                    await adminUpdatePushTrigger({ client, path: { eventType: trigger.eventType }, body: editForm });
+                  }
                 }
                 cancelEdit();
               }}>
@@ -313,10 +320,11 @@ function NotificationTemplatesSection() {
                             Cancel
                           </Button>
                           <Button size="sm" onClick={async () => {
-                            try {
-                              await adminApi.put(`/v1/admin/config/notification-templates/${expandedId}`, editForm);
-                            } catch {
-                              // Silently handle — backend may not be available yet
+                            if (expandedId) {
+                              const template = templates.find((t) => t.id === expandedId);
+                              if (template) {
+                                await adminUpdateNotificationTemplate({ client, path: { eventType: template.eventType }, body: editForm });
+                              }
                             }
                             setExpandedId(null);
                           }}>
@@ -538,11 +546,7 @@ function RateLimitsSection() {
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={resetAll}>Reset</Button>
           <Button onClick={async () => {
-            try {
-              await adminApi.put('/v1/admin/config/rate-limits', { pushPerHour, emailPerDay, smsPerDay, dedupWindowSeconds: dedupWindow, collapseRules });
-            } catch {
-              // Silently handle — backend may not be available yet
-            }
+            await adminUpdateRateLimitConfig({ client, body: { pushPerHour, emailPerDay, smsPerDay, dedupWindowSeconds: dedupWindow, collapseRules } });
           }}>
             Save
           </Button>
@@ -712,11 +716,7 @@ function WeeklyDigestSection() {
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={reset}>Reset</Button>
           <Button onClick={async () => {
-            try {
-              await adminApi.put('/v1/admin/config/weekly-digest', { subjectTemplate, headerTemplate, footerTemplate, includeStandings, includeHighlights, includeUpcomingEvents, lookbackDays, sendDay, sendHourUtc, enabled });
-            } catch {
-              // Silently handle — backend may not be available yet
-            }
+            await adminUpdateDigestConfig({ client, body: { subjectTemplate, headerTemplate, footerTemplate, includeStandings, includeHighlights, includeUpcomingEvents, lookbackDays, sendDay, sendHourUtc, enabled } });
           }}>
             Save
           </Button>

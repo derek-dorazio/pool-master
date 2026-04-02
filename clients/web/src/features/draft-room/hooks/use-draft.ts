@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DraftMode, DraftStatus } from '@poolmaster/shared/domain';
-import { api } from '@/lib/api-client';
-import { client, typedData } from '@/lib/api-client-generated';
+import { client, getDraftState } from '@/lib/api';
 
 export interface DraftState {
   id: string;
@@ -63,10 +62,9 @@ export function useDraft(draftId: string) {
   return useQuery({
     queryKey: ['drafts', draftId],
     queryFn: async () => {
-      const result = await client.GET('/api/v1/drafts/{contestId}', {
-        params: { path: { contestId: draftId } },
-      });
-      return typedData<DraftState>(result);
+      const { data, error } = await getDraftState({ client, path: { contestId: draftId } });
+      if (error) throw error;
+      return data as unknown as DraftState;
     },
     refetchInterval: 10_000,
     refetchOnWindowFocus: true,
@@ -76,13 +74,18 @@ export function useDraft(draftId: string) {
 export function useAvailableParticipants(draftId: string, filters: { query?: string; position?: string; sort?: string }) {
   return useQuery({
     queryKey: ['drafts', draftId, 'available', filters],
-    queryFn: () => {
-      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
-      const params = new URLSearchParams();
-      if (filters.query) params.set('q', filters.query);
-      if (filters.position) params.set('position', filters.position);
-      if (filters.sort) params.set('sort', filters.sort);
-      return api.get<AvailableParticipant[]>(`/v1/drafts/${draftId}/available?${params.toString()}`);
+    queryFn: async () => {
+      const query: Record<string, string> = {};
+      if (filters.query) query.q = filters.query;
+      if (filters.position) query.position = filters.position;
+      if (filters.sort) query.sort = filters.sort;
+      const { data, error } = await client.get<AvailableParticipant[]>({
+        url: '/api/v1/drafts/{contestId}/available',
+        path: { contestId: draftId },
+        query,
+      });
+      if (error) throw error;
+      return data as AvailableParticipant[];
     },
   });
 }
@@ -92,12 +95,13 @@ export function useMakePick(draftId: string) {
 
   return useMutation({
     mutationFn: async (participantId: string) => {
-      const result: any = await client.POST('/api/v1/drafts/{contestId}/pick', {
-        params: { path: { contestId: draftId } },
-        body: { participantId } as never,
+      const { error } = await client.post({
+        url: '/api/v1/drafts/{contestId}/pick',
+        path: { contestId: draftId },
+        body: { participantId },
+        headers: { 'Content-Type': 'application/json' },
       });
-      if (result.error) throw result.error;
-      if (!result.response.ok) throw new Error(`Request failed: ${result.response.status}`);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });

@@ -7,6 +7,7 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
 import type { DunningConfigService } from './dunning-config-service';
@@ -62,6 +63,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get poll interval configuration',
       operationId: 'adminGetPollIntervals',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return pollConfig.getConfig();
@@ -73,6 +75,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update poll interval configuration',
       operationId: 'adminUpdatePollIntervals',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -105,6 +108,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Reset poll intervals to defaults',
       operationId: 'adminResetPollIntervals',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request: FastifyRequest) => {
       const { adminUserId, adminUserEmail } = extractAdminContext(request);
@@ -121,6 +125,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get ingestion schedule configuration',
       operationId: 'adminGetIngestionSchedule',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return ingestionConfig.getConfig();
@@ -132,6 +137,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update ingestion schedule configuration',
       operationId: 'adminUpdateIngestionSchedule',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -164,6 +170,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Set per-sport ingestion schedule override',
       operationId: 'adminSetSportIngestionOverride',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -203,6 +210,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Reset ingestion schedule to defaults',
       operationId: 'adminResetIngestionSchedule',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request: FastifyRequest) => {
       const { adminUserId, adminUserEmail } = extractAdminContext(request);
@@ -219,6 +227,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get dunning schedule configuration',
       operationId: 'adminGetDunningConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return dunningConfig.getConfig();
@@ -230,6 +239,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update dunning schedule configuration',
       operationId: 'adminUpdateDunningConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -280,6 +290,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Reset dunning configuration to defaults',
       operationId: 'adminResetDunningConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request: FastifyRequest) => {
       const { adminUserId, adminUserEmail } = extractAdminContext(request);
@@ -296,6 +307,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get notification channel defaults',
       operationId: 'adminGetChannelConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return channelConfig.getConfig();
@@ -307,6 +319,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update notification channel defaults for a category',
       operationId: 'adminUpdateChannelConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['channels'],
@@ -344,6 +357,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Reset notification channel defaults',
       operationId: 'adminResetChannelConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request: FastifyRequest) => {
       const { adminUserId, adminUserEmail } = extractAdminContext(request);
@@ -360,6 +374,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get data retention defaults',
       operationId: 'adminGetRetentionDefaults',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return retentionConfig.getDefaults();
@@ -371,6 +386,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update data retention defaults',
       operationId: 'adminUpdateRetentionDefaults',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -404,6 +420,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Reset data retention to defaults',
       operationId: 'adminResetRetentionDefaults',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return retentionConfig.resetDefaults();
@@ -415,6 +432,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get tenant-specific retention override',
       operationId: 'adminGetTenantRetentionOverride',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (
       request: FastifyRequest<{ Params: { tenantId: string } }>,
@@ -432,6 +450,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Set tenant-specific retention override',
       operationId: 'adminSetTenantRetentionOverride',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -469,6 +488,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Clear tenant-specific retention override',
       operationId: 'adminClearTenantRetentionOverride',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (
       request: FastifyRequest<{ Params: { tenantId: string } }>,
@@ -487,6 +507,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get weekly digest configuration',
       operationId: 'adminGetDigestConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return digestConfig.getConfig();
@@ -498,6 +519,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update weekly digest configuration',
       operationId: 'adminUpdateDigestConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -542,6 +564,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Reset weekly digest configuration to defaults',
       operationId: 'adminResetDigestConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return digestConfig.resetDefaults();
@@ -553,6 +576,7 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Preview weekly digest for a league',
       operationId: 'adminPreviewDigest',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (
       request: FastifyRequest<{

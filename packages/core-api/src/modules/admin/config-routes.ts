@@ -10,6 +10,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import { TemplateConfigService } from './template-config-service';
 import { createTemplateConfigHandlers } from './template-config-handler';
 import { NotificationConfigService } from './notification-config-service';
@@ -42,6 +43,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List scoring templates',
       operationId: 'adminListScoringTemplates',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: templateConfig.listScoringTemplates,
   });
@@ -51,6 +53,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get scoring template by ID',
       operationId: 'adminGetScoringTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: templateConfig.getScoringTemplate,
   });
@@ -60,6 +63,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Create a scoring template',
       operationId: 'adminCreateScoringTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['id', 'sport', 'name', 'description', 'config'],
@@ -80,6 +84,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update a scoring template',
       operationId: 'adminUpdateScoringTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -98,6 +103,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Delete a scoring template',
       operationId: 'adminDeleteScoringTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: templateConfig.deleteScoringTemplate,
   });
@@ -112,6 +118,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List selection templates',
       operationId: 'adminListSelectionTemplatesConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: templateConfig.listSelectionTemplates,
   });
@@ -121,6 +128,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get selection template by ID',
       operationId: 'adminGetSelectionTemplateConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: templateConfig.getSelectionTemplate,
   });
@@ -130,6 +138,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Create a selection template',
       operationId: 'adminCreateSelectionTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['id', 'name', 'description', 'sport', 'contestType', 'selectionType', 'config'],
@@ -152,6 +161,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update a selection template',
       operationId: 'adminUpdateSelectionTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -172,6 +182,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Delete a selection template',
       operationId: 'adminDeleteSelectionTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: templateConfig.deleteSelectionTemplate,
   });
@@ -186,6 +197,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List notification templates',
       operationId: 'adminListNotificationTemplates',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: notificationConfig.listTemplates,
   });
@@ -195,6 +207,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get notification template by event type',
       operationId: 'adminGetNotificationTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: notificationConfig.getTemplate,
   });
@@ -204,6 +217,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update a notification template',
       operationId: 'adminUpdateNotificationTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -226,6 +240,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Reset a notification template to defaults',
       operationId: 'adminResetNotificationTemplate',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: notificationConfig.resetTemplate,
   });
@@ -240,6 +255,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List push trigger configurations',
       operationId: 'adminListPushTriggers',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: pushTriggerConfig.listTriggers,
   });
@@ -249,6 +265,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update a push trigger configuration',
       operationId: 'adminUpdatePushTrigger',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -269,6 +286,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Enable a push trigger',
       operationId: 'adminEnablePushTrigger',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: pushTriggerConfig.enableTrigger,
   });
@@ -278,6 +296,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Disable a push trigger',
       operationId: 'adminDisablePushTrigger',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: pushTriggerConfig.disableTrigger,
   });
@@ -287,6 +306,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Reset all push triggers to defaults',
       operationId: 'adminResetPushTriggers',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: pushTriggerConfig.resetAll,
   });
@@ -301,6 +321,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get rate limit configuration',
       operationId: 'adminGetRateLimitConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: rateLimitConfig.getConfig,
   });
@@ -310,6 +331,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update rate limit configuration',
       operationId: 'adminUpdateRateLimitConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         properties: {
@@ -340,6 +362,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Reset rate limits to defaults',
       operationId: 'adminResetRateLimitConfig',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: rateLimitConfig.resetConfig,
   });

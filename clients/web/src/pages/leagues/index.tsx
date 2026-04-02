@@ -18,9 +18,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api-client';
-import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
-import type { LeagueListResponse, LeagueSummaryDto } from '@poolmaster/shared/dto';
+import { client, listLeagues } from '@/lib/api';
+import type { LeagueSummaryDto } from '@poolmaster/shared/dto';
 
 type SortOption = 'activity' | 'name' | 'created';
 type ViewMode = 'grid' | 'list';
@@ -29,8 +28,9 @@ function useLeagues() {
   return useQuery({
     queryKey: ['leagues'],
     queryFn: async (): Promise<LeagueSummaryDto[]> => {
-      const res = await api.get<LeagueListResponse>(clientPath(API_ROUTES.leagues.list));
-      return res.leagues;
+      const { data, error } = await listLeagues({ client });
+      if (error) throw error;
+      return (data as any).leagues;
     },
   });
 }

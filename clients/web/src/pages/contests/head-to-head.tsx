@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -30,8 +30,11 @@ function useH2HEntries(contestId: string | undefined) {
   return useQuery({
     queryKey: ['contest-h2h', contestId],
     queryFn: async (): Promise<H2HEntry[]> => {
-      const res = await api.get<H2HResponse>(`/v1/contests/${contestId}/head-to-head`);
-      return res.entries ?? [];
+      const { data, error } = await client.get<H2HResponse>({
+        url: `/api/v1/contests/${contestId}/head-to-head`,
+      });
+      if (error) throw error;
+      return data?.entries ?? [];
     },
     enabled: !!contestId,
   });

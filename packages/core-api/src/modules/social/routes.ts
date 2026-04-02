@@ -15,6 +15,11 @@
 import type { FastifyInstance } from 'fastify';
 import { FeedService } from './feed-service';
 import { createFeedHandlers } from './feed-handler';
+import {
+  zodToJsonSchema,
+  FeedResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
 
 export async function socialModule(fastify: FastifyInstance): Promise<void> {
   const feedService = new FeedService();
@@ -23,6 +28,9 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
   // --- Get Feed (paginated, cursor-based) ---
   fastify.get('/leagues/:leagueId/feed', {
     schema: {
+      tags: ['Social'],
+      summary: 'Get league activity feed',
+      operationId: 'getLeagueFeed',
       params: {
         type: 'object',
         required: ['leagueId'],
@@ -35,6 +43,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           limit: { type: 'string' },
         },
       },
+      response: { 200: zodToJsonSchema(FeedResponseSchema) },
     },
     handler: handlers.getFeed,
   });
@@ -42,6 +51,9 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
   // --- Create Post ---
   fastify.post('/leagues/:leagueId/feed', {
     schema: {
+      tags: ['Social'],
+      summary: 'Create a feed post',
+      operationId: 'createFeedPost',
       params: {
         type: 'object',
         required: ['leagueId'],
@@ -55,6 +67,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           type: { type: 'string', enum: ['POST', 'ANNOUNCEMENT', 'SYSTEM'] },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.createPost,
   });
@@ -62,6 +75,9 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
   // --- Get Post with Replies ---
   fastify.get('/leagues/:leagueId/feed/:postId', {
     schema: {
+      tags: ['Social'],
+      summary: 'Get a single feed post',
+      operationId: 'getFeedPost',
       params: {
         type: 'object',
         required: ['leagueId', 'postId'],
@@ -70,6 +86,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.getPost,
   });
@@ -77,6 +94,9 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
   // --- Create Reply ---
   fastify.post('/leagues/:leagueId/feed/:postId/replies', {
     schema: {
+      tags: ['Social'],
+      summary: 'Reply to a feed post',
+      operationId: 'addFeedReply',
       params: {
         type: 'object',
         required: ['leagueId', 'postId'],
@@ -92,6 +112,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           content: { type: 'string', minLength: 1, maxLength: 5000 },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.createReply,
   });
@@ -99,6 +120,9 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
   // --- Toggle Reaction ---
   fastify.post('/leagues/:leagueId/feed/:postId/reactions', {
     schema: {
+      tags: ['Social'],
+      summary: 'Add a reaction to a post',
+      operationId: 'addFeedReaction',
       params: {
         type: 'object',
         required: ['leagueId', 'postId'],
@@ -114,6 +138,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           emoji: { type: 'string', minLength: 1 },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.toggleReaction,
   });
@@ -121,6 +146,9 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
   // --- Pin Post ---
   fastify.post('/leagues/:leagueId/feed/:postId/pin', {
     schema: {
+      tags: ['Social'],
+      summary: 'Pin a feed post',
+      operationId: 'pinFeedPost',
       params: {
         type: 'object',
         required: ['leagueId', 'postId'],
@@ -129,6 +157,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.pinPost,
   });
@@ -136,6 +165,9 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
   // --- Unpin Post ---
   fastify.delete('/leagues/:leagueId/feed/:postId/pin', {
     schema: {
+      tags: ['Social'],
+      summary: 'Unpin a feed post',
+      operationId: 'unpinFeedPost',
       params: {
         type: 'object',
         required: ['leagueId', 'postId'],
@@ -144,6 +176,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.unpinPost,
   });
@@ -151,6 +184,9 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
   // --- Delete Post ---
   fastify.delete('/leagues/:leagueId/feed/:postId', {
     schema: {
+      tags: ['Social'],
+      summary: 'Delete a feed post',
+      operationId: 'deleteFeedPost',
       params: {
         type: 'object',
         required: ['leagueId', 'postId'],
@@ -159,6 +195,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.deletePost,
   });

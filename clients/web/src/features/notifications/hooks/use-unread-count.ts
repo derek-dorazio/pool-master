@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { client, typedData } from '@/lib/api-client-generated';
+import { client, getUnreadNotificationCount } from '@/lib/api';
 import { notificationKeys } from './query-keys';
 
 export interface UnreadCounts {
@@ -11,8 +11,9 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: notificationKeys.unreadCount(),
     queryFn: async (): Promise<UnreadCounts> => {
-      const result = await client.GET('/api/v1/notifications/unread-count');
-      return typedData<UnreadCounts>(result);
+      const { data, error } = await getUnreadNotificationCount({ client });
+      if (error) throw error;
+      return data as unknown as UnreadCounts;
     },
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,

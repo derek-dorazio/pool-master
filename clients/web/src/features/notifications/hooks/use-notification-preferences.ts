@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { client, typedData } from '@/lib/api-client-generated';
+import { client, getNotificationPreferences } from '@/lib/api';
 import { notificationKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -25,8 +25,9 @@ export function useNotificationPreferences() {
   return useQuery({
     queryKey: notificationKeys.preferences(),
     queryFn: async (): Promise<NotificationPreferences> => {
-      const result = await client.GET('/api/v1/notifications/preferences');
-      return typedData<NotificationPreferences>(result);
+      const { data, error } = await getNotificationPreferences({ client });
+      if (error) throw error;
+      return data as unknown as NotificationPreferences;
     },
   });
 }
@@ -36,11 +37,12 @@ export function useSaveNotificationPreferences() {
 
   return useMutation({
     mutationFn: async (preferences: NotificationPreferences) => {
-      const result: any = await client.PUT('/api/v1/notifications/preferences', {
-        body: preferences as never,
+      const { error } = await client.put({
+        url: '/api/v1/notifications/preferences',
+        body: preferences,
+        headers: { 'Content-Type': 'application/json' },
       });
-      if (result.error) throw result.error;
-      if (!result.response.ok) throw new Error(`Request failed: ${result.response.status}`);
+      if (error) throw error;
     },
     onMutate: async (newPreferences) => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.preferences() });

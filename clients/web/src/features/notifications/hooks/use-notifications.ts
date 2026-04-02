@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { client, typedData } from '@/lib/api-client-generated';
+import { client } from '@/lib/api';
 import { notificationKeys } from './query-keys';
 
 export type NotificationCategory =
@@ -32,10 +32,12 @@ export function useNotifications(category?: string) {
       const query: Record<string, string> = { limit: '20' };
       if (category) query.category = category;
       if (pageParam) query.cursor = pageParam;
-      const result = await client.GET('/api/v1/notifications', {
-        params: { query } as never,
+      const { data, error } = await client.get<NotificationPage>({
+        url: '/api/v1/notifications',
+        query,
       });
-      return typedData<NotificationPage>(result);
+      if (error) throw error;
+      return data as NotificationPage;
     },
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

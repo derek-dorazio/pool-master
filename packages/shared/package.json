@@ -48,12 +48,21 @@
     "./generated": {
       "types": "./generated/api-types.ts",
       "default": "./generated/api-types.ts"
+    },
+    "./generated/hey-api": {
+      "types": "./generated/hey-api/index.ts",
+      "default": "./generated/hey-api/index.ts"
+    },
+    "./generated/hey-api/*": {
+      "types": "./generated/hey-api/*.ts",
+      "default": "./generated/hey-api/*.ts"
     }
   },
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "generate": "npx @hey-api/openapi-ts -f openapi-ts.config.ts"
   },
   "dependencies": {
     "i18next": "^23.12.0",

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 
 export interface UpcomingDraft {
   id: string;
@@ -13,9 +13,12 @@ export function useUpcomingDrafts() {
   return useQuery({
     queryKey: ['dashboard', 'upcoming-drafts'],
     queryFn: async (): Promise<UpcomingDraft[]> => {
-      // TODO: migrate to client.GET when /api/v1/drafts?status=scheduled is in the OpenAPI spec
-      const res = await api.get<UpcomingDraft[] | { drafts: UpcomingDraft[] }>('/v1/drafts?status=scheduled');
-      return Array.isArray(res) ? res : res.drafts ?? [];
+      const { data, error } = await client.get<UpcomingDraft[] | { drafts: UpcomingDraft[] }>({
+        url: '/api/v1/drafts',
+        query: { status: 'scheduled' },
+      });
+      if (error) throw error;
+      return Array.isArray(data) ? data : (data as { drafts: UpcomingDraft[] }).drafts ?? [];
     },
   });
 }

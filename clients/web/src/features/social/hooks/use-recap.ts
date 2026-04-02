@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 import { socialKeys } from './query-keys';
 
 export interface StandingEntry {
@@ -33,8 +33,13 @@ export function useRecap(leagueId: string, weekId: string) {
   return useQuery({
     queryKey: socialKeys.recap(leagueId, weekId),
     queryFn: async (): Promise<RecapData> => {
-      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
-      return await api.get<RecapData>(`/v1/social/leagues/${leagueId}/recap?week=${weekId}`);
+      const { data, error } = await client.get<RecapData>({
+        url: '/api/v1/social/leagues/{leagueId}/recap',
+        path: { leagueId },
+        query: { week: weekId },
+      });
+      if (error) throw error;
+      return data as RecapData;
     },
   });
 }

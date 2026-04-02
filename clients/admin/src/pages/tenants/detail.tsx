@@ -7,7 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { adminApi } from '@/lib/api-client';
+import {
+  client,
+  adminSuspendTenant,
+  adminChangeTenantPlan,
+  adminApplyCredit,
+  adminExtendTrial,
+  adminDeleteTenant,
+} from '@/lib/api';
 import { useTenantDetail } from '@/hooks/use-admin-api';
 
 const planColors: Record<string, string> = {
@@ -82,11 +89,23 @@ export function Component() {
       `Are you sure you want to ${action} for "${tenant!.name}"?`,
       { confirmLabel: action, variant: action === 'Delete' ? 'destructive' : 'default' },
     );
-    if (confirmed) {
-      try {
-        await adminApi.post(`/v1/admin/tenants/${id}/actions`, { action });
-      } catch {
-        // Silently handle — backend may not be available yet
+    if (confirmed && id) {
+      switch (action) {
+        case 'Suspend':
+          await adminSuspendTenant({ client, path: { tenantId: id }, body: { reason: 'Admin action' } });
+          break;
+        case 'Change Plan':
+          await adminChangeTenantPlan({ client, path: { tenantId: id }, body: { planTier: 'Pro', reason: 'Admin action' } });
+          break;
+        case 'Apply Credit':
+          await adminApplyCredit({ client, path: { tenantId: id }, body: { amount: 0, reason: 'Admin action' } });
+          break;
+        case 'Extend Trial':
+          await adminExtendTrial({ client, path: { tenantId: id }, body: { days: 30, reason: 'Admin action' } });
+          break;
+        case 'Delete':
+          await adminDeleteTenant({ client, path: { tenantId: id }, body: { confirmation: tenant!.name } });
+          break;
       }
     }
   }

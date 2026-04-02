@@ -4,6 +4,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import { ComplianceService, verifyAge } from './compliance-service';
 
 export async function complianceModule(fastify: FastifyInstance): Promise<void> {
@@ -19,6 +20,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
         tags: ['Account'],
         summary: 'Verify user meets minimum age requirement',
         operationId: 'verifyAge',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
         body: {
           type: 'object',
           required: ['birthYear'],
@@ -38,6 +40,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
         tags: ['Account'],
         summary: 'Record user consent for a policy type',
         operationId: 'recordConsent',
+        response: { 201: zodToJsonSchema(SuccessSchema) },
         body: {
           type: 'object',
           required: ['consentType', 'granted', 'version'],
@@ -68,6 +71,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Get consent history for current user',
       operationId: 'getConsentHistory',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const userId = request.headers['x-user-id'] as string;
@@ -83,6 +87,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Request personal data export (GDPR)',
       operationId: 'requestDataExport',
+      response: { 202: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const userId = request.headers['x-user-id'] as string;
@@ -96,6 +101,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Get data export status and download',
       operationId: 'getDataExport',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       return complianceService.processDataExport(request.params.id);
@@ -109,6 +115,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Request account deletion',
       operationId: 'requestAccountDeletion',
+      response: { 202: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const userId = request.headers['x-user-id'] as string;
@@ -125,6 +132,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Cancel a pending account deletion',
       operationId: 'cancelAccountDeletion',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       await complianceService.cancelDeletion(request.params.id);
@@ -141,6 +149,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
         tags: ['Account'],
         summary: 'Create self-exclusion or cool-down period',
         operationId: 'createSelfExclusion',
+        response: { 201: zodToJsonSchema(SuccessSchema) },
         body: {
           type: 'object',
           required: ['type', 'duration'],
@@ -167,6 +176,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Get active self-exclusion status',
       operationId: 'getActiveExclusion',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const userId = request.headers['x-user-id'] as string;
@@ -192,6 +202,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
         tags: ['Account'],
         summary: 'Create enforcement action against a user',
         operationId: 'createEnforcementAction',
+        response: { 201: zodToJsonSchema(SuccessSchema) },
         body: {
           type: 'object',
           required: ['userId', 'level', 'reason', 'trigger'],
@@ -221,6 +232,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Get enforcement history for a user',
       operationId: 'getEnforcementHistory',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const history = await complianceService.getEnforcementHistory(request.params.userId);
@@ -235,6 +247,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
         tags: ['Account'],
         summary: 'Update enforcement appeal status',
         operationId: 'updateAppealStatus',
+        response: { 200: zodToJsonSchema(SuccessSchema) },
       },
     },
     async (request) => {
@@ -253,6 +266,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Trigger retention data cleanup',
       operationId: 'runRetentionCleanup',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async () => {
       return complianceService.runRetentionCleanup();

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Logo } from '@/components/ui/logo';
-import { api } from '@/lib/api-client';
+import { client, forgotPassword } from '@/lib/api';
 
 const forgotSchema = z.object({
   email: z
@@ -36,7 +36,7 @@ export function Component() {
 
   async function onSubmit(data: ForgotForm) {
     try {
-      await api.post('/auth/forgot-password', { email: data.email });
+      await forgotPassword({ client, body: { email: data.email } });
     } catch {
       // Intentionally swallow — prevent enumeration
     }

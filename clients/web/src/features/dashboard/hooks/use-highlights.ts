@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 
 export interface SeasonHighlights {
   recentWin: string | null;
@@ -12,8 +12,11 @@ export function useHighlights() {
   return useQuery({
     queryKey: ['dashboard', 'highlights'],
     queryFn: async (): Promise<SeasonHighlights> => {
-      // TODO: migrate to client.GET when /api/v1/history/highlights is in the OpenAPI spec
-      return await api.get<SeasonHighlights>('/v1/history/highlights');
+      const { data, error } = await client.get<SeasonHighlights>({
+        url: '/api/v1/history/highlights',
+      });
+      if (error) throw error;
+      return data as SeasonHighlights;
     },
   });
 }

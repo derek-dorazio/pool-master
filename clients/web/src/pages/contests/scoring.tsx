@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useContest } from '@/features/contests/hooks/use-contest';
-import { api } from '@/lib/api-client';
+import { client, getStandings } from '@/lib/api';
 
 interface ParticipantScoring {
   id: string;
@@ -98,9 +98,14 @@ export function Component() {
 
   const { data: scoring, isLoading } = useQuery({
     queryKey: ['contests', contestId, 'scoring', selectedEntry],
-    queryFn: () => {
-      const params = selectedEntry ? `?entryId=${selectedEntry}` : '';
-      return api.get<ScoringResponse>(`/v1/contests/${contestId}/standings${params}`);
+    queryFn: async () => {
+      const { data, error } = await getStandings({
+        client,
+        path: { contestId: contestId! },
+        query: selectedEntry ? { entryId: selectedEntry } : undefined,
+      });
+      if (error) throw error;
+      return data as unknown as ScoringResponse;
     },
     staleTime: 2 * 60 * 1000,
   });

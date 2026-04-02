@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { api } from '@/lib/api-client';
+import { client, getStandings } from '@/lib/api';
 
 interface FinalEntry {
   id: string;
@@ -34,7 +34,14 @@ export function Component() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['contests', contestId, 'standings'],
-    queryFn: () => api.get<StandingsResponse>(`/v1/contests/${contestId}/standings`),
+    queryFn: async () => {
+      const { data, error } = await getStandings({
+        client,
+        path: { contestId: contestId! },
+      });
+      if (error) throw error;
+      return data as StandingsResponse;
+    },
     staleTime: 5 * 60 * 1000,
   });
 

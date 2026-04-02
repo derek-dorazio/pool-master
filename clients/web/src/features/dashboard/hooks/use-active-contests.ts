@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 
 export interface ActiveContest {
   id: string;
@@ -16,9 +16,12 @@ export function useActiveContests() {
   return useQuery({
     queryKey: ['dashboard', 'active-contests'],
     queryFn: async (): Promise<ActiveContest[]> => {
-      // TODO: migrate to client.GET when /api/v1/contests?status=active is in the OpenAPI spec
-      const res = await api.get<ActiveContest[] | { contests: ActiveContest[] }>('/v1/contests?status=active');
-      return Array.isArray(res) ? res : res.contests ?? [];
+      const { data, error } = await client.get<ActiveContest[] | { contests: ActiveContest[] }>({
+        url: '/api/v1/contests',
+        query: { status: 'active' },
+      });
+      if (error) throw error;
+      return Array.isArray(data) ? data : (data as { contests: ActiveContest[] }).contests ?? [];
     },
     refetchInterval: 10_000,
   });

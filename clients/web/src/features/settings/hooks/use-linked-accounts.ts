@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import { client } from '@/lib/api';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -14,8 +13,11 @@ export function useLinkedAccounts() {
   return useQuery({
     queryKey: settingsKeys.linkedAccounts(),
     queryFn: async (): Promise<LinkedAccount[]> => {
-      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
-      return await api.get<LinkedAccount[]>(clientPath('/api/v1/auth/linked-accounts'));
+      const { data, error } = await client.get<LinkedAccount[]>({
+        url: '/api/v1/auth/linked-accounts',
+      });
+      if (error) throw error;
+      return data as LinkedAccount[];
     },
   });
 }
@@ -24,9 +26,13 @@ export function useConnectAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
     mutationFn: async (provider: string) => {
-      return await api.post(clientPath(API_ROUTES.auth.linkedAccounts(provider)) + '/connect');
+      const { data, error } = await client.post({
+        url: '/api/v1/auth/linked-accounts/{provider}/connect',
+        path: { provider },
+      });
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.linkedAccounts() });
@@ -39,9 +45,13 @@ export function useDisconnectAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
     mutationFn: async (provider: string) => {
-      return await api.delete(clientPath(API_ROUTES.auth.linkedAccounts(provider)));
+      const { data, error } = await client.delete({
+        url: '/api/v1/auth/linked-accounts/{provider}',
+        path: { provider },
+      });
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.linkedAccounts() });

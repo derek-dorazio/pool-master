@@ -7,6 +7,12 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
+  zodToJsonSchema,
+  ContestListResponseSchema,
+  ContestResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
+import {
   PrismaContestRepository,
   PrismaSelectionConfigRepository,
   PrismaLeagueMembershipRepository,
@@ -44,7 +50,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Contests'],
       summary: 'List contests for a league',
       operationId: 'listContests',
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(ContestListResponseSchema) },
     },
     handler: handlers.listContests,
   });
@@ -111,7 +117,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
           scoringStopsOnElimination: { type: 'boolean' },
         },
       },
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 201: zodToJsonSchema(ContestResponseSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
     handler: handlers.createContest,
@@ -148,7 +154,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Get a contest by ID',
       operationId: 'getContest',
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
     handler: handlers.getContest,
   });
@@ -170,7 +176,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
           isExclusive: { type: 'boolean' },
         },
       },
-      // TODO: add response schema after handler uses DTO mappers
+      response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
     handler: handlers.updateContest,
   });
@@ -180,6 +186,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Delete a contest',
       operationId: 'deleteContest',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: handlers.deleteContest,
   });
@@ -191,6 +198,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Undo a draft pick',
       operationId: 'undoDraftPick',
       body: { type: 'object', required: ['pickId', 'reason'], properties: { pickId: { type: 'string' }, reason: { type: 'string' } } },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.undoPick,
   });
@@ -200,6 +208,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Pause an active draft (contest override)',
       operationId: 'pauseContestDraft',
       body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.pauseDraft,
   });
@@ -208,6 +217,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Resume a paused draft (contest override)',
       operationId: 'resumeContestDraft',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.resumeDraft,
   });
@@ -217,6 +227,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Extend the pick clock for the current drafter',
       operationId: 'extendPickClock',
       body: { type: 'object', required: ['additionalSeconds'], properties: { additionalSeconds: { type: 'integer', minimum: 1 } } },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.extendPickClock,
   });
@@ -228,6 +239,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Manually adjust an entry score',
       operationId: 'adjustScore',
       body: { type: 'object', required: ['entryId', 'adjustment', 'reason'], properties: { entryId: { type: 'string' }, adjustment: { type: 'number' }, reason: { type: 'string' } } },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.adjustScore,
   });
@@ -236,6 +248,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Recalculate standings for a contest',
       operationId: 'recalculateStandings',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.recalculateStandings,
   });
@@ -247,6 +260,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Reopen a closed contest',
       operationId: 'reopenContest',
       body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.reopenContest,
   });
@@ -256,6 +270,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Close a contest early',
       operationId: 'closeContest',
       body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.closeContest,
   });
@@ -265,6 +280,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Extend the contest end deadline',
       operationId: 'extendContestDeadline',
       body: { type: 'object', required: ['newEnd', 'reason'], properties: { newEnd: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.extendDeadline,
   });
@@ -274,6 +290,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Update the contest lock time',
       operationId: 'updateContestLockTime',
       body: { type: 'object', required: ['newLock', 'reason'], properties: { newLock: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.updateLockTime,
   });
@@ -284,6 +301,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Confirm and finalize contest payouts',
       operationId: 'confirmPayouts',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.confirmPayouts,
   });
@@ -294,6 +312,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Get the audit log for a contest',
       operationId: 'getContestAuditLog',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };

@@ -6,28 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Logo } from '@/components/ui/logo';
 import { useAdminAuthStore, type AdminUser } from '@/stores/admin-auth-store';
-
-const MOCK_ADMIN: AdminUser = {
-  id: 'admin-001',
-  email: 'admin@poolmaster.io',
-  name: 'Sarah Chen',
-  role: 'Super Admin',
-  permissions: [
-    'tenants.read',
-    'tenants.write',
-    'users.read',
-    'users.write',
-    'contests.read',
-    'contests.write',
-    'providers.read',
-    'providers.write',
-    'flags.read',
-    'flags.write',
-    'audit.read',
-    'announcements.write',
-    'migrations.write',
-  ],
-};
+import { client, loginUser } from '@/lib/api';
 
 export function Component() {
   const navigate = useNavigate();
@@ -41,15 +20,13 @@ export function Component() {
     return <Navigate to="/" replace />;
   }
 
-  function handleSso() {
+  async function handleSso() {
     setLoading(true);
-    setTimeout(() => {
-      setAdminUser(MOCK_ADMIN);
-      navigate('/');
-    }, 300);
+    // Redirect to SSO endpoint; the callback will set the admin user
+    window.location.href = '/api/v1/auth/sso/admin';
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
 
@@ -59,15 +36,29 @@ export function Component() {
     }
 
     setSubmitting(true);
-    setTimeout(() => {
-      if (email === 'admin@poolmaster.io' && password === 'admin') {
-        setAdminUser(MOCK_ADMIN);
-        navigate('/');
-      } else {
-        setError('Invalid email or password');
-        setSubmitting(false);
+    try {
+      const { data } = await loginUser({
+        client,
+        body: { email, password },
+      });
+
+      if (data?.tokens?.accessToken) {
+        localStorage.setItem('admin_access_token', data.tokens.accessToken);
       }
-    }, 400);
+
+      const adminUser: AdminUser = {
+        id: data?.user?.id ?? '',
+        email: data?.user?.email ?? email,
+        name: data?.user?.displayName ?? email,
+        role: 'Admin',
+        permissions: [],
+      };
+      setAdminUser(adminUser);
+      navigate('/');
+    } catch {
+      setError('Invalid email or password');
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -130,10 +121,6 @@ export function Component() {
               {submitting ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-
-          <p className="text-center text-xs text-muted-foreground">
-            Dev credentials: admin@poolmaster.io / admin
-          </p>
         </CardContent>
       </Card>
     </div>

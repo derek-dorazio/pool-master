@@ -19,7 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatCurrency } from '@/lib/format-currency';
 import { usePreferencesStore } from '@/stores/preferences-store';
-import { api } from '@/lib/api-client';
+import { client, getLeague } from '@/lib/api';
 
 interface LeagueSettings {
   name: string;
@@ -38,7 +38,11 @@ export function Component() {
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['leagues', leagueId, 'settings'],
-    queryFn: () => api.get<LeagueSettings>(`/v1/leagues/${leagueId}/settings`),
+    queryFn: async () => {
+      const { data, error } = await getLeague({ client, path: { id: leagueId! } });
+      if (error) throw error;
+      return data as unknown as LeagueSettings;
+    },
     staleTime: 5 * 60 * 1000,
   });
 

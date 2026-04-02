@@ -4,9 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { api, ApiError } from '@/lib/api-client';
+import { client, oauthCallback } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
-import type { AuthResponse } from '@poolmaster/shared/dto';
 
 export function Component() {
   const { t } = useTranslation('auth');
@@ -26,21 +25,16 @@ export function Component() {
 
     async function handleCallback() {
       try {
-        // TODO: migrate to client.POST('/api/v1/auth/callback') when the OpenAPI spec
-        // defines requestBody and response content for oauthCallback
-        const res = await api.post<AuthResponse>('/v1/auth/callback', {
-          code,
-          state,
+        const { data: res, error } = await oauthCallback({
+          client,
+          body: { code, state },
         });
+        if (error) throw error;
         localStorage.setItem('access_token', res.tokens.accessToken);
         setUser({ ...res.user, avatarUrl: res.user.avatarUrl ?? undefined });
         navigate('/dashboard', { replace: true });
-      } catch (err) {
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : t('callback.error'),
-        );
+      } catch (err: any) {
+        setError(err?.message ?? t('callback.error'));
       }
     }
 

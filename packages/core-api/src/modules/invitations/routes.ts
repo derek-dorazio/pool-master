@@ -7,6 +7,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import {
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
@@ -29,6 +30,7 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
       tags: ['Invitations'],
       summary: 'Accept a league invitation using an invite code',
       operationId: 'acceptInvitation',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
         required: ['inviteCode'],

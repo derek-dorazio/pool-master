@@ -1,5 +1,5 @@
 /**
- * RoleGuard — restricts access to pages based on the user's league role.
+ * RoleGuard -- restricts access to pages based on the user's league role.
  * Wraps route content; redirects non-authorized users with a toast.
  */
 
@@ -8,7 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { LeagueRole } from '@poolmaster/shared/domain';
 import { useAuthStore } from '@/stores/auth-store';
-import { api } from '@/lib/api-client';
+import { client } from '@/lib/api';
 
 interface RoleGuardProps {
   /** Minimum roles that have access (checked in order: OWNER > COMMISSIONER > MANAGER > VIEWER) */
@@ -24,13 +24,12 @@ function useMyLeagueRole(leagueId: string) {
   return useQuery({
     queryKey: ['leagues', leagueId, 'my-role'],
     queryFn: async (): Promise<LeagueRole> => {
-      try {
-        const membership = await api.get<{ role: string }>(`/leagues/${leagueId}/members/me`);
-        return (membership.role as LeagueRole) ?? LeagueRole.VIEWER;
-      } catch {
-        // Fail secure — default to least privilege on error
-        return LeagueRole.VIEWER;
-      }
+      const { data, error } = await client.get<{ role: string }>({
+        url: '/api/v1/leagues/{leagueId}/members/me',
+        path: { leagueId },
+      });
+      if (error) throw error;
+      return ((data as { role: string }).role as LeagueRole) ?? LeagueRole.VIEWER;
     },
     enabled: !!user,
   });

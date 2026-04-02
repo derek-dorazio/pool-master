@@ -7,8 +7,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { api } from '@/lib/api-client';
-import { clientPath } from '@poolmaster/shared/api-routes';
+import { client, getSeasonSummaries } from '@/lib/api';
 
 interface ContestResult {
   id: string;
@@ -30,10 +29,9 @@ function useHistory(leagueId: string) {
   return useQuery({
     queryKey: ['league-history', leagueId],
     queryFn: async (): Promise<SeasonSummary[]> => {
-      const res = await api.get<{ seasons: SeasonSummary[] }>(
-        clientPath(`/api/v1/leagues/${leagueId}/history/seasons`),
-      );
-      return res.seasons;
+      const { data, error } = await getSeasonSummaries({ client, path: { id: leagueId } });
+      if (error) throw error;
+      return (data as any).seasons ?? [];
     },
   });
 }

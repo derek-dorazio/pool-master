@@ -18,9 +18,8 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Logo } from '@/components/ui/logo';
-import { api, ApiError } from '@/lib/api-client';
+import { client, registerUser } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
-import type { AuthResponse } from '@poolmaster/shared/dto';
 
 const TOTAL_STEPS = 5;
 
@@ -168,20 +167,22 @@ export function Component() {
   async function onSubmit(data: RegisterForm) {
     setServerError('');
     try {
-      // TODO: migrate to client.POST('/api/v1/auth/register') when the OpenAPI spec
-      // includes dateOfBirth and plan in the request body
-      const res = await api.post<AuthResponse>('/v1/auth/register', {
-        email: data.email,
-        password: data.password,
-        displayName: data.displayName,
-        dateOfBirth: `${data.dobYear}-${data.dobMonth.padStart(2, '0')}-${data.dobDay.padStart(2, '0')}`,
-        plan: data.plan,
+      const { data: res, error } = await registerUser({
+        client,
+        body: {
+          email: data.email,
+          password: data.password,
+          displayName: data.displayName,
+          dateOfBirth: `${data.dobYear}-${data.dobMonth.padStart(2, '0')}-${data.dobDay.padStart(2, '0')}`,
+          plan: data.plan,
+        },
       });
+      if (error) throw error;
       localStorage.setItem('access_token', res.tokens.accessToken);
       setUser({ ...res.user, avatarUrl: res.user.avatarUrl ?? undefined });
       navigate('/dashboard');
-    } catch (err) {
-      if (err instanceof ApiError) {
+    } catch (err: any) {
+      if (err?.message) {
         setServerError(err.message);
       } else {
         setServerError('Something went wrong. Please try again.');

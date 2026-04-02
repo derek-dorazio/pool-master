@@ -36,6 +36,15 @@
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import type { EntitlementKey } from '@poolmaster/shared/domain';
+import {
+  zodToJsonSchema,
+  PlanResponseSchema,
+  PlansListResponseSchema,
+  UsageResponseSchema,
+  EntitlementsResponseSchema,
+  InvoiceListResponseSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
 import { EntitlementService } from './entitlement-service';
 import { UsageService } from './usage-service';
 import { SubscriptionService } from './subscription-service';
@@ -87,6 +96,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get current plan details for tenant',
       operationId: 'getCurrentPlan',
+      response: { 200: zodToJsonSchema(PlanResponseSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -134,6 +144,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get all entitlement checks for current tenant',
       operationId: 'getEntitlements',
+      response: { 200: zodToJsonSchema(EntitlementsResponseSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -161,6 +172,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get usage summary for current tenant',
       operationId: 'getUsage',
+      response: { 200: zodToJsonSchema(UsageResponseSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -187,6 +199,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'List available plan tiers',
       operationId: 'listPlans',
+      response: { 200: zodToJsonSchema(PlansListResponseSchema) },
     },
     handler: async (_request, reply) => {
       const billingOn = await isBillingEnabled();
@@ -220,6 +233,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Create a new subscription',
       operationId: 'createSubscription',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -251,6 +265,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Change subscription plan',
       operationId: 'changePlan',
+      response: { 200: zodToJsonSchema(PlanResponseSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -282,6 +297,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Resume a cancelled subscription',
       operationId: 'resumeSubscription',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -309,6 +325,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get current subscription details',
       operationId: 'getSubscription',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -329,6 +346,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Create setup intent for Stripe payment method',
       operationId: 'createPaymentMethodSetup',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -362,6 +380,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get Stripe billing portal session URL',
       operationId: 'getBillingPortal',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -397,6 +416,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Start a trial subscription',
       operationId: 'startTrial',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -425,6 +445,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get current trial status',
       operationId: 'getTrialStatus',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -445,6 +466,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get invoice history for tenant',
       operationId: 'listInvoices',
+      response: { 200: zodToJsonSchema(InvoiceListResponseSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -467,6 +489,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Preview upcoming invoice',
       operationId: 'getUpcomingInvoice',
+      response: { 200: zodToJsonSchema(InvoiceListResponseSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -487,6 +510,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get invoice detail by ID',
       operationId: 'getInvoiceDetail',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const { invoiceId } = request.params as { invoiceId: string };
@@ -529,6 +553,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Preview upgrade proration for a plan',
       operationId: 'previewUpgrade',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -550,6 +575,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Preview downgrade impact for a plan',
       operationId: 'previewDowngrade',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -571,6 +597,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Preview cancellation impact',
       operationId: 'previewCancellation',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -591,6 +618,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get retention offer for tenant',
       operationId: 'getRetentionOffer',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -611,6 +639,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Cancel subscription with feedback',
       operationId: 'cancelSubscription',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -643,6 +672,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get revenue analytics metrics',
       operationId: 'getRevenueAnalytics',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
@@ -663,6 +693,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get subscribers grouped by plan',
       operationId: 'getSubscribersByPlan',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
@@ -683,6 +714,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get trial conversion metrics',
       operationId: 'getTrialMetrics',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
@@ -703,6 +735,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get churn metrics over time',
       operationId: 'getChurnMetrics',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
@@ -725,6 +758,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'List enterprise plans',
       operationId: 'listEnterprisePlans',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
@@ -745,6 +779,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Create a custom enterprise plan',
       operationId: 'createEnterprisePlan',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
@@ -794,6 +829,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get dunning status for a tenant',
       operationId: 'getDunningStatus',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];

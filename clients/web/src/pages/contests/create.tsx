@@ -21,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { api } from '@/lib/api-client';
+import { client, createContest } from '@/lib/api';
 
 const STEPS = [
   { label: 'Sport & Event', icon: Trophy },
@@ -718,25 +718,29 @@ export function Component() {
   async function handleCreate() {
     try {
       const values = form.getValues();
-      const response = await api.post<{ id: string }>('/v1/contests', {
-        sport: values.sport,
-        eventId: values.eventId,
-        duration: values.duration,
-        selectionType: values.selectionType,
-        scoringTemplateId: values.scoringTemplateId,
-        customize: values.customize,
-        draftMode: values.draftMode,
-        secondsPerPick: values.secondsPerPick,
-        draftDate: values.draftDate,
-        maxEntries: values.maxEntries,
-        entryDeadline: values.entryDeadline,
-        rosterSize: values.rosterSize,
+      const { data: result, error } = await createContest({
+        client,
+        body: {
+          sport: values.sport,
+          eventId: values.eventId,
+          duration: values.duration,
+          selectionType: values.selectionType,
+          scoringTemplateId: values.scoringTemplateId,
+          customize: values.customize,
+          draftMode: values.draftMode,
+          secondsPerPick: values.secondsPerPick,
+          draftDate: values.draftDate,
+          maxEntries: values.maxEntries,
+          entryDeadline: values.entryDeadline,
+          rosterSize: values.rosterSize,
+        },
       });
+      if (error) throw error;
       toast({
         title: 'Contest created',
         description: 'Your contest has been created successfully.',
       });
-      navigate(`/contests/${response.id}`);
+      navigate(`/contests/${result.id}`);
     } catch {
       toast({
         title: 'Error',

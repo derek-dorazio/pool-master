@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
-import { api } from '@/lib/api-client';
+import { client, createLeague } from '@/lib/api';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(60, 'Name must be 60 characters or less'),
@@ -111,14 +111,18 @@ export function Component() {
 
   async function handleCreate() {
     try {
-      const response = await api.post<{ id: string }>('/v1/leagues', {
-        name: values.name,
-        description: values.description,
-        invitePolicy: values.invitePolicy,
-        visibility: values.visibility,
+      const { data, error } = await createLeague({
+        client,
+        body: {
+          name: values.name,
+          description: values.description,
+          invitePolicy: values.invitePolicy,
+          visibility: values.visibility,
+        },
       });
+      if (error) throw error;
       toast({ title: 'League created!', description: `${values.name} is ready to go.` });
-      navigate(`/leagues/${response.id}`);
+      navigate(`/leagues/${data.id}`);
     } catch {
       toast({ title: 'Error', description: 'Failed to create league. Please try again.' });
     }
