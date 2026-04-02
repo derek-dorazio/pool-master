@@ -32,6 +32,10 @@
     "./i18n": {
       "types": "./i18n/index.ts",
       "default": "./dist/i18n/index.js"
+    },
+    "./api-routes": {
+      "types": "./api-routes.ts",
+      "default": "./dist/api-routes.js"
     }
   },
   "scripts": {

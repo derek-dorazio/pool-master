@@ -24,6 +24,20 @@ No Bare String Literals for State/Type/Status Values:
 - Frontend code should import enums from `@poolmaster/shared/domain` or define local constants that mirror them.
 - EventBus event type strings must use constants from `packages/shared/events/*.ts`, never inline strings.
 
+No Hardcoded API Paths:
+- NEVER write raw URL path strings like `'/v1/auth/login'` or `'/api/v1/leagues'` in application code or tests.
+- ALWAYS import from `@poolmaster/shared/api-routes`:
+  - In tests and smoke tests: `API_ROUTES.auth.login` (full path with `/api` prefix)
+  - In frontend hooks/pages: `clientPath(API_ROUTES.auth.login)` (strips `/api` prefix since api-client prepends it)
+  - In backend route registration: use `API_PREFIXES.AUTH` from the same module
+- This applies to ALL code: frontend hooks, page components, smoke tests, integration tests, and backend route registrations.
+- If you need a new route, add it to `packages/shared/api-routes.ts` FIRST, then reference it everywhere else.
+
+No Silent API Error Swallowing:
+- NEVER write try/catch blocks in hooks that return mock data on failure. This hides path errors and schema drift.
+- Let API errors propagate to the component layer where they can be handled visually (error boundaries, toast messages).
+- Mock data for development belongs in MSW handlers or Storybook, NOT in production hook code.
+
 Nomenclature:
 - Use PascalCase for classes.
 - Use camelCase for variables, functions, and methods.

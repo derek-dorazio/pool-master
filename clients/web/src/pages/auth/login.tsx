@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Logo } from '@/components/ui/logo';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
+import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
 
 const loginSchema = z.object({
   email: z
@@ -67,7 +68,7 @@ export function Component() {
   async function onSubmit(data: LoginForm) {
     setServerError('');
     try {
-      const res = await api.post<LoginResponse>('/v1/auth/login', {
+      const res = await api.post<LoginResponse>(clientPath(API_ROUTES.auth.login), {
         email: data.email,
         password: data.password,
       });

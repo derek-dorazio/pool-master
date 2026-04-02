@@ -1,6 +1,16 @@
 import { renderHook } from '@/test-utils';
 import { waitFor } from '@testing-library/react';
 import { useMyLeagues } from './use-my-leagues';
+import { vi } from 'vitest';
+
+vi.mock('@/lib/api-client', () => ({
+  api: {
+    get: vi.fn().mockResolvedValue([
+      { id: 'league-1', name: 'Weekend Warriors', memberCount: 12, activeContestCount: 1, role: 'Commissioner' },
+      { id: 'league-2', name: 'Soccer Fanatics', memberCount: 8, activeContestCount: 1, role: 'Member' },
+    ]),
+  },
+}));
 
 describe('useMyLeagues', () => {
   it('returns leagues array', async () => {

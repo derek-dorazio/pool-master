@@ -1,4 +1,5 @@
 import { BASE_URL, smokeFetch, expectStatus } from '../setup';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 /**
  * Functional smoke test — Auth token refresh flow.
  *
@@ -11,7 +12,7 @@ let refreshToken: string;
 
 describe('Auth Token Refresh Flow', () => {
   it('registers and gets initial tokens', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/register`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.register}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -32,14 +33,14 @@ describe('Auth Token Refresh Flow', () => {
   });
 
   it('access token works for profile', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/me`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.me}`, {
       headers: { authorization: `Bearer ${accessToken}` },
     });
     await expectStatus(res, 200, 'access token works for profile');
   });
 
   it('refreshes token and gets new pair', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/refresh`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.refresh}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -58,14 +59,14 @@ describe('Auth Token Refresh Flow', () => {
   });
 
   it('new access token works for profile', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/me`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.me}`, {
       headers: { authorization: `Bearer ${accessToken}` },
     });
     await expectStatus(res, 200, 'new access token works for profile');
   });
 
   it('old refresh token is rejected (rotated)', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/refresh`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.refresh}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken: 'old-invalid-token' }),
@@ -74,7 +75,7 @@ describe('Auth Token Refresh Flow', () => {
   });
 
   it('logout revokes current refresh token', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/logout`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.logout}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -83,7 +84,7 @@ describe('Auth Token Refresh Flow', () => {
   });
 
   it('refresh token fails after logout', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/refresh`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.refresh}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),

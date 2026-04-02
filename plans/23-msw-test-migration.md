@@ -39,8 +39,15 @@ Replace module-level API mocks with [MSW (Mock Service Worker)](https://mswjs.io
 
 | ID | Phase | Task | Priority | Effort | Status | Notes |
 |---|---|---|---|---|---|---|
+| **Shared Constants & Enum Imports (immediate — no MSW needed)** | | | | | | |
+| 23-A01 | A | Create shared route constants (`packages/shared/api-routes.ts`) | P0 | M | Done | `API_ROUTES`, `API_PREFIXES`, `clientPath()` helper |
+| 23-A02 | A | Update smoke tests to use `API_ROUTES` instead of hardcoded paths | P0 | L | In Progress | 5 smoke test files, 13+ hardcoded paths. Example done: `auth-refresh.smoke.ts` |
+| 23-A03 | A | Update integration tests to use `API_ROUTES` + imported enums | P0 | L | In Progress | Replace 111+ hardcoded enum strings. Example done: `contests.integration.ts` |
+| 23-A04 | A | Update frontend hooks to use `clientPath(API_ROUTES.*)` | P0 | M | In Progress | 4+ hooks. Example done: `use-my-leagues.ts`, `login.tsx` |
+| 23-A05 | A | Remove try/catch fallback mocks from dashboard hooks | P0 | M | In Progress | 5 hooks. Example done: `use-my-leagues.ts` |
+| 23-A06 | A | Update admin hooks to use `clientPath(API_ROUTES.*)` | P0 | M | Todo | `use-admin-api.ts`, `use-config-api.ts`, `use-contests-api.ts`, `use-providers-api.ts` |
+| **MSW Migration (after shared constants are in place)** | | | | | | |
 | 23-001 | 0 | Install MSW in web and admin packages | P0 | S | Todo | `msw@^2.7` as devDependency |
-| 23-002 | 0 | Create shared route constants (`packages/shared/src/api-routes.ts`) | P0 | M | Todo | Single source of truth for all API paths |
 | 23-003 | 0 | Create web MSW handlers and server | P0 | L | Todo | `clients/web/src/test/msw/handlers.ts` + `server.ts` |
 | 23-004 | 0 | Create admin MSW handlers and server | P0 | M | Todo | `clients/admin/src/test/msw/handlers.ts` + `server.ts` |
 | 23-005 | 0 | Wire MSW into Vitest setup files | P0 | S | Todo | `beforeAll/afterEach/afterAll` + `onUnhandledRequest: 'error'` |
@@ -52,9 +59,8 @@ Replace module-level API mocks with [MSW (Mock Service Worker)](https://mswjs.io
 | 23-011 | 2 | Migrate web create page tests (contests, leagues) | P1 | M | Todo | Remove api-client mock, use `server.use()` for overrides |
 | 23-012 | 3 | Migrate admin page tests (7 files) | P1 | L | Todo | Remove api-client mock portions from dual-mock files |
 | 23-013 | 3 | Migrate admin hook test (use-contests-api) | P1 | S | Todo | Remove api-client mock |
-| 23-014 | 4 | Remove try/catch fallback mocks from dashboard hooks | P0 | M | Todo | 5 hooks — move mock data to MSW handlers |
-| 23-015 | 5 | Refactor backend to use shared route constants | P2 | M | Todo | `core-api/index.ts` derives prefixes from `API_ROUTES` |
-| 23-016 | 5 | Add CI route sync check script | P2 | M | Todo | `scripts/check-route-sync.ts` — verifies MSW handlers match backend |
+| 23-015 | 4 | Refactor backend to use shared route constants from `API_PREFIXES` | P2 | M | Todo | `core-api/index.ts` derives prefixes from `API_PREFIXES` |
+| 23-016 | 4 | Add CI route sync check script | P2 | M | Todo | `scripts/check-route-sync.ts` — verifies MSW handlers match backend |
 
 ---
 

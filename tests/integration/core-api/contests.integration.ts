@@ -8,6 +8,8 @@ import {
   createTestUser,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ContestType, SelectionType, ScoringEngine, ContestStatus, LeagueVisibility } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -26,24 +28,24 @@ describe('Contests Integration', () => {
 
     const leagueRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/leagues',
+      url: API_ROUTES.leagues.list,
       headers: ownerHeaders,
-      payload: { name: 'Contest Test League', visibility: 'PRIVATE' },
+      payload: { name: 'Contest Test League', visibility: LeagueVisibility.PRIVATE },
     });
     leagueId = leagueRes.json().league.id;
   });
 
-  describe('POST /api/v1/leagues/:leagueId/contests', () => {
+  describe('POST leagues/:leagueId/contests', () => {
     it('creates a contest', async () => {
       const res = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/leagues/${leagueId}/contests`,
+        url: API_ROUTES.leagues.contests(leagueId),
         headers: ownerHeaders,
         payload: {
           name: 'Test Golf Pool',
-          contestType: 'SINGLE_EVENT',
-          selectionType: 'SNAKE_DRAFT',
-          scoringEngine: 'STROKE_PLAY',
+          contestType: ContestType.SINGLE_EVENT,
+          selectionType: SelectionType.SNAKE_DRAFT,
+          scoringEngine: ScoringEngine.STROKE_PLAY,
         },
       });
       expect(res.statusCode).toBe(201);
@@ -51,16 +53,16 @@ describe('Contests Integration', () => {
       const contest = body.contest ?? body;
       expect(contest.id).toBeDefined();
       expect(contest.name).toBe('Test Golf Pool');
-      expect(contest.status).toBe('DRAFT');
+      expect(contest.status).toBe(ContestStatus.DRAFT);
       contestId = contest.id;
     });
   });
 
-  describe('GET /api/v1/leagues/:leagueId/contests', () => {
+  describe('GET leagues/:leagueId/contests', () => {
     it('lists contests in the league', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/leagues/${leagueId}/contests`,
+        url: API_ROUTES.leagues.contests(leagueId),
         headers: ownerHeaders,
       });
       expect(res.statusCode).toBe(200);
@@ -75,22 +77,22 @@ describe('Contests Integration', () => {
     it('returns contest details', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/contests/${contestId}`,
+        url: API_ROUTES.contests.detail(contestId),
         headers: ownerHeaders,
       });
       expect(res.statusCode).toBe(200);
       const contest = res.json().contest ?? res.json();
       expect(contest.id).toBe(contestId);
       expect(contest.name).toBe('Test Golf Pool');
-      expect(contest.contestType).toBe('SINGLE_EVENT');
-      expect(contest.selectionType).toBe('SNAKE_DRAFT');
-      expect(contest.scoringEngine).toBe('STROKE_PLAY');
+      expect(contest.contestType).toBe(ContestType.SINGLE_EVENT);
+      expect(contest.selectionType).toBe(SelectionType.SNAKE_DRAFT);
+      expect(contest.scoringEngine).toBe(ScoringEngine.STROKE_PLAY);
     });
 
     it('returns 403 or 404 for non-existent contest', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/contests/00000000-0000-0000-0000-000000000000',
+        url: API_ROUTES.contests.detail('00000000-0000-0000-0000-000000000000'),
         headers: ownerHeaders,
       });
       expect([403, 404]).toContain(res.statusCode);
@@ -101,7 +103,7 @@ describe('Contests Integration', () => {
     it('updates the contest name', async () => {
       const res = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/contests/${contestId}`,
+        url: API_ROUTES.contests.detail(contestId),
         headers: ownerHeaders,
         payload: { name: 'Updated Golf Pool' },
       });
@@ -113,7 +115,7 @@ describe('Contests Integration', () => {
     it('persists the update', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/contests/${contestId}`,
+        url: API_ROUTES.contests.detail(contestId),
         headers: ownerHeaders,
       });
       expect(res.statusCode).toBe(200);
@@ -128,7 +130,7 @@ describe('Contests Integration', () => {
       const { 'content-type': _, ...headersNoContentType } = ownerHeaders;
       const res = await getApp().inject({
         method: 'DELETE',
-        url: `/api/v1/contests/${contestId}`,
+        url: API_ROUTES.contests.detail(contestId),
         headers: headersNoContentType,
       });
       expect([200, 204]).toContain(res.statusCode);
@@ -137,7 +139,7 @@ describe('Contests Integration', () => {
     it('contest is gone after deletion', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/contests/${contestId}`,
+        url: API_ROUTES.contests.detail(contestId),
         headers: ownerHeaders,
       });
       expect([403, 404]).toContain(res.statusCode);
