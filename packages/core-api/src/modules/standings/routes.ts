@@ -9,6 +9,10 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import {
+  zodToJsonSchema,
+  StandingsResponseSchema,
+} from '@poolmaster/shared/dto';
 import { StandingsService } from './service';
 import { createStandingsHandlers } from './handler';
 
@@ -20,6 +24,9 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
   // --- Full Leaderboard ---
   fastify.get('/', {
     schema: {
+      tags: ['Standings'],
+      summary: 'Get the full paginated leaderboard',
+      operationId: 'getStandings',
       querystring: {
         type: 'object',
         properties: {
@@ -28,6 +35,7 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
           sortBy: { type: 'string', enum: ['rank', 'score', 'name'] },
         },
       },
+      response: { 200: zodToJsonSchema(StandingsResponseSchema) },
     },
     handler: handlers.getStandings,
   });
@@ -35,6 +43,9 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
   // --- Top N Summary ---
   fastify.get('/summary', {
     schema: {
+      tags: ['Standings'],
+      summary: 'Get top N standings summary for dashboard widgets',
+      operationId: 'getStandingsSummary',
       querystring: {
         type: 'object',
         properties: {
@@ -46,5 +57,12 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
   });
 
   // --- My Entry ---
-  fastify.get('/my-entry', handlers.getMyEntry);
+  fastify.get('/my-entry', {
+    schema: {
+      tags: ['Standings'],
+      summary: 'Get the current user\'s entry with rank context',
+      operationId: 'getMyStandingsEntry',
+    },
+    handler: handlers.getMyEntry,
+  });
 }

@@ -107,6 +107,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.get('/tenants', {
     schema: {
+      tags: ['Admin'],
+      summary: 'List all tenants with filters',
+      operationId: 'adminListTenants',
       querystring: {
         type: 'object',
         properties: {
@@ -123,10 +126,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: tenant.listTenants,
   });
 
-  fastify.get('/tenants/:tenantId', tenant.getTenantDetail);
+  fastify.get('/tenants/:tenantId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get tenant detail',
+      operationId: 'adminGetTenantDetail',
+    },
+    handler: tenant.getTenantDetail,
+  });
 
   fastify.put('/tenants/:tenantId/plan', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Change tenant plan tier',
+      operationId: 'adminChangeTenantPlan',
       body: {
         type: 'object',
         required: ['planTier', 'reason'],
@@ -141,6 +154,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/tenants/:tenantId/suspend', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Suspend a tenant',
+      operationId: 'adminSuspendTenant',
       body: {
         type: 'object',
         required: ['reason'],
@@ -152,10 +168,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: tenant.suspendTenant,
   });
 
-  fastify.post('/tenants/:tenantId/unsuspend', tenant.unsuspendTenant);
+  fastify.post('/tenants/:tenantId/unsuspend', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Unsuspend a tenant',
+      operationId: 'adminUnsuspendTenant',
+    },
+    handler: tenant.unsuspendTenant,
+  });
 
   fastify.post('/tenants/:tenantId/credit', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Apply credit to a tenant account',
+      operationId: 'adminApplyCredit',
       body: {
         type: 'object',
         required: ['amount', 'reason'],
@@ -170,6 +196,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/tenants/:tenantId/extend-trial', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Extend tenant trial period',
+      operationId: 'adminExtendTrial',
       body: {
         type: 'object',
         required: ['days', 'reason'],
@@ -184,6 +213,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.delete('/tenants/:tenantId', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Delete a tenant permanently',
+      operationId: 'adminDeleteTenant',
       body: {
         type: 'object',
         required: ['confirmation'],
@@ -200,6 +232,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.get('/users', {
     schema: {
+      tags: ['Admin'],
+      summary: 'List users with filters',
+      operationId: 'adminListUsers',
       querystring: {
         type: 'object',
         properties: {
@@ -216,6 +251,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/users/merge', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Merge duplicate user accounts',
+      operationId: 'adminMergeUsers',
       body: {
         type: 'object',
         required: ['primaryId', 'duplicateId'],
@@ -228,14 +266,38 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: user.mergeUsers,
   });
 
-  fastify.get('/users/:userId', user.getUserDetail);
+  fastify.get('/users/:userId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get user detail',
+      operationId: 'adminGetUserDetail',
+    },
+    handler: user.getUserDetail,
+  });
 
-  fastify.post('/users/:userId/reset-password', user.resetPassword);
+  fastify.post('/users/:userId/reset-password', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset user password',
+      operationId: 'adminResetPassword',
+    },
+    handler: user.resetPassword,
+  });
 
-  fastify.post('/users/:userId/force-logout', user.forceLogout);
+  fastify.post('/users/:userId/force-logout', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Force logout a user from all sessions',
+      operationId: 'adminForceLogout',
+    },
+    handler: user.forceLogout,
+  });
 
   fastify.post('/users/:userId/disable', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Disable a user account',
+      operationId: 'adminDisableUser',
       body: {
         type: 'object',
         required: ['reason'],
@@ -247,10 +309,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: user.disableUser,
   });
 
-  fastify.post('/users/:userId/enable', user.enableUser);
+  fastify.post('/users/:userId/enable', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Re-enable a disabled user account',
+      operationId: 'adminEnableUser',
+    },
+    handler: user.enableUser,
+  });
 
   fastify.post('/users/:userId/email', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Send administrative email to user',
+      operationId: 'adminSendEmail',
       body: {
         type: 'object',
         required: ['subject', 'body'],
@@ -267,6 +339,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.get('/contests', {
     schema: {
+      tags: ['Admin'],
+      summary: 'List contests with filters',
+      operationId: 'adminListContests',
       querystring: {
         type: 'object',
         properties: {
@@ -284,10 +359,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: contest.listContests,
   });
 
-  fastify.get('/contests/:contestId', contest.getContestDetail);
+  fastify.get('/contests/:contestId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get contest detail',
+      operationId: 'adminGetContestDetail',
+    },
+    handler: contest.getContestDetail,
+  });
 
   fastify.post('/contests/:contestId/force-close', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Force-close a contest',
+      operationId: 'adminForceCloseContest',
       body: {
         type: 'object',
         required: ['reason'],
@@ -301,6 +386,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/contests/:contestId/reopen', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Reopen a closed contest',
+      operationId: 'adminReopenContest',
       body: {
         type: 'object',
         required: ['reason'],
@@ -314,6 +402,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/contests/:contestId/override-score', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Override an entry score in a contest',
+      operationId: 'adminOverrideScore',
       body: {
         type: 'object',
         required: ['entryId', 'newScore', 'reason'],
@@ -327,12 +418,29 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: contest.overrideScore,
   });
 
-  fastify.post('/contests/:contestId/recalculate-standings', contest.recalculateStandings);
+  fastify.post('/contests/:contestId/recalculate-standings', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Recalculate contest standings',
+      operationId: 'adminRecalculateStandings',
+    },
+    handler: contest.recalculateStandings,
+  });
 
-  fastify.post('/contests/:contestId/recalculate-payouts', contest.recalculatePayouts);
+  fastify.post('/contests/:contestId/recalculate-payouts', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Recalculate contest payouts',
+      operationId: 'adminRecalculatePayouts',
+    },
+    handler: contest.recalculatePayouts,
+  });
 
   fastify.post('/contests/:contestId/re-ingest', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Re-ingest scoring data for an event',
+      operationId: 'adminReIngestScoring',
       body: {
         type: 'object',
         required: ['eventId'],
@@ -347,14 +455,38 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   // --- Sports Data Provider Routes ---
   // Permission: sportsdata.view, sportsdata.configure, sportsdata.re_ingest
 
-  fastify.get('/providers/health', provider.listProviders);
+  fastify.get('/providers/health', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List sports data providers and health status',
+      operationId: 'adminListProviders',
+    },
+    handler: provider.listProviders,
+  });
 
-  fastify.get('/providers/ingestion', provider.getIngestionDashboard);
+  fastify.get('/providers/ingestion', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get ingestion dashboard metrics',
+      operationId: 'adminGetIngestionDashboard',
+    },
+    handler: provider.getIngestionDashboard,
+  });
 
-  fastify.get('/providers/unmapped-participants', provider.getUnmappedParticipants);
+  fastify.get('/providers/unmapped-participants', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List unmapped participants from providers',
+      operationId: 'adminGetUnmappedParticipants',
+    },
+    handler: provider.getUnmappedParticipants,
+  });
 
   fastify.post('/providers/map-participant', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Map an external participant to an internal ID',
+      operationId: 'adminMapParticipant',
       body: {
         type: 'object',
         required: ['externalId', 'internalId'],
@@ -367,10 +499,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: provider.mapParticipant,
   });
 
-  fastify.get('/providers/:providerId', provider.getProviderDetail);
+  fastify.get('/providers/:providerId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get provider detail and configuration',
+      operationId: 'adminGetProviderDetail',
+    },
+    handler: provider.getProviderDetail,
+  });
 
   fastify.put('/providers/:providerId/config', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update provider configuration',
+      operationId: 'adminUpdateProviderConfig',
       body: {
         type: 'object',
         properties: {
@@ -390,17 +532,41 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: provider.updateProviderConfig,
   });
 
-  fastify.post('/providers/:providerId/health-check', provider.triggerHealthCheck);
+  fastify.post('/providers/:providerId/health-check', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Trigger manual health check for a provider',
+      operationId: 'adminTriggerHealthCheck',
+    },
+    handler: provider.triggerHealthCheck,
+  });
 
-  fastify.post('/providers/:providerId/re-ingest/:eventId', provider.reIngestEvent);
+  fastify.post('/providers/:providerId/re-ingest/:eventId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Re-ingest event data from a provider',
+      operationId: 'adminReIngestEvent',
+    },
+    handler: provider.reIngestEvent,
+  });
 
   // --- Feature Flag Routes ---
   // Permission: flags.view, flags.edit
 
-  fastify.get('/flags', flag.listFlags);
+  fastify.get('/flags', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List all feature flags',
+      operationId: 'adminListFlags',
+    },
+    handler: flag.listFlags,
+  });
 
   fastify.post('/flags', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Create a new feature flag',
+      operationId: 'adminCreateFlag',
       body: {
         type: 'object',
         required: ['key', 'name', 'description', 'flagType', 'enabledGlobally', 'owner'],
@@ -418,10 +584,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: flag.createFlag,
   });
 
-  fastify.get('/flags/:flagKey', flag.getFlagDetail);
+  fastify.get('/flags/:flagKey', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get feature flag detail',
+      operationId: 'adminGetFlagDetail',
+    },
+    handler: flag.getFlagDetail,
+  });
 
   fastify.put('/flags/:flagKey', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update a feature flag',
+      operationId: 'adminUpdateFlag',
       body: {
         type: 'object',
         properties: {
@@ -436,10 +612,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: flag.updateFlag,
   });
 
-  fastify.delete('/flags/:flagKey', flag.deleteFlag);
+  fastify.delete('/flags/:flagKey', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Delete a feature flag',
+      operationId: 'adminDeleteFlag',
+    },
+    handler: flag.deleteFlag,
+  });
 
   fastify.post('/flags/:flagKey/overrides', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Add a tenant override for a feature flag',
+      operationId: 'adminAddFlagOverride',
       body: {
         type: 'object',
         required: ['tenantId', 'tenantName', 'enabled', 'reason'],
@@ -454,21 +640,59 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: flag.addOverride,
   });
 
-  fastify.delete('/flags/:flagKey/overrides/:tenantId', flag.removeOverride);
+  fastify.delete('/flags/:flagKey/overrides/:tenantId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Remove a tenant override for a feature flag',
+      operationId: 'adminRemoveFlagOverride',
+    },
+    handler: flag.removeOverride,
+  });
 
-  fastify.get('/flags/:flagKey/resolve/:tenantId', flag.resolveFlag);
+  fastify.get('/flags/:flagKey/resolve/:tenantId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Resolve feature flag value for a tenant',
+      operationId: 'adminResolveFlag',
+    },
+    handler: flag.resolveFlag,
+  });
 
   // --- Health / Platform Monitoring Routes ---
   // Permission: platform.health
 
-  fastify.get('/health/services', health.getServiceHealth);
+  fastify.get('/health/services', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get service health status',
+      operationId: 'adminGetServiceHealth',
+    },
+    handler: health.getServiceHealth,
+  });
 
-  fastify.get('/health/infrastructure', health.getInfrastructureMetrics);
+  fastify.get('/health/infrastructure', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get infrastructure metrics',
+      operationId: 'adminGetInfrastructureMetrics',
+    },
+    handler: health.getInfrastructureMetrics,
+  });
 
-  fastify.get('/health/metrics', health.getBusinessMetrics);
+  fastify.get('/health/metrics', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get business metrics',
+      operationId: 'adminGetBusinessMetrics',
+    },
+    handler: health.getBusinessMetrics,
+  });
 
   fastify.get('/health/errors', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Search platform errors',
+      operationId: 'adminSearchErrors',
       querystring: {
         type: 'object',
         properties: {
@@ -485,12 +709,29 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: health.searchErrors,
   });
 
-  fastify.get('/health/errors/:errorId', health.getErrorDetail);
+  fastify.get('/health/errors/:errorId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get error detail',
+      operationId: 'adminGetErrorDetail',
+    },
+    handler: health.getErrorDetail,
+  });
 
-  fastify.get('/health/alerts', health.getAlertRules);
+  fastify.get('/health/alerts', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get alert rules',
+      operationId: 'adminGetAlertRules',
+    },
+    handler: health.getAlertRules,
+  });
 
   fastify.put('/health/alerts/:alertId', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update an alert rule',
+      operationId: 'adminUpdateAlertRule',
       body: {
         type: 'object',
         properties: {
@@ -510,6 +751,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/health/alerts/:alertId/mute', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Mute an alert for a duration',
+      operationId: 'adminMuteAlert',
       body: {
         type: 'object',
         required: ['duration'],
@@ -521,13 +765,23 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: health.muteAlert,
   });
 
-  fastify.post('/health/alerts/:alertId/unmute', health.unmuteAlert);
+  fastify.post('/health/alerts/:alertId/unmute', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Unmute an alert',
+      operationId: 'adminUnmuteAlert',
+    },
+    handler: health.unmuteAlert,
+  });
 
   // --- Impersonation Routes ---
   // Permission: tenant.impersonate
 
   fastify.post('/impersonation/start', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Start tenant impersonation session',
+      operationId: 'adminStartImpersonation',
       body: {
         type: 'object',
         required: ['tenantId'],
@@ -539,19 +793,50 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: impersonation.startSession,
   });
 
-  fastify.post('/impersonation/end', impersonation.endSession);
+  fastify.post('/impersonation/end', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'End tenant impersonation session',
+      operationId: 'adminEndImpersonation',
+    },
+    handler: impersonation.endSession,
+  });
 
-  fastify.get('/impersonation/active', impersonation.getActiveSession);
+  fastify.get('/impersonation/active', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get active impersonation session',
+      operationId: 'adminGetActiveImpersonation',
+    },
+    handler: impersonation.getActiveSession,
+  });
 
   // --- Announcement Routes ---
   // Permission: platform.announcements
 
-  fastify.get('/announcements/active', announcement.getActiveAnnouncements);
+  fastify.get('/announcements/active', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get active announcements',
+      operationId: 'adminGetActiveAnnouncements',
+    },
+    handler: announcement.getActiveAnnouncements,
+  });
 
-  fastify.get('/announcements', announcement.listAnnouncements);
+  fastify.get('/announcements', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List all announcements',
+      operationId: 'adminListAnnouncements',
+    },
+    handler: announcement.listAnnouncements,
+  });
 
   fastify.post('/announcements', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Create a new announcement',
+      operationId: 'adminCreateAnnouncement',
       body: {
         type: 'object',
         required: ['type', 'title', 'body', 'severity'],
@@ -573,10 +858,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: announcement.createAnnouncement,
   });
 
-  fastify.get('/announcements/:id', announcement.getAnnouncement);
+  fastify.get('/announcements/:id', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get announcement by ID',
+      operationId: 'adminGetAnnouncement',
+    },
+    handler: announcement.getAnnouncement,
+  });
 
   fastify.put('/announcements/:id', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update an announcement',
+      operationId: 'adminUpdateAnnouncement',
       body: {
         type: 'object',
         properties: {
@@ -596,19 +891,50 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: announcement.updateAnnouncement,
   });
 
-  fastify.delete('/announcements/:id', announcement.deleteAnnouncement);
+  fastify.delete('/announcements/:id', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Delete an announcement',
+      operationId: 'adminDeleteAnnouncement',
+    },
+    handler: announcement.deleteAnnouncement,
+  });
 
-  fastify.post('/announcements/:id/activate', announcement.activateAnnouncement);
+  fastify.post('/announcements/:id/activate', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Activate an announcement',
+      operationId: 'adminActivateAnnouncement',
+    },
+    handler: announcement.activateAnnouncement,
+  });
 
-  fastify.post('/announcements/:id/deactivate', announcement.deactivateAnnouncement);
+  fastify.post('/announcements/:id/deactivate', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Deactivate an announcement',
+      operationId: 'adminDeactivateAnnouncement',
+    },
+    handler: announcement.deactivateAnnouncement,
+  });
 
   // --- Migration Routes ---
   // Permission: platform.migrations
 
-  fastify.get('/migrations', migration.listMigrations);
+  fastify.get('/migrations', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List available data migrations',
+      operationId: 'adminListMigrations',
+    },
+    handler: migration.listMigrations,
+  });
 
   fastify.post('/migrations/run', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Start a data migration run',
+      operationId: 'adminStartMigrationRun',
       body: {
         type: 'object',
         required: ['migrationId'],
@@ -623,26 +949,71 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: migration.startRun,
   });
 
-  fastify.get('/migrations/runs/:runId', migration.getRunDetail);
+  fastify.get('/migrations/runs/:runId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get migration run detail',
+      operationId: 'adminGetMigrationRunDetail',
+    },
+    handler: migration.getRunDetail,
+  });
 
-  fastify.post('/migrations/runs/:runId/cancel', migration.cancelRun);
+  fastify.post('/migrations/runs/:runId/cancel', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Cancel a migration run',
+      operationId: 'adminCancelMigrationRun',
+    },
+    handler: migration.cancelRun,
+  });
 
   // --- Support Investigation Routes ---
   // Permission: tenant.view (support staff need at minimum view access)
 
-  fastify.get('/support/tenant/:tenantId/investigation', support.getInvestigation);
+  fastify.get('/support/tenant/:tenantId/investigation', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get support investigation overview for a tenant',
+      operationId: 'adminGetInvestigation',
+    },
+    handler: support.getInvestigation,
+  });
 
-  fastify.get('/support/tenant/:tenantId/errors', support.getErrors);
+  fastify.get('/support/tenant/:tenantId/errors', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get recent errors for a tenant',
+      operationId: 'adminGetTenantErrors',
+    },
+    handler: support.getErrors,
+  });
 
-  fastify.get('/support/tenant/:tenantId/notifications', support.getNotifications);
+  fastify.get('/support/tenant/:tenantId/notifications', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get recent notifications for a tenant',
+      operationId: 'adminGetTenantNotifications',
+    },
+    handler: support.getNotifications,
+  });
 
-  fastify.get('/support/tenant/:tenantId/requests', support.getRequests);
+  fastify.get('/support/tenant/:tenantId/requests', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get recent API requests for a tenant',
+      operationId: 'adminGetTenantRequests',
+    },
+    handler: support.getRequests,
+  });
 
   // --- Quick Action Routes ---
   // Permission: varies by action (user.edit, sportsdata.re_ingest, etc.)
 
   fastify.post('/support/quick-actions/reset-password', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Quick action: reset user password',
+      operationId: 'adminQuickResetPassword',
       body: {
         type: 'object',
         required: ['userId', 'email'],
@@ -657,6 +1028,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/support/quick-actions/check-provider', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Quick action: check sports data provider',
+      operationId: 'adminQuickCheckProvider',
       body: {
         type: 'object',
         required: ['providerId', 'sport'],
@@ -671,6 +1045,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/support/quick-actions/check-entitlements', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Quick action: check tenant entitlements',
+      operationId: 'adminQuickCheckEntitlements',
       body: {
         type: 'object',
         required: ['tenantId'],
@@ -684,6 +1061,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/support/quick-actions/check-notifications', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Quick action: check user notifications',
+      operationId: 'adminQuickCheckNotifications',
       body: {
         type: 'object',
         required: ['userId'],
@@ -697,6 +1077,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/support/quick-actions/re-ingest-scores', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Quick action: re-ingest scoring data',
+      operationId: 'adminQuickReIngestScores',
       body: {
         type: 'object',
         required: ['contestId', 'eventId'],
@@ -712,11 +1095,32 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   // --- Tenant Data Export Routes ---
   // Permission: tenant.view
 
-  fastify.post('/tenants/:tenantId/export', tenantExport.startExport);
+  fastify.post('/tenants/:tenantId/export', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Start tenant data export',
+      operationId: 'adminStartTenantExport',
+    },
+    handler: tenantExport.startExport,
+  });
 
-  fastify.get('/tenants/:tenantId/export/status', tenantExport.getExportStatus);
+  fastify.get('/tenants/:tenantId/export/status', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get tenant export status',
+      operationId: 'adminGetExportStatus',
+    },
+    handler: tenantExport.getExportStatus,
+  });
 
-  fastify.get('/tenants/:tenantId/export/download', tenantExport.downloadExport);
+  fastify.get('/tenants/:tenantId/export/download', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Download tenant export',
+      operationId: 'adminDownloadExport',
+    },
+    handler: tenantExport.downloadExport,
+  });
 
   // --- Platform Configuration Routes ---
   // Permission: platform.config

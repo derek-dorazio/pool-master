@@ -2,8 +2,12 @@
  * Contest pool module — registers pool management routes under /api/v1/contests/:contestId/pool.
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import {
+  zodToJsonSchema,
+  ContestPoolResponseSchema,
+} from '@poolmaster/shared/dto';
 import {
   PrismaContestPoolRepository,
   PrismaContestParticipantPoolRepository,
@@ -15,7 +19,6 @@ import { createPoolHandlers } from './pool-handler';
 import { PricingAndTierService } from './pricing-service';
 import { createPricingHandlers } from './pricing-handler';
 import { DraftSearchService } from './draft-search-service';
-import type { FastifyReply, FastifyRequest } from 'fastify';
 
 export async function contestPoolModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -35,6 +38,9 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
 
   fastify.post('/', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Create a contest participant pool',
+      operationId: 'createContestPool',
       body: {
         type: 'object',
         required: ['sport', 'poolType'],
@@ -49,10 +55,21 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
     handler: handler.createPool,
   });
 
-  fastify.get('/', handler.getPool);
+  fastify.get('/', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Get the contest participant pool',
+      operationId: 'getContestPool',
+      response: { 200: zodToJsonSchema(ContestPoolResponseSchema) },
+    },
+    handler: handler.getPool,
+  });
 
   fastify.put('/', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Update the contest participant pool',
+      operationId: 'updateContestPool',
       body: {
         type: 'object',
         properties: {
@@ -67,20 +84,58 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
 
   // --- Pool lifecycle ---
 
-  fastify.post('/resolve', handler.resolvePool);
+  fastify.post('/resolve', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Resolve the pool from an external data source',
+      operationId: 'resolveContestPool',
+    },
+    handler: handler.resolvePool,
+  });
 
-  fastify.post('/refresh', handler.refreshPool);
+  fastify.post('/refresh', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Refresh pool participant data',
+      operationId: 'refreshContestPool',
+    },
+    handler: handler.refreshPool,
+  });
 
-  fastify.post('/lock', handler.lockPool);
+  fastify.post('/lock', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Lock the pool to prevent further changes',
+      operationId: 'lockContestPool',
+    },
+    handler: handler.lockPool,
+  });
 
   // --- Participant management ---
 
-  fastify.delete('/participants/:participantId', handler.excludeParticipant);
+  fastify.delete('/participants/:participantId', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Exclude a participant from the pool',
+      operationId: 'excludePoolParticipant',
+    },
+    handler: handler.excludeParticipant,
+  });
 
-  fastify.post('/participants/:participantId/restore', handler.removeExclusion);
+  fastify.post('/participants/:participantId/restore', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Restore an excluded participant to the pool',
+      operationId: 'restorePoolParticipant',
+    },
+    handler: handler.removeExclusion,
+  });
 
   fastify.post('/participants/:participantId/unavailable', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Mark a pool participant as unavailable',
+      operationId: 'markPoolParticipantUnavailable',
       body: {
         type: 'object',
         required: ['reason'],
@@ -92,12 +147,22 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
     handler: handler.markUnavailable,
   });
 
-  fastify.post('/participants/:participantId/available', handler.markAvailable);
+  fastify.post('/participants/:participantId/available', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Mark a pool participant as available',
+      operationId: 'markPoolParticipantAvailable',
+    },
+    handler: handler.markAvailable,
+  });
 
   // --- Pricing ---
 
   fastify.post('/pricing/calculate', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Calculate prices for pool participants',
+      operationId: 'calculatePoolPricing',
       body: {
         type: 'object',
         required: ['sport', 'totalBudget', 'minPrice', 'maxPrice', 'priceIncrement', 'rankingWeight', 'formWeight', 'oddsWeight'],
@@ -130,6 +195,9 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
 
   fastify.put('/pricing/override/:participantId', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Apply a manual price override for a participant',
+      operationId: 'applyPoolPriceOverride',
       body: {
         type: 'object',
         required: ['price', 'reason'],
@@ -146,6 +214,9 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
 
   fastify.post('/tiers/assign', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Assign participants to tiers',
+      operationId: 'assignPoolTiers',
       body: {
         type: 'object',
         required: ['sport', 'assignmentMode', 'tiers'],
@@ -175,12 +246,22 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
     handler: pricing.assignTiers,
   });
 
-  fastify.put('/tiers/:tierId/participants/:participantId', pricing.moveParticipantTier);
+  fastify.put('/tiers/:tierId/participants/:participantId', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Move a participant to a different tier',
+      operationId: 'moveParticipantTier',
+    },
+    handler: pricing.moveParticipantTier,
+  });
 
   // --- Draft Room Search ---
 
   fastify.get('/search', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Search pool participants for the draft room',
+      operationId: 'searchPoolParticipants',
       querystring: {
         type: 'object',
         properties: {

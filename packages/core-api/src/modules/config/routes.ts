@@ -24,7 +24,14 @@ export async function configModule(fastify: FastifyInstance): Promise<void> {
    *   "default": 30000
    * }
    */
-  fastify.get('/poll-intervals', async (_request, reply) => {
-    return reply.send(POLL_INTERVAL_CONFIG);
+  fastify.get('/poll-intervals', {
+    schema: {
+      tags: ['Config'],
+      summary: 'Get recommended poll intervals for clients',
+      operationId: 'getPollIntervals',
+    },
+    handler: async (_request, reply) => {
+      return reply.send(POLL_INTERVAL_CONFIG);
+    },
   });
 }

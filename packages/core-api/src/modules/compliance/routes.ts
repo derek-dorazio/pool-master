@@ -16,6 +16,9 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
     '/verify-age',
     {
       schema: {
+        tags: ['Account'],
+        summary: 'Verify user meets minimum age requirement',
+        operationId: 'verifyAge',
         body: {
           type: 'object',
           required: ['birthYear'],
@@ -32,6 +35,9 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
     '/consent',
     {
       schema: {
+        tags: ['Account'],
+        summary: 'Record user consent for a policy type',
+        operationId: 'recordConsent',
         body: {
           type: 'object',
           required: ['consentType', 'granted', 'version'],
@@ -57,38 +63,73 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
     },
   );
 
-  fastify.get('/consent', async (request) => {
-    const userId = request.headers['x-user-id'] as string;
-    const history = await complianceService.getConsentHistory(userId);
-    return { consents: history };
+  fastify.get('/consent', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Get consent history for current user',
+      operationId: 'getConsentHistory',
+    },
+    handler: async (request) => {
+      const userId = request.headers['x-user-id'] as string;
+      const history = await complianceService.getConsentHistory(userId);
+      return { consents: history };
+    },
   });
 
   // --- Data Export ---
 
-  fastify.post('/data-export', async (request, reply) => {
-    const userId = request.headers['x-user-id'] as string;
-    const id = await complianceService.requestDataExport(userId);
-    return reply.status(202).send({ requestId: id, message: 'Export request accepted' });
+  fastify.post('/data-export', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Request personal data export (GDPR)',
+      operationId: 'requestDataExport',
+    },
+    handler: async (request, reply) => {
+      const userId = request.headers['x-user-id'] as string;
+      const id = await complianceService.requestDataExport(userId);
+      return reply.status(202).send({ requestId: id, message: 'Export request accepted' });
+    },
   });
 
-  fastify.get<{ Params: { id: string } }>('/data-export/:id', async (request) => {
-    return complianceService.processDataExport(request.params.id);
+  fastify.get<{ Params: { id: string } }>('/data-export/:id', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Get data export status and download',
+      operationId: 'getDataExport',
+    },
+    handler: async (request) => {
+      return complianceService.processDataExport(request.params.id);
+    },
   });
 
   // --- Account Deletion ---
 
-  fastify.post<{ Body: { reason?: string } }>('/delete-account', async (request, reply) => {
-    const userId = request.headers['x-user-id'] as string;
-    const id = await complianceService.requestDeletion(userId, request.body.reason);
-    return reply.status(202).send({
-      requestId: id,
-      message: 'Deletion scheduled in 14 days. You can cancel before then.',
-    });
+  fastify.post<{ Body: { reason?: string } }>('/delete-account', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Request account deletion',
+      operationId: 'requestAccountDeletion',
+    },
+    handler: async (request, reply) => {
+      const userId = request.headers['x-user-id'] as string;
+      const id = await complianceService.requestDeletion(userId, request.body.reason);
+      return reply.status(202).send({
+        requestId: id,
+        message: 'Deletion scheduled in 14 days. You can cancel before then.',
+      });
+    },
   });
 
-  fastify.post<{ Params: { id: string } }>('/delete-account/:id/cancel', async (request) => {
-    await complianceService.cancelDeletion(request.params.id);
-    return { success: true, message: 'Deletion cancelled' };
+  fastify.post<{ Params: { id: string } }>('/delete-account/:id/cancel', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Cancel a pending account deletion',
+      operationId: 'cancelAccountDeletion',
+    },
+    handler: async (request) => {
+      await complianceService.cancelDeletion(request.params.id);
+      return { success: true, message: 'Deletion cancelled' };
+    },
   });
 
   // --- Self-Exclusion ---
@@ -97,6 +138,9 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
     '/self-exclusion',
     {
       schema: {
+        tags: ['Account'],
+        summary: 'Create self-exclusion or cool-down period',
+        operationId: 'createSelfExclusion',
         body: {
           type: 'object',
           required: ['type', 'duration'],
@@ -118,10 +162,17 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
     },
   );
 
-  fastify.get('/self-exclusion', async (request) => {
-    const userId = request.headers['x-user-id'] as string;
-    const exclusion = await complianceService.getActiveExclusion(userId);
-    return { exclusion };
+  fastify.get('/self-exclusion', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Get active self-exclusion status',
+      operationId: 'getActiveExclusion',
+    },
+    handler: async (request) => {
+      const userId = request.headers['x-user-id'] as string;
+      const exclusion = await complianceService.getActiveExclusion(userId);
+      return { exclusion };
+    },
   });
 
   // --- Enforcement (admin) ---
@@ -138,6 +189,9 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
     '/enforcement',
     {
       schema: {
+        tags: ['Account'],
+        summary: 'Create enforcement action against a user',
+        operationId: 'createEnforcementAction',
         body: {
           type: 'object',
           required: ['userId', 'level', 'reason', 'trigger'],
@@ -162,13 +216,27 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
     },
   );
 
-  fastify.get<{ Params: { userId: string } }>('/enforcement/:userId', async (request) => {
-    const history = await complianceService.getEnforcementHistory(request.params.userId);
-    return { enforcement: history };
+  fastify.get<{ Params: { userId: string } }>('/enforcement/:userId', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Get enforcement history for a user',
+      operationId: 'getEnforcementHistory',
+    },
+    handler: async (request) => {
+      const history = await complianceService.getEnforcementHistory(request.params.userId);
+      return { enforcement: history };
+    },
   });
 
   fastify.put<{ Params: { id: string }; Body: { status: string } }>(
     '/enforcement/:id/appeal',
+    {
+      schema: {
+        tags: ['Account'],
+        summary: 'Update enforcement appeal status',
+        operationId: 'updateAppealStatus',
+      },
+    },
     async (request) => {
       await complianceService.updateAppealStatus(
         request.params.id,
@@ -180,7 +248,14 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
 
   // --- Retention Cleanup (admin/cron trigger) ---
 
-  fastify.post('/retention/cleanup', async () => {
-    return complianceService.runRetentionCleanup();
+  fastify.post('/retention/cleanup', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Trigger retention data cleanup',
+      operationId: 'runRetentionCleanup',
+    },
+    handler: async () => {
+      return complianceService.runRetentionCleanup();
+    },
   });
 }

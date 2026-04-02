@@ -4,6 +4,10 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import {
+  zodToJsonSchema,
+  SearchResultsResponseSchema,
+} from '@poolmaster/shared/dto';
 import { SearchService } from './search-service';
 
 export async function searchModule(fastify: FastifyInstance): Promise<void> {
@@ -26,6 +30,9 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
     };
   }>('/participants', {
     schema: {
+      tags: ['Search'],
+      summary: 'Search participants with filters',
+      operationId: 'searchParticipants',
       querystring: {
         type: 'object',
         properties: {
@@ -40,6 +47,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
           offset: { type: 'string' },
         },
       },
+      response: { 200: zodToJsonSchema(SearchResultsResponseSchema) },
     },
     handler: async (request) => {
       const qs = request.query;
@@ -68,6 +76,11 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       offset?: string;
     };
   }>('/discover/leagues', {
+    schema: {
+      tags: ['Search'],
+      summary: 'Discover public leagues',
+      operationId: 'discoverLeagues',
+    },
     handler: async (request) => {
       const qs = request.query;
       return searchService.searchLeagues({
@@ -91,6 +104,11 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       offset?: string;
     };
   }>('/discover/contests', {
+    schema: {
+      tags: ['Search'],
+      summary: 'Discover open contests',
+      operationId: 'discoverContests',
+    },
     handler: async (request) => {
       const qs = request.query;
       return searchService.searchContests({
@@ -109,6 +127,9 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
     Body: { entityType: string; entityId: string; reason: string };
   }>('/discover/report', {
     schema: {
+      tags: ['Search'],
+      summary: 'Report a league or contest',
+      operationId: 'reportDiscoveryEntity',
       body: {
         type: 'object',
         required: ['entityType', 'entityId', 'reason'],

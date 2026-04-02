@@ -26,6 +26,9 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
 
   fastify.post('/accept', {
     schema: {
+      tags: ['Invitations'],
+      summary: 'Accept a league invitation using an invite code',
+      operationId: 'acceptInvitation',
       body: {
         type: 'object',
         required: ['inviteCode'],

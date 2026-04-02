@@ -23,10 +23,27 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
     },
   };
   // Export must be registered before :entryId to avoid route collision
-  app.get('/audit-log/export', { schema: querySchema }, exportAuditLog);
-  app.get('/audit-log', { schema: querySchema }, listAuditLog);
+  app.get('/audit-log/export', {
+    schema: {
+      tags: ['Admin'] as const,
+      summary: 'Export audit log entries',
+      operationId: 'adminExportAuditLog',
+      ...querySchema,
+    },
+  }, exportAuditLog);
+  app.get('/audit-log', {
+    schema: {
+      tags: ['Admin'] as const,
+      summary: 'List audit log entries',
+      operationId: 'adminListAuditLog',
+      ...querySchema,
+    },
+  }, listAuditLog);
   app.get<{ Params: { entryId: string } }>('/audit-log/:entryId', {
     schema: {
+      tags: ['Admin'] as const,
+      summary: 'Get audit log entry detail',
+      operationId: 'adminGetAuditEntry',
       params: {
         type: 'object' as const,
         required: ['entryId'] as const,

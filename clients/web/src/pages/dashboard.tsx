@@ -13,7 +13,7 @@ export function Component() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Welcome back, {displayName}</h1>
+        <h1 className="text-3xl font-bold" data-testid="dashboard-greeting">Welcome back, {displayName}</h1>
         <p className="text-muted-foreground mt-1">
           Your leagues, active contests, and upcoming drafts at a glance.
         </p>

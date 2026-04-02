@@ -18,10 +18,10 @@ function ordinal(n: number): string {
 }
 
 export function ActiveContestsCard() {
-  const { data: contests, isLoading } = useActiveContests();
+  const { data: contests, isLoading, isError } = useActiveContests();
 
   return (
-    <Card>
+    <Card data-testid="active-contests-card">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Trophy className="h-5 w-5 text-primary" />
@@ -31,6 +31,10 @@ export function ActiveContestsCard() {
       <CardContent>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
+        ) : isError ? (
+          <p role="alert" className="text-sm text-destructive text-center py-6">
+            Failed to load active contests.
+          </p>
         ) : !contests?.length ? (
           <div className="text-center py-6">
             <p className="text-sm text-muted-foreground mb-2">No active contests</p>

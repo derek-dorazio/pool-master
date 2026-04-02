@@ -7,6 +7,11 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
+  zodToJsonSchema,
+  ContestResponseSchema,
+  ContestListResponseSchema,
+} from '@poolmaster/shared/dto';
+import {
   PrismaContestRepository,
   PrismaSelectionConfigRepository,
   PrismaLeagueMembershipRepository,
@@ -39,10 +44,21 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
   // --- League-scoped contest routes (under /api/v1/leagues/:id/contests) ---
   // Note: These are registered under the leagues prefix, so :id = leagueId
 
-  fastify.get('/', handlers.listContests);
+  fastify.get('/', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'List contests for a league',
+      operationId: 'listContests',
+      response: { 200: zodToJsonSchema(ContestListResponseSchema) },
+    },
+    handler: handlers.listContests,
+  });
 
   fastify.post('/', {
     schema: {
+      tags: ['Contests'],
+      summary: 'Create a new contest in a league',
+      operationId: 'createContest',
       body: {
         type: 'object',
         required: ['name', 'contestType', 'selectionType', 'scoringEngine'],
@@ -100,6 +116,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
           scoringStopsOnElimination: { type: 'boolean' },
         },
       },
+      response: { 201: zodToJsonSchema(ContestResponseSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
     handler: handlers.createContest,
@@ -131,10 +148,21 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   const overrides = createOverrideHandlers(overrideService);
 
   // --- Contest CRUD ---
-  fastify.get('/:contestId', handlers.getContest);
+  fastify.get('/:contestId', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Get a contest by ID',
+      operationId: 'getContest',
+      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+    },
+    handler: handlers.getContest,
+  });
 
   fastify.put('/:contestId', {
     schema: {
+      tags: ['Contests'],
+      summary: 'Update a contest',
+      operationId: 'updateContest',
       body: {
         type: 'object',
         properties: {
@@ -147,61 +175,137 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
           isExclusive: { type: 'boolean' },
         },
       },
+      response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
     handler: handlers.updateContest,
   });
 
-  fastify.delete('/:contestId', handlers.deleteContest);
+  fastify.delete('/:contestId', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Delete a contest',
+      operationId: 'deleteContest',
+    },
+    handler: handlers.deleteContest,
+  });
 
   // --- Draft Overrides ---
   fastify.post('/:contestId/draft/undo-pick', {
-    schema: { body: { type: 'object', required: ['pickId', 'reason'], properties: { pickId: { type: 'string' }, reason: { type: 'string' } } } },
+    schema: {
+      tags: ['Contests'],
+      summary: 'Undo a draft pick',
+      operationId: 'undoDraftPick',
+      body: { type: 'object', required: ['pickId', 'reason'], properties: { pickId: { type: 'string' }, reason: { type: 'string' } } },
+    },
     handler: overrides.undoPick,
   });
   fastify.post('/:contestId/draft/pause', {
-    schema: { body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } } },
+    schema: {
+      tags: ['Contests'],
+      summary: 'Pause an active draft',
+      operationId: 'pauseDraft',
+      body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+    },
     handler: overrides.pauseDraft,
   });
-  fastify.post('/:contestId/draft/resume', overrides.resumeDraft);
+  fastify.post('/:contestId/draft/resume', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Resume a paused draft',
+      operationId: 'resumeDraft',
+    },
+    handler: overrides.resumeDraft,
+  });
   fastify.post('/:contestId/draft/extend-clock', {
-    schema: { body: { type: 'object', required: ['additionalSeconds'], properties: { additionalSeconds: { type: 'integer', minimum: 1 } } } },
+    schema: {
+      tags: ['Contests'],
+      summary: 'Extend the pick clock for the current drafter',
+      operationId: 'extendPickClock',
+      body: { type: 'object', required: ['additionalSeconds'], properties: { additionalSeconds: { type: 'integer', minimum: 1 } } },
+    },
     handler: overrides.extendPickClock,
   });
 
   // --- Scoring Overrides ---
   fastify.post('/:contestId/scoring/adjust', {
-    schema: { body: { type: 'object', required: ['entryId', 'adjustment', 'reason'], properties: { entryId: { type: 'string' }, adjustment: { type: 'number' }, reason: { type: 'string' } } } },
+    schema: {
+      tags: ['Contests'],
+      summary: 'Manually adjust an entry score',
+      operationId: 'adjustScore',
+      body: { type: 'object', required: ['entryId', 'adjustment', 'reason'], properties: { entryId: { type: 'string' }, adjustment: { type: 'number' }, reason: { type: 'string' } } },
+    },
     handler: overrides.adjustScore,
   });
-  fastify.post('/:contestId/scoring/recalculate', overrides.recalculateStandings);
+  fastify.post('/:contestId/scoring/recalculate', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Recalculate standings for a contest',
+      operationId: 'recalculateStandings',
+    },
+    handler: overrides.recalculateStandings,
+  });
 
   // --- Contest Lifecycle Overrides ---
   fastify.post('/:contestId/reopen', {
-    schema: { body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } } },
+    schema: {
+      tags: ['Contests'],
+      summary: 'Reopen a closed contest',
+      operationId: 'reopenContest',
+      body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+    },
     handler: overrides.reopenContest,
   });
   fastify.post('/:contestId/close', {
-    schema: { body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } } },
+    schema: {
+      tags: ['Contests'],
+      summary: 'Close a contest early',
+      operationId: 'closeContest',
+      body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+    },
     handler: overrides.closeContest,
   });
   fastify.post('/:contestId/extend-deadline', {
-    schema: { body: { type: 'object', required: ['newEnd', 'reason'], properties: { newEnd: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } } },
+    schema: {
+      tags: ['Contests'],
+      summary: 'Extend the contest end deadline',
+      operationId: 'extendContestDeadline',
+      body: { type: 'object', required: ['newEnd', 'reason'], properties: { newEnd: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } },
+    },
     handler: overrides.extendDeadline,
   });
   fastify.post('/:contestId/update-lock', {
-    schema: { body: { type: 'object', required: ['newLock', 'reason'], properties: { newLock: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } } },
+    schema: {
+      tags: ['Contests'],
+      summary: 'Update the contest lock time',
+      operationId: 'updateContestLockTime',
+      body: { type: 'object', required: ['newLock', 'reason'], properties: { newLock: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } },
+    },
     handler: overrides.updateLockTime,
   });
 
   // --- Payout Overrides ---
-  fastify.post('/:contestId/payouts/confirm', overrides.confirmPayouts);
+  fastify.post('/:contestId/payouts/confirm', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Confirm and finalize contest payouts',
+      operationId: 'confirmPayouts',
+    },
+    handler: overrides.confirmPayouts,
+  });
 
   // --- Contest Audit Log ---
-  fastify.get('/:contestId/audit-log', async (request, reply) => {
-    const { contestId } = request.params as { contestId: string };
-    const { AuditService: AuditSvc } = await import('../leagues/audit-service.js');
-    const auditService = new AuditSvc(prisma);
-    const entries = await auditService.getContestAuditLog(contestId);
-    return reply.send({ entries });
+  fastify.get('/:contestId/audit-log', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Get the audit log for a contest',
+      operationId: 'getContestAuditLog',
+    },
+    handler: async (request, reply) => {
+      const { contestId } = request.params as { contestId: string };
+      const { AuditService: AuditSvc } = await import('../leagues/audit-service.js');
+      const auditService = new AuditSvc(prisma);
+      const entries = await auditService.getContestAuditLog(contestId);
+      return reply.send({ entries });
+    },
   });
 }

@@ -26,6 +26,11 @@ import { createMemberHandlers } from './member-handler';
 import { createDashboardHandlers } from './dashboard-handler';
 import { createAuditHandlers } from './audit-handler';
 import { createBulkHandlers } from './bulk-handler';
+import {
+  zodToJsonSchema,
+  LeagueResponseSchema,
+  LeagueListResponseSchema,
+} from '@poolmaster/shared/dto';
 
 export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -64,10 +69,21 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   // --- League CRUD ---
 
-  fastify.get('/', league.listLeagues);
+  fastify.get('/', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'List leagues for the current user',
+      operationId: 'listLeagues',
+      response: { 200: zodToJsonSchema(LeagueListResponseSchema) },
+    },
+    handler: league.listLeagues,
+  });
 
   fastify.post('/', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Create a new league',
+      operationId: 'createLeague',
       body: {
         type: 'object',
         required: ['name', 'visibility'],
@@ -79,14 +95,26 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           settings: { type: 'object' },
         },
       },
+      response: { 201: zodToJsonSchema(LeagueResponseSchema) },
     },
     handler: league.createLeague,
   });
 
-  fastify.get('/:id', league.getLeague);
+  fastify.get('/:id', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Get league details by ID',
+      operationId: 'getLeague',
+      response: { 200: zodToJsonSchema(LeagueResponseSchema) },
+    },
+    handler: league.getLeague,
+  });
 
   fastify.put('/:id/settings', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Update league settings',
+      operationId: 'updateLeagueSettings',
       body: {
         type: 'object',
         properties: {
@@ -112,6 +140,9 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/:id/invitations', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Send email invitations to join a league',
+      operationId: 'sendLeagueInvitations',
       body: {
         type: 'object',
         required: ['emails'],
@@ -132,6 +163,9 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/:id/invite-link', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Generate a shareable invite link',
+      operationId: 'generateInviteLink',
       body: {
         type: 'object',
         properties: {
@@ -145,6 +179,11 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   });
 
   fastify.delete('/:id/invite-link/:code', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Revoke an invite link',
+      operationId: 'revokeInviteLink',
+    },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
     handler: invitation.revokeInviteLink,
   });
@@ -153,6 +192,9 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.put('/:id/members/:uid/role', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Change a member role and permissions',
+      operationId: 'changeMemberRole',
       body: {
         type: 'object',
         required: ['role'],
@@ -170,12 +212,20 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   });
 
   fastify.delete('/:id/members/:uid', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Remove a member from the league',
+      operationId: 'removeMember',
+    },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_REMOVE),
     handler: member.removeMember,
   });
 
   fastify.post('/:id/transfer-ownership', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Transfer league ownership to another member',
+      operationId: 'transferOwnership',
       body: {
         type: 'object',
         required: ['newOwnerId'],
@@ -190,19 +240,51 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   // --- Commissioner Dashboard ---
 
-  fastify.get('/:id/dashboard', dashboard.getDashboard);
+  fastify.get('/:id/dashboard', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Get commissioner dashboard for a league',
+      operationId: 'getLeagueDashboard',
+    },
+    handler: dashboard.getDashboard,
+  });
 
-  fastify.post('/:id/action-items/:itemId/resolve', dashboard.resolveActionItem);
+  fastify.post('/:id/action-items/:itemId/resolve', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Resolve a commissioner action item',
+      operationId: 'resolveActionItem',
+    },
+    handler: dashboard.resolveActionItem,
+  });
 
   // --- Audit Log ---
 
-  fastify.get('/:id/audit-log', audit.getLeagueAuditLog);
-  fastify.get('/:id/audit-log/member', audit.getMemberAuditLog);
+  fastify.get('/:id/audit-log', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Get audit log for a league',
+      operationId: 'getLeagueAuditLog',
+    },
+    handler: audit.getLeagueAuditLog,
+  });
+
+  fastify.get('/:id/audit-log/member', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Get audit log for a specific member',
+      operationId: 'getMemberAuditLog',
+    },
+    handler: audit.getMemberAuditLog,
+  });
 
   // --- Bulk Operations ---
 
   fastify.post('/:id/contests/bulk', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Bulk-create contests from a template',
+      operationId: 'bulkCreateContests',
       body: {
         type: 'object',
         required: ['templateId', 'namingPattern', 'events'],
@@ -231,6 +313,9 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/:id/contests/copy-season', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Copy contests from a previous season',
+      operationId: 'copySeason',
       body: {
         type: 'object',
         required: ['sourceContestIds'],
@@ -246,6 +331,9 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/:id/members/import', {
     schema: {
+      tags: ['Leagues'],
+      summary: 'Bulk-import members via CSV rows',
+      operationId: 'importMembers',
       body: {
         type: 'object',
         required: ['rows'],

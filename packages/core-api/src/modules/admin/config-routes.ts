@@ -37,12 +37,29 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
   // Permission: config.scoring_templates
   // -----------------------------------------------------------------------
 
-  fastify.get('/config/scoring-templates', templateConfig.listScoringTemplates);
+  fastify.get('/config/scoring-templates', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List scoring templates',
+      operationId: 'adminListScoringTemplates',
+    },
+    handler: templateConfig.listScoringTemplates,
+  });
 
-  fastify.get('/config/scoring-templates/:id', templateConfig.getScoringTemplate);
+  fastify.get('/config/scoring-templates/:id', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get scoring template by ID',
+      operationId: 'adminGetScoringTemplate',
+    },
+    handler: templateConfig.getScoringTemplate,
+  });
 
   fastify.post('/config/scoring-templates', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Create a scoring template',
+      operationId: 'adminCreateScoringTemplate',
       body: {
         type: 'object',
         required: ['id', 'sport', 'name', 'description', 'config'],
@@ -60,6 +77,9 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.put('/config/scoring-templates/:id', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update a scoring template',
+      operationId: 'adminUpdateScoringTemplate',
       body: {
         type: 'object',
         properties: {
@@ -73,19 +93,43 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
     handler: templateConfig.updateScoringTemplate,
   });
 
-  fastify.delete('/config/scoring-templates/:id', templateConfig.deleteScoringTemplate);
+  fastify.delete('/config/scoring-templates/:id', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Delete a scoring template',
+      operationId: 'adminDeleteScoringTemplate',
+    },
+    handler: templateConfig.deleteScoringTemplate,
+  });
 
   // -----------------------------------------------------------------------
   // Selection Template Routes
   // Permission: config.selection_templates
   // -----------------------------------------------------------------------
 
-  fastify.get('/config/selection-templates', templateConfig.listSelectionTemplates);
+  fastify.get('/config/selection-templates', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List selection templates',
+      operationId: 'adminListSelectionTemplatesConfig',
+    },
+    handler: templateConfig.listSelectionTemplates,
+  });
 
-  fastify.get('/config/selection-templates/:id', templateConfig.getSelectionTemplate);
+  fastify.get('/config/selection-templates/:id', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get selection template by ID',
+      operationId: 'adminGetSelectionTemplateConfig',
+    },
+    handler: templateConfig.getSelectionTemplate,
+  });
 
   fastify.post('/config/selection-templates', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Create a selection template',
+      operationId: 'adminCreateSelectionTemplate',
       body: {
         type: 'object',
         required: ['id', 'name', 'description', 'sport', 'contestType', 'selectionType', 'config'],
@@ -105,6 +149,9 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.put('/config/selection-templates/:id', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update a selection template',
+      operationId: 'adminUpdateSelectionTemplate',
       body: {
         type: 'object',
         properties: {
@@ -120,19 +167,43 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
     handler: templateConfig.updateSelectionTemplate,
   });
 
-  fastify.delete('/config/selection-templates/:id', templateConfig.deleteSelectionTemplate);
+  fastify.delete('/config/selection-templates/:id', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Delete a selection template',
+      operationId: 'adminDeleteSelectionTemplate',
+    },
+    handler: templateConfig.deleteSelectionTemplate,
+  });
 
   // -----------------------------------------------------------------------
   // Notification Template Routes
   // Permission: config.notification_templates
   // -----------------------------------------------------------------------
 
-  fastify.get('/config/notification-templates', notificationConfig.listTemplates);
+  fastify.get('/config/notification-templates', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List notification templates',
+      operationId: 'adminListNotificationTemplates',
+    },
+    handler: notificationConfig.listTemplates,
+  });
 
-  fastify.get('/config/notification-templates/:eventType', notificationConfig.getTemplate);
+  fastify.get('/config/notification-templates/:eventType', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get notification template by event type',
+      operationId: 'adminGetNotificationTemplate',
+    },
+    handler: notificationConfig.getTemplate,
+  });
 
   fastify.put('/config/notification-templates/:eventType', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update a notification template',
+      operationId: 'adminUpdateNotificationTemplate',
       body: {
         type: 'object',
         properties: {
@@ -150,17 +221,34 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
     handler: notificationConfig.updateTemplate,
   });
 
-  fastify.post('/config/notification-templates/reset/:eventType', notificationConfig.resetTemplate);
+  fastify.post('/config/notification-templates/reset/:eventType', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset a notification template to defaults',
+      operationId: 'adminResetNotificationTemplate',
+    },
+    handler: notificationConfig.resetTemplate,
+  });
 
   // -----------------------------------------------------------------------
   // Push Trigger Configuration Routes
   // Permission: config.push_triggers
   // -----------------------------------------------------------------------
 
-  fastify.get('/config/push-triggers', pushTriggerConfig.listTriggers);
+  fastify.get('/config/push-triggers', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List push trigger configurations',
+      operationId: 'adminListPushTriggers',
+    },
+    handler: pushTriggerConfig.listTriggers,
+  });
 
   fastify.put('/config/push-triggers/:eventType', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update a push trigger configuration',
+      operationId: 'adminUpdatePushTrigger',
       body: {
         type: 'object',
         properties: {
@@ -176,21 +264,52 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
     handler: pushTriggerConfig.updateTrigger,
   });
 
-  fastify.post('/config/push-triggers/:eventType/enable', pushTriggerConfig.enableTrigger);
+  fastify.post('/config/push-triggers/:eventType/enable', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Enable a push trigger',
+      operationId: 'adminEnablePushTrigger',
+    },
+    handler: pushTriggerConfig.enableTrigger,
+  });
 
-  fastify.post('/config/push-triggers/:eventType/disable', pushTriggerConfig.disableTrigger);
+  fastify.post('/config/push-triggers/:eventType/disable', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Disable a push trigger',
+      operationId: 'adminDisablePushTrigger',
+    },
+    handler: pushTriggerConfig.disableTrigger,
+  });
 
-  fastify.post('/config/push-triggers/reset', pushTriggerConfig.resetAll);
+  fastify.post('/config/push-triggers/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset all push triggers to defaults',
+      operationId: 'adminResetPushTriggers',
+    },
+    handler: pushTriggerConfig.resetAll,
+  });
 
   // -----------------------------------------------------------------------
   // Rate Limit Configuration Routes
   // Permission: config.rate_limits
   // -----------------------------------------------------------------------
 
-  fastify.get('/config/rate-limits', rateLimitConfig.getConfig);
+  fastify.get('/config/rate-limits', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get rate limit configuration',
+      operationId: 'adminGetRateLimitConfig',
+    },
+    handler: rateLimitConfig.getConfig,
+  });
 
   fastify.put('/config/rate-limits', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update rate limit configuration',
+      operationId: 'adminUpdateRateLimitConfig',
       body: {
         type: 'object',
         properties: {
@@ -216,5 +335,12 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
     handler: rateLimitConfig.updateConfig,
   });
 
-  fastify.post('/config/rate-limits/reset', rateLimitConfig.resetConfig);
+  fastify.post('/config/rate-limits/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset rate limits to defaults',
+      operationId: 'adminResetRateLimitConfig',
+    },
+    handler: rateLimitConfig.resetConfig,
+  });
 }

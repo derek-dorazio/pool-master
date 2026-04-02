@@ -5,6 +5,10 @@
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import {
+  zodToJsonSchema,
+  ParticipantListResponseSchema,
+} from '@poolmaster/shared/dto';
+import {
   PrismaParticipantRepository,
   PrismaParticipantSeasonRecordRepository,
   PrismaParticipantProviderMappingRepository,
@@ -30,6 +34,9 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
 
   fastify.get('/', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Search and list participants',
+      operationId: 'searchParticipants',
       querystring: {
         type: 'object',
         properties: {
@@ -43,16 +50,27 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           offset: { type: 'string' },
         },
       },
+      response: { 200: zodToJsonSchema(ParticipantListResponseSchema) },
     },
     handler: handler.searchParticipants,
   });
 
   // --- CRUD ---
 
-  fastify.get('/:id', handler.getParticipant);
+  fastify.get('/:id', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Get a participant by ID',
+      operationId: 'getParticipant',
+    },
+    handler: handler.getParticipant,
+  });
 
   fastify.post('/', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Create a new participant',
+      operationId: 'createParticipant',
       body: {
         type: 'object',
         required: ['sportId', 'name', 'participantType'],
@@ -77,6 +95,9 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
 
   fastify.patch('/:id', {
     schema: {
+      tags: ['Participants'],
+      summary: 'Update a participant',
+      operationId: 'updateParticipant',
       body: {
         type: 'object',
         properties: {
@@ -100,7 +121,21 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
 
   // --- Season Records ---
 
-  fastify.get('/:id/seasons', handler.getSeasonRecords);
+  fastify.get('/:id/seasons', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Get all season records for a participant',
+      operationId: 'getParticipantSeasonRecords',
+    },
+    handler: handler.getSeasonRecords,
+  });
 
-  fastify.get('/:id/seasons/:season', handler.getSeasonRecord);
+  fastify.get('/:id/seasons/:season', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'Get a specific season record for a participant',
+      operationId: 'getParticipantSeasonRecord',
+    },
+    handler: handler.getSeasonRecord,
+  });
 }

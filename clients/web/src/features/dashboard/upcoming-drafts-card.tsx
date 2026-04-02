@@ -40,10 +40,10 @@ function formatCountdown(t: { days: number; hours: number; minutes: number; seco
 }
 
 export function UpcomingDraftsCard() {
-  const { data: drafts, isLoading } = useUpcomingDrafts();
+  const { data: drafts, isLoading, isError } = useUpcomingDrafts();
 
   return (
-    <Card>
+    <Card data-testid="upcoming-drafts-card">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
@@ -53,6 +53,10 @@ export function UpcomingDraftsCard() {
       <CardContent>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
+        ) : isError ? (
+          <p role="alert" className="text-sm text-destructive text-center py-6">
+            Failed to load upcoming drafts.
+          </p>
         ) : !drafts?.length ? (
           <div className="text-center py-6">
             <p className="text-sm text-muted-foreground">No upcoming drafts.</p>

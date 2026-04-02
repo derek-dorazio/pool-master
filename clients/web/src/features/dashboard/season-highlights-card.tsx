@@ -3,10 +3,22 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useHighlights } from './hooks/use-highlights';
 
 export function SeasonHighlightsCard() {
-  const { data: highlights, isLoading } = useHighlights();
+  const { data: highlights, isLoading, isError } = useHighlights();
 
-  if (isLoading || !highlights) {
+  if (isLoading || (!highlights && !isError)) {
     return null;
+  }
+
+  if (isError) {
+    return (
+      <Card data-testid="season-highlights-card">
+        <CardContent className="py-6">
+          <p role="alert" className="text-sm text-destructive text-center">
+            Failed to load season highlights.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   const stats = [
@@ -33,7 +45,7 @@ export function SeasonHighlightsCard() {
   ];
 
   return (
-    <Card>
+    <Card data-testid="season-highlights-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />

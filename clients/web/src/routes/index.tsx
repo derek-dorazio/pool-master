@@ -2,12 +2,14 @@ import { createBrowserRouter } from 'react-router-dom';
 import { PublicLayout } from '@/components/layouts/public-layout';
 import { AuthenticatedLayout } from '@/components/layouts/authenticated-layout';
 import { FullscreenLayout } from '@/components/layouts/fullscreen-layout';
+import { RouteErrorFallback } from '@/components/route-error-fallback';
 import { NotFoundPage } from '@/pages/not-found';
 
 export const router = createBrowserRouter([
   // Public routes
   {
     element: <PublicLayout />,
+    errorElement: <RouteErrorFallback />,
     children: [
       { index: true, lazy: () => import('@/pages/landing') },
       { path: 'login', lazy: () => import('@/pages/auth/login') },
@@ -25,6 +27,7 @@ export const router = createBrowserRouter([
   // Authenticated routes
   {
     element: <AuthenticatedLayout />,
+    errorElement: <RouteErrorFallback />,
     children: [
       { path: 'dashboard', lazy: () => import('@/pages/dashboard') },
       { path: 'notifications', lazy: () => import('@/pages/notifications') },
@@ -71,6 +74,7 @@ export const router = createBrowserRouter([
   // Fullscreen routes (draft room)
   {
     element: <FullscreenLayout />,
+    errorElement: <RouteErrorFallback />,
     children: [
       { path: 'drafts/:draftId', lazy: () => import('@/pages/drafts/room') },
       { path: 'drafts/:draftId/results', lazy: () => import('@/pages/drafts/results') },

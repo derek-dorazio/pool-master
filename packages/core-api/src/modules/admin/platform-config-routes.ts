@@ -57,12 +57,22 @@ export function registerPlatformConfigRoutes(
   // Poll Interval Configuration
   // -------------------------------------------------------------------------
 
-  fastify.get('/config/poll-intervals', async () => {
-    return pollConfig.getConfig();
+  fastify.get('/config/poll-intervals', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get poll interval configuration',
+      operationId: 'adminGetPollIntervals',
+    },
+    handler: async () => {
+      return pollConfig.getConfig();
+    },
   });
 
   fastify.put('/config/poll-intervals', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update poll interval configuration',
+      operationId: 'adminUpdatePollIntervals',
       body: {
         type: 'object',
         properties: {
@@ -90,21 +100,38 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.post('/config/poll-intervals/reset', async (request: FastifyRequest) => {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
-    return pollConfig.resetDefaults(adminUserId, adminUserEmail);
+  fastify.post('/config/poll-intervals/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset poll intervals to defaults',
+      operationId: 'adminResetPollIntervals',
+    },
+    handler: async (request: FastifyRequest) => {
+      const { adminUserId, adminUserEmail } = extractAdminContext(request);
+      return pollConfig.resetDefaults(adminUserId, adminUserEmail);
+    },
   });
 
   // -------------------------------------------------------------------------
   // Ingestion Schedule Configuration
   // -------------------------------------------------------------------------
 
-  fastify.get('/config/ingestion-schedule', async () => {
-    return ingestionConfig.getConfig();
+  fastify.get('/config/ingestion-schedule', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get ingestion schedule configuration',
+      operationId: 'adminGetIngestionSchedule',
+    },
+    handler: async () => {
+      return ingestionConfig.getConfig();
+    },
   });
 
   fastify.put('/config/ingestion-schedule', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update ingestion schedule configuration',
+      operationId: 'adminUpdateIngestionSchedule',
       body: {
         type: 'object',
         properties: {
@@ -134,6 +161,9 @@ export function registerPlatformConfigRoutes(
 
   fastify.put('/config/ingestion-schedule/:sport', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Set per-sport ingestion schedule override',
+      operationId: 'adminSetSportIngestionOverride',
       body: {
         type: 'object',
         properties: {
@@ -168,21 +198,38 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.post('/config/ingestion-schedule/reset', async (request: FastifyRequest) => {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
-    return ingestionConfig.resetDefaults(adminUserId, adminUserEmail);
+  fastify.post('/config/ingestion-schedule/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset ingestion schedule to defaults',
+      operationId: 'adminResetIngestionSchedule',
+    },
+    handler: async (request: FastifyRequest) => {
+      const { adminUserId, adminUserEmail } = extractAdminContext(request);
+      return ingestionConfig.resetDefaults(adminUserId, adminUserEmail);
+    },
   });
 
   // -------------------------------------------------------------------------
   // Dunning Schedule Configuration
   // -------------------------------------------------------------------------
 
-  fastify.get('/config/dunning', async () => {
-    return dunningConfig.getConfig();
+  fastify.get('/config/dunning', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get dunning schedule configuration',
+      operationId: 'adminGetDunningConfig',
+    },
+    handler: async () => {
+      return dunningConfig.getConfig();
+    },
   });
 
   fastify.put('/config/dunning', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update dunning schedule configuration',
+      operationId: 'adminUpdateDunningConfig',
       body: {
         type: 'object',
         properties: {
@@ -228,21 +275,38 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.post('/config/dunning/reset', async (request: FastifyRequest) => {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
-    return dunningConfig.resetDefaults(adminUserId, adminUserEmail);
+  fastify.post('/config/dunning/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset dunning configuration to defaults',
+      operationId: 'adminResetDunningConfig',
+    },
+    handler: async (request: FastifyRequest) => {
+      const { adminUserId, adminUserEmail } = extractAdminContext(request);
+      return dunningConfig.resetDefaults(adminUserId, adminUserEmail);
+    },
   });
 
   // -------------------------------------------------------------------------
   // Notification Channel Configuration
   // -------------------------------------------------------------------------
 
-  fastify.get('/config/notification-channels', async () => {
-    return channelConfig.getConfig();
+  fastify.get('/config/notification-channels', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get notification channel defaults',
+      operationId: 'adminGetChannelConfig',
+    },
+    handler: async () => {
+      return channelConfig.getConfig();
+    },
   });
 
   fastify.put('/config/notification-channels/:category', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update notification channel defaults for a category',
+      operationId: 'adminUpdateChannelConfig',
       body: {
         type: 'object',
         required: ['channels'],
@@ -275,21 +339,38 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.post('/config/notification-channels/reset', async (request: FastifyRequest) => {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
-    return channelConfig.resetDefaults(adminUserId, adminUserEmail);
+  fastify.post('/config/notification-channels/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset notification channel defaults',
+      operationId: 'adminResetChannelConfig',
+    },
+    handler: async (request: FastifyRequest) => {
+      const { adminUserId, adminUserEmail } = extractAdminContext(request);
+      return channelConfig.resetDefaults(adminUserId, adminUserEmail);
+    },
   });
 
   // -------------------------------------------------------------------------
   // Retention Defaults Configuration
   // -------------------------------------------------------------------------
 
-  fastify.get('/config/retention', async () => {
-    return retentionConfig.getDefaults();
+  fastify.get('/config/retention', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get data retention defaults',
+      operationId: 'adminGetRetentionDefaults',
+    },
+    handler: async () => {
+      return retentionConfig.getDefaults();
+    },
   });
 
   fastify.put('/config/retention', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update data retention defaults',
+      operationId: 'adminUpdateRetentionDefaults',
       body: {
         type: 'object',
         properties: {
@@ -318,22 +399,39 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.post('/config/retention/reset', async () => {
-    return retentionConfig.resetDefaults();
+  fastify.post('/config/retention/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset data retention to defaults',
+      operationId: 'adminResetRetentionDefaults',
+    },
+    handler: async () => {
+      return retentionConfig.resetDefaults();
+    },
   });
 
-  fastify.get('/config/retention/:tenantId', async (
-    request: FastifyRequest<{ Params: { tenantId: string } }>,
-  ) => {
-    const override = retentionConfig.getTenantOverride(request.params.tenantId);
-    if (!override) {
-      return { override: null, defaults: retentionConfig.getDefaults() };
-    }
-    return { override };
+  fastify.get('/config/retention/:tenantId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get tenant-specific retention override',
+      operationId: 'adminGetTenantRetentionOverride',
+    },
+    handler: async (
+      request: FastifyRequest<{ Params: { tenantId: string } }>,
+    ) => {
+      const override = retentionConfig.getTenantOverride(request.params.tenantId);
+      if (!override) {
+        return { override: null, defaults: retentionConfig.getDefaults() };
+      }
+      return { override };
+    },
   });
 
   fastify.put('/config/retention/:tenantId', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Set tenant-specific retention override',
+      operationId: 'adminSetTenantRetentionOverride',
       body: {
         type: 'object',
         properties: {
@@ -366,23 +464,40 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.delete('/config/retention/:tenantId', async (
-    request: FastifyRequest<{ Params: { tenantId: string } }>,
-  ) => {
-    retentionConfig.clearTenantOverride(request.params.tenantId);
-    return { cleared: true, tenantId: request.params.tenantId };
+  fastify.delete('/config/retention/:tenantId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Clear tenant-specific retention override',
+      operationId: 'adminClearTenantRetentionOverride',
+    },
+    handler: async (
+      request: FastifyRequest<{ Params: { tenantId: string } }>,
+    ) => {
+      retentionConfig.clearTenantOverride(request.params.tenantId);
+      return { cleared: true, tenantId: request.params.tenantId };
+    },
   });
 
   // -------------------------------------------------------------------------
   // Weekly Digest Configuration
   // -------------------------------------------------------------------------
 
-  fastify.get('/config/weekly-digest', async () => {
-    return digestConfig.getConfig();
+  fastify.get('/config/weekly-digest', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Get weekly digest configuration',
+      operationId: 'adminGetDigestConfig',
+    },
+    handler: async () => {
+      return digestConfig.getConfig();
+    },
   });
 
   fastify.put('/config/weekly-digest', {
     schema: {
+      tags: ['Admin'],
+      summary: 'Update weekly digest configuration',
+      operationId: 'adminUpdateDigestConfig',
       body: {
         type: 'object',
         properties: {
@@ -422,16 +537,30 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.post('/config/weekly-digest/reset', async () => {
-    return digestConfig.resetDefaults();
+  fastify.post('/config/weekly-digest/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset weekly digest configuration to defaults',
+      operationId: 'adminResetDigestConfig',
+    },
+    handler: async () => {
+      return digestConfig.resetDefaults();
+    },
   });
 
-  fastify.get('/config/weekly-digest/preview', async (
-    request: FastifyRequest<{
-      Querystring: { leagueId?: string };
-    }>,
-  ) => {
-    const leagueId = (request.query as { leagueId?: string }).leagueId;
-    return { preview: digestConfig.previewDigest(leagueId) };
+  fastify.get('/config/weekly-digest/preview', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Preview weekly digest for a league',
+      operationId: 'adminPreviewDigest',
+    },
+    handler: async (
+      request: FastifyRequest<{
+        Querystring: { leagueId?: string };
+      }>,
+    ) => {
+      const leagueId = (request.query as { leagueId?: string }).leagueId;
+      return { preview: digestConfig.previewDigest(leagueId) };
+    },
   });
 }

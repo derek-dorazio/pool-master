@@ -16,6 +16,9 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.get('/', {
     schema: {
+      tags: ['Templates'],
+      summary: 'List contest templates for a league',
+      operationId: 'listTemplates',
       querystring: {
         type: 'object',
         required: ['leagueId'],
@@ -29,6 +32,9 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
 
   fastify.post('/', {
     schema: {
+      tags: ['Templates'],
+      summary: 'Create a new contest template',
+      operationId: 'createTemplate',
       body: {
         type: 'object',
         required: ['leagueId', 'name', 'sport', 'contestType'],
@@ -49,10 +55,20 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
     handler: handlers.createTemplate,
   });
 
-  fastify.get('/:id', handlers.getTemplate);
+  fastify.get('/:id', {
+    schema: {
+      tags: ['Templates'],
+      summary: 'Get a contest template by ID',
+      operationId: 'getTemplate',
+    },
+    handler: handlers.getTemplate,
+  });
 
   fastify.put('/:id', {
     schema: {
+      tags: ['Templates'],
+      summary: 'Update a contest template',
+      operationId: 'updateTemplate',
       body: {
         type: 'object',
         properties: {
@@ -69,5 +85,12 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
     handler: handlers.updateTemplate,
   });
 
-  fastify.delete('/:id', handlers.deleteTemplate);
+  fastify.delete('/:id', {
+    schema: {
+      tags: ['Templates'],
+      summary: 'Delete a contest template',
+      operationId: 'deleteTemplate',
+    },
+    handler: handlers.deleteTemplate,
+  });
 }

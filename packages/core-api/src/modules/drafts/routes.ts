@@ -51,6 +51,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Get the current draft state for a contest. */
   fastify.get('/:contestId', {
     schema: {
+      tags: ['Drafts'],
+      summary: 'Get current draft state for a contest',
+      operationId: 'getDraftState',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -78,6 +81,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Start a draft session. Commissioner only. */
   fastify.post('/:contestId/start', {
     schema: {
+      tags: ['Drafts'],
+      summary: 'Start a new draft session',
+      operationId: 'startDraft',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -153,6 +159,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Submit a pick (async mode). */
   fastify.post('/:contestId/pick', {
     schema: {
+      tags: ['Drafts'],
+      summary: 'Submit a draft pick',
+      operationId: 'submitDraftPick',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -244,6 +253,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Pause the draft. Commissioner only. */
   fastify.post('/:contestId/pause', {
     schema: {
+      tags: ['Drafts'],
+      summary: 'Pause an active draft',
+      operationId: 'pauseDraft',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -259,6 +271,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Resume the draft. Commissioner only. */
   fastify.post('/:contestId/resume', {
     schema: {
+      tags: ['Drafts'],
+      summary: 'Resume a paused draft',
+      operationId: 'resumeDraft',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -274,6 +289,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Extend the current pick deadline. Commissioner only. */
   fastify.post('/:contestId/extend', {
     schema: {
+      tags: ['Drafts'],
+      summary: 'Extend the current pick deadline',
+      operationId: 'extendPickDeadline',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -298,6 +316,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** List all selection templates, optionally filtered by sport and/or contestType. */
   fastify.get('/templates', {
     schema: {
+      tags: ['Drafts'],
+      summary: 'List selection templates',
+      operationId: 'listSelectionTemplates',
       querystring: {
         type: 'object',
         properties: {
@@ -325,6 +346,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   /** Get a single selection template by ID. */
   fastify.get('/templates/:templateId', {
     schema: {
+      tags: ['Drafts'],
+      summary: 'Get a selection template by ID',
+      operationId: 'getSelectionTemplate',
       params: {
         type: 'object',
         required: ['templateId'],

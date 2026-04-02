@@ -7,13 +7,13 @@ import { useMyLeagues } from './hooks/use-my-leagues';
 const MAX_DISPLAYED = 6;
 
 export function MyLeaguesSummary() {
-  const { data: leagues, isLoading } = useMyLeagues();
+  const { data: leagues, isLoading, isError } = useMyLeagues();
 
   const displayed = Array.isArray(leagues) ? leagues.slice(0, MAX_DISPLAYED) : [];
   const hasMore = displayed.length >= MAX_DISPLAYED;
 
   return (
-    <Card>
+    <Card data-testid="my-leagues-card">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
@@ -32,6 +32,10 @@ export function MyLeaguesSummary() {
       <CardContent>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
+        ) : isError ? (
+          <p role="alert" className="text-sm text-destructive text-center py-6">
+            Failed to load leagues.
+          </p>
         ) : !displayed?.length ? (
           <div className="text-center py-6 space-y-3">
             <p className="text-sm text-muted-foreground">
