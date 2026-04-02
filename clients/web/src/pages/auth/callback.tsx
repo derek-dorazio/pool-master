@@ -8,7 +8,11 @@ import { api, ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 
 interface CallbackResponse {
-  token: string;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+  };
   user: {
     id: string;
     email: string;
@@ -39,7 +43,7 @@ export function Component() {
           code,
           state,
         });
-        localStorage.setItem('access_token', res.token);
+        localStorage.setItem('access_token', res.tokens.accessToken);
         setUser(res.user);
         navigate('/dashboard', { replace: true });
       } catch (err) {

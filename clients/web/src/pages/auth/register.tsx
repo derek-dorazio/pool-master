@@ -73,7 +73,11 @@ const stepFields: Record<number, (keyof RegisterForm)[]> = {
 };
 
 interface RegisterResponse {
-  token: string;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+  };
   user: {
     id: string;
     email: string;
@@ -184,7 +188,7 @@ export function Component() {
         dateOfBirth: `${data.dobYear}-${data.dobMonth.padStart(2, '0')}-${data.dobDay.padStart(2, '0')}`,
         plan: data.plan,
       });
-      localStorage.setItem('access_token', res.token);
+      localStorage.setItem('access_token', res.tokens.accessToken);
       setUser(res.user);
       navigate('/dashboard');
     } catch (err) {

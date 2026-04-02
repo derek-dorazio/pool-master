@@ -71,7 +71,7 @@ describe('Auth Login Flow', () => {
 
   it('stores token in localStorage and sets user in auth store on successful login', async () => {
     mockApiPost.mockResolvedValue({
-      token: 'test-jwt-token-123',
+      tokens: { accessToken: 'test-jwt-token-123', refreshToken: 'rt-1', expiresIn: 900 },
       user: { id: 'u-1', email: 'jane@example.com', displayName: 'Jane Doe' },
     });
 
@@ -105,7 +105,7 @@ describe('Auth Login Flow', () => {
 
   it('navigates to /dashboard after successful login', async () => {
     mockApiPost.mockResolvedValue({
-      token: 'jwt-token',
+      tokens: { accessToken: 'jwt-token', refreshToken: 'rt-2', expiresIn: 900 },
       user: { id: 'u-1', email: 'jane@example.com', displayName: 'Jane Doe' },
     });
 

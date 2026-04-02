@@ -27,7 +27,11 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 interface LoginResponse {
-  token: string;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+  };
   user: {
     id: string;
     email: string;
@@ -67,7 +71,7 @@ export function Component() {
         email: data.email,
         password: data.password,
       });
-      localStorage.setItem('access_token', res.token);
+      localStorage.setItem('access_token', res.tokens.accessToken);
       setUser(res.user);
       navigate('/dashboard');
     } catch (err) {
