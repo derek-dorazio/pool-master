@@ -345,10 +345,12 @@ export function scoreEntry(
 ): EntryScoreResult {
   const breakdowns = participants.map((p) => scoreParticipant(config, p));
 
-  const scoredParticipants = breakdowns.map((b) => ({
+  const scoredParticipants = breakdowns.map((b, i) => ({
     participantId: b.participantId,
     score: b.finalScore,
-    excluded: b.dnfAdjustment !== 0 && config.dnf_handling === 'EXCLUDE',
+    excluded:
+      (participants[i].isDNF || participants[i].isMissedCut === true) &&
+      config.dnf_handling === 'EXCLUDE',
   }));
 
   const { totalScore, countingIds } = applyCountingMethod(config, scoredParticipants);

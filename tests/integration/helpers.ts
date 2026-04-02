@@ -37,6 +37,7 @@ import { contestPoolModule } from '../../packages/core-api/src/modules/participa
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
 import { billingModule } from '../../packages/core-api/src/modules/billing/routes';
+import { socialModule } from '../../packages/core-api/src/modules/social/routes';
 import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
 import { loadConfig as loadNotifConfig } from '../../packages/core-api/src/modules/notifications/core/config';
 import { createChannels } from '../../packages/core-api/src/modules/notifications/channels/channel-factory';
@@ -93,6 +94,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
   testApp.register(historyModule, { prefix: '/api/v1' });
   testApp.register(billingModule, { prefix: '/api/v1/billing' });
+  testApp.register(socialModule, { prefix: '/api/v1' });
 
   // Notification module (for notification persistence tests)
   const notifConfig = loadNotifConfig();

@@ -117,6 +117,11 @@ export function createAuthHandlers(authService: AuthService) {
     try {
       const token = authHeader.slice(7);
       const payload = authService.verifyAccessToken(token);
+
+      if (!payload.sub) {
+        return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Token missing required sub claim' });
+      }
+
       const profile = await authService.getProfile(payload.sub);
       return reply.send({ user: profile });
     } catch (err) {
