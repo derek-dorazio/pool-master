@@ -12,6 +12,9 @@ const config: Config = {
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/../tsconfig.json' }],
   },
+  moduleNameMapper: {
+    '^@poolmaster/shared/(.*)$': '<rootDir>/../../packages/shared/$1',
+  },
   setupFilesAfterEnv: ['./setup.ts'],
   testTimeout: 15_000,
 };
