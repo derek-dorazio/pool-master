@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api-client';
 import { Sport } from '@poolmaster/shared/domain';
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface PlatformMetrics {
   activeTenants: { value: number; trend: number };
   totalUsers: { value: number; trend: number };
@@ -10,11 +11,13 @@ export interface PlatformMetrics {
   notificationRate: { value: number; trend: number };
 }
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface ServiceHealth {
   name: string;
   status: 'green' | 'yellow' | 'red';
 }
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface Alert {
   id: string;
   severity: 'Info' | 'Warning' | 'Critical';
@@ -22,6 +25,7 @@ export interface Alert {
   timestamp: string;
 }
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface AuditEntry {
   id: string;
   adminName: string;
@@ -30,6 +34,7 @@ export interface AuditEntry {
   timestamp: string;
 }
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface Tenant {
   id: string;
   name: string;
@@ -43,6 +48,7 @@ export interface Tenant {
   createdAt: string;
 }
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface TenantDetail extends Tenant {
   usage: {
     leagues: { current: number; limit: number };
@@ -80,6 +86,7 @@ export interface TenantDetail extends Tenant {
   }[];
 }
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface UserResult {
   id: string;
   email: string;
@@ -89,6 +96,7 @@ export interface UserResult {
   status: 'Active' | 'Disabled' | 'Pending';
 }
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface UserDetail {
   id: string;
   email: string;
@@ -295,6 +303,7 @@ export function useAdminMetrics() {
   });
 }
 
+// TODO: migrate to @poolmaster/shared/dto when admin DTOs are created
 export interface TenantFilters {
   search?: string;
   plan?: string;

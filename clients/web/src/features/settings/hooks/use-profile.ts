@@ -1,15 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import type { UserProfileDto } from '@poolmaster/shared/dto';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
-export interface UserProfile {
-  id: string;
-  displayName: string;
-  email: string;
+// Extends UserProfileDto with fields not yet in the shared DTO
+// TODO: migrate bio and authProvider to @poolmaster/shared/dto when DTO is updated
+export interface UserProfile extends UserProfileDto {
   bio: string;
-  avatarUrl: string | null;
   authProvider: 'email' | 'google' | 'apple';
 }
 

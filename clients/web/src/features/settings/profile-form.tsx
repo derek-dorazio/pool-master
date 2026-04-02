@@ -92,7 +92,7 @@ export function ProfileForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <AvatarUpload avatarUrl={profile.avatarUrl} displayName={profile.displayName} />
+          <AvatarUpload avatarUrl={profile.avatarUrl ?? null} displayName={profile.displayName} />
 
           <div className="space-y-2">
             <Label htmlFor="displayName">Display Name</Label>

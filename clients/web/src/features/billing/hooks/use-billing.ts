@@ -1,10 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 
+// TODO: migrate to @poolmaster/shared/dto when billing DTOs align with UI shape
+// The shared PlanDto uses slug/monthlyPriceCents/entitlements while the UI uses tier/price/features.
+// These local types will be replaced once the billing DTO is updated to match the UI contract.
+
 export type PlanTier = 'free' | 'starter' | 'pro' | 'league-plus';
 export type InvoiceStatus = 'paid' | 'pending' | 'failed';
 export type BillingCycle = 'monthly' | 'annual';
 
+// TODO: migrate to @poolmaster/shared/dto when DTO is created
 export interface BillingPlan {
   tier: PlanTier;
   name: string;
@@ -13,6 +18,7 @@ export interface BillingPlan {
   features: PlanFeatures;
 }
 
+// TODO: migrate to @poolmaster/shared/dto when DTO is created
 export interface PlanFeatures {
   leagues: number | null;
   contestsPerLeague: number | null;
@@ -24,12 +30,14 @@ export interface PlanFeatures {
   customScoring: boolean;
 }
 
+// TODO: migrate to @poolmaster/shared/dto when DTO is created
 export interface UsageStats {
   leagues: { current: number; limit: number | null };
   contests: { current: number; limit: number | null };
   members: { current: number; limit: number | null };
 }
 
+// TODO: migrate to @poolmaster/shared/dto when DTO is created
 export interface Subscription {
   tier: PlanTier;
   name: string;
@@ -39,6 +47,7 @@ export interface Subscription {
   status: 'active' | 'trialing' | 'cancelled';
 }
 
+// TODO: migrate to @poolmaster/shared/dto when DTO is created
 export interface Invoice {
   id: string;
   number: string;

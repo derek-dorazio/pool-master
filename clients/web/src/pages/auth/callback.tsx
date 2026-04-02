@@ -6,20 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
-
-interface CallbackResponse {
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-  };
-  user: {
-    id: string;
-    email: string;
-    displayName: string;
-    avatarUrl?: string;
-  };
-}
+import type { AuthResponse } from '@poolmaster/shared/dto';
 
 export function Component() {
   const { t } = useTranslation('auth');
@@ -39,12 +26,12 @@ export function Component() {
 
     async function handleCallback() {
       try {
-        const res = await api.post<CallbackResponse>('/v1/auth/callback', {
+        const res = await api.post<AuthResponse>('/v1/auth/callback', {
           code,
           state,
         });
         localStorage.setItem('access_token', res.tokens.accessToken);
-        setUser(res.user);
+        setUser({ ...res.user, avatarUrl: res.user.avatarUrl ?? undefined });
         navigate('/dashboard', { replace: true });
       } catch (err) {
         setError(

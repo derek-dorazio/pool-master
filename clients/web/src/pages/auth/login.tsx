@@ -15,6 +15,7 @@ import { Logo } from '@/components/ui/logo';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import type { AuthResponse } from '@poolmaster/shared/dto';
 
 const loginSchema = z.object({
   email: z
@@ -26,20 +27,6 @@ const loginSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
-
-interface LoginResponse {
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-  };
-  user: {
-    id: string;
-    email: string;
-    displayName: string;
-    avatarUrl?: string;
-  };
-}
 
 export function Component() {
   const { t } = useTranslation('auth');
@@ -68,12 +55,12 @@ export function Component() {
   async function onSubmit(data: LoginForm) {
     setServerError('');
     try {
-      const res = await api.post<LoginResponse>(clientPath(API_ROUTES.auth.login), {
+      const res = await api.post<AuthResponse>(clientPath(API_ROUTES.auth.login), {
         email: data.email,
         password: data.password,
       });
       localStorage.setItem('access_token', res.tokens.accessToken);
-      setUser(res.user);
+      setUser({ ...res.user, avatarUrl: res.user.avatarUrl ?? undefined });
       navigate('/dashboard');
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
