@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Sport, InvitePolicy } from '@poolmaster/shared/domain/enums';
+import { Sport, InvitePolicy } from '@poolmaster/shared/domain';
 import { api } from '@/lib/api-client';
 
 export interface DiscoverableLeague {

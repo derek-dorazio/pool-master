@@ -21,7 +21,7 @@ No Bare String Literals for State/Type/Status Values:
 - For dual-state properties, prefer booleans: `isActive: boolean`, `isEnabled: boolean`, `isLocked: boolean`.
 - For 3+ states, define an enum: `ContestStatus`, `DeliveryStatus`, `SubscriptionStatus`.
 - Route JSON schemas must use `Object.values(EnumName)` or reference the enum — never hardcode `enum: ['A', 'B']`.
-- Frontend code should import enums from `@poolmaster/shared/domain/enums` or define local constants that mirror them.
+- Frontend code should import enums from `@poolmaster/shared/domain` or define local constants that mirror them.
 - EventBus event type strings must use constants from `packages/shared/events/*.ts`, never inline strings.
 
 Nomenclature:

@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { InvitePolicy } from '@poolmaster/shared/domain/enums';
+import { InvitePolicy } from '@poolmaster/shared/domain';
 import { UserPlus, LogOut, Clock, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

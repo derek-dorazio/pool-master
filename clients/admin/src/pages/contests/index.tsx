@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain/enums';
+import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { useContestList } from '@/hooks/use-contests-api';
 import type { Contest, ContestFilters } from '@/hooks/use-contests-api';
 

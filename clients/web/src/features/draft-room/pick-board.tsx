@@ -1,4 +1,4 @@
-import { DraftStatus } from '@poolmaster/shared/domain/enums';
+import { DraftStatus } from '@poolmaster/shared/domain';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { DraftState, DraftPick, DraftEntry } from './hooks/use-draft';

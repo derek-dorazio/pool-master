@@ -27,7 +27,7 @@ import {
   ScoringEngine,
   SelectionType,
   WeekDay,
-} from '@poolmaster/shared/domain/enums';
+} from '@poolmaster/shared/domain';
 
 let counter = 0;
 function nextId(): string {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Sport } from '@poolmaster/shared/domain/enums';
+import { Sport } from '@poolmaster/shared/domain';
 import { SearchBar } from '@/features/discovery/search-bar';
 import { ContestDiscoveryCard } from '@/features/discovery/discovery-cards';
 import { useBrowseContests } from '@/features/discovery/hooks/use-discovery';

@@ -19,7 +19,7 @@
  *          SOC-5, TEN-5, UFC-5
  */
 
-import { SurvivorStyle } from '@poolmaster/shared/domain/enums';
+import { SurvivorStyle } from '@poolmaster/shared/domain';
 
 // --- Types ---
 

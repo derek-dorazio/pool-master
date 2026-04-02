@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ContestStatus } from '@poolmaster/shared/domain/enums';
+import { ContestStatus } from '@poolmaster/shared/domain';
 import { Shield, Calculator, XCircle, CheckCircle, Clock, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

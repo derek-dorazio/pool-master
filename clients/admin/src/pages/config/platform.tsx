@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Server, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminApi } from '@/lib/api-client';
-import { Sport } from '@poolmaster/shared/domain/enums';
+import { Sport } from '@poolmaster/shared/domain';
 import {
   usePollIntervals,
   useIngestionSchedule,

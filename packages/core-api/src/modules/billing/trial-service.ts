@@ -7,7 +7,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import { SubscriptionStatus } from '@poolmaster/shared/domain/enums';
+import { SubscriptionStatus } from '@poolmaster/shared/domain';
 import { isBillingEnabled } from './billing-feature-gate';
 
 // ---------------------------------------------------------------------------

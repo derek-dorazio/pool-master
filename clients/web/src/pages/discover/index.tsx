@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sport } from '@poolmaster/shared/domain/enums';
+import { Sport } from '@poolmaster/shared/domain';
 import { ChevronRight } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchBar } from '@/features/discovery/search-bar';

@@ -10,7 +10,7 @@ import {
   CheckCircle, Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ContestStatus } from '@poolmaster/shared/domain/enums';
+import { ContestStatus } from '@poolmaster/shared/domain';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useContestDetail } from '@/hooks/use-contests-api';
 

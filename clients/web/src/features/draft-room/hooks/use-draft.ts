@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { DraftMode, DraftStatus } from '@poolmaster/shared/domain/enums';
+import { DraftMode, DraftStatus } from '@poolmaster/shared/domain';
 import { api } from '@/lib/api-client';
 
 export interface DraftState {

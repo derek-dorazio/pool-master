@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sport, InvitePolicy } from '@poolmaster/shared/domain/enums';
+import { Sport, InvitePolicy } from '@poolmaster/shared/domain';
 import { Users, Trophy, Clock, UserPlus, Check, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

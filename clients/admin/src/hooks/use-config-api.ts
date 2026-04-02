@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api-client';
-import { Sport } from '@poolmaster/shared/domain/enums';
+import { Sport } from '@poolmaster/shared/domain';
 
 // ── Scoring Templates ──────────────────────────────────────────────────────────
 

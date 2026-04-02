@@ -19,7 +19,7 @@ import type {
   MemberActivityEvent,
   UpcomingEvent,
 } from '@poolmaster/shared/domain';
-import { InvitationStatus } from '@poolmaster/shared/domain/enums';
+import { InvitationStatus } from '@poolmaster/shared/domain';
 
 export class DashboardService {
   constructor(

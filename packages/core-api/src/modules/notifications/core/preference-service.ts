@@ -4,7 +4,7 @@
  */
 
 import type { NotificationCategory, NotificationChannel } from '@poolmaster/shared/events';
-import { NotificationChannel as NotificationChannelEnum } from '@poolmaster/shared/domain/enums';
+import { NotificationChannel as NotificationChannelEnum } from '@poolmaster/shared/domain';
 
 export interface CategoryPreference {
   enabled: boolean;

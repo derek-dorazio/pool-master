@@ -14,7 +14,7 @@ import {
   Settings2,
   ClipboardList,
 } from 'lucide-react';
-import { Sport } from '@poolmaster/shared/domain/enums';
+import { Sport } from '@poolmaster/shared/domain';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

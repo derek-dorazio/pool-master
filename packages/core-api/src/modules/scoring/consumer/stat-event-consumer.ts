@@ -16,7 +16,7 @@ import type { EventBus } from '@poolmaster/shared/events/event-bus';
 import type { ScoreBreakdown } from '../engine/scoring-engine';
 import { scoreParticipant } from '../engine/scoring-engine';
 import type { ScoreStore } from '../storage/score-store';
-import { ContestStatus } from '@poolmaster/shared/domain/enums';
+import { ContestStatus } from '@poolmaster/shared/domain';
 
 // --- Lookup Types ---
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { DraftStatus } from '@poolmaster/shared/domain/enums';
+import { DraftStatus } from '@poolmaster/shared/domain';
 import { Volume2, VolumeX, Maximize, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

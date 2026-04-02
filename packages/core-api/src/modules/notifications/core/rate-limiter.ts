@@ -5,7 +5,7 @@
  * swap to Redis-backed counters.
  */
 
-import { NotificationChannel } from '@poolmaster/shared/domain/enums';
+import { NotificationChannel } from '@poolmaster/shared/domain';
 
 export interface RateLimitConfig {
   pushPerHour: number;

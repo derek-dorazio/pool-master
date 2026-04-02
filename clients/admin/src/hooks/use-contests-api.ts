@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api-client';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain/enums';
+import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 
 export interface Contest {
   id: string;

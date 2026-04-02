@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DraftStatus } from '@poolmaster/shared/domain/enums';
+import { DraftStatus } from '@poolmaster/shared/domain';
 import { Shield, Pause, Play, Undo2, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

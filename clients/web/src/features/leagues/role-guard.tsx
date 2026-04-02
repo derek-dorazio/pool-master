@@ -6,7 +6,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { LeagueRole } from '@poolmaster/shared/domain/enums';
+import { LeagueRole } from '@poolmaster/shared/domain';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api-client';
 
