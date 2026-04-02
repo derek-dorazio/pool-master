@@ -101,6 +101,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - run: npx turbo build --filter=@poolmaster/shared
 
       - name: Run webapp tests with coverage
         run: cd clients/web && npx vitest run --coverage
@@ -134,6 +135,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - run: npx turbo build --filter=@poolmaster/shared
 
       - name: Run admin tests with coverage
         run: cd clients/admin && npx vitest run --coverage
