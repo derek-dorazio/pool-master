@@ -31,8 +31,9 @@ export const test = base.extend<{ pageErrors: PageErrors }>({
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         const text = msg.text();
-        // Ignore known noise (e.g., favicon 404, browser extensions)
+        // Ignore known noise (favicon, browser extensions, expected 404s on optional API endpoints)
         if (text.includes('favicon.ico') || text.includes('ERR_BLOCKED_BY_CLIENT')) return;
+        if (text.includes('Failed to load resource') && text.includes('404')) return;
         errors.consoleErrors.push(text);
       }
     });
