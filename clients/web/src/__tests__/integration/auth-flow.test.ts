@@ -86,7 +86,7 @@ describe('Auth Login Flow', () => {
     await user.click(submitBtn);
 
     await waitFor(() => {
-      expect(mockApiPost).toHaveBeenCalledWith('/auth/login', {
+      expect(mockApiPost).toHaveBeenCalledWith('/v1/auth/login', {
         email: 'jane@example.com',
         password: 'securepassword',
       });
