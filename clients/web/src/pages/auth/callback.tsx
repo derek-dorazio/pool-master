@@ -39,7 +39,7 @@ export function Component() {
 
     async function handleCallback() {
       try {
-        const res = await api.post<CallbackResponse>('/auth/callback', {
+        const res = await api.post<CallbackResponse>('/v1/auth/callback', {
           code,
           state,
         });

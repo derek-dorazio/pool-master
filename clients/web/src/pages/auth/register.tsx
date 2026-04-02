@@ -181,7 +181,7 @@ export function Component() {
   async function onSubmit(data: RegisterForm) {
     setServerError('');
     try {
-      const res = await api.post<RegisterResponse>('/auth/register', {
+      const res = await api.post<RegisterResponse>('/v1/auth/register', {
         email: data.email,
         password: data.password,
         displayName: data.displayName,

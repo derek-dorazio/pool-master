@@ -67,7 +67,7 @@ export function Component() {
   async function onSubmit(data: LoginForm) {
     setServerError('');
     try {
-      const res = await api.post<LoginResponse>('/auth/login', {
+      const res = await api.post<LoginResponse>('/v1/auth/login', {
         email: data.email,
         password: data.password,
       });
