@@ -9,6 +9,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   getApp,
+  getPrisma,
   createTestUser,
   cleanupTestData,
 } from '../helpers';
@@ -23,6 +24,30 @@ describe('Billing deep integration', () => {
   let headers: Record<string, string>;
 
   beforeAll(async () => {
+    // Seed a free plan tier — integration tests start with an empty database
+    const prisma = getPrisma();
+    await prisma.planTier.upsert({
+      where: { slug: 'free' },
+      update: {},
+      create: {
+        name: 'Free',
+        slug: 'free',
+        displayOrder: 0,
+        monthlyPriceCents: 0,
+        annualPriceCents: 0,
+        trialDays: 0,
+        entitlements: {
+          max_leagues: 50,
+          max_members_per_league: 100,
+          max_contests_per_season: 100,
+          allowed_sports: 'ALL',
+          api_access: false,
+          branding: false,
+          support_tier: 'community',
+        },
+      },
+    });
+
     const testUser = await createTestUser({ displayName: 'Billing Test User' });
     headers = testUser.headers;
   });
