@@ -73,8 +73,10 @@ beforeAll(async () => {
     headers,
     payload: { name: 'Schema Validation League', visibility: LeagueVisibility.PRIVATE },
   });
+  expect(leagueRes.statusCode).toBe(201);
   const leagueBody = JSON.parse(leagueRes.body);
   leagueId = leagueBody.league?.id ?? leagueBody.id;
+  expect(leagueId).toBeDefined();
 
   // Contest via API
   const contestRes = await app.inject({
@@ -84,12 +86,14 @@ beforeAll(async () => {
     payload: {
       name: 'Schema Validation Contest',
       contestType: ContestType.SINGLE_EVENT,
-      selectionType: SelectionType.OPEN_SELECTION,
+      selectionType: SelectionType.SNAKE_DRAFT,
       scoringEngine: ScoringEngine.STROKE_PLAY,
     },
   });
+  expect(contestRes.statusCode).toBe(201);
   const contestBody = JSON.parse(contestRes.body);
   contestId = contestBody.contest?.id ?? contestBody.id;
+  expect(contestId).toBeDefined();
 
   // LeagueMembership (auto-created when league was created)
   const membership = await prisma.leagueMembership.findFirst({
