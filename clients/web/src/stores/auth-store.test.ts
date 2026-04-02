@@ -21,7 +21,13 @@ describe('auth-store', () => {
     expect(state.isLoading).toBe(false);
   });
 
-  it('clearUser removes user, clears token, marks unauthenticated', () => {
+  it('setUser persists auth_user to localStorage', () => {
+    useAuthStore.getState().setUser({ id: '1', email: 'a@b.com', displayName: 'Test' });
+    const stored = JSON.parse(localStorage.getItem('auth_user')!);
+    expect(stored.email).toBe('a@b.com');
+  });
+
+  it('clearUser removes user, clears token and auth_user, marks unauthenticated', () => {
     localStorage.setItem('access_token', 'tok123');
     useAuthStore.getState().setUser({ id: '1', email: 'a@b.com', displayName: 'Test' });
     useAuthStore.getState().clearUser();
@@ -30,6 +36,7 @@ describe('auth-store', () => {
     expect(state.isAuthenticated).toBe(false);
     expect(state.isLoading).toBe(false);
     expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('auth_user')).toBeNull();
   });
 
   it('setLoading updates isLoading', () => {
