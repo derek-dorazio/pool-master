@@ -171,6 +171,38 @@ The scoring engine is the most business-critical component. An incorrect score c
 - Reconnection after disconnect
 - Draft room: pick submission, timer display, auto-pick warning
 
+### Frontend API Mocking — CRITICAL RULES
+
+**NEVER mock the `api-client` module with `vi.mock('@/lib/api-client')` in new tests.** This pattern replaces `fetch` entirely, so the real URL (`${API_BASE}${path}`) is never constructed. Path mismatches between frontend and backend become invisible.
+
+**Instead, use MSW (Mock Service Worker)** to intercept at the network level:
+```typescript
+import { http, HttpResponse } from 'msw';
+import { server } from '@/test/msw/server';
+
+server.use(
+  http.post('/api/v1/auth/login', () => {
+    return HttpResponse.json({ tokens: { accessToken: 'test' }, user: { ... } });
+  }),
+);
+```
+
+**Why:** With MSW, the real `api-client.ts` code runs. If the frontend calls `/api/auth/login` but the handler expects `/api/v1/auth/login`, the test fails immediately because `onUnhandledRequest: 'error'` is set.
+
+**NEVER assert on API path strings in tests.** Assertions like `expect(mockApi).toHaveBeenCalledWith('/v1/auth/login', ...)` are just copies of the code — they validate nothing and drift silently. If you must assert on a path, import it from the shared route constants.
+
+**NEVER write try/catch fallbacks that return mock data in hooks.** This pattern silently hides API errors:
+```typescript
+// BAD — hides path errors, returns stale mock data
+try { return await api.get('/v1/contests'); }
+catch { return mockContests; }
+
+// GOOD — let errors propagate, handle in the component
+return await api.get('/v1/contests');
+```
+
+See `plans/23-msw-test-migration.md` for the full migration plan.
+
 ---
 
 ## 5. Test Data Strategy
