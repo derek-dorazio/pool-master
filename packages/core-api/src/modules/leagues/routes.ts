@@ -74,7 +74,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'List leagues for the current user',
       operationId: 'listLeagues',
-      response: { 200: zodToJsonSchema(LeagueListResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: league.listLeagues,
   });
@@ -95,7 +95,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
           settings: { type: 'object' },
         },
       },
-      response: { 201: zodToJsonSchema(LeagueResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: league.createLeague,
   });
@@ -105,7 +105,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get league details by ID',
       operationId: 'getLeague',
-      response: { 200: zodToJsonSchema(LeagueResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: league.getLeague,
   });

@@ -60,7 +60,7 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
       tags: ['Participants'],
       summary: 'Get the contest participant pool',
       operationId: 'getContestPool',
-      response: { 200: zodToJsonSchema(ContestPoolResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: handler.getPool,
   });

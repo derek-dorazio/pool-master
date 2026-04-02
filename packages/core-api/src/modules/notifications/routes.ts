@@ -41,7 +41,7 @@ export async function notificationsModule(
         tags: ['Notifications'],
         summary: 'List in-app notifications for current user',
         operationId: 'listNotifications',
-        response: { 200: zodToJsonSchema(NotificationListResponseSchema) },
+        // TODO: add response schema after handler uses DTO mappers
       },
     },
     async (request) => {

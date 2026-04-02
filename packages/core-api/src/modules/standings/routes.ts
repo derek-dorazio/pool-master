@@ -35,7 +35,7 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
           sortBy: { type: 'string', enum: ['rank', 'score', 'name'] },
         },
       },
-      response: { 200: zodToJsonSchema(StandingsResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: handlers.getStandings,
   });

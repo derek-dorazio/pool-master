@@ -49,7 +49,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Contests'],
       summary: 'List contests for a league',
       operationId: 'listContests',
-      response: { 200: zodToJsonSchema(ContestListResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: handlers.listContests,
   });
@@ -116,7 +116,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
           scoringStopsOnElimination: { type: 'boolean' },
         },
       },
-      response: { 201: zodToJsonSchema(ContestResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
     handler: handlers.createContest,
@@ -153,7 +153,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Get a contest by ID',
       operationId: 'getContest',
-      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: handlers.getContest,
   });
@@ -175,7 +175,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
           isExclusive: { type: 'boolean' },
         },
       },
-      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: handlers.updateContest,
   });

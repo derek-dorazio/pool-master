@@ -47,7 +47,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
           offset: { type: 'string' },
         },
       },
-      response: { 200: zodToJsonSchema(SearchResultsResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: async (request) => {
       const qs = request.query;

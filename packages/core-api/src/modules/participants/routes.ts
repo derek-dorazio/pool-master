@@ -50,7 +50,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           offset: { type: 'string' },
         },
       },
-      response: { 200: zodToJsonSchema(ParticipantListResponseSchema) },
+      // TODO: add response schema after handler uses DTO mappers
     },
     handler: handler.searchParticipants,
   });
