@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api-client';
+import { Sport } from '@poolmaster/shared/domain/enums';
 
 export type ProviderStatus = 'HEALTHY' | 'DEGRADED' | 'DOWN';
 
@@ -85,10 +86,10 @@ function buildProviderDetail(provider: Provider): ProviderDetail {
       { timestamp: '2026-03-26T09:30:00Z', errorType: 'Timeout', message: 'Request timed out after 5000ms', eventId: 'evt-8688' },
     ],
     sports: [
-      { sport: 'NFL', lastPoll: '12s ago', eventsToday: 342, errorsToday: 2, activeEvents: 8, dependentContests: 12 },
-      { sport: 'NBA', lastPoll: '8s ago', eventsToday: 518, errorsToday: 1, activeEvents: 10, dependentContests: 8 },
-      { sport: 'Golf', lastPoll: '45s ago', eventsToday: 128, errorsToday: 0, activeEvents: 3, dependentContests: 5 },
-      { sport: 'Soccer', lastPoll: '15s ago', eventsToday: 257, errorsToday: 3, activeEvents: 6, dependentContests: 4 },
+      { sport: Sport.NFL, lastPoll: '12s ago', eventsToday: 342, errorsToday: 2, activeEvents: 8, dependentContests: 12 },
+      { sport: Sport.NBA, lastPoll: '8s ago', eventsToday: 518, errorsToday: 1, activeEvents: 10, dependentContests: 8 },
+      { sport: Sport.GOLF, lastPoll: '45s ago', eventsToday: 128, errorsToday: 0, activeEvents: 3, dependentContests: 5 },
+      { sport: Sport.SOCCER, lastPoll: '15s ago', eventsToday: 257, errorsToday: 3, activeEvents: 6, dependentContests: 4 },
     ],
     unmapped: [
       { externalId: 'ext-99201', providerName: 'J. Rodriguez (QB)', status: 'Unmapped' },
@@ -99,8 +100,8 @@ function buildProviderDetail(provider: Provider): ProviderDetail {
 }
 
 const MOCK_JOBS: IngestionJob[] = [
-  { id: 'j-001', provider: 'SportsDataIO', sport: 'NFL', event: 'Week 14 — Chiefs vs Ravens', progress: 72 },
-  { id: 'j-002', provider: 'Sportradar', sport: 'NBA', event: 'Celtics vs Lakers', progress: 34 },
+  { id: 'j-001', provider: 'SportsDataIO', sport: Sport.NFL, event: 'Week 14 — Chiefs vs Ravens', progress: 72 },
+  { id: 'j-002', provider: 'Sportradar', sport: Sport.NBA, event: 'Celtics vs Lakers', progress: 34 },
 ];
 
 const MOCK_INGESTION_ERRORS: ProviderError[] = [

@@ -14,6 +14,7 @@ import {
   Settings2,
   ClipboardList,
 } from 'lucide-react';
+import { Sport } from '@poolmaster/shared/domain/enums';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,59 +34,59 @@ const STEPS = [
 ];
 
 const SPORTS = [
-  { id: 'nfl', name: 'NFL', emoji: '🏈' },
-  { id: 'nba', name: 'NBA', emoji: '🏀' },
-  { id: 'golf', name: 'Golf', emoji: '⛳' },
-  { id: 'f1', name: 'F1', emoji: '🏎️' },
-  { id: 'ncaa', name: 'NCAA', emoji: '🎓' },
-  { id: 'tennis', name: 'Tennis', emoji: '🎾' },
-  { id: 'soccer', name: 'Soccer', emoji: '⚽' },
-  { id: 'nascar', name: 'NASCAR', emoji: '🏁' },
-  { id: 'horse-racing', name: 'Horse Racing', emoji: '🐎' },
+  { id: Sport.NFL, name: 'NFL', emoji: '🏈' },
+  { id: Sport.NBA, name: 'NBA', emoji: '🏀' },
+  { id: Sport.GOLF, name: 'Golf', emoji: '⛳' },
+  { id: Sport.F1, name: 'F1', emoji: '🏎️' },
+  { id: Sport.NCAA_BASKETBALL, name: 'NCAA', emoji: '🎓' },
+  { id: Sport.TENNIS, name: 'Tennis', emoji: '🎾' },
+  { id: Sport.SOCCER, name: 'Soccer', emoji: '⚽' },
+  { id: Sport.NASCAR, name: 'NASCAR', emoji: '🏁' },
+  { id: Sport.HORSE_RACING, name: 'Horse Racing', emoji: '🐎' },
 ];
 
 const EVENTS_BY_SPORT: Record<string, Array<{ id: string; name: string; venue: string; dates: string; field: string }>> = {
-  golf: [
+  [Sport.GOLF]: [
     { id: 'masters-2026', name: 'The Masters 2026', venue: 'Augusta National', dates: 'Apr 9-12', field: '90 players' },
     { id: 'pga-2026', name: 'PGA Championship 2026', venue: 'Aronimink GC', dates: 'May 14-17', field: 'TBD' },
     { id: 'us-open-2026', name: 'US Open 2026', venue: 'Shinnecock Hills', dates: 'Jun 18-21', field: 'TBD' },
   ],
-  nfl: [
+  [Sport.NFL]: [
     { id: 'nfl-week1-2026', name: 'NFL Week 1 2026', venue: 'Various', dates: 'Sep 10-13', field: '32 teams' },
     { id: 'nfl-playoffs-2026', name: 'NFL Playoffs 2027', venue: 'Various', dates: 'Jan 9-Feb 7', field: '14 teams' },
     { id: 'super-bowl-2027', name: 'Super Bowl LXI', venue: 'SoFi Stadium', dates: 'Feb 7, 2027', field: '2 teams' },
   ],
-  nba: [
+  [Sport.NBA]: [
     { id: 'nba-playoffs-2026', name: 'NBA Playoffs 2026', venue: 'Various', dates: 'Apr 18-Jun', field: '16 teams' },
     { id: 'nba-finals-2026', name: 'NBA Finals 2026', venue: 'TBD', dates: 'Jun 2026', field: '2 teams' },
     { id: 'nba-allstar-2027', name: 'NBA All-Star Weekend', venue: 'TBD', dates: 'Feb 2027', field: '24 players' },
   ],
-  f1: [
+  [Sport.F1]: [
     { id: 'f1-monaco-2026', name: 'Monaco Grand Prix 2026', venue: 'Circuit de Monaco', dates: 'May 24', field: '20 drivers' },
     { id: 'f1-silverstone-2026', name: 'British Grand Prix 2026', venue: 'Silverstone', dates: 'Jul 5', field: '20 drivers' },
     { id: 'f1-monza-2026', name: 'Italian Grand Prix 2026', venue: 'Monza', dates: 'Sep 6', field: '20 drivers' },
   ],
-  ncaa: [
+  [Sport.NCAA_BASKETBALL]: [
     { id: 'march-madness-2027', name: 'March Madness 2027', venue: 'Various', dates: 'Mar 16-Apr 5', field: '68 teams' },
     { id: 'cfp-2026', name: 'College Football Playoff 2026', venue: 'Various', dates: 'Dec-Jan', field: '12 teams' },
     { id: 'ncaa-bowl-2026', name: 'Bowl Season 2026', venue: 'Various', dates: 'Dec 2026', field: '40+ teams' },
   ],
-  tennis: [
+  [Sport.TENNIS]: [
     { id: 'wimbledon-2026', name: 'Wimbledon 2026', venue: 'All England Club', dates: 'Jun 29-Jul 12', field: '128 players' },
     { id: 'us-open-tennis-2026', name: 'US Open 2026', venue: 'Flushing Meadows', dates: 'Aug 31-Sep 13', field: '128 players' },
     { id: 'aus-open-2027', name: 'Australian Open 2027', venue: 'Melbourne Park', dates: 'Jan 18-31', field: '128 players' },
   ],
-  soccer: [
+  [Sport.SOCCER]: [
     { id: 'world-cup-2026', name: 'FIFA World Cup 2026', venue: 'USA/CAN/MEX', dates: 'Jun-Jul 2026', field: '48 teams' },
     { id: 'epl-2026', name: 'Premier League 2026-27', venue: 'Various', dates: 'Aug 2026-May 2027', field: '20 teams' },
     { id: 'ucl-2026', name: 'Champions League 2026-27', venue: 'Various', dates: 'Sep 2026-Jun 2027', field: '36 teams' },
   ],
-  nascar: [
+  [Sport.NASCAR]: [
     { id: 'daytona-2027', name: 'Daytona 500 2027', venue: 'Daytona International', dates: 'Feb 14, 2027', field: '40 cars' },
     { id: 'nascar-coke600-2026', name: 'Coca-Cola 600 2026', venue: 'Charlotte Motor', dates: 'May 24', field: '40 cars' },
     { id: 'nascar-champ-2026', name: 'NASCAR Championship 2026', venue: 'Phoenix Raceway', dates: 'Nov 8', field: '4 cars' },
   ],
-  'horse-racing': [
+  [Sport.HORSE_RACING]: [
     { id: 'ky-derby-2026', name: 'Kentucky Derby 2026', venue: 'Churchill Downs', dates: 'May 2', field: '20 horses' },
     { id: 'preakness-2026', name: 'Preakness Stakes 2026', venue: 'Pimlico', dates: 'May 16', field: '14 horses' },
     { id: 'belmont-2026', name: 'Belmont Stakes 2026', venue: 'Belmont Park', dates: 'Jun 6', field: '12 horses' },
@@ -103,7 +104,7 @@ const SELECTION_TYPES = [
 ];
 
 const SCORING_TEMPLATES: Record<string, Array<{ id: string; name: string; description: string; rules: Array<{ stat: string; points: string; condition: string }> }>> = {
-  golf: [
+  [Sport.GOLF]: [
     {
       id: 'stroke-play',
       name: 'Stroke Play (Standard)',
@@ -131,7 +132,7 @@ const SCORING_TEMPLATES: Record<string, Array<{ id: string; name: string; descri
       ],
     },
   ],
-  nfl: [
+  [Sport.NFL]: [
     {
       id: 'nfl-standard',
       name: 'NFL Standard',
@@ -336,7 +337,7 @@ function Step2ContestType({
   const duration = form.watch('duration');
   const selectionType = form.watch('selectionType');
   const sport = form.watch('sport');
-  const bracketSports = ['ncaa', 'nba'];
+  const bracketSports: string[] = [Sport.NCAA_BASKETBALL, Sport.NBA];
 
   return (
     <div className="space-y-8">

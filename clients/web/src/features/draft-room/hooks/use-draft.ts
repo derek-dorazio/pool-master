@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DraftMode, DraftStatus } from '@poolmaster/shared/domain/enums';
 import { api } from '@/lib/api-client';
 
 export interface DraftState {
@@ -8,8 +9,8 @@ export interface DraftState {
   leagueName: string;
   sport: string;
   draftType: 'SNAKE' | 'AUCTION' | 'TIERED' | 'PICK_EM' | 'BRACKET';
-  mode: 'LIVE' | 'ASYNC';
-  status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
+  mode: DraftMode;
+  status: DraftStatus;
   currentPickNumber: number;
   totalPicks: number;
   currentRound: number;
@@ -65,8 +66,8 @@ const mockDraft: DraftState = {
   leagueName: 'Weekend Warriors',
   sport: 'NFL',
   draftType: 'SNAKE',
-  mode: 'LIVE',
-  status: 'LIVE',
+  mode: DraftMode.LIVE,
+  status: DraftStatus.LIVE,
   currentPickNumber: 7,
   totalPicks: 180,
   currentRound: 3,

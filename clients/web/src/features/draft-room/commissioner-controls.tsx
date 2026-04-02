@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { DraftStatus } from '@poolmaster/shared/domain/enums';
 import { Shield, Pause, Play, Undo2, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface CommissionerControlsProps {
   draftId: string;
-  draftStatus: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
+  draftStatus: DraftStatus;
   isCommissioner: boolean;
 }
 
@@ -26,35 +27,35 @@ export function CommissionerControls({ draftId, draftStatus, isCommissioner }: C
     },
   });
 
-  if (!isCommissioner || draftStatus === 'COMPLETE') return null;
+  if (!isCommissioner || draftStatus === DraftStatus.COMPLETE) return null;
 
   const actions = [
     {
       key: 'pause',
       label: 'Pause Draft',
       icon: Pause,
-      show: draftStatus === 'LIVE',
+      show: draftStatus === DraftStatus.LIVE,
       confirm: 'Pause the draft? All timers will stop until you resume.',
     },
     {
       key: 'resume',
       label: 'Resume Draft',
       icon: Play,
-      show: draftStatus === 'PAUSED',
+      show: draftStatus === DraftStatus.PAUSED,
       confirm: 'Resume the draft? Timers will restart.',
     },
     {
       key: 'undo',
       label: 'Undo Last Pick',
       icon: Undo2,
-      show: draftStatus === 'LIVE' || draftStatus === 'PAUSED',
+      show: draftStatus === DraftStatus.LIVE || draftStatus === DraftStatus.PAUSED,
       confirm: 'Undo the last pick? The player will return to the available pool.',
     },
     {
       key: 'skip',
       label: 'Skip Pick',
       icon: SkipForward,
-      show: draftStatus === 'LIVE',
+      show: draftStatus === DraftStatus.LIVE,
       confirm: 'Skip the current pick? It will be marked as skipped.',
     },
   ];

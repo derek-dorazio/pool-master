@@ -1,3 +1,4 @@
+import { DraftStatus } from '@poolmaster/shared/domain/enums';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { DraftState, DraftPick, DraftEntry } from './hooks/use-draft';
@@ -28,7 +29,7 @@ export function PickBoard({ draft }: { draft: DraftState }) {
   return (
     <div className="flex flex-col h-full">
       {/* Current pick banner */}
-      {draft.status === 'LIVE' && (
+      {draft.status === DraftStatus.LIVE && (
         <div
           className={cn(
             'px-4 py-2 text-center text-sm font-medium border-b',
@@ -79,7 +80,7 @@ export function PickBoard({ draft }: { draft: DraftState }) {
                 {entries.map((entry) => {
                   const pick = pickMap.get(`${round}-${entry.id}`);
                   const pickNum = orderedEntries.indexOf(entry) + 1 + (round - 1) * entries.length;
-                  const isCurrent = pickNum === currentPickNumber && draft.status === 'LIVE';
+                  const isCurrent = pickNum === currentPickNumber && draft.status === DraftStatus.LIVE;
 
                   return (
                     <div

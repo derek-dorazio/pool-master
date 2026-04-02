@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Sport, InvitePolicy } from '@poolmaster/shared/domain/enums';
 import { api } from '@/lib/api-client';
 
 export interface DiscoverableLeague {
@@ -32,18 +33,18 @@ export interface DiscoverableContest {
 
 // Mock data
 const mockLeagues: DiscoverableLeague[] = [
-  { id: 'l1', name: 'Masters Pool 2026', description: 'Annual Masters tournament pool', sport: 'GOLF', memberCount: 14, maxMembers: 20, activeContestCount: 1, activityLevel: 'HIGH', joinPolicy: 'OPEN', commissionerName: 'Dave' },
-  { id: 'l2', name: 'NFL Survivor League', description: 'Pick one team per week, survive or die', sport: 'NFL', memberCount: 32, maxMembers: null, activeContestCount: 0, activityLevel: 'MEDIUM', joinPolicy: 'OPEN', commissionerName: 'Mike' },
-  { id: 'l3', name: 'F1 Fantasy League', description: 'Full season F1 fantasy', sport: 'F1', memberCount: 8, maxMembers: 12, activeContestCount: 2, activityLevel: 'HIGH', joinPolicy: 'APPROVAL', commissionerName: 'Sarah' },
-  { id: 'l4', name: 'March Madness Bracket', description: 'NCAA tournament bracket challenge', sport: 'NCAA_BASKETBALL', memberCount: 45, maxMembers: 100, activeContestCount: 1, activityLevel: 'HIGH', joinPolicy: 'OPEN', commissionerName: 'Tom' },
-  { id: 'l5', name: 'Kentucky Derby Club', description: 'Triple Crown horse racing picks', sport: 'HORSE_RACING', memberCount: 6, maxMembers: 10, activeContestCount: 0, activityLevel: 'LOW', joinPolicy: 'OPEN', commissionerName: 'Lisa' },
-  { id: 'l6', name: 'EPL Soccer Picks', description: 'Premier League weekly picks', sport: 'SOCCER', memberCount: 18, maxMembers: 24, activeContestCount: 1, activityLevel: 'HIGH', joinPolicy: 'OPEN', commissionerName: 'Alex' },
+  { id: 'l1', name: 'Masters Pool 2026', description: 'Annual Masters tournament pool', sport: Sport.GOLF, memberCount: 14, maxMembers: 20, activeContestCount: 1, activityLevel: 'HIGH', joinPolicy: InvitePolicy.OPEN, commissionerName: 'Dave' },
+  { id: 'l2', name: 'NFL Survivor League', description: 'Pick one team per week, survive or die', sport: Sport.NFL, memberCount: 32, maxMembers: null, activeContestCount: 0, activityLevel: 'MEDIUM', joinPolicy: InvitePolicy.OPEN, commissionerName: 'Mike' },
+  { id: 'l3', name: 'F1 Fantasy League', description: 'Full season F1 fantasy', sport: Sport.F1, memberCount: 8, maxMembers: 12, activeContestCount: 2, activityLevel: 'HIGH', joinPolicy: 'APPROVAL', commissionerName: 'Sarah' },
+  { id: 'l4', name: 'March Madness Bracket', description: 'NCAA tournament bracket challenge', sport: Sport.NCAA_BASKETBALL, memberCount: 45, maxMembers: 100, activeContestCount: 1, activityLevel: 'HIGH', joinPolicy: InvitePolicy.OPEN, commissionerName: 'Tom' },
+  { id: 'l5', name: 'Kentucky Derby Club', description: 'Triple Crown horse racing picks', sport: Sport.HORSE_RACING, memberCount: 6, maxMembers: 10, activeContestCount: 0, activityLevel: 'LOW', joinPolicy: InvitePolicy.OPEN, commissionerName: 'Lisa' },
+  { id: 'l6', name: 'EPL Soccer Picks', description: 'Premier League weekly picks', sport: Sport.SOCCER, memberCount: 18, maxMembers: 24, activeContestCount: 1, activityLevel: 'HIGH', joinPolicy: InvitePolicy.OPEN, commissionerName: 'Alex' },
 ];
 
 const mockContests: DiscoverableContest[] = [
-  { id: 'c1', leagueName: 'Masters Pool 2026', contestName: 'The Masters — Pick 6', sport: 'GOLF', eventName: 'The Masters 2026', draftType: 'SNAKE', memberCount: 10, maxMembers: 20, entryFee: null, prizePool: null, draftStart: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), lockTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), status: 'OPEN' },
-  { id: 'c2', leagueName: 'March Madness Bracket', contestName: 'NCAA Tournament Bracket', sport: 'NCAA_BASKETBALL', eventName: 'March Madness 2026', draftType: 'BRACKET', memberCount: 38, maxMembers: 100, entryFee: null, prizePool: null, draftStart: null, lockTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), status: 'OPEN' },
-  { id: 'c3', leagueName: 'F1 Fantasy League', contestName: 'Bahrain GP — Budget Pick', sport: 'F1', eventName: 'Bahrain Grand Prix', draftType: 'BUDGET', memberCount: 6, maxMembers: 12, entryFee: null, prizePool: null, draftStart: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), lockTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), status: 'OPEN' },
+  { id: 'c1', leagueName: 'Masters Pool 2026', contestName: 'The Masters — Pick 6', sport: Sport.GOLF, eventName: 'The Masters 2026', draftType: 'SNAKE', memberCount: 10, maxMembers: 20, entryFee: null, prizePool: null, draftStart: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), lockTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), status: 'OPEN' },
+  { id: 'c2', leagueName: 'March Madness Bracket', contestName: 'NCAA Tournament Bracket', sport: Sport.NCAA_BASKETBALL, eventName: 'March Madness 2026', draftType: 'BRACKET', memberCount: 38, maxMembers: 100, entryFee: null, prizePool: null, draftStart: null, lockTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), status: 'OPEN' },
+  { id: 'c3', leagueName: 'F1 Fantasy League', contestName: 'Bahrain GP — Budget Pick', sport: Sport.F1, eventName: 'Bahrain Grand Prix', draftType: 'BUDGET', memberCount: 6, maxMembers: 12, entryFee: null, prizePool: null, draftStart: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), lockTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), status: 'OPEN' },
 ];
 
 export function useTrendingLeagues(sport?: string) {

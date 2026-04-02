@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api-client';
+import { Sport } from '@poolmaster/shared/domain/enums';
 
 // ── Scoring Templates ──────────────────────────────────────────────────────────
 
@@ -14,14 +15,14 @@ export interface ScoringTemplate {
 }
 
 const MOCK_SCORING_TEMPLATES: ScoringTemplate[] = [
-  { id: 'st-1', name: 'NFL Standard', sport: 'NFL', type: 'Points', description: 'Standard NFL scoring with TDs, FGs, turnovers', lastModified: '2026-03-20' },
-  { id: 'st-2', name: 'NFL PPR', sport: 'NFL', type: 'Points', description: 'Points per reception scoring variant', lastModified: '2026-03-18' },
-  { id: 'st-3', name: 'NBA Fantasy', sport: 'NBA', type: 'Points', description: 'Category-based NBA scoring', lastModified: '2026-03-15' },
-  { id: 'st-4', name: 'Soccer Goals Only', sport: 'Soccer', type: 'Simple', description: 'Goals and assists only scoring', lastModified: '2026-03-22' },
-  { id: 'st-5', name: 'Golf Stroke Play', sport: 'Golf', type: 'Stroke', description: 'Under/over par scoring for stroke play', lastModified: '2026-03-24' },
-  { id: 'st-6', name: 'NASCAR Points', sport: 'NASCAR', type: 'Position', description: 'Position-based points with stage bonuses', lastModified: '2026-03-10' },
-  { id: 'st-7', name: 'NCAA Bracket', sport: 'NCAA', type: 'Bracket', description: 'Round-weighted bracket scoring', lastModified: '2026-03-25' },
-  { id: 'st-8', name: 'Tennis Match', sport: 'Tennis', type: 'Match', description: 'Sets and match-win scoring', lastModified: '2026-03-12' },
+  { id: 'st-1', name: 'NFL Standard', sport: Sport.NFL, type: 'Points', description: 'Standard NFL scoring with TDs, FGs, turnovers', lastModified: '2026-03-20' },
+  { id: 'st-2', name: 'NFL PPR', sport: Sport.NFL, type: 'Points', description: 'Points per reception scoring variant', lastModified: '2026-03-18' },
+  { id: 'st-3', name: 'NBA Fantasy', sport: Sport.NBA, type: 'Points', description: 'Category-based NBA scoring', lastModified: '2026-03-15' },
+  { id: 'st-4', name: 'Soccer Goals Only', sport: Sport.SOCCER, type: 'Simple', description: 'Goals and assists only scoring', lastModified: '2026-03-22' },
+  { id: 'st-5', name: 'Golf Stroke Play', sport: Sport.GOLF, type: 'Stroke', description: 'Under/over par scoring for stroke play', lastModified: '2026-03-24' },
+  { id: 'st-6', name: 'NASCAR Points', sport: Sport.NASCAR, type: 'Position', description: 'Position-based points with stage bonuses', lastModified: '2026-03-10' },
+  { id: 'st-7', name: 'NCAA Bracket', sport: Sport.NCAA_BASKETBALL, type: 'Bracket', description: 'Round-weighted bracket scoring', lastModified: '2026-03-25' },
+  { id: 'st-8', name: 'Tennis Match', sport: Sport.TENNIS, type: 'Match', description: 'Sets and match-win scoring', lastModified: '2026-03-12' },
 ];
 
 export function useScoringTemplates() {
@@ -51,12 +52,12 @@ export interface SelectionTemplate {
 }
 
 const MOCK_SELECTION_TEMPLATES: SelectionTemplate[] = [
-  { id: 'sel-1', name: 'NFL Pick\'em', sport: 'NFL', type: 'Pick', description: 'Weekly game pick selections', lastModified: '2026-03-20' },
-  { id: 'sel-2', name: 'NFL Survivor', sport: 'NFL', type: 'Survivor', description: 'Single team weekly survivor pool', lastModified: '2026-03-18' },
-  { id: 'sel-3', name: 'Golf DFS', sport: 'Golf', type: 'Salary Cap', description: 'Daily fantasy salary cap selections', lastModified: '2026-03-22' },
-  { id: 'sel-4', name: 'NASCAR Top 5', sport: 'NASCAR', type: 'Rank', description: 'Predict top 5 finishers', lastModified: '2026-03-15' },
-  { id: 'sel-5', name: 'NCAA Bracket', sport: 'NCAA', type: 'Bracket', description: '64-team bracket selection', lastModified: '2026-03-25' },
-  { id: 'sel-6', name: 'Soccer Prop', sport: 'Soccer', type: 'Prop', description: 'Player prop bet selections', lastModified: '2026-03-14' },
+  { id: 'sel-1', name: 'NFL Pick\'em', sport: Sport.NFL, type: 'Pick', description: 'Weekly game pick selections', lastModified: '2026-03-20' },
+  { id: 'sel-2', name: 'NFL Survivor', sport: Sport.NFL, type: 'Survivor', description: 'Single team weekly survivor pool', lastModified: '2026-03-18' },
+  { id: 'sel-3', name: 'Golf DFS', sport: Sport.GOLF, type: 'Salary Cap', description: 'Daily fantasy salary cap selections', lastModified: '2026-03-22' },
+  { id: 'sel-4', name: 'NASCAR Top 5', sport: Sport.NASCAR, type: 'Rank', description: 'Predict top 5 finishers', lastModified: '2026-03-15' },
+  { id: 'sel-5', name: 'NCAA Bracket', sport: Sport.NCAA_BASKETBALL, type: 'Bracket', description: '64-team bracket selection', lastModified: '2026-03-25' },
+  { id: 'sel-6', name: 'Soccer Prop', sport: Sport.SOCCER, type: 'Prop', description: 'Player prop bet selections', lastModified: '2026-03-14' },
 ];
 
 export function useSelectionTemplates() {
@@ -281,8 +282,8 @@ const MOCK_INGESTION_SCHEDULE: IngestionScheduleConfig = {
   rankingSyncHrs: 4,
   liveScorePollingSeconds: 30,
   sportOverrides: [
-    { sport: 'NFL', healthCheckMin: 3, scheduleSyncHrs: 4, participantSyncHrs: 6, rankingSyncHrs: 2, liveScorePollingSeconds: 10 },
-    { sport: 'NBA', healthCheckMin: 3, scheduleSyncHrs: 4, participantSyncHrs: 8, rankingSyncHrs: 3, liveScorePollingSeconds: 15 },
+    { sport: Sport.NFL, healthCheckMin: 3, scheduleSyncHrs: 4, participantSyncHrs: 6, rankingSyncHrs: 2, liveScorePollingSeconds: 10 },
+    { sport: Sport.NBA, healthCheckMin: 3, scheduleSyncHrs: 4, participantSyncHrs: 8, rankingSyncHrs: 3, liveScorePollingSeconds: 15 },
   ],
 };
 

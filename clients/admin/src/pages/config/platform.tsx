@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Server, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminApi } from '@/lib/api-client';
+import { Sport } from '@poolmaster/shared/domain/enums';
 import {
   usePollIntervals,
   useIngestionSchedule,
@@ -120,7 +121,7 @@ function PollIntervalsSection() {
 
 // ── Ingestion Schedule Section ─────────────────────────────────────────────────
 
-const AVAILABLE_SPORTS = ['NFL', 'NBA', 'NCAA', 'Soccer', 'Golf', 'NASCAR', 'Tennis', 'F1', 'Horse Racing'];
+const AVAILABLE_SPORTS = [Sport.NFL, Sport.NBA, Sport.NCAA_BASKETBALL, Sport.SOCCER, Sport.GOLF, Sport.NASCAR, Sport.TENNIS, Sport.F1, Sport.HORSE_RACING];
 
 function IngestionScheduleSection() {
   const { data: config } = useIngestionSchedule();

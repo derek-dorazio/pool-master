@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Sport } from '@poolmaster/shared/domain/enums';
 import { SearchBar } from '@/features/discovery/search-bar';
 import { LeagueDiscoveryCard } from '@/features/discovery/discovery-cards';
 import { useBrowseLeagues, useJoinLeague } from '@/features/discovery/hooks/use-discovery';
 import { Badge } from '@/components/ui/badge';
 
-const SPORTS = ['ALL', 'GOLF', 'NFL', 'NBA', 'F1', 'NCAA_BASKETBALL', 'SOCCER', 'TENNIS', 'HORSE_RACING'];
+const SPORTS = ['ALL', Sport.GOLF, Sport.NFL, Sport.NBA, Sport.F1, Sport.NCAA_BASKETBALL, Sport.SOCCER, Sport.TENNIS, Sport.HORSE_RACING];
 const SORT_OPTIONS = [
   { value: 'active', label: 'Most Active' },
   { value: 'newest', label: 'Newest' },

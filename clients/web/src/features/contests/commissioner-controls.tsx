@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ContestStatus } from '@poolmaster/shared/domain/enums';
 import { Shield, Calculator, XCircle, CheckCircle, Clock, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,8 +43,8 @@ export function CommissionerContestControls({ contestId, contestStatus, isCommis
 
   if (!isCommissioner) return null;
 
-  const isActive = contestStatus === 'ACTIVE' || contestStatus === 'LOCKED';
-  const isCompleted = contestStatus === 'COMPLETED';
+  const isActive = contestStatus === ContestStatus.ACTIVE || contestStatus === ContestStatus.LOCKED;
+  const isCompleted = contestStatus === ContestStatus.COMPLETED;
 
   return (
     <Card className="border-amber-200 dark:border-amber-800">
@@ -96,7 +97,7 @@ export function CommissionerContestControls({ contestId, contestStatus, isCommis
             </Button>
           )}
 
-          {(isActive || contestStatus === 'OPEN' || contestStatus === 'DRAFTING') && (
+          {(isActive || contestStatus === ContestStatus.OPEN || contestStatus === ContestStatus.DRAFTING) && (
             <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={() => setConfirming('cancel')} disabled={action.isPending}>
               <XCircle className="h-3 w-3 mr-1" /> Cancel Contest
             </Button>

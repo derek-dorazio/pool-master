@@ -5,11 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ContestStatus, Sport } from '@poolmaster/shared/domain/enums';
 import { useContestList } from '@/hooks/use-contests-api';
 import type { Contest, ContestFilters } from '@/hooks/use-contests-api';
 
-const SPORTS = ['All', 'NFL', 'NBA', 'Golf', 'F1', 'NCAA', 'Soccer', 'Horse Racing', 'NASCAR'];
-const STATUSES = ['All', 'OPEN', 'DRAFTING', 'ACTIVE', 'COMPLETED', 'CANCELLED'];
+const SPORTS = ['All', Sport.NFL, Sport.NBA, Sport.GOLF, Sport.F1, Sport.NCAA_BASKETBALL, Sport.SOCCER, Sport.HORSE_RACING, Sport.NASCAR];
+const STATUSES = ['All', ContestStatus.OPEN, ContestStatus.DRAFTING, ContestStatus.ACTIVE, ContestStatus.COMPLETED, ContestStatus.CANCELLED];
 const TYPES = ['All', 'Single Event', 'Season Long'];
 const TENANTS = ['All', 'Ultimate Pool Manager Pro', 'FanDraft', 'RaceFan'];
 
@@ -17,11 +18,11 @@ const PAGE_SIZE = 5;
 
 function statusColor(status: Contest['status']) {
   switch (status) {
-    case 'OPEN': return 'bg-blue-100 text-blue-800';
-    case 'DRAFTING': return 'bg-yellow-100 text-yellow-800';
-    case 'ACTIVE': return 'bg-green-100 text-green-800';
-    case 'COMPLETED': return 'bg-gray-100 text-gray-800';
-    case 'CANCELLED': return 'bg-red-100 text-red-800';
+    case ContestStatus.OPEN: return 'bg-blue-100 text-blue-800';
+    case ContestStatus.DRAFTING: return 'bg-yellow-100 text-yellow-800';
+    case ContestStatus.ACTIVE: return 'bg-green-100 text-green-800';
+    case ContestStatus.COMPLETED: return 'bg-gray-100 text-gray-800';
+    case ContestStatus.CANCELLED: return 'bg-red-100 text-red-800';
   }
 }
 

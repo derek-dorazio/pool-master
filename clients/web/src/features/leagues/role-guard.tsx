@@ -6,10 +6,9 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { LeagueRole } from '@poolmaster/shared/domain/enums';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api-client';
-
-type LeagueRole = 'OWNER' | 'COMMISSIONER' | 'MANAGER' | 'VIEWER';
 
 interface RoleGuardProps {
   /** Minimum roles that have access (checked in order: OWNER > COMMISSIONER > MANAGER > VIEWER) */
@@ -27,10 +26,10 @@ function useMyLeagueRole(leagueId: string) {
     queryFn: async (): Promise<LeagueRole> => {
       try {
         const membership = await api.get<{ role: string }>(`/leagues/${leagueId}/members/me`);
-        return (membership.role as LeagueRole) ?? 'VIEWER';
+        return (membership.role as LeagueRole) ?? LeagueRole.VIEWER;
       } catch {
         // Fail secure — default to least privilege on error
-        return 'VIEWER';
+        return LeagueRole.VIEWER;
       }
     },
     enabled: !!user,

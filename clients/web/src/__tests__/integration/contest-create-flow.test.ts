@@ -126,7 +126,7 @@ describe('Contest Create Flow', () => {
       expect(mockApiPost).toHaveBeenCalledWith(
         '/v1/contests',
         expect.objectContaining({
-          sport: 'golf',
+          sport: 'GOLF',
           eventId: 'masters-2026',
           selectionType: 'snake-draft',
           scoringTemplateId: 'stroke-play',

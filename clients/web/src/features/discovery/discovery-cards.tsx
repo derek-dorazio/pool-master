@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Sport, InvitePolicy } from '@poolmaster/shared/domain/enums';
 import { Users, Trophy, Clock, UserPlus, Check, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import type { DiscoverableLeague, DiscoverableContest } from './hooks/use-discovery';
 
 const sportEmoji: Record<string, string> = {
-  GOLF: '\u26F3', NFL: '\uD83C\uDFC8', NBA: '\uD83C\uDFC0', F1: '\uD83C\uDFCE\uFE0F',
-  NASCAR: '\uD83C\uDFCE\uFE0F', NCAA_BASKETBALL: '\uD83C\uDFC0', TENNIS: '\uD83C\uDFBE',
-  HORSE_RACING: '\uD83C\uDFC7', SOCCER: '\u26BD', NHL: '\uD83C\uDFD2', MLB: '\u26BE', UFC: '\uD83E\uDD4A',
+  [Sport.GOLF]: '\u26F3', [Sport.NFL]: '\uD83C\uDFC8', [Sport.NBA]: '\uD83C\uDFC0', [Sport.F1]: '\uD83C\uDFCE\uFE0F',
+  [Sport.NASCAR]: '\uD83C\uDFCE\uFE0F', [Sport.NCAA_BASKETBALL]: '\uD83C\uDFC0', [Sport.TENNIS]: '\uD83C\uDFBE',
+  [Sport.HORSE_RACING]: '\uD83C\uDFC7', [Sport.SOCCER]: '\u26BD', [Sport.NHL]: '\uD83C\uDFD2', [Sport.MLB]: '\u26BE', [Sport.UFC]: '\uD83E\uDD4A',
 };
 
 // --- League Card ---
@@ -51,9 +52,9 @@ export function LeagueDiscoveryCard({ league, onJoin, isJoining, joinState = 'no
             <div className="flex items-center gap-2 mt-2">
               <Badge
                 variant="outline"
-                className={`text-[10px] ${league.joinPolicy === 'OPEN' ? 'text-green-700 border-green-300' : 'text-amber-700 border-amber-300'}`}
+                className={`text-[10px] ${league.joinPolicy === InvitePolicy.OPEN ? 'text-green-700 border-green-300' : 'text-amber-700 border-amber-300'}`}
               >
-                {league.joinPolicy === 'OPEN' ? 'Open' : 'Approval'}
+                {league.joinPolicy === InvitePolicy.OPEN ? 'Open' : 'Approval'}
               </Badge>
               <span className="text-[10px] text-muted-foreground">by {league.commissionerName}</span>
             </div>
@@ -73,7 +74,7 @@ export function LeagueDiscoveryCard({ league, onJoin, isJoining, joinState = 'no
                 {isJoining ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  <><UserPlus className="h-3 w-3 mr-1" /> {league.joinPolicy === 'OPEN' ? 'Join' : 'Request'}</>
+                  <><UserPlus className="h-3 w-3 mr-1" /> {league.joinPolicy === InvitePolicy.OPEN ? 'Join' : 'Request'}</>
                 )}
               </Button>
             )}

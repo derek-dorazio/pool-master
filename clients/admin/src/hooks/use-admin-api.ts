@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api-client';
+import { Sport } from '@poolmaster/shared/domain/enums';
 
 export interface PlatformMetrics {
   activeTenants: { value: number; trend: number };
@@ -203,15 +204,15 @@ const mockTenantDetail: TenantDetail = {
     { id: 'u6', email: 'frank@fantasykings.com', displayName: 'Frank Lee', role: 'Member', lastActive: '2026-03-23T16:00:00Z' },
   ],
   leaguesList: [
-    { id: 'l1', name: 'NFL Kings League', sport: 'NFL', members: 12, contests: 8 },
-    { id: 'l2', name: 'NBA Dynasty', sport: 'NBA', members: 10, contests: 14 },
-    { id: 'l3', name: 'March Madness Bracket', sport: 'NCAA', members: 24, contests: 3 },
+    { id: 'l1', name: 'NFL Kings League', sport: Sport.NFL, members: 12, contests: 8 },
+    { id: 'l2', name: 'NBA Dynasty', sport: Sport.NBA, members: 10, contests: 14 },
+    { id: 'l3', name: 'March Madness Bracket', sport: Sport.NCAA_BASKETBALL, members: 24, contests: 3 },
   ],
   contestsList: [
-    { id: 'c1', name: 'Week 12 NFL Pick Em', sport: 'NFL', type: 'Pick Em', status: 'Active', entries: 12 },
-    { id: 'c2', name: 'NBA Daily Fantasy', sport: 'NBA', type: 'Daily Fantasy', status: 'Active', entries: 8 },
-    { id: 'c3', name: 'March Madness 2026', sport: 'NCAA', type: 'Bracket', status: 'Upcoming', entries: 24 },
-    { id: 'c4', name: 'Super Bowl Props', sport: 'NFL', type: 'Props', status: 'Completed', entries: 18 },
+    { id: 'c1', name: 'Week 12 NFL Pick Em', sport: Sport.NFL, type: 'Pick Em', status: 'Active', entries: 12 },
+    { id: 'c2', name: 'NBA Daily Fantasy', sport: Sport.NBA, type: 'Daily Fantasy', status: 'Active', entries: 8 },
+    { id: 'c3', name: 'March Madness 2026', sport: Sport.NCAA_BASKETBALL, type: 'Bracket', status: 'Upcoming', entries: 24 },
+    { id: 'c4', name: 'Super Bowl Props', sport: Sport.NFL, type: 'Props', status: 'Completed', entries: 18 },
   ],
   activity: [
     { id: 'a1', timestamp: '2026-03-26T14:00:00Z', action: 'contest.created', description: 'Created contest "Week 13 NFL Pick Em"' },
@@ -244,15 +245,15 @@ const mockUserDetail: UserDetail = {
     { tenantId: 't2', tenantName: 'Draft Masters', role: 'Member' },
   ],
   leagueMemberships: [
-    { leagueId: 'l1', leagueName: 'NFL Kings League', sport: 'NFL', role: 'Commissioner' },
-    { leagueId: 'l2', leagueName: 'NBA Dynasty', sport: 'NBA', role: 'Member' },
-    { leagueId: 'l5', leagueName: 'Draft Masters Weekly', sport: 'NFL', role: 'Member' },
+    { leagueId: 'l1', leagueName: 'NFL Kings League', sport: Sport.NFL, role: 'Commissioner' },
+    { leagueId: 'l2', leagueName: 'NBA Dynasty', sport: Sport.NBA, role: 'Member' },
+    { leagueId: 'l5', leagueName: 'Draft Masters Weekly', sport: Sport.NFL, role: 'Member' },
   ],
   contests: [
-    { id: 'c1', name: 'Week 12 NFL Pick Em', sport: 'NFL', status: 'Active', rank: 3 },
-    { id: 'c2', name: 'NBA Daily Fantasy', sport: 'NBA', status: 'Active', rank: 1 },
-    { id: 'c3', name: 'March Madness 2026', sport: 'NCAA', status: 'Upcoming', rank: 0 },
-    { id: 'c4', name: 'Super Bowl Props', sport: 'NFL', status: 'Completed', rank: 5 },
+    { id: 'c1', name: 'Week 12 NFL Pick Em', sport: Sport.NFL, status: 'Active', rank: 3 },
+    { id: 'c2', name: 'NBA Daily Fantasy', sport: Sport.NBA, status: 'Active', rank: 1 },
+    { id: 'c3', name: 'March Madness 2026', sport: Sport.NCAA_BASKETBALL, status: 'Upcoming', rank: 0 },
+    { id: 'c4', name: 'Super Bowl Props', sport: Sport.NFL, status: 'Completed', rank: 5 },
   ],
   devices: [
     { id: 'd1', platform: 'iOS 17 / iPhone 15 Pro', lastActive: '2026-03-26T14:00:00Z', tokenStatus: 'Valid' },

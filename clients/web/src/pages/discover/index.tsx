@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Sport } from '@poolmaster/shared/domain/enums';
 import { ChevronRight } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchBar } from '@/features/discovery/search-bar';
@@ -7,7 +8,7 @@ import { LeagueDiscoveryCard } from '@/features/discovery/discovery-cards';
 import { ContestDiscoveryCard } from '@/features/discovery/discovery-cards';
 import { useTrendingLeagues, usePopularContests, useJoinLeague } from '@/features/discovery/hooks/use-discovery';
 
-const SPORTS = ['ALL', 'GOLF', 'NFL', 'NBA', 'F1', 'NCAA_BASKETBALL', 'SOCCER', 'TENNIS', 'HORSE_RACING', 'NASCAR'];
+const SPORTS = ['ALL', Sport.GOLF, Sport.NFL, Sport.NBA, Sport.F1, Sport.NCAA_BASKETBALL, Sport.SOCCER, Sport.TENNIS, Sport.HORSE_RACING, Sport.NASCAR];
 
 export function Component() {
   const navigate = useNavigate();

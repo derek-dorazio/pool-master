@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { InvitePolicy } from '@poolmaster/shared/domain/enums';
 import { UserPlus, LogOut, Clock, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -12,7 +13,7 @@ type MembershipState = 'none' | 'pending' | 'member';
 
 interface JoinLeagueButtonProps {
   leagueId: string;
-  joinPolicy: 'OPEN' | 'APPROVAL';
+  joinPolicy: string;
   membershipState: MembershipState;
 }
 
@@ -55,7 +56,7 @@ export function JoinLeagueButton({ leagueId: _leagueId, joinPolicy, membershipSt
       ) : (
         <>
           <UserPlus className="h-4 w-4 mr-1" />
-          {joinPolicy === 'OPEN' ? 'Join League' : 'Request to Join'}
+          {joinPolicy === InvitePolicy.OPEN ? 'Join League' : 'Request to Join'}
         </>
       )}
     </Button>

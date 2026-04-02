@@ -1,3 +1,4 @@
+import { DraftStatus } from '@poolmaster/shared/domain/enums';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { DraftState, DraftPick } from './hooks/use-draft';
@@ -67,7 +68,7 @@ export function TieredBoard({ draft, tiers }: TieredBoardProps) {
                   {entries.map((entry) => {
                     const pick = pickMap.get(`${round}-${entry.id}`);
                     const pickNum = (round - 1) * entries.length + entries.indexOf(entry) + 1;
-                    const isCurrent = pickNum === currentPickNumber && draft.status === 'LIVE';
+                    const isCurrent = pickNum === currentPickNumber && draft.status === DraftStatus.LIVE;
 
                     return (
                       <div
