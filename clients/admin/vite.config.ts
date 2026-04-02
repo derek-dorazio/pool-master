@@ -7,6 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@poolmaster/shared/domain': path.resolve(__dirname, '../../packages/shared/domain/index.ts'),
+      '@poolmaster/shared': path.resolve(__dirname, '../../packages/shared'),
     },
   },
   server: {
