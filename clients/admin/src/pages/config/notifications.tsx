@@ -564,7 +564,7 @@ const SEND_DAYS: SendDay[] = [
 
 function WeeklyDigestSection() {
   const { data: config } = useDigestConfig();
-  const { data: mockPreview } = useDigestPreview();
+  const { data: digestPreview } = useDigestPreview();
   const [subjectTemplate, setSubjectTemplate] = useState(config.subjectTemplate);
   const [headerTemplate, setHeaderTemplate] = useState(config.headerTemplate);
   const [footerTemplate, setFooterTemplate] = useState(config.footerTemplate);
@@ -704,9 +704,9 @@ function WeeklyDigestSection() {
           {showPreview && (
             <Card className="mt-3 bg-muted/30">
               <CardContent className="p-4">
-                <h4 className="mb-2 text-sm font-semibold">Mock Digest Preview</h4>
+                <h4 className="mb-2 text-sm font-semibold">Digest Preview</h4>
                 <pre className="whitespace-pre-wrap rounded-md bg-background p-4 text-xs font-mono leading-relaxed">
-                  {mockPreview}
+                  {digestPreview}
                 </pre>
               </CardContent>
             </Card>
