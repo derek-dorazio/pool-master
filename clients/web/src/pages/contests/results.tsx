@@ -1,9 +1,11 @@
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Trophy, ChevronLeft, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { api } from '@/lib/api-client';
 
 interface FinalEntry {
   id: string;
@@ -14,20 +16,11 @@ interface FinalEntry {
   isCurrentUser: boolean;
 }
 
-const mockFinalStandings: FinalEntry[] = [
-  { id: 'e1', rank: 1, entryName: 'Eagle Eye', ownerName: 'Sarah K.', totalScore: 298, isCurrentUser: false },
-  { id: 'e2', rank: 2, entryName: 'Birdie Brigade', ownerName: 'Jake M.', totalScore: 285, isCurrentUser: false },
-  { id: 'e3', rank: 3, entryName: 'My Entry', ownerName: 'You', totalScore: 274, isCurrentUser: true },
-  { id: 'e4', rank: 4, entryName: 'Par for Course', ownerName: 'Lisa R.', totalScore: 261, isCurrentUser: false },
-  { id: 'e5', rank: 5, entryName: 'Bogey Squad', ownerName: 'Tom W.', totalScore: 255, isCurrentUser: false },
-  { id: 'e6', rank: 6, entryName: 'Fore!', ownerName: 'Anna P.', totalScore: 248, isCurrentUser: false },
-  { id: 'e7', rank: 7, entryName: 'Slice of Life', ownerName: 'Chris D.', totalScore: 241, isCurrentUser: false },
-  { id: 'e8', rank: 8, entryName: 'Fairway Kings', ownerName: 'Dan H.', totalScore: 234, isCurrentUser: false },
-  { id: 'e9', rank: 9, entryName: 'The Hackers', ownerName: 'Emily S.', totalScore: 220, isCurrentUser: false },
-  { id: 'e10', rank: 10, entryName: 'Green Jacket', ownerName: 'Frank L.', totalScore: 210, isCurrentUser: false },
-  { id: 'e11', rank: 11, entryName: 'Rough Riders', ownerName: 'Grace N.', totalScore: 195, isCurrentUser: false },
-  { id: 'e12', rank: 12, entryName: 'Sand Trap', ownerName: 'Henry B.', totalScore: 180, isCurrentUser: false },
-];
+interface StandingsResponse {
+  standings: FinalEntry[];
+  total: number;
+  contestId: string;
+}
 
 function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) return <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-100 text-sm font-bold text-yellow-700">1</span>;
@@ -38,8 +31,21 @@ function RankBadge({ rank }: { rank: number }) {
 
 export function Component() {
   const { contestId } = useParams();
-  const winner = mockFinalStandings[0];
-  const runnerUp = mockFinalStandings[1];
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['contests', contestId, 'standings'],
+    queryFn: () => api.get<StandingsResponse>(`/v1/contests/${contestId}/standings`),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const standings = data?.standings ?? [];
+
+  if (isLoading || standings.length < 2) {
+    return <div className="space-y-6"><div className="h-8 w-64 rounded bg-muted animate-pulse" /></div>;
+  }
+
+  const winner = standings[0];
+  const runnerUp = standings[1];
   const margin = winner.totalScore - runnerUp.totalScore;
 
   return (
@@ -106,7 +112,7 @@ export function Component() {
                 </tr>
               </thead>
               <tbody>
-                {mockFinalStandings.map((entry) => (
+                {standings.map((entry) => (
                   <tr
                     key={entry.id}
                     className={cn(

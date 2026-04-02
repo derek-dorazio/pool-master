@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Trophy, Target, Flame, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { api } from '@/lib/api-client';
 
 interface PersonalStats {
   totalContests: number;
@@ -16,31 +17,11 @@ interface PersonalStats {
   sportBreakdown: Array<{ sport: string; contests: number; wins: number; winRate: number }>;
 }
 
-const mockStats: PersonalStats = {
-  totalContests: 24,
-  totalWins: 5,
-  winRate: 0.208,
-  totalTop3: 9,
-  avgPointsPerContest: 187.4,
-  highestScore: { score: 312, contestName: 'Masters Pool 2025' },
-  currentStreak: { type: 'WIN', length: 3 },
-  netWinnings: 450,
-  avgPercentileRank: 72.3,
-  sportBreakdown: [
-    { sport: 'GOLF', contests: 10, wins: 3, winRate: 0.3 },
-    { sport: 'NFL', contests: 8, wins: 1, winRate: 0.125 },
-    { sport: 'NCAA_BASKETBALL', contests: 4, wins: 1, winRate: 0.25 },
-    { sport: 'F1', contests: 2, wins: 0, winRate: 0 },
-  ],
-};
-
 function usePersonalStats(leagueId: string, memberId: string) {
   return useQuery({
     queryKey: ['history', 'personal-stats', leagueId, memberId],
-    queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      return mockStats;
-    },
+    queryFn: () =>
+      api.get<PersonalStats>(`/v1/leagues/${leagueId}/members/${memberId}/stats`),
     staleTime: 5 * 60 * 1000,
   });
 }

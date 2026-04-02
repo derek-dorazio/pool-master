@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 import { socialKeys } from './query-keys';
 
 export interface Conversation {
@@ -22,25 +23,12 @@ export interface DirectMessage {
   read: boolean;
 }
 
-const mockConversations: Conversation[] = [
-  { id: 'conv-1', participantName: 'Mike Thompson', participantInitials: 'MT', participantAvatarUrl: null, lastMessage: 'Hey, want to trade picks?', lastMessageAt: new Date(Date.now() - 2 * 60_000).toISOString(), unreadCount: 1 },
-  { id: 'conv-2', participantName: 'Sarah Kim', participantInitials: 'SK', participantAvatarUrl: null, lastMessage: 'Thanks for the tip!', lastMessageAt: new Date(Date.now() - 60 * 60_000).toISOString(), unreadCount: 0 },
-  { id: 'conv-3', participantName: 'Jane D.', participantInitials: 'JD', participantAvatarUrl: null, lastMessage: 'Draft is confirmed for Sat', lastMessageAt: new Date(Date.now() - 3 * 60 * 60_000).toISOString(), unreadCount: 2 },
-];
-
-const mockMessages: DirectMessage[] = [
-  { id: 'dm-1', senderId: 'u-2', senderName: 'Mike Thompson', content: "Hey, want to trade picks? I've got #3 overall.", createdAt: new Date(Date.now() - 5 * 60_000).toISOString(), isOwn: false, delivered: true, read: true },
-  { id: 'dm-2', senderId: 'u-1', senderName: 'You', content: 'What are you looking for?', createdAt: new Date(Date.now() - 4 * 60_000).toISOString(), isOwn: true, delivered: true, read: true },
-  { id: 'dm-3', senderId: 'u-2', senderName: 'Mike Thompson', content: 'Ideally a 2nd round pick + a bench player', createdAt: new Date(Date.now() - 3 * 60_000).toISOString(), isOwn: false, delivered: true, read: false },
-];
-
 export function useConversations() {
   return useQuery({
     queryKey: socialKeys.conversations(),
     queryFn: async (): Promise<Conversation[]> => {
-      // TODO: return api.get('/api/messages/conversations');
-      await new Promise((r) => setTimeout(r, 200));
-      return mockConversations;
+      // TODO: Add /v1/social/messages/conversations to API_ROUTES once backend endpoint exists
+      return await api.get<Conversation[]>('/v1/social/messages/conversations');
     },
   });
 }
@@ -49,9 +37,8 @@ export function useConversationMessages(conversationId: string) {
   return useQuery({
     queryKey: socialKeys.conversation(conversationId),
     queryFn: async (): Promise<DirectMessage[]> => {
-      // TODO: return api.get(`/api/messages/conversations/${conversationId}?limit=30`);
-      await new Promise((r) => setTimeout(r, 200));
-      return mockMessages;
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.get<DirectMessage[]>(`/v1/social/messages/conversations/${conversationId}?limit=30`);
     },
   });
 }
@@ -59,9 +46,9 @@ export function useConversationMessages(conversationId: string) {
 export function useSendDirectMessage(conversationId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (_content: string) => {
-      // TODO: return api.post(`/api/messages/conversations/${conversationId}`, { content });
-      await new Promise((r) => setTimeout(r, 100));
+    mutationFn: async (content: string) => {
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.post(`/v1/social/messages/conversations/${conversationId}`, { content });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: socialKeys.conversation(conversationId) });
@@ -70,12 +57,12 @@ export function useSendDirectMessage(conversationId: string) {
   });
 }
 
-export function useMarkConversationRead(_conversationId: string) {
+export function useMarkConversationRead(conversationId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      // TODO: return api.patch(`/api/messages/conversations/${conversationId}/read`);
-      await new Promise((r) => setTimeout(r, 50));
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.patch(`/v1/social/messages/conversations/${conversationId}/read`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: socialKeys.conversations() });

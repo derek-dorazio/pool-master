@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
+import { api } from '@/lib/api-client';
 
 interface DraftRecap {
   id: string;
@@ -20,42 +21,13 @@ interface DraftRecap {
   };
 }
 
-const mockRecap: DraftRecap = {
-  id: 'draft-1', contestName: 'NFL Keeper League Draft', completedAt: '2026-03-15T20:30:00Z',
-  totalPicks: 48, totalTeams: 4,
-  teams: [
-    { id: 'e1', name: 'My Team', picks: [
-      { name: 'P. Mahomes', position: 'QB', team: 'KC', round: 1, pickNumber: 1 },
-      { name: 'D. Henry', position: 'RB', team: 'TEN', round: 2, pickNumber: 8 },
-      { name: 'J. Chase', position: 'WR', team: 'CIN', round: 3, pickNumber: 9 },
-    ]},
-    { id: 'e2', name: 'Team Alpha', picks: [
-      { name: 'J. Jefferson', position: 'WR', team: 'MIN', round: 1, pickNumber: 2 },
-      { name: 'T. Kelce', position: 'TE', team: 'KC', round: 2, pickNumber: 7 },
-    ]},
-  ],
-  picks: [
-    { pickNumber: 1, round: 1, entryName: 'My Team', participantName: 'P. Mahomes', position: 'QB', team: 'KC' },
-    { pickNumber: 2, round: 1, entryName: 'Team Alpha', participantName: 'J. Jefferson', position: 'WR', team: 'MIN' },
-    { pickNumber: 3, round: 1, entryName: 'Team Beta', participantName: 'T. Hill', position: 'WR', team: 'MIA' },
-    { pickNumber: 4, round: 1, entryName: 'Team Gamma', participantName: 'J. Hurts', position: 'QB', team: 'PHI' },
-  ],
-  analysis: {
-    bestValue: [{ name: 'J. Addison', ranking: 25, pickNumber: 48, delta: 23 }],
-    biggestReaches: [{ name: 'R. Stevenson', ranking: 40, pickNumber: 15, delta: -25 }],
-  },
-};
-
 export function Component() {
   const { draftId } = useParams<{ draftId: string }>();
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
 
   const { data: recap, isLoading } = useQuery({
     queryKey: ['drafts', draftId, 'recap'],
-    queryFn: async (): Promise<DraftRecap> => {
-      await new Promise((r) => setTimeout(r, 300));
-      return mockRecap;
-    },
+    queryFn: () => api.get<DraftRecap>(`/v1/drafts/${draftId}`),
     staleTime: 5 * 60 * 1000,
   });
 

@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 import { socialKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -53,53 +54,13 @@ interface FeedPage {
   nextCursor: string | null;
 }
 
-const mockFeedItems: FeedPost[] = [
-  {
-    id: 'p-1', type: 'post', authorId: 'u-2', authorName: 'Mike T.', authorInitials: 'MT', authorAvatarUrl: null,
-    content: '@Jane is Mahomes really available? No way he lasts to round 3.',
-    createdAt: new Date(Date.now() - 5 * 60_000).toISOString(), pinned: false, pinnedBy: null,
-    reactions: [{ emoji: '👍', count: 3, reacted: false }, { emoji: '😂', count: 1, reacted: true }],
-    replyCount: 4, poll: null,
-  },
-  {
-    id: 'p-2', type: 'event', authorId: 'system', authorName: 'System', authorInitials: 'PM', authorAvatarUrl: null,
-    content: 'Draft Pick: John drafted Patrick Mahomes in NFL Survivor Pool',
-    createdAt: new Date(Date.now() - 30 * 60_000).toISOString(), pinned: false, pinnedBy: null,
-    reactions: [], replyCount: 0, poll: null,
-  },
-  {
-    id: 'p-3', type: 'poll', authorId: 'u-3', authorName: 'Sarah K.', authorInitials: 'SK', authorAvatarUrl: null,
-    content: 'Who else is nervous about their picks?',
-    createdAt: new Date(Date.now() - 60 * 60_000).toISOString(), pinned: false, pinnedBy: null,
-    reactions: [{ emoji: '👍', count: 2, reacted: false }],
-    replyCount: 2,
-    poll: {
-      question: 'How confident are you?',
-      options: [
-        { id: 'o1', text: 'Very', votes: 9 },
-        { id: 'o2', text: 'Kinda', votes: 6 },
-        { id: 'o3', text: 'Nope', votes: 5 },
-      ],
-      totalVotes: 20, expiresAt: new Date(Date.now() + 6 * 60 * 60_000).toISOString(), userVoted: null,
-    },
-  },
-];
-
-const mockPinnedPost: FeedPost = {
-  id: 'p-0', type: 'announcement', authorId: 'u-1', authorName: 'Jane D.', authorInitials: 'JD', authorAvatarUrl: null,
-  content: 'Reminder: Draft is this Saturday at 3pm ET. Don\'t forget to rank your players!',
-  createdAt: new Date(Date.now() - 2 * 24 * 60 * 60_000).toISOString(), pinned: true, pinnedBy: 'Jane D.',
-  reactions: [{ emoji: '👍', count: 5, reacted: false }, { emoji: '🔥', count: 2, reacted: false }],
-  replyCount: 0, poll: null,
-};
-
 export function useFeed(leagueId: string) {
   return useInfiniteQuery({
     queryKey: socialKeys.feed(leagueId),
-    queryFn: async ({ pageParam: _pageParam }): Promise<FeedPage> => {
-      // TODO: return api.get(`/api/leagues/${leagueId}/feed?cursor=${pageParam}&limit=20`);
-      await new Promise((r) => setTimeout(r, 300));
-      return { items: mockFeedItems, pinned: [mockPinnedPost], nextCursor: null };
+    queryFn: async ({ pageParam }): Promise<FeedPage> => {
+      // TODO: Add /v1/social/feed to API_ROUTES once backend endpoint exists
+      const cursor = pageParam ? `&cursor=${pageParam}` : '';
+      return await api.get<FeedPage>(`/v1/social/leagues/${leagueId}/feed?limit=20${cursor}`);
     },
     initialPageParam: '',
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -110,9 +71,9 @@ export function useFeed(leagueId: string) {
 export function useCreatePost(leagueId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (_data: { content: string; poll?: { question: string; options: string[]; expiresIn: string } }) => {
-      // TODO: return api.post(`/api/leagues/${leagueId}/feed`, data);
-      await new Promise((r) => setTimeout(r, 200));
+    mutationFn: async (data: { content: string; poll?: { question: string; options: string[]; expiresIn: string } }) => {
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.post(`/v1/social/leagues/${leagueId}/feed`, data);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: socialKeys.feed(leagueId) }); },
   });
@@ -121,9 +82,9 @@ export function useCreatePost(leagueId: string) {
 export function useToggleReaction(leagueId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (_data: { postId: string; emoji: string }) => {
-      // TODO: return api.post(`/api/feed/${data.postId}/reactions`, { emoji: data.emoji });
-      await new Promise((r) => setTimeout(r, 100));
+    mutationFn: async (data: { postId: string; emoji: string }) => {
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.post(`/v1/social/feed/${data.postId}/reactions`, { emoji: data.emoji });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: socialKeys.feed(leagueId) }); },
   });
@@ -132,9 +93,9 @@ export function useToggleReaction(leagueId: string) {
 export function usePinPost(leagueId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (_data: { postId: string; pin: boolean }) => {
-      // TODO: return api.patch(`/api/feed/${data.postId}/pin`, { pinned: data.pin });
-      await new Promise((r) => setTimeout(r, 100));
+    mutationFn: async (data: { postId: string; pin: boolean }) => {
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.patch(`/v1/social/feed/${data.postId}/pin`, { pinned: data.pin });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: socialKeys.feed(leagueId) }); },
   });
@@ -143,9 +104,9 @@ export function usePinPost(leagueId: string) {
 export function useDeletePost(leagueId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (_postId: string) => {
-      // TODO: return api.delete(`/api/feed/${postId}`);
-      await new Promise((r) => setTimeout(r, 100));
+    mutationFn: async (postId: string) => {
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.delete(`/v1/social/feed/${postId}`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: socialKeys.feed(leagueId) });
@@ -158,12 +119,8 @@ export function useReplies(postId: string, enabled: boolean) {
   return useQuery({
     queryKey: socialKeys.replies(postId),
     queryFn: async (): Promise<FeedReply[]> => {
-      // TODO: return api.get(`/api/feed/${postId}/replies?limit=10`);
-      await new Promise((r) => setTimeout(r, 200));
-      return [
-        { id: 'r1', authorName: 'John D.', authorInitials: 'JD', content: 'No chance!', createdAt: new Date(Date.now() - 3 * 60_000).toISOString(), reactions: [] },
-        { id: 'r2', authorName: 'Sarah K.', authorInitials: 'SK', content: 'I think round 4 at best', createdAt: new Date(Date.now() - 2 * 60_000).toISOString(), reactions: [] },
-      ];
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.get<FeedReply[]>(`/v1/social/feed/${postId}/replies?limit=10`);
     },
     enabled,
   });
@@ -172,9 +129,9 @@ export function useReplies(postId: string, enabled: boolean) {
 export function useCreateReply(postId: string, leagueId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (_content: string) => {
-      // TODO: return api.post(`/api/feed/${postId}/replies`, { content });
-      await new Promise((r) => setTimeout(r, 150));
+    mutationFn: async (content: string) => {
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.post(`/v1/social/feed/${postId}/replies`, { content });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: socialKeys.replies(postId) });
@@ -186,9 +143,9 @@ export function useCreateReply(postId: string, leagueId: string) {
 export function useVotePoll(leagueId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (_data: { postId: string; optionId: string }) => {
-      // TODO: return api.post(`/api/feed/${data.postId}/vote`, { optionId: data.optionId });
-      await new Promise((r) => setTimeout(r, 150));
+    mutationFn: async (data: { postId: string; optionId: string }) => {
+      // TODO: Add to API_ROUTES once backend endpoint exists
+      return await api.post(`/v1/social/feed/${data.postId}/vote`, { optionId: data.optionId });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: socialKeys.feed(leagueId) }); },
   });

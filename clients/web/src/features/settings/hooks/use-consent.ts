@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -10,23 +11,11 @@ export interface ConsentPreferences {
   doNotSell: boolean;
 }
 
-const mockConsent: ConsentPreferences = {
-  marketingEmails: false,
-  analytics: true,
-  thirdPartyIntegrations: false,
-  doNotSell: false,
-};
-
 export function useConsent() {
   return useQuery({
     queryKey: settingsKeys.consent(),
     queryFn: async (): Promise<ConsentPreferences> => {
-      try {
-        return await api.get<ConsentPreferences>('/v1/account/consent');
-      } catch {
-        // Fallback to mock data when backend unavailable
-        return mockConsent;
-      }
+      return await api.get<ConsentPreferences>(clientPath(API_ROUTES.account.consent));
     },
   });
 }
@@ -36,12 +25,7 @@ export function useUpdateConsent() {
 
   return useMutation({
     mutationFn: async (consent: Partial<ConsentPreferences>) => {
-      try {
-        return await api.put('/v1/account/consent', consent);
-      } catch {
-        // Fallback: simulate success when backend unavailable
-        return undefined;
-      }
+      return await api.put(clientPath(API_ROUTES.account.consent), consent);
     },
     onMutate: async (newConsent) => {
       await queryClient.cancelQueries({ queryKey: settingsKeys.consent() });

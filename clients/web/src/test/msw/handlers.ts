@@ -103,6 +103,30 @@ export const leagueHandlers = [
   http.post('/api/v1/leagues/:id/invite-link', () => {
     return HttpResponse.json({ invitation: { inviteCode: 'test-code', expiresAt: new Date().toISOString() } });
   }),
+
+  http.get('/api/v1/leagues/:id/settings', () => {
+    return HttpResponse.json({
+      name: 'Test League',
+      description: 'A test league description.',
+      invitePolicy: 'Invite Only',
+      inviteLink: 'https://poolmaster.app/join/test-code',
+    });
+  }),
+
+  http.get('/api/v1/leagues/:leagueId/members/:memberId/stats', () => {
+    return HttpResponse.json({
+      totalContests: 0,
+      totalWins: 0,
+      winRate: 0,
+      totalTop3: 0,
+      avgPointsPerContest: 0,
+      highestScore: { score: 0, contestName: '' },
+      currentStreak: null,
+      netWinnings: 0,
+      avgPercentileRank: 0,
+      sportBreakdown: [],
+    });
+  }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -128,6 +152,10 @@ export const contestHandlers = [
 
   http.get('/api/v1/contests/:id/standings', () => {
     return HttpResponse.json({ standings: [], total: 0, contestId: 'contest-1' });
+  }),
+
+  http.get('/api/v1/contests/:id/head-to-head', () => {
+    return HttpResponse.json({ entries: [] });
   }),
 ];
 
@@ -219,6 +247,14 @@ export const draftHandlers = [
   http.get('/api/v1/drafts/:id', () => {
     return HttpResponse.json({ draft: null });
   }),
+
+  http.get('/api/v1/drafts/:id/available', () => {
+    return HttpResponse.json([]);
+  }),
+
+  http.post('/api/v1/drafts/:id/pick', () => {
+    return HttpResponse.json({ success: true });
+  }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -267,6 +303,160 @@ export const accountHandlers = [
   http.put('/api/v1/account/consent', () => {
     return HttpResponse.json({ success: true });
   }),
+
+  http.get('/api/v1/account/data-export', () => {
+    return HttpResponse.json({
+      status: 'none',
+      requestedAt: null,
+      downloadUrl: null,
+      expiresAt: null,
+      nextAllowedAt: null,
+    });
+  }),
+
+  http.post('/api/v1/account/data-export', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.get('/api/v1/auth/linked-accounts', () => {
+    return HttpResponse.json([
+      { provider: 'google', connected: true, email: 'dave@gmail.com' },
+      { provider: 'apple', connected: false, email: null },
+    ]);
+  }),
+
+  http.post('/api/v1/auth/linked-accounts/:provider/connect', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.delete('/api/v1/auth/linked-accounts/:provider', () => {
+    return HttpResponse.json({ success: true });
+  }),
+];
+
+// ---------------------------------------------------------------------------
+// Social
+// ---------------------------------------------------------------------------
+
+export const socialHandlers = [
+  http.get('/api/v1/social/leagues/:leagueId/recap', () => {
+    return HttpResponse.json({
+      weekLabel: 'Mar 16-22',
+      standings: [
+        { rank: 1, name: 'Mike T.', initials: 'MT', points: 145, change: 2 },
+        { rank: 2, name: 'Sarah K.', initials: 'SK', points: 132, change: 0 },
+        { rank: 3, name: 'John D.', initials: 'JD', points: 128, change: -1 },
+      ],
+      highlights: [
+        { icon: 'fire', title: 'Highest Score', detail: 'Mike T. — 45 pts this week' },
+        { icon: 'chart', title: 'Biggest Mover', detail: 'Mike T. — up 2 spots' },
+      ],
+      upcoming: [
+        { name: 'NBA Playoff Draft', dateTime: '2026-03-25T19:00:00Z', daysUntil: 2 },
+      ],
+    });
+  }),
+
+  http.get('/api/v1/social/messages/conversations', () => {
+    return HttpResponse.json([
+      { id: 'conv-1', participantName: 'Mike Thompson', participantInitials: 'MT', participantAvatarUrl: null, lastMessage: 'Hey, want to trade picks?', lastMessageAt: new Date().toISOString(), unreadCount: 1 },
+      { id: 'conv-2', participantName: 'Sarah Kim', participantInitials: 'SK', participantAvatarUrl: null, lastMessage: 'Thanks for the tip!', lastMessageAt: new Date().toISOString(), unreadCount: 0 },
+    ]);
+  }),
+
+  http.get('/api/v1/social/messages/conversations/:conversationId', () => {
+    return HttpResponse.json([
+      { id: 'dm-1', senderId: 'u-2', senderName: 'Mike Thompson', content: 'Hey, want to trade picks?', createdAt: new Date().toISOString(), isOwn: false, delivered: true, read: true },
+      { id: 'dm-2', senderId: 'u-1', senderName: 'You', content: 'What are you looking for?', createdAt: new Date().toISOString(), isOwn: true, delivered: true, read: true },
+    ]);
+  }),
+
+  http.post('/api/v1/social/messages/conversations/:conversationId', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.patch('/api/v1/social/messages/conversations/:conversationId/read', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.get('/api/v1/social/leagues/:leagueId/feed', () => {
+    return HttpResponse.json({
+      items: [
+        {
+          id: 'p-1', type: 'post', authorId: 'u-2', authorName: 'Mike T.', authorInitials: 'MT', authorAvatarUrl: null,
+          content: 'Great game last night!',
+          createdAt: new Date().toISOString(), pinned: false, pinnedBy: null,
+          reactions: [{ emoji: 'thumbsup', count: 3, reacted: false }],
+          replyCount: 4, poll: null,
+        },
+      ],
+      pinned: [
+        {
+          id: 'p-0', type: 'announcement', authorId: 'u-1', authorName: 'Jane D.', authorInitials: 'JD', authorAvatarUrl: null,
+          content: 'Draft is this Saturday at 3pm ET.',
+          createdAt: new Date().toISOString(), pinned: true, pinnedBy: 'Jane D.',
+          reactions: [], replyCount: 0, poll: null,
+        },
+      ],
+      nextCursor: null,
+    });
+  }),
+
+  http.post('/api/v1/social/leagues/:leagueId/feed', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.post('/api/v1/social/feed/:postId/reactions', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.patch('/api/v1/social/feed/:postId/pin', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.delete('/api/v1/social/feed/:postId', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.get('/api/v1/social/feed/:postId/replies', () => {
+    return HttpResponse.json([
+      { id: 'r1', authorName: 'John D.', authorInitials: 'JD', content: 'No chance!', createdAt: new Date().toISOString(), reactions: [] },
+    ]);
+  }),
+
+  http.post('/api/v1/social/feed/:postId/replies', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.post('/api/v1/social/feed/:postId/vote', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.get('/api/v1/social/shares/:shareId', () => {
+    return HttpResponse.json({
+      id: 'share-1', type: 'contest_result', title: 'NFL Survivor Pool 2026', sport: 'NFL', sportIcon: 'football',
+      winnerName: 'Mike Thompson', winnerAvatarUrl: null, winnerScore: '145 points',
+      leaderboard: [
+        { rank: 1, name: 'Mike Thompson', score: '145 pts' },
+        { rank: 2, name: 'Sarah Kim', score: '132 pts' },
+        { rank: 3, name: 'John Doe', score: '128 pts' },
+      ],
+      dateRange: 'Sep 7 — Jan 12, 2026', imageUrl: null,
+      ogTitle: 'Mike won the NFL Survivor Pool!', ogDescription: 'Score: 145 pts — Can you beat it?',
+    });
+  }),
+
+  http.get('/api/v1/social/contests/:contestId/chat', () => {
+    return HttpResponse.json([
+      { id: 'c1', type: 'system', authorName: 'System', authorInitials: '', content: 'Draft started', createdAt: new Date().toISOString(), isOwn: false },
+      { id: 'c2', type: 'user', authorName: 'Mike', authorInitials: 'MT', content: 'Good luck all!', createdAt: new Date().toISOString(), isOwn: false },
+      { id: 'c3', type: 'user', authorName: 'You', authorInitials: 'DO', content: "Let's do it!", createdAt: new Date().toISOString(), isOwn: true },
+    ]);
+  }),
+
+  http.post('/api/v1/social/contests/:contestId/chat', () => {
+    return HttpResponse.json({ success: true });
+  }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -285,4 +475,5 @@ export const handlers = [
   ...templateHandlers,
   ...invitationHandlers,
   ...accountHandlers,
+  ...socialHandlers,
 ];

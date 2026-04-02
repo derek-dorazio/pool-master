@@ -1,5 +1,7 @@
 import { renderHook } from '@/test-utils';
 import { waitFor } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/test/msw/server';
 import { api } from '@/lib/api-client';
 import { useDraft, useAvailableParticipants, useMakePick } from './use-draft';
 import type { DraftState, AvailableParticipant } from './use-draft';
@@ -32,12 +34,12 @@ const mockAvailable: AvailableParticipant[] = [
 ];
 
 describe('useDraft', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('returns draft state from API on success', async () => {
-    vi.spyOn(api, 'get').mockResolvedValueOnce(mockDraftState);
+    server.use(
+      http.get('/api/v1/drafts/draft-42', () => {
+        return HttpResponse.json(mockDraftState);
+      }),
+    );
     const { result } = renderHook(() => useDraft('draft-42'));
 
     await waitFor(() => expect(result.current.data).toBeDefined());
@@ -50,19 +52,27 @@ describe('useDraft', () => {
 
     await waitFor(() => expect(spy).toHaveBeenCalled());
     expect(spy).toHaveBeenCalledWith('/v1/drafts/draft-99');
+    spy.mockRestore();
   });
 
-  it('returns fallback data when API fails', async () => {
-    vi.spyOn(api, 'get').mockRejectedValueOnce(new Error('Network error'));
+  it('returns error state when API fails', async () => {
+    server.use(
+      http.get('/api/v1/drafts/draft-fallback', () => {
+        return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+      }),
+    );
     const { result } = renderHook(() => useDraft('draft-fallback'));
 
-    await waitFor(() => expect(result.current.data).toBeDefined());
-    expect(result.current.data!.id).toBe('draft-fallback');
-    expect(result.current.data!.isMyPick).toBe(true);
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
   });
 
   it('returns data with expected shape', async () => {
-    vi.spyOn(api, 'get').mockResolvedValueOnce(mockDraftState);
+    server.use(
+      http.get('/api/v1/drafts/draft-42', () => {
+        return HttpResponse.json(mockDraftState);
+      }),
+    );
     const { result } = renderHook(() => useDraft('draft-42'));
 
     await waitFor(() => expect(result.current.data).toBeDefined());
@@ -75,12 +85,12 @@ describe('useDraft', () => {
 });
 
 describe('useAvailableParticipants', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('returns available participants from API', async () => {
-    vi.spyOn(api, 'get').mockResolvedValueOnce(mockAvailable);
+    server.use(
+      http.get('/api/v1/drafts/draft-1/available', () => {
+        return HttpResponse.json(mockAvailable);
+      }),
+    );
     const { result } = renderHook(() => useAvailableParticipants('draft-1', {}));
 
     await waitFor(() => expect(result.current.data).toBeDefined());
@@ -99,24 +109,23 @@ describe('useAvailableParticipants', () => {
     expect(url).toContain('q=mahomes');
     expect(url).toContain('position=QB');
     expect(url).toContain('sort=name');
+    spy.mockRestore();
   });
 
-  it('returns filtered fallback data when API fails', async () => {
-    vi.spyOn(api, 'get').mockRejectedValueOnce(new Error('Network'));
+  it('returns error state when API fails', async () => {
+    server.use(
+      http.get('/api/v1/drafts/draft-1/available', () => {
+        return HttpResponse.json({ message: 'Server error' }, { status: 500 });
+      }),
+    );
     const { result } = renderHook(() => useAvailableParticipants('draft-1', { position: 'QB' }));
 
-    await waitFor(() => expect(result.current.data).toBeDefined());
-    const data = result.current.data!;
-    expect(data.length).toBeGreaterThan(0);
-    expect(data.every((p) => p.position === 'QB')).toBe(true);
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
   });
 });
 
 describe('useMakePick', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('posts pick to correct endpoint', async () => {
     const spy = vi.spyOn(api, 'post').mockResolvedValueOnce({ success: true });
     const { result } = renderHook(() => useMakePick('draft-1'));
@@ -124,6 +133,7 @@ describe('useMakePick', () => {
     result.current.mutate('player-99');
     await waitFor(() => expect(spy).toHaveBeenCalled());
     expect(spy).toHaveBeenCalledWith('/v1/drafts/draft-1/pick', { participantId: 'player-99' });
+    spy.mockRestore();
   });
 
   it('returns success on API response', async () => {
@@ -135,12 +145,11 @@ describe('useMakePick', () => {
     expect(result.current.data).toEqual({ success: true });
   });
 
-  it('returns fallback success when API fails', async () => {
+  it('returns error state when API fails', async () => {
     vi.spyOn(api, 'post').mockRejectedValueOnce(new Error('Server down'));
     const { result } = renderHook(() => useMakePick('draft-1'));
 
     result.current.mutate('player-1');
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual({ success: true });
+    await waitFor(() => expect(result.current.isError).toBe(true));
   });
 });

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -20,76 +22,20 @@ interface H2HEntry {
   participants: H2HParticipant[];
 }
 
-const mockEntryOptions = [
-  { id: 'entry-me', label: 'My Entry (You)' },
-  { id: 'entry-1', label: 'Eagle Eye (Sarah K.)' },
-  { id: 'entry-2', label: 'Birdie Brigade (Jake M.)' },
-  { id: 'entry-4', label: 'Par for Course (Lisa R.)' },
-  { id: 'entry-5', label: 'Bogey Squad (Tom W.)' },
-];
+interface H2HResponse {
+  entries: H2HEntry[];
+}
 
-const mockEntryData: Record<string, H2HEntry> = {
-  'entry-me': {
-    id: 'entry-me',
-    entryName: 'My Entry',
-    ownerName: 'You',
-    totalScore: 274,
-    participants: [
-      { name: 'Scottie Scheffler', tier: 'Tier 1', score: 82 },
-      { name: 'Rory McIlroy', tier: 'Tier 2', score: 71 },
-      { name: 'Collin Morikawa', tier: 'Tier 3', score: 68 },
-      { name: 'Tommy Fleetwood', tier: 'Tier 4', score: 53 },
-    ],
-  },
-  'entry-1': {
-    id: 'entry-1',
-    entryName: 'Eagle Eye',
-    ownerName: 'Sarah K.',
-    totalScore: 298,
-    participants: [
-      { name: 'Scottie Scheffler', tier: 'Tier 1', score: 82 },
-      { name: 'Jon Rahm', tier: 'Tier 2', score: 78 },
-      { name: 'Viktor Hovland', tier: 'Tier 3', score: 74 },
-      { name: 'Shane Lowry', tier: 'Tier 4', score: 64 },
-    ],
-  },
-  'entry-2': {
-    id: 'entry-2',
-    entryName: 'Birdie Brigade',
-    ownerName: 'Jake M.',
-    totalScore: 285,
-    participants: [
-      { name: 'Xander Schauffele', tier: 'Tier 1', score: 79 },
-      { name: 'Rory McIlroy', tier: 'Tier 2', score: 71 },
-      { name: 'Ludvig Aberg', tier: 'Tier 3', score: 72 },
-      { name: 'Min Woo Lee', tier: 'Tier 4', score: 63 },
-    ],
-  },
-  'entry-4': {
-    id: 'entry-4',
-    entryName: 'Par for Course',
-    ownerName: 'Lisa R.',
-    totalScore: 261,
-    participants: [
-      { name: 'Bryson DeChambeau', tier: 'Tier 1', score: 76 },
-      { name: 'Brooks Koepka', tier: 'Tier 2', score: 69 },
-      { name: 'Collin Morikawa', tier: 'Tier 3', score: 68 },
-      { name: 'Hideki Matsuyama', tier: 'Tier 4', score: 48 },
-    ],
-  },
-  'entry-5': {
-    id: 'entry-5',
-    entryName: 'Bogey Squad',
-    ownerName: 'Tom W.',
-    totalScore: 255,
-    participants: [
-      { name: 'Jon Rahm', tier: 'Tier 1', score: 78 },
-      { name: 'Patrick Cantlay', tier: 'Tier 2', score: 65 },
-      { name: 'Russell Henley', tier: 'Tier 3', score: 60 },
-      { name: 'Tommy Fleetwood', tier: 'Tier 4', score: 52 },
-    ],
-  },
-};
+function useH2HEntries(contestId: string | undefined) {
+  return useQuery({
+    queryKey: ['contest-h2h', contestId],
+    queryFn: async (): Promise<H2HEntry[]> => {
+      const res = await api.get<H2HResponse>(`/v1/contests/${contestId}/head-to-head`);
+      return res.entries ?? [];
+    },
+    enabled: !!contestId,
+  });
+}
 
 function EntryColumn({ entry, isWinning }: { entry: H2HEntry; isWinning: boolean }) {
   return (
@@ -117,11 +63,20 @@ function EntryColumn({ entry, isWinning }: { entry: H2HEntry; isWinning: boolean
 
 export function Component() {
   const { contestId } = useParams();
-  const [leftId, setLeftId] = useState('entry-me');
-  const [rightId, setRightId] = useState('entry-1');
+  const { data: entries = [], isLoading, isError } = useH2HEntries(contestId);
+  const [leftId, setLeftId] = useState('');
+  const [rightId, setRightId] = useState('');
 
-  const leftEntry = mockEntryData[leftId];
-  const rightEntry = mockEntryData[rightId];
+  // Auto-select first two entries when data loads
+  if (entries.length >= 2 && !leftId && !rightId) {
+    setLeftId(entries[0].id);
+    setRightId(entries[1].id);
+  }
+
+  const entryMap = new Map(entries.map((e) => [e.id, e]));
+  const entryOptions = entries.map((e) => ({ id: e.id, label: `${e.entryName} (${e.ownerName})` }));
+  const leftEntry = entryMap.get(leftId);
+  const rightEntry = entryMap.get(rightId);
   const diff = leftEntry && rightEntry ? leftEntry.totalScore - rightEntry.totalScore : 0;
 
   return (
@@ -168,7 +123,7 @@ export function Component() {
             onChange={(e) => setLeftId(e.target.value)}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            {mockEntryOptions.map((opt) => (
+            {entryOptions.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
             ))}
           </select>
@@ -181,7 +136,7 @@ export function Component() {
             onChange={(e) => setRightId(e.target.value)}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            {mockEntryOptions.map((opt) => (
+            {entryOptions.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
             ))}
           </select>

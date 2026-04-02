@@ -7,42 +7,13 @@ import { NotificationItem } from './notification-item';
 import { useMarkAllAsRead } from './hooks/use-notification-actions';
 import { notificationKeys } from './hooks/query-keys';
 import { useNotificationUiStore } from '@/stores/notification-ui-store';
+import { api } from '@/lib/api-client';
 import type { Notification } from './hooks/use-notifications';
 
 interface NotificationPage {
   items: Notification[];
   nextCursor: string | null;
 }
-
-const mockUnreadNotifications: Notification[] = [
-  {
-    id: 'n-1',
-    category: 'draft',
-    title: 'Draft Starting Soon',
-    body: 'Your NFL Fantasy Draft begins in 15 minutes.',
-    read: false,
-    targetUrl: '/drafts/draft-1',
-    createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'n-2',
-    category: 'scoring',
-    title: 'Score Update: Premier League Picks',
-    body: 'Your entry moved up to 2nd place (+12 pts).',
-    read: false,
-    targetUrl: '/contests/contest-2/standings',
-    createdAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'n-3',
-    category: 'league',
-    title: 'New Member in Weekend Warriors',
-    body: 'JaneDoe has joined your league.',
-    read: false,
-    targetUrl: '/leagues/league-1/members',
-    createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-  },
-];
 
 export function NotificationDropdown() {
   const isOpen = useNotificationUiStore((s) => s.isDropdownOpen);
@@ -52,12 +23,8 @@ export function NotificationDropdown() {
 
   const { data, isLoading } = useQuery({
     queryKey: notificationKeys.unreadList(),
-    queryFn: async (): Promise<NotificationPage> => {
-      // TODO: Replace with real API call
-      // return api.get<NotificationPage>('/notifications?status=unread&limit=5');
-      await new Promise((resolve) => setTimeout(resolve, 150));
-      return { items: mockUnreadNotifications, nextCursor: null };
-    },
+    queryFn: () =>
+      api.get<NotificationPage>('/v1/notifications?status=unread&limit=5'),
     staleTime: 10_000,
     enabled: isOpen,
   });

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Copy, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,31 +19,53 @@ import { toast } from '@/hooks/use-toast';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatCurrency } from '@/lib/format-currency';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import { api } from '@/lib/api-client';
+
+interface LeagueSettings {
+  name: string;
+  description: string;
+  invitePolicy: string;
+  inviteLink: string;
+}
 
 interface SettingsForm {
   name: string;
   description: string;
 }
 
-const mockSettings = {
-  name: 'Sunday Gridiron League',
-  description: 'A competitive NFL pool for friends and family. Weekly picks, survivor pools, and more.',
-  invitePolicy: 'Invite Only',
-  inviteLink: 'https://poolmaster.app/join/abc123xyz',
-};
-
 export function Component() {
   const { leagueId } = useParams<{ leagueId: string }>();
-  const [inviteLink, setInviteLink] = useState(mockSettings.inviteLink);
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['leagues', leagueId, 'settings'],
+    queryFn: () => api.get<LeagueSettings>(`/v1/leagues/${leagueId}/settings`),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [inviteLink, setInviteLink] = useState('');
   const [leagueCurrency, setLeagueCurrency] = useState('USD');
   const { numberFormat } = usePreferencesStore();
 
-  const { register, handleSubmit } = useForm<SettingsForm>({
+  const { register, handleSubmit, reset } = useForm<SettingsForm>({
     defaultValues: {
-      name: mockSettings.name,
-      description: mockSettings.description,
+      name: '',
+      description: '',
     },
   });
+
+  const dialog = useConfirmDialog();
+
+  // Update form defaults + invite link when settings load
+  useEffect(() => {
+    if (settings) {
+      reset({ name: settings.name, description: settings.description });
+      setInviteLink(settings.inviteLink);
+    }
+  }, [settings, reset]);
+
+  if (isLoading) {
+    return <div className="max-w-2xl mx-auto space-y-6"><div className="h-8 w-64 rounded bg-muted animate-pulse" /></div>;
+  }
 
   function onSave(data: SettingsForm) {
     toast({ title: 'Settings saved', description: `League "${data.name}" has been updated.` });
@@ -58,8 +81,6 @@ export function Component() {
     setInviteLink(`https://poolmaster.app/join/${newId}`);
     toast({ title: 'New link generated', description: 'The old invite link is no longer valid.' });
   }
-
-  const dialog = useConfirmDialog();
 
   async function handleArchive() {
     const confirmed = await dialog.confirm(
@@ -132,7 +153,7 @@ export function Component() {
         <CardHeader>
           <CardTitle>Invitations</CardTitle>
           <CardDescription>
-            Current policy: <span className="font-medium">{mockSettings.invitePolicy}</span>
+            Current policy: <span className="font-medium">{settings?.invitePolicy ?? 'Invite Only'}</span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

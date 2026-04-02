@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useContest } from '@/features/contests/hooks/use-contest';
+import { api } from '@/lib/api-client';
 
 interface ParticipantScoring {
   id: string;
@@ -15,90 +17,23 @@ interface ParticipantScoring {
   stats: Array<{ label: string; detail: string; points: number }>;
 }
 
+interface ScoringEntry {
+  id: string;
+  name: string;
+}
+
 interface ScoringRule {
   stat: string;
   points: string;
   condition: string;
 }
 
-const mockEntries = [
-  { id: 'entry-me', name: 'My Entry (You)' },
-  { id: 'entry-1', name: 'Eagle Eye (Sarah K.)' },
-  { id: 'entry-2', name: 'Birdie Brigade (Jake M.)' },
-  { id: 'entry-4', name: 'Par for Course (Lisa R.)' },
-];
+interface ScoringResponse {
+  entries: ScoringEntry[];
+  participants: ParticipantScoring[];
+  rules: ScoringRule[];
+}
 
-const mockParticipants: ParticipantScoring[] = [
-  {
-    id: 'p1',
-    name: 'Scottie Scheffler',
-    tier: 'Tier 1',
-    score: 82,
-    pctOfTotal: 29.9,
-    stats: [
-      { label: 'Eagles', detail: '2 x 8pts', points: 16 },
-      { label: 'Birdies', detail: '12 x 3pts', points: 36 },
-      { label: 'Pars', detail: '40 x 0.5pts', points: 20 },
-      { label: 'Top 10 Finish', detail: '1 x 5pts', points: 5 },
-      { label: 'Win Bonus', detail: '1 x 10pts', points: 10 },
-      { label: 'Bogeys', detail: '10 x -0.5pts', points: -5 },
-    ],
-  },
-  {
-    id: 'p2',
-    name: 'Rory McIlroy',
-    tier: 'Tier 2',
-    score: 71,
-    pctOfTotal: 25.9,
-    stats: [
-      { label: 'Eagles', detail: '1 x 8pts', points: 8 },
-      { label: 'Birdies', detail: '14 x 3pts', points: 42 },
-      { label: 'Pars', detail: '38 x 0.5pts', points: 19 },
-      { label: 'Top 10 Finish', detail: '1 x 5pts', points: 5 },
-      { label: 'Bogeys', detail: '6 x -0.5pts', points: -3 },
-    ],
-  },
-  {
-    id: 'p3',
-    name: 'Collin Morikawa',
-    tier: 'Tier 3',
-    score: 68,
-    pctOfTotal: 24.8,
-    stats: [
-      { label: 'Eagles', detail: '1 x 8pts', points: 8 },
-      { label: 'Birdies', detail: '10 x 3pts', points: 30 },
-      { label: 'Pars', detail: '44 x 0.5pts', points: 22 },
-      { label: 'Top 10 Finish', detail: '1 x 5pts', points: 5 },
-      { label: 'Bogeys', detail: '4 x -0.5pts', points: -2 },
-      { label: 'Win Bonus', detail: '1 x 10pts', points: 5 },
-    ],
-  },
-  {
-    id: 'p4',
-    name: 'Tommy Fleetwood',
-    tier: 'Tier 4',
-    score: 53,
-    pctOfTotal: 19.3,
-    stats: [
-      { label: 'Birdies', detail: '8 x 3pts', points: 24 },
-      { label: 'Pars', detail: '46 x 0.5pts', points: 23 },
-      { label: 'Top 10 Finish', detail: '1 x 5pts', points: 5 },
-      { label: 'Bogeys', detail: '2 x -0.5pts', points: -1 },
-      { label: 'Double Bogey+', detail: '1 x -2pts', points: 2 },
-    ],
-  },
-];
-
-const scoringRules: ScoringRule[] = [
-  { stat: 'Eagle', points: '+8', condition: 'Per hole' },
-  { stat: 'Birdie', points: '+3', condition: 'Per hole' },
-  { stat: 'Par', points: '+0.5', condition: 'Per hole' },
-  { stat: 'Bogey', points: '-0.5', condition: 'Per hole' },
-  { stat: 'Double Bogey+', points: '-2', condition: 'Per hole' },
-  { stat: 'Top 10 Finish', points: '+5', condition: 'Bonus' },
-  { stat: 'Win', points: '+10', condition: 'Bonus' },
-  { stat: 'Missed Cut', points: '-5', condition: 'Penalty' },
-];
 
 function ParticipantRow({ participant }: { participant: ParticipantScoring }) {
   const [expanded, setExpanded] = useState(false);
@@ -158,10 +93,26 @@ function ParticipantRow({ participant }: { participant: ParticipantScoring }) {
 export function Component() {
   const { contestId } = useParams();
   const { data: contest } = useContest(contestId);
-  const [selectedEntry, setSelectedEntry] = useState('entry-me');
+  const [selectedEntry, setSelectedEntry] = useState('');
   const [rulesExpanded, setRulesExpanded] = useState(false);
 
-  const totalScore = mockParticipants.reduce((sum, p) => sum + p.score, 0);
+  const { data: scoring, isLoading } = useQuery({
+    queryKey: ['contests', contestId, 'scoring', selectedEntry],
+    queryFn: () => {
+      const params = selectedEntry ? `?entryId=${selectedEntry}` : '';
+      return api.get<ScoringResponse>(`/v1/contests/${contestId}/standings${params}`);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const entries = scoring?.entries ?? [];
+  const participants = scoring?.participants ?? [];
+  const scoringRules = scoring?.rules ?? [];
+  const totalScore = participants.reduce((sum, p) => sum + p.score, 0);
+
+  if (isLoading) {
+    return <div className="space-y-6"><div className="h-8 w-64 rounded bg-muted animate-pulse" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -189,7 +140,7 @@ export function Component() {
           onChange={(e) => setSelectedEntry(e.target.value)}
           className="flex h-10 w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {mockEntries.map((entry) => (
+          {entries.map((entry) => (
             <option key={entry.id} value={entry.id}>{entry.name}</option>
           ))}
         </select>
@@ -216,7 +167,7 @@ export function Component() {
               </tr>
             </thead>
             <tbody>
-              {mockParticipants.map((p) => (
+              {participants.map((p) => (
                 <ParticipantRow key={p.id} participant={p} />
               ))}
             </tbody>

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -11,24 +12,11 @@ export interface DataExportStatus {
   nextAllowedAt: string | null;
 }
 
-const mockExportStatus: DataExportStatus = {
-  status: 'none',
-  requestedAt: null,
-  downloadUrl: null,
-  expiresAt: null,
-  nextAllowedAt: null,
-};
-
 export function useDataExportStatus() {
   return useQuery({
     queryKey: settingsKeys.dataExport(),
     queryFn: async (): Promise<DataExportStatus> => {
-      try {
-        return await api.get<DataExportStatus>('/v1/account/export/status');
-      } catch {
-        // Fallback to mock data when backend unavailable
-        return mockExportStatus;
-      }
+      return await api.get<DataExportStatus>(clientPath(API_ROUTES.account.dataExport));
     },
   });
 }
@@ -38,7 +26,7 @@ export function useRequestDataExport() {
 
   return useMutation({
     mutationFn: async () => {
-      return await api.post('/v1/account/data-export');
+      return await api.post(clientPath(API_ROUTES.account.dataExport));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.dataExport() });

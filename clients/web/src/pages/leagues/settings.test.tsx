@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as LeagueSettingsPage } from './settings';
 
@@ -15,10 +16,17 @@ vi.mock('@/hooks/use-toast', () => ({
 }));
 
 function renderPage() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+    },
+  });
   return render(
-    <MemoryRouter>
-      <LeagueSettingsPage />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <LeagueSettingsPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -27,21 +35,27 @@ describe('LeagueSettingsPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders settings form fields', () => {
+  it('renders settings form fields', async () => {
     renderPage();
-    expect(screen.getByLabelText('League Name')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText('League Name')).toBeInTheDocument();
+    });
     expect(screen.getByLabelText('Description')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Save Changes/ })).toBeInTheDocument();
   });
 
-  it('shows currency selector', () => {
+  it('shows currency selector', async () => {
     renderPage();
-    expect(screen.getByLabelText('League Currency')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText('League Currency')).toBeInTheDocument();
+    });
   });
 
-  it('shows invite policy section', () => {
+  it('shows invite policy section', async () => {
     renderPage();
-    expect(screen.getByText('Invitations')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Invitations')).toBeInTheDocument();
+    });
     expect(screen.getByText(/Invite Only/)).toBeInTheDocument();
     expect(screen.getByText('Invite Link')).toBeInTheDocument();
   });
