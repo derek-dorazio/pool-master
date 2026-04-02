@@ -64,7 +64,8 @@ describe('formatCountdown', () => {
     const inTwoDays = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000);
     const result = formatCountdown(inTwoDays);
     expect(result).toContain('2d');
-    expect(result).toContain('3h');
+    // Hours may be 2h or 3h due to ms elapsed between Date.now() calls
+    expect(result).toMatch(/[23]h/);
   });
 });
 
