@@ -1,5 +1,18 @@
 # PoolMaster — Claude Code Instructions
 
+## CRITICAL: No Mock Data in Application Code
+
+**This is the #1 code quality rule in the project. Violations are treated as defects.**
+
+- **NEVER add mock data, fake data, hardcoded sample data, or mocking of any kind to application code.** This includes hooks, pages, components, services, handlers, and any file that ships to production.
+- Mock data belongs ONLY in test files (`*.test.ts`, `*.test.tsx`, `__tests__/`, `__fixtures__/`, `e2e/`).
+- Application code MUST always call real APIs. If an endpoint does not exist yet, the component should show a loading/error/empty state — NOT return fake data.
+- `try/catch` blocks in hooks that return mock data on failure are **BANNED** — they hide real errors.
+- `initialData: mockData` in React Query hooks is **BANNED** — it prevents real API calls from ever being made.
+- `queryFn: async () => mockData` is **BANNED** — it makes the query return fake data instead of calling the API.
+- Unit tests create their own mocks as part of test setup (`vi.mock`, MSW handlers) — mocks are NEVER imported from application code.
+- **If you see mock data in application code, it is a defect — remove it and wire to the real API.**
+
 ## Rules Files
 
 Read the rules files in `rules/` before doing any implementation work:

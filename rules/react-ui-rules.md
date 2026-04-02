@@ -181,11 +181,29 @@ This is a **modern React application** with the following characteristics:
 
 ## API Integration
 
+### CRITICAL: No Mock Data in Application Code
+
+**This is the #1 code quality rule. Every item below is BANNED in hooks, pages, and components.**
+
+- **NEVER use `queryFn: async () => mockData`** — this makes the query return fake data instead of calling a real API. The hook will appear to "work" but is completely fake.
+- **NEVER use `initialData: mockData`** — this prevents the real API call from ever being made because TanStack Query sees data already present and skips the fetch.
+- **NEVER write `try/catch` blocks that return mock data on error** — this silently hides API path errors, schema drift, and authentication failures. The component layer handles errors, not the hook.
+- **NEVER define `const mockData = [...]` or `const MOCK_*` constants in hook files, page files, or component files.** Mock data belongs ONLY in test files.
+- **NEVER import mock data from application code into tests** — tests create their own mocks via `vi.mock()`, MSW handlers, or inline fixtures.
+- **If an API endpoint does not exist yet, the hook MUST still call it.** Let the request fail. The component handles `isLoading`, `isError`, and empty data states gracefully. This makes it immediately obvious that the endpoint needs to be built.
+
+### Required Patterns
+
+- **Hooks MUST call real APIs via the api-client.** Every `useQuery` must have a `queryFn` that calls `api.get(...)`, `api.post(...)`, etc.
 - **Hooks MUST import response types from `@poolmaster/shared/dto`** — NEVER define local interfaces for API response shapes. The DTO package is the single source of truth for API contracts.
 - **API calls MUST be typed with shared DTOs:** `api.get<LeagueListResponse>(...)`. This ensures type safety flows from backend schema through to component props.
 - **If a DTO doesn't exist for your endpoint, create one in `packages/shared/dto/` FIRST** before writing the hook. Do not work around a missing DTO with a local type.
 - **Use `clientPath(API_ROUTES.xxx)` for API paths** — NEVER hardcode path strings in hooks or components. See `@poolmaster/shared/api-routes` for the route registry.
-- **NEVER write try/catch blocks in hooks that return mock data on failure.** This silently hides API errors (path mismatches, schema drift). Let errors propagate to error boundaries or toast handlers at the component layer.
+- **Components MUST handle all query states:** `isLoading` (show skeleton/spinner), `isError` (show error message/retry), and empty data (show empty state). These are not optional — they are required for every data-fetching component.
+
+### Why This Matters
+
+Mock data in hooks is the single most common source of bugs in this project. It makes features appear to work during development, but they silently break when connected to the real backend. Errors are hidden, schema drift goes undetected, and API path mismatches are invisible. Every hook must call a real API endpoint.
 
 **Reference**
 Refer to React official documentation and modern React patterns for best practices.

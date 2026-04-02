@@ -30,14 +30,16 @@ Every model change requires updating these layers **in order**:
 
 ### Frontend — Webapp (required if field is user-facing or returned from API)
 
-- [ ] **Hooks** (`clients/web/src/features/*/hooks/*.ts`) — update response interface and mock data fallback.
-- [ ] **Components/pages** (`clients/web/src/pages/*.tsx`, `clients/web/src/features/*/*.tsx`) — render, edit, or conditionally display the field.
+- [ ] **Hooks** (`clients/web/src/features/*/hooks/*.ts`) — update response type imports from `@poolmaster/shared/dto`. **Verify the hook calls a real API endpoint — no mock data, no `queryFn: async () => mockData`, no `initialData: mockData`.**
+- [ ] **Components/pages** (`clients/web/src/pages/*.tsx`, `clients/web/src/features/*/*.tsx`) — render, edit, or conditionally display the field. Ensure component handles `isLoading`, `isError`, and empty data states.
 - [ ] **i18n** (`clients/web/src/locales/en/*.json`) — add translation keys for labels, placeholders, help text.
+- [ ] **No mock data verification** — **Confirm that NO `mockData` constants, fake data arrays, or try/catch-with-fallback patterns exist in the hook or page file.** If found, remove them and wire to the real API.
 
 ### Frontend — Admin App (required if field is relevant to admin workflows)
 
-- [ ] **Hooks** (`clients/admin/src/hooks/*.ts`) — update response interface and mock data fallback.
+- [ ] **Hooks** (`clients/admin/src/hooks/*.ts`) — update response type imports from `@poolmaster/shared/dto`. **Verify the hook calls a real API endpoint — no mock data.**
 - [ ] **Pages** (`clients/admin/src/pages/*.tsx`) — update tables, detail views, forms.
+- [ ] **No mock data verification** — **Confirm no mock data exists in the hook or page file.**
 
 ### Tests (always required)
 
@@ -107,12 +109,12 @@ Every model change requires updating these layers **in order**:
 - Use `enum: [...]` for restricted values — must match the domain enum values.
 - Use `format: 'uuid'` for ID fields, `format: 'date-time'` for timestamps.
 
-### Frontend Mock Data
+### Frontend Hooks — No Mock Data (CRITICAL)
 
-- Every hook has mock data as a fallback when the backend is unavailable.
-- **Mock data must include the new field** — otherwise the UI breaks when the backend returns it.
-- Mock data types must match the hook's TypeScript interface.
-- When updating mock data, also update the corresponding test mock data.
+- **Hooks MUST NEVER contain mock data.** No `const mockData`, no `queryFn: async () => mockData`, no `initialData: mockData`, no `try/catch` returning fake data on error.
+- Hooks MUST call real API endpoints via the api-client. If the endpoint does not exist yet, call it anyway — let the error propagate so the component shows an error state.
+- Components handle `isLoading`, `isError`, and empty data states — this is what replaces mock data fallbacks.
+- **Test mock data** (in `*.test.ts` files, MSW handlers, and `__fixtures__/`) must include the new field — otherwise tests use stale data shapes.
 
 ### Test Coverage
 

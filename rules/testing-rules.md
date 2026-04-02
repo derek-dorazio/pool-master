@@ -490,10 +490,40 @@ describe("Golf scoring against real data", () => {
 
 ---
 
-## 10. Testing Anti-Patterns to Avoid
+## 10. CRITICAL: Mock Data Belongs ONLY in Test Files
+
+**Mock data, fake data, and test doubles MUST NEVER exist in application code. This is the #1 code quality rule.**
+
+### Where Mocks Belong
+
+- **Test files ONLY:** `*.test.ts`, `*.test.tsx`, files inside `__tests__/`, `__fixtures__/`, `tests/`, `e2e/`
+- **MSW handlers** for frontend API mocking (see section 4, "Frontend API Mocking")
+- **Test factories** (`tests/factories/`) using fishery for generating realistic test data
+- **Inline in test files** as `const mockResponse = { ... }` within `describe`/`it` blocks
+- **`__fixtures__/` directories** for shared test data used across multiple test files
+
+### Where Mocks MUST NEVER Exist
+
+- **NEVER in hooks** (`clients/*/src/**/hooks/*.ts`) — no `const mockData`, no `queryFn: async () => mockData`, no `initialData: mockData`, no `try/catch` returning fake data
+- **NEVER in pages or components** (`clients/*/src/pages/*.tsx`, `clients/*/src/features/**/*.tsx`)
+- **NEVER in services** (`packages/*/src/modules/*/service.ts`) — services call real repositories
+- **NEVER in handlers** (`packages/*/src/modules/*/handler.ts`) — handlers return real data from services
+- **NEVER in any file under `packages/*/src/`** or `clients/*/src/` outside of test files
+
+### Rules
+
+- **Application code MUST NEVER import from test fixtures** or contain mock data constants.
+- **Tests create their own mocks** via `vi.mock()` factories, MSW handlers, fishery factories, or inline test data.
+- **The presence of mock data in application code is a defect** to be found and fixed — not a pattern to follow.
+- **If you see mock data in a hook, page, component, service, or handler, remove it** and wire the code to the real API/database.
+
+---
+
+## 11. Testing Anti-Patterns to Avoid
 
 | Anti-Pattern | Why It's Bad | Do This Instead |
 |---|---|---|
+| Mock data in application code | Hides missing APIs, schema drift, path errors — features appear to work but are completely fake | Remove mock data from app code; wire to real APIs; handle loading/error/empty states in components |
 | Mocking the database in integration tests | Hides real query issues, schema mismatches | Use testcontainers with real PostgreSQL |
 | Testing implementation details | Tests break on refactor without behaviour change | Test inputs and outputs, not internal state |
 | Shared mutable state between tests | Flaky tests, order-dependent failures | Isolate each test with fresh state |
@@ -504,7 +534,7 @@ describe("Golf scoring against real data", () => {
 
 ---
 
-## 11. Notification Testing
+## 12. Notification Testing
 
 ### Unit Tests
 Mock channel adapters directly with Jest mocks. Test the preference service, template renderer, rate limiter, event grouper, dispatcher, channels (InApp/Email/Push), scheduled runner, and weekly digest in isolation.
@@ -542,7 +572,7 @@ See `rules/architecture-rules.md` section 8 for the full local dev infrastructur
 
 ---
 
-## 12. Schema Validation Tests
+## 13. Schema Validation Tests
 
 ### Purpose
 Catch Prisma schema drift (P2022/P2023) by performing a create+read+delete cycle on every Prisma model against the real database.
@@ -556,7 +586,7 @@ Catch Prisma schema drift (P2022/P2023) by performing a create+read+delete cycle
 
 ---
 
-## 13. API Contract Validation Tests
+## 14. API Contract Validation Tests
 
 ### Purpose
 Catch frontend/backend drift by verifying API response shapes match what webapp and admin hooks expect.
@@ -572,7 +602,7 @@ Catch frontend/backend drift by verifying API response shapes match what webapp 
 
 ---
 
-## 14. Functional Smoke Tests
+## 15. Functional Smoke Tests
 
 ### Purpose
 Test complete user journeys end-to-end via the API against live QA.
@@ -585,7 +615,7 @@ Test complete user journeys end-to-end via the API against live QA.
 
 ---
 
-## 15. Boundary Contract Tests — Enums, Events, Templates
+## 16. Boundary Contract Tests — Enums, Events, Templates
 
 ### Purpose
 Catch silent drift between system boundaries where two sides use the same values but are maintained separately. String-based enum values, event types, and template configs can drift without compile-time errors — these tests catch the drift at test time.

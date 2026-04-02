@@ -51,6 +51,13 @@
 - Use the Observation framework (`@Observable`, `@State`, and `@Binding`) to build reactive views.
 - Implement proper error handling and propagation.
 
+### CRITICAL: No Mock Data in Application Code
+
+- **NEVER include mock data, fake data, or hardcoded sample responses in ViewModels, Views, services, or repositories.** All application code must call real APIs.
+- Mock data belongs ONLY in test files (unit tests, UI tests, Preview providers for rapid iteration).
+- If an API endpoint does not exist yet, the ViewModel should call it anyway and surface the error state — Views must handle loading, error, and empty states gracefully.
+- **The presence of mock data in application code is a defect** — remove it and wire to the real API.
+
 ## 7. Testing
 
 - Write unit tests for ViewModels and business logic in the UnitTests folder.

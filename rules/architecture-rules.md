@@ -105,6 +105,18 @@ All plan documents and implementation work must conform to these rules. This is 
 
 ---
 
+## 1b. Architecture Principles — No Mock Data in Application Code
+
+**Clean separation between application code and test infrastructure is a fundamental architecture principle.**
+
+- **The application layer MUST NEVER contain mock data, fake data, or hardcoded sample responses.** All application code (services, handlers, hooks, pages, components) calls real services and real APIs.
+- **Mock data exists ONLY in the test layer** (`tests/`, `__tests__/`, `__fixtures__/`, `*.test.ts`, `*.test.tsx`). The test layer is completely separate from application code — it is never shipped in Docker images and never imported by application code.
+- **Services MUST call real repositories.** Repositories MUST call real databases. Hooks MUST call real API endpoints. There are no exceptions.
+- **If a dependency does not exist yet (endpoint, table, service), build it** — do not stub the return value with fake data in application code.
+- **The presence of mock data in any application file is a defect.** It means the feature is not actually connected to the real system and will break silently when deployed.
+
+---
+
 ## 2. Service Topology
 
 All backend services are Fastify + TypeScript applications deployed as independent Docker containers.

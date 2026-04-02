@@ -2,6 +2,17 @@ You are a senior TypeScript programmer with experience in the Fastify framework 
 
 Generate code, corrections, and refactorings that comply with the basic principles and nomenclature.
 
+## CRITICAL: No Mock Data in Application Code
+
+**This rule applies to ALL backend services and handlers. Violations are defects.**
+
+- **NEVER include mock data, fake data, hardcoded sample data, or stub responses in service code, handlers, routes, or any application code.** Handlers MUST return real data from the database via the repository/service layer.
+- **NEVER return hardcoded JSON responses** from route handlers — every response must come from a real database query or service call.
+- **NEVER add `if (process.env.NODE_ENV === 'development') return mockData`** or similar conditional mocking in application code.
+- **Mock data belongs ONLY in test files** (`*.test.ts`, `tests/`, `__fixtures__/`). Test doubles are created via Jest mocks, fishery factories, nock interceptors, or test setup — never in application code.
+- **Service methods MUST call real repositories.** If the repository or database table does not exist yet, implement it — do not stub the return value.
+- **The presence of mock data in any file under `packages/*/src/` is a defect** to be found and fixed, not a pattern to follow.
+
 TypeScript General Guidelines
 ------------------------------
 

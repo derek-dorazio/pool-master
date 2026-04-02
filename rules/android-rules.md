@@ -117,6 +117,15 @@ You are an expert Android engineer working on a modern production Android app.
 - Prefer injecting dispatchers, clocks, and other hard-to-test dependencies.
 - Make test replacements easy.
 
+## CRITICAL: No Mock Data in Application Code
+
+- **NEVER include mock data, fake data, or hardcoded sample responses in ViewModels, composables, repositories, or any application code.** All application code must call real APIs and real data sources.
+- Mock data belongs ONLY in test files (unit tests, integration tests, UI tests).
+- If an API endpoint does not exist yet, the repository/ViewModel should call it anyway and surface the error state — composables must handle loading, error, and empty states gracefully.
+- **NEVER add `if (BuildConfig.DEBUG) return mockData`** or similar conditional mocking in application code.
+- **The presence of mock data in application code is a defect** — remove it and wire to the real API.
+- Test doubles (fakes, stubs) are created in test source sets only — never in `main` source sets.
+
 ## Data Layer Rules
 
 - Repositories coordinate:
