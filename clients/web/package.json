@@ -33,6 +33,7 @@
     "clsx": "^2.1.0",
     "i18next": "^23.12.0",
     "lucide-react": "^0.400.0",
+    "openapi-fetch": "^0.17.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-hook-form": "^7.52.0",

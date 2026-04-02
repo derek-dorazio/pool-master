@@ -44,6 +44,10 @@
     "./dto/*": {
       "types": "./dto/*.ts",
       "default": "./dist/dto/*.js"
+    },
+    "./generated": {
+      "types": "./generated/api-types.ts",
+      "default": "./generated/api-types.ts"
     }
   },
   "scripts": {

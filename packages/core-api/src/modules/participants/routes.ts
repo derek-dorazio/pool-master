@@ -32,7 +32,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Participants'],
       summary: 'Search and list participants',
-      operationId: 'searchParticipants',
+      operationId: 'listParticipants',
       querystring: {
         type: 'object',
         properties: {

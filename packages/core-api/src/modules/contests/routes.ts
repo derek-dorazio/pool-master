@@ -197,8 +197,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   fastify.post('/:contestId/draft/pause', {
     schema: {
       tags: ['Contests'],
-      summary: 'Pause an active draft',
-      operationId: 'pauseDraft',
+      summary: 'Pause an active draft (contest override)',
+      operationId: 'pauseContestDraft',
       body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
     },
     handler: overrides.pauseDraft,
@@ -206,8 +206,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   fastify.post('/:contestId/draft/resume', {
     schema: {
       tags: ['Contests'],
-      summary: 'Resume a paused draft',
-      operationId: 'resumeDraft',
+      summary: 'Resume a paused draft (contest override)',
+      operationId: 'resumeContestDraft',
     },
     handler: overrides.resumeDraft,
   });
