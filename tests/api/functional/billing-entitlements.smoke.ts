@@ -1,4 +1,5 @@
 import { BASE_URL, smokeFetch, expectStatus } from '../setup';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 /**
  * Functional smoke test — Billing + Entitlements.
  *
@@ -10,7 +11,7 @@ let token: string;
 
 async function setup() {
   const email = `billing-${Date.now()}@smoke.test`;
-  const res = await smokeFetch(`${BASE_URL}/api/v1/auth/register`, {
+  const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.register}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password: 'SmokePas123', displayName: 'Billing Tester' }),
@@ -25,7 +26,7 @@ describe('Billing + Entitlements', () => {
   beforeAll(() => setup());
 
   it('gets current plan (free tier)', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/billing/plan`, { headers: headers() });
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.billing.plan}`, { headers: headers() });
     await expectStatus(res, 200, 'get current plan');
     const body = res.headers.get('content-type')?.includes('json')
       ? await res.json() as any
@@ -37,7 +38,7 @@ describe('Billing + Entitlements', () => {
   });
 
   it('gets entitlements', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/billing/entitlements`, { headers: headers() });
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.billing.entitlements}`, { headers: headers() });
     await expectStatus(res, 200, 'get entitlements');
     const body = res.headers.get('content-type')?.includes('json')
       ? await res.json() as any
@@ -47,12 +48,12 @@ describe('Billing + Entitlements', () => {
   });
 
   it('gets usage stats', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/billing/usage`, { headers: headers() });
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.billing.usage}`, { headers: headers() });
     await expectStatus(res, 200, 'get usage stats');
   });
 
   it('lists available plan tiers', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/billing/plans`, { headers: headers() });
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.billing.plans}`, { headers: headers() });
     await expectStatus(res, 200, 'list plan tiers');
     const body = res.headers.get('content-type')?.includes('json')
       ? await res.json() as any
@@ -63,7 +64,7 @@ describe('Billing + Entitlements', () => {
   });
 
   it('free tier allows league creation', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.list}`, {
       method: 'POST', headers: headers(),
       body: JSON.stringify({ name: 'Free Tier League', visibility: 'PRIVATE' }),
     });
@@ -72,11 +73,11 @@ describe('Billing + Entitlements', () => {
   });
 
   it('free tier allows contest creation', async () => {
-    const lr = await smokeFetch(`${BASE_URL}/api/v1/leagues`, { headers: headers() });
+    const lr = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.list}`, { headers: headers() });
     const leagueId = ((await lr.json()) as any).leagues[0]?.id;
     if (!leagueId) return;
 
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues/${leagueId}/contests`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.contests(leagueId)}`, {
       method: 'POST', headers: headers(),
       body: JSON.stringify({ name: 'Free Contest', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY' }),
     });

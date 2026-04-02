@@ -11,6 +11,8 @@ import {
   createTestUser,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { LeagueVisibility, LeagueRole } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -44,16 +46,16 @@ describe('League Member Errors & Audit Logs', () => {
     // Owner creates league
     const createRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/leagues',
+      url: API_ROUTES.leagues.list,
       headers: ownerHeaders,
-      payload: { name: 'Error Paths League', visibility: 'PRIVATE', maxMembers: 10 },
+      payload: { name: 'Error Paths League', visibility: LeagueVisibility.PRIVATE, maxMembers: 10 },
     });
     leagueId = createRes.json().league.id;
 
     // Generate invite link
     const ilRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/leagues/${leagueId}/invite-link`,
+      url: API_ROUTES.leagues.inviteLink(leagueId),
       headers: ownerHeaders,
       payload: { expiresInDays: 7, maxUses: 10 },
     });
@@ -63,7 +65,7 @@ describe('League Member Errors & Audit Logs', () => {
     // member2 joins via invite code
     const joinRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/invitations/accept',
+      url: API_ROUTES.invitations.accept,
       headers: member2Headers,
       payload: { inviteCode },
     });
@@ -79,9 +81,9 @@ describe('League Member Errors & Audit Logs', () => {
     const fakeUserId = '00000000-0000-0000-0000-000000000000';
     const res = await getApp().inject({
       method: 'PUT',
-      url: `/api/v1/leagues/${leagueId}/members/${fakeUserId}/role`,
+      url: API_ROUTES.leagues.memberRole(leagueId, fakeUserId),
       headers: ownerHeaders,
-      payload: { role: 'COMMISSIONER' },
+      payload: { role: LeagueRole.COMMISSIONER },
     });
     expect([400, 404]).toContain(res.statusCode);
   });
@@ -92,9 +94,9 @@ describe('League Member Errors & Audit Logs', () => {
   it('PUT /leagues/:id/members/:uid/role — non-owner gets 403', async () => {
     const res = await getApp().inject({
       method: 'PUT',
-      url: `/api/v1/leagues/${leagueId}/members/${member2Id}/role`,
+      url: API_ROUTES.leagues.memberRole(leagueId, member2Id),
       headers: member2Headers,
-      payload: { role: 'MANAGER' },
+      payload: { role: LeagueRole.MANAGER },
     });
     expect(res.statusCode).toBe(403);
   });
@@ -106,7 +108,7 @@ describe('League Member Errors & Audit Logs', () => {
     const { 'content-type': _, ...h } = ownerHeaders;
     const res = await getApp().inject({
       method: 'DELETE',
-      url: `/api/v1/leagues/${leagueId}/members/${ownerId}`,
+      url: API_ROUTES.leagues.removeMember(leagueId, ownerId),
       headers: h,
     });
     expect(res.statusCode).toBe(400);
@@ -119,7 +121,7 @@ describe('League Member Errors & Audit Logs', () => {
     const { 'content-type': _, ...h } = member2Headers;
     const res = await getApp().inject({
       method: 'DELETE',
-      url: `/api/v1/leagues/${leagueId}/members/${ownerId}`,
+      url: API_ROUTES.leagues.removeMember(leagueId, ownerId),
       headers: h,
     });
     expect(res.statusCode).toBe(403);
@@ -159,7 +161,7 @@ describe('League Member Errors & Audit Logs', () => {
     const { 'content-type': _, ...h } = ownerHeaders;
     const res = await getApp().inject({
       method: 'DELETE',
-      url: `/api/v1/leagues/${leagueId}/members/${fakeUserId}`,
+      url: API_ROUTES.leagues.removeMember(leagueId, fakeUserId),
       headers: h,
     });
     expect(res.statusCode).toBe(404);

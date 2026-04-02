@@ -12,6 +12,8 @@ import {
   getPrisma,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ContestType, SelectionType, ScoringEngine, LeagueVisibility } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -41,16 +43,16 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
     // Owner creates a league
     const leagueRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/leagues',
+      url: API_ROUTES.leagues.list,
       headers: ownerHeaders,
-      payload: { name: 'InvBulk Test League', visibility: 'PRIVATE', maxMembers: 50 },
+      payload: { name: 'InvBulk Test League', visibility: LeagueVisibility.PRIVATE, maxMembers: 50 },
     });
     leagueId = leagueRes.json().league.id;
 
     // Generate an invite link
     const linkRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/leagues/${leagueId}/invite-link`,
+      url: API_ROUTES.leagues.inviteLink(leagueId),
       headers: ownerHeaders,
       payload: { expiresInDays: 7, maxUses: 10 },
     });
@@ -60,7 +62,7 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
     // Member joins via invite code
     const joinRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/invitations/accept',
+      url: API_ROUTES.invitations.accept,
       headers: memberHeaders,
       payload: { inviteCode },
     });
@@ -69,13 +71,13 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
     // Create a contest for copy-season tests
     const contestRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/leagues/${leagueId}/contests`,
+      url: API_ROUTES.leagues.contests(leagueId),
       headers: ownerHeaders,
       payload: {
         name: 'Source Contest',
-        contestType: 'SINGLE_EVENT',
-        selectionType: 'SNAKE_DRAFT',
-        scoringEngine: 'STROKE_PLAY',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.SNAKE_DRAFT,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
       },
     });
     const contestBody = contestRes.json();
@@ -91,7 +93,7 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
       // Member is already in the league; attempting to accept the same code again
       const res = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/invitations/accept',
+        url: API_ROUTES.invitations.accept,
         headers: memberHeaders,
         payload: { inviteCode },
       });
@@ -103,7 +105,7 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
     it('returns 404 for completely invalid invite code', async () => {
       const res = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/invitations/accept',
+        url: API_ROUTES.invitations.accept,
         headers: memberHeaders,
         payload: { inviteCode: 'TOTALLYINVALIDCODE9999' },
       });
@@ -131,7 +133,7 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
       const newUser = await createTestUser({ displayName: 'Expired Invite User' });
       const res = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/invitations/accept',
+        url: API_ROUTES.invitations.accept,
         headers: newUser.headers,
         payload: { inviteCode: expiredCode },
       });
@@ -158,7 +160,7 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
       const newUser = await createTestUser({ displayName: 'MaxUses Invite User' });
       const res = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/invitations/accept',
+        url: API_ROUTES.invitations.accept,
         headers: newUser.headers,
         payload: { inviteCode: maxedCode },
       });

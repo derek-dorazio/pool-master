@@ -1,4 +1,5 @@
 import { BASE_URL, smokeFetch, expectStatus } from '../setup';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 /**
  * Functional smoke test — complete user journey via API.
  *
@@ -26,7 +27,7 @@ describe('User Journey — Full API Flow', () => {
   // -----------------------------------------------------------------------
   it('registers a new user', async () => {
     email = `journey-${Date.now()}@e2e.test`;
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/register`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.register}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -49,7 +50,7 @@ describe('User Journey — Full API Flow', () => {
   // 2. Login
   // -----------------------------------------------------------------------
   it('logs in with the same credentials', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/login`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.login}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email, password: 'JourneyPass123' }),
@@ -67,7 +68,7 @@ describe('User Journey — Full API Flow', () => {
   // 3. Get profile
   // -----------------------------------------------------------------------
   it('fetches current user profile', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/auth/me`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.me}`, {
       headers: { authorization: `Bearer ${accessToken}` },
     });
     await expectStatus(res, 200, 'fetch user profile');
@@ -83,7 +84,7 @@ describe('User Journey — Full API Flow', () => {
   // 4. Create league
   // -----------------------------------------------------------------------
   it('creates a league', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.list}`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -106,7 +107,7 @@ describe('User Journey — Full API Flow', () => {
   // 5. Get league details
   // -----------------------------------------------------------------------
   it('retrieves the created league', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues/${leagueId}`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.detail(leagueId)}`, {
       headers: headers(),
     });
     await expectStatus(res, 200, 'retrieve league');
@@ -121,7 +122,7 @@ describe('User Journey — Full API Flow', () => {
   // 6. Create contest
   // -----------------------------------------------------------------------
   it('creates a contest in the league', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues/${leagueId}/contests`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.contests(leagueId)}`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -146,7 +147,7 @@ describe('User Journey — Full API Flow', () => {
   // 7. Get contest details
   // -----------------------------------------------------------------------
   it('retrieves the created contest', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/contests/${contestId}`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.contests.detail(contestId)}`, {
       headers: headers(),
     });
     await expectStatus(res, 200, 'retrieve contest');
@@ -168,7 +169,7 @@ describe('User Journey — Full API Flow', () => {
     const entryB = crypto.randomUUID();
     const participants = Array.from({ length: 10 }, () => crypto.randomUUID());
 
-    const res = await smokeFetch(`${BASE_URL}/api/v1/drafts/${contestId}/start`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.drafts.start(contestId)}`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -206,7 +207,7 @@ describe('User Journey — Full API Flow', () => {
     const entryA = (globalThis as any).__draftEntryA;
     const participants = (globalThis as any).__draftParticipants;
 
-    const res = await smokeFetch(`${BASE_URL}/api/v1/drafts/${contestId}/pick`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.drafts.pick(contestId)}`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -228,7 +229,7 @@ describe('User Journey — Full API Flow', () => {
   it('verifies the draft state reflects the pick', async () => {
     if (!(globalThis as any).__draftAvailable) return; // draft routes not available
 
-    const res = await smokeFetch(`${BASE_URL}/api/v1/drafts/${contestId}`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.drafts.state(contestId)}`, {
       headers: headers(),
     });
     await expectStatus(res, 200, 'verify draft state');

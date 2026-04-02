@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -12,25 +13,11 @@ export interface UserProfile {
   authProvider: 'email' | 'google' | 'apple';
 }
 
-const mockProfile: UserProfile = {
-  id: 'user-1',
-  displayName: 'Dave O',
-  email: 'dave@example.com',
-  bio: 'Fantasy sports enthusiast',
-  avatarUrl: null,
-  authProvider: 'email',
-};
-
 export function useProfile() {
   return useQuery({
     queryKey: settingsKeys.profile(),
     queryFn: async (): Promise<UserProfile> => {
-      try {
-        return await api.get<UserProfile>('/v1/auth/me');
-      } catch {
-        // Fallback to mock data when backend unavailable
-        return mockProfile;
-      }
+      return await api.get<UserProfile>(clientPath(API_ROUTES.auth.me));
     },
     staleTime: Infinity,
   });

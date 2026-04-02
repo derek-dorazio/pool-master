@@ -12,6 +12,8 @@ import {
   createTestUser,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ContestType, SelectionType, ScoringEngine, ContestStatus, LeagueVisibility } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -39,9 +41,9 @@ describe('Web API Contract Validation', () => {
     // Create a league for league/contest contract tests
     const leagueRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/leagues',
+      url: API_ROUTES.leagues.list,
       headers,
-      payload: { name: 'Contract Test League', visibility: 'PRIVATE', maxMembers: 12 },
+      payload: { name: 'Contract Test League', visibility: LeagueVisibility.PRIVATE, maxMembers: 12 },
     });
     expect(leagueRes.statusCode).toBe(201);
     leagueId = leagueRes.json().league.id;
@@ -49,13 +51,13 @@ describe('Web API Contract Validation', () => {
     // Create a contest inside the league
     const contestRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/leagues/${leagueId}/contests`,
+      url: API_ROUTES.leagues.contests(leagueId),
       headers,
       payload: {
         name: 'Contract Test Contest',
-        contestType: 'SINGLE_EVENT',
-        selectionType: 'SNAKE_DRAFT',
-        scoringEngine: 'STROKE_PLAY',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.SNAKE_DRAFT,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
       },
     });
     expect(contestRes.statusCode).toBe(201);
@@ -71,7 +73,7 @@ describe('Web API Contract Validation', () => {
     it('POST /auth/register returns { user, tokens: { accessToken, refreshToken, expiresIn } }', async () => {
       const res = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/auth/register',
+        url: API_ROUTES.auth.register,
         payload: {
           email: testEmail,
           password: testPassword,
@@ -101,7 +103,7 @@ describe('Web API Contract Validation', () => {
     it('POST /auth/login returns same shape as register', async () => {
       const res = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/auth/login',
+        url: API_ROUTES.auth.login,
         payload: { email: testEmail, password: testPassword },
       });
       expect(res.statusCode).toBe(200);
@@ -125,7 +127,7 @@ describe('Web API Contract Validation', () => {
     it('GET /auth/me returns { user: { id, email, displayName } }', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/auth/me',
+        url: API_ROUTES.auth.me,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -141,7 +143,7 @@ describe('Web API Contract Validation', () => {
     it('POST /auth/refresh returns { accessToken, refreshToken, expiresIn }', async () => {
       const res = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/auth/refresh',
+        url: API_ROUTES.auth.refresh,
         payload: { refreshToken },
       });
       expect(res.statusCode).toBe(200);
@@ -165,9 +167,9 @@ describe('Web API Contract Validation', () => {
     it('POST /leagues returns { league: { id, name, visibility, ... } }', async () => {
       const res = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/leagues',
+        url: API_ROUTES.leagues.list,
         headers,
-        payload: { name: 'Contract League Shape', visibility: 'PRIVATE' },
+        payload: { name: 'Contract League Shape', visibility: LeagueVisibility.PRIVATE },
       });
       expect(res.statusCode).toBe(201);
       const body = res.json();
@@ -182,7 +184,7 @@ describe('Web API Contract Validation', () => {
     it('GET /leagues returns { leagues: [...] } (array wrapped in object)', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/leagues',
+        url: API_ROUTES.leagues.list,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -202,7 +204,7 @@ describe('Web API Contract Validation', () => {
     it('GET /leagues/:id returns { league: { id, name, ... } }', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/leagues/${leagueId}`,
+        url: API_ROUTES.leagues.detail(leagueId),
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -218,7 +220,7 @@ describe('Web API Contract Validation', () => {
     it('PUT /leagues/:id/settings returns { league } with updated settings', async () => {
       const res = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/leagues/${leagueId}/settings`,
+        url: API_ROUTES.leagues.settings(leagueId),
         headers,
         payload: { allowMidSeasonJoin: true },
       });
@@ -239,13 +241,13 @@ describe('Web API Contract Validation', () => {
     it('POST /leagues/:id/contests returns contest with { id, name, status, contestType, selectionType, scoringEngine }', async () => {
       const res = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/leagues/${leagueId}/contests`,
+        url: API_ROUTES.leagues.contests(leagueId),
         headers,
         payload: {
           name: 'Contract Contest Shape',
-          contestType: 'SINGLE_EVENT',
-          selectionType: 'SNAKE_DRAFT',
-          scoringEngine: 'STROKE_PLAY',
+          contestType: ContestType.SINGLE_EVENT,
+          selectionType: SelectionType.SNAKE_DRAFT,
+          scoringEngine: ScoringEngine.STROKE_PLAY,
         },
       });
       expect(res.statusCode).toBe(201);
@@ -255,7 +257,7 @@ describe('Web API Contract Validation', () => {
       const contest = body.contest ?? body;
       expect(typeof contest.id).toBe('string');
       expect(typeof contest.name).toBe('string');
-      expect(contest.status).toBe('DRAFT');
+      expect(contest.status).toBe(ContestStatus.DRAFT);
       expect(typeof contest.contestType).toBe('string');
       expect(typeof contest.selectionType).toBe('string');
       expect(typeof contest.scoringEngine).toBe('string');
@@ -265,7 +267,7 @@ describe('Web API Contract Validation', () => {
     it('GET /leagues/:id/contests returns array of contests (may be wrapped or bare)', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/leagues/${leagueId}/contests`,
+        url: API_ROUTES.leagues.contests(leagueId),
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -288,7 +290,7 @@ describe('Web API Contract Validation', () => {
     it('GET /contests/:id returns contest detail (may be wrapped or bare)', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/contests/${contestId}`,
+        url: API_ROUTES.contests.detail(contestId),
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -306,7 +308,7 @@ describe('Web API Contract Validation', () => {
     it('PUT /contests/:id returns updated contest', async () => {
       const res = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/contests/${contestId}`,
+        url: API_ROUTES.contests.detail(contestId),
         headers,
         payload: { name: 'Updated Contract Contest' },
       });
@@ -416,7 +418,7 @@ describe('Web API Contract Validation', () => {
     it('GET /notifications returns notifications list', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/notifications',
+        url: API_ROUTES.notifications.list,
         headers: notifHeaders(),
       });
       expect(res.statusCode).toBeGreaterThanOrEqual(200);
@@ -442,7 +444,7 @@ describe('Web API Contract Validation', () => {
     it('GET /notifications/preferences returns preferences object', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/notifications/preferences',
+        url: API_ROUTES.notifications.preferences,
         headers: notifHeaders(),
       });
       expect(res.statusCode).toBeGreaterThanOrEqual(200);
@@ -484,7 +486,7 @@ describe('Web API Contract Validation', () => {
     it('GET /billing/plan returns plan with slug or name', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/plan',
+        url: API_ROUTES.billing.plan,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -499,7 +501,7 @@ describe('Web API Contract Validation', () => {
     it('GET /billing/entitlements returns { entitlements: object }', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/entitlements',
+        url: API_ROUTES.billing.entitlements,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -513,7 +515,7 @@ describe('Web API Contract Validation', () => {
     it('GET /billing/plans returns { plans: [...] }', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/plans',
+        url: API_ROUTES.billing.plans,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -536,7 +538,7 @@ describe('Web API Contract Validation', () => {
     it('GET /search/participants?q=test returns { participants: [...], total }', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/search/participants?q=test',
+        url: `${API_ROUTES.search.participants}?q=test`,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -591,7 +593,7 @@ describe('Web API Contract Validation', () => {
     it('GET /account/consent returns { consents: [...] }', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/account/consent',
+        url: API_ROUTES.account.consent,
         headers,
       });
       expect(res.statusCode).toBe(200);

@@ -9,6 +9,8 @@ import {
   createTestUser,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ContestType, SelectionType, ScoringEngine, ContestStatus, LeagueVisibility } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -27,22 +29,22 @@ describe('Override Service Error Paths', () => {
     // Create a league
     const leagueRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/leagues',
+      url: API_ROUTES.leagues.list,
       headers,
-      payload: { name: 'Override Error Test League', visibility: 'PRIVATE' },
+      payload: { name: 'Override Error Test League', visibility: LeagueVisibility.PRIVATE },
     });
     const leagueId = leagueRes.json().league.id;
 
     // Create a contest in DRAFT status
     const contestRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/leagues/${leagueId}/contests`,
+      url: API_ROUTES.leagues.contests(leagueId),
       headers,
       payload: {
         name: 'Override Error Pool',
-        contestType: 'SINGLE_EVENT',
-        selectionType: 'SNAKE_DRAFT',
-        scoringEngine: 'STROKE_PLAY',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.SNAKE_DRAFT,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
       },
     });
     const body = contestRes.json();
@@ -175,7 +177,7 @@ describe('Override Service Error Paths', () => {
       expect(res.statusCode).toBe(200);
       const body = res.json();
       expect(body.contest).toBeDefined();
-      expect(body.contest.status).toBe('COMPLETED');
+      expect(body.contest.status).toBe(ContestStatus.COMPLETED);
     });
   });
 });

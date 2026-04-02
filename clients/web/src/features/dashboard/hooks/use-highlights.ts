@@ -8,23 +8,12 @@ export interface SeasonHighlights {
   seasonRecord: { wins: number; losses: number };
 }
 
-const mockHighlights: SeasonHighlights = {
-  recentWin: 'Premier League Matchday 28',
-  personalBest: 142,
-  currentStreak: 3,
-  seasonRecord: { wins: 7, losses: 3 },
-};
-
 export function useHighlights() {
   return useQuery({
     queryKey: ['dashboard', 'highlights'],
     queryFn: async (): Promise<SeasonHighlights> => {
-      try {
-        return await api.get<SeasonHighlights>('/v1/history/highlights');
-      } catch {
-        // Fallback to mock data when backend unavailable
-        return mockHighlights;
-      }
+      // TODO: add API_ROUTES.history.highlights when backend endpoint exists
+      return await api.get<SeasonHighlights>('/v1/history/highlights');
     },
   });
 }

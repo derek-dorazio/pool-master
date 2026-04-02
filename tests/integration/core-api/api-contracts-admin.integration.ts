@@ -11,6 +11,7 @@ import {
   createTestUser,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -39,7 +40,7 @@ describe('Admin API Contract Validation', () => {
     it('returns service health data with admin auth', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/admin/health/services',
+        url: `${API_ROUTES.admin.health}/services`,
         headers: adminHeaders,
       });
 
@@ -73,7 +74,7 @@ describe('Admin API Contract Validation', () => {
     it('returns paginated tenant list with { items, total } shape', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/admin/tenants',
+        url: API_ROUTES.admin.tenants,
         headers: adminHeaders,
       });
 
@@ -106,7 +107,7 @@ describe('Admin API Contract Validation', () => {
     it('returns paginated user list with { items, total } shape', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/admin/users?search=test',
+        url: `${API_ROUTES.admin.users}?search=test`,
         headers: adminHeaders,
       });
 
@@ -139,7 +140,7 @@ describe('Admin API Contract Validation', () => {
     it('returns array of flags with key, name, enabled properties', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/admin/flags',
+        url: API_ROUTES.admin.flags,
         headers: adminHeaders,
       });
 
@@ -172,7 +173,7 @@ describe('Admin API Contract Validation', () => {
     it('returns array of announcements', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/admin/announcements',
+        url: API_ROUTES.admin.announcements,
         headers: adminHeaders,
       });
 

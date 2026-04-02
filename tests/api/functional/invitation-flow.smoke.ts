@@ -1,4 +1,5 @@
 import { BASE_URL, smokeFetch, expectStatus } from '../setup';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 /**
  * Functional smoke test — Invitation + Join flow.
  *
@@ -15,7 +16,7 @@ let inviteCode: string;
 async function register(name: string) {
   const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
   const email = `invite-${slug}-${Date.now()}@smoke.test`;
-  const res = await smokeFetch(`${BASE_URL}/api/v1/auth/register`, {
+  const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.register}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password: 'SmokePas123', displayName: name }),
@@ -47,7 +48,7 @@ describe('Invitation + Join Flow', () => {
   });
 
   it('owner creates a league', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.list}`, {
       method: 'POST',
       headers: authHeaders(ownerToken),
       body: JSON.stringify({ name: 'Invite Test League', visibility: 'PRIVATE', maxMembers: 10 }),
@@ -61,7 +62,7 @@ describe('Invitation + Join Flow', () => {
   });
 
   it('owner generates invite link', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues/${leagueId}/invite-link`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.inviteLink(leagueId)}`, {
       method: 'POST',
       headers: authHeaders(ownerToken),
       body: JSON.stringify({ expiresInDays: 7, maxUses: 5 }),
@@ -76,7 +77,7 @@ describe('Invitation + Join Flow', () => {
   });
 
   it('member accepts invite link', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/invitations/accept`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.invitations.accept}`, {
       method: 'POST',
       headers: authHeaders(memberToken),
       body: JSON.stringify({ inviteCode }),
@@ -85,7 +86,7 @@ describe('Invitation + Join Flow', () => {
   });
 
   it('member can see the league', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues/${leagueId}`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.detail(leagueId)}`, {
       headers: authHeaders(memberToken),
     });
     // 200 if same tenant, 403/404 if cross-tenant (different auto-created tenants)
@@ -101,7 +102,7 @@ describe('Invitation + Join Flow', () => {
   });
 
   it('owner sees member in league list', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/leagues`, {
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.leagues.list}`, {
       headers: authHeaders(ownerToken),
     });
     await expectStatus(res, 200, 'owner list leagues');

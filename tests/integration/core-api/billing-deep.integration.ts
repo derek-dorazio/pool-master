@@ -13,6 +13,8 @@ import {
   createTestUser,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { LeagueVisibility } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -59,7 +61,7 @@ describe('Billing deep integration', () => {
     it('returns plan object with slug, name, and entitlements', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/plan',
+        url: API_ROUTES.billing.plan,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -82,7 +84,7 @@ describe('Billing deep integration', () => {
     it('returns entitlements object with expected keys', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/entitlements',
+        url: API_ROUTES.billing.entitlements,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -119,7 +121,7 @@ describe('Billing deep integration', () => {
     it('returns usage data with leagues, members, contests counts', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/usage',
+        url: API_ROUTES.billing.usage,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -149,7 +151,7 @@ describe('Billing deep integration', () => {
     it('returns plans array with at least 1 tier', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/plans',
+        url: API_ROUTES.billing.plans,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -173,7 +175,7 @@ describe('Billing deep integration', () => {
     it('free tier plan entitlements include max_leagues, max_members, max_contests_per_league', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/plan',
+        url: API_ROUTES.billing.plan,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -196,7 +198,7 @@ describe('Billing deep integration', () => {
     it('max_leagues is positive or unlimited (-1)', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/plan',
+        url: API_ROUTES.billing.plan,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -215,7 +217,7 @@ describe('Billing deep integration', () => {
       // Capture baseline usage
       const beforeRes = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/usage',
+        url: API_ROUTES.billing.usage,
         headers,
       });
       expect(beforeRes.statusCode).toBe(200);
@@ -224,11 +226,11 @@ describe('Billing deep integration', () => {
       // Create a league
       const createRes = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/leagues',
+        url: API_ROUTES.leagues.list,
         headers,
         payload: {
           name: 'Billing Usage Test League',
-          visibility: 'PRIVATE',
+          visibility: LeagueVisibility.PRIVATE,
           maxMembers: 10,
         },
       });
@@ -237,7 +239,7 @@ describe('Billing deep integration', () => {
       // Check usage after league creation
       const afterRes = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/usage',
+        url: API_ROUTES.billing.usage,
         headers,
       });
       expect(afterRes.statusCode).toBe(200);
@@ -255,7 +257,7 @@ describe('Billing deep integration', () => {
     it('returns invoice list with items array', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/invoices',
+        url: API_ROUTES.billing.invoices,
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -274,7 +276,7 @@ describe('Billing deep integration', () => {
     it('GET /api/v1/billing/plan without auth returns 401', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/plan',
+        url: API_ROUTES.billing.plan,
       });
       expect(res.statusCode).toBe(401);
     });
@@ -282,7 +284,7 @@ describe('Billing deep integration', () => {
     it('GET /api/v1/billing/entitlements without auth returns 401', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/entitlements',
+        url: API_ROUTES.billing.entitlements,
       });
       expect(res.statusCode).toBe(401);
     });
@@ -290,7 +292,7 @@ describe('Billing deep integration', () => {
     it('GET /api/v1/billing/usage without auth returns 401', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/usage',
+        url: API_ROUTES.billing.usage,
       });
       expect(res.statusCode).toBe(401);
     });
@@ -298,7 +300,7 @@ describe('Billing deep integration', () => {
     it('GET /api/v1/billing/invoices without auth returns 401', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/invoices',
+        url: API_ROUTES.billing.invoices,
       });
       expect(res.statusCode).toBe(401);
     });
@@ -311,7 +313,7 @@ describe('Billing deep integration', () => {
     it('plan entitlements include api_access, branding, and support_tier', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/billing/plan',
+        url: API_ROUTES.billing.plan,
         headers,
       });
       expect(res.statusCode).toBe(200);

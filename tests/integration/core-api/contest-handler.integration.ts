@@ -12,6 +12,8 @@ import {
   getPrisma,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ContestType, SelectionType, ScoringEngine, ContestStatus, LeagueVisibility } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -32,9 +34,9 @@ describe('Contest Handler Integration', () => {
     // Create league
     const leagueRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/leagues',
+      url: API_ROUTES.leagues.list,
       headers,
-      payload: { name: 'Handler Test League', visibility: 'PRIVATE' },
+      payload: { name: 'Handler Test League', visibility: LeagueVisibility.PRIVATE },
     });
     expect(leagueRes.statusCode).toBe(201);
     leagueId = leagueRes.json().league.id;
@@ -42,13 +44,13 @@ describe('Contest Handler Integration', () => {
     // Contest 1 — stays DRAFT
     const c1 = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/leagues/${leagueId}/contests`,
+      url: API_ROUTES.leagues.contests(leagueId),
       headers,
       payload: {
         name: 'Draft Contest',
-        contestType: 'SINGLE_EVENT',
-        selectionType: 'SNAKE_DRAFT',
-        scoringEngine: 'STROKE_PLAY',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.SNAKE_DRAFT,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
       },
     });
     expect(c1.statusCode).toBe(201);
@@ -58,13 +60,13 @@ describe('Contest Handler Integration', () => {
     // Contest 2 — used for lifecycle operations
     const c2 = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/leagues/${leagueId}/contests`,
+      url: API_ROUTES.leagues.contests(leagueId),
       headers,
       payload: {
         name: 'Lifecycle Contest',
-        contestType: 'SINGLE_EVENT',
-        selectionType: 'SNAKE_DRAFT',
-        scoringEngine: 'STROKE_PLAY',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.SNAKE_DRAFT,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
       },
     });
     expect(c2.statusCode).toBe(201);
@@ -79,7 +81,7 @@ describe('Contest Handler Integration', () => {
     it('returns the full contest object with expected fields', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/contests/${draftContestId}`,
+        url: API_ROUTES.contests.detail(draftContestId),
         headers,
       });
       expect(res.statusCode).toBe(200);
@@ -87,10 +89,10 @@ describe('Contest Handler Integration', () => {
       const contest = body.contest ?? body;
       expect(contest.id).toBe(draftContestId);
       expect(contest.name).toBe('Draft Contest');
-      expect(contest.status).toBe('DRAFT');
-      expect(contest.contestType).toBe('SINGLE_EVENT');
-      expect(contest.selectionType).toBe('SNAKE_DRAFT');
-      expect(contest.scoringEngine).toBe('STROKE_PLAY');
+      expect(contest.status).toBe(ContestStatus.DRAFT);
+      expect(contest.contestType).toBe(ContestType.SINGLE_EVENT);
+      expect(contest.selectionType).toBe(SelectionType.SNAKE_DRAFT);
+      expect(contest.scoringEngine).toBe(ScoringEngine.STROKE_PLAY);
       expect(contest.leagueId).toBe(leagueId);
       expect(contest.createdAt).toBeDefined();
       expect(contest.updatedAt).toBeDefined();
@@ -104,7 +106,7 @@ describe('Contest Handler Integration', () => {
     it('updates the name and persists the change', async () => {
       const updateRes = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/contests/${draftContestId}`,
+        url: API_ROUTES.contests.detail(draftContestId),
         headers,
         payload: { name: 'Renamed Draft Contest' },
       });
@@ -115,7 +117,7 @@ describe('Contest Handler Integration', () => {
       // Verify persistence via GET
       const getRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/contests/${draftContestId}`,
+        url: API_ROUTES.contests.detail(draftContestId),
         headers,
       });
       expect(getRes.statusCode).toBe(200);
@@ -136,7 +138,7 @@ describe('Contest Handler Integration', () => {
       };
       const res = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/contests/${draftContestId}`,
+        url: API_ROUTES.contests.detail(draftContestId),
         headers,
         payload: { scoringRules },
       });
@@ -159,7 +161,7 @@ describe('Contest Handler Integration', () => {
       const lockAt = '2026-07-01T09:00:00.000Z';
       const res = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/contests/${draftContestId}`,
+        url: API_ROUTES.contests.detail(draftContestId),
         headers,
         payload: { startsAt, endsAt, lockAt },
       });
@@ -183,13 +185,13 @@ describe('Contest Handler Integration', () => {
       // Create a throwaway contest for deletion
       const cr = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/leagues/${leagueId}/contests`,
+        url: API_ROUTES.leagues.contests(leagueId),
         headers,
         payload: {
           name: 'Disposable Contest',
-          contestType: 'SINGLE_EVENT',
-          selectionType: 'SNAKE_DRAFT',
-          scoringEngine: 'STROKE_PLAY',
+          contestType: ContestType.SINGLE_EVENT,
+          selectionType: SelectionType.SNAKE_DRAFT,
+          scoringEngine: ScoringEngine.STROKE_PLAY,
         },
       });
       deleteContestId = (cr.json().contest ?? cr.json()).id;
@@ -199,7 +201,7 @@ describe('Contest Handler Integration', () => {
       const { 'content-type': _, ...h } = headers;
       const res = await getApp().inject({
         method: 'DELETE',
-        url: `/api/v1/contests/${deleteContestId}`,
+        url: API_ROUTES.contests.detail(deleteContestId),
         headers: h,
       });
       expect(res.statusCode).toBe(204);
@@ -207,7 +209,7 @@ describe('Contest Handler Integration', () => {
       // Verify it's gone
       const getRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/contests/${deleteContestId}`,
+        url: API_ROUTES.contests.detail(deleteContestId),
         headers,
       });
       expect(getRes.statusCode).toBe(404);
@@ -227,7 +229,7 @@ describe('Contest Handler Integration', () => {
       });
       expect(res.statusCode).toBe(200);
       const contest = res.json().contest ?? res.json();
-      expect(contest.status).toBe('COMPLETED');
+      expect(contest.status).toBe(ContestStatus.COMPLETED);
     });
   });
 
@@ -245,7 +247,7 @@ describe('Contest Handler Integration', () => {
       });
       expect(res.statusCode).toBe(200);
       const contest = res.json().contest ?? res.json();
-      expect(contest.status).toBe('ACTIVE');
+      expect(contest.status).toBe(ContestStatus.ACTIVE);
     });
 
     it('returns 400 when reopening a non-completed contest', async () => {
@@ -327,7 +329,7 @@ describe('Contest Handler Integration', () => {
     it('rejects PUT /api/v1/contests/:id without auth', async () => {
       const res = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/contests/${draftContestId}`,
+        url: API_ROUTES.contests.detail(draftContestId),
         payload: { name: 'No Auth Update' },
         headers: { 'content-type': 'application/json' },
       });

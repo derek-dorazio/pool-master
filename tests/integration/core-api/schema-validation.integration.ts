@@ -16,6 +16,8 @@ import {
   getPrisma,
   cleanupTestData,
 } from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { LeagueVisibility, ContestType, SelectionType, ScoringEngine } from '@poolmaster/shared/domain';
 
 // ---------------------------------------------------------------------------
 // Shared prerequisite IDs populated in beforeAll
@@ -67,9 +69,9 @@ beforeAll(async () => {
   // League via API
   const leagueRes = await app.inject({
     method: 'POST',
-    url: '/api/v1/leagues',
+    url: API_ROUTES.leagues.list,
     headers,
-    payload: { name: 'Schema Validation League', visibility: 'PRIVATE' },
+    payload: { name: 'Schema Validation League', visibility: LeagueVisibility.PRIVATE },
   });
   const leagueBody = JSON.parse(leagueRes.body);
   leagueId = leagueBody.league?.id ?? leagueBody.id;
@@ -77,13 +79,13 @@ beforeAll(async () => {
   // Contest via API
   const contestRes = await app.inject({
     method: 'POST',
-    url: `/api/v1/leagues/${leagueId}/contests`,
+    url: API_ROUTES.leagues.contests(leagueId),
     headers,
     payload: {
       name: 'Schema Validation Contest',
-      contestType: 'SINGLE_EVENT',
-      selectionType: 'OPEN_SELECTION',
-      scoringEngine: 'STROKE_PLAY',
+      contestType: ContestType.SINGLE_EVENT,
+      selectionType: SelectionType.OPEN_SELECTION,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
     },
   });
   const contestBody = JSON.parse(contestRes.body);

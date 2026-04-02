@@ -1,4 +1,5 @@
 import { BASE_URL, smokeFetch, expectStatus } from '../setup';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 /**
  * Functional smoke test — Search + Discovery.
  *
@@ -10,7 +11,7 @@ let token: string;
 
 async function setup() {
   const email = `search-${Date.now()}@smoke.test`;
-  const res = await smokeFetch(`${BASE_URL}/api/v1/auth/register`, {
+  const res = await smokeFetch(`${BASE_URL}${API_ROUTES.auth.register}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password: 'SmokePas123', displayName: 'Search Tester' }),
@@ -25,7 +26,7 @@ describe('Search + Discovery', () => {
   beforeAll(() => setup());
 
   it('searches participants by name', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/search/participants?q=Tiger`, { headers: headers() });
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.search.participants}?q=Tiger`, { headers: headers() });
     await expectStatus(res, 200, 'search participants by name');
     const body = res.headers.get('content-type')?.includes('json')
       ? await res.json() as any
@@ -36,13 +37,13 @@ describe('Search + Discovery', () => {
   });
 
   it('searches participants with sport filter', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/search/participants?q=&sportId=GOLF`, { headers: headers() });
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.search.participants}?q=&sportId=GOLF`, { headers: headers() });
     // 200 if sportId filter works, 400 if sportId needs UUID format, 500 known bug
     await expectStatus(res, [200, 400, 500], 'search participants with sport filter');
   });
 
   it('searches with pagination', async () => {
-    const res = await smokeFetch(`${BASE_URL}/api/v1/search/participants?q=&limit=5&offset=0`, { headers: headers() });
+    const res = await smokeFetch(`${BASE_URL}${API_ROUTES.search.participants}?q=&limit=5&offset=0`, { headers: headers() });
     await expectStatus(res, 200, 'search with pagination');
     const body = res.headers.get('content-type')?.includes('json')
       ? await res.json() as any

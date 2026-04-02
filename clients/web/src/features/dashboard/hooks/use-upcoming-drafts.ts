@@ -9,32 +9,12 @@ export interface UpcomingDraft {
   scheduledAt: string;
 }
 
-function getTwoDaysFromNow(): string {
-  const date = new Date();
-  date.setDate(date.getDate() + 2);
-  return date.toISOString();
-}
-
-const mockUpcomingDrafts: UpcomingDraft[] = [
-  {
-    id: 'draft-1',
-    name: 'NBA Fantasy Draft',
-    leagueName: 'Hoops League',
-    type: 'Snake',
-    scheduledAt: getTwoDaysFromNow(),
-  },
-];
-
 export function useUpcomingDrafts() {
   return useQuery({
     queryKey: ['dashboard', 'upcoming-drafts'],
     queryFn: async (): Promise<UpcomingDraft[]> => {
-      try {
-        return await api.get<UpcomingDraft[]>('/v1/drafts?status=scheduled');
-      } catch {
-        // Fallback to mock data when backend unavailable
-        return mockUpcomingDrafts;
-      }
+      // TODO: add API_ROUTES.drafts.scheduled when backend endpoint exists
+      return await api.get<UpcomingDraft[]>('/v1/drafts?status=scheduled');
     },
   });
 }

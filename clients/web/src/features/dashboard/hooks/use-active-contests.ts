@@ -12,39 +12,12 @@ export interface ActiveContest {
   delta: number;
 }
 
-const mockActiveContests: ActiveContest[] = [
-  {
-    id: 'contest-1',
-    name: 'NFL Survivor Pool',
-    sport: 'football',
-    leagueName: 'Weekend Warriors',
-    rank: 3,
-    totalEntrants: 12,
-    score: 47,
-    delta: 5,
-  },
-  {
-    id: 'contest-2',
-    name: 'Premier League Picks',
-    sport: 'soccer',
-    leagueName: 'Soccer Fanatics',
-    rank: 1,
-    totalEntrants: 8,
-    score: 82,
-    delta: 0,
-  },
-];
-
 export function useActiveContests() {
   return useQuery({
     queryKey: ['dashboard', 'active-contests'],
     queryFn: async (): Promise<ActiveContest[]> => {
-      try {
-        return await api.get<ActiveContest[]>('/v1/contests?status=active');
-      } catch {
-        // Fallback to mock data when backend unavailable
-        return mockActiveContests;
-      }
+      // TODO: add API_ROUTES.contests.active when backend endpoint exists
+      return await api.get<ActiveContest[]>('/v1/contests?status=active');
     },
     refetchInterval: 10_000,
   });

@@ -1,6 +1,21 @@
 import { renderHook } from '@/test-utils';
 import { waitFor } from '@testing-library/react';
 import { useUpcomingDrafts } from './use-upcoming-drafts';
+import { vi } from 'vitest';
+
+vi.mock('@/lib/api-client', () => ({
+  api: {
+    get: vi.fn().mockResolvedValue([
+      {
+        id: 'draft-1',
+        name: 'NBA Fantasy Draft',
+        leagueName: 'Hoops League',
+        type: 'Snake',
+        scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ]),
+  },
+}));
 
 describe('useUpcomingDrafts', () => {
   it('returns drafts array', async () => {
