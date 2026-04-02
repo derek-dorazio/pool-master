@@ -5,10 +5,12 @@ import { vi } from 'vitest';
 
 vi.mock('@/lib/api-client', () => ({
   api: {
-    get: vi.fn().mockResolvedValue([
-      { id: 'league-1', name: 'Weekend Warriors', memberCount: 12, activeContestCount: 1, role: 'Commissioner' },
-      { id: 'league-2', name: 'Soccer Fanatics', memberCount: 8, activeContestCount: 1, role: 'Member' },
-    ]),
+    get: vi.fn().mockResolvedValue({
+      leagues: [
+        { id: 'league-1', name: 'Weekend Warriors', memberCount: 12, activeContestCount: 1, role: 'Commissioner' },
+        { id: 'league-2', name: 'Soccer Fanatics', memberCount: 8, activeContestCount: 1, role: 'Member' },
+      ],
+    }),
   },
 }));
 

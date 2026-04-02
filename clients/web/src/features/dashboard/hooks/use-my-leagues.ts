@@ -14,7 +14,8 @@ export function useMyLeagues() {
   return useQuery({
     queryKey: ['dashboard', 'leagues'],
     queryFn: async (): Promise<League[]> => {
-      return await api.get<League[]>(clientPath(API_ROUTES.leagues.list));
+      const res = await api.get<{ leagues: League[] }>(clientPath(API_ROUTES.leagues.list));
+      return res.leagues;
     },
   });
 }

@@ -14,7 +14,8 @@ export function useUpcomingDrafts() {
     queryKey: ['dashboard', 'upcoming-drafts'],
     queryFn: async (): Promise<UpcomingDraft[]> => {
       // TODO: add API_ROUTES.drafts.scheduled when backend endpoint exists
-      return await api.get<UpcomingDraft[]>('/v1/drafts?status=scheduled');
+      const res = await api.get<UpcomingDraft[] | { drafts: UpcomingDraft[] }>('/v1/drafts?status=scheduled');
+      return Array.isArray(res) ? res : res.drafts ?? [];
     },
   });
 }

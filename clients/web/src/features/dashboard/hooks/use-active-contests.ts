@@ -17,7 +17,8 @@ export function useActiveContests() {
     queryKey: ['dashboard', 'active-contests'],
     queryFn: async (): Promise<ActiveContest[]> => {
       // TODO: add API_ROUTES.contests.active when backend endpoint exists
-      return await api.get<ActiveContest[]>('/v1/contests?status=active');
+      const res = await api.get<ActiveContest[] | { contests: ActiveContest[] }>('/v1/contests?status=active');
+      return Array.isArray(res) ? res : res.contests ?? [];
     },
     refetchInterval: 10_000,
   });

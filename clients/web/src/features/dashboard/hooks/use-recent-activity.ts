@@ -21,7 +21,8 @@ export function useRecentActivity() {
     queryKey: ['dashboard', 'recent-activity'],
     queryFn: async (): Promise<ActivityItem[]> => {
       // TODO: add API_ROUTES.activity.recent when backend endpoint exists
-      return await api.get<ActivityItem[]>('/v1/activity?limit=5');
+      const res = await api.get<ActivityItem[] | { items: ActivityItem[] }>('/v1/activity?limit=5');
+      return Array.isArray(res) ? res : res.items ?? [];
     },
   });
 }
