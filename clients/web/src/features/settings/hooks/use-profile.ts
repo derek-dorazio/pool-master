@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { client } from '@/lib/api-client-generated';
 import { api } from '@/lib/api-client';
-import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
 import type { UserProfileDto } from '@poolmaster/shared/dto';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
@@ -16,7 +16,11 @@ export function useProfile() {
   return useQuery({
     queryKey: settingsKeys.profile(),
     queryFn: async (): Promise<UserProfile> => {
-      return await api.get<UserProfile>(clientPath(API_ROUTES.auth.me));
+      const { data, error } = await client.GET('/api/v1/auth/me');
+      if (error) throw error;
+      // The generated type wraps the profile in a `user` object;
+      // cast to UserProfile which extends UserProfileDto with extra fields
+      return data.user as unknown as UserProfile;
     },
     staleTime: Infinity,
   });
@@ -27,6 +31,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (data: Partial<Pick<UserProfile, 'displayName' | 'email' | 'bio'>>) => {
+      // TODO: migrate to client.PUT when /api/v1/auth/profile is in the OpenAPI spec
       return await api.put('/v1/auth/profile', data);
     },
     onSuccess: () => {
@@ -47,6 +52,7 @@ export function useUploadAvatar() {
       try {
         const formData = new FormData();
         formData.append('avatar', file);
+        // TODO: migrate to client.POST when /api/v1/auth/profile/avatar is in the OpenAPI spec
         return await api.post('/v1/auth/profile/avatar', formData);
       } catch {
         // Fallback: simulate success when backend unavailable
@@ -69,6 +75,7 @@ export function useDeleteAvatar() {
   return useMutation({
     mutationFn: async () => {
       try {
+        // TODO: migrate to client.DELETE when /api/v1/auth/profile/avatar is in the OpenAPI spec
         return await api.delete('/v1/auth/profile/avatar');
       } catch {
         // Fallback: simulate success when backend unavailable
@@ -85,6 +92,7 @@ export function useDeleteAvatar() {
 export function useUpdatePassword() {
   return useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      // TODO: migrate to client.PUT when /api/v1/auth/password is in the OpenAPI spec
       return await api.put('/v1/auth/password', data);
     },
     onSuccess: () => {

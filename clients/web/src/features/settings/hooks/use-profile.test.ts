@@ -3,16 +3,30 @@ import { waitFor } from '@testing-library/react';
 import { useProfile } from './use-profile';
 import { vi } from 'vitest';
 
+vi.mock('@/lib/api-client-generated', () => ({
+  client: {
+    GET: vi.fn().mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          displayName: 'Dave O',
+          email: 'dave@example.com',
+          bio: 'Fantasy sports enthusiast',
+          avatarUrl: null,
+          authProvider: 'email',
+        },
+      },
+      error: undefined,
+    }),
+  },
+}));
+
 vi.mock('@/lib/api-client', () => ({
   api: {
-    get: vi.fn().mockResolvedValue({
-      id: 'user-1',
-      displayName: 'Dave O',
-      email: 'dave@example.com',
-      bio: 'Fantasy sports enthusiast',
-      avatarUrl: null,
-      authProvider: 'email',
-    }),
+    get: vi.fn(),
+    put: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 

@@ -20,7 +20,7 @@ export function useRecentActivity() {
   return useQuery({
     queryKey: ['dashboard', 'recent-activity'],
     queryFn: async (): Promise<ActivityItem[]> => {
-      // TODO: add API_ROUTES.activity.recent when backend endpoint exists
+      // TODO: migrate to client.GET when /api/v1/activity?limit=5 is in the OpenAPI spec
       const res = await api.get<ActivityItem[] | { items: ActivityItem[] }>('/v1/activity?limit=5');
       return Array.isArray(res) ? res : res.items ?? [];
     },

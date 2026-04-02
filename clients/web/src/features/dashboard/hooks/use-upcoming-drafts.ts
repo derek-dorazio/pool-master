@@ -13,7 +13,7 @@ export function useUpcomingDrafts() {
   return useQuery({
     queryKey: ['dashboard', 'upcoming-drafts'],
     queryFn: async (): Promise<UpcomingDraft[]> => {
-      // TODO: add API_ROUTES.drafts.scheduled when backend endpoint exists
+      // TODO: migrate to client.GET when /api/v1/drafts?status=scheduled is in the OpenAPI spec
       const res = await api.get<UpcomingDraft[] | { drafts: UpcomingDraft[] }>('/v1/drafts?status=scheduled');
       return Array.isArray(res) ? res : res.drafts ?? [];
     },

@@ -63,7 +63,7 @@ function EntryColumn({ entry, isWinning }: { entry: H2HEntry; isWinning: boolean
 
 export function Component() {
   const { contestId } = useParams();
-  const { data: entries = [], isLoading, isError } = useH2HEntries(contestId);
+  const { data: entries = [] } = useH2HEntries(contestId);
   const [leftId, setLeftId] = useState('');
   const [rightId, setRightId] = useState('');
 

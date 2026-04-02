@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import { client } from '@/lib/api-client-generated';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 
@@ -16,6 +17,7 @@ export function useDataExportStatus() {
   return useQuery({
     queryKey: settingsKeys.dataExport(),
     queryFn: async (): Promise<DataExportStatus> => {
+      // TODO: migrate to generated client when backend adds GET /api/v1/account/data-export to OpenAPI spec
       return await api.get<DataExportStatus>(clientPath(API_ROUTES.account.dataExport));
     },
   });
@@ -26,7 +28,9 @@ export function useRequestDataExport() {
 
   return useMutation({
     mutationFn: async () => {
-      return await api.post(clientPath(API_ROUTES.account.dataExport));
+      const result: any = await client.POST('/api/v1/account/data-export');
+      if (result.error) throw result.error;
+      if (!result.response.ok) throw new Error(`Request failed: ${result.response.status}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.dataExport() });

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DraftMode, DraftStatus } from '@poolmaster/shared/domain';
 import { api } from '@/lib/api-client';
+import { client, typedData } from '@/lib/api-client-generated';
 
 export interface DraftState {
   id: string;
@@ -61,7 +62,12 @@ export interface AvailableParticipant {
 export function useDraft(draftId: string) {
   return useQuery({
     queryKey: ['drafts', draftId],
-    queryFn: () => api.get<DraftState>(`/v1/drafts/${draftId}`),
+    queryFn: async () => {
+      const result = await client.GET('/api/v1/drafts/{contestId}', {
+        params: { path: { contestId: draftId } },
+      });
+      return typedData<DraftState>(result);
+    },
     refetchInterval: 10_000,
     refetchOnWindowFocus: true,
   });
@@ -71,6 +77,7 @@ export function useAvailableParticipants(draftId: string, filters: { query?: str
   return useQuery({
     queryKey: ['drafts', draftId, 'available', filters],
     queryFn: () => {
+      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
       const params = new URLSearchParams();
       if (filters.query) params.set('q', filters.query);
       if (filters.position) params.set('position', filters.position);
@@ -84,8 +91,14 @@ export function useMakePick(draftId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (participantId: string) =>
-      api.post<{ success: boolean }>(`/v1/drafts/${draftId}/pick`, { participantId }),
+    mutationFn: async (participantId: string) => {
+      const result: any = await client.POST('/api/v1/drafts/{contestId}/pick', {
+        params: { path: { contestId: draftId } },
+        body: { participantId } as never,
+      });
+      if (result.error) throw result.error;
+      if (!result.response.ok) throw new Error(`Request failed: ${result.response.status}`);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
       queryClient.invalidateQueries({ queryKey: ['drafts', draftId, 'available'] });

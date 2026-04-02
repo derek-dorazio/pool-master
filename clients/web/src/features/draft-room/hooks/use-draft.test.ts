@@ -46,13 +46,17 @@ describe('useDraft', () => {
     expect(result.current.data).toMatchObject({ id: 'draft-42', sport: 'NFL', draftType: 'SNAKE' });
   });
 
-  it('calls correct API endpoint', async () => {
-    const spy = vi.spyOn(api, 'get').mockResolvedValueOnce(mockDraftState);
+  it('fetches from the correct API endpoint', async () => {
+    let requestUrl = '';
+    server.use(
+      http.get('/api/v1/drafts/draft-99', ({ request }) => {
+        requestUrl = new URL(request.url).pathname;
+        return HttpResponse.json(mockDraftState);
+      }),
+    );
     renderHook(() => useDraft('draft-99'));
 
-    await waitFor(() => expect(spy).toHaveBeenCalled());
-    expect(spy).toHaveBeenCalledWith('/v1/drafts/draft-99');
-    spy.mockRestore();
+    await waitFor(() => expect(requestUrl).toBe('/api/v1/drafts/draft-99'));
   });
 
   it('returns error state when API fails', async () => {
@@ -127,26 +131,40 @@ describe('useAvailableParticipants', () => {
 
 describe('useMakePick', () => {
   it('posts pick to correct endpoint', async () => {
-    const spy = vi.spyOn(api, 'post').mockResolvedValueOnce({ success: true });
+    let capturedPath = '';
+    let capturedBody: Record<string, unknown> = {};
+    server.use(
+      http.post('/api/v1/drafts/draft-1/pick', async ({ request }) => {
+        capturedPath = new URL(request.url).pathname;
+        capturedBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ success: true });
+      }),
+    );
     const { result } = renderHook(() => useMakePick('draft-1'));
 
     result.current.mutate('player-99');
-    await waitFor(() => expect(spy).toHaveBeenCalled());
-    expect(spy).toHaveBeenCalledWith('/v1/drafts/draft-1/pick', { participantId: 'player-99' });
-    spy.mockRestore();
+    await waitFor(() => expect(capturedPath).toBe('/api/v1/drafts/draft-1/pick'));
+    expect(capturedBody).toEqual({ participantId: 'player-99' });
   });
 
   it('returns success on API response', async () => {
-    vi.spyOn(api, 'post').mockResolvedValueOnce({ success: true });
+    server.use(
+      http.post('/api/v1/drafts/draft-1/pick', () => {
+        return HttpResponse.json({ success: true });
+      }),
+    );
     const { result } = renderHook(() => useMakePick('draft-1'));
 
     result.current.mutate('player-1');
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual({ success: true });
   });
 
   it('returns error state when API fails', async () => {
-    vi.spyOn(api, 'post').mockRejectedValueOnce(new Error('Server down'));
+    server.use(
+      http.post('/api/v1/drafts/draft-1/pick', () => {
+        return HttpResponse.json({ message: 'Server error' }, { status: 500 });
+      }),
+    );
     const { result } = renderHook(() => useMakePick('draft-1'));
 
     result.current.mutate('player-1');

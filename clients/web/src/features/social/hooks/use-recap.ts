@@ -33,7 +33,7 @@ export function useRecap(leagueId: string, weekId: string) {
   return useQuery({
     queryKey: socialKeys.recap(leagueId, weekId),
     queryFn: async (): Promise<RecapData> => {
-      // TODO: Add /v1/social/recap to API_ROUTES once backend endpoint exists
+      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
       return await api.get<RecapData>(`/v1/social/leagues/${leagueId}/recap?week=${weekId}`);
     },
   });

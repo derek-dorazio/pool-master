@@ -12,7 +12,7 @@ export function useHighlights() {
   return useQuery({
     queryKey: ['dashboard', 'highlights'],
     queryFn: async (): Promise<SeasonHighlights> => {
-      // TODO: add API_ROUTES.history.highlights when backend endpoint exists
+      // TODO: migrate to client.GET when /api/v1/history/highlights is in the OpenAPI spec
       return await api.get<SeasonHighlights>('/v1/history/highlights');
     },
   });

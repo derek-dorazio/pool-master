@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import { client, typedData } from '@/lib/api-client-generated';
 
 export interface StandingsEntry {
   id: string;
@@ -28,9 +27,10 @@ export function useStandings(contestId: string | undefined) {
   return useQuery({
     queryKey: ['contests', contestId, 'standings'],
     queryFn: async (): Promise<StandingsResponse> => {
-      return await api.get<StandingsResponse>(
-        clientPath(API_ROUTES.contests.standings(contestId!)),
-      );
+      const result = await client.GET('/api/v1/contests/{contestId}/standings/', {
+        params: { path: { contestId: contestId! } },
+      });
+      return typedData<StandingsResponse>(result);
     },
     enabled: !!contestId,
   });

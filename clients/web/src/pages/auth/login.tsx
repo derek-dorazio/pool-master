@@ -12,10 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Logo } from '@/components/ui/logo';
-import { api, ApiError } from '@/lib/api-client';
+import { client } from '@/lib/api-client-generated';
 import { useAuthStore } from '@/stores/auth-store';
-import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
-import type { AuthResponse } from '@poolmaster/shared/dto';
 
 const loginSchema = z.object({
   email: z
@@ -55,15 +53,18 @@ export function Component() {
   async function onSubmit(data: LoginForm) {
     setServerError('');
     try {
-      const res = await api.post<AuthResponse>(clientPath(API_ROUTES.auth.login), {
-        email: data.email,
-        password: data.password,
+      const { data: res, error } = await client.POST('/api/v1/auth/login', {
+        body: {
+          email: data.email,
+          password: data.password,
+        },
       });
+      if (error) throw error;
       localStorage.setItem('access_token', res.tokens.accessToken);
       setUser({ ...res.user, avatarUrl: res.user.avatarUrl ?? undefined });
       navigate('/dashboard');
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
+      if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 401) {
         setServerError(t('errors.invalidCredentials'));
       } else {
         setServerError('Unable to connect to server. Please try again later.');

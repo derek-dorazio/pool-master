@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { client, typedData } from '@/lib/api-client-generated';
 
 // TODO: migrate to @poolmaster/shared/dto when billing DTOs align with UI shape
 // The shared PlanDto uses slug/monthlyPriceCents/entitlements while the UI uses tier/price/features.
@@ -70,7 +70,8 @@ export function useBillingEnabled() {
   return useQuery({
     queryKey: billingKeys.enabled(),
     queryFn: async (): Promise<boolean> => {
-      const plan = await api.get<BillingPlan>('/v1/billing/plan');
+      const result = await client.GET('/api/v1/billing/plan');
+      const plan = await typedData<BillingPlan>(result);
       return !!plan;
     },
     staleTime: 30 * 60 * 1000,
@@ -80,7 +81,10 @@ export function useBillingEnabled() {
 export function useBillingPlan() {
   return useQuery({
     queryKey: billingKeys.subscription(),
-    queryFn: () => api.get<BillingPlan>('/v1/billing/plan'),
+    queryFn: async () => {
+      const result = await client.GET('/api/v1/billing/plan');
+      return typedData<BillingPlan>(result);
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -88,7 +92,10 @@ export function useBillingPlan() {
 export function useBillingUsage() {
   return useQuery({
     queryKey: billingKeys.usage(),
-    queryFn: () => api.get<UsageStats>('/v1/billing/usage'),
+    queryFn: async () => {
+      const result = await client.GET('/api/v1/billing/usage');
+      return typedData<UsageStats>(result);
+    },
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -96,7 +103,10 @@ export function useBillingUsage() {
 export function useBillingSubscription() {
   return useQuery({
     queryKey: [...billingKeys.subscription(), 'detail'] as const,
-    queryFn: () => api.get<Subscription | null>('/v1/billing/plan'),
+    queryFn: async () => {
+      const result = await client.GET('/api/v1/billing/plan');
+      return typedData<Subscription | null>(result);
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -104,7 +114,10 @@ export function useBillingSubscription() {
 export function usePlanTiers() {
   return useQuery({
     queryKey: billingKeys.plans(),
-    queryFn: () => api.get<BillingPlan[]>('/v1/billing/plans'),
+    queryFn: async () => {
+      const result = await client.GET('/api/v1/billing/plans');
+      return typedData<BillingPlan[]>(result);
+    },
     staleTime: 30 * 60 * 1000,
   });
 }
@@ -112,7 +125,10 @@ export function usePlanTiers() {
 export function useInvoices() {
   return useQuery({
     queryKey: billingKeys.invoices(),
-    queryFn: () => api.get<Invoice[]>('/v1/billing/invoices'),
+    queryFn: async () => {
+      const result = await client.GET('/api/v1/billing/invoices');
+      return typedData<Invoice[]>(result);
+    },
     staleTime: 5 * 60 * 1000,
   });
 }

@@ -27,7 +27,7 @@ export function useConversations() {
   return useQuery({
     queryKey: socialKeys.conversations(),
     queryFn: async (): Promise<Conversation[]> => {
-      // TODO: Add /v1/social/messages/conversations to API_ROUTES once backend endpoint exists
+      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
       return await api.get<Conversation[]>('/v1/social/messages/conversations');
     },
   });
@@ -37,7 +37,7 @@ export function useConversationMessages(conversationId: string) {
   return useQuery({
     queryKey: socialKeys.conversation(conversationId),
     queryFn: async (): Promise<DirectMessage[]> => {
-      // TODO: Add to API_ROUTES once backend endpoint exists
+      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
       return await api.get<DirectMessage[]>(`/v1/social/messages/conversations/${conversationId}?limit=30`);
     },
   });
@@ -47,7 +47,7 @@ export function useSendDirectMessage(conversationId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (content: string) => {
-      // TODO: Add to API_ROUTES once backend endpoint exists
+      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
       return await api.post(`/v1/social/messages/conversations/${conversationId}`, { content });
     },
     onSuccess: () => {
@@ -61,7 +61,7 @@ export function useMarkConversationRead(conversationId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      // TODO: Add to API_ROUTES once backend endpoint exists
+      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
       return await api.patch(`/v1/social/messages/conversations/${conversationId}/read`);
     },
     onSuccess: () => {

@@ -220,7 +220,7 @@ export const searchHandlers = [
     return HttpResponse.json({ participants: [], total: 0, facets: {} });
   }),
 
-  http.get('/api/v1/search/leagues', ({ request }) => {
+  http.get('/api/v1/search/discover/leagues', ({ request }) => {
     const url = new URL(request.url);
     const sport = url.searchParams.get('sport');
     const leagues = [
@@ -231,7 +231,7 @@ export const searchHandlers = [
     return HttpResponse.json({ leagues: filtered, total: filtered.length });
   }),
 
-  http.get('/api/v1/search/contests', () => {
+  http.get('/api/v1/search/discover/contests', () => {
     const contests = [
       { id: 'c1', leagueName: 'Masters Pool 2026', contestName: 'The Masters — Pick 6', sport: 'GOLF', eventName: 'The Masters 2026', draftType: 'SNAKE', memberCount: 10, maxMembers: 20, entryFee: null, prizePool: null, draftStart: null, lockTime: null, status: 'OPEN' },
     ];
@@ -300,7 +300,7 @@ export const accountHandlers = [
     return HttpResponse.json({ consents: [] });
   }),
 
-  http.put('/api/v1/account/consent', () => {
+  http.post('/api/v1/account/consent', () => {
     return HttpResponse.json({ success: true });
   }),
 
@@ -379,7 +379,8 @@ export const socialHandlers = [
     return HttpResponse.json({ success: true });
   }),
 
-  http.get('/api/v1/social/leagues/:leagueId/feed', () => {
+  // Feed endpoints — generated client uses /api/v1/leagues/{leagueId}/feed
+  http.get('/api/v1/leagues/:leagueId/feed', () => {
     return HttpResponse.json({
       items: [
         {
@@ -402,32 +403,38 @@ export const socialHandlers = [
     });
   }),
 
-  http.post('/api/v1/social/leagues/:leagueId/feed', () => {
+  http.post('/api/v1/leagues/:leagueId/feed', () => {
     return HttpResponse.json({ success: true });
   }),
 
-  http.post('/api/v1/social/feed/:postId/reactions', () => {
+  http.post('/api/v1/leagues/:leagueId/feed/:postId/reactions', () => {
     return HttpResponse.json({ success: true });
   }),
 
-  http.patch('/api/v1/social/feed/:postId/pin', () => {
+  http.post('/api/v1/leagues/:leagueId/feed/:postId/pin', () => {
     return HttpResponse.json({ success: true });
   }),
 
-  http.delete('/api/v1/social/feed/:postId', () => {
+  http.delete('/api/v1/leagues/:leagueId/feed/:postId/pin', () => {
     return HttpResponse.json({ success: true });
   }),
 
+  http.delete('/api/v1/leagues/:leagueId/feed/:postId', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  // Replies — GET still uses old /v1/social pattern (not in OpenAPI spec)
   http.get('/api/v1/social/feed/:postId/replies', () => {
     return HttpResponse.json([
       { id: 'r1', authorName: 'John D.', authorInitials: 'JD', content: 'No chance!', createdAt: new Date().toISOString(), reactions: [] },
     ]);
   }),
 
-  http.post('/api/v1/social/feed/:postId/replies', () => {
+  http.post('/api/v1/leagues/:leagueId/feed/:postId/replies', () => {
     return HttpResponse.json({ success: true });
   }),
 
+  // Vote — still uses old /v1/social pattern (not in OpenAPI spec)
   http.post('/api/v1/social/feed/:postId/vote', () => {
     return HttpResponse.json({ success: true });
   }),

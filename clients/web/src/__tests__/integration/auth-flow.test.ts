@@ -35,18 +35,10 @@ vi.mock('@/stores/auth-store', () => ({
   },
 }));
 
-const mockApiPost = vi.fn();
+const mockClientPost = vi.fn();
 
-vi.mock('@/lib/api-client', () => ({
-  api: { post: (...args: any[]) => mockApiPost(...args) },
-  ApiError: class ApiError extends Error {
-    status: number;
-    constructor(status: number, message: string) {
-      super(message);
-      this.status = status;
-      this.name = 'ApiError';
-    }
-  },
+vi.mock('@/lib/api-client-generated', () => ({
+  client: { POST: (...args: any[]) => mockClientPost(...args) },
 }));
 
 async function renderAndGetLoginPage() {
@@ -70,9 +62,12 @@ describe('Auth Login Flow', () => {
   });
 
   it('stores token in localStorage and sets user in auth store on successful login', async () => {
-    mockApiPost.mockResolvedValue({
-      tokens: { accessToken: 'test-jwt-token-123', refreshToken: 'rt-1', expiresIn: 900 },
-      user: { id: 'u-1', email: 'jane@example.com', displayName: 'Jane Doe' },
+    mockClientPost.mockResolvedValue({
+      data: {
+        tokens: { accessToken: 'test-jwt-token-123', refreshToken: 'rt-1', expiresIn: 900 },
+        user: { id: 'u-1', email: 'jane@example.com', displayName: 'Jane Doe' },
+      },
+      error: undefined,
     });
 
     await renderAndGetLoginPage();
@@ -86,9 +81,11 @@ describe('Auth Login Flow', () => {
     await user.click(submitBtn);
 
     await waitFor(() => {
-      expect(mockApiPost).toHaveBeenCalledWith('/v1/auth/login', {
-        email: 'jane@example.com',
-        password: 'securepassword',
+      expect(mockClientPost).toHaveBeenCalledWith('/api/v1/auth/login', {
+        body: {
+          email: 'jane@example.com',
+          password: 'securepassword',
+        },
       });
     });
 
@@ -104,9 +101,12 @@ describe('Auth Login Flow', () => {
   });
 
   it('navigates to /dashboard after successful login', async () => {
-    mockApiPost.mockResolvedValue({
-      tokens: { accessToken: 'jwt-token', refreshToken: 'rt-2', expiresIn: 900 },
-      user: { id: 'u-1', email: 'jane@example.com', displayName: 'Jane Doe' },
+    mockClientPost.mockResolvedValue({
+      data: {
+        tokens: { accessToken: 'jwt-token', refreshToken: 'rt-2', expiresIn: 900 },
+        user: { id: 'u-1', email: 'jane@example.com', displayName: 'Jane Doe' },
+      },
+      error: undefined,
     });
 
     await renderAndGetLoginPage();
@@ -121,8 +121,10 @@ describe('Auth Login Flow', () => {
   });
 
   it('shows error message on API rejection', async () => {
-    const { ApiError } = await import('@/lib/api-client');
-    mockApiPost.mockRejectedValue(new (ApiError as any)(401, 'Invalid credentials'));
+    mockClientPost.mockResolvedValue({
+      data: undefined,
+      error: { statusCode: 401, message: 'Invalid credentials' },
+    });
 
     await renderAndGetLoginPage();
 

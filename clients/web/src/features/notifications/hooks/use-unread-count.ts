@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { clientPath, API_ROUTES } from '@poolmaster/shared/api-routes';
+import { client, typedData } from '@/lib/api-client-generated';
 import { notificationKeys } from './query-keys';
 
 export interface UnreadCounts {
@@ -12,9 +11,8 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: notificationKeys.unreadCount(),
     queryFn: async (): Promise<UnreadCounts> => {
-      return await api.get<UnreadCounts>(
-        `${clientPath(API_ROUTES.notifications.list)}/unread-count`,
-      );
+      const result = await client.GET('/api/v1/notifications/unread-count');
+      return typedData<UnreadCounts>(result);
     },
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,

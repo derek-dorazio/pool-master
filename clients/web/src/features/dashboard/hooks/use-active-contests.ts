@@ -16,7 +16,7 @@ export function useActiveContests() {
   return useQuery({
     queryKey: ['dashboard', 'active-contests'],
     queryFn: async (): Promise<ActiveContest[]> => {
-      // TODO: add API_ROUTES.contests.active when backend endpoint exists
+      // TODO: migrate to client.GET when /api/v1/contests?status=active is in the OpenAPI spec
       const res = await api.get<ActiveContest[] | { contests: ActiveContest[] }>('/v1/contests?status=active');
       return Array.isArray(res) ? res : res.contests ?? [];
     },

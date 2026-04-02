@@ -14,6 +14,7 @@ export function useLinkedAccounts() {
   return useQuery({
     queryKey: settingsKeys.linkedAccounts(),
     queryFn: async (): Promise<LinkedAccount[]> => {
+      // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
       return await api.get<LinkedAccount[]>(clientPath('/api/v1/auth/linked-accounts'));
     },
   });
@@ -23,6 +24,7 @@ export function useConnectAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
     mutationFn: async (provider: string) => {
       return await api.post(clientPath(API_ROUTES.auth.linkedAccounts(provider)) + '/connect');
     },
@@ -37,6 +39,7 @@ export function useDisconnectAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // TODO: migrate to generated client when backend adds this endpoint to OpenAPI spec
     mutationFn: async (provider: string) => {
       return await api.delete(clientPath(API_ROUTES.auth.linkedAccounts(provider)));
     },

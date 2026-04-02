@@ -168,6 +168,8 @@ export function Component() {
   async function onSubmit(data: RegisterForm) {
     setServerError('');
     try {
+      // TODO: migrate to client.POST('/api/v1/auth/register') when the OpenAPI spec
+      // includes dateOfBirth and plan in the request body
       const res = await api.post<AuthResponse>('/v1/auth/register', {
         email: data.email,
         password: data.password,

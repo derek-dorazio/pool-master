@@ -26,6 +26,8 @@ export function Component() {
 
     async function handleCallback() {
       try {
+        // TODO: migrate to client.POST('/api/v1/auth/callback') when the OpenAPI spec
+        // defines requestBody and response content for oauthCallback
         const res = await api.post<AuthResponse>('/v1/auth/callback', {
           code,
           state,

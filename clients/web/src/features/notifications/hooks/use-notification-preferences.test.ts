@@ -1,6 +1,7 @@
 import { renderHook } from '@/test-utils';
 import { waitFor } from '@testing-library/react';
-import { api } from '@/lib/api-client';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/test/msw/server';
 import { useNotificationPreferences, useSaveNotificationPreferences } from './use-notification-preferences';
 import type { NotificationPreferences } from './use-notification-preferences';
 
@@ -27,7 +28,11 @@ describe('useNotificationPreferences', () => {
   });
 
   it('returns preferences from API on success', async () => {
-    vi.spyOn(api, 'get').mockResolvedValueOnce(mockPreferences);
+    server.use(
+      http.get('/api/v1/notifications/preferences', () => {
+        return HttpResponse.json(mockPreferences);
+      }),
+    );
     const { result } = renderHook(() => useNotificationPreferences());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
@@ -35,16 +40,25 @@ describe('useNotificationPreferences', () => {
     expect(result.current.data).toHaveProperty('dnd');
   });
 
-  it('calls correct API endpoint', async () => {
-    const spy = vi.spyOn(api, 'get').mockResolvedValueOnce(mockPreferences);
+  it('fetches from the notifications preferences endpoint', async () => {
+    let requestUrl = '';
+    server.use(
+      http.get('/api/v1/notifications/preferences', ({ request }) => {
+        requestUrl = new URL(request.url).pathname;
+        return HttpResponse.json(mockPreferences);
+      }),
+    );
     renderHook(() => useNotificationPreferences());
 
-    await waitFor(() => expect(spy).toHaveBeenCalled());
-    expect(spy).toHaveBeenCalledWith('/v1/notifications/preferences');
+    await waitFor(() => expect(requestUrl).toBe('/api/v1/notifications/preferences'));
   });
 
   it('propagates error when API fails', async () => {
-    vi.spyOn(api, 'get').mockRejectedValue(new Error('Network'));
+    server.use(
+      http.get('/api/v1/notifications/preferences', () => {
+        return HttpResponse.json({ message: 'Server error' }, { status: 500 });
+      }),
+    );
     const { result } = renderHook(() => useNotificationPreferences());
 
     await waitFor(() => expect(result.current.isError).toBe(true));
@@ -52,7 +66,11 @@ describe('useNotificationPreferences', () => {
   });
 
   it('returns categories with channel toggles', async () => {
-    vi.spyOn(api, 'get').mockResolvedValueOnce(mockPreferences);
+    server.use(
+      http.get('/api/v1/notifications/preferences', () => {
+        return HttpResponse.json(mockPreferences);
+      }),
+    );
     const { result } = renderHook(() => useNotificationPreferences());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
@@ -69,9 +87,18 @@ describe('useSaveNotificationPreferences', () => {
   });
 
   it('sends PUT to correct endpoint', async () => {
-    const spy = vi.spyOn(api, 'put').mockResolvedValueOnce(undefined);
-    // Pre-populate the query cache so optimistic update works
-    vi.spyOn(api, 'get').mockResolvedValueOnce(mockPreferences);
+    let capturedMethod = '';
+    let capturedPath = '';
+    server.use(
+      http.get('/api/v1/notifications/preferences', () => {
+        return HttpResponse.json(mockPreferences);
+      }),
+      http.put('/api/v1/notifications/preferences', ({ request }) => {
+        capturedMethod = request.method;
+        capturedPath = new URL(request.url).pathname;
+        return HttpResponse.json({ success: true });
+      }),
+    );
     const { result } = renderHook(() => {
       const prefs = useNotificationPreferences();
       const save = useSaveNotificationPreferences();
@@ -82,13 +109,19 @@ describe('useSaveNotificationPreferences', () => {
 
     const updated = { ...mockPreferences, dnd: { ...mockPreferences.dnd, enabled: true } };
     result.current.save.mutate(updated);
-    await waitFor(() => expect(spy).toHaveBeenCalled());
-    expect(spy).toHaveBeenCalledWith('/v1/notifications/preferences', updated);
+    await waitFor(() => expect(capturedPath).toBe('/api/v1/notifications/preferences'));
+    expect(capturedMethod).toBe('PUT');
   });
 
   it('completes mutation successfully on API response', async () => {
-    vi.spyOn(api, 'put').mockResolvedValueOnce(undefined);
-    vi.spyOn(api, 'get').mockResolvedValueOnce(mockPreferences);
+    server.use(
+      http.get('/api/v1/notifications/preferences', () => {
+        return HttpResponse.json(mockPreferences);
+      }),
+      http.put('/api/v1/notifications/preferences', () => {
+        return HttpResponse.json({ success: true });
+      }),
+    );
     const { result } = renderHook(() => {
       const prefs = useNotificationPreferences();
       const save = useSaveNotificationPreferences();
@@ -101,8 +134,14 @@ describe('useSaveNotificationPreferences', () => {
   });
 
   it('propagates mutation error when API fails', async () => {
-    vi.spyOn(api, 'put').mockRejectedValueOnce(new Error('Server error'));
-    vi.spyOn(api, 'get').mockResolvedValueOnce(mockPreferences);
+    server.use(
+      http.get('/api/v1/notifications/preferences', () => {
+        return HttpResponse.json(mockPreferences);
+      }),
+      http.put('/api/v1/notifications/preferences', () => {
+        return HttpResponse.json({ message: 'Server error' }, { status: 500 });
+      }),
+    );
     const { result } = renderHook(() => {
       const prefs = useNotificationPreferences();
       const save = useSaveNotificationPreferences();
