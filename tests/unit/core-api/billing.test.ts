@@ -86,7 +86,6 @@ jest.mock('../../../packages/core-api/src/modules/billing/invoice-service', () =
     getInvoiceHistory: jest.fn().mockResolvedValue({ invoices: [], total: 0 }),
     getUpcomingInvoice: jest.fn().mockResolvedValue(null),
     getInvoiceDetail: jest.fn().mockResolvedValue({ id: 'inv-1' }),
-    getInvoicePdfUrl: jest.fn().mockResolvedValue('https://example.com/pdf'),
   })),
 }));
 

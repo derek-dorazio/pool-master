@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,7 +22,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { client, createContest } from '@/lib/api';
+import { client, createContest, listLeagues } from '@/lib/api';
 
 const STEPS = [
   { label: 'Sport & Event', icon: Trophy },
@@ -188,6 +189,7 @@ const defaultTemplates = [
 ];
 
 const wizardSchema = z.object({
+  leagueId: z.string().min(1, 'Select a league'),
   sport: z.string().min(1, 'Select a sport'),
   eventId: z.string().min(1, 'Select an event'),
   duration: z.enum(['single', 'season']),
@@ -203,6 +205,22 @@ const wizardSchema = z.object({
 });
 
 type WizardForm = z.infer<typeof wizardSchema>;
+
+const selectionTypeMap = {
+  'snake-draft': 'SNAKE_DRAFT',
+  tiered: 'TIERED',
+  budget: 'BUDGET_PICK',
+  open: 'OPEN_SELECTION',
+  pickem: 'PICK_EM',
+  bracket: 'BRACKET_PICK_EM',
+} as const;
+
+function getScoringEngine(selectionType: WizardForm['selectionType'], sport: string) {
+  if (selectionType === 'bracket') return 'BRACKET' as const;
+  if (sport === Sport.GOLF) return 'STROKE_PLAY' as const;
+  if (sport === Sport.NFL || sport === Sport.NBA) return 'STAT_ACCUMULATION' as const;
+  return 'POSITION' as const;
+}
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -237,15 +255,51 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 
 function Step1SportEvent({
   form,
+  leagues,
 }: {
   form: ReturnType<typeof useForm<WizardForm>>;
+  leagues: Array<{ id: string; name: string; role?: string }>;
 }) {
+  const leagueId = form.watch('leagueId');
   const sport = form.watch('sport');
   const eventId = form.watch('eventId');
   const events = sport ? (EVENTS_BY_SPORT[sport] ?? []) : [];
 
   return (
     <div className="space-y-8">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Select League</h3>
+        <div className="space-y-2">
+          {leagues.map((league) => (
+            <button
+              key={league.id}
+              type="button"
+              onClick={() => form.setValue('leagueId', league.id, { shouldValidate: true })}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
+                leagueId === league.id
+                  ? 'border-primary bg-primary/5'
+                  : 'border-transparent bg-muted/50',
+              )}
+            >
+              <div
+                className={cn(
+                  'h-4 w-4 shrink-0 rounded-full border-2',
+                  leagueId === league.id ? 'border-primary bg-primary' : 'border-muted-foreground/40',
+                )}
+              />
+              <div>
+                <p className="font-medium">{league.name}</p>
+                <p className="text-sm text-muted-foreground">{league.role ?? 'member'}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+        {form.formState.errors.leagueId && (
+          <p className="text-sm text-destructive">{form.formState.errors.leagueId.message}</p>
+        )}
+      </div>
+
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Select Sport</h3>
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
@@ -676,10 +730,22 @@ function Step7Review({
 export function Component() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const { data: leagueResponse } = useQuery({
+    queryKey: ['my-leagues', 'contest-create'],
+    queryFn: async () => {
+      const { data, error } = await listLeagues({ client });
+      if (error) throw error;
+      return data;
+    },
+  });
+  const commissionerLeagues = (leagueResponse?.leagues ?? []).filter(
+    (league) => league.role === 'owner' || league.role === 'commissioner',
+  );
 
   const form = useForm<WizardForm>({
     resolver: zodResolver(wizardSchema),
     defaultValues: {
+      leagueId: '',
       sport: '',
       eventId: '',
       duration: 'single',
@@ -697,7 +763,7 @@ export function Component() {
   });
 
   const stepValidation: Record<number, (keyof WizardForm)[]> = {
-    0: ['sport', 'eventId'],
+    0: ['leagueId', 'sport', 'eventId'],
     1: ['duration', 'selectionType'],
     2: ['scoringTemplateId'],
   };
@@ -718,21 +784,17 @@ export function Component() {
   async function handleCreate() {
     try {
       const values = form.getValues();
+      const selectedEvent = (EVENTS_BY_SPORT[values.sport] ?? []).find((event) => event.id === values.eventId);
       const { data: result, error } = await createContest({
         client,
+        path: { id: values.leagueId },
         body: {
-          sport: values.sport,
-          eventId: values.eventId,
-          duration: values.duration,
-          selectionType: values.selectionType,
-          scoringTemplateId: values.scoringTemplateId,
-          customize: values.customize,
-          draftMode: values.draftMode,
-          secondsPerPick: values.secondsPerPick,
-          draftDate: values.draftDate,
-          maxEntries: values.maxEntries,
-          entryDeadline: values.entryDeadline,
-          rosterSize: values.rosterSize,
+          name: selectedEvent?.name ?? `${values.sport} Contest`,
+          contestType: 'SINGLE_EVENT',
+          selectionType: selectionTypeMap[values.selectionType as keyof typeof selectionTypeMap],
+          scoringEngine: getScoringEngine(values.selectionType, values.sport),
+          scoringTemplateKey: values.scoringTemplateId,
+          startsAt: values.draftDate ? new Date(`${values.draftDate}T12:00:00.000Z`).toISOString() : undefined,
         },
       });
       if (error) throw error;
@@ -740,7 +802,7 @@ export function Component() {
         title: 'Contest created',
         description: 'Your contest has been created successfully.',
       });
-      navigate(`/contests/${result.id}`);
+      navigate(`/contests/${result?.contest.id}`);
     } catch {
       toast({
         title: 'Error',
@@ -763,7 +825,7 @@ export function Component() {
 
       <Card>
         <CardContent className="p-6">
-          {step === 0 && <Step1SportEvent form={form} />}
+          {step === 0 && <Step1SportEvent form={form} leagues={commissionerLeagues} />}
           {step === 1 && <Step2ContestType form={form} />}
           {step === 2 && <Step3ScoringRules form={form} />}
           {step === 3 && <Step4DraftConfig />}

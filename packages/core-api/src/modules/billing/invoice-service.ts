@@ -1,5 +1,5 @@
 /**
- * InvoiceService — handles invoice history, detail, PDF URLs, and
+ * InvoiceService — handles invoice history, detail, and
  * upcoming invoice preview. Uses mock data until Stripe integration
  * is live.
  */
@@ -110,17 +110,6 @@ export class InvoiceService {
       throw new Error(`Invoice not found: ${invoiceId}`);
     }
     return invoice;
-  }
-
-  /**
-   * Get the PDF download URL for an invoice.
-   */
-  async getInvoicePdfUrl(invoiceId: string): Promise<string> {
-    const invoice = await this.getInvoiceDetail(invoiceId);
-    if (!invoice.invoicePdfUrl) {
-      throw new Error(`PDF not available for invoice: ${invoiceId}`);
-    }
-    return invoice.invoicePdfUrl;
   }
 
   /**

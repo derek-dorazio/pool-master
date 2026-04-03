@@ -46,7 +46,12 @@ export function createHealthHandlers(healthService: HealthService) {
     _reply: FastifyReply,
   ) {
     const services = await healthService.getServiceHealth();
-    return { services };
+    return {
+      services: services.map((service) => ({
+        ...service,
+        checkedAt: service.checkedAt.toISOString(),
+      })),
+    };
   }
 
   // --- Infrastructure metrics ---
@@ -56,7 +61,10 @@ export function createHealthHandlers(healthService: HealthService) {
     _reply: FastifyReply,
   ) {
     const metrics = await healthService.getInfrastructureMetrics();
-    return metrics;
+    return {
+      ...metrics,
+      checkedAt: metrics.checkedAt.toISOString(),
+    };
   }
 
   // --- Business metrics ---
@@ -66,7 +74,10 @@ export function createHealthHandlers(healthService: HealthService) {
     _reply: FastifyReply,
   ) {
     const metrics = await healthService.getBusinessMetrics();
-    return metrics;
+    return {
+      ...metrics,
+      checkedAt: metrics.checkedAt.toISOString(),
+    };
   }
 
   // --- Search errors ---
@@ -95,7 +106,18 @@ export function createHealthHandlers(healthService: HealthService) {
       page: query.page,
       pageSize: query.pageSize,
     });
-    return result;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    return {
+      items: result.items.map((entry) => ({
+        ...entry,
+        occurredAt: entry.occurredAt.toISOString(),
+      })),
+      total: result.total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
+    };
   }
 
   // --- Error detail ---
@@ -106,7 +128,10 @@ export function createHealthHandlers(healthService: HealthService) {
   ) {
     try {
       const detail = await healthService.getErrorDetail(request.params.errorId);
-      return reply.send(detail);
+      return reply.send({
+        ...detail,
+        occurredAt: detail.occurredAt.toISOString(),
+      });
     } catch (err) {
       if (err instanceof ErrorLogEntryNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -122,7 +147,15 @@ export function createHealthHandlers(healthService: HealthService) {
     _reply: FastifyReply,
   ) {
     const rules = await healthService.getAlertRules();
-    return { rules };
+    return {
+      rules: rules.map((rule) => ({
+        ...rule,
+        mutedUntil: rule.mutedUntil?.toISOString(),
+        lastTriggeredAt: rule.lastTriggeredAt?.toISOString(),
+        createdAt: rule.createdAt.toISOString(),
+        updatedAt: rule.updatedAt.toISOString(),
+      })),
+    };
   }
 
   // --- Update alert rule ---
@@ -151,7 +184,13 @@ export function createHealthHandlers(healthService: HealthService) {
         thresholds: body.thresholds,
         windowMinutes: body.windowMinutes,
       });
-      return reply.send(rule);
+      return reply.send({
+        ...rule,
+        mutedUntil: rule.mutedUntil?.toISOString(),
+        lastTriggeredAt: rule.lastTriggeredAt?.toISOString(),
+        createdAt: rule.createdAt.toISOString(),
+        updatedAt: rule.updatedAt.toISOString(),
+      });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -182,7 +221,13 @@ export function createHealthHandlers(healthService: HealthService) {
 
     try {
       const rule = await healthService.muteAlert(alertId, minutes);
-      return reply.send(rule);
+      return reply.send({
+        ...rule,
+        mutedUntil: rule.mutedUntil?.toISOString(),
+        lastTriggeredAt: rule.lastTriggeredAt?.toISOString(),
+        createdAt: rule.createdAt.toISOString(),
+        updatedAt: rule.updatedAt.toISOString(),
+      });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -203,7 +248,13 @@ export function createHealthHandlers(healthService: HealthService) {
 
     try {
       const rule = await healthService.unmuteAlert(alertId);
-      return reply.send(rule);
+      return reply.send({
+        ...rule,
+        mutedUntil: rule.mutedUntil?.toISOString(),
+        lastTriggeredAt: rule.lastTriggeredAt?.toISOString(),
+        createdAt: rule.createdAt.toISOString(),
+        updatedAt: rule.updatedAt.toISOString(),
+      });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

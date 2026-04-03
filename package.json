@@ -28,9 +28,9 @@
     "test:smoke:e2e": "cd clients/web && npx playwright test",
     "test:smoke": "npm run test:smoke:api && npm run test:smoke:e2e",
     "format": "prettier --write .",
-    "api:export": "npx tsx packages/core-api/scripts/export-openapi.ts",
+    "api:export": "node --import tsx packages/core-api/scripts/export-openapi.ts",
     "api:generate": "npx @hey-api/openapi-ts -f packages/shared/openapi-ts.config.ts",
-    "api:validate": "npx tsx scripts/validate-openapi-spec.ts",
+    "api:validate": "node --import tsx scripts/validate-openapi-spec.ts",
     "api:refresh": "npm run api:export && npm run api:generate"
   },
   "devDependencies": {

@@ -79,7 +79,7 @@ export function createAuthHandlers(authService: AuthService) {
   ): Promise<void> {
     const { refreshToken } = request.body;
     await authService.logout(refreshToken);
-    return reply.status(204).send();
+    return reply.send({ success: true });
   }
 
   async function handleForgotPassword(

@@ -67,6 +67,7 @@ import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-
 export function buildApp() {
   const app = Fastify({ logger: true });
   const prisma = new PrismaClient();
+  const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
 
   // --- Scoring subsystem (Prisma-backed) ---
   const scoreStore = new ScoreStore(prisma);
@@ -124,8 +125,10 @@ export function buildApp() {
   app.register(scoringRoutes, { prefix: '/api/v1', scoringService });
 
   // Subscribe stat event consumer + start periodic standings rollup
-  subscribeStatEventConsumer({ eventBus, scoreStore, contestLookup });
-  standingsRollup.startPeriodicRollup();
+  if (!isOpenApiExport) {
+    subscribeStatEventConsumer({ eventBus, scoreStore, contestLookup });
+    standingsRollup.startPeriodicRollup();
+  }
 
   // =========================================================================
   // Notification module (from notification-service)
@@ -202,6 +205,10 @@ export function buildApp() {
   // Lifecycle hooks
   // =========================================================================
   app.addHook('onReady', async () => {
+    if (isOpenApiExport) {
+      return;
+    }
+
     // Notifications
     scheduledRunner.start();
     app.log.info('Scheduled notification runner started');
@@ -256,4 +263,6 @@ async function start(): Promise<void> {
   }
 }
 
-start();
+if (process.env.OPENAPI_EXPORT !== 'true') {
+  void start();
+}

@@ -18,7 +18,6 @@
  *   GET  /invoices                          → Invoice history for tenant
  *   GET  /invoices/upcoming                 → Upcoming invoice preview
  *   GET  /invoices/:invoiceId               → Invoice detail
- *   GET  /invoices/:invoiceId/pdf           → Invoice PDF URL
  *   GET  /upgrade-preview/:planSlug         → Preview upgrade proration
  *   GET  /downgrade-preview/:planSlug       → Preview downgrade impact
  *   GET  /cancellation-preview              → Preview cancellation
@@ -33,7 +32,7 @@
  *   GET  /dunning/:tenantId                 → Dunning status (admin)
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import type { EntitlementKey } from '@poolmaster/shared/domain';
 import {
@@ -74,6 +73,10 @@ const ALL_ENTITLEMENT_KEYS: EntitlementKey[] = [
   'api.access',
 ];
 
+function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknown) {
+  return reply.status(statusCode).send(payload);
+}
+
 export async function billingModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const usageService = new UsageService(prisma);
@@ -101,7 +104,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
 
       const tenant = await prisma.tenant.findUnique({
@@ -110,7 +113,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       });
 
       if (!tenant) {
-        return reply.status(404).send({ error: 'TENANT_NOT_FOUND' });
+        return sendWithStatus(reply, 404, { error: 'TENANT_NOT_FOUND' });
       }
 
       const tier = await prisma.planTier.findUnique({
@@ -149,7 +152,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
 
       const results = await entitlementService.checkMultiple(tenantId, ALL_ENTITLEMENT_KEYS);
@@ -177,7 +180,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
 
       const [leagues, members, contests] = await Promise.all([
@@ -238,21 +241,21 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const billingOn = await isBillingEnabled(tenantId);
       if (!billingOn) {
-        return reply.status(403).send({
+        return sendWithStatus(reply, 403, {
           error: 'BILLING_DISABLED',
           message: 'Billing features are not yet available.',
         });
       }
       const { planSlug, cycle } = request.body as { planSlug: string; cycle: 'MONTHLY' | 'ANNUAL' };
       if (!planSlug || !cycle) {
-        return reply.status(400).send({ error: 'INVALID_INPUT', message: 'planSlug and cycle are required.' });
+        return sendWithStatus(reply, 400, { error: 'INVALID_INPUT', message: 'planSlug and cycle are required.' });
       }
       const subscription = await subscriptionService.createSubscription({ tenantId, planSlug, cycle });
-      return reply.status(201).send({ subscription });
+      return sendWithStatus(reply, 201, { subscription });
     },
   });
 
@@ -270,18 +273,18 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const billingOn = await isBillingEnabled(tenantId);
       if (!billingOn) {
-        return reply.status(403).send({
+        return sendWithStatus(reply, 403, {
           error: 'BILLING_DISABLED',
           message: 'Billing features are not yet available.',
         });
       }
       const { planSlug } = request.body as { planSlug: string };
       if (!planSlug) {
-        return reply.status(400).send({ error: 'INVALID_INPUT', message: 'planSlug is required.' });
+        return sendWithStatus(reply, 400, { error: 'INVALID_INPUT', message: 'planSlug is required.' });
       }
       const subscription = await subscriptionService.changePlan(tenantId, planSlug);
       return reply.send({ subscription });
@@ -302,11 +305,11 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const billingOn = await isBillingEnabled(tenantId);
       if (!billingOn) {
-        return reply.status(403).send({
+        return sendWithStatus(reply, 403, {
           error: 'BILLING_DISABLED',
           message: 'Billing features are not yet available.',
         });
@@ -330,7 +333,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const subscription = await subscriptionService.getSubscription(tenantId);
       return reply.send({ subscription });
@@ -351,18 +354,18 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const billingOn = await isBillingEnabled(tenantId);
       if (!billingOn) {
-        return reply.status(403).send({
+        return sendWithStatus(reply, 403, {
           error: 'BILLING_DISABLED',
           message: 'Billing features are not yet available.',
         });
       }
       const subscription = await subscriptionService.getSubscription(tenantId);
       if (!subscription.stripeCustomerId) {
-        return reply.status(400).send({ error: 'NO_CUSTOMER', message: 'No Stripe customer found.' });
+        return sendWithStatus(reply, 400, { error: 'NO_CUSTOMER', message: 'No Stripe customer found.' });
       }
       const intent = await stripeClient.setupIntents.create({
         customer: subscription.stripeCustomerId,
@@ -385,18 +388,18 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const billingOn = await isBillingEnabled(tenantId);
       if (!billingOn) {
-        return reply.status(403).send({
+        return sendWithStatus(reply, 403, {
           error: 'BILLING_DISABLED',
           message: 'Billing features are not yet available.',
         });
       }
       const subscription = await subscriptionService.getSubscription(tenantId);
       if (!subscription.stripeCustomerId) {
-        return reply.status(400).send({ error: 'NO_CUSTOMER', message: 'No Stripe customer found.' });
+        return sendWithStatus(reply, 400, { error: 'NO_CUSTOMER', message: 'No Stripe customer found.' });
       }
       const returnUrl = (request.query as { returnUrl?: string }).returnUrl ?? '/billing';
       const session = await stripeClient.billingPortal.sessions.create({
@@ -421,18 +424,18 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const billingOn = await isBillingEnabled(tenantId);
       if (!billingOn) {
-        return reply.status(403).send({
+        return sendWithStatus(reply, 403, {
           error: 'BILLING_DISABLED',
           message: 'Billing features are not yet available.',
         });
       }
       const { planSlug } = request.body as { planSlug?: string };
       const trial = await trialService.startTrial(tenantId, planSlug ?? 'pro');
-      return reply.status(201).send({ trial });
+      return sendWithStatus(reply, 201, { trial });
     },
   });
 
@@ -450,7 +453,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const status = await trialService.checkTrialStatus(tenantId);
       return reply.send({ trial: status });
@@ -471,7 +474,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const query = request.query as { page?: string };
       const page = parseInt(query.page ?? '1', 10);
@@ -494,7 +497,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const invoice = await invoiceService.getUpcomingInvoice(tenantId);
       return reply.send(invoice);
@@ -518,28 +521,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
         const invoice = await invoiceService.getInvoiceDetail(invoiceId);
         return reply.send(invoice);
       } catch {
-        return reply.status(404).send({ error: 'INVOICE_NOT_FOUND' });
-      }
-    },
-  });
-
-  // -------------------------------------------------------------------------
-  // GET /invoices/:invoiceId/pdf — Invoice PDF URL
-  // -------------------------------------------------------------------------
-
-  fastify.get('/invoices/:invoiceId/pdf', {
-    schema: {
-      tags: ['Billing'],
-      summary: 'Get invoice PDF download URL',
-      operationId: 'getInvoicePdf',
-    },
-    handler: async (request, reply) => {
-      const { invoiceId } = request.params as { invoiceId: string };
-      try {
-        const url = await invoiceService.getInvoicePdfUrl(invoiceId);
-        return reply.send({ url });
-      } catch {
-        return reply.status(404).send({ error: 'PDF_NOT_AVAILABLE' });
+        return sendWithStatus(reply, 404, { error: 'INVOICE_NOT_FOUND' });
       }
     },
   });
@@ -558,7 +540,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const { planSlug } = request.params as { planSlug: string };
       const preview = await planChangeService.previewUpgrade(tenantId, planSlug);
@@ -580,7 +562,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const { planSlug } = request.params as { planSlug: string };
       const preview = await planChangeService.previewDowngrade(tenantId, planSlug);
@@ -602,7 +584,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const preview = await cancellationService.previewCancellation(tenantId);
       return reply.send(preview);
@@ -623,7 +605,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const offer = await cancellationService.getRetentionOffer(tenantId);
       return reply.send({ offer });
@@ -644,18 +626,18 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED' });
+        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
       const billingOn = await isBillingEnabled(tenantId);
       if (!billingOn) {
-        return reply.status(403).send({
+        return sendWithStatus(reply, 403, {
           error: 'BILLING_DISABLED',
           message: 'Billing features are not yet available.',
         });
       }
       const body = request.body as { reason: string; feedback?: string; immediate?: boolean };
       if (!body.reason) {
-        return reply.status(400).send({ error: 'REASON_REQUIRED' });
+        return sendWithStatus(reply, 400, { error: 'REASON_REQUIRED' });
       }
       await subscriptionService.cancelSubscription(tenantId, body.immediate ?? false);
       await cancellationService.cancel(tenantId, body.reason, body.feedback);
@@ -677,7 +659,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'ADMIN_REQUIRED' });
+        return sendWithStatus(reply, 403, { error: 'ADMIN_REQUIRED' });
       }
       const metrics = await revenueAnalyticsService.getMetrics();
       return reply.send(metrics);
@@ -698,7 +680,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'ADMIN_REQUIRED' });
+        return sendWithStatus(reply, 403, { error: 'ADMIN_REQUIRED' });
       }
       const subscribers = await revenueAnalyticsService.getSubscribersByPlan();
       return reply.send({ subscribers });
@@ -719,7 +701,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'ADMIN_REQUIRED' });
+        return sendWithStatus(reply, 403, { error: 'ADMIN_REQUIRED' });
       }
       const trials = await revenueAnalyticsService.getTrialMetrics();
       return reply.send(trials);
@@ -740,7 +722,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'ADMIN_REQUIRED' });
+        return sendWithStatus(reply, 403, { error: 'ADMIN_REQUIRED' });
       }
       const query = request.query as { months?: string };
       const months = parseInt(query.months ?? '6', 10);
@@ -763,7 +745,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'ADMIN_REQUIRED' });
+        return sendWithStatus(reply, 403, { error: 'ADMIN_REQUIRED' });
       }
       const plans = await enterpriseService.listEnterprisePlans();
       return reply.send({ plans });
@@ -784,7 +766,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'ADMIN_REQUIRED' });
+        return sendWithStatus(reply, 403, { error: 'ADMIN_REQUIRED' });
       }
       const body = request.body as {
         tenantId: string;
@@ -801,7 +783,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
         notes?: string;
       };
       if (!body.tenantId || !body.customName || !body.customMonthlyPriceCents) {
-        return reply.status(400).send({ error: 'MISSING_REQUIRED_FIELDS' });
+        return sendWithStatus(reply, 400, { error: 'MISSING_REQUIRED_FIELDS' });
       }
       const plan = await enterpriseService.createEnterprisePlan({
         tenantId: body.tenantId,
@@ -816,7 +798,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
         dedicatedSupportContact: body.dedicatedSupportContact,
         notes: body.notes,
       });
-      return reply.status(201).send(plan);
+      return sendWithStatus(reply, 201, plan);
     },
   });
 
@@ -834,7 +816,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'ADMIN_REQUIRED' });
+        return sendWithStatus(reply, 403, { error: 'ADMIN_REQUIRED' });
       }
       const { tenantId } = request.params as { tenantId: string };
       const status = await dunningService.getDunningStatus(tenantId);

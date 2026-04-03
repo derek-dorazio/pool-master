@@ -5,7 +5,7 @@
  * The timer runs server-side; auto-pick triggers if the deadline passes.
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import {
   zodToJsonSchema,
@@ -31,6 +31,10 @@ import { draftStore } from './storage/draft-store';
 import { draftQueue } from './engine/draft-queue';
 
 const engine = new SnakeDraftEngine();
+
+function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknown) {
+  return reply.status(statusCode).send(payload);
+}
 
 /** Build a response payload from session + draft state. */
 function buildDraftResponse(session: SessionState, state: DraftState, availableParticipants: string[]) {
@@ -72,12 +76,12 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
 
       const session = await draftStore.getSession(contestId);
       if (!session) {
-        return reply.status(404).send({ error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
+        return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
       }
 
       const state = await draftStore.getState(contestId);
       if (!state) {
-        return reply.status(404).send({ error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
+        return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
       }
 
       const available = await draftStore.getAvailableParticipants(contestId);
@@ -120,7 +124,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
 
       // Check if draft already exists
       if (draftStore.has(contestId)) {
-        return reply.status(409).send({ error: 'DRAFT_EXISTS', message: `Draft already exists for contest ${contestId}` });
+        return sendWithStatus(reply, 409, { error: 'DRAFT_EXISTS', message: `Draft already exists for contest ${contestId}` });
       }
 
       const entryIds = body.entryIds ?? [crypto.randomUUID(), crypto.randomUUID()];
@@ -160,7 +164,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       await draftStore.setState(contestId, initialState);
       await draftStore.setAvailableParticipants(contestId, availableParticipantIds);
 
-      return reply.status(201).send(buildDraftResponse(liveSession, initialState, availableParticipantIds));
+      return sendWithStatus(reply, 201, buildDraftResponse(liveSession, initialState, availableParticipantIds));
     },
   });
 
@@ -194,12 +198,12 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
 
       const session = await draftStore.getSession(contestId);
       if (!session) {
-        return reply.status(404).send({ error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
+        return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
       }
 
       let state = await draftStore.getState(contestId);
       if (!state) {
-        return reply.status(404).send({ error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
+        return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
       }
 
       const available = await draftStore.getAvailableParticipants(contestId);
@@ -234,7 +238,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       // Validate the proposed pick
       const validation = engine.validatePick(state, { entryId, participantId });
       if (!validation.valid) {
-        return reply.status(400).send({ error: 'INVALID_PICK', message: validation.reason });
+        return sendWithStatus(reply, 400, { error: 'INVALID_PICK', message: validation.reason });
       }
 
       // Apply the pick
@@ -274,7 +278,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      return reply.status(501).send({ contestId, message: 'not implemented' });
+      return sendWithStatus(reply, 501, { contestId, message: 'not implemented' });
     },
   });
 
@@ -293,7 +297,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      return reply.status(501).send({ contestId, message: 'not implemented' });
+      return sendWithStatus(reply, 501, { contestId, message: 'not implemented' });
     },
   });
 
@@ -319,7 +323,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      return reply.status(501).send({ contestId, message: 'not implemented' });
+      return sendWithStatus(reply, 501, { contestId, message: 'not implemented' });
     },
   });
 
@@ -373,7 +377,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       const { templateId } = request.params as { templateId: string };
       const template = getTemplateById(templateId);
       if (!template) {
-        return reply.status(404).send({ error: `Template ${templateId} not found` });
+        return sendWithStatus(reply, 404, { error: `Template ${templateId} not found` });
       }
       return template;
     },

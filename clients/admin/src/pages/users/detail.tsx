@@ -19,16 +19,10 @@ import { useUserDetail } from '@/hooks/use-admin-api';
 const statusColors: Record<string, string> = {
   Active: 'bg-green-100 text-green-800 border-green-200',
   Disabled: 'bg-red-100 text-red-800 border-red-200',
-  Pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
 };
 
-const tokenColors: Record<string, string> = {
-  Valid: 'bg-green-100 text-green-800 border-green-200',
-  Expired: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  Revoked: 'bg-red-100 text-red-800 border-red-200',
-};
-
-function formatDate(iso: string): string {
+function formatDate(iso?: string): string {
+  if (!iso) return 'Never';
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -57,11 +51,7 @@ function CopyButton({ text }: { text: string }) {
   }
 
   return (
-    <button
-      className="ml-1 inline-flex items-center rounded p-0.5 hover:bg-accent"
-      onClick={handleCopy}
-      title="Copy to clipboard"
-    >
+    <button className="ml-1 inline-flex items-center rounded p-0.5 hover:bg-accent" onClick={handleCopy} title="Copy to clipboard">
       {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
     </button>
   );
@@ -85,7 +75,7 @@ export function Component() {
     setActionsOpen(false);
     const confirmed = await dialog.confirm(
       action,
-      `Are you sure you want to ${action} for "${user!.displayName}"?`,
+      `Are you sure you want to ${action} for "${user?.displayName}"?`,
       { confirmLabel: action, variant: action === 'Disable Account' ? 'destructive' : 'default' },
     );
     if (confirmed && id) {
@@ -106,9 +96,10 @@ export function Component() {
     }
   }
 
+  const statusLabel = user.status === 'disabled' ? 'Disabled' : 'Active';
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">{user.displayName}</h1>
@@ -121,7 +112,7 @@ export function Component() {
             <CopyButton text={user.id} />
           </div>
           <div className="pt-1">
-            <Badge variant="outline" className={statusColors[user.status]}>{user.status}</Badge>
+            <Badge variant="outline" className={statusColors[statusLabel]}>{statusLabel}</Badge>
           </div>
         </div>
         <div className="relative">
@@ -140,7 +131,6 @@ export function Component() {
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -150,7 +140,6 @@ export function Component() {
           <TabsTrigger value="auth">Auth Events</TabsTrigger>
         </TabsList>
 
-        {/* Overview */}
         <TabsContent value="overview">
           <Card>
             <CardHeader className="pb-3">
@@ -163,7 +152,7 @@ export function Component() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Auth Provider</span>
-                <span>{user.authProvider}</span>
+                <span>{user.authProvider ?? 'Unknown'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Created</span>
@@ -171,17 +160,12 @@ export function Component() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Last Login</span>
-                <span>{formatDate(user.lastLogin)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Locale</span>
-                <span>{user.locale}</span>
+                <span>{formatDate(user.lastLoginAt)}</span>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Tenants & Leagues */}
         <TabsContent value="tenants" className="space-y-6">
           <Card>
             <CardHeader className="pb-3">
@@ -193,15 +177,15 @@ export function Component() {
                   <tr className="border-b bg-muted/50">
                     <th className="px-4 py-3 text-left font-medium">Tenant</th>
                     <th className="px-4 py-3 text-left font-medium">Role</th>
+                    <th className="px-4 py-3 text-left font-medium">Joined</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {user.tenantMemberships.map((tm) => (
-                    <tr key={tm.tenantId} className="border-b">
-                      <td className="px-4 py-3 font-medium">{tm.tenantName}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline">{tm.role}</Badge>
-                      </td>
+                  {user.tenants.map((membership) => (
+                    <tr key={membership.id} className="border-b">
+                      <td className="px-4 py-3 font-medium">{membership.name}</td>
+                      <td className="px-4 py-3"><Badge variant="outline">{membership.role}</Badge></td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatDate(membership.joinedAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -220,16 +204,16 @@ export function Component() {
                     <th className="px-4 py-3 text-left font-medium">League</th>
                     <th className="px-4 py-3 text-left font-medium">Sport</th>
                     <th className="px-4 py-3 text-left font-medium">Role</th>
+                    <th className="px-4 py-3 text-left font-medium">Tenant</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {user.leagueMemberships.map((lm) => (
-                    <tr key={lm.leagueId} className="border-b">
-                      <td className="px-4 py-3 font-medium">{lm.leagueName}</td>
-                      <td className="px-4 py-3">{lm.sport}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline">{lm.role}</Badge>
-                      </td>
+                  {user.leagues.map((league) => (
+                    <tr key={league.id} className="border-b">
+                      <td className="px-4 py-3 font-medium">{league.name}</td>
+                      <td className="px-4 py-3">{league.sport || 'Unknown'}</td>
+                      <td className="px-4 py-3"><Badge variant="outline">{league.role}</Badge></td>
+                      <td className="px-4 py-3 text-muted-foreground">{league.tenantName}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -238,7 +222,6 @@ export function Component() {
           </Card>
         </TabsContent>
 
-        {/* Contests */}
         <TabsContent value="contests">
           <Card>
             <div className="overflow-x-auto">
@@ -252,18 +235,12 @@ export function Component() {
                   </tr>
                 </thead>
                 <tbody>
-                  {user.contests.map((c) => (
-                    <tr key={c.id} className="border-b">
-                      <td className="px-4 py-3 font-medium">{c.name}</td>
-                      <td className="px-4 py-3">{c.sport}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className={cn(
-                          c.status === 'Active' && 'bg-green-100 text-green-800 border-green-200',
-                          c.status === 'Upcoming' && 'bg-blue-100 text-blue-800 border-blue-200',
-                          c.status === 'Completed' && 'bg-gray-100 text-gray-800 border-gray-200',
-                        )}>{c.status}</Badge>
-                      </td>
-                      <td className="px-4 py-3">{c.rank > 0 ? `#${c.rank}` : '-'}</td>
+                  {user.activeContests.map((contest) => (
+                    <tr key={contest.id} className="border-b">
+                      <td className="px-4 py-3 font-medium">{contest.name}</td>
+                      <td className="px-4 py-3">{contest.sport}</td>
+                      <td className="px-4 py-3">{contest.status}</td>
+                      <td className="px-4 py-3">{contest.rank ? `#${contest.rank}` : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -272,7 +249,6 @@ export function Component() {
           </Card>
         </TabsContent>
 
-        {/* Devices */}
         <TabsContent value="devices">
           <Card>
             <div className="overflow-x-auto">
@@ -285,13 +261,11 @@ export function Component() {
                   </tr>
                 </thead>
                 <tbody>
-                  {user.devices.map((d) => (
-                    <tr key={d.id} className="border-b">
-                      <td className="px-4 py-3 font-medium">{d.platform}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatRelativeTime(d.lastActive)}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className={tokenColors[d.tokenStatus]}>{d.tokenStatus}</Badge>
-                      </td>
+                  {user.devices.map((device) => (
+                    <tr key={device.id} className="border-b">
+                      <td className="px-4 py-3 font-medium">{device.platform}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatRelativeTime(device.lastActiveAt)}</td>
+                      <td className="px-4 py-3">{device.tokenStatus}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -300,7 +274,6 @@ export function Component() {
           </Card>
         </TabsContent>
 
-        {/* Auth Events */}
         <TabsContent value="auth">
           <Card>
             <div className="overflow-x-auto">
@@ -314,22 +287,28 @@ export function Component() {
                   </tr>
                 </thead>
                 <tbody>
-                  {user.authEvents.map((ae) => (
-                    <tr key={ae.id} className="border-b">
-                      <td className="px-4 py-3 font-medium capitalize">{ae.type.replace('_', ' ')}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatDate(ae.timestamp)}</td>
-                      <td className="px-4 py-3 font-mono text-xs">{ae.ip}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className={cn(
-                          ae.success
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : 'bg-red-100 text-red-800 border-red-200',
-                        )}>
-                          {ae.success ? 'Success' : 'Failed'}
-                        </Badge>
+                  {user.recentAuthEvents.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                        No authentication events are available yet.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    user.recentAuthEvents.map((event, index) => (
+                      <tr key={`${event.type}-${event.timestamp}-${index}`} className="border-b">
+                        <td className="px-4 py-3 font-medium capitalize">{event.type.replace('_', ' ')}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{formatDate(event.timestamp)}</td>
+                        <td className="px-4 py-3 font-mono text-xs">{event.ipAddress ?? 'N/A'}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className={cn(
+                            event.success ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200',
+                          )}>
+                            {event.success ? 'Success' : 'Failed'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

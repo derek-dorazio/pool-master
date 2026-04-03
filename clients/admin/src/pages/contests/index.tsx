@@ -62,7 +62,7 @@ export function Component() {
     type: 'All',
   });
   const [page, setPage] = useState(0);
-  const { data: contests } = useContestList(filters);
+  const { data: contests = [] } = useContestList(filters);
 
   const totalPages = Math.max(1, Math.ceil(contests.length / PAGE_SIZE));
   const paged = contests.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);

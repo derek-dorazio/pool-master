@@ -2,7 +2,7 @@
  * Scoring routes — template library and leaderboard/scoring endpoints.
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
 import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import { getTemplate, listTemplates } from './templates/registry';
@@ -18,6 +18,10 @@ import {
 
 export interface ScoringRoutesOptions {
   scoringService: ScoringService;
+}
+
+function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknown) {
+  return reply.status(statusCode).send(payload);
 }
 
 export async function scoringRoutes(
@@ -56,7 +60,7 @@ export async function scoringRoutes(
       const template = getTemplate(key);
 
       if (!template) {
-        return reply.status(404).send({ error: `Template "${key}" not found` });
+        return sendWithStatus(reply, 404, { error: `Template "${key}" not found` });
       }
 
       return {
@@ -78,7 +82,7 @@ export async function scoringRoutes(
       const parseResult = ScoringConfigSchema.safeParse(request.body);
 
       if (!parseResult.success) {
-        return reply.status(400).send({
+        return sendWithStatus(reply, 400, {
           valid: false,
           errors: parseResult.error.issues,
         });

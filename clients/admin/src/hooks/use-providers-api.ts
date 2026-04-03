@@ -69,9 +69,9 @@ export interface IngestionJob {
 export function useProviderList() {
   return useQuery({
     queryKey: ['admin', 'providers'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Provider[]> => {
       const { data } = await adminListProviders({ client });
-      return data;
+      return data as unknown as Provider[];
     },
   });
 }
@@ -79,9 +79,9 @@ export function useProviderList() {
 export function useProviderDetail(id: string) {
   return useQuery({
     queryKey: ['admin', 'provider', id],
-    queryFn: async () => {
+    queryFn: async (): Promise<ProviderDetail> => {
       const { data } = await adminGetProviderDetail({ client, path: { providerId: id } });
-      return data;
+      return data as unknown as ProviderDetail;
     },
   });
 }

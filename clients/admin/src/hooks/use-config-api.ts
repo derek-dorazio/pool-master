@@ -29,9 +29,9 @@ export interface ScoringTemplate {
 export function useScoringTemplates() {
   return useQuery({
     queryKey: ['admin', 'config', 'scoring-templates'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ScoringTemplate[]> => {
       const { data } = await adminListScoringTemplates({ client });
-      return data;
+      return data as unknown as ScoringTemplate[];
     },
   });
 }
@@ -50,9 +50,9 @@ export interface SelectionTemplate {
 export function useSelectionTemplates() {
   return useQuery({
     queryKey: ['admin', 'config', 'selection-templates'],
-    queryFn: async () => {
+    queryFn: async (): Promise<SelectionTemplate[]> => {
       const { data } = await adminListSelectionTemplatesConfig({ client });
-      return data;
+      return data as unknown as SelectionTemplate[];
     },
   });
 }
@@ -74,9 +74,9 @@ export interface PushTrigger {
 export function usePushTriggers() {
   return useQuery({
     queryKey: ['admin', 'config', 'push-triggers'],
-    queryFn: async () => {
+    queryFn: async (): Promise<PushTrigger[]> => {
       const { data } = await adminListPushTriggers({ client });
-      return data;
+      return data as unknown as PushTrigger[];
     },
   });
 }
@@ -97,9 +97,9 @@ export interface NotificationTemplate {
 export function useNotificationTemplates() {
   return useQuery({
     queryKey: ['admin', 'config', 'notification-templates'],
-    queryFn: async () => {
+    queryFn: async (): Promise<NotificationTemplate[]> => {
       const { data } = await adminListNotificationTemplates({ client });
-      return data;
+      return data as unknown as NotificationTemplate[];
     },
   });
 }
@@ -117,9 +117,9 @@ export interface ChannelDefault {
 export function useChannelDefaults() {
   return useQuery({
     queryKey: ['admin', 'config', 'channel-defaults'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ChannelDefault[]> => {
       const { data } = await adminGetChannelConfig({ client });
-      return data;
+      return data as unknown as ChannelDefault[];
     },
   });
 }
@@ -143,9 +143,9 @@ export interface RateLimitConfig {
 export function useRateLimits() {
   return useQuery({
     queryKey: ['admin', 'config', 'rate-limits'],
-    queryFn: async () => {
+    queryFn: async (): Promise<RateLimitConfig> => {
       const { data } = await adminGetRateLimitConfig({ client });
-      return data;
+      return data as unknown as RateLimitConfig;
     },
   });
 }
@@ -163,9 +163,9 @@ export interface PollIntervalConfig {
 export function usePollIntervals() {
   return useQuery({
     queryKey: ['admin', 'config', 'poll-intervals'],
-    queryFn: async () => {
+    queryFn: async (): Promise<PollIntervalConfig> => {
       const { data } = await adminGetPollIntervals({ client });
-      return data;
+      return data as unknown as PollIntervalConfig;
     },
   });
 }
@@ -193,9 +193,9 @@ export interface IngestionScheduleConfig {
 export function useIngestionSchedule() {
   return useQuery({
     queryKey: ['admin', 'config', 'ingestion-schedule'],
-    queryFn: async () => {
+    queryFn: async (): Promise<IngestionScheduleConfig> => {
       const { data } = await adminGetIngestionSchedule({ client });
-      return data;
+      return data as unknown as IngestionScheduleConfig;
     },
   });
 }
@@ -221,9 +221,9 @@ export interface DunningConfig {
 export function useDunningConfig() {
   return useQuery({
     queryKey: ['admin', 'config', 'dunning'],
-    queryFn: async () => {
+    queryFn: async (): Promise<DunningConfig> => {
       const { data } = await adminGetDunningConfig({ client });
-      return data;
+      return data as unknown as DunningConfig;
     },
   });
 }
@@ -242,9 +242,9 @@ export interface RetentionDefaultsConfig {
 export function useRetentionDefaults() {
   return useQuery({
     queryKey: ['admin', 'config', 'retention-defaults'],
-    queryFn: async () => {
+    queryFn: async (): Promise<RetentionDefaultsConfig> => {
       const { data } = await adminGetRetentionDefaults({ client });
-      return data;
+      return data as unknown as RetentionDefaultsConfig;
     },
   });
 }
@@ -269,9 +269,9 @@ export interface DigestTemplateConfig {
 export function useDigestConfig() {
   return useQuery({
     queryKey: ['admin', 'config', 'digest'],
-    queryFn: async () => {
+    queryFn: async (): Promise<DigestTemplateConfig> => {
       const { data } = await adminGetDigestConfig({ client });
-      return data;
+      return data as unknown as DigestTemplateConfig;
     },
   });
 }
@@ -279,9 +279,9 @@ export function useDigestConfig() {
 export function useDigestPreview() {
   return useQuery({
     queryKey: ['admin', 'config', 'digest-preview'],
-    queryFn: async () => {
+    queryFn: async (): Promise<string> => {
       const { data } = await adminPreviewDigest({ client });
-      return data;
+      return (data as unknown as { preview: string }).preview;
     },
   });
 }

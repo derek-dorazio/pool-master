@@ -340,7 +340,26 @@
         },
         "responses": {
           "200": {
-            "description": "Default Response"
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }
@@ -358,22 +377,39 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email"
-                ],
                 "properties": {
                   "email": {
                     "type": "string",
                     "format": "email"
                   }
-                }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Default Response"
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }
@@ -385,9 +421,53 @@
         "tags": [
           "Auth"
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "state"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "501": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }
@@ -8131,15 +8211,82 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "planTier": {
+                            "type": "string"
+                          },
+                          "memberCount": {
+                            "type": "number"
+                          },
+                          "contestCount": {
+                            "type": "number"
+                          },
+                          "leagueCount": {
+                            "type": "number"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "suspended",
+                              "trial"
+                            ]
+                          },
+                          "lastActiveAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "slug",
+                          "planTier",
+                          "memberCount",
+                          "contestCount",
+                          "leagueCount",
+                          "status",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "pageSize": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "success"
+                    "items",
+                    "total",
+                    "page",
+                    "pageSize",
+                    "totalPages"
                   ],
                   "additionalProperties": false
                 }
@@ -8174,15 +8321,106 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "tenant": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "planTier": {
+                          "type": "string"
+                        },
+                        "settings": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "slug",
+                        "planTier",
+                        "settings",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "memberCount": {
+                      "type": "number"
+                    },
+                    "leagueCount": {
+                      "type": "number"
+                    },
+                    "contestCount": {
+                      "type": "number"
+                    },
+                    "activeContestCount": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string",
                       "enum": [
-                        true
+                        "active",
+                        "suspended",
+                        "trial"
                       ]
+                    },
+                    "lastActiveAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "recentMembers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "email",
+                          "displayName",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
-                    "success"
+                    "tenant",
+                    "memberCount",
+                    "leagueCount",
+                    "contestCount",
+                    "activeContestCount",
+                    "status",
+                    "recentMembers"
                   ],
                   "additionalProperties": false
                 }
@@ -8627,15 +8865,89 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "tenants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "role": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "role"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "lastLoginAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "disabled"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "email",
+                          "displayName",
+                          "tenants",
+                          "status",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "pageSize": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "success"
+                    "items",
+                    "total",
+                    "page",
+                    "pageSize",
+                    "totalPages"
                   ],
                   "additionalProperties": false
                 }
@@ -8727,15 +9039,193 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "id": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "authProvider": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
                       "enum": [
-                        true
+                        "active",
+                        "disabled"
                       ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "tenants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          },
+                          "joinedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "slug",
+                          "role",
+                          "joinedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "leagues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "sport": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          },
+                          "tenantName": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "sport",
+                          "role",
+                          "tenantName"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "activeContests": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "sport": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "rank": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "sport",
+                          "status"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "devices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "platform": {
+                            "type": "string"
+                          },
+                          "lastActiveAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "tokenStatus": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "platform",
+                          "lastActiveAt",
+                          "tokenStatus"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "recentAuthEvents": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "ipAddress": {
+                            "type": "string"
+                          },
+                          "success": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "timestamp",
+                          "success"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
-                    "success"
+                    "id",
+                    "email",
+                    "displayName",
+                    "status",
+                    "createdAt",
+                    "tenants",
+                    "leagues",
+                    "activeContests",
+                    "devices",
+                    "recentAuthEvents"
                   ],
                   "additionalProperties": false
                 }
@@ -10352,15 +10842,86 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "services": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "UP",
+                              "DEGRADED",
+                              "DOWN"
+                            ]
+                          },
+                          "uptimePercent": {
+                            "type": "number"
+                          },
+                          "errorRatePercent": {
+                            "type": "number"
+                          },
+                          "p95LatencyMs": {
+                            "type": "number"
+                          },
+                          "version": {
+                            "type": "string"
+                          },
+                          "uptimeSeconds": {
+                            "type": "number"
+                          },
+                          "checkedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "dependencies": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "UP",
+                                    "DOWN"
+                                  ]
+                                },
+                                "latencyMs": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "status",
+                                "latencyMs"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "status",
+                          "uptimePercent",
+                          "errorRatePercent",
+                          "p95LatencyMs",
+                          "version",
+                          "uptimeSeconds",
+                          "checkedAt",
+                          "dependencies"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
-                    "success"
+                    "services"
                   ],
                   "additionalProperties": false
                 }
@@ -10385,15 +10946,169 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "postgres": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "UP",
+                            "DEGRADED",
+                            "DOWN"
+                          ]
+                        },
+                        "cpuPercent": {
+                          "type": "number"
+                        },
+                        "connectionsCurrent": {
+                          "type": "number"
+                        },
+                        "connectionsMax": {
+                          "type": "number"
+                        },
+                        "diskUsageGb": {
+                          "type": "number"
+                        },
+                        "diskTotalGb": {
+                          "type": "number"
+                        },
+                        "replicationLagMs": {
+                          "type": "number"
+                        },
+                        "slowQueriesLast24h": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "cpuPercent",
+                        "connectionsCurrent",
+                        "connectionsMax",
+                        "diskUsageGb",
+                        "diskTotalGb",
+                        "replicationLagMs",
+                        "slowQueriesLast24h"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "redis": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "UP",
+                            "DEGRADED",
+                            "DOWN"
+                          ]
+                        },
+                        "memoryUsedGb": {
+                          "type": "number"
+                        },
+                        "memoryMaxGb": {
+                          "type": "number"
+                        },
+                        "keyCount": {
+                          "type": "number"
+                        },
+                        "hitRatePercent": {
+                          "type": "number"
+                        },
+                        "connectedClients": {
+                          "type": "number"
+                        },
+                        "evictedKeysLast24h": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "memoryUsedGb",
+                        "memoryMaxGb",
+                        "keyCount",
+                        "hitRatePercent",
+                        "connectedClients",
+                        "evictedKeysLast24h"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "messageBus": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "UP",
+                            "DEGRADED",
+                            "DOWN"
+                          ]
+                        },
+                        "queueDepth": {
+                          "type": "number"
+                        },
+                        "consumerLagSeconds": {
+                          "type": "number"
+                        },
+                        "messagesPerSecond": {
+                          "type": "number"
+                        },
+                        "deadLetterCount": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "queueDepth",
+                        "consumerLagSeconds",
+                        "messagesPerSecond",
+                        "deadLetterCount"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "s3Cdn": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "UP",
+                            "DEGRADED",
+                            "DOWN"
+                          ]
+                        },
+                        "bandwidthGbPerDay": {
+                          "type": "number"
+                        },
+                        "requestsLast24h": {
+                          "type": "number"
+                        },
+                        "errorRatePercent": {
+                          "type": "number"
+                        },
+                        "storageUsedGb": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "bandwidthGbPerDay",
+                        "requestsLast24h",
+                        "errorRatePercent",
+                        "storageUsedGb"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "checkedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "success"
+                    "postgres",
+                    "redis",
+                    "messageBus",
+                    "s3Cdn",
+                    "checkedAt"
                   ],
                   "additionalProperties": false
                 }
@@ -10418,93 +11133,45 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "activeTenants": {
-                      "type": "object",
-                      "properties": {
-                        "value": {
-                          "type": "number"
-                        },
-                        "trend": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "value",
-                        "trend"
-                      ],
-                      "additionalProperties": false
+                    "activeUsersLast24h": {
+                      "type": "number"
                     },
-                    "totalUsers": {
-                      "type": "object",
-                      "properties": {
-                        "value": {
-                          "type": "number"
-                        },
-                        "trend": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "value",
-                        "trend"
-                      ],
-                      "additionalProperties": false
+                    "websocketConnectionsCurrent": {
+                      "type": "number"
+                    },
+                    "apiRequestsLast24h": {
+                      "type": "number"
+                    },
+                    "notificationsSent": {
+                      "type": "number"
+                    },
+                    "notificationsDelivered": {
+                      "type": "number"
+                    },
+                    "notificationDeliveryRatePercent": {
+                      "type": "number"
                     },
                     "activeContests": {
-                      "type": "object",
-                      "properties": {
-                        "value": {
-                          "type": "number"
-                        },
-                        "trend": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "value",
-                        "trend"
-                      ],
-                      "additionalProperties": false
+                      "type": "number"
                     },
                     "liveDrafts": {
-                      "type": "object",
-                      "properties": {
-                        "value": {
-                          "type": "number"
-                        },
-                        "trend": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "value",
-                        "trend"
-                      ],
-                      "additionalProperties": false
+                      "type": "number"
                     },
-                    "notificationRate": {
-                      "type": "object",
-                      "properties": {
-                        "value": {
-                          "type": "number"
-                        },
-                        "trend": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "value",
-                        "trend"
-                      ],
-                      "additionalProperties": false
+                    "checkedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "activeTenants",
-                    "totalUsers",
+                    "activeUsersLast24h",
+                    "websocketConnectionsCurrent",
+                    "apiRequestsLast24h",
+                    "notificationsSent",
+                    "notificationsDelivered",
+                    "notificationDeliveryRatePercent",
                     "activeContests",
                     "liveDrafts",
-                    "notificationRate"
+                    "checkedAt"
                   ],
                   "additionalProperties": false
                 }
@@ -10597,15 +11264,85 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "service": {
+                            "type": "string"
+                          },
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "ERROR",
+                              "CRITICAL",
+                              "WARNING"
+                            ]
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "errorType": {
+                            "type": "string"
+                          },
+                          "requestId": {
+                            "type": "string"
+                          },
+                          "tenantId": {
+                            "type": "string"
+                          },
+                          "userId": {
+                            "type": "string"
+                          },
+                          "stackTrace": {
+                            "type": "string"
+                          },
+                          "metadata": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "service",
+                          "severity",
+                          "message",
+                          "errorType",
+                          "requestId",
+                          "stackTrace",
+                          "metadata",
+                          "occurredAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "pageSize": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "success"
+                    "items",
+                    "total",
+                    "page",
+                    "pageSize",
+                    "totalPages"
                   ],
                   "additionalProperties": false
                 }
@@ -10640,15 +11377,87 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "id": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string",
                       "enum": [
-                        true
+                        "ERROR",
+                        "CRITICAL",
+                        "WARNING"
                       ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "errorType": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "tenantId": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "stackTrace": {
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "occurredAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "httpMethod": {
+                      "type": "string"
+                    },
+                    "httpPath": {
+                      "type": "string"
+                    },
+                    "httpStatusCode": {
+                      "type": "number"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "requestBody": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "responseTimeMs": {
+                      "type": "number"
+                    },
+                    "hostName": {
+                      "type": "string"
+                    },
+                    "environment": {
+                      "type": "string"
                     }
                   },
                   "required": [
-                    "success"
+                    "id",
+                    "service",
+                    "severity",
+                    "message",
+                    "errorType",
+                    "requestId",
+                    "stackTrace",
+                    "metadata",
+                    "occurredAt",
+                    "hostName",
+                    "environment"
                   ],
                   "additionalProperties": false
                 }
@@ -10673,15 +11482,100 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "rules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "string",
+                            "enum": [
+                              "SERVICE",
+                              "ERROR_RATE",
+                              "INFRASTRUCTURE",
+                              "BUSINESS"
+                            ]
+                          },
+                          "isEnabled": {
+                            "type": "boolean"
+                          },
+                          "isMuted": {
+                            "type": "boolean"
+                          },
+                          "mutedUntil": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "P1",
+                              "P2",
+                              "P3"
+                            ]
+                          },
+                          "channels": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "SLACK",
+                                "PAGERDUTY",
+                                "EMAIL"
+                              ]
+                            }
+                          },
+                          "thresholds": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "number"
+                            }
+                          },
+                          "windowMinutes": {
+                            "type": "number"
+                          },
+                          "lastTriggeredAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "description",
+                          "category",
+                          "isEnabled",
+                          "isMuted",
+                          "severity",
+                          "channels",
+                          "thresholds",
+                          "windowMinutes",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
-                    "success"
+                    "rules"
                   ],
                   "additionalProperties": false
                 }
@@ -10757,15 +11651,88 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string",
                       "enum": [
-                        true
+                        "SERVICE",
+                        "ERROR_RATE",
+                        "INFRASTRUCTURE",
+                        "BUSINESS"
                       ]
+                    },
+                    "isEnabled": {
+                      "type": "boolean"
+                    },
+                    "isMuted": {
+                      "type": "boolean"
+                    },
+                    "mutedUntil": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "P1",
+                        "P2",
+                        "P3"
+                      ]
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "SLACK",
+                          "PAGERDUTY",
+                          "EMAIL"
+                        ]
+                      }
+                    },
+                    "thresholds": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "number"
+                      }
+                    },
+                    "windowMinutes": {
+                      "type": "number"
+                    },
+                    "lastTriggeredAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "success"
+                    "id",
+                    "name",
+                    "description",
+                    "category",
+                    "isEnabled",
+                    "isMuted",
+                    "severity",
+                    "channels",
+                    "thresholds",
+                    "windowMinutes",
+                    "createdAt",
+                    "updatedAt"
                   ],
                   "additionalProperties": false
                 }
@@ -10824,15 +11791,88 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string",
                       "enum": [
-                        true
+                        "SERVICE",
+                        "ERROR_RATE",
+                        "INFRASTRUCTURE",
+                        "BUSINESS"
                       ]
+                    },
+                    "isEnabled": {
+                      "type": "boolean"
+                    },
+                    "isMuted": {
+                      "type": "boolean"
+                    },
+                    "mutedUntil": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "P1",
+                        "P2",
+                        "P3"
+                      ]
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "SLACK",
+                          "PAGERDUTY",
+                          "EMAIL"
+                        ]
+                      }
+                    },
+                    "thresholds": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "number"
+                      }
+                    },
+                    "windowMinutes": {
+                      "type": "number"
+                    },
+                    "lastTriggeredAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "success"
+                    "id",
+                    "name",
+                    "description",
+                    "category",
+                    "isEnabled",
+                    "isMuted",
+                    "severity",
+                    "channels",
+                    "thresholds",
+                    "windowMinutes",
+                    "createdAt",
+                    "updatedAt"
                   ],
                   "additionalProperties": false
                 }
@@ -10867,15 +11907,88 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string",
                       "enum": [
-                        true
+                        "SERVICE",
+                        "ERROR_RATE",
+                        "INFRASTRUCTURE",
+                        "BUSINESS"
                       ]
+                    },
+                    "isEnabled": {
+                      "type": "boolean"
+                    },
+                    "isMuted": {
+                      "type": "boolean"
+                    },
+                    "mutedUntil": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "P1",
+                        "P2",
+                        "P3"
+                      ]
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "SLACK",
+                          "PAGERDUTY",
+                          "EMAIL"
+                        ]
+                      }
+                    },
+                    "thresholds": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "number"
+                      }
+                    },
+                    "windowMinutes": {
+                      "type": "number"
+                    },
+                    "lastTriggeredAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "success"
+                    "id",
+                    "name",
+                    "description",
+                    "category",
+                    "isEnabled",
+                    "isMuted",
+                    "severity",
+                    "channels",
+                    "thresholds",
+                    "windowMinutes",
+                    "createdAt",
+                    "updatedAt"
                   ],
                   "additionalProperties": false
                 }
@@ -12196,6 +13309,372 @@
                   },
                   "required": [
                     "success"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-log/export": {
+      "get": {
+        "operationId": "adminExportAuditLog",
+        "summary": "Export audit log entries",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "adminUserId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "action",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "resourceType",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "resourceId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "dateFrom",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "dateTo",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "pageSize",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-log": {
+      "get": {
+        "operationId": "adminListAuditLog",
+        "summary": "List audit log entries",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "adminUserId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "action",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "resourceType",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "resourceId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "dateFrom",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "dateTo",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "pageSize",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "adminUserEmail": {
+                            "type": "string"
+                          },
+                          "adminUserName": {
+                            "type": "string"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "resourceType": {
+                            "type": "string"
+                          },
+                          "resourceId": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "ipAddress": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "hasStateChanges": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "adminUserEmail",
+                          "adminUserName",
+                          "action",
+                          "resourceType",
+                          "resourceId",
+                          "description",
+                          "createdAt",
+                          "hasStateChanges"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "pageSize": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total",
+                    "page",
+                    "pageSize"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-log/{entryId}": {
+      "get": {
+        "operationId": "adminGetAuditEntry",
+        "summary": "Get audit log entry detail",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "entryId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entry": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "adminUserEmail": {
+                          "type": "string"
+                        },
+                        "adminUserName": {
+                          "type": "string"
+                        },
+                        "action": {
+                          "type": "string"
+                        },
+                        "resourceType": {
+                          "type": "string"
+                        },
+                        "resourceId": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "ipAddress": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "hasStateChanges": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "adminUserEmail",
+                        "adminUserName",
+                        "action",
+                        "resourceType",
+                        "resourceId",
+                        "description",
+                        "createdAt",
+                        "hasStateChanges"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "entry"
                   ],
                   "additionalProperties": false
                 }
@@ -14581,31 +16060,87 @@
                   "type": "object",
                   "properties": {
                     "usage": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "resource": {
-                            "type": "string"
+                      "type": "object",
+                      "properties": {
+                        "leagues": {
+                          "type": "object",
+                          "properties": {
+                            "resource": {
+                              "type": "string"
+                            },
+                            "current": {
+                              "type": "number"
+                            },
+                            "limit": {
+                              "type": "number"
+                            },
+                            "percentage": {
+                              "type": "number"
+                            }
                           },
-                          "currentCount": {
-                            "type": "number"
-                          },
-                          "limit": {
-                            "type": "number"
-                          },
-                          "percentage": {
-                            "type": "number"
-                          }
+                          "required": [
+                            "resource",
+                            "current",
+                            "limit",
+                            "percentage"
+                          ],
+                          "additionalProperties": false
                         },
-                        "required": [
-                          "resource",
-                          "currentCount",
-                          "limit",
-                          "percentage"
-                        ],
-                        "additionalProperties": false
-                      }
+                        "members": {
+                          "type": "object",
+                          "properties": {
+                            "resource": {
+                              "type": "string"
+                            },
+                            "current": {
+                              "type": "number"
+                            },
+                            "limit": {
+                              "type": "number"
+                            },
+                            "percentage": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "resource",
+                            "current",
+                            "limit",
+                            "percentage"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "contests": {
+                          "type": "object",
+                          "properties": {
+                            "resource": {
+                              "type": "string"
+                            },
+                            "current": {
+                              "type": "number"
+                            },
+                            "limit": {
+                              "type": "number"
+                            },
+                            "percentage": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "resource",
+                            "current",
+                            "limit",
+                            "percentage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "leagues",
+                        "members",
+                        "contests"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -14666,6 +16201,12 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "billingEnabled": {
+                      "type": "boolean"
+                    },
+                    "upgradeLabel": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -15081,30 +16622,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/v1/billing/invoices/{invoiceId}/pdf": {
-      "get": {
-        "operationId": "getInvoicePdf",
-        "summary": "Get invoice PDF download URL",
-        "tags": [
-          "Billing"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "invoiceId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
           }
         }
       }

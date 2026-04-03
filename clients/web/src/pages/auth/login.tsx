@@ -15,6 +15,18 @@ import { Logo } from '@/components/ui/logo';
 import { client, loginUser } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
+interface AuthSuccessResponse {
+  user: {
+    id: string;
+    email: string;
+    displayName: string;
+    avatarUrl?: string | null;
+  };
+  tokens: {
+    accessToken: string;
+  };
+}
+
 const loginSchema = z.object({
   email: z
     .string()
@@ -61,8 +73,12 @@ export function Component() {
         },
       });
       if (error) throw error;
-      localStorage.setItem('access_token', res.tokens.accessToken);
-      setUser({ ...res.user, avatarUrl: res.user.avatarUrl ?? undefined });
+      const auth = res as AuthSuccessResponse | undefined;
+      if (!auth) {
+        throw new Error('Login did not return a response payload.');
+      }
+      localStorage.setItem('access_token', auth.tokens.accessToken);
+      setUser({ ...auth.user, avatarUrl: auth.user.avatarUrl ?? undefined });
       navigate('/dashboard');
     } catch (err) {
       if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 401) {

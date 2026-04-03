@@ -30,7 +30,7 @@ const statusColors: Record<string, string> = {
   Trial: 'bg-yellow-100 text-yellow-800 border-yellow-200',
 };
 
-const sortableColumns = ['name', 'plan', 'members', 'leagues', 'contests', 'status', 'lastActive'] as const;
+const sortableColumns = ['name', 'members', 'leagues', 'contests', 'lastActive'] as const;
 
 export function Component() {
   const navigate = useNavigate();
@@ -82,10 +82,10 @@ export function Component() {
             onChange={(e) => setFilters((p) => ({ ...p, plan: e.target.value, page: 1 }))}
           >
             <option value="All">All Plans</option>
-            <option value="Free">Free</option>
-            <option value="Starter">Starter</option>
-            <option value="Pro">Pro</option>
-            <option value="League+">League+</option>
+            <option value="free">Free</option>
+            <option value="starter">Starter</option>
+            <option value="pro">Pro</option>
+            <option value="league_plus">League+</option>
           </select>
           <select
             className="h-10 rounded-md border border-input bg-background px-3 text-sm"
@@ -93,9 +93,9 @@ export function Component() {
             onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value, page: 1 }))}
           >
             <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Suspended">Suspended</option>
-            <option value="Trial">Trial</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="trial">Trial</option>
           </select>
         </CardContent>
       </Card>

@@ -34,6 +34,47 @@ interface ScoringResponse {
   rules: ScoringRule[];
 }
 
+function buildScoringResponse(
+  standings:
+    | {
+        standings: Array<{
+          rank: number;
+          entryId: string;
+          displayName: string;
+          score: number;
+        }>;
+      }
+    | undefined,
+): ScoringResponse {
+  const participants = (standings?.standings ?? []).map((entry) => ({
+    id: entry.entryId,
+    name: entry.displayName,
+    tier: `Rank ${entry.rank}`,
+    score: entry.score,
+    pctOfTotal: 0,
+    stats: [
+      {
+        label: 'Standing',
+        detail: `Rank ${entry.rank}`,
+        points: entry.score,
+      },
+    ],
+  }));
+  const totalScore = participants.reduce((sum, participant) => sum + participant.score, 0);
+
+  return {
+    entries: participants.map((participant) => ({
+      id: participant.id,
+      name: participant.name,
+    })),
+    participants: participants.map((participant) => ({
+      ...participant,
+      pctOfTotal: totalScore > 0 ? (participant.score / totalScore) * 100 : 0,
+    })),
+    rules: [],
+  };
+}
+
 
 function ParticipantRow({ participant }: { participant: ParticipantScoring }) {
   const [expanded, setExpanded] = useState(false);
@@ -98,14 +139,13 @@ export function Component() {
 
   const { data: scoring, isLoading } = useQuery({
     queryKey: ['contests', contestId, 'scoring', selectedEntry],
-    queryFn: async () => {
+    queryFn: async (): Promise<ScoringResponse> => {
       const { data, error } = await getStandings({
         client,
         path: { contestId: contestId! },
-        query: selectedEntry ? { entryId: selectedEntry } : undefined,
       });
       if (error) throw error;
-      return data as unknown as ScoringResponse;
+      return buildScoringResponse(data);
     },
     staleTime: 2 * 60 * 1000,
   });

@@ -116,13 +116,15 @@ export function Component() {
         body: {
           name: values.name,
           description: values.description,
-          invitePolicy: values.invitePolicy,
-          visibility: values.visibility,
+          visibility: values.visibility === 'public' ? 'PUBLIC' : 'PRIVATE',
+          settings: {
+            invitePolicy: values.invitePolicy,
+          },
         },
       });
       if (error) throw error;
       toast({ title: 'League created!', description: `${values.name} is ready to go.` });
-      navigate(`/leagues/${data.id}`);
+      navigate(`/leagues/${data?.league.id}`);
     } catch {
       toast({ title: 'Error', description: 'Failed to create league. Please try again.' });
     }

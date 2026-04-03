@@ -31,9 +31,9 @@ export interface FlagDetail extends FeatureFlag {
 export function useFlagList() {
   return useQuery({
     queryKey: ['admin', 'flags'],
-    queryFn: async () => {
+    queryFn: async (): Promise<FeatureFlag[]> => {
       const { data } = await adminListFlags({ client });
-      return data;
+      return data as unknown as FeatureFlag[];
     },
   });
 }
@@ -41,9 +41,9 @@ export function useFlagList() {
 export function useFlagDetail(key: string) {
   return useQuery({
     queryKey: ['admin', 'flag', key],
-    queryFn: async () => {
+    queryFn: async (): Promise<FlagDetail> => {
       const { data } = await adminGetFlagDetail({ client, path: { flagKey: key } });
-      return data;
+      return data as unknown as FlagDetail;
     },
   });
 }

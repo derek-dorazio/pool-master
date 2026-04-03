@@ -24,12 +24,14 @@ function useMyLeagueRole(leagueId: string) {
   return useQuery({
     queryKey: ['leagues', leagueId, 'my-role'],
     queryFn: async (): Promise<LeagueRole> => {
-      const { data, error } = await client.get<{ role: string }>({
+      const { data, error } = await client.get<string | { role?: string }>({
         url: '/api/v1/leagues/{leagueId}/members/me',
         path: { leagueId },
       });
       if (error) throw error;
-      return ((data as { role: string }).role as LeagueRole) ?? LeagueRole.VIEWER;
+      const payload = data as string | { role?: string } | undefined;
+      const role = typeof payload === 'string' ? payload : payload?.role;
+      return (role as LeagueRole | undefined) ?? LeagueRole.VIEWER;
     },
     enabled: !!user,
   });

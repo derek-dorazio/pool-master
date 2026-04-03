@@ -124,8 +124,12 @@ export type LogoutUserResponses = {
     /**
      * Default Response
      */
-    200: unknown;
+    200: {
+        success: true;
+    };
 };
+
+export type LogoutUserResponse = LogoutUserResponses[keyof LogoutUserResponses];
 
 export type ForgotPasswordData = {
     body: {
@@ -140,22 +144,35 @@ export type ForgotPasswordResponses = {
     /**
      * Default Response
      */
-    200: unknown;
+    200: {
+        message: string;
+    };
 };
 
+export type ForgotPasswordResponse = ForgotPasswordResponses[keyof ForgotPasswordResponses];
+
 export type OauthCallbackData = {
-    body?: never;
+    body: {
+        code: string;
+        state: string;
+    };
     path?: never;
     query?: never;
     url: '/api/v1/auth/callback';
 };
 
-export type OauthCallbackResponses = {
+export type OauthCallbackErrors = {
     /**
      * Default Response
      */
-    200: unknown;
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
 };
+
+export type OauthCallbackError = OauthCallbackErrors[keyof OauthCallbackErrors];
 
 export type GetCurrentUserData = {
     body?: never;
@@ -3116,7 +3133,22 @@ export type AdminListTenantsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            name: string;
+            slug: string;
+            planTier: string;
+            memberCount: number;
+            contestCount: number;
+            leagueCount: number;
+            status: 'active' | 'suspended' | 'trial';
+            lastActiveAt?: string;
+            createdAt: string;
+        }>;
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
     };
 };
 
@@ -3158,7 +3190,29 @@ export type AdminGetTenantDetailResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        tenant: {
+            id: string;
+            name: string;
+            slug: string;
+            planTier: string;
+            settings: {
+                [key: string]: unknown;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
+        memberCount: number;
+        leagueCount: number;
+        contestCount: number;
+        activeContestCount: number;
+        status: 'active' | 'suspended' | 'trial';
+        lastActiveAt?: string;
+        recentMembers: Array<{
+            id: string;
+            email: string;
+            displayName: string;
+            createdAt: string;
+        }>;
     };
 };
 
@@ -3293,7 +3347,23 @@ export type AdminListUsersResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            email: string;
+            displayName: string;
+            tenants: Array<{
+                id: string;
+                name: string;
+                role: string;
+            }>;
+            lastLoginAt?: string;
+            status: 'active' | 'disabled';
+            createdAt: string;
+        }>;
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
     };
 };
 
@@ -3334,7 +3404,46 @@ export type AdminGetUserDetailResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        email: string;
+        displayName: string;
+        authProvider?: string;
+        status: 'active' | 'disabled';
+        createdAt: string;
+        lastLoginAt?: string;
+        tenants: Array<{
+            id: string;
+            name: string;
+            slug: string;
+            role: string;
+            joinedAt: string;
+        }>;
+        leagues: Array<{
+            id: string;
+            name: string;
+            sport: string;
+            role: string;
+            tenantName: string;
+        }>;
+        activeContests: Array<{
+            id: string;
+            name: string;
+            sport: string;
+            status: string;
+            rank?: number;
+        }>;
+        devices: Array<{
+            id: string;
+            platform: string;
+            lastActiveAt: string;
+            tokenStatus: string;
+        }>;
+        recentAuthEvents: Array<{
+            type: string;
+            timestamp: string;
+            ipAddress?: string;
+            success: boolean;
+        }>;
     };
 };
 
@@ -3978,7 +4087,21 @@ export type AdminGetServiceHealthResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        services: Array<{
+            name: string;
+            status: 'UP' | 'DEGRADED' | 'DOWN';
+            uptimePercent: number;
+            errorRatePercent: number;
+            p95LatencyMs: number;
+            version: string;
+            uptimeSeconds: number;
+            checkedAt: string;
+            dependencies: Array<{
+                name: string;
+                status: 'UP' | 'DOWN';
+                latencyMs: number;
+            }>;
+        }>;
     };
 };
 
@@ -3996,7 +4119,40 @@ export type AdminGetInfrastructureMetricsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        postgres: {
+            status: 'UP' | 'DEGRADED' | 'DOWN';
+            cpuPercent: number;
+            connectionsCurrent: number;
+            connectionsMax: number;
+            diskUsageGb: number;
+            diskTotalGb: number;
+            replicationLagMs: number;
+            slowQueriesLast24h: number;
+        };
+        redis: {
+            status: 'UP' | 'DEGRADED' | 'DOWN';
+            memoryUsedGb: number;
+            memoryMaxGb: number;
+            keyCount: number;
+            hitRatePercent: number;
+            connectedClients: number;
+            evictedKeysLast24h: number;
+        };
+        messageBus: {
+            status: 'UP' | 'DEGRADED' | 'DOWN';
+            queueDepth: number;
+            consumerLagSeconds: number;
+            messagesPerSecond: number;
+            deadLetterCount: number;
+        };
+        s3Cdn: {
+            status: 'UP' | 'DEGRADED' | 'DOWN';
+            bandwidthGbPerDay: number;
+            requestsLast24h: number;
+            errorRatePercent: number;
+            storageUsedGb: number;
+        };
+        checkedAt: string;
     };
 };
 
@@ -4014,26 +4170,15 @@ export type AdminGetBusinessMetricsResponses = {
      * Default Response
      */
     200: {
-        activeTenants: {
-            value: number;
-            trend: number;
-        };
-        totalUsers: {
-            value: number;
-            trend: number;
-        };
-        activeContests: {
-            value: number;
-            trend: number;
-        };
-        liveDrafts: {
-            value: number;
-            trend: number;
-        };
-        notificationRate: {
-            value: number;
-            trend: number;
-        };
+        activeUsersLast24h: number;
+        websocketConnectionsCurrent: number;
+        apiRequestsLast24h: number;
+        notificationsSent: number;
+        notificationsDelivered: number;
+        notificationDeliveryRatePercent: number;
+        activeContests: number;
+        liveDrafts: number;
+        checkedAt: string;
     };
 };
 
@@ -4059,7 +4204,25 @@ export type AdminSearchErrorsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            service: string;
+            severity: 'ERROR' | 'CRITICAL' | 'WARNING';
+            message: string;
+            errorType: string;
+            requestId: string;
+            tenantId?: string;
+            userId?: string;
+            stackTrace: string;
+            metadata: {
+                [key: string]: unknown;
+            };
+            occurredAt: string;
+        }>;
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
     };
 };
 
@@ -4079,7 +4242,31 @@ export type AdminGetErrorDetailResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        service: string;
+        severity: 'ERROR' | 'CRITICAL' | 'WARNING';
+        message: string;
+        errorType: string;
+        requestId: string;
+        tenantId?: string;
+        userId?: string;
+        stackTrace: string;
+        metadata: {
+            [key: string]: unknown;
+        };
+        occurredAt: string;
+        httpMethod?: string;
+        httpPath?: string;
+        httpStatusCode?: number;
+        headers?: {
+            [key: string]: string;
+        };
+        requestBody?: {
+            [key: string]: unknown;
+        };
+        responseTimeMs?: number;
+        hostName: string;
+        environment: string;
     };
 };
 
@@ -4097,7 +4284,24 @@ export type AdminGetAlertRulesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        rules: Array<{
+            id: string;
+            name: string;
+            description: string;
+            category: 'SERVICE' | 'ERROR_RATE' | 'INFRASTRUCTURE' | 'BUSINESS';
+            isEnabled: boolean;
+            isMuted: boolean;
+            mutedUntil?: string;
+            severity: 'P1' | 'P2' | 'P3';
+            channels: Array<'SLACK' | 'PAGERDUTY' | 'EMAIL'>;
+            thresholds: {
+                [key: string]: number;
+            };
+            windowMinutes: number;
+            lastTriggeredAt?: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
     };
 };
 
@@ -4125,7 +4329,22 @@ export type AdminUpdateAlertRuleResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        name: string;
+        description: string;
+        category: 'SERVICE' | 'ERROR_RATE' | 'INFRASTRUCTURE' | 'BUSINESS';
+        isEnabled: boolean;
+        isMuted: boolean;
+        mutedUntil?: string;
+        severity: 'P1' | 'P2' | 'P3';
+        channels: Array<'SLACK' | 'PAGERDUTY' | 'EMAIL'>;
+        thresholds: {
+            [key: string]: number;
+        };
+        windowMinutes: number;
+        lastTriggeredAt?: string;
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -4147,7 +4366,22 @@ export type AdminMuteAlertResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        name: string;
+        description: string;
+        category: 'SERVICE' | 'ERROR_RATE' | 'INFRASTRUCTURE' | 'BUSINESS';
+        isEnabled: boolean;
+        isMuted: boolean;
+        mutedUntil?: string;
+        severity: 'P1' | 'P2' | 'P3';
+        channels: Array<'SLACK' | 'PAGERDUTY' | 'EMAIL'>;
+        thresholds: {
+            [key: string]: number;
+        };
+        windowMinutes: number;
+        lastTriggeredAt?: string;
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -4167,7 +4401,22 @@ export type AdminUnmuteAlertResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        name: string;
+        description: string;
+        category: 'SERVICE' | 'ERROR_RATE' | 'INFRASTRUCTURE' | 'BUSINESS';
+        isEnabled: boolean;
+        isMuted: boolean;
+        mutedUntil?: string;
+        severity: 'P1' | 'P2' | 'P3';
+        channels: Array<'SLACK' | 'PAGERDUTY' | 'EMAIL'>;
+        thresholds: {
+            [key: string]: number;
+        };
+        windowMinutes: number;
+        lastTriggeredAt?: string;
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -4729,6 +4978,109 @@ export type AdminDownloadExportResponses = {
 };
 
 export type AdminDownloadExportResponse = AdminDownloadExportResponses[keyof AdminDownloadExportResponses];
+
+export type AdminExportAuditLogData = {
+    body?: never;
+    path?: never;
+    query?: {
+        adminUserId?: string;
+        action?: string;
+        resourceType?: string;
+        resourceId?: string;
+        dateFrom?: string;
+        dateTo?: string;
+        search?: string;
+        page?: string;
+        pageSize?: string;
+    };
+    url: '/api/v1/admin/audit-log/export';
+};
+
+export type AdminExportAuditLogResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        success: true;
+    };
+};
+
+export type AdminExportAuditLogResponse = AdminExportAuditLogResponses[keyof AdminExportAuditLogResponses];
+
+export type AdminListAuditLogData = {
+    body?: never;
+    path?: never;
+    query?: {
+        adminUserId?: string;
+        action?: string;
+        resourceType?: string;
+        resourceId?: string;
+        dateFrom?: string;
+        dateTo?: string;
+        search?: string;
+        page?: string;
+        pageSize?: string;
+    };
+    url: '/api/v1/admin/audit-log';
+};
+
+export type AdminListAuditLogResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        items: Array<{
+            id: string;
+            adminUserEmail: string;
+            adminUserName: string;
+            action: string;
+            resourceType: string;
+            resourceId: string;
+            description: string;
+            reason?: string;
+            ipAddress?: string;
+            createdAt: string;
+            hasStateChanges: boolean;
+        }>;
+        total: number;
+        page: number;
+        pageSize: number;
+    };
+};
+
+export type AdminListAuditLogResponse = AdminListAuditLogResponses[keyof AdminListAuditLogResponses];
+
+export type AdminGetAuditEntryData = {
+    body?: never;
+    path: {
+        entryId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/audit-log/{entryId}';
+};
+
+export type AdminGetAuditEntryResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        entry: {
+            id: string;
+            adminUserEmail: string;
+            adminUserName: string;
+            action: string;
+            resourceType: string;
+            resourceId: string;
+            description: string;
+            reason?: string;
+            ipAddress?: string;
+            createdAt: string;
+            hasStateChanges: boolean;
+        };
+    };
+};
+
+export type AdminGetAuditEntryResponse = AdminGetAuditEntryResponses[keyof AdminGetAuditEntryResponses];
 
 export type AdminGetPollIntervalsData = {
     body?: never;
@@ -5792,12 +6144,26 @@ export type GetUsageResponses = {
      * Default Response
      */
     200: {
-        usage: Array<{
-            resource: string;
-            currentCount: number;
-            limit: number;
-            percentage: number;
-        }>;
+        usage: {
+            leagues: {
+                resource: string;
+                current: number;
+                limit: number;
+                percentage: number;
+            };
+            members: {
+                resource: string;
+                current: number;
+                limit: number;
+                percentage: number;
+            };
+            contests: {
+                resource: string;
+                current: number;
+                limit: number;
+                percentage: number;
+            };
+        };
     };
 };
 
@@ -5825,6 +6191,8 @@ export type ListPlansResponses = {
                 [key: string]: unknown;
             };
         }>;
+        billingEnabled?: boolean;
+        upgradeLabel?: string;
     };
 };
 
@@ -6027,22 +6395,6 @@ export type GetInvoiceDetailResponses = {
 };
 
 export type GetInvoiceDetailResponse = GetInvoiceDetailResponses[keyof GetInvoiceDetailResponses];
-
-export type GetInvoicePdfData = {
-    body?: never;
-    path: {
-        invoiceId: string;
-    };
-    query?: never;
-    url: '/api/v1/billing/invoices/{invoiceId}/pdf';
-};
-
-export type GetInvoicePdfResponses = {
-    /**
-     * Default Response
-     */
-    200: unknown;
-};
 
 export type PreviewUpgradeData = {
     body?: never;

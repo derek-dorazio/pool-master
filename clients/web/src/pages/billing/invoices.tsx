@@ -72,7 +72,6 @@ export function Component() {
                     <th className="pb-3 pr-4 font-medium">Invoice #</th>
                     <th className="pb-3 pr-4 font-medium">Amount</th>
                     <th className="pb-3 pr-4 font-medium">Status</th>
-                    <th className="pb-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -91,16 +90,6 @@ export function Component() {
                           {invoice.status.charAt(0).toUpperCase() +
                             invoice.status.slice(1)}
                         </Badge>
-                      </td>
-                      <td className="py-3">
-                        <button
-                          className="text-sm text-primary hover:underline"
-                          onClick={() => {
-                            /* PDF download placeholder */
-                          }}
-                        >
-                          Download PDF
-                        </button>
                       </td>
                     </tr>
                   ))}

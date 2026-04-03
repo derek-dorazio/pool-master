@@ -10,7 +10,6 @@ import { useUserSearch } from '@/hooks/use-admin-api';
 const statusColors: Record<string, string> = {
   Active: 'bg-green-100 text-green-800 border-green-200',
   Disabled: 'bg-red-100 text-red-800 border-red-200',
-  Pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
 };
 
 function formatRelativeTime(iso: string): string {
@@ -52,7 +51,7 @@ export function Component() {
         <div className="flex items-center justify-center py-16">
           <p className="text-muted-foreground">Searching...</p>
         </div>
-      ) : isFetched && users && users.length > 0 ? (
+      ) : isFetched && users && users.items.length > 0 ? (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -66,7 +65,7 @@ export function Component() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {users.items.map((u) => (
                   <tr
                     key={u.id}
                     className="cursor-pointer border-b transition-colors hover:bg-muted/50"
@@ -74,10 +73,12 @@ export function Component() {
                   >
                     <td className="px-4 py-3">{u.email}</td>
                     <td className="px-4 py-3 font-medium">{u.displayName}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{u.tenants.join(', ')}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatRelativeTime(u.lastLogin)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{u.tenants.map((tenant) => tenant.name).join(', ')}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{formatRelativeTime(u.lastLoginAt ?? u.createdAt)}</td>
                     <td className="px-4 py-3">
-                      <Badge variant="outline" className={cn(statusColors[u.status])}>{u.status}</Badge>
+                      <Badge variant="outline" className={cn(statusColors[u.status === 'disabled' ? 'Disabled' : 'Active'])}>
+                        {u.status === 'disabled' ? 'Disabled' : 'Active'}
+                      </Badge>
                     </td>
                   </tr>
                 ))}

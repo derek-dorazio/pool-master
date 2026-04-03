@@ -15,7 +15,7 @@ export const client = createClient(createConfig<ClientOptions>({
   baseUrl: '/',
 }));
 
-client.interceptors.request.use((request) => {
+client.interceptors.request.use((request: Request) => {
   const token = localStorage.getItem('admin_access_token');
   if (token) {
     request.headers.set('Authorization', `Bearer ${token}`);

@@ -136,6 +136,9 @@ export function Component() {
                 </div>
               );
             })}
+            {alerts.length === 0 && (
+              <p className="text-sm text-muted-foreground">No active alerts.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -160,6 +163,9 @@ export function Component() {
                   </span>
                 </div>
               ))}
+              {audit.length === 0 && (
+                <p className="text-sm text-muted-foreground">No recent audit activity.</p>
+              )}
             </div>
           </CardContent>
         </Card>

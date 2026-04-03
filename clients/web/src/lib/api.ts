@@ -20,7 +20,7 @@ export const client = createClient(createConfig<ClientOptions>({
   baseUrl: resolvedBaseUrl,
 }));
 
-client.interceptors.request.use((request) => {
+client.interceptors.request.use((request: Request) => {
   const token = localStorage.getItem('access_token');
   if (token) {
     request.headers.set('Authorization', `Bearer ${token}`);

@@ -26,10 +26,18 @@ export interface AuditFilters {
   page: number;
 }
 
+export interface AuditLogResult {
+  entries: AuditEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export function useAuditLog(filters: AuditFilters) {
   return useQuery({
     queryKey: ['audit-log', filters],
-    queryFn: async () => {
+    queryFn: async (): Promise<AuditLogResult> => {
       const params = new URLSearchParams();
       if (filters.admin && filters.admin !== 'All') params.set('admin', filters.admin);
       if (filters.action && filters.action !== 'All') params.set('action', filters.action);
@@ -42,7 +50,42 @@ export function useAuditLog(filters: AuditFilters) {
       const { data } = await client.get({
         url: `/api/v1/admin/audit-log${query ? `?${query}` : ''}`,
       });
-      return data;
+      const payload = data as {
+        items: Array<{
+          id: string;
+          createdAt: string;
+          adminUserEmail: string;
+          action: string;
+          resourceType: string;
+          resourceId: string;
+          description: string;
+          reason?: string;
+          ipAddress?: string;
+        }>;
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
+      };
+
+      return {
+        entries: payload.items.map((entry) => ({
+          id: entry.id,
+          timestamp: entry.createdAt,
+          admin: entry.adminUserEmail,
+          action: entry.action,
+          resourceType: entry.resourceType,
+          resourceId: entry.resourceId,
+          description: entry.description,
+          reason: entry.reason,
+          ipAddress: entry.ipAddress ?? '',
+          userAgent: '',
+        })),
+        total: payload.total,
+        page: payload.page,
+        pageSize: payload.pageSize,
+        totalPages: payload.totalPages,
+      };
     },
     placeholderData: keepPreviousData,
   });

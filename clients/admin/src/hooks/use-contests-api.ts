@@ -68,14 +68,14 @@ export interface ContestFilters {
 export function useContestList(filters: ContestFilters = {}) {
   return useQuery({
     queryKey: ['admin', 'contests', filters],
-    queryFn: async () => {
+    queryFn: async (): Promise<Contest[]> => {
       const query: Record<string, string> = {};
       if (filters.tenant && filters.tenant !== 'All') query.tenant = filters.tenant;
       if (filters.sport && filters.sport !== 'All') query.sport = filters.sport;
       if (filters.status && filters.status !== 'All') query.status = filters.status;
       if (filters.type && filters.type !== 'All') query.type = filters.type;
       const { data } = await adminListContests({ client, query });
-      return data;
+      return data as unknown as Contest[];
     },
   });
 }
@@ -83,9 +83,9 @@ export function useContestList(filters: ContestFilters = {}) {
 export function useContestDetail(id: string) {
   return useQuery({
     queryKey: ['admin', 'contest', id],
-    queryFn: async () => {
+    queryFn: async (): Promise<ContestDetail> => {
       const { data } = await adminGetContestDetail({ client, path: { contestId: id } });
-      return data;
+      return data as unknown as ContestDetail;
     },
   });
 }

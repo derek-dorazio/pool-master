@@ -23,8 +23,10 @@ import {
 } from '@/hooks/use-config-api';
 import type {
   PollIntervalConfig,
+  IngestionScheduleConfig,
   SportOverride,
   RetryAttempt,
+  DunningConfig,
   RetentionDefaultsConfig,
 } from '@/hooks/use-config-api';
 
@@ -80,14 +82,21 @@ const POLL_FIELDS: { key: keyof PollIntervalConfig; label: string }[] = [
 
 function PollIntervalsSection() {
   const { data: config } = usePollIntervals();
-  const [values, setValues] = useState<PollIntervalConfig>({ ...config });
+  const safeConfig: PollIntervalConfig = config ?? {
+    standings: 0,
+    draft: 0,
+    contestStatus: 0,
+    notifications: 0,
+    default: 0,
+  };
+  const [values, setValues] = useState<PollIntervalConfig>({ ...safeConfig });
 
   function update(key: keyof PollIntervalConfig, value: number) {
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 
   function reset() {
-    setValues({ ...config });
+    setValues({ ...safeConfig });
   }
 
   return (
@@ -130,12 +139,20 @@ const AVAILABLE_SPORTS = [Sport.NFL, Sport.NBA, Sport.NCAA_BASKETBALL, Sport.SOC
 
 function IngestionScheduleSection() {
   const { data: config } = useIngestionSchedule();
-  const [healthCheckMin, setHealthCheckMin] = useState(config.healthCheckMin);
-  const [scheduleSyncHrs, setScheduleSyncHrs] = useState(config.scheduleSyncHrs);
-  const [participantSyncHrs, setParticipantSyncHrs] = useState(config.participantSyncHrs);
-  const [rankingSyncHrs, setRankingSyncHrs] = useState(config.rankingSyncHrs);
-  const [liveScorePolling, setLiveScorePolling] = useState(config.liveScorePollingSeconds);
-  const [overrides, setOverrides] = useState<SportOverride[]>(config.sportOverrides);
+  const safeConfig: IngestionScheduleConfig = config ?? {
+    healthCheckMin: 0,
+    scheduleSyncHrs: 0,
+    participantSyncHrs: 0,
+    rankingSyncHrs: 0,
+    liveScorePollingSeconds: 0,
+    sportOverrides: [],
+  };
+  const [healthCheckMin, setHealthCheckMin] = useState(safeConfig.healthCheckMin);
+  const [scheduleSyncHrs, setScheduleSyncHrs] = useState(safeConfig.scheduleSyncHrs);
+  const [participantSyncHrs, setParticipantSyncHrs] = useState(safeConfig.participantSyncHrs);
+  const [rankingSyncHrs, setRankingSyncHrs] = useState(safeConfig.rankingSyncHrs);
+  const [liveScorePolling, setLiveScorePolling] = useState(safeConfig.liveScorePollingSeconds);
+  const [overrides, setOverrides] = useState<SportOverride[]>(safeConfig.sportOverrides);
   const [showOverrides, setShowOverrides] = useState(false);
 
   function updateOverride(index: number, field: keyof SportOverride, value: string | number) {
@@ -166,12 +183,12 @@ function IngestionScheduleSection() {
   }
 
   function reset() {
-    setHealthCheckMin(config.healthCheckMin);
-    setScheduleSyncHrs(config.scheduleSyncHrs);
-    setParticipantSyncHrs(config.participantSyncHrs);
-    setRankingSyncHrs(config.rankingSyncHrs);
-    setLiveScorePolling(config.liveScorePollingSeconds);
-    setOverrides(config.sportOverrides);
+    setHealthCheckMin(safeConfig.healthCheckMin);
+    setScheduleSyncHrs(safeConfig.scheduleSyncHrs);
+    setParticipantSyncHrs(safeConfig.participantSyncHrs);
+    setRankingSyncHrs(safeConfig.rankingSyncHrs);
+    setLiveScorePolling(safeConfig.liveScorePollingSeconds);
+    setOverrides(safeConfig.sportOverrides);
   }
 
   return (
@@ -331,14 +348,24 @@ function IngestionScheduleSection() {
 
 function DunningScheduleSection() {
   const { data: config } = useDunningConfig();
-  const [retryAttempts, setRetryAttempts] = useState<RetryAttempt[]>(config.retryAttempts);
-  const [gracePeriod, setGracePeriod] = useState(config.gracePeriodDays);
-  const [degradedPeriod, setDegradedPeriod] = useState(config.degradedPeriodDays);
-  const [cancellationThreshold, setCancellationThreshold] = useState(config.cancellationThresholdDays);
-  const [notifyOnRetry, setNotifyOnRetry] = useState(config.notifyOnRetry);
-  const [notifyOnGraceStart, setNotifyOnGraceStart] = useState(config.notifyOnGraceStart);
-  const [notifyOnDegradation, setNotifyOnDegradation] = useState(config.notifyOnDegradation);
-  const [notifyBeforeCancellation, setNotifyBeforeCancellation] = useState(config.notifyBeforeCancellation);
+  const safeConfig: DunningConfig = config ?? {
+    retryAttempts: [],
+    gracePeriodDays: 0,
+    degradedPeriodDays: 0,
+    cancellationThresholdDays: 0,
+    notifyOnRetry: false,
+    notifyOnGraceStart: false,
+    notifyOnDegradation: false,
+    notifyBeforeCancellation: false,
+  };
+  const [retryAttempts, setRetryAttempts] = useState<RetryAttempt[]>(safeConfig.retryAttempts);
+  const [gracePeriod, setGracePeriod] = useState(safeConfig.gracePeriodDays);
+  const [degradedPeriod, setDegradedPeriod] = useState(safeConfig.degradedPeriodDays);
+  const [cancellationThreshold, setCancellationThreshold] = useState(safeConfig.cancellationThresholdDays);
+  const [notifyOnRetry, setNotifyOnRetry] = useState(safeConfig.notifyOnRetry);
+  const [notifyOnGraceStart, setNotifyOnGraceStart] = useState(safeConfig.notifyOnGraceStart);
+  const [notifyOnDegradation, setNotifyOnDegradation] = useState(safeConfig.notifyOnDegradation);
+  const [notifyBeforeCancellation, setNotifyBeforeCancellation] = useState(safeConfig.notifyBeforeCancellation);
 
   function updateRetry(index: number, field: keyof RetryAttempt, value: string | number) {
     setRetryAttempts((prev) =>
@@ -358,14 +385,14 @@ function DunningScheduleSection() {
   }
 
   function reset() {
-    setRetryAttempts(config.retryAttempts);
-    setGracePeriod(config.gracePeriodDays);
-    setDegradedPeriod(config.degradedPeriodDays);
-    setCancellationThreshold(config.cancellationThresholdDays);
-    setNotifyOnRetry(config.notifyOnRetry);
-    setNotifyOnGraceStart(config.notifyOnGraceStart);
-    setNotifyOnDegradation(config.notifyOnDegradation);
-    setNotifyBeforeCancellation(config.notifyBeforeCancellation);
+    setRetryAttempts(safeConfig.retryAttempts);
+    setGracePeriod(safeConfig.gracePeriodDays);
+    setDegradedPeriod(safeConfig.degradedPeriodDays);
+    setCancellationThreshold(safeConfig.cancellationThresholdDays);
+    setNotifyOnRetry(safeConfig.notifyOnRetry);
+    setNotifyOnGraceStart(safeConfig.notifyOnGraceStart);
+    setNotifyOnDegradation(safeConfig.notifyOnDegradation);
+    setNotifyBeforeCancellation(safeConfig.notifyBeforeCancellation);
   }
 
   return (
@@ -512,7 +539,15 @@ const RETENTION_FIELDS: RetentionField[] = [
 
 function RetentionDefaultsSection() {
   const { data: config } = useRetentionDefaults();
-  const [values, setValues] = useState<RetentionDefaultsConfig>({ ...config });
+  const safeConfig: RetentionDefaultsConfig = config ?? {
+    contestResultRetentionSeasons: 0,
+    rosterHistoryRetentionSeasons: 0,
+    activityLogRetentionDays: 0,
+    payoutRecordRetentionSeasons: 0,
+    chatMessageRetentionDays: 0,
+    auditLogRetentionDays: 0,
+  };
+  const [values, setValues] = useState<RetentionDefaultsConfig>({ ...safeConfig });
   const [tenantId, setTenantId] = useState('');
   const [tenantOverride, setTenantOverride] = useState<RetentionDefaultsConfig | null>(null);
   const [showTenantOverrides, setShowTenantOverrides] = useState(false);
@@ -529,13 +564,13 @@ function RetentionDefaultsSection() {
   }
 
   function reset() {
-    setValues({ ...config });
+    setValues({ ...safeConfig });
   }
 
   async function lookupTenant() {
     if (!tenantId.trim()) return;
     const { data: override } = await adminGetTenantRetentionOverride({ client, path: { tenantId } });
-    setTenantOverride(override ?? null);
+    setTenantOverride((override as unknown as RetentionDefaultsConfig | null) ?? null);
   }
 
   async function clearTenantOverride() {

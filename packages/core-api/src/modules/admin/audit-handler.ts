@@ -47,7 +47,13 @@ export async function listAuditLog(
     pageSize: qs.pageSize ? parseInt(qs.pageSize, 10) : undefined,
   };
   const result = await queryAuditLog(query);
-  return reply.send(result);
+  return reply.send({
+    ...result,
+    items: result.items.map((entry) => ({
+      ...entry,
+      createdAt: entry.createdAt.toISOString(),
+    })),
+  });
 }
 
 /**
@@ -62,7 +68,12 @@ export async function getAuditEntry(
   if (!entry) {
     return reply.status(404).send({ error: 'Audit entry not found' });
   }
-  return reply.send({ entry });
+  return reply.send({
+    entry: {
+      ...entry,
+      createdAt: entry.createdAt.toISOString(),
+    },
+  });
 }
 
 /**

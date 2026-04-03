@@ -34,13 +34,24 @@ export function Component() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['contests', contestId, 'standings'],
-    queryFn: async () => {
+    queryFn: async (): Promise<StandingsResponse> => {
       const { data, error } = await getStandings({
         client,
         path: { contestId: contestId! },
       });
       if (error) throw error;
-      return data as StandingsResponse;
+      return {
+        contestId: data?.contestId ?? contestId!,
+        total: data?.total ?? 0,
+        standings: (data?.standings ?? []).map((entry) => ({
+          id: entry.entryId,
+          rank: entry.rank,
+          entryName: entry.displayName,
+          ownerName: entry.displayName,
+          totalScore: entry.score,
+          isCurrentUser: false,
+        })),
+      };
     },
     staleTime: 5 * 60 * 1000,
   });

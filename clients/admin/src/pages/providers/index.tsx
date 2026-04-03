@@ -20,7 +20,7 @@ function statusIndicator(status: ProviderStatus) {
 
 export function Component() {
   const navigate = useNavigate();
-  const { data: providers } = useProviderList();
+  const { data: providers = [] } = useProviderList();
   const [countdown, setCountdown] = useState(30);
 
   useEffect(() => {

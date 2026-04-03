@@ -17,7 +17,7 @@ export type PlanDto = z.infer<typeof PlanDtoSchema>;
 
 export const UsageDtoSchema = z.object({
   resource: z.string(),
-  currentCount: z.number(),
+  current: z.number(),
   limit: z.number(),
   percentage: z.number(),
 });
@@ -41,11 +41,17 @@ export type PlanResponse = PlanDto;
 
 export const PlansListResponseSchema = z.object({
   plans: z.array(PlanDtoSchema),
+  billingEnabled: z.boolean().optional(),
+  upgradeLabel: z.string().optional(),
 });
 export type PlansListResponse = z.infer<typeof PlansListResponseSchema>;
 
 export const UsageResponseSchema = z.object({
-  usage: z.array(UsageDtoSchema),
+  usage: z.object({
+    leagues: UsageDtoSchema,
+    members: UsageDtoSchema,
+    contests: UsageDtoSchema,
+  }),
 });
 export type UsageResponse = z.infer<typeof UsageResponseSchema>;
 

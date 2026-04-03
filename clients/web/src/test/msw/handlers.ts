@@ -38,7 +38,7 @@ export const authHandlers = [
   }),
 
   http.post('/api/v1/auth/logout', () => {
-    return new HttpResponse(null, { status: 204 });
+    return HttpResponse.json({ success: true });
   }),
 
   http.get('/api/v1/auth/me', () => {
@@ -71,7 +71,7 @@ export const leagueHandlers = [
   http.get('/api/v1/leagues', () => {
     return HttpResponse.json({
       leagues: [
-        { id: 'league-1', name: 'Test League', visibility: 'PRIVATE', memberCount: 5, activeContestCount: 1, role: 'Commissioner', createdAt: new Date().toISOString() },
+        { id: 'league-1', name: 'Test League', visibility: 'PRIVATE', memberCount: 5, activeContestCount: 1, role: 'commissioner', createdAt: new Date().toISOString() },
       ],
     });
   }),
@@ -89,11 +89,9 @@ export const leagueHandlers = [
   }),
 
   http.get('/api/v1/leagues/:id/members', () => {
-    return HttpResponse.json({
-      members: [
-        { id: 'm-1', userId: 'u-1', displayName: 'Test User', role: 'OWNER', joinedAt: new Date().toISOString() },
-      ],
-    });
+    return HttpResponse.json([
+      { id: 'm-1', userId: 'u-1', displayName: 'Test User', role: 'OWNER', joinedAt: new Date().toISOString() },
+    ]);
   }),
 
   http.get('/api/v1/leagues/:id/contests', () => {
@@ -101,7 +99,7 @@ export const leagueHandlers = [
   }),
 
   http.post('/api/v1/leagues/:id/invite-link', () => {
-    return HttpResponse.json({ invitation: { inviteCode: 'test-code', expiresAt: new Date().toISOString() } });
+    return HttpResponse.json({ success: true });
   }),
 
   http.get('/api/v1/leagues/:id/settings', () => {
@@ -144,6 +142,13 @@ export const contestHandlers = [
     }, { status: 201 });
   }),
 
+  http.get('/api/v1/drafts/:contestId/available', () => {
+    return HttpResponse.json([
+      { id: 'p1', name: 'Player One', position: 'QB', team: 'KC', ranking: 1, formRating: 9.0, injuryStatus: 'HEALTHY' },
+      { id: 'p2', name: 'Player Two', position: 'WR', team: 'DAL', ranking: 2, formRating: 8.5, injuryStatus: 'HEALTHY' },
+    ]);
+  }),
+
   http.get('/api/v1/contests/:id', () => {
     return HttpResponse.json({
       contest: { id: 'contest-1', name: 'Test Contest', status: 'DRAFT', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY', leagueId: 'league-1' },
@@ -173,11 +178,19 @@ export const billingHandlers = [
   http.get('/api/v1/billing/plans', () => {
     return HttpResponse.json({
       plans: [{ slug: 'free', name: 'Free', monthlyPriceCents: 0, entitlements: {} }],
+      billingEnabled: false,
+      upgradeLabel: 'Coming Soon',
     });
   }),
 
   http.get('/api/v1/billing/usage', () => {
-    return HttpResponse.json({ usage: [] });
+    return HttpResponse.json({
+      usage: {
+        leagues: { resource: 'LEAGUES', current: 0, limit: -1, percentage: 0 },
+        contests: { resource: 'CONTESTS', current: 0, limit: -1, percentage: 0 },
+        members: { resource: 'MEMBERS', current: 0, limit: -1, percentage: 0 },
+      },
+    });
   }),
 
   http.get('/api/v1/billing/entitlements', () => {
@@ -236,6 +249,33 @@ export const searchHandlers = [
       { id: 'c1', leagueName: 'Masters Pool 2026', contestName: 'The Masters — Pick 6', sport: 'GOLF', eventName: 'The Masters 2026', draftType: 'SNAKE', memberCount: 10, maxMembers: 20, entryFee: null, prizePool: null, draftStart: null, lockTime: null, status: 'OPEN' },
     ];
     return HttpResponse.json({ contests, total: contests.length });
+  }),
+];
+
+export const dashboardHandlers = [
+  http.get('/api/v1/activity', () => {
+    return HttpResponse.json({
+      items: [
+        { id: 'activity-1', type: 'announcement', description: 'League update posted', relativeTime: '5m ago' },
+      ],
+    });
+  }),
+
+  http.get('/api/v1/drafts', () => {
+    return HttpResponse.json({
+      drafts: [
+        { id: 'draft-1', name: 'NFL Draft', leagueName: 'Test League', type: 'Snake', scheduledAt: new Date().toISOString() },
+      ],
+    });
+  }),
+
+  http.get('/api/v1/history/highlights', () => {
+    return HttpResponse.json({
+      recentWin: 'Weekly Picks',
+      personalBest: 124,
+      currentStreak: 3,
+      seasonRecord: { wins: 10, losses: 4 },
+    });
   }),
 ];
 
@@ -474,6 +514,7 @@ export const handlers = [
   ...authHandlers,
   ...leagueHandlers,
   ...contestHandlers,
+  ...dashboardHandlers,
   ...billingHandlers,
   ...notificationHandlers,
   ...searchHandlers,

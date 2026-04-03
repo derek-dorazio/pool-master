@@ -19,9 +19,9 @@ export interface Announcement {
 export function useAnnouncements() {
   return useQuery({
     queryKey: ['announcements'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Announcement[]> => {
       const { data } = await adminListAnnouncements({ client });
-      return data;
+      return data as unknown as Announcement[];
     },
   });
 }

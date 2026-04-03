@@ -65,10 +65,11 @@ export function Component() {
   const dialog = useConfirmDialog();
 
   if (!flag) return null;
+  const flagOverrides = flag.overrides;
 
   function handleTest() {
     if (!testTenant.trim()) return;
-    const override = flag.overrides.find(
+    const override = flagOverrides.find(
       (o) => o.tenantName.toLowerCase().includes(testTenant.toLowerCase()),
     );
     if (override) {
@@ -205,7 +206,7 @@ export function Component() {
               </tr>
             </thead>
             <tbody>
-              {flag.overrides.map((o) => (
+                                {flagOverrides.map((o) => (
                 <tr key={o.tenantName} className="border-b">
                   <td className="px-4 py-3 font-medium">{o.tenantName}</td>
                   <td className="px-4 py-3">

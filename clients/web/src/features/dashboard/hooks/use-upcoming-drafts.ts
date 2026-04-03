@@ -18,7 +18,9 @@ export function useUpcomingDrafts() {
         query: { status: 'scheduled' },
       });
       if (error) throw error;
-      return Array.isArray(data) ? data : (data as { drafts: UpcomingDraft[] }).drafts ?? [];
+      const payload = data as UpcomingDraft[] | { drafts?: UpcomingDraft[] } | undefined;
+      if (!payload) return [];
+      return Array.isArray(payload) ? payload : payload.drafts ?? [];
     },
   });
 }

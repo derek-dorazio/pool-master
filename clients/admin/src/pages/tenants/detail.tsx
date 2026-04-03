@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   client,
@@ -47,27 +45,6 @@ function formatRelativeTime(iso: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function ProgressBar({ current, limit, label }: { current: number; limit: number; label: string }) {
-  const pct = Math.min((current / limit) * 100, 100);
-  return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-sm">
-        <span>{label}</span>
-        <span className="text-muted-foreground">{current} / {limit}</span>
-      </div>
-      <div className="h-2 w-full rounded-full bg-muted">
-        <div
-          className={cn(
-            'h-2 rounded-full transition-all',
-            pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-yellow-500' : 'bg-primary',
-          )}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 export function Component() {
   const { id } = useParams<{ id: string }>();
   const { data: tenant, isLoading } = useTenantDetail(id);
@@ -86,7 +63,7 @@ export function Component() {
     setActionsOpen(false);
     const confirmed = await dialog.confirm(
       action,
-      `Are you sure you want to ${action} for "${tenant!.name}"?`,
+      `Are you sure you want to ${action} for "${tenant?.name}"?`,
       { confirmLabel: action, variant: action === 'Delete' ? 'destructive' : 'default' },
     );
     if (confirmed && id) {
@@ -104,7 +81,7 @@ export function Component() {
           await adminExtendTrial({ client, path: { tenantId: id }, body: { days: 30, reason: 'Admin action' } });
           break;
         case 'Delete':
-          await adminDeleteTenant({ client, path: { tenantId: id }, body: { confirmation: tenant!.name } });
+          await adminDeleteTenant({ client, path: { tenantId: id }, body: { confirmation: tenant?.name ?? '' } });
           break;
       }
     }
@@ -112,13 +89,12 @@ export function Component() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">{tenant.name}</h1>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className={planColors[tenant.plan]}>{tenant.plan}</Badge>
-            <Badge variant="outline" className={statusColors[tenant.status]}>{tenant.status}</Badge>
+            <Badge variant="outline" className={statusColors[tenant.statusLabel]}>{tenant.statusLabel}</Badge>
             <span className="text-sm text-muted-foreground">Created {formatDate(tenant.createdAt)}</span>
           </div>
         </div>
@@ -139,191 +115,73 @@ export function Component() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="leagues">Leagues</TabsTrigger>
-          <TabsTrigger value="contests">Contests</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Tenant Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Slug</span>
+              <span className="font-mono text-xs">{tenant.slug}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Members</span>
+              <span>{tenant.memberCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Leagues</span>
+              <span>{tenant.leagueCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Contests</span>
+              <span>{tenant.contestCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Active Contests</span>
+              <span>{tenant.activeContestCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Last Active</span>
+              <span>{formatRelativeTime(tenant.lastActive)}</span>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Overview */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Tenant Info</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Name</span>
-                  <span className="font-medium">{tenant.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Slug</span>
-                  <span className="font-mono text-xs">{tenant.slug}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Plan</span>
-                  <span>{tenant.plan}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created</span>
-                  <span>{formatDate(tenant.createdAt)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Active</span>
-                  <span>{formatRelativeTime(tenant.lastActive)}</span>
-                </div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Settings Snapshot</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">
+              {JSON.stringify(tenant.tenant.settings, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
+      </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Usage</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ProgressBar label="Leagues" current={tenant.usage.leagues.current} limit={tenant.usage.leagues.limit} />
-                <ProgressBar label="Contests" current={tenant.usage.contests.current} limit={tenant.usage.contests.limit} />
-                <ProgressBar label="Members" current={tenant.usage.members.current} limit={tenant.usage.members.limit} />
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Recent Signups</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {tenant.recentSignups.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <span>{s.email}</span>
-                    <span className="text-muted-foreground">{formatDate(s.date)}</span>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Recent Members</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tenant.recentMembers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No members found for this tenant.</p>
+          ) : (
+            <div className="space-y-2">
+              {tenant.recentMembers.map((member) => (
+                <div key={member.id} className="flex items-center justify-between border-b py-2 text-sm last:border-0">
+                  <div>
+                    <p className="font-medium">{member.displayName}</p>
+                    <p className="text-muted-foreground">{member.email}</p>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Members */}
-        <TabsContent value="members">
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left font-medium">Email</th>
-                    <th className="px-4 py-3 text-left font-medium">Display Name</th>
-                    <th className="px-4 py-3 text-left font-medium">Role</th>
-                    <th className="px-4 py-3 text-left font-medium">Last Active</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenant.membersList.map((m) => (
-                    <tr key={m.id} className="border-b">
-                      <td className="px-4 py-3">{m.email}</td>
-                      <td className="px-4 py-3 font-medium">{m.displayName}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline">{m.role}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatRelativeTime(m.lastActive)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                  <span className="text-muted-foreground">{formatDate(member.createdAt)}</span>
+                </div>
+              ))}
             </div>
-          </Card>
-        </TabsContent>
-
-        {/* Leagues */}
-        <TabsContent value="leagues">
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left font-medium">Name</th>
-                    <th className="px-4 py-3 text-left font-medium">Sport</th>
-                    <th className="px-4 py-3 text-left font-medium">Members</th>
-                    <th className="px-4 py-3 text-left font-medium">Contests</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenant.leaguesList.map((l) => (
-                    <tr key={l.id} className="border-b">
-                      <td className="px-4 py-3 font-medium">{l.name}</td>
-                      <td className="px-4 py-3">{l.sport}</td>
-                      <td className="px-4 py-3">{l.members}</td>
-                      <td className="px-4 py-3">{l.contests}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Contests */}
-        <TabsContent value="contests">
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left font-medium">Name</th>
-                    <th className="px-4 py-3 text-left font-medium">Sport</th>
-                    <th className="px-4 py-3 text-left font-medium">Type</th>
-                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                    <th className="px-4 py-3 text-left font-medium">Entries</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenant.contestsList.map((c) => (
-                    <tr key={c.id} className="border-b">
-                      <td className="px-4 py-3 font-medium">{c.name}</td>
-                      <td className="px-4 py-3">{c.sport}</td>
-                      <td className="px-4 py-3">{c.type}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className={cn(
-                          c.status === 'Active' && 'bg-green-100 text-green-800 border-green-200',
-                          c.status === 'Upcoming' && 'bg-blue-100 text-blue-800 border-blue-200',
-                          c.status === 'Completed' && 'bg-gray-100 text-gray-800 border-gray-200',
-                        )}>{c.status}</Badge>
-                      </td>
-                      <td className="px-4 py-3">{c.entries}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Activity */}
-        <TabsContent value="activity">
-          <Card>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {tenant.activity.map((a) => (
-                  <div key={a.id} className="flex items-start justify-between px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium">{a.action}</p>
-                      <p className="text-sm text-muted-foreground">{a.description}</p>
-                    </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatRelativeTime(a.timestamp)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          )}
+        </CardContent>
+      </Card>
 
       <ConfirmDialog
         open={dialog.open}

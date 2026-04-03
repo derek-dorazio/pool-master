@@ -41,9 +41,9 @@ export interface MigrationsData {
 export function useMigrations() {
   return useQuery({
     queryKey: ['migrations'],
-    queryFn: async () => {
+    queryFn: async (): Promise<MigrationsData> => {
       const { data } = await adminListMigrations({ client });
-      return data;
+      return data as unknown as MigrationsData;
     },
   });
 }
@@ -51,9 +51,9 @@ export function useMigrations() {
 export function useMigrationDetail(id: string) {
   return useQuery({
     queryKey: ['migration-detail', id],
-    queryFn: async () => {
+    queryFn: async (): Promise<MigrationRun> => {
       const { data } = await adminGetMigrationRunDetail({ client, path: { runId: id } });
-      return data;
+      return data as unknown as MigrationRun;
     },
   });
 }

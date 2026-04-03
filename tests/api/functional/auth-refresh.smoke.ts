@@ -80,7 +80,8 @@ describe('Auth Token Refresh Flow', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     });
-    await expectStatus(res, 204, 'logout revokes refresh token');
+    await expectStatus(res, 200, 'logout revokes refresh token');
+    expect(await res.json()).toEqual({ success: true });
   });
 
   it('refresh token fails after logout', async () => {

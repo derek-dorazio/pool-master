@@ -9,7 +9,6 @@ import {
   zodToJsonSchema,
   LeagueListResponseSchema,
   LeagueResponseSchema,
-  LeagueMembersResponseSchema,
   SuccessSchema,
 } from '@poolmaster/shared/dto';
 import {

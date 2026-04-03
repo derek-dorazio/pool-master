@@ -25,7 +25,9 @@ export function useRecentActivity() {
         query: { limit: '5' },
       });
       if (error) throw error;
-      return Array.isArray(data) ? data : (data as { items: ActivityItem[] }).items ?? [];
+      const payload = data as ActivityItem[] | { items?: ActivityItem[] } | undefined;
+      if (!payload) return [];
+      return Array.isArray(payload) ? payload : payload.items ?? [];
     },
   });
 }

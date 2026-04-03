@@ -7,8 +7,8 @@
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { zodToJsonSchema, PlatformMetricsResponseSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import { setAuditPrisma } from './admin-audit-service';
+import { setAuditQueryPrisma } from './audit-query-service';
 import { TenantService } from './tenant-service';
 import { createTenantHandlers } from './tenant-handler';
 import { UserService } from './user-service';
@@ -40,6 +40,27 @@ import { RetentionConfigService } from './retention-config-service';
 import { DigestConfigService } from './digest-config-service';
 import { registerPlatformConfigRoutes } from './platform-config-routes';
 import { configRoutes } from './config-routes';
+import { auditRoutes } from './audit-routes';
+
+const commonDtoModule = require('../../../../shared/dto/common.dto.ts') as typeof import('../../../../shared/dto/common.dto');
+const adminDtoModule = require('../../../../shared/dto/admin.dto.ts') as typeof import('../../../../shared/dto/admin.dto');
+const jsonSchemaModule = require('../../../../shared/dto/json-schema.ts') as typeof import('../../../../shared/dto/json-schema');
+
+const { SuccessSchema } = commonDtoModule;
+const {
+  TenantListResponseSchema,
+  TenantDetailResponseSchema,
+  UserListResponseSchema,
+  UserDetailResponseSchema,
+  ServiceHealthListResponseSchema,
+  InfrastructureMetricsResponseSchema,
+  BusinessMetricsResponseSchema,
+  ErrorLogListResponseSchema,
+  ErrorLogDetailResponseSchema,
+  AlertRulesResponseSchema,
+  AlertRuleDtoSchema,
+} = adminDtoModule;
+const { zodToJsonSchema } = jsonSchemaModule;
 
 // ---------------------------------------------------------------------------
 // Admin auth preHandler (placeholder — will be replaced with real SSO check)
@@ -70,12 +91,13 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   // Initialise the audit service's Prisma reference so that the module-level
   // logAdminAction() helper can persist audit entries to the database.
   setAuditPrisma(prisma);
+  setAuditQueryPrisma(prisma);
 
   // --- Services ---
   const tenantService = new TenantService(prisma);
   const userService = new UserService(prisma);
   const contestService = new ContestService(prisma);
-  const healthService = new HealthService();
+  const healthService = new HealthService(prisma);
   const providerService = new ProviderService();
   const flagService = new FlagService(prisma);
   const impersonationService = new ImpersonationService(prisma);
@@ -111,7 +133,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List all tenants with filters',
       operationId: 'adminListTenants',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(TenantListResponseSchema) },
       querystring: {
         type: 'object',
         properties: {
@@ -133,7 +155,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get tenant detail',
       operationId: 'adminGetTenantDetail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(TenantDetailResponseSchema) },
     },
     handler: tenant.getTenantDetail,
   });
@@ -244,7 +266,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List users with filters',
       operationId: 'adminListUsers',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(UserListResponseSchema) },
       querystring: {
         type: 'object',
         properties: {
@@ -282,7 +304,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get user detail',
       operationId: 'adminGetUserDetail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(UserDetailResponseSchema) },
     },
     handler: user.getUserDetail,
   });
@@ -707,7 +729,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get service health status',
       operationId: 'adminGetServiceHealth',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ServiceHealthListResponseSchema) },
     },
     handler: health.getServiceHealth,
   });
@@ -717,7 +739,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get infrastructure metrics',
       operationId: 'adminGetInfrastructureMetrics',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(InfrastructureMetricsResponseSchema) },
     },
     handler: health.getInfrastructureMetrics,
   });
@@ -727,7 +749,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get business metrics',
       operationId: 'adminGetBusinessMetrics',
-      response: { 200: zodToJsonSchema(PlatformMetricsResponseSchema) },
+      response: { 200: zodToJsonSchema(BusinessMetricsResponseSchema) },
     },
     handler: health.getBusinessMetrics,
   });
@@ -737,7 +759,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Search platform errors',
       operationId: 'adminSearchErrors',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ErrorLogListResponseSchema) },
       querystring: {
         type: 'object',
         properties: {
@@ -759,7 +781,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get error detail',
       operationId: 'adminGetErrorDetail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ErrorLogDetailResponseSchema) },
     },
     handler: health.getErrorDetail,
   });
@@ -769,7 +791,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get alert rules',
       operationId: 'adminGetAlertRules',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AlertRulesResponseSchema) },
     },
     handler: health.getAlertRules,
   });
@@ -779,7 +801,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update an alert rule',
       operationId: 'adminUpdateAlertRule',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AlertRuleDtoSchema) },
       body: {
         type: 'object',
         properties: {
@@ -802,7 +824,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Mute an alert for a duration',
       operationId: 'adminMuteAlert',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AlertRuleDtoSchema) },
       body: {
         type: 'object',
         required: ['duration'],
@@ -819,7 +841,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Unmute an alert',
       operationId: 'adminUnmuteAlert',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AlertRuleDtoSchema) },
     },
     handler: health.unmuteAlert,
   });
@@ -1201,6 +1223,8 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   // --- Platform Configuration Routes ---
   // Permission: platform.config
+
+  await fastify.register(auditRoutes);
 
   registerPlatformConfigRoutes(fastify, {
     pollConfig: pollConfigService,

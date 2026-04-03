@@ -155,7 +155,8 @@ describe('Auth Edge Cases', () => {
         url: '/api/v1/auth/logout',
         payload: { refreshToken: tokens.refreshToken },
       });
-      expect(logoutRes.statusCode).toBe(204);
+      expect(logoutRes.statusCode).toBe(200);
+      expect(logoutRes.json()).toEqual({ success: true });
 
       // Attempt to use the revoked refresh token
       const refreshRes = await getApp().inject({

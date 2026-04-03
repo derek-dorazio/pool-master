@@ -49,18 +49,18 @@ export function toUsageResponse(usage: {
   contests: UsageItem;
 }): UsageResponse {
   return {
-    usage: [
-      toUsageDto(usage.leagues),
-      toUsageDto(usage.members),
-      toUsageDto(usage.contests),
-    ],
+    usage: {
+      leagues: toUsageDto(usage.leagues),
+      members: toUsageDto(usage.members),
+      contests: toUsageDto(usage.contests),
+    },
   };
 }
 
 function toUsageDto(item: UsageItem): UsageDto {
   return {
     resource: item.resource,
-    currentCount: item.current,
+    current: item.current,
     limit: item.limit,
     percentage: item.percentage,
   };

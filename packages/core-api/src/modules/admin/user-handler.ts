@@ -63,7 +63,23 @@ export function createUserHandlers(userService: UserService) {
       page: query.page,
       pageSize: query.pageSize,
     });
-    return result;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 25;
+    return {
+      items: result.items.map((item) => ({
+        id: item.id,
+        email: item.email,
+        displayName: item.displayName,
+        tenants: item.tenants,
+        lastLoginAt: item.lastLoginAt?.toISOString(),
+        status: item.status,
+        createdAt: item.createdAt.toISOString(),
+      })),
+      total: result.total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
+    };
   }
 
   // --- User detail ---
@@ -74,7 +90,23 @@ export function createUserHandlers(userService: UserService) {
   ) {
     try {
       const detail = await userService.getUserDetail(request.params.userId);
-      return reply.send(detail);
+      return reply.send({
+        ...detail,
+        createdAt: detail.createdAt.toISOString(),
+        lastLoginAt: detail.lastLoginAt?.toISOString(),
+        tenants: detail.tenants.map((tenant) => ({
+          ...tenant,
+          joinedAt: tenant.joinedAt.toISOString(),
+        })),
+        devices: detail.devices.map((device) => ({
+          ...device,
+          lastActiveAt: device.lastActiveAt.toISOString(),
+        })),
+        recentAuthEvents: detail.recentAuthEvents.map((event) => ({
+          ...event,
+          timestamp: event.timestamp.toISOString(),
+        })),
+      });
     } catch (err) {
       if (err instanceof UserNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

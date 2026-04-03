@@ -32,7 +32,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { client, getLeague, listContests, getLeagueRecords, getSeasonSummaries } from '@/lib/api';
-import type { LeagueDetailDto, LeagueMemberDto, LeagueMembersResponse } from '@poolmaster/shared/dto';
+import type { LeagueDetailDto, LeagueMemberDto } from '@poolmaster/shared/dto';
 import type { ContestSummaryDto } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
@@ -65,11 +65,11 @@ function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const { data, error } = await client.get<LeagueMembersResponse>({
+      const { data, error } = await client.get<LeagueMemberDto[]>({
         url: `/api/v1/leagues/${leagueId}/members`,
       });
       if (error) throw error;
-      return data?.members ?? [];
+      return data ?? [];
     },
   });
 }

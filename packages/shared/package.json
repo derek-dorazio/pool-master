@@ -53,6 +53,14 @@
       "types": "./generated/hey-api/index.ts",
       "default": "./generated/hey-api/index.ts"
     },
+    "./generated/hey-api/client": {
+      "types": "./generated/hey-api/client/index.ts",
+      "default": "./generated/hey-api/client/index.ts"
+    },
+    "./generated/hey-api/client/*": {
+      "types": "./generated/hey-api/client/*.ts",
+      "default": "./generated/hey-api/client/*.ts"
+    },
     "./generated/hey-api/*": {
       "types": "./generated/hey-api/*.ts",
       "default": "./generated/hey-api/*.ts"

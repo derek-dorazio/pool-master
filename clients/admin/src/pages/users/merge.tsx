@@ -35,9 +35,9 @@ function UserSearchSelect({
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          {results && results.length > 0 && (
+          {results && results.items.length > 0 && (
             <div className="space-y-2">
-              {results.map((u) => (
+              {results.items.map((u) => (
                 <button
                   key={u.id}
                   className="flex w-full items-center justify-between rounded-md border p-3 text-left text-sm transition-colors hover:bg-accent"
@@ -50,7 +50,7 @@ function UserSearchSelect({
                     <p className="font-medium">{u.displayName}</p>
                     <p className="text-muted-foreground">{u.email}</p>
                   </div>
-                  <Badge variant="outline">{u.tenants[0]}</Badge>
+                  <Badge variant="outline">{u.tenants[0]?.name ?? 'No tenant'}</Badge>
                 </button>
               ))}
             </div>
@@ -63,7 +63,7 @@ function UserSearchSelect({
               <div className="space-y-1">
                 <p className="font-semibold">{selected.displayName}</p>
                 <p className="text-sm text-muted-foreground">{selected.email}</p>
-                <p className="text-sm text-muted-foreground">Tenants: {selected.tenants.join(', ')}</p>
+                <p className="text-sm text-muted-foreground">Tenants: {selected.tenants.map((tenant) => tenant.name).join(', ')}</p>
                 <div className="flex gap-4 pt-1 text-xs text-muted-foreground">
                   <span>3 leagues</span>
                   <span>5 contests</span>

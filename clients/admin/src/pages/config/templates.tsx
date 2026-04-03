@@ -152,8 +152,8 @@ function EditModal({
 }
 
 export function Component() {
-  const { data: scoringTemplates } = useScoringTemplates();
-  const { data: selectionTemplates } = useSelectionTemplates();
+  const { data: scoringTemplates = [] } = useScoringTemplates();
+  const { data: selectionTemplates = [] } = useSelectionTemplates();
   const [editingTemplate, setEditingTemplate] = useState<AnyTemplate | null>(null);
 
   function handleEdit(id: string, list: AnyTemplate[]) {

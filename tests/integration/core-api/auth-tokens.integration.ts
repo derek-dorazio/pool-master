@@ -90,7 +90,8 @@ describe('Auth Token Lifecycle', () => {
         url: '/api/v1/auth/logout',
         payload: { refreshToken },
       });
-      expect(res.statusCode).toBe(204);
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ success: true });
     });
 
     it('refresh token no longer works after logout', async () => {

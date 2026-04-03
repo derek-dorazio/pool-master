@@ -53,7 +53,7 @@ function Toggle({
 
 export function Component() {
   const navigate = useNavigate();
-  const { data: flags } = useFlagList();
+  const { data: flags = [] } = useFlagList();
   const [toggleState, setToggleState] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     flags.forEach((f) => { initial[f.key] = f.enabled; });

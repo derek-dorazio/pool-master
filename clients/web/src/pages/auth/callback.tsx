@@ -4,8 +4,28 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { client, oauthCallback } from '@/lib/api';
+import { client } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
+
+interface OAuthCallbackResponse {
+  user: {
+    id: string;
+    email: string;
+    displayName: string;
+    avatarUrl?: string | null;
+  };
+  tokens: {
+    accessToken: string;
+  };
+}
+
+function isOAuthCallbackResponse(value: unknown): value is OAuthCallbackResponse {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  const user = candidate.user as Record<string, unknown> | undefined;
+  const tokens = candidate.tokens as Record<string, unknown> | undefined;
+  return !!user?.id && !!user?.email && !!user?.displayName && !!tokens?.accessToken;
+}
 
 export function Component() {
   const { t } = useTranslation('auth');
@@ -25,11 +45,14 @@ export function Component() {
 
     async function handleCallback() {
       try {
-        const { data: res, error } = await oauthCallback({
-          client,
+        const { data: res, error } = await client.post<unknown>({
+          url: '/api/v1/auth/callback',
           body: { code, state },
         });
         if (error) throw error;
+        if (!isOAuthCallbackResponse(res)) {
+          throw new Error(t('callback.error'));
+        }
         localStorage.setItem('access_token', res.tokens.accessToken);
         setUser({ ...res.user, avatarUrl: res.user.avatarUrl ?? undefined });
         navigate('/dashboard', { replace: true });

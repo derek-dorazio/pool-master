@@ -21,7 +21,9 @@ export function useActiveContests() {
         query: { status: 'active' },
       });
       if (error) throw error;
-      return Array.isArray(data) ? data : (data as { contests: ActiveContest[] }).contests ?? [];
+      const payload = data as ActiveContest[] | { contests?: ActiveContest[] } | undefined;
+      if (!payload) return [];
+      return Array.isArray(payload) ? payload : payload.contests ?? [];
     },
     refetchInterval: 10_000,
   });

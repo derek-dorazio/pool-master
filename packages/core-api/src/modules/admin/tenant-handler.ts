@@ -67,7 +67,26 @@ export function createTenantHandlers(tenantService: TenantService) {
       page: query.page,
       pageSize: query.pageSize,
     });
-    return result;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 25;
+    return {
+      items: result.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        slug: item.slug,
+        planTier: item.planTier,
+        memberCount: item.memberCount,
+        contestCount: item.contestCount,
+        leagueCount: item.leagueCount,
+        status: item.status,
+        lastActiveAt: item.lastActiveAt?.toISOString(),
+        createdAt: item.createdAt.toISOString(),
+      })),
+      total: result.total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
+    };
   }
 
   // --- Tenant detail ---
@@ -78,7 +97,23 @@ export function createTenantHandlers(tenantService: TenantService) {
   ) {
     try {
       const detail = await tenantService.getTenantDetail(request.params.tenantId);
-      return reply.send(detail);
+      return reply.send({
+        tenant: {
+          ...detail.tenant,
+          createdAt: detail.tenant.createdAt.toISOString(),
+          updatedAt: detail.tenant.updatedAt.toISOString(),
+        },
+        memberCount: detail.memberCount,
+        leagueCount: detail.leagueCount,
+        contestCount: detail.contestCount,
+        activeContestCount: detail.activeContestCount,
+        status: detail.status,
+        lastActiveAt: detail.lastActiveAt?.toISOString(),
+        recentMembers: detail.recentMembers.map((member) => ({
+          ...member,
+          createdAt: member.createdAt.toISOString(),
+        })),
+      });
     } catch (err) {
       if (err instanceof TenantNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

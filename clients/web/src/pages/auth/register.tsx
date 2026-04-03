@@ -21,6 +21,18 @@ import { Logo } from '@/components/ui/logo';
 import { client, registerUser } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
+interface AuthSuccessResponse {
+  user: {
+    id: string;
+    email: string;
+    displayName: string;
+    avatarUrl?: string | null;
+  };
+  tokens: {
+    accessToken: string;
+  };
+}
+
 const TOTAL_STEPS = 5;
 
 const months = [
@@ -173,13 +185,15 @@ export function Component() {
           email: data.email,
           password: data.password,
           displayName: data.displayName,
-          dateOfBirth: `${data.dobYear}-${data.dobMonth.padStart(2, '0')}-${data.dobDay.padStart(2, '0')}`,
-          plan: data.plan,
         },
       });
       if (error) throw error;
-      localStorage.setItem('access_token', res.tokens.accessToken);
-      setUser({ ...res.user, avatarUrl: res.user.avatarUrl ?? undefined });
+      const auth = res as AuthSuccessResponse | undefined;
+      if (!auth) {
+        throw new Error('Registration did not return a response payload.');
+      }
+      localStorage.setItem('access_token', auth.tokens.accessToken);
+      setUser({ ...auth.user, avatarUrl: auth.user.avatarUrl ?? undefined });
       navigate('/dashboard');
     } catch (err: any) {
       if (err?.message) {

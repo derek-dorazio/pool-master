@@ -77,7 +77,7 @@ function priorityBadge(priority: Priority) {
 // ── Push Triggers Section ──────────────────────────────────────────────────────
 
 function PushTriggersSection() {
-  const { data: triggers } = usePushTriggers();
+  const { data: triggers = [] } = usePushTriggers();
   const [toggleState, setToggleState] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     triggers.forEach((t) => { initial[t.id] = t.enabled; });
@@ -187,7 +187,14 @@ function PushTriggersSection() {
                 if (editingId) {
                   const trigger = triggers.find((t) => t.id === editingId);
                   if (trigger) {
-                    await adminUpdatePushTrigger({ client, path: { eventType: trigger.eventType }, body: editForm });
+                    await adminUpdatePushTrigger({
+                      client,
+                      path: { eventType: trigger.eventType },
+                      body: {
+                        ...editForm,
+                        priority: editForm.priority === 'low' ? 'normal' : editForm.priority,
+                      },
+                    });
                   }
                 }
                 cancelEdit();
@@ -205,7 +212,7 @@ function PushTriggersSection() {
 // ── Notification Templates Section ─────────────────────────────────────────────
 
 function NotificationTemplatesSection() {
-  const { data: templates } = useNotificationTemplates();
+  const { data: templates = [] } = useNotificationTemplates();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<NotificationTemplate>>({});
 
@@ -358,7 +365,7 @@ function channelLabel(ch: Channel): string {
 }
 
 function ChannelDefaultsSection() {
-  const { data: defaults } = useChannelDefaults();
+  const { data: defaults = [] } = useChannelDefaults();
   const [channels, setChannels] = useState<Record<NotificationCategory, Channel[]>>(() => {
     const initial: Record<string, Channel[]> = {};
     defaults.forEach((d) => { initial[d.category] = [...d.channels]; });
@@ -444,11 +451,18 @@ function ChannelDefaultsSection() {
 
 function RateLimitsSection() {
   const { data: config } = useRateLimits();
-  const [pushPerHour, setPushPerHour] = useState(config.pushPerHour);
-  const [emailPerDay, setEmailPerDay] = useState(config.emailPerDay);
-  const [smsPerDay, setSmsPerDay] = useState(config.smsPerDay);
-  const [dedupWindow, setDedupWindow] = useState(config.dedupWindowSeconds);
-  const [collapseRules, setCollapseRules] = useState<CollapseRule[]>(config.collapseRules);
+  const safeConfig = config ?? {
+    pushPerHour: 0,
+    emailPerDay: 0,
+    smsPerDay: 0,
+    dedupWindowSeconds: 0,
+    collapseRules: [],
+  };
+  const [pushPerHour, setPushPerHour] = useState(safeConfig.pushPerHour);
+  const [emailPerDay, setEmailPerDay] = useState(safeConfig.emailPerDay);
+  const [smsPerDay, setSmsPerDay] = useState(safeConfig.smsPerDay);
+  const [dedupWindow, setDedupWindow] = useState(safeConfig.dedupWindowSeconds);
+  const [collapseRules, setCollapseRules] = useState<CollapseRule[]>(safeConfig.collapseRules);
 
   function updateRule(index: number, field: keyof CollapseRule, value: string | number) {
     setCollapseRules((prev) =>
@@ -457,11 +471,11 @@ function RateLimitsSection() {
   }
 
   function resetAll() {
-    setPushPerHour(config.pushPerHour);
-    setEmailPerDay(config.emailPerDay);
-    setSmsPerDay(config.smsPerDay);
-    setDedupWindow(config.dedupWindowSeconds);
-    setCollapseRules(config.collapseRules);
+    setPushPerHour(safeConfig.pushPerHour);
+    setEmailPerDay(safeConfig.emailPerDay);
+    setSmsPerDay(safeConfig.smsPerDay);
+    setDedupWindow(safeConfig.dedupWindowSeconds);
+    setCollapseRules(safeConfig.collapseRules);
   }
 
   return (
@@ -564,30 +578,42 @@ const SEND_DAYS: SendDay[] = [
 
 function WeeklyDigestSection() {
   const { data: config } = useDigestConfig();
-  const { data: digestPreview } = useDigestPreview();
-  const [subjectTemplate, setSubjectTemplate] = useState(config.subjectTemplate);
-  const [headerTemplate, setHeaderTemplate] = useState(config.headerTemplate);
-  const [footerTemplate, setFooterTemplate] = useState(config.footerTemplate);
-  const [includeStandings, setIncludeStandings] = useState(config.includeStandings);
-  const [includeHighlights, setIncludeHighlights] = useState(config.includeHighlights);
-  const [includeUpcomingEvents, setIncludeUpcomingEvents] = useState(config.includeUpcomingEvents);
-  const [lookbackDays, setLookbackDays] = useState(config.lookbackDays);
-  const [sendDay, setSendDay] = useState<SendDay>(config.sendDay);
-  const [sendHourUtc, setSendHourUtc] = useState(config.sendHourUtc);
-  const [enabled, setEnabled] = useState(config.enabled);
+  const { data: digestPreview = '' } = useDigestPreview();
+  const safeConfig = config ?? {
+    subjectTemplate: '',
+    headerTemplate: '',
+    footerTemplate: '',
+    includeStandings: false,
+    includeHighlights: false,
+    includeUpcomingEvents: false,
+    lookbackDays: 0,
+    sendDay: 'MONDAY' as SendDay,
+    sendHourUtc: 0,
+    enabled: false,
+  };
+  const [subjectTemplate, setSubjectTemplate] = useState(safeConfig.subjectTemplate);
+  const [headerTemplate, setHeaderTemplate] = useState(safeConfig.headerTemplate);
+  const [footerTemplate, setFooterTemplate] = useState(safeConfig.footerTemplate);
+  const [includeStandings, setIncludeStandings] = useState(safeConfig.includeStandings);
+  const [includeHighlights, setIncludeHighlights] = useState(safeConfig.includeHighlights);
+  const [includeUpcomingEvents, setIncludeUpcomingEvents] = useState(safeConfig.includeUpcomingEvents);
+  const [lookbackDays, setLookbackDays] = useState(safeConfig.lookbackDays);
+  const [sendDay, setSendDay] = useState<SendDay>(safeConfig.sendDay);
+  const [sendHourUtc, setSendHourUtc] = useState(safeConfig.sendHourUtc);
+  const [enabled, setEnabled] = useState(safeConfig.enabled);
   const [showPreview, setShowPreview] = useState(false);
 
   function reset() {
-    setSubjectTemplate(config.subjectTemplate);
-    setHeaderTemplate(config.headerTemplate);
-    setFooterTemplate(config.footerTemplate);
-    setIncludeStandings(config.includeStandings);
-    setIncludeHighlights(config.includeHighlights);
-    setIncludeUpcomingEvents(config.includeUpcomingEvents);
-    setLookbackDays(config.lookbackDays);
-    setSendDay(config.sendDay);
-    setSendHourUtc(config.sendHourUtc);
-    setEnabled(config.enabled);
+    setSubjectTemplate(safeConfig.subjectTemplate);
+    setHeaderTemplate(safeConfig.headerTemplate);
+    setFooterTemplate(safeConfig.footerTemplate);
+    setIncludeStandings(safeConfig.includeStandings);
+    setIncludeHighlights(safeConfig.includeHighlights);
+    setIncludeUpcomingEvents(safeConfig.includeUpcomingEvents);
+    setLookbackDays(safeConfig.lookbackDays);
+    setSendDay(safeConfig.sendDay);
+    setSendHourUtc(safeConfig.sendHourUtc);
+    setEnabled(safeConfig.enabled);
     setShowPreview(false);
   }
 

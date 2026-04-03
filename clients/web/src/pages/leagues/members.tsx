@@ -23,17 +23,17 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { client, getLeague, generateInviteLink } from '@/lib/api';
-import type { LeagueMemberDto, LeagueMembersResponse } from '@poolmaster/shared/dto';
+import type { LeagueMemberDto } from '@poolmaster/shared/dto';
 
 function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const { data, error } = await client.get<LeagueMembersResponse>({
+      const { data, error } = await client.get<LeagueMemberDto[]>({
         url: `/api/v1/leagues/${leagueId}/members`,
       });
       if (error) throw error;
-      return data?.members ?? [];
+      return data ?? [];
     },
   });
 }
@@ -53,9 +53,13 @@ function useInviteLink(leagueId: string) {
   return useQuery({
     queryKey: ['league-invite-link', leagueId],
     queryFn: async (): Promise<string> => {
-      const { data, error } = await generateInviteLink({ client, path: { id: leagueId } });
+      const { data, error } = await generateInviteLink({
+        client,
+        path: { id: leagueId },
+        body: {},
+      });
       if (error) throw error;
-      return (data as any).inviteLink;
+      return data ? `${window.location.origin}/join/${leagueId}` : '';
     },
   });
 }
