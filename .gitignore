@@ -16,6 +16,7 @@ packages/*/src/**/*.d.ts.map
 *.swp
 *.swo
 *~
+.claude/*.lock
 
 # macOS
 .DS_Store

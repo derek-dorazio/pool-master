@@ -385,8 +385,83 @@ jobs:
           echo "Migration task timed out after 10 minutes"
           exit 1
 
-      - name: Wait for ECS deployment to stabilize
-        run: sleep 30
+      - name: Run QA seed task
+        if: steps.run-migration.outputs.skipped != 'true'
+        id: run-seed
+        run: |
+          SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
+          SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
+
+          echo "Starting QA seed task in ECS..."
+          TASK_ARN=$(aws ecs run-task \
+            --cluster poolmaster-qa-cluster \
+            --task-definition poolmaster-qa-migrate \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
+            --overrides '{"containerOverrides":[{"name":"migrate","command":["node","--import","tsx","prisma/seed.ts"]}]}' \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [ "$TASK_ARN" = "None" ] || [ -z "$TASK_ARN" ]; then
+            echo "::warning::Failed to start QA seed task"
+            exit 1
+          fi
+
+          echo "task_arn=${TASK_ARN}" >> $GITHUB_OUTPUT
+          echo "Seed task started: ${TASK_ARN}"
+
+      - name: Wait for QA seed to complete
+        if: steps.run-seed.outputs.task_arn != ''
+        run: |
+          TASK_ARN="${{ steps.run-seed.outputs.task_arn }}"
+          CLUSTER="poolmaster-qa-cluster"
+
+          echo "Waiting for seed task to complete..."
+          for i in $(seq 1 40); do
+            STATUS=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
+              --query 'tasks[0].lastStatus' --output text)
+            echo "  Status: $STATUS (attempt $i/40)"
+
+            if [ "$STATUS" = "STOPPED" ]; then
+              EXIT_CODE=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
+                --query 'tasks[0].containers[0].exitCode' --output text)
+              REASON=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
+                --query 'tasks[0].containers[0].reason' --output text 2>/dev/null || echo "")
+
+              if [ "$EXIT_CODE" = "0" ]; then
+                echo "✅ QA seed completed successfully"
+                exit 0
+              else
+                echo "❌ QA seed failed with exit code: $EXIT_CODE"
+                [ -n "$REASON" ] && [ "$REASON" != "None" ] && echo "  Reason: $REASON"
+                TASK_ID=$(echo $TASK_ARN | awk -F'/' '{print $NF}')
+                echo "--- Seed Logs ---"
+                aws logs get-log-events \
+                  --log-group-name /ecs/poolmaster-qa/migrate \
+                  --log-stream-name "ecs/migrate/${TASK_ID}" \
+                  --query 'events[].message' --output text 2>/dev/null || echo "(no logs available)"
+                exit 1
+              fi
+            fi
+
+            sleep 15
+          done
+
+          echo "Seed task timed out after 10 minutes"
+          exit 1
+
+      - name: Wait for ECS service to stabilize
+        run: |
+          if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            aws ecs wait services-stable \
+              --cluster poolmaster-qa-cluster \
+              --services poolmaster-qa-core-api
+          else
+            echo "QA cluster not found — skipping service stabilization wait."
+          fi
+
+      - name: Warm-up delay after ECS stabilization
+        run: sleep 20
 
   # =========================================================================
   # API Smoke Tests — run against live QA after deploy + migrate

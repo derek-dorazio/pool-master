@@ -50,6 +50,7 @@ export interface FacetBucket {
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export class SearchService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -64,12 +65,43 @@ export class SearchService {
     const limit = Math.min(options.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const offset = options.offset ?? 0;
     const hasQuery = options.query.trim().length > 0;
+    const sportId = await this.resolveSportId(options.sportId);
+
+    if (options.sportId && !sportId) {
+      return {
+        participants: [],
+        total: 0,
+        facets: emptyFacets(),
+      };
+    }
 
     if (hasQuery) {
-      return this.fullTextSearch(options, limit, offset);
+      return this.fullTextSearch({ ...options, sportId }, limit, offset);
     } else {
-      return this.filteredSearch(options, limit, offset);
+      return this.filteredSearch({ ...options, sportId }, limit, offset);
     }
+  }
+
+  private async resolveSportId(sportIdOrName?: string): Promise<string | undefined> {
+    if (!sportIdOrName) {
+      return undefined;
+    }
+
+    if (UUID_PATTERN.test(sportIdOrName)) {
+      return sportIdOrName;
+    }
+
+    const sport = await this.prisma.sport.findFirst({
+      where: {
+        name: {
+          equals: sportIdOrName,
+          mode: 'insensitive',
+        },
+      },
+      select: { id: true },
+    });
+
+    return sport?.id;
   }
 
   /**
@@ -334,6 +366,21 @@ export class SearchService {
 
     return { contests, total };
   }
+}
+
+function emptyFacets(): SearchFacets {
+  return {
+    positions: [],
+    teams: [],
+    nationalities: [],
+    rankingDistribution: {
+      top10: 0,
+      top25: 0,
+      top50: 0,
+      top100: 0,
+      unranked: 0,
+    },
+  };
 }
 
 // --- Raw SQL row mapping ---

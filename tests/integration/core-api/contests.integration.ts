@@ -56,6 +56,27 @@ describe('Contests Integration', () => {
       expect(contest.status).toBe(ContestStatus.DRAFT);
       contestId = contest.id;
     });
+
+    it('creates a contest using a scoring template key', async () => {
+      const res = await getApp().inject({
+        method: 'POST',
+        url: API_ROUTES.leagues.contests(leagueId),
+        headers: ownerHeaders,
+        payload: {
+          name: 'Template-backed Golf Pool',
+          contestType: ContestType.SINGLE_EVENT,
+          selectionType: SelectionType.SNAKE_DRAFT,
+          scoringEngine: ScoringEngine.STROKE_PLAY,
+          scoringTemplateKey: 'golf_relative_to_par',
+        },
+      });
+
+      expect(res.statusCode).toBe(201);
+      const contest = res.json().contest ?? res.json();
+      expect(contest.name).toBe('Template-backed Golf Pool');
+      expect(contest.scoringRules).toBeDefined();
+      expect(contest.scoringRules.sport).toBe('GOLF');
+    });
   });
 
   describe('GET leagues/:leagueId/contests', () => {
@@ -127,7 +148,8 @@ describe('Contests Integration', () => {
   describe('DELETE /api/v1/contests/:contestId', () => {
     it('deletes the contest and its child records', async () => {
       // Don't send content-type: application/json with empty body
-      const { 'content-type': _, ...headersNoContentType } = ownerHeaders;
+      const headersNoContentType = { ...ownerHeaders };
+      delete headersNoContentType['content-type'];
       const res = await getApp().inject({
         method: 'DELETE',
         url: API_ROUTES.contests.detail(contestId),

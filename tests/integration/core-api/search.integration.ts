@@ -102,6 +102,21 @@ describe('Search & Discovery Integration', () => {
         expect(p.sportId).toBe(sportId);
       }
     });
+
+    it('accepts a sport name and resolves it to the same sport', async () => {
+      const res = await getApp().inject({
+        method: 'GET',
+        url: '/api/v1/search/participants?q=&sportId=Golf',
+        headers,
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(Array.isArray(body.participants)).toBe(true);
+      for (const p of body.participants) {
+        expect(p.sportId).toBe(sportId);
+      }
+    });
   });
 
   // -----------------------------------------------------------------------
