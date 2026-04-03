@@ -20,7 +20,7 @@ interface ContestRow {
   scoringEngine: string;
   isExclusive: boolean;
   scoringStopsOnElimination: boolean;
-  scoringRules: Record<string, unknown>;
+  scoringRules: unknown;
   startsAt?: Date | null;
   endsAt?: Date | null;
   lockAt?: Date | null;
@@ -44,6 +44,7 @@ export function toContestSummaryDto(
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
     createdAt: contest.createdAt.toISOString(),
+    updatedAt: contest.updatedAt.toISOString(),
   };
 }
 
@@ -53,7 +54,7 @@ export function toContestDetailDto(
 ): ContestDetailDto {
   return {
     ...toContestSummaryDto(contest),
-    scoringRules: contest.scoringRules,
+    scoringRules: (contest.scoringRules ?? {}) as Record<string, unknown>,
     lockAt: contest.lockAt?.toISOString() ?? null,
     isExclusive: contest.isExclusive,
   };

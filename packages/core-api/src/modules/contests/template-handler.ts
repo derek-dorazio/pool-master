@@ -5,6 +5,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ContestTemplateService } from './template-service';
 import { TemplateNotFoundError, TemplateOperationError } from './template-service';
+import { mapContestTemplateToDto } from '../../mappers';
 
 export function createTemplateHandlers(templateService: ContestTemplateService) {
   return {
@@ -18,9 +19,9 @@ export function createTemplateHandlers(templateService: ContestTemplateService) 
   async function listTemplates(
     request: FastifyRequest<{ Querystring: { leagueId: string } }>,
     _reply: FastifyReply,
-  ): Promise<{ templates: unknown[] }> {
+  ): Promise<{ templates: ReturnType<typeof mapContestTemplateToDto>[] }> {
     const templates = await templateService.listTemplates(request.query.leagueId);
-    return { templates };
+    return { templates: templates.map(mapContestTemplateToDto) };
   }
 
   async function createTemplate(
@@ -45,7 +46,7 @@ export function createTemplateHandlers(templateService: ContestTemplateService) 
       poolConfig: (body.poolConfig ?? {}) as Record<string, unknown>,
       sharedWithTenant: body.sharedWithTenant as boolean | undefined,
     });
-    return reply.status(201).send({ template });
+    return reply.status(201).send({ template: mapContestTemplateToDto(template) });
   }
 
   async function getTemplate(
@@ -56,7 +57,7 @@ export function createTemplateHandlers(templateService: ContestTemplateService) 
     if (!template) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'Template not found' });
     }
-    return reply.send({ template });
+    return reply.send({ template: mapContestTemplateToDto(template) });
   }
 
   async function updateTemplate(
@@ -71,7 +72,7 @@ export function createTemplateHandlers(templateService: ContestTemplateService) 
         request.params.id,
         request.body as any,
       );
-      return reply.send({ template });
+      return reply.send({ template: mapContestTemplateToDto(template) });
     } catch (err) {
       if (err instanceof TemplateNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -89,7 +90,7 @@ export function createTemplateHandlers(templateService: ContestTemplateService) 
   ): Promise<void> {
     try {
       await templateService.deleteTemplate(request.params.id);
-      return reply.status(204).send();
+      return reply.send({ success: true });
     } catch (err) {
       if (err instanceof TemplateNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

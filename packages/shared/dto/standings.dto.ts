@@ -18,14 +18,14 @@ export type StandingsQuery = z.infer<typeof StandingsQuerySchema>;
 export const StandingEntryDtoSchema = z.object({
   rank: z.number(),
   entryId: z.string(),
-  userId: z.string(),
-  displayName: z.string(),
-  score: z.number(),
-  wins: z.number(),
-  losses: z.number(),
-  previousRank: z.number().nullable().optional(),
-  movement: z.enum(['up', 'down', 'same', 'new']).optional(),
-  isEliminated: z.boolean().optional(),
+  entryName: z.string(),
+  ownerDisplayName: z.string(),
+  ownerId: z.string(),
+  totalScore: z.number(),
+  previousRank: z.number().nullable(),
+  movement: z.enum(['up', 'down', 'same', 'new']),
+  isEliminated: z.boolean(),
+  lastUpdatedAt: z.string().datetime(),
 });
 export type StandingEntryDto = z.infer<typeof StandingEntryDtoSchema>;
 
@@ -34,6 +34,20 @@ export type StandingEntryDto = z.infer<typeof StandingEntryDtoSchema>;
 export const StandingsResponseSchema = z.object({
   standings: z.array(StandingEntryDtoSchema),
   total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
   contestId: z.string(),
 });
 export type StandingsResponse = z.infer<typeof StandingsResponseSchema>;
+
+export const StandingsSummaryResponseSchema = z.object({
+  topEntries: z.array(StandingEntryDtoSchema),
+  totalEntries: z.number(),
+  contestId: z.string(),
+});
+
+export const MyStandingsEntryResponseSchema = z.object({
+  entry: StandingEntryDtoSchema,
+  totalEntries: z.number(),
+  contestId: z.string(),
+});

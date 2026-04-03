@@ -42,6 +42,8 @@ import {
   UsageResponseSchema,
   EntitlementsResponseSchema,
   InvoiceListResponseSchema,
+  UpcomingInvoiceResponseSchema,
+  InvoiceDetailResponseSchema,
   SuccessSchema,
 } from '@poolmaster/shared/dto';
 import { EntitlementService } from './entitlement-service';
@@ -479,7 +481,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       const query = request.query as { page?: string };
       const page = parseInt(query.page ?? '1', 10);
       const result = await invoiceService.getInvoiceHistory(tenantId, page);
-      return reply.send(result);
+      return reply.send({ items: result.items, total: result.total });
     },
   });
 
@@ -492,7 +494,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Preview upcoming invoice',
       operationId: 'getUpcomingInvoice',
-      response: { 200: zodToJsonSchema(InvoiceListResponseSchema) },
+      response: { 200: zodToJsonSchema(UpcomingInvoiceResponseSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -513,7 +515,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get invoice detail by ID',
       operationId: 'getInvoiceDetail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(InvoiceDetailResponseSchema) },
     },
     handler: async (request, reply) => {
       const { invoiceId } = request.params as { invoiceId: string };

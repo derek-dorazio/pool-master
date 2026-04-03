@@ -4,7 +4,14 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
+import {
+  zodToJsonSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto';
+import {
+  TemplateListResponseSchema,
+  TemplateResponseSchema,
+} from '@poolmaster/shared/dto/templates.dto';
 import { PrismaContestTemplateRepository } from '../../adapters';
 import { ContestTemplateService } from '../contests/template-service';
 import { createTemplateHandlers } from '../contests/template-handler';
@@ -20,7 +27,7 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Templates'],
       summary: 'List contest templates for a league',
       operationId: 'listTemplates',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(TemplateListResponseSchema) },
       querystring: {
         type: 'object',
         required: ['leagueId'],
@@ -37,7 +44,7 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Templates'],
       summary: 'Create a new contest template',
       operationId: 'createTemplate',
-      response: { 201: zodToJsonSchema(SuccessSchema) },
+      response: { 201: zodToJsonSchema(TemplateResponseSchema) },
       body: {
         type: 'object',
         required: ['leagueId', 'name', 'sport', 'contestType'],
@@ -63,7 +70,7 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Templates'],
       summary: 'Get a contest template by ID',
       operationId: 'getTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(TemplateResponseSchema) },
     },
     handler: handlers.getTemplate,
   });
@@ -73,7 +80,7 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Templates'],
       summary: 'Update a contest template',
       operationId: 'updateTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(TemplateResponseSchema) },
       body: {
         type: 'object',
         properties: {

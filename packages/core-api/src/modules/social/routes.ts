@@ -17,9 +17,13 @@ import { FeedService } from './feed-service';
 import { createFeedHandlers } from './feed-handler';
 import {
   zodToJsonSchema,
-  FeedResponseSchema,
-  SuccessSchema,
 } from '@poolmaster/shared/dto';
+import {
+  FeedResponseSchema,
+  FeedPostResponseSchema,
+  FeedReactionResponseSchema,
+  FeedPinResponseSchema,
+} from '@poolmaster/shared/dto/social.dto';
 
 export async function socialModule(fastify: FastifyInstance): Promise<void> {
   const feedService = new FeedService();
@@ -67,7 +71,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           type: { type: 'string', enum: ['POST', 'ANNOUNCEMENT', 'SYSTEM'] },
         },
       },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 201: zodToJsonSchema(FeedPostResponseSchema) },
     },
     handler: handlers.createPost,
   });
@@ -86,7 +90,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(FeedPostResponseSchema) },
     },
     handler: handlers.getPost,
   });
@@ -112,7 +116,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           content: { type: 'string', minLength: 1, maxLength: 5000 },
         },
       },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 201: zodToJsonSchema(FeedPostResponseSchema) },
     },
     handler: handlers.createReply,
   });
@@ -138,7 +142,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           emoji: { type: 'string', minLength: 1 },
         },
       },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(FeedReactionResponseSchema) },
     },
     handler: handlers.toggleReaction,
   });
@@ -157,7 +161,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(FeedPinResponseSchema) },
     },
     handler: handlers.pinPost,
   });
@@ -176,7 +180,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(FeedPinResponseSchema) },
     },
     handler: handlers.unpinPost,
   });
@@ -195,7 +199,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(FeedPinResponseSchema) },
     },
     handler: handlers.deletePost,
   });

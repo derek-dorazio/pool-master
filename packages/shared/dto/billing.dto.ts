@@ -25,11 +25,23 @@ export type UsageDto = z.infer<typeof UsageDtoSchema>;
 
 export const InvoiceDtoSchema = z.object({
   id: z.string(),
-  amount: z.number(),
+  tenantId: z.string().optional(),
+  stripeInvoiceId: z.string().optional(),
+  amount: z.number().optional(),
+  amountCents: z.number().optional(),
   currency: z.string(),
   status: z.string(),
   periodStart: z.string().datetime().optional(),
   periodEnd: z.string().datetime().optional(),
+  paidAt: z.string().datetime().nullable().optional(),
+  invoicePdfUrl: z.string().nullable().optional(),
+  lineItems: z.array(
+    z.object({
+      description: z.string(),
+      amountCents: z.number(),
+      quantity: z.number(),
+    }),
+  ).optional(),
   createdAt: z.string().datetime().optional(),
 });
 export type InvoiceDto = z.infer<typeof InvoiceDtoSchema>;
@@ -61,6 +73,10 @@ export const EntitlementsResponseSchema = z.object({
 export type EntitlementsResponse = z.infer<typeof EntitlementsResponseSchema>;
 
 export const InvoiceListResponseSchema = z.object({
-  invoices: z.array(InvoiceDtoSchema),
+  items: z.array(InvoiceDtoSchema),
+  total: z.number(),
 });
 export type InvoiceListResponse = z.infer<typeof InvoiceListResponseSchema>;
+
+export const UpcomingInvoiceResponseSchema = InvoiceDtoSchema;
+export const InvoiceDetailResponseSchema = InvoiceDtoSchema;

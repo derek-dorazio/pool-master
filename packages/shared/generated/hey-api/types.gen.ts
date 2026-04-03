@@ -362,7 +362,7 @@ export type SendLeagueInvitationsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -385,7 +385,7 @@ export type GenerateInviteLinkResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -406,7 +406,7 @@ export type RevokeInviteLinkResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -430,7 +430,16 @@ export type ChangeMemberRoleResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        membership: {
+            id: string;
+            leagueId: string;
+            userId: string;
+            role: string;
+            permissions: Array<string>;
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -473,7 +482,26 @@ export type TransferOwnershipResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        previousOwner: {
+            id: string;
+            leagueId: string;
+            userId: string;
+            role: string;
+            permissions: Array<string>;
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+        newOwner: {
+            id: string;
+            leagueId: string;
+            userId: string;
+            role: string;
+            permissions: Array<string>;
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -493,21 +521,7 @@ export type GetLeagueDashboardResponses = {
      * Default Response
      */
     200: {
-        league: {
-            id: string;
-            name: string;
-            description?: string;
-            visibility: string;
-            memberCount: number;
-            activeContestCount: number;
-            role?: string;
-            createdAt?: string;
-            maxMembers?: number;
-            settings?: {
-                [key: string]: unknown;
-            };
-            invitePolicy?: string;
-        };
+        [key: string]: unknown;
     };
 };
 
@@ -528,7 +542,7 @@ export type ResolveActionItemResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -548,7 +562,7 @@ export type GetLeagueAuditLogResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -568,7 +582,9 @@ export type GetMemberAuditLogResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        entries: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -595,8 +611,8 @@ export type BulkCreateContestsResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        [key: string]: unknown;
     };
 };
 
@@ -618,8 +634,8 @@ export type CopySeasonResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        [key: string]: unknown;
     };
 };
 
@@ -644,8 +660,8 @@ export type ImportMembersResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        [key: string]: unknown;
     };
 };
 
@@ -697,6 +713,7 @@ export type ListContestsResponses = {
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
+            updatedAt?: string;
         }>;
     };
 };
@@ -762,6 +779,7 @@ export type CreateContestResponses = {
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
+            updatedAt?: string;
             scoringRules?: {
                 [key: string]: unknown;
             };
@@ -823,6 +841,7 @@ export type GetContestResponses = {
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
+            updatedAt?: string;
             scoringRules?: {
                 [key: string]: unknown;
             };
@@ -876,6 +895,7 @@ export type UpdateContestResponses = {
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
+            updatedAt?: string;
             scoringRules?: {
                 [key: string]: unknown;
             };
@@ -1016,7 +1036,16 @@ export type RecalculateStandingsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contestId: string;
+        teamsAffected: number;
+        standingsChanged: boolean;
+        changes: Array<{
+            entryId: string;
+            oldRank: number;
+            newRank: number;
+            oldScore: number;
+            newScore: number;
+        }>;
     };
 };
 
@@ -1038,7 +1067,29 @@ export type ReopenContestResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contest: {
+            id: string;
+            name: string;
+            status: string;
+            contestType: string;
+            selectionType: string;
+            scoringEngine: string;
+            leagueId: string;
+            entryCount?: number;
+            startsAt?: string;
+            endsAt?: string;
+            createdAt?: string;
+            updatedAt?: string;
+            scoringRules?: {
+                [key: string]: unknown;
+            };
+            lockAt?: string;
+            isExclusive?: boolean;
+            sport?: string;
+        };
+        selectionConfig?: {
+            [key: string]: unknown;
+        };
     };
 };
 
@@ -1060,7 +1111,29 @@ export type CloseContestResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contest: {
+            id: string;
+            name: string;
+            status: string;
+            contestType: string;
+            selectionType: string;
+            scoringEngine: string;
+            leagueId: string;
+            entryCount?: number;
+            startsAt?: string;
+            endsAt?: string;
+            createdAt?: string;
+            updatedAt?: string;
+            scoringRules?: {
+                [key: string]: unknown;
+            };
+            lockAt?: string;
+            isExclusive?: boolean;
+            sport?: string;
+        };
+        selectionConfig?: {
+            [key: string]: unknown;
+        };
     };
 };
 
@@ -1083,7 +1156,29 @@ export type ExtendContestDeadlineResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contest: {
+            id: string;
+            name: string;
+            status: string;
+            contestType: string;
+            selectionType: string;
+            scoringEngine: string;
+            leagueId: string;
+            entryCount?: number;
+            startsAt?: string;
+            endsAt?: string;
+            createdAt?: string;
+            updatedAt?: string;
+            scoringRules?: {
+                [key: string]: unknown;
+            };
+            lockAt?: string;
+            isExclusive?: boolean;
+            sport?: string;
+        };
+        selectionConfig?: {
+            [key: string]: unknown;
+        };
     };
 };
 
@@ -1106,7 +1201,29 @@ export type UpdateContestLockTimeResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contest: {
+            id: string;
+            name: string;
+            status: string;
+            contestType: string;
+            selectionType: string;
+            scoringEngine: string;
+            leagueId: string;
+            entryCount?: number;
+            startsAt?: string;
+            endsAt?: string;
+            createdAt?: string;
+            updatedAt?: string;
+            scoringRules?: {
+                [key: string]: unknown;
+            };
+            lockAt?: string;
+            isExclusive?: boolean;
+            sport?: string;
+        };
+        selectionConfig?: {
+            [key: string]: unknown;
+        };
     };
 };
 
@@ -1166,7 +1283,33 @@ export type ListTemplatesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        templates: Array<{
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            description?: string;
+            sport: string;
+            contestType: string;
+            draftConfig: {
+                [key: string]: unknown;
+            };
+            scoringConfig: {
+                [key: string]: unknown;
+            };
+            payoutConfig: {
+                [key: string]: unknown;
+            };
+            poolConfig: {
+                [key: string]: unknown;
+            };
+            sharedWithTenant: boolean;
+            isPlatformTemplate: boolean;
+            timesUsed: number;
+            lastUsedAt?: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
     };
 };
 
@@ -1203,7 +1346,33 @@ export type CreateTemplateResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        template: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            description?: string;
+            sport: string;
+            contestType: string;
+            draftConfig: {
+                [key: string]: unknown;
+            };
+            scoringConfig: {
+                [key: string]: unknown;
+            };
+            payoutConfig: {
+                [key: string]: unknown;
+            };
+            poolConfig: {
+                [key: string]: unknown;
+            };
+            sharedWithTenant: boolean;
+            isPlatformTemplate: boolean;
+            timesUsed: number;
+            lastUsedAt?: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -1243,7 +1412,33 @@ export type GetTemplateResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        template: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            description?: string;
+            sport: string;
+            contestType: string;
+            draftConfig: {
+                [key: string]: unknown;
+            };
+            scoringConfig: {
+                [key: string]: unknown;
+            };
+            payoutConfig: {
+                [key: string]: unknown;
+            };
+            poolConfig: {
+                [key: string]: unknown;
+            };
+            sharedWithTenant: boolean;
+            isPlatformTemplate: boolean;
+            timesUsed: number;
+            lastUsedAt?: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -1279,7 +1474,33 @@ export type UpdateTemplateResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        template: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            description?: string;
+            sport: string;
+            contestType: string;
+            draftConfig: {
+                [key: string]: unknown;
+            };
+            scoringConfig: {
+                [key: string]: unknown;
+            };
+            payoutConfig: {
+                [key: string]: unknown;
+            };
+            poolConfig: {
+                [key: string]: unknown;
+            };
+            sharedWithTenant: boolean;
+            isPlatformTemplate: boolean;
+            timesUsed: number;
+            lastUsedAt?: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -1308,12 +1529,34 @@ export type ListParticipantsResponses = {
     200: {
         participants: Array<{
             id: string;
+            sportId: string;
             name: string;
-            sport: string;
+            participantType: string;
+            externalId?: string;
+            metadata: {
+                [key: string]: unknown;
+            };
+            firstName?: string;
+            lastName?: string;
+            shortName?: string;
+            nationality?: string;
             position?: string;
             teamAffiliation?: string;
             status: string;
+            injuryStatus: {
+                status: string;
+                detail?: string;
+                expectedReturn?: string;
+                updatedAt?: string;
+                source?: string;
+            };
             photoUrl?: string;
+            photoLastUpdated?: string;
+            externalIds: {
+                [key: string]: string;
+            };
+            createdAt: string;
+            updatedAt: string;
         }>;
         total: number;
     };
@@ -1350,7 +1593,37 @@ export type CreateParticipantResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        participant: {
+            id: string;
+            sportId: string;
+            name: string;
+            participantType: string;
+            externalId?: string;
+            metadata: {
+                [key: string]: unknown;
+            };
+            firstName?: string;
+            lastName?: string;
+            shortName?: string;
+            nationality?: string;
+            position?: string;
+            teamAffiliation?: string;
+            status: string;
+            injuryStatus: {
+                status: string;
+                detail?: string;
+                expectedReturn?: string;
+                updatedAt?: string;
+                source?: string;
+            };
+            photoUrl?: string;
+            photoLastUpdated?: string;
+            externalIds: {
+                [key: string]: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -1370,7 +1643,37 @@ export type GetParticipantResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        participant: {
+            id: string;
+            sportId: string;
+            name: string;
+            participantType: string;
+            externalId?: string;
+            metadata: {
+                [key: string]: unknown;
+            };
+            firstName?: string;
+            lastName?: string;
+            shortName?: string;
+            nationality?: string;
+            position?: string;
+            teamAffiliation?: string;
+            status: string;
+            injuryStatus: {
+                status: string;
+                detail?: string;
+                expectedReturn?: string;
+                updatedAt?: string;
+                source?: string;
+            };
+            photoUrl?: string;
+            photoLastUpdated?: string;
+            externalIds: {
+                [key: string]: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -1409,7 +1712,37 @@ export type UpdateParticipantResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        participant: {
+            id: string;
+            sportId: string;
+            name: string;
+            participantType: string;
+            externalId?: string;
+            metadata: {
+                [key: string]: unknown;
+            };
+            firstName?: string;
+            lastName?: string;
+            shortName?: string;
+            nationality?: string;
+            position?: string;
+            teamAffiliation?: string;
+            status: string;
+            injuryStatus: {
+                status: string;
+                detail?: string;
+                expectedReturn?: string;
+                updatedAt?: string;
+                source?: string;
+            };
+            photoUrl?: string;
+            photoLastUpdated?: string;
+            externalIds: {
+                [key: string]: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -1429,7 +1762,35 @@ export type GetParticipantSeasonRecordsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        seasonRecords: Array<{
+            id: string;
+            participantId: string;
+            sport: string;
+            season: string;
+            rankings: Array<{
+                rankingType: string;
+                rank: number;
+                points?: number;
+                asOfDate: string;
+            }>;
+            budgetPrice: number;
+            priceTier?: string;
+            priceUpdatedAt?: string;
+            eventsEntered: number;
+            eventsCompleted: number;
+            wins: number;
+            top5Finishes: number;
+            top10Finishes: number;
+            top25Finishes: number;
+            seasonStats: {
+                [key: string]: number;
+            };
+            formRating: number;
+            formTrend: string;
+            lastUpdated: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
     };
 };
 
@@ -1450,7 +1811,35 @@ export type GetParticipantSeasonRecordResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        seasonRecord: {
+            id: string;
+            participantId: string;
+            sport: string;
+            season: string;
+            rankings: Array<{
+                rankingType: string;
+                rank: number;
+                points?: number;
+                asOfDate: string;
+            }>;
+            budgetPrice: number;
+            priceTier?: string;
+            priceUpdatedAt?: string;
+            eventsEntered: number;
+            eventsCompleted: number;
+            wins: number;
+            top5Finishes: number;
+            top10Finishes: number;
+            top25Finishes: number;
+            seasonStats: {
+                [key: string]: number;
+            };
+            formRating: number;
+            formTrend: string;
+            lastUpdated: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -1470,16 +1859,7 @@ export type GetContestPoolResponses = {
      * Default Response
      */
     200: {
-        pool: Array<{
-            id: string;
-            name: string;
-            sport: string;
-            position?: string;
-            teamAffiliation?: string;
-            status: string;
-            photoUrl?: string;
-        }>;
-        contestId: string;
+        [key: string]: unknown;
     };
 };
 
@@ -1506,16 +1886,7 @@ export type CreateContestPoolResponses = {
      * Default Response
      */
     201: {
-        pool: Array<{
-            id: string;
-            name: string;
-            sport: string;
-            position?: string;
-            teamAffiliation?: string;
-            status: string;
-            photoUrl?: string;
-        }>;
-        contestId: string;
+        [key: string]: unknown;
     };
 };
 
@@ -1541,16 +1912,7 @@ export type UpdateContestPoolResponses = {
      * Default Response
      */
     200: {
-        pool: Array<{
-            id: string;
-            name: string;
-            sport: string;
-            position?: string;
-            teamAffiliation?: string;
-            status: string;
-            photoUrl?: string;
-        }>;
-        contestId: string;
+        [key: string]: unknown;
     };
 };
 
@@ -1570,7 +1932,7 @@ export type ResolveContestPoolResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1590,16 +1952,7 @@ export type RefreshContestPoolResponses = {
      * Default Response
      */
     200: {
-        pool: Array<{
-            id: string;
-            name: string;
-            sport: string;
-            position?: string;
-            teamAffiliation?: string;
-            status: string;
-            photoUrl?: string;
-        }>;
-        contestId: string;
+        [key: string]: unknown;
     };
 };
 
@@ -1619,7 +1972,7 @@ export type LockContestPoolResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1640,7 +1993,7 @@ export type ExcludePoolParticipantResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1661,7 +2014,7 @@ export type RestorePoolParticipantResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1684,7 +2037,7 @@ export type MarkPoolParticipantUnavailableResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1705,7 +2058,7 @@ export type MarkPoolParticipantAvailableResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1739,7 +2092,7 @@ export type CalculatePoolPricingResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1763,7 +2116,7 @@ export type ApplyPoolPriceOverrideResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1802,7 +2155,7 @@ export type AssignPoolTiersResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1824,7 +2177,7 @@ export type MoveParticipantTierResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1854,7 +2207,51 @@ export type SearchPoolParticipantsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        participants: Array<{
+            participantId: string;
+            displayName: string;
+            photoUrl: string;
+            sport: string;
+            position?: string;
+            teamAffiliation?: string;
+            nationality?: string;
+            ranking?: number;
+            budgetPrice?: number;
+            tier?: string;
+            injuryStatus: {
+                status: string;
+                detail?: string;
+                expectedReturn?: string;
+                updatedAt?: string;
+                source?: string;
+            };
+            isAvailable: boolean;
+            unavailableReason?: string;
+            isDrafted: boolean;
+        }>;
+        total: number;
+        facets: {
+            positions: Array<{
+                value: string;
+                count: number;
+            }>;
+            teams: Array<{
+                value: string;
+                count: number;
+            }>;
+            nationalities: Array<{
+                value: string;
+                count: number;
+            }>;
+            tiers: Array<{
+                value: string;
+                count: number;
+            }>;
+            injuryStatuses: Array<{
+                value: string;
+                count: number;
+            }>;
+        };
     };
 };
 
@@ -1881,16 +2278,18 @@ export type GetStandingsResponses = {
         standings: Array<{
             rank: number;
             entryId: string;
-            userId: string;
-            displayName: string;
-            score: number;
-            wins: number;
-            losses: number;
-            previousRank?: number;
-            movement?: 'up' | 'down' | 'same' | 'new';
-            isEliminated?: boolean;
+            entryName: string;
+            ownerDisplayName: string;
+            ownerId: string;
+            totalScore: number;
+            previousRank: number;
+            movement: 'up' | 'down' | 'same' | 'new';
+            isEliminated: boolean;
+            lastUpdatedAt: string;
         }>;
         total: number;
+        page: number;
+        pageSize: number;
         contestId: string;
     };
 };
@@ -1913,19 +2312,19 @@ export type GetStandingsSummaryResponses = {
      * Default Response
      */
     200: {
-        standings: Array<{
+        topEntries: Array<{
             rank: number;
             entryId: string;
-            userId: string;
-            displayName: string;
-            score: number;
-            wins: number;
-            losses: number;
-            previousRank?: number;
-            movement?: 'up' | 'down' | 'same' | 'new';
-            isEliminated?: boolean;
+            entryName: string;
+            ownerDisplayName: string;
+            ownerId: string;
+            totalScore: number;
+            previousRank: number;
+            movement: 'up' | 'down' | 'same' | 'new';
+            isEliminated: boolean;
+            lastUpdatedAt: string;
         }>;
-        total: number;
+        totalEntries: number;
         contestId: string;
     };
 };
@@ -1946,7 +2345,20 @@ export type GetMyStandingsEntryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        entry: {
+            rank: number;
+            entryId: string;
+            entryName: string;
+            ownerDisplayName: string;
+            ownerId: string;
+            totalScore: number;
+            previousRank: number;
+            movement: 'up' | 'down' | 'same' | 'new';
+            isEliminated: boolean;
+            lastUpdatedAt: string;
+        };
+        totalEntries: number;
+        contestId: string;
     };
 };
 
@@ -1966,7 +2378,7 @@ export type GetContestHistorySummaryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -1986,7 +2398,9 @@ export type GetContestHistoryStandingsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        standings: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2007,7 +2421,7 @@ export type GetRosterHistoryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2027,7 +2441,9 @@ export type GetContestPayoutsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        payouts: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2047,7 +2463,9 @@ export type GetLeagueResultsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        results: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2068,7 +2486,9 @@ export type GetMemberResultsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        results: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2088,7 +2508,7 @@ export type GetContestTimelineResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2108,7 +2528,7 @@ export type GetDraftReplayResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2129,7 +2549,7 @@ export type GetRosterReplayResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2149,7 +2569,9 @@ export type GetSeasonSummariesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        seasons: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2170,7 +2592,7 @@ export type GetSeasonSummaryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2190,7 +2612,9 @@ export type GetChampionListResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        champions: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2211,7 +2635,7 @@ export type GetMemberStatsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2231,7 +2655,9 @@ export type GetAllTimeLeaderboardResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        leaderboard: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2252,7 +2678,9 @@ export type GetMemberTrophiesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        trophies: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2272,7 +2700,9 @@ export type GetLeagueRecordsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        records: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2293,7 +2723,7 @@ export type GetLeagueRecordResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2313,7 +2743,7 @@ export type RecomputeLeagueRecordsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2333,7 +2763,9 @@ export type GetLeagueRivalriesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        rivalries: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2355,7 +2787,7 @@ export type GetRivalryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2375,7 +2807,7 @@ export type RecomputeRivalriesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2395,7 +2827,9 @@ export type GetLuckScoresResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        luckScores: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2415,7 +2849,9 @@ export type GetPowerRatingsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        powerRatings: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2435,7 +2871,9 @@ export type GetConsistencyScoresResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        consistencyScores: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2455,7 +2893,7 @@ export type AwardAnalyticsTrophiesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2475,7 +2913,7 @@ export type GetYoYStatsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2495,7 +2933,9 @@ export type GetImprovementRankingsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        rankings: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2516,7 +2956,9 @@ export type GetSeasonNotesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        notes: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2537,7 +2979,7 @@ export type AddSeasonNoteResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2558,7 +3000,7 @@ export type AwardCustomTrophyResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2578,7 +3020,9 @@ export type ListCustomTrophiesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        trophies: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -2598,7 +3042,7 @@ export type ImportSeasonResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2616,7 +3060,7 @@ export type PreviewMemberMergeResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2634,7 +3078,7 @@ export type ExecuteMemberMergeResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2654,7 +3098,7 @@ export type ExportLeagueHistoryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2674,7 +3118,7 @@ export type ExportMemberHistoryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2694,7 +3138,7 @@ export type GetLeagueRetentionConfigResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2714,7 +3158,7 @@ export type UpdateLeagueRetentionConfigResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2734,7 +3178,7 @@ export type PreviewRetentionCleanupResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2764,12 +3208,34 @@ export type SearchParticipantsResponses = {
     200: {
         participants: Array<{
             id: string;
+            sportId: string;
             name: string;
-            sport: string;
+            participantType: string;
+            externalId?: string;
+            metadata: {
+                [key: string]: unknown;
+            };
+            firstName?: string;
+            lastName?: string;
+            shortName?: string;
+            nationality?: string;
             position?: string;
             teamAffiliation?: string;
             status: string;
+            injuryStatus: {
+                status: string;
+                detail?: string;
+                expectedReturn?: string;
+                updatedAt?: string;
+                source?: string;
+            };
             photoUrl?: string;
+            photoLastUpdated?: string;
+            externalIds: {
+                [key: string]: string;
+            };
+            createdAt: string;
+            updatedAt: string;
         }>;
         total: number;
         facets: {
@@ -2810,7 +3276,16 @@ export type DiscoverLeaguesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        leagues: Array<{
+            id: string;
+            name: string;
+            description?: string;
+            sport?: string;
+            memberCount: number;
+            visibility: string;
+            createdAt?: string;
+        }>;
+        total: number;
     };
 };
 
@@ -2828,7 +3303,16 @@ export type DiscoverContestsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contests: Array<{
+            id: string;
+            contestName: string;
+            sport?: string;
+            status: string;
+            memberCount: number;
+            prizePool?: number;
+            lockTime?: string;
+        }>;
+        total: number;
     };
 };
 
@@ -2850,7 +3334,10 @@ export type ReportDiscoveryEntityResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        report: {
+            id: string;
+        };
+        reportCount: number;
     };
 };
 
@@ -2870,7 +3357,9 @@ export type VerifyAgeResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        allowed: boolean;
+        age: number;
+        reason?: string;
     };
 };
 
@@ -2888,7 +3377,16 @@ export type GetConsentHistoryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        consents: Array<{
+            id: string;
+            userId: string;
+            consentType: string;
+            granted: boolean;
+            version: string;
+            ipAddress?: string;
+            userAgent?: string;
+            createdAt: string;
+        }>;
     };
 };
 
@@ -2910,7 +3408,7 @@ export type RecordConsentResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        success: boolean;
     };
 };
 
@@ -2928,7 +3426,8 @@ export type RequestDataExportResponses = {
      * Default Response
      */
     202: {
-        success: true;
+        requestId: string;
+        message: string;
     };
 };
 
@@ -2948,7 +3447,7 @@ export type GetDataExportResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -2966,7 +3465,8 @@ export type RequestAccountDeletionResponses = {
      * Default Response
      */
     202: {
-        success: true;
+        requestId: string;
+        message: string;
     };
 };
 
@@ -2987,6 +3487,7 @@ export type CancelAccountDeletionResponses = {
      */
     200: {
         success: true;
+        message: string;
     };
 };
 
@@ -3004,7 +3505,16 @@ export type GetActiveExclusionResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        exclusion: {
+            id: string;
+            userId: string;
+            exclusionType: string;
+            duration: string;
+            endsAt?: string;
+            isActive: boolean;
+            startedAt: string;
+            reactivatedAt?: string;
+        };
     };
 };
 
@@ -3025,7 +3535,7 @@ export type CreateSelfExclusionResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        exclusionId: string;
     };
 };
 
@@ -3049,7 +3559,7 @@ export type CreateEnforcementActionResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        enforcementId: string;
     };
 };
 
@@ -3069,7 +3579,17 @@ export type GetEnforcementHistoryResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        enforcement: Array<{
+            id: string;
+            userId: string;
+            level: string;
+            reason: string;
+            trigger: string;
+            enforcedBy?: string;
+            endsAt?: string;
+            appealStatus?: string;
+            createdAt: string;
+        }>;
     };
 };
 
@@ -3089,7 +3609,7 @@ export type UpdateAppealStatusResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        success: boolean;
     };
 };
 
@@ -3107,7 +3627,7 @@ export type RunRetentionCleanupResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: number;
     };
 };
 
@@ -6336,15 +6856,26 @@ export type ListInvoicesResponses = {
      * Default Response
      */
     200: {
-        invoices: Array<{
+        items: Array<{
             id: string;
-            amount: number;
+            tenantId?: string;
+            stripeInvoiceId?: string;
+            amount?: number;
+            amountCents?: number;
             currency: string;
             status: string;
             periodStart?: string;
             periodEnd?: string;
+            paidAt?: string;
+            invoicePdfUrl?: string;
+            lineItems?: Array<{
+                description: string;
+                amountCents: number;
+                quantity: number;
+            }>;
             createdAt?: string;
         }>;
+        total: number;
     };
 };
 
@@ -6362,15 +6893,23 @@ export type GetUpcomingInvoiceResponses = {
      * Default Response
      */
     200: {
-        invoices: Array<{
-            id: string;
-            amount: number;
-            currency: string;
-            status: string;
-            periodStart?: string;
-            periodEnd?: string;
-            createdAt?: string;
+        id: string;
+        tenantId?: string;
+        stripeInvoiceId?: string;
+        amount?: number;
+        amountCents?: number;
+        currency: string;
+        status: string;
+        periodStart?: string;
+        periodEnd?: string;
+        paidAt?: string;
+        invoicePdfUrl?: string;
+        lineItems?: Array<{
+            description: string;
+            amountCents: number;
+            quantity: number;
         }>;
+        createdAt?: string;
     };
 };
 
@@ -6390,7 +6929,23 @@ export type GetInvoiceDetailResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        tenantId?: string;
+        stripeInvoiceId?: string;
+        amount?: number;
+        amountCents?: number;
+        currency: string;
+        status: string;
+        periodStart?: string;
+        periodEnd?: string;
+        paidAt?: string;
+        invoicePdfUrl?: string;
+        lineItems?: Array<{
+            description: string;
+            amountCents: number;
+            quantity: number;
+        }>;
+        createdAt?: string;
     };
 };
 
@@ -6649,16 +7204,23 @@ export type GetLeagueFeedResponses = {
      * Default Response
      */
     200: {
-        items: Array<{
+        posts: Array<{
             id: string;
+            leagueId: string;
+            authorId: string;
             type: string;
             authorName: string;
             content: string;
-            createdAt: string;
+            isPinned: boolean;
+            reactions: {
+                [key: string]: Array<string>;
+            };
             replyCount: number;
-            likeCount: number;
+            parentId?: string;
+            createdAt: string;
+            updatedAt: string;
         }>;
-        hasMore: boolean;
+        nextCursor?: string;
     };
 };
 
@@ -6680,8 +7242,22 @@ export type CreateFeedPostResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        id: string;
+        leagueId: string;
+        authorId: string;
+        type: string;
+        authorName: string;
+        content: string;
+        isPinned: boolean;
+        reactions: {
+            [key: string]: Array<string>;
+        };
+        replyCount: number;
+        parentId?: string;
+        createdAt: string;
+        updatedAt: string;
+        replies?: Array<unknown>;
     };
 };
 
@@ -6723,7 +7299,21 @@ export type GetFeedPostResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        leagueId: string;
+        authorId: string;
+        type: string;
+        authorName: string;
+        content: string;
+        isPinned: boolean;
+        reactions: {
+            [key: string]: Array<string>;
+        };
+        replyCount: number;
+        parentId?: string;
+        createdAt: string;
+        updatedAt: string;
+        replies?: Array<unknown>;
     };
 };
 
@@ -6745,8 +7335,22 @@ export type AddFeedReplyResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        id: string;
+        leagueId: string;
+        authorId: string;
+        type: string;
+        authorName: string;
+        content: string;
+        isPinned: boolean;
+        reactions: {
+            [key: string]: Array<string>;
+        };
+        replyCount: number;
+        parentId?: string;
+        createdAt: string;
+        updatedAt: string;
+        replies?: Array<unknown>;
     };
 };
 
@@ -6769,7 +7373,7 @@ export type AddFeedReactionResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        added: boolean;
     };
 };
 
@@ -6817,6 +7421,63 @@ export type PinFeedPostResponses = {
 
 export type PinFeedPostResponse = PinFeedPostResponses[keyof PinFeedPostResponses];
 
+export type ListSelectionTemplatesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        sport?: string;
+        contestType?: string;
+    };
+    url: '/api/v1/drafts/templates';
+};
+
+export type ListSelectionTemplatesResponses = {
+    /**
+     * Default Response
+     */
+    200: Array<{
+        id: string;
+        name: string;
+        description: string;
+        sport: string;
+        contestType: string;
+        selectionType: string;
+        config: {
+            [key: string]: unknown;
+        };
+    }>;
+};
+
+export type ListSelectionTemplatesResponse = ListSelectionTemplatesResponses[keyof ListSelectionTemplatesResponses];
+
+export type GetSelectionTemplateData = {
+    body?: never;
+    path: {
+        templateId: string;
+    };
+    query?: never;
+    url: '/api/v1/drafts/templates/{templateId}';
+};
+
+export type GetSelectionTemplateResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        id: string;
+        name: string;
+        description: string;
+        sport: string;
+        contestType: string;
+        selectionType: string;
+        config: {
+            [key: string]: unknown;
+        };
+    };
+};
+
+export type GetSelectionTemplateResponse = GetSelectionTemplateResponses[keyof GetSelectionTemplateResponses];
+
 export type GetDraftStateData = {
     body?: never;
     path: {
@@ -6831,27 +7492,7 @@ export type GetDraftStateResponses = {
      * Default Response
      */
     200: {
-        draft: {
-            id: string;
-            contestId: string;
-            status: string;
-            currentRound: number;
-            currentPick: number;
-            picks: Array<{
-                pickNumber: number;
-                round: number;
-                entryId: string;
-                participantId: string;
-                isAutoPick: boolean;
-                pickedAt: string;
-            }>;
-            entries: Array<{
-                id: string;
-                userId: string;
-                displayName: string;
-                pickCount: number;
-            }>;
-        };
+        [key: string]: unknown;
     };
 };
 
@@ -6877,27 +7518,7 @@ export type StartDraftResponses = {
      * Default Response
      */
     201: {
-        draft: {
-            id: string;
-            contestId: string;
-            status: string;
-            currentRound: number;
-            currentPick: number;
-            picks: Array<{
-                pickNumber: number;
-                round: number;
-                entryId: string;
-                participantId: string;
-                isAutoPick: boolean;
-                pickedAt: string;
-            }>;
-            entries: Array<{
-                id: string;
-                userId: string;
-                displayName: string;
-                pickCount: number;
-            }>;
-        };
+        [key: string]: unknown;
     };
 };
 
@@ -6920,35 +7541,7 @@ export type SubmitDraftPickResponses = {
      * Default Response
      */
     200: {
-        pick: {
-            pickNumber: number;
-            round: number;
-            entryId: string;
-            participantId: string;
-            isAutoPick: boolean;
-            pickedAt: string;
-        };
-        draft: {
-            id: string;
-            contestId: string;
-            status: string;
-            currentRound: number;
-            currentPick: number;
-            picks: Array<{
-                pickNumber: number;
-                round: number;
-                entryId: string;
-                participantId: string;
-                isAutoPick: boolean;
-                pickedAt: string;
-            }>;
-            entries: Array<{
-                id: string;
-                userId: string;
-                displayName: string;
-                pickCount: number;
-            }>;
-        };
+        [key: string]: unknown;
     };
 };
 
@@ -6968,27 +7561,7 @@ export type PauseDraftResponses = {
      * Default Response
      */
     200: {
-        draft: {
-            id: string;
-            contestId: string;
-            status: string;
-            currentRound: number;
-            currentPick: number;
-            picks: Array<{
-                pickNumber: number;
-                round: number;
-                entryId: string;
-                participantId: string;
-                isAutoPick: boolean;
-                pickedAt: string;
-            }>;
-            entries: Array<{
-                id: string;
-                userId: string;
-                displayName: string;
-                pickCount: number;
-            }>;
-        };
+        [key: string]: unknown;
     };
 };
 
@@ -7008,27 +7581,7 @@ export type ResumeDraftResponses = {
      * Default Response
      */
     200: {
-        draft: {
-            id: string;
-            contestId: string;
-            status: string;
-            currentRound: number;
-            currentPick: number;
-            picks: Array<{
-                pickNumber: number;
-                round: number;
-                entryId: string;
-                participantId: string;
-                isAutoPick: boolean;
-                pickedAt: string;
-            }>;
-            entries: Array<{
-                id: string;
-                userId: string;
-                displayName: string;
-                pickCount: number;
-            }>;
-        };
+        [key: string]: unknown;
     };
 };
 
@@ -7050,72 +7603,11 @@ export type ExtendPickDeadlineResponses = {
      * Default Response
      */
     200: {
-        draft: {
-            id: string;
-            contestId: string;
-            status: string;
-            currentRound: number;
-            currentPick: number;
-            picks: Array<{
-                pickNumber: number;
-                round: number;
-                entryId: string;
-                participantId: string;
-                isAutoPick: boolean;
-                pickedAt: string;
-            }>;
-            entries: Array<{
-                id: string;
-                userId: string;
-                displayName: string;
-                pickCount: number;
-            }>;
-        };
+        [key: string]: unknown;
     };
 };
 
 export type ExtendPickDeadlineResponse = ExtendPickDeadlineResponses[keyof ExtendPickDeadlineResponses];
-
-export type ListSelectionTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        sport?: string;
-        contestType?: string;
-    };
-    url: '/api/v1/drafts/templates';
-};
-
-export type ListSelectionTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type ListSelectionTemplatesResponse = ListSelectionTemplatesResponses[keyof ListSelectionTemplatesResponses];
-
-export type GetSelectionTemplateData = {
-    body?: never;
-    path: {
-        templateId: string;
-    };
-    query?: never;
-    url: '/api/v1/drafts/templates/{templateId}';
-};
-
-export type GetSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type GetSelectionTemplateResponse = GetSelectionTemplateResponses[keyof GetSelectionTemplateResponses];
 
 export type ListScoringTemplatesData = {
     body?: never;
@@ -7287,14 +7779,22 @@ export type ListNotificationsResponses = {
     200: {
         notifications: Array<{
             id: string;
-            type: string;
+            userId?: string;
+            eventType: string;
             title: string;
             body: string;
             read: boolean;
+            readAt?: string;
+            dismissed?: boolean;
+            imageUrl?: string;
+            actionScreen?: string;
+            actionParams?: {
+                [key: string]: unknown;
+            };
+            groupKey?: string;
             createdAt: string;
-            linkTo?: string;
         }>;
-        unreadCount: number;
+        total: number;
     };
 };
 
@@ -7312,7 +7812,7 @@ export type GetUnreadNotificationCountResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        unreadCount: number;
     };
 };
 
@@ -7350,7 +7850,7 @@ export type MarkAllNotificationsReadResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        markedRead: number;
     };
 };
 
@@ -7388,7 +7888,15 @@ export type GetNotificationPreferencesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        preferences: {
+            doNotDisturb: boolean;
+            dndSchedule?: {
+                [key: string]: unknown;
+            };
+            categories: {
+                [key: string]: unknown;
+            };
+        };
     };
 };
 
@@ -7406,7 +7914,15 @@ export type UpdateNotificationPreferencesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        preferences: {
+            doNotDisturb: boolean;
+            dndSchedule?: {
+                [key: string]: unknown;
+            };
+            categories: {
+                [key: string]: unknown;
+            };
+        };
     };
 };
 
@@ -7427,6 +7943,8 @@ export type UnsubscribeNotificationCategoryResponses = {
      */
     200: {
         success: true;
+        category: string;
+        enabled: false;
     };
 };
 
@@ -7444,7 +7962,18 @@ export type ListDevicesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        devices: Array<{
+            id: string;
+            userId: string;
+            platform: string;
+            token: string;
+            appVersion?: string;
+            osVersion?: string;
+            deviceModel?: string;
+            isActive: boolean;
+            registeredAt: string;
+            lastActiveAt: string;
+        }>;
     };
 };
 
@@ -7462,7 +7991,18 @@ export type RegisterDeviceResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        device: {
+            id: string;
+            userId: string;
+            platform: string;
+            token: string;
+            appVersion?: string;
+            osVersion?: string;
+            deviceModel?: string;
+            isActive: boolean;
+            registeredAt: string;
+            lastActiveAt: string;
+        };
     };
 };
 
@@ -7480,7 +8020,18 @@ export type RegisterDeviceAliasResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        device: {
+            id: string;
+            userId: string;
+            platform: string;
+            token: string;
+            appVersion?: string;
+            osVersion?: string;
+            deviceModel?: string;
+            isActive: boolean;
+            registeredAt: string;
+            lastActiveAt: string;
+        };
     };
 };
 
@@ -7518,7 +8069,7 @@ export type DispatchNotificationResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -7536,7 +8087,7 @@ export type SendAnnouncementResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -7554,7 +8105,8 @@ export type ScheduleNotificationResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        scheduled: boolean;
+        id: string;
     };
 };
 
@@ -7575,7 +8127,7 @@ export type CancelScheduledNotificationsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        cancelled: number;
     };
 };
 
@@ -7595,7 +8147,7 @@ export type TriggerWeeklyDigestResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -7613,7 +8165,25 @@ export type GetNotificationAnalyticsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        period: {
+            days: number;
+            since: string;
+        };
+        total: number;
+        deliveryRate: number;
+        sent: number;
+        suppressed: number;
+        failed: number;
+        byChannel: {
+            [key: string]: {
+                sent: number;
+                suppressed: number;
+                failed: number;
+            };
+        };
+        suppressionReasons: {
+            [key: string]: number;
+        };
     };
 };
 
@@ -7631,7 +8201,7 @@ export type SendTestEmailResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 
@@ -7649,7 +8219,7 @@ export type SendTestPushResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        [key: string]: unknown;
     };
 };
 

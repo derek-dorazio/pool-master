@@ -170,7 +170,8 @@ describe('Social Feed Integration', () => {
         },
       });
 
-      expect([200, 204]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ success: true });
 
       // Verify the post is gone
       const getRes = await getApp().inject({

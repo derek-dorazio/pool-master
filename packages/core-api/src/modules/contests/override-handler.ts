@@ -6,6 +6,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { extractTenantContext } from '../../core/tenant-context';
 import type { OverrideService } from './override-service';
 import { OverrideError } from './override-service';
+import { toContestResponse } from '../../mappers/contests.mapper';
 
 export function createOverrideHandlers(overrideService: OverrideService) {
   return {
@@ -144,7 +145,7 @@ export function createOverrideHandlers(overrideService: OverrideService) {
         tenantId,
         request.body.reason,
       );
-      return reply.send({ contest });
+      return reply.send(toContestResponse(contest, null));
     } catch (err) {
       handleOverrideError(err, reply);
     }
@@ -164,7 +165,7 @@ export function createOverrideHandlers(overrideService: OverrideService) {
         tenantId,
         request.body.reason,
       );
-      return reply.send({ contest });
+      return reply.send(toContestResponse(contest, null));
     } catch (err) {
       handleOverrideError(err, reply);
     }
@@ -185,7 +186,7 @@ export function createOverrideHandlers(overrideService: OverrideService) {
         new Date(request.body.newEnd),
         request.body.reason,
       );
-      return reply.send({ contest });
+      return reply.send(toContestResponse(contest, null));
     } catch (err) {
       handleOverrideError(err, reply);
     }
@@ -206,7 +207,7 @@ export function createOverrideHandlers(overrideService: OverrideService) {
         new Date(request.body.newLock),
         request.body.reason,
       );
-      return reply.send({ contest });
+      return reply.send(toContestResponse(contest, null));
     } catch (err) {
       handleOverrideError(err, reply);
     }

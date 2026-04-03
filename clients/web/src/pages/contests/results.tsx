@@ -46,9 +46,9 @@ export function Component() {
         standings: (data?.standings ?? []).map((entry) => ({
           id: entry.entryId,
           rank: entry.rank,
-          entryName: entry.displayName,
-          ownerName: entry.displayName,
-          totalScore: entry.score,
+          entryName: entry.entryName,
+          ownerName: entry.ownerDisplayName,
+          totalScore: entry.totalScore,
           isCurrentUser: false,
         })),
       };

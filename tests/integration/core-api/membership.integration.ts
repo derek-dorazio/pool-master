@@ -120,7 +120,8 @@ describe('Membership Integration', () => {
         url: `/api/v1/leagues/${leagueId}/members/${member3Id}`,
         headers: h,
       });
-      expect([200, 204]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ success: true });
     });
 
     it('removed member cannot access league', async () => {

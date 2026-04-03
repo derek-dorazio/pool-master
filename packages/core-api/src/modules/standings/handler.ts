@@ -5,6 +5,11 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { StandingsService, SortField } from './service';
 import { StandingsError } from './service';
+import {
+  mapMyEntryResultToDto,
+  mapStandingsPageToDto,
+  mapStandingsSummaryToDto,
+} from '../../mappers';
 
 const STANDINGS_POLL_INTERVAL = 10000;
 
@@ -33,7 +38,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
       const result = await standingsService.getStandings(contestId, { page, pageSize, sortBy });
       reply.header('X-Poll-Interval', String(STANDINGS_POLL_INTERVAL));
       reply.header('X-Poll-Interval-Unit', 'ms');
-      return reply.send(result);
+      return reply.send(mapStandingsPageToDto(result));
     } catch (err) {
       if (err instanceof StandingsError) {
         return reply.status(err.statusCode).send({ error: err.code, message: err.message });
@@ -57,7 +62,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
       const result = await standingsService.getSummary(contestId, topN);
       reply.header('X-Poll-Interval', String(STANDINGS_POLL_INTERVAL));
       reply.header('X-Poll-Interval-Unit', 'ms');
-      return reply.send(result);
+      return reply.send(mapStandingsSummaryToDto(result));
     } catch (err) {
       if (err instanceof StandingsError) {
         return reply.status(err.statusCode).send({ error: err.code, message: err.message });
@@ -89,7 +94,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
       const result = await standingsService.getMyEntry(contestId, userId);
       reply.header('X-Poll-Interval', String(STANDINGS_POLL_INTERVAL));
       reply.header('X-Poll-Interval-Unit', 'ms');
-      return reply.send(result);
+      return reply.send(mapMyEntryResultToDto(result));
     } catch (err) {
       if (err instanceof StandingsError) {
         return reply.status(err.statusCode).send({ error: err.code, message: err.message });

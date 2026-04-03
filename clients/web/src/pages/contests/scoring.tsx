@@ -40,23 +40,24 @@ function buildScoringResponse(
         standings: Array<{
           rank: number;
           entryId: string;
-          displayName: string;
-          score: number;
+          entryName: string;
+          ownerDisplayName: string;
+          totalScore: number;
         }>;
       }
     | undefined,
 ): ScoringResponse {
   const participants = (standings?.standings ?? []).map((entry) => ({
     id: entry.entryId,
-    name: entry.displayName,
+    name: entry.entryName,
     tier: `Rank ${entry.rank}`,
-    score: entry.score,
+    score: entry.totalScore,
     pctOfTotal: 0,
     stats: [
       {
         label: 'Standing',
-        detail: `Rank ${entry.rank}`,
-        points: entry.score,
+        detail: `${entry.ownerDisplayName} · Rank ${entry.rank}`,
+        points: entry.totalScore,
       },
     ],
   }));

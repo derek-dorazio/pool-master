@@ -2962,6 +2962,24 @@ export const pinFeedPost = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
+ * List selection templates
+ */
+export const listSelectionTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListSelectionTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListSelectionTemplatesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/drafts/templates',
+    ...options
+});
+
+/**
+ * Get a selection template by ID
+ */
+export const getSelectionTemplate = <ThrowOnError extends boolean = false>(options: Options<GetSelectionTemplateData, ThrowOnError>) => (options.client ?? client).get<GetSelectionTemplateResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/drafts/templates/{templateId}',
+    ...options
+});
+
+/**
  * Get current draft state for a contest
  */
 export const getDraftState = <ThrowOnError extends boolean = false>(options: Options<GetDraftStateData, ThrowOnError>) => (options.client ?? client).get<GetDraftStateResponses, unknown, ThrowOnError>({
@@ -3025,24 +3043,6 @@ export const extendPickDeadline = <ThrowOnError extends boolean = false>(options
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * List selection templates
- */
-export const listSelectionTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListSelectionTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListSelectionTemplatesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/drafts/templates',
-    ...options
-});
-
-/**
- * Get a selection template by ID
- */
-export const getSelectionTemplate = <ThrowOnError extends boolean = false>(options: Options<GetSelectionTemplateData, ThrowOnError>) => (options.client ?? client).get<GetSelectionTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/drafts/templates/{templateId}',
-    ...options
 });
 
 /**

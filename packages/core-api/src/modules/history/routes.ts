@@ -4,7 +4,26 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
+import {
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
+import {
+  HistoryObjectSchema,
+  HistoryStandingsResponseSchema,
+  HistoryPayoutsResponseSchema,
+  HistoryResultsResponseSchema,
+  HistorySeasonsResponseSchema,
+  HistoryChampionsResponseSchema,
+  HistoryLeaderboardResponseSchema,
+  HistoryTrophiesResponseSchema,
+  HistoryRecordsResponseSchema,
+  HistoryRivalriesResponseSchema,
+  HistoryLuckScoresResponseSchema,
+  HistoryPowerRatingsResponseSchema,
+  HistoryConsistencyScoresResponseSchema,
+  HistoryRankingsResponseSchema,
+  HistoryNotesResponseSchema,
+} from '@poolmaster/shared/dto/history.dto';
 import { HistoryService } from './history-service';
 import { LeagueHistoryService } from './league-history-service';
 import { TimelineService } from './timeline-service';
@@ -41,7 +60,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get contest history summary',
         operationId: 'getContestHistorySummary',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -61,7 +80,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get contest historical standings',
         operationId: 'getContestHistoryStandings',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryStandingsResponseSchema) },
       },
     },
     async (request) => {
@@ -78,7 +97,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get roster history for an entry',
         operationId: 'getRosterHistory',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -101,7 +120,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get contest payout history',
         operationId: 'getContestPayouts',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryPayoutsResponseSchema) },
       },
     },
     async (request) => {
@@ -118,7 +137,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get league contest results',
         operationId: 'getLeagueResults',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryResultsResponseSchema) },
       },
     },
     async (request) => {
@@ -135,7 +154,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get member contest results within a league',
         operationId: 'getMemberResults',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryResultsResponseSchema) },
       },
     },
     async (request) => {
@@ -154,7 +173,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get scoring timeline for a contest',
         operationId: 'getContestTimeline',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -171,7 +190,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get draft replay for a contest',
         operationId: 'getDraftReplay',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -191,7 +210,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get roster replay for an entry',
         operationId: 'getRosterReplay',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -216,7 +235,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'List league season summaries',
         operationId: 'getSeasonSummaries',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistorySeasonsResponseSchema) },
       },
     },
     async (request) => {
@@ -233,7 +252,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get a specific season summary',
         operationId: 'getSeasonSummary',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -256,7 +275,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get league champion list',
         operationId: 'getChampionList',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryChampionsResponseSchema) },
       },
     },
     async (request) => {
@@ -273,7 +292,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get member stats within a league',
         operationId: 'getMemberStats',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -293,7 +312,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get all-time league leaderboard',
         operationId: 'getAllTimeLeaderboard',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryLeaderboardResponseSchema) },
       },
     },
     async (request) => {
@@ -314,7 +333,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get member trophies within a league',
         operationId: 'getMemberTrophies',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryTrophiesResponseSchema) },
       },
     },
     async (request) => {
@@ -336,7 +355,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get league records',
         operationId: 'getLeagueRecords',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryRecordsResponseSchema) },
       },
     },
     async (request) => {
@@ -353,7 +372,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get a specific league record by category',
         operationId: 'getLeagueRecord',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -373,7 +392,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Recompute all league records',
         operationId: 'recomputeLeagueRecords',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -390,7 +409,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get league rivalries',
         operationId: 'getLeagueRivalries',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryRivalriesResponseSchema) },
       },
     },
     async (request) => {
@@ -407,7 +426,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get head-to-head rivalry between two members',
         operationId: 'getRivalry',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -431,7 +450,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Recompute all league rivalries',
         operationId: 'recomputeRivalries',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -450,7 +469,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Compute luck scores for league members',
         operationId: 'getLuckScores',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryLuckScoresResponseSchema) },
       },
     },
     async (request) => {
@@ -467,7 +486,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Compute power ratings for league members',
         operationId: 'getPowerRatings',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryPowerRatingsResponseSchema) },
       },
     },
     async (request) => {
@@ -484,7 +503,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Compute consistency scores for league members',
         operationId: 'getConsistencyScores',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryConsistencyScoresResponseSchema) },
       },
     },
     async (request) => {
@@ -501,7 +520,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Award analytics-based trophies for a season',
         operationId: 'awardAnalyticsTrophies',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -523,7 +542,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get year-over-year improvement stats for a member',
         operationId: 'getYoYStats',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -540,7 +559,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get improvement rankings for a season',
         operationId: 'getImprovementRankings',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryRankingsResponseSchema) },
       },
     },
     async (request, reply) => {
@@ -563,7 +582,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Add a season note',
         operationId: 'addSeasonNote',
-        response: { 201: zodToJsonSchema(SuccessSchema) },
+        response: { 201: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -585,7 +604,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get season notes',
         operationId: 'getSeasonNotes',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryNotesResponseSchema) },
       },
     },
     async (request) => {
@@ -605,7 +624,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Award a custom trophy for a season',
         operationId: 'awardCustomTrophy',
-        response: { 201: zodToJsonSchema(SuccessSchema) },
+        response: { 201: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -626,7 +645,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'List custom trophies for a league',
         operationId: 'listCustomTrophies',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryTrophiesResponseSchema) },
       },
     },
     async (request) => {
@@ -651,7 +670,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Import historical season data',
         operationId: 'importSeason',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -675,7 +694,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Preview member merge impact',
         operationId: 'previewMemberMerge',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -695,7 +714,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Execute member merge',
         operationId: 'executeMemberMerge',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -717,7 +736,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Export league history data',
         operationId: 'exportLeagueHistory',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request, reply) => {
@@ -739,7 +758,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Export member history data',
         operationId: 'exportMemberHistory',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -758,7 +777,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get league data retention configuration',
         operationId: 'getLeagueRetentionConfig',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -775,7 +794,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Update league data retention configuration',
         operationId: 'updateLeagueRetentionConfig',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {
@@ -792,7 +811,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Preview retention cleanup impact',
         operationId: 'previewRetentionCleanup',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
       },
     },
     async (request) => {

@@ -7,9 +7,18 @@ import { PrismaClient } from '@prisma/client';
 import { SearchService } from './search-service';
 import {
   zodToJsonSchema,
-  SearchResultsResponseSchema,
-  SuccessSchema,
 } from '@poolmaster/shared/dto';
+import {
+  SearchResultsResponseSchema,
+  DiscoverLeaguesResponseSchema,
+  DiscoverContestsResponseSchema,
+  DiscoveryReportResponseSchema,
+} from '@poolmaster/shared/dto/search.dto';
+import {
+  mapDiscoverableContestToDto,
+  mapDiscoverableLeagueToDto,
+  mapSearchParticipantsResponseToDto,
+} from '../../mappers';
 
 export async function searchModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -52,7 +61,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request) => {
       const qs = request.query;
-      return searchService.searchParticipants({
+      const result = await searchService.searchParticipants({
         query: qs.q ?? '',
         sportId: qs.sportId,
         status: qs.status ? qs.status.split(',') : undefined,
@@ -63,6 +72,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
         limit: qs.limit ? parseInt(qs.limit, 10) : undefined,
         offset: qs.offset ? parseInt(qs.offset, 10) : undefined,
       });
+      return mapSearchParticipantsResponseToDto(result);
     },
   });
 
@@ -81,17 +91,23 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Search'],
       summary: 'Discover public leagues',
       operationId: 'discoverLeagues',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(DiscoverLeaguesResponseSchema) },
     },
     handler: async (request) => {
       const qs = request.query;
-      return searchService.searchLeagues({
+      const result = await searchService.searchLeagues({
         query: qs.q,
         sport: qs.sport,
         sortBy: (qs.sort ?? 'POPULAR') as 'POPULAR' | 'NEWEST' | 'ACTIVITY',
         limit: qs.limit ? parseInt(qs.limit, 10) : undefined,
         offset: qs.offset ? parseInt(qs.offset, 10) : undefined,
       });
+      return {
+        leagues: result.leagues.map((league) =>
+          mapDiscoverableLeagueToDto(league as Record<string, unknown>),
+        ),
+        total: result.total,
+      };
     },
   });
 
@@ -110,17 +126,23 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Search'],
       summary: 'Discover open contests',
       operationId: 'discoverContests',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(DiscoverContestsResponseSchema) },
     },
     handler: async (request) => {
       const qs = request.query;
-      return searchService.searchContests({
+      const result = await searchService.searchContests({
         query: qs.q,
         sport: qs.sport,
         sortBy: (qs.sort ?? 'STARTING_SOON') as 'STARTING_SOON' | 'POPULAR' | 'PRIZE_POOL',
         limit: qs.limit ? parseInt(qs.limit, 10) : undefined,
         offset: qs.offset ? parseInt(qs.offset, 10) : undefined,
       });
+      return {
+        contests: result.contests.map((contest) =>
+          mapDiscoverableContestToDto(contest as Record<string, unknown>),
+        ),
+        total: result.total,
+      };
     },
   });
 
@@ -133,7 +155,7 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Search'],
       summary: 'Report a league or contest',
       operationId: 'reportDiscoveryEntity',
-      response: { 201: zodToJsonSchema(SuccessSchema) },
+      response: { 201: zodToJsonSchema(DiscoveryReportResponseSchema) },
       body: {
         type: 'object',
         required: ['entityType', 'entityId', 'reason'],

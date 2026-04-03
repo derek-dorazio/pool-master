@@ -128,7 +128,8 @@ describe('Templates Integration', () => {
         url: `/api/v1/templates/${templateId}`,
         headers: headersNoContentType,
       });
-      expect([200, 204]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ success: true });
     });
 
     it('template is gone after deletion', async () => {

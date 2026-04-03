@@ -5,14 +5,36 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@poolmaster/shared/generated': path.resolve(__dirname, '../../packages/shared/generated/api-types.ts'),
-      '@poolmaster/shared/dto': path.resolve(__dirname, '../../packages/shared/dto/index.ts'),
-      '@poolmaster/shared/api-routes': path.resolve(__dirname, '../../packages/shared/api-routes.ts'),
-      '@poolmaster/shared/domain': path.resolve(__dirname, '../../packages/shared/domain/index.ts'),
-      '@poolmaster/shared': path.resolve(__dirname, '../../packages/shared'),
-    },
+    alias: [
+      {
+        find: '@',
+        replacement: path.resolve(__dirname, './src'),
+      },
+      {
+        find: '@poolmaster/shared/generated/hey-api',
+        replacement: path.resolve(__dirname, '../../packages/shared/generated/hey-api'),
+      },
+      {
+        find: '@poolmaster/shared/generated',
+        replacement: path.resolve(__dirname, '../../packages/shared/generated/api-types.ts'),
+      },
+      {
+        find: '@poolmaster/shared/dto',
+        replacement: path.resolve(__dirname, '../../packages/shared/dto/index.ts'),
+      },
+      {
+        find: '@poolmaster/shared/api-routes',
+        replacement: path.resolve(__dirname, '../../packages/shared/api-routes.ts'),
+      },
+      {
+        find: '@poolmaster/shared/domain',
+        replacement: path.resolve(__dirname, '../../packages/shared/domain/index.ts'),
+      },
+      {
+        find: '@poolmaster/shared',
+        replacement: path.resolve(__dirname, '../../packages/shared'),
+      },
+    ],
   },
   server: {
     port: 5174,

@@ -5,6 +5,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { FeedService } from './feed-service';
 import { FeedError } from './feed-service';
+import {
+  mapFeedPageToDto,
+  mapFeedPostToDto,
+} from '../../mappers';
 
 export function createFeedHandlers(feedService: FeedService) {
   return {
@@ -31,7 +35,7 @@ export function createFeedHandlers(feedService: FeedService) {
 
     try {
       const result = await feedService.getFeed(leagueId, query.cursor, limit);
-      return reply.send(result);
+      return reply.send(mapFeedPageToDto(result));
     } catch (err) {
       if (err instanceof FeedError) {
         return reply.status(err.statusCode).send({ error: err.code, message: err.message });
@@ -64,7 +68,7 @@ export function createFeedHandlers(feedService: FeedService) {
     try {
       const postType = (type as 'POST' | 'ANNOUNCEMENT' | 'SYSTEM') ?? 'POST';
       const post = await feedService.createPost(leagueId, userId, content, postType);
-      return reply.status(201).send(post);
+      return reply.status(201).send(mapFeedPostToDto(post));
     } catch (err) {
       if (err instanceof FeedError) {
         return reply.status(err.statusCode).send({ error: err.code, message: err.message });
@@ -83,7 +87,7 @@ export function createFeedHandlers(feedService: FeedService) {
 
     try {
       const post = await feedService.getPost(postId);
-      return reply.send(post);
+      return reply.send(mapFeedPostToDto(post));
     } catch (err) {
       if (err instanceof FeedError) {
         return reply.status(err.statusCode).send({ error: err.code, message: err.message });
@@ -115,7 +119,7 @@ export function createFeedHandlers(feedService: FeedService) {
 
     try {
       const replyPost = await feedService.createReply(postId, userId, content);
-      return reply.status(201).send(replyPost);
+      return reply.status(201).send(mapFeedPostToDto(replyPost));
     } catch (err) {
       if (err instanceof FeedError) {
         return reply.status(err.statusCode).send({ error: err.code, message: err.message });
@@ -204,7 +208,7 @@ export function createFeedHandlers(feedService: FeedService) {
 
     try {
       await feedService.deletePost(postId);
-      return reply.status(204).send();
+      return reply.send({ success: true });
     } catch (err) {
       if (err instanceof FeedError) {
         return reply.status(err.statusCode).send({ error: err.code, message: err.message });

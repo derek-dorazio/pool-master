@@ -5,6 +5,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { MemberService } from './member-service';
 import { MemberNotFoundError, MemberOperationError } from './member-service';
+import { mapLeagueMembershipToDto } from '../../mappers';
 
 export function createMemberHandlers(memberService: MemberService) {
   return {
@@ -27,7 +28,7 @@ export function createMemberHandlers(memberService: MemberService) {
         newRole: request.body.role as Parameters<MemberService['changeRole']>[0]['newRole'],
         permissions: request.body.permissions as Parameters<MemberService['changeRole']>[0]['permissions'],
       });
-      return reply.send({ membership });
+      return reply.send({ membership: mapLeagueMembershipToDto(membership) });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -45,7 +46,7 @@ export function createMemberHandlers(memberService: MemberService) {
   ): Promise<void> {
     try {
       await memberService.removeMember(request.params.id, request.params.uid);
-      return reply.status(204).send();
+      return reply.send({ success: true });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -74,7 +75,10 @@ export function createMemberHandlers(memberService: MemberService) {
         userId,
         request.body.newOwnerId,
       );
-      return reply.send(result);
+      return reply.send({
+        previousOwner: mapLeagueMembershipToDto(result.previousOwner),
+        newOwner: mapLeagueMembershipToDto(result.newOwner),
+      });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

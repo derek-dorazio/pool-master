@@ -2,6 +2,7 @@
  * League DTOs — request/response schemas for league endpoints.
  */
 import { z } from 'zod';
+import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 
 // --- Requests ---
 
@@ -52,6 +53,19 @@ export const LeagueMemberDtoSchema = z.object({
 });
 export type LeagueMemberDto = z.infer<typeof LeagueMemberDtoSchema>;
 
+export const LeagueMembershipDtoSchema = z.object({
+  id: z.string(),
+  leagueId: z.string(),
+  userId: z.string(),
+  role: z.string(),
+  permissions: z.array(z.string()),
+  joinedAt: DateTimeSchema,
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
+});
+
+export const LeagueAuditEntryDtoSchema = JsonObjectSchema;
+
 // --- Responses ---
 
 export const LeagueResponseSchema = z.object({
@@ -68,3 +82,18 @@ export const LeagueMembersResponseSchema = z.object({
   members: z.array(LeagueMemberDtoSchema),
 });
 export type LeagueMembersResponse = z.infer<typeof LeagueMembersResponseSchema>;
+
+export const LeagueMembershipResponseSchema = z.object({
+  membership: LeagueMembershipDtoSchema,
+});
+
+export const TransferOwnershipResponseSchema = z.object({
+  previousOwner: LeagueMembershipDtoSchema,
+  newOwner: LeagueMembershipDtoSchema,
+});
+
+export const LeagueAuditEntriesResponseSchema = z.object({
+  entries: z.array(LeagueAuditEntryDtoSchema),
+});
+
+export const LeagueBulkOperationResponseSchema = JsonObjectSchema;

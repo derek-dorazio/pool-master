@@ -4,6 +4,10 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { extractTenantContext } from '../../core/tenant-context';
+import {
+  toContestListResponse,
+  toContestResponse,
+} from '../../mappers/contests.mapper';
 import type { ContestService } from './service';
 import { ContestNotFoundError, ContestOperationError } from './service';
 
@@ -49,7 +53,7 @@ export function createContestHandlers(contestService: ContestService) {
         isExclusive: body.isExclusive as boolean | undefined,
         scoringStopsOnElimination: body.scoringStopsOnElimination as boolean | undefined,
       });
-      return reply.status(201).send(result);
+      return reply.status(201).send(toContestResponse(result.contest, result.selectionConfig));
     } catch (err) {
       if (err instanceof ContestOperationError) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
@@ -63,7 +67,7 @@ export function createContestHandlers(contestService: ContestService) {
     _reply: FastifyReply,
   ): Promise<{ contests: unknown[] }> {
     const contests = await contestService.listByLeague(request.params.id);
-    return { contests };
+    return toContestListResponse(contests);
   }
 
   async function getContest(
@@ -75,7 +79,7 @@ export function createContestHandlers(contestService: ContestService) {
     if (!result) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'Contest not found' });
     }
-    return reply.send(result);
+    return reply.send(toContestResponse(result.contest, result.selectionConfig));
   }
 
   async function updateContest(
@@ -92,7 +96,7 @@ export function createContestHandlers(contestService: ContestService) {
         tenantId,
         request.body as any,
       );
-      return reply.send({ contest });
+      return reply.send(toContestResponse(contest, null));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

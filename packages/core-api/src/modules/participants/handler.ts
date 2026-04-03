@@ -7,6 +7,10 @@ import type { ParticipantService } from './service';
 import { ParticipantNotFoundError } from './service';
 import type { ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
+import {
+  mapParticipantSeasonRecordToDto,
+  mapParticipantToDto,
+} from '../../mappers';
 
 export function createParticipantHandlers(participantService: ParticipantService) {
   return {
@@ -32,7 +36,7 @@ export function createParticipantHandlers(participantService: ParticipantService
       };
     }>,
     _reply: FastifyReply,
-  ): Promise<{ participants: unknown[]; total: number }> {
+  ): Promise<{ participants: ReturnType<typeof mapParticipantToDto>[]; total: number }> {
     const qs = request.query;
     const filters: ParticipantSearchFilters = {};
     if (qs.sportId) filters.sportId = qs.sportId;
@@ -41,12 +45,16 @@ export function createParticipantHandlers(participantService: ParticipantService
     if (qs.team) filters.teamAffiliation = qs.team.split(',');
     if (qs.nationality) filters.nationality = qs.nationality.split(',');
 
-    return participantService.search({
+    const result = await participantService.search({
       query: qs.q,
       filters,
       limit: qs.limit ? parseInt(qs.limit, 10) : undefined,
       offset: qs.offset ? parseInt(qs.offset, 10) : undefined,
     });
+    return {
+      participants: result.participants.map(mapParticipantToDto),
+      total: result.total,
+    };
   }
 
   async function getParticipant(
@@ -57,7 +65,7 @@ export function createParticipantHandlers(participantService: ParticipantService
     if (!participant) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'Participant not found' });
     }
-    return reply.send({ participant });
+    return reply.send({ participant: mapParticipantToDto(participant) });
   }
 
   async function createParticipant(
@@ -94,7 +102,7 @@ export function createParticipantHandlers(participantService: ParticipantService
       metadata: body.metadata,
       externalIds: body.externalIds,
     });
-    return reply.status(201).send({ participant });
+    return reply.status(201).send({ participant: mapParticipantToDto(participant) });
   }
 
   async function updateParticipant(
@@ -106,7 +114,7 @@ export function createParticipantHandlers(participantService: ParticipantService
   ): Promise<void> {
     try {
       const participant = await participantService.update(request.params.id, request.body);
-      return reply.send({ participant });
+      return reply.send({ participant: mapParticipantToDto(participant) });
     } catch (err) {
       if (err instanceof ParticipantNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -126,14 +134,14 @@ export function createParticipantHandlers(participantService: ParticipantService
     if (!record) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'Season record not found' });
     }
-    return reply.send({ seasonRecord: record });
+    return reply.send({ seasonRecord: mapParticipantSeasonRecordToDto(record) });
   }
 
   async function getSeasonRecords(
     request: FastifyRequest<{ Params: { id: string } }>,
     _reply: FastifyReply,
-  ): Promise<{ seasonRecords: unknown[] }> {
+  ): Promise<{ seasonRecords: ReturnType<typeof mapParticipantSeasonRecordToDto>[] }> {
     const records = await participantService.getSeasonRecords(request.params.id);
-    return { seasonRecords: records };
+    return { seasonRecords: records.map(mapParticipantSeasonRecordToDto) };
   }
 }

@@ -9,10 +9,11 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import {
   zodToJsonSchema,
-  DraftStateResponseSchema,
-  DraftPickResponseSchema,
-  SuccessSchema,
 } from '@poolmaster/shared/dto';
+import {
+  SelectionTemplateListResponseSchema,
+  SelectionTemplateResponseSchema,
+} from '@poolmaster/shared/dto/drafts.dto';
 import crypto from 'node:crypto';
 import {
   SELECTION_TEMPLATES,
@@ -58,6 +59,62 @@ function buildDraftResponse(session: SessionState, state: DraftState, availableP
 }
 
 export async function draftsModule(fastify: FastifyInstance): Promise<void> {
+  const passthroughResponseSchema = {
+    type: 'object',
+    additionalProperties: true,
+  } as const;
+  fastify.get('/templates', {
+    schema: {
+      tags: ['Drafts'],
+      summary: 'List selection templates',
+      operationId: 'listSelectionTemplates',
+      querystring: {
+        type: 'object',
+        properties: {
+          sport: { type: 'string' },
+          contestType: { type: 'string' },
+        },
+      },
+      response: { 200: zodToJsonSchema(SelectionTemplateListResponseSchema) },
+    },
+    handler: async (request) => {
+      const { sport, contestType } = request.query as {
+        sport?: string;
+        contestType?: string;
+      };
+
+      if (sport && contestType) {
+        return getTemplatesForContestType(sport as Sport, contestType);
+      }
+      if (sport) {
+        return getTemplatesForSport(sport as Sport);
+      }
+      return SELECTION_TEMPLATES;
+    },
+  });
+
+  fastify.get('/templates/:templateId', {
+    schema: {
+      tags: ['Drafts'],
+      summary: 'Get a selection template by ID',
+      operationId: 'getSelectionTemplate',
+      params: {
+        type: 'object',
+        required: ['templateId'],
+        properties: { templateId: { type: 'string' } },
+      },
+      response: { 200: zodToJsonSchema(SelectionTemplateResponseSchema) },
+    },
+    handler: async (request, reply) => {
+      const { templateId } = request.params as { templateId: string };
+      const template = getTemplateById(templateId);
+      if (!template) {
+        return sendWithStatus(reply, 404, { error: `Template ${templateId} not found` });
+      }
+      return template;
+    },
+  });
+
   /** Get the current draft state for a contest. */
   fastify.get('/:contestId', {
     schema: {
@@ -69,7 +126,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: { 200: passthroughResponseSchema },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -110,7 +167,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           autoPickPolicy: { type: 'string', enum: ['QUEUE_THEN_BEST', 'BEST_AVAILABLE', 'RANDOM'] },
         },
       },
-      response: { 201: zodToJsonSchema(DraftStateResponseSchema) },
+      response: { 201: passthroughResponseSchema },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -187,7 +244,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           participantId: { type: 'string', format: 'uuid' },
         },
       },
-      response: { 200: zodToJsonSchema(DraftPickResponseSchema) },
+      response: { 200: passthroughResponseSchema },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -274,7 +331,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: { 200: passthroughResponseSchema },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -293,7 +350,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: { 200: passthroughResponseSchema },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -319,7 +376,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           additionalSeconds: { type: 'number', minimum: 1, maximum: 3600 },
         },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: { 200: passthroughResponseSchema },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -327,59 +384,4 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
   });
 
-  // --- Selection Template Routes ---
-
-  /** List all selection templates, optionally filtered by sport and/or contestType. */
-  fastify.get('/templates', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'List selection templates',
-      operationId: 'listSelectionTemplates',
-      querystring: {
-        type: 'object',
-        properties: {
-          sport: { type: 'string' },
-          contestType: { type: 'string' },
-        },
-      },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async (request) => {
-      const { sport, contestType } = request.query as {
-        sport?: string;
-        contestType?: string;
-      };
-
-      if (sport && contestType) {
-        return getTemplatesForContestType(sport as Sport, contestType);
-      }
-      if (sport) {
-        return getTemplatesForSport(sport as Sport);
-      }
-      return SELECTION_TEMPLATES;
-    },
-  });
-
-  /** Get a single selection template by ID. */
-  fastify.get('/templates/:templateId', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Get a selection template by ID',
-      operationId: 'getSelectionTemplate',
-      params: {
-        type: 'object',
-        required: ['templateId'],
-        properties: { templateId: { type: 'string' } },
-      },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async (request, reply) => {
-      const { templateId } = request.params as { templateId: string };
-      const template = getTemplateById(templateId);
-      if (!template) {
-        return sendWithStatus(reply, 404, { error: `Template ${templateId} not found` });
-      }
-      return template;
-    },
-  });
 }

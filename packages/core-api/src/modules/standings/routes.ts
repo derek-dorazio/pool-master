@@ -11,9 +11,12 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import {
   zodToJsonSchema,
-  StandingsResponseSchema,
-  SuccessSchema,
 } from '@poolmaster/shared/dto';
+import {
+  StandingsResponseSchema,
+  StandingsSummaryResponseSchema,
+  MyStandingsEntryResponseSchema,
+} from '@poolmaster/shared/dto/standings.dto';
 import { StandingsService } from './service';
 import { createStandingsHandlers } from './handler';
 
@@ -53,7 +56,7 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
           topN: { type: 'string' },
         },
       },
-      response: { 200: zodToJsonSchema(StandingsResponseSchema) },
+      response: { 200: zodToJsonSchema(StandingsSummaryResponseSchema) },
     },
     handler: handlers.getSummary,
   });
@@ -64,7 +67,7 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Standings'],
       summary: 'Get the current user\'s entry with rank context',
       operationId: 'getMyStandingsEntry',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(MyStandingsEntryResponseSchema) },
     },
     handler: handlers.getMyEntry,
   });

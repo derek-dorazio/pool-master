@@ -43,6 +43,7 @@ export const ContestSummaryDtoSchema = z.object({
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
   createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional(),
 });
 export type ContestSummaryDto = z.infer<typeof ContestSummaryDtoSchema>;
 
@@ -66,3 +67,18 @@ export const ContestListResponseSchema = z.object({
   contests: z.array(ContestSummaryDtoSchema),
 });
 export type ContestListResponse = z.infer<typeof ContestListResponseSchema>;
+
+export const ContestStandingsRecalculationResponseSchema = z.object({
+  contestId: z.string(),
+  teamsAffected: z.number(),
+  standingsChanged: z.boolean(),
+  changes: z.array(
+    z.object({
+      entryId: z.string(),
+      oldRank: z.number(),
+      newRank: z.number(),
+      oldScore: z.number(),
+      newScore: z.number(),
+    }),
+  ),
+});

@@ -4,6 +4,10 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { extractTenantContext } from '../../core/tenant-context';
+import {
+  toLeagueDetailDto,
+  toLeagueListResponse,
+} from '../../mappers/leagues.mapper';
 import type { CreateLeagueInput, LeagueService } from './service';
 import { LeagueNotFoundError } from './service';
 
@@ -21,7 +25,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
   ): Promise<{ leagues: unknown[] }> {
     const { tenantId } = extractTenantContext(request);
     const leagues = await leagueService.findByTenant(tenantId);
-    return { leagues };
+    return toLeagueListResponse(leagues);
   }
 
   async function createLeague(
@@ -52,7 +56,12 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       settings: body.settings as CreateLeagueInput['settings'],
     };
     const result = await leagueService.createLeague(input);
-    return reply.status(201).send(result);
+    return reply.status(201).send({
+      league: toLeagueDetailDto(result.league, {
+        memberCount: 1,
+        activeContestCount: 0,
+      }),
+    });
   }
 
   async function getLeague(
@@ -64,7 +73,12 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     if (!result) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'League not found' });
     }
-    return reply.send(result);
+    return reply.send({
+      league: toLeagueDetailDto(result.league, {
+        memberCount: result.members.length,
+        activeContestCount: 0,
+      }),
+    });
   }
 
   async function updateSettings(
@@ -81,7 +95,9 @@ export function createLeagueHandlers(leagueService: LeagueService) {
         tenantId,
         request.body as Parameters<LeagueService['updateSettings']>[2],
       );
-      return reply.send({ league });
+      return reply.send({
+        league: toLeagueDetailDto(league),
+      });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

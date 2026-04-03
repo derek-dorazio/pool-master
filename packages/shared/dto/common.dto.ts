@@ -7,6 +7,8 @@ import { z } from 'zod';
 
 export const UuidSchema = z.string().uuid();
 export const DateTimeSchema = z.string().datetime();
+export const JsonObjectSchema = z.record(z.unknown());
+export const StringRecordSchema = z.record(z.string());
 
 // --- Error Envelope ---
 

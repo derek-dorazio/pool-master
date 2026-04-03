@@ -69,3 +69,20 @@ export const SearchResultsResponseSchema = z.object({
   facets: SearchFacetsDtoSchema,
 });
 export type SearchResultsResponse = z.infer<typeof SearchResultsResponseSchema>;
+
+export const DiscoverLeaguesResponseSchema = z.object({
+  leagues: z.array(DiscoverableLeagueDtoSchema),
+  total: z.number(),
+});
+
+export const DiscoverContestsResponseSchema = z.object({
+  contests: z.array(DiscoverableContestDtoSchema),
+  total: z.number(),
+});
+
+export const DiscoveryReportResponseSchema = z.object({
+  report: z.object({
+    id: z.string(),
+  }),
+  reportCount: z.number(),
+});

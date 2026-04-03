@@ -7,8 +7,12 @@ import { PrismaClient } from '@prisma/client';
 import {
   zodToJsonSchema,
   ParticipantListResponseSchema,
-  SuccessSchema,
 } from '@poolmaster/shared/dto';
+import {
+  ParticipantResponseSchema,
+  ParticipantSeasonRecordListResponseSchema,
+  ParticipantSeasonRecordResponseSchema,
+} from '@poolmaster/shared/dto/participants.dto';
 import {
   PrismaParticipantRepository,
   PrismaParticipantSeasonRecordRepository,
@@ -63,7 +67,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Get a participant by ID',
       operationId: 'getParticipant',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ParticipantResponseSchema) },
     },
     handler: handler.getParticipant,
   });
@@ -91,7 +95,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           externalIds: { type: 'object' },
         },
       },
-      response: { 201: zodToJsonSchema(SuccessSchema) },
+      response: { 201: zodToJsonSchema(ParticipantResponseSchema) },
     },
     handler: handler.createParticipant,
   });
@@ -101,7 +105,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Update a participant',
       operationId: 'updateParticipant',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ParticipantResponseSchema) },
       body: {
         type: 'object',
         properties: {
@@ -130,7 +134,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Get all season records for a participant',
       operationId: 'getParticipantSeasonRecords',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ParticipantSeasonRecordListResponseSchema) },
     },
     handler: handler.getSeasonRecords,
   });
@@ -140,7 +144,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Get a specific season record for a participant',
       operationId: 'getParticipantSeasonRecord',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ParticipantSeasonRecordResponseSchema) },
     },
     handler: handler.getSeasonRecord,
   });

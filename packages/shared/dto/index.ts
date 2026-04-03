@@ -11,4 +11,7 @@ export * from './notifications.dto';
 export * from './admin.dto';
 export * from './social.dto';
 export * from './config.dto';
+export * from './compliance.dto';
+export * from './templates.dto';
+export * from './history.dto';
 export { zodToJsonSchema } from './json-schema';
