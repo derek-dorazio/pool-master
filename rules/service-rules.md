@@ -1,156 +1,182 @@
-You are a senior TypeScript programmer with experience in the Fastify framework and a preference for clean programming and design patterns.
+# PoolMaster — Service Rules
 
-Generate code, corrections, and refactorings that comply with the basic principles and nomenclature.
+These rules govern backend services in `packages/*/src`, especially Fastify modules, Prisma-backed services, DTOs, mappers, and OpenAPI generation.
 
-## CRITICAL: No Mock Data in Application Code
+---
 
-**This rule applies to ALL backend services and handlers. Violations are defects.**
+## 1. Core Standards
 
-- **NEVER include mock data, fake data, hardcoded sample data, or stub responses in service code, handlers, routes, or any application code.** Handlers MUST return real data from the database via the repository/service layer.
-- **NEVER return hardcoded JSON responses** from route handlers — every response must come from a real database query or service call.
-- **NEVER add `if (process.env.NODE_ENV === 'development') return mockData`** or similar conditional mocking in application code.
-- **Mock data belongs ONLY in test files** (`*.test.ts`, `tests/`, `__fixtures__/`). Test doubles are created via Jest mocks, fishery factories, nock interceptors, or test setup — never in application code.
-- **Service methods MUST call real repositories.** If the repository or database table does not exist yet, implement it — do not stub the return value.
-- **The presence of mock data in any file under `packages/*/src/` is a defect** to be found and fixed, not a pattern to follow.
+- Use TypeScript strict mode.
+- Use English for code and documentation.
+- Avoid `any`.
+- Prefer explicit return types on exported functions and public methods.
+- Use descriptive names and small, focused functions.
+- Prefer immutable data and `readonly` where practical.
+- Use shared enums/constants instead of bare string literals.
 
-TypeScript General Guidelines
-------------------------------
+### Banned Backend Patterns
 
-Basic Principles:
-- Use English for all code and documentation.
-- Always declare the type of each variable and function (parameters and return value).
-- Avoid using any.
-- Create necessary types.
-- Use JSDoc to document public classes and methods.
-- Don't leave blank lines within a function.
-- One export per file.
+- Returning hardcoded sample JSON from handlers
+- Returning raw Prisma entities directly from handlers
+- Defining a route without a real `schema.response`
+- Shipping mock data or development-only fallbacks in `packages/*/src`
+- Hand-editing generated OpenAPI/client output
+- Fixing generated-client problems with frontend casts instead of repairing backend schemas
 
-No Bare String Literals for State/Type/Status Values:
-- NEVER compare against raw string literals like `status === 'ACTIVE'` or `role === 'COMMISSIONER'`.
-- ALWAYS import and use enum constants: `status === ContestStatus.ACTIVE`, `role === LeagueRole.COMMISSIONER`.
-- All enums live in `packages/shared/domain/enums.ts` using the `as const` pattern.
-- For dual-state properties, prefer booleans: `isActive: boolean`, `isEnabled: boolean`, `isLocked: boolean`.
-- For 3+ states, define an enum: `ContestStatus`, `DeliveryStatus`, `SubscriptionStatus`.
-- Route JSON schemas must use `Object.values(EnumName)` or reference the enum — never hardcode `enum: ['A', 'B']`.
-- Frontend code should import enums from `@poolmaster/shared/domain` or define local constants that mirror them.
-- EventBus event type strings must use constants from `packages/shared/events/*.ts`, never inline strings.
+---
 
-No Hardcoded API Paths:
-- NEVER write raw URL path strings like `'/v1/auth/login'` or `'/api/v1/leagues'` in application code or tests.
-- ALWAYS import from `@poolmaster/shared/api-routes`:
-  - In tests and smoke tests: `API_ROUTES.auth.login` (full path with `/api` prefix)
-  - In frontend hooks/pages: `clientPath(API_ROUTES.auth.login)` (strips `/api` prefix since api-client prepends it)
-  - In backend route registration: use `API_PREFIXES.AUTH` from the same module
-- This applies to ALL code: frontend hooks, page components, smoke tests, integration tests, and backend route registrations.
-- If you need a new route, add it to `packages/shared/api-routes.ts` FIRST, then reference it everywhere else.
+## 2. No Mock Data in Application Code
 
-No Silent API Error Swallowing:
-- NEVER write try/catch blocks in hooks that return mock data on failure. This hides path errors and schema drift.
-- Let API errors propagate to the component layer where they can be handled visually (error boundaries, toast messages).
-- Mock data for development belongs in MSW handlers or Storybook, NOT in production hook code.
+This applies to all backend services and handlers.
 
-Nomenclature:
-- Use PascalCase for classes.
-- Use camelCase for variables, functions, and methods.
-- Use kebab-case for file and directory names.
-- Use UPPERCASE for environment variables.
-- Avoid magic numbers and define constants.
-- Start each function with a verb.
-- Use verbs for boolean variables. Example: isLoading, hasError, canDelete, etc.
-- Use complete words instead of abbreviations and correct spelling.
-  - Except for standard abbreviations like API, URL, etc.
-  - Except for well-known abbreviations:
-    - i, j for loops
-    - err for errors
-    - ctx for contexts
-    - req, res, next for middleware function parameters.
+- Never include mock data, fake data, stub responses, or hardcoded sample records in backend application code.
+- Handlers must return real service results backed by real repositories/data access.
+- If a dependency is missing, implement it or surface a real error. Do not fake the response.
+- The presence of mock data under `packages/*/src/` is a defect.
 
-Functions:
-- Write short functions with a single purpose. Less than 20 instructions.
-- Name functions with a verb and something else.
-  - If it returns a boolean, use isX or hasX, canX, etc.
-  - If it doesn't return anything, use executeX or saveX, etc.
-- Avoid nesting blocks by:
-  - Early checks and returns.
-  - Extraction to utility functions.
-- Use higher-order functions (map, filter, reduce, etc.) to avoid function nesting.
-- Use arrow functions for simple functions (less than 3 instructions).
-- Use named functions for non-simple functions.
-- Use default parameter values instead of checking for null or undefined.
-- Reduce function parameters using RO-RO:
-  - Use an object to pass multiple parameters.
-  - Use an object to return results.
-- Declare necessary types for input arguments and output.
-- Use a single level of abstraction.
+---
 
-Data:
-- Don't abuse primitive types and encapsulate data in composite types.
-- Avoid data validations in functions and use classes with internal validation.
-- Prefer immutability for data.
-- Use readonly for data that doesn't change.
-- Use as const for literals that don't change.
+## 3. Fastify Module Structure
 
-Classes:
-- Follow SOLID principles.
-- Prefer composition over inheritance.
-- Declare interfaces to define contracts.
-- Write small classes with a single purpose.
-  - Less than 200 instructions.
-  - Less than 10 public methods.
-  - Less than 10 properties.
+Organize backend code by domain module.
 
-Exceptions:
-- Use exceptions to handle errors you don't expect.
-- If you catch an exception, it should be to:
-  - Fix an expected problem.
-  - Add context.
-- Otherwise, use a global handler.
+Typical module layout:
 
-Testing:
-- Follow the Arrange-Act-Assert convention for tests.
-- Name test variables clearly.
-- Follow the convention: inputX, mockX, actualX, expectedX, etc.
-- Write unit tests for each public function.
-- Use test doubles to simulate dependencies.
-  - Except for third-party dependencies that are not expensive to execute.
-- Write acceptance tests for each module.
-- Follow the Given-When-Then convention.
+```
+modules/<domain>/
+  routes.ts
+  handler.ts
+  service.ts
+```
 
-Specific to Fastify
--------------------
+Rules:
 
-Basic Principles:
-- Use a modular architecture for your Fastify API.
-- Encapsulate the API into modules:
-  - One module per domain or main route.
-  - One route for each HTTP resource, encapsulated in plugins.
-  - One handler per route that deals with its business logic.
-- Use hooks (onRequest, preHandler, etc.) for request lifecycle management.
-- Validation:
-  - Validate input with JSON schemas and ajv for Fastify's built-in validation.
-  - Use DTOs or input types for handling structured data.
-- Prisma ORM:
-  - Use Prisma Client to interact with your database.
-  - Create services to manage entities and abstract database operations from the handlers.
-  - Use Prisma's schema for generating types and migrations.
-- A core folder for shared utilities:
-  - Middleware for common request handling.
-  - Global error handlers.
-  - Logging and instrumentation.
-  - Utility functions used across the application.
-- Environment management:
-  - Use dotenv or a similar library to manage environment variables.
-  - Store sensitive information in environment variables (like DB_URL).
+- Keep one domain area per module.
+- Route files define Fastify schemas and wire handlers.
+- Handlers translate HTTP concerns to service calls.
+- Services own business logic.
+- Mappers translate domain/service results to DTOs.
 
-DTO Mapping and OpenAPI:
-- Every new route handler MUST map domain entities to DTOs via a mapper in `packages/core-api/src/mappers/` before calling `reply.send()`. Never return raw Prisma types or domain entities directly from a handler.
-- Every route MUST define `schema.response` with JSON Schema derived from DTO Zod schemas using `zodToJsonSchema()`. This ensures response validation and drives the OpenAPI spec.
-- Every route MUST include `tags`, `operationId`, and `summary` in its schema for OpenAPI documentation. Tags group endpoints by domain; operationId must be unique across the API.
-- DTO Zod schemas use `z.string().datetime()` for date fields — never `Date` objects over the wire. All dates are serialized as ISO 8601 strings in API responses.
+---
 
-Testing:
-- Use the Jest framework for unit and integration tests.
-- Write unit tests for every service and handler.
-- Use test doubles (mocks, stubs) to simulate dependencies.
-- Write end-to-end tests using Fastify's inject method for simulating requests.
-- Create a /health route for health checks or smoke tests in each module.
+## 4. DTOs, Mappers, and OpenAPI
+
+PoolMaster uses DTO-driven API contracts.
+
+### Required Backend Flow
+
+For every API endpoint:
+
+1. Define or update the DTO Zod schema in `packages/shared/dto/`.
+2. Map domain/service results to that DTO in `packages/core-api/src/mappers/`.
+3. Use `zodToJsonSchema()` in the Fastify route schema for request/response payloads.
+4. Provide `tags`, `summary`, and unique `operationId`.
+5. Regenerate and validate the shared OpenAPI/client artifacts.
+
+### Required Route Schema Fields
+
+Every route must include:
+
+- `tags`
+- `summary`
+- `operationId`
+- request schema where applicable (`body`, `params`, `querystring`)
+- `response` schema for every supported status returned by the handler
+
+### Response Rules
+
+- Always describe the real response envelope.
+- If the response is `{ league: ... }`, schema must say `{ league: ... }`.
+- If the response is `{ success: true }`, schema must say `{ success: true }`.
+- Dates over the wire must be ISO 8601 strings, not `Date` objects.
+
+### Generated Artifacts Rules
+
+- Run `npm run api:refresh` after DTO/route changes that affect the contract.
+- Run `npm run api:validate` after regeneration.
+- Never hand-edit:
+  - `packages/shared/generated/openapi.json`
+  - anything under `packages/shared/generated/hey-api/`
+
+### What Not To Do
+
+- Do not leave placeholder `SuccessSchema` responses on endpoints that return real domain data.
+- Do not omit response schemas because “the frontend already knows.”
+- Do not add local frontend interfaces to paper over backend schema gaps.
+- Do not use `as unknown as` in app code to force a generated response into shape.
+
+---
+
+## 5. Prisma and Persistence
+
+- Use Prisma for database access.
+- Keep persistence concerns out of handlers.
+- Keep Prisma row shapes from leaking directly into API responses.
+- When Prisma models change, update DTOs, mappers, route schemas, and tests in the same work.
+- Prefer explicit mapping from persistence models to domain/DTO models.
+
+---
+
+## 6. Enums, Constants, and Paths
+
+### Enums and Status Values
+
+- Never compare important state with ad hoc bare strings if a shared enum/constant exists.
+- Use shared domain constants/enums from `packages/shared/domain`.
+- Route schema enums must derive from shared values, not copied literal arrays where possible.
+
+### Route Constants
+
+- `packages/shared/api-routes.ts` is the canonical route constant registry.
+- Use it for:
+  - backend registration prefixes
+  - integration tests
+  - smoke tests
+  - MSW handlers
+- Do not create new duplicate route-constant registries.
+
+### Frontend Boundary Clarification
+
+- Frontend runtime app code should prefer the generated `hey-api` SDK over manual path constants when an operation exists.
+- Backend work must still keep `API_ROUTES` current so non-generated consumers stay aligned.
+
+---
+
+## 7. Error Handling
+
+- Catch exceptions only to add context, translate domain errors, or handle expected failures.
+- Do not swallow backend errors to preserve a fake success path.
+- Prefer clear typed/domain errors over ambiguous generic errors where practical.
+- Let global Fastify error handling deal with unhandled failures.
+
+---
+
+## 8. Testing Expectations for Backend Work
+
+- Unit-test service logic.
+- Integration-test request/response behavior with Fastify `inject` where appropriate.
+- Add/update contract tests for API response shapes.
+- When API schema changes, verify:
+  - contract tests
+  - `api:refresh`
+  - `api:validate`
+
+### Do Not Preserve Bad Tests
+
+- Do not keep tests that only lock in outdated manual wrapper behavior.
+- Do not keep tests that validate copied path strings without exercising real request construction.
+- Replace stale tests with contract/integration coverage where that provides better signal.
+
+---
+
+## 9. Backend Review Checklist
+
+Before finishing backend API work, verify:
+
+1. Does every changed route have real request/response schemas?
+2. Do handlers return mapped DTOs instead of raw Prisma rows?
+3. Is `operationId` present and unique?
+4. Does `npm run api:refresh` succeed?
+5. Does `npm run api:validate` succeed?
+6. Did generated files update as expected?
+7. Did any frontend casts/local API interfaces become removable?

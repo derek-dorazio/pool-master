@@ -1,673 +1,186 @@
 # PoolMaster — Testing Rules
 
-All services and clients must follow these testing standards. This document defines the testing strategy, tools, coverage requirements, and conventions for the PoolMaster platform.
+All services and clients must follow these testing standards. This document defines the testing strategy, contract validation rules, smoke/E2E expectations, and when old tests should be removed rather than preserved.
 
-> **Architecture dependency:** This document assumes the tech stack defined in [architecture-rules.md](architecture-rules.md). Backend = Node.js + Fastify + TypeScript (see [service-rules.md](service-rules.md)). Frontend = React + shadcn/ui + TailwindCSS (see [react-ui-rules.md](react-ui-rules.md)). Mobile = React Native.
+> **Architecture dependency:** This document assumes the stack in [architecture-rules.md](architecture-rules.md): Fastify + TypeScript backend, React web/admin clients, native iOS/Android clients, DTO-driven OpenAPI, and shared generated `hey-api` clients for web/admin.
 
 ---
 
 ## 1. Testing Tools
 
-### Backend (Node.js + TypeScript)
+### Backend
 
 | Tool | Purpose |
 |---|---|
-| **Jest** (or **Vitest**) | Test runner and framework |
-| **light-my-request** (or Fastify inject) | HTTP testing via Fastify's built-in inject method |
-| **fishery** | Test data factories (generate realistic domain objects) |
-| **Faker** (`@faker-js/faker`) | Generate fake data (names, emails, dates) |
-| **testcontainers** (`testcontainers-node`) | Spin up PostgreSQL, Redis, DynamoDB containers for integration tests |
-| **aws-sdk-client-mock** | Mock AWS services (S3, SQS, DynamoDB) for unit tests |
-| **sinon** (or Jest mocks) | Stubs, spies, and mocks for time, dependencies |
-| **nock** | Mock HTTP requests to external APIs (sports data providers, Stripe) |
-| **Mailpit** | Email capture for integration/E2E tests (SMTP on 1025, API on 8025) |
-| **LocalStack** | AWS service mocks (SES, SNS, SQS) for integration tests |
-| **Push Mock Server** | APNs/FCM push capture for integration tests (port 3099) |
+| Jest | unit and integration test runner |
+| Fastify `inject` | request/response integration testing |
+| Prisma test DB / local infra | persistence-backed integration tests |
+| `nock` / service mocks | external dependency isolation where needed |
 
-### Frontend (React + TypeScript)
+### Frontend — Web/Admin
 
 | Tool | Purpose |
 |---|---|
-| **Vitest** | Test runner (fast, Vite-native, Jest-compatible API) |
-| **React Testing Library** | Component testing (user-centric, not implementation-detail) |
-| **MSW (Mock Service Worker)** | Mock API responses at the network level |
-| **Playwright** | End-to-end browser tests |
+| Vitest | unit and integration-style test runner |
+| React Testing Library | user-focused component and page tests |
+| MSW | request-level API mocking |
+| Playwright | browser smoke/E2E tests |
 
-### Mobile (React Native)
+### Mobile
 
-| Tool | Purpose |
+| Platform | Tooling |
 |---|---|
-| **Jest** | Test runner (React Native default) |
-| **React Native Testing Library** | Component testing |
-| **Detox** | End-to-end mobile testing (iOS + Android simulators) |
+| iOS | XCTest / XCUITest |
+| Android | JUnit / Compose UI tests / instrumentation where needed |
 
 ---
 
 ## 2. Test Layers
 
-### Layer Definitions
+### Backend
 
-```
-┌─────────────────────────────────────────────────┐
-│            E2E Tests (Playwright / Detox)         │  Few, slow, high confidence
-│  Full user flows through real UI + real API        │
-├─────────────────────────────────────────────────┤
-│         Integration Tests (testcontainers)        │  Moderate count
-│  Service + real DB + real Redis + real message bus │
-├─────────────────────────────────────────────────┤
-│              Unit Tests (Jest / Vitest)            │  Many, fast, focused
-│  Single function/class, mocked dependencies        │
-└─────────────────────────────────────────────────┘
-```
-
-### Backend Test Layers
-
-| Layer | Scope | Database | External Services | Speed |
-|---|---|---|---|---|
-| **Unit** | Single function, class, or Zod schema | Mocked | Mocked | < 1s per test |
-| **Integration** | Service → repository → real database | Real (testcontainers PostgreSQL) | Mocked (nock, aws-sdk-client-mock) | < 5s per test |
-| **API** | Full HTTP request → response cycle | Real (testcontainers) | Mocked | < 5s per test |
-| **E2E** | Multi-service flows | Real | Real (staging providers) | < 30s per test |
-
-### Frontend Test Layers
-
-| Layer | Scope | API | Speed |
+| Layer | Scope | Real DB | Notes |
 |---|---|---|---|
-| **Unit** | Component rendering, hooks, utilities | Mocked (MSW) | < 1s per test |
-| **Integration** | Multi-component flows, form submissions | Mocked (MSW) | < 3s per test |
-| **E2E** | Full user journey in real browser | Real (staging API) | < 30s per test |
+| Unit | function/service behavior | no | mock dependencies intentionally |
+| Integration | Fastify + services + persistence | yes | validates real behavior |
+| Contract | response/request shape vs DTO schema | yes | catches drift |
+| Smoke | deployed API black-box flow | deployed env | post-build/post-deploy confidence |
+
+### Frontend
+
+| Layer | Scope | API |
+|---|---|---|
+| Unit | presentational components, utilities | mocked only if network irrelevant |
+| Integration | hooks/pages/user flows | MSW |
+| Browser E2E | deployed browser flows | real deployed API |
 
 ---
 
-## 3. Coverage Requirements
+## 3. Required Local Quality Gates
 
-### Minimum Coverage Thresholds
+These are the default required checks before commit:
 
-| Service / Package | Line Coverage | Branch Coverage | Enforced In |
-|---|---|---|---|
-| `shared/domain` | 95% | 90% | CI (block merge) |
-| `shared/events` | 90% | 85% | CI (block merge) |
-| `core-api` | 85% | 80% | CI (block merge) |
-| `draft-service` | 90% | 85% | CI (block merge) |
-| `scoring-service` | 95% | 90% | CI (block merge) |
-| `ingestion-worker` | 85% | 80% | CI (block merge) |
-| `notification-service` | 80% | 75% | CI (block merge) |
-| `clients/web` | 80% | 75% | CI (warn, don't block) |
-| `clients/mobile` | 70% | 65% | CI (warn, don't block) |
+1. `npx turbo typecheck --force`
+2. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+3. `npx jest --config tests/jest.config.js --forceExit`
+4. `cd clients/web && npx vitest run`
+5. `cd clients/admin && npx vitest run`
 
-### Why Scoring Service Is Highest
+Contract-specific commands:
 
-The scoring engine is the most business-critical component. An incorrect score calculation directly affects contest results and payouts. Every scoring rule, bonus, penalty, multiplier, and edge case (missed cut, DNF, corrections) must have dedicated test cases.
+6. `npm run api:refresh` when API schemas change
+7. `npm run api:validate` when OpenAPI output changes
 
 ---
 
-## 4. What Must Be Tested
+## 4. Contract Testing Rules
 
-### Backend — Required Test Cases
+PoolMaster treats API contracts as first-class test surfaces.
 
-**Domain models and schemas:**
-- Zod schema validation (valid and invalid inputs)
-- Serialisation / deserialisation round-trips
-- Enum value validation
+- Contract tests must validate live responses against DTO Zod schemas using `.safeParse()`.
+- New or changed endpoints must update:
+  - `tests/integration/core-api/api-contracts-web.integration.ts`
+  - `tests/integration/core-api/api-contracts-admin.integration.ts`
+  - or a clearly equivalent contract suite
+- If response shape changes, update the contract test in the same change.
+- Do not rely on TypeScript alone to prove runtime payload shape correctness.
 
-**Repository layer:**
-- CRUD operations against real PostgreSQL (integration tests)
-- Tenant isolation (query with wrong tenant_id returns nothing)
-- Edge cases: duplicate keys, not found, concurrent updates
+---
 
-**API endpoints:**
-- Happy path for every endpoint
-- Authentication required (401 without token)
-- Authorisation (403 for wrong role — commissioner vs manager vs viewer)
-- Validation errors (422 for invalid input)
-- Tenant isolation (can't access another tenant's data)
-- Pagination (first page, last page, empty results)
+## 5. MSW Rules
 
-**Scoring engine:**
-- Every scoring template (golf stroke play, NBA advancement, NCAA bracket, NHL player stats, soccer tournament, etc.)
-- Every stat rule, bonus rule, penalty rule, multiplier rule
-- Edge cases: missed cut, DNF, withdrawal, disqualification
-- Data corrections (is_correction = true) and recalculation
-- Tiebreaker chains
-- BEST_N and DROP_LOWEST_N counting methods
-- Position-based scoring with ranges
+MSW is the default pattern for frontend tests that should exercise real request wiring.
 
-**Draft engine:**
-- Snake pick order (odd rounds, even rounds, various team counts)
-- Salary cap budget enforcement (max bid, reserve for remaining slots)
-- Tiered draft tier enforcement (picks per tier, exclusivity)
-- Auto-pick (queue → rankings → system default)
-- Timer expiry and auto-pick trigger
-- Commissioner overrides (undo, pause, extend clock)
-- Draft state persistence and recovery after crash
+Use MSW when testing:
 
-**Notifications:**
-- Event → template rendering → correct channel routing
-- User preference filtering (push enabled, email disabled)
-- Suppression rules (rate limiting, DND, dedup)
-- Scheduled notification fire-at-time accuracy
+- hooks
+- pages
+- form submission flows
+- authenticated screen loading
+- query/mutation behavior
 
-**Entitlement service:**
-- Plan-based access checks for every entitlement key
-- Usage limit enforcement (leagues, contests, members)
-- Admin overrides
-- Graceful degradation on downgrade
+Why:
 
-### Frontend — Required Test Cases
+- the real API layer executes
+- the real URL/method/body gets constructed
+- path drift and request-shape drift are caught
 
-**Components:**
-- Render with expected props
-- User interactions (click, type, submit)
+### Banned Frontend Test Patterns
+
+- `vi.mock('@/lib/api-client')`
+- mocking the generated API layer so completely that request construction never runs
+- tests that only assert copied path strings
+- preserving old tests that validate retired manual-client behavior
+
+### Allowed Cleanup
+
+Remove tests if they are:
+
+- enforcing obsolete manual API wrappers
+- built around fake application fallback data that no longer exists
+- lower-signal duplicates of stronger MSW/contract coverage
+
+Do not keep bad tests just because they already exist.
+
+---
+
+## 6. Smoke and Browser E2E Rules
+
+### API Smoke
+
+- Lives under `tests/api/functional/*.smoke.ts` and related health smoke files.
+- Treat smoke tests as black-box environment validation against deployed services.
+- Use shared route constants from `@poolmaster/shared/api-routes`.
+- Keep smoke flows aligned with real critical-path behavior.
+- When endpoint contracts change, smoke tests must change with them.
+
+### Browser Smoke / E2E
+
+- Lives under `clients/web/e2e/`.
+- Uses Playwright against a running local app or deployed environment.
+- Focus on high-value user journeys and runtime error detection.
+- Remove or update browser tests when they reference retired UI paths or dead buttons.
+
+---
+
+## 7. What Must Be Tested
+
+### Backend
+
+- Authentication and authorization behavior
+- Route validation behavior
+- DTO contract compliance
+- Persistence for changed model fields
+- Tenant isolation
+- Critical business flows
+
+### Frontend
+
 - Loading, error, and empty states
-- Responsive layout breakpoints (if applicable)
-
-**Forms:**
-- Validation rules (required fields, formats, ranges)
-- Submission success and error handling
-- Commissioner wizards (league setup, contest setup) — step-by-step flow
-
-**Real-time:**
-- WebSocket connection → message display
-- Reconnection after disconnect
-- Draft room: pick submission, timer display, auto-pick warning
-
-### Frontend API Mocking — CRITICAL RULES
-
-**NEVER mock the `api-client` module with `vi.mock('@/lib/api-client')` in new tests.** This pattern replaces `fetch` entirely, so the real URL (`${API_BASE}${path}`) is never constructed. Path mismatches between frontend and backend become invisible.
-
-**Instead, use MSW (Mock Service Worker)** to intercept at the network level:
-```typescript
-import { http, HttpResponse } from 'msw';
-import { server } from '@/test/msw/server';
-
-server.use(
-  http.post('/api/v1/auth/login', () => {
-    return HttpResponse.json({ tokens: { accessToken: 'test' }, user: { ... } });
-  }),
-);
-```
-
-**Why:** With MSW, the real `api-client.ts` code runs. If the frontend calls `/api/auth/login` but the handler expects `/api/v1/auth/login`, the test fails immediately because `onUnhandledRequest: 'error'` is set.
-
-**NEVER assert on API path strings in tests.** Assertions like `expect(mockApi).toHaveBeenCalledWith('/v1/auth/login', ...)` are just copies of the code — they validate nothing and drift silently. If you must assert on a path, import it from the shared route constants.
-
-**NEVER write try/catch fallbacks that return mock data in hooks.** This pattern silently hides API errors:
-```typescript
-// BAD — hides path errors, returns stale mock data
-try { return await api.get('/v1/contests'); }
-catch { return mockContests; }
-
-// GOOD — let errors propagate, handle in the component
-return await api.get('/v1/contests');
-```
-
-See `plans/23-msw-test-migration.md` for the full migration plan.
-
-### DTO Contract Validation
-
-- **Contract tests MUST validate responses against DTO Zod schemas** using `.safeParse()`. This catches drift between what the backend actually returns and what the DTO declares as the contract.
-- **Every new endpoint MUST have a contract test** that parses the response through the corresponding DTO schema. Add to `tests/integration/core-api/api-contracts-web.integration.ts` or `api-contracts-admin.integration.ts`.
-- **Test mock data MUST satisfy DTO schemas.** Import types from `@poolmaster/shared/dto` and validate mock data with `.safeParse()` to ensure mocks stay in sync with the real contract.
+- Form validation and submission behavior
+- Navigation to critical product pages
+- Mutations that change server state
+- Critical authenticated flows
 
 ---
 
-## 5. Test Data Strategy
+## 8. What Not To Do
 
-### Factories (Backend)
-
-Use `fishery` to generate realistic test data. Every domain model has a factory.
-
-```typescript
-import { Factory } from "fishery";
-import { v4 as uuid } from "uuid";
-import { League, Contest } from "@poolmaster/shared/domain";
-
-export const leagueFactory = Factory.define<League>(() => ({
-  id: uuid(),
-  tenantId: uuid(),
-  name: faker.company.name(),
-  description: faker.lorem.sentence(),
-  createdBy: uuid(),
-  visibility: "PRIVATE",
-  maxMembers: 20,
-}));
-
-export const contestFactory = Factory.define<Contest>(() => ({
-  id: uuid(),
-  leagueId: uuid(),
-  sport: "GOLF",
-  contestType: "SINGLE_EVENT",
-  scoringType: "CUMULATIVE",
-  status: "DRAFT",
-}));
-```
-
-### Fixtures (Backend)
-
-Shared setup in `tests/setup.ts`:
-
-```typescript
-// Global test setup — DB connections, test containers
-import { PostgreSqlContainer } from "@testcontainers/postgresql";
-import { GenericContainer } from "testcontainers";
-
-let pgContainer: StartedPostgreSqlContainer;
-let redisContainer: StartedTestContainer;
-
-beforeAll(async () => {
-  pgContainer = await new PostgreSqlContainer().start();
-  redisContainer = await new GenericContainer("redis:7-alpine").withExposedPorts(6379).start();
-  // Set connection URLs in environment
-});
-
-afterAll(async () => {
-  await pgContainer.stop();
-  await redisContainer.stop();
-});
-```
-
-### Seed Data
-
-For E2E and manual testing, a seed script populates:
-- 3 tenants (free, pro, league+)
-- 2 leagues per tenant with 8-12 members each
-- Participants for golf (PGA field), NFL (sample rosters)
-- 1 completed contest with full history (for history feature testing)
-- 1 active contest in draft state
-- 1 active contest with live scoring
+- Do not keep around tests that verify bad architecture.
+- Do not preserve tests for no-op UI.
+- Do not update mocks without checking whether the real contract changed.
+- Do not hand-wave broken contract tests as “just generated client issues.”
+- Do not skip OpenAPI validation after changing route schemas.
 
 ---
 
-## 6. Test Conventions
+## 9. Documentation Drift Rules
 
-### Naming
+If test strategy changes materially, update this file in the same work.
 
-```typescript
-// Backend: describe block = module, it block = behaviour
-describe("LeagueService", () => {
-  it("creates a league with valid data");
-  it("rejects league creation without a name");
-});
+Examples:
 
-describe("ScoringEngine", () => {
-  it("reverses snake draft pick order on even rounds");
-  it("assigns penalty score for golf missed cut");
-});
-
-describe("EntitlementService", () => {
-  it("blocks fourth league creation on free plan");
-});
-```
-
-```typescript
-// Frontend: describe block = component/feature, it block = behaviour
-describe("DraftRoom", () => {
-  it("displays countdown timer when user is on the clock");
-  it("submits pick and shows confirmation");
-  it("shows auto-pick warning at 10 seconds remaining");
-});
-```
-
-### File Organisation
-
-```
-# Backend tests (top-level tests/ directory)
-tests/
-├── unit/
-│   ├── core-api/
-│   │   ├── league-service.test.ts
-│   │   ├── scoring-engine.test.ts
-│   │   └── entitlement-service.test.ts
-│   └── shared/
-│       └── domain-models.test.ts
-├── integration/
-│   ├── core-api/
-│   │   ├── league-repository.test.ts
-│   │   ├── contest-repository.test.ts
-│   │   └── scoring-pipeline.test.ts
-├── api/
-│   ├── core-api/
-│   │   ├── league-endpoints.test.ts
-│   │   ├── contest-endpoints.test.ts
-│   │   └── draft-endpoints.test.ts
-├── factories/
-│   ├── league.factory.ts
-│   ├── contest.factory.ts
-│   └── user.factory.ts
-└── setup.ts
-
-# Frontend tests (co-located within client)
-clients/web/src/
-├── components/
-│   ├── DraftRoom/
-│   │   ├── DraftRoom.tsx
-│   │   └── DraftRoom.test.tsx
-├── __tests__/
-│   └── e2e/
-│       ├── draft-flow.spec.ts
-│       └── contest-setup.spec.ts
-```
-
-### Test Isolation
-
-- Each test is independent — no shared mutable state between tests
-- Database tests use transactions that roll back after each test (or fresh containers)
-- Redis tests flush the test database between tests
-- Time-dependent tests use Jest fake timers or sinon to freeze time
-- External API tests use `nock` mocks — never call real providers in unit/integration tests
-
----
-
-## 7. CI Pipeline
-
-### Pipeline Stages
-
-```
-1. Lint & Format
-   ├── Backend + Frontend: eslint + prettier --check
-   └── Block merge on failure
-
-2. Type Check
-   ├── All packages: tsc --noEmit (via Turborepo)
-   └── Block merge on failure
-
-3. Unit Tests
-   ├── Backend: jest tests/unit/ --coverage
-   ├── Frontend: vitest run
-   └── Block merge on failure or coverage below threshold
-
-4. Integration Tests
-   ├── Backend: jest tests/integration/ (testcontainers)
-   └── Block merge on failure
-
-5. API Tests
-   ├── Backend: jest tests/api/ (testcontainers)
-   └── Block merge on failure
-
-6. E2E Tests (on merge to main only)
-   ├── Frontend: playwright (against staging API)
-   └── Notify on failure, don't block deploy
-
-7. Build & Push
-   ├── Docker build for each service
-   ├── Push to ECR
-   └── Deploy to staging
-```
-
-### Pre-Commit Hooks (via lint-staged + husky)
-
-```json
-{
-  "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
-  "*.{json,md}": ["prettier --write"]
-}
-```
-
-### Pull Request Requirements
-
-- All CI stages 1-5 must pass
-- At least one approval from a code reviewer
-- No decrease in coverage percentage
-- All new public functions/endpoints have tests
-
----
-
-## 8. Sport-Specific Test Suites
-
-Given the sport-agnostic scoring engine, each sport needs a dedicated test suite that validates its scoring templates against known real-world results.
-
-### Validation Approach
-
-```typescript
-// For each sport, test against known historical results:
-// "Given this scoring config and these real stat events,
-//  the engine should produce these exact scores and standings."
-
-describe("Golf scoring against real data", () => {
-  it("stroke play scoring matches 2025 Masters actual results", () => {
-    const config = SCORING_TEMPLATES["golf_dfs_standard"];
-    const stats = loadFixture("masters_2025_stats.json");
-    const results = scoringEngine.calculate(config, stats);
-    expect(results[0].participantName).toBe("Scottie Scheffler");
-    expect(results[0].totalPoints).toBeCloseTo(287.5, 1);
-  });
-
-  it("Stroke play scoring matches 2025 Masters actual results", () => {
-    const config = SCORING_TEMPLATES["golf_stroke_pick6_use4"];
-    // ... validate stroke play scoring
-  });
-});
-```
-
-### Required Fixtures Per Sport
-
-| Sport | Fixture Data | Source |
-|---|---|---|
-| Golf | 1 major tournament full stats (72 holes, all players) | Historical provider data |
-| NFL | 1 full week of games (all players, all stats) | Historical provider data |
-| F1 | 1 race weekend (qualifying + race, all drivers) | Historical provider data |
-| NCAA Basketball | 1 full tournament bracket (all 67 games) | Historical results |
-| Tennis | 1 Grand Slam draw (128 players, all matches) | Historical results |
-| Horse Racing | 1 major race (full field, positions, times) | Historical results |
-
----
-
-## 9. Load Testing
-
-### When to Run
-
-- Before each major release
-- After significant scoring engine changes
-- After database schema changes
-- When onboarding a large tenant
-
-### Tools
-
-- **k6** (JavaScript-based, runs natively) or **Artillery**
-- Run against a dedicated load-test environment (mirrors production infra)
-
-### Key Scenarios
-
-| Scenario | Target | SLA |
-|---|---|---|
-| Live draft (12 teams, 60s picks) | WebSocket messages delivered | < 200ms p99 |
-| Live scoring (50 contests, 1000 stat events/min) | Score recalculation | < 2s per contest |
-| API burst (1000 concurrent leaderboard requests) | Response time | < 500ms p95 |
-| Draft room reconnection (100 simultaneous reconnects) | State recovery | < 3s per client |
-| Notification storm (contest completes, 500 notifications) | Delivery | < 30s all delivered |
-
-### Performance Budgets
-
-| Metric | Target |
-|---|---|
-| API response (p95) | < 200ms |
-| API response (p99) | < 500ms |
-| WebSocket message delivery (p95) | < 100ms |
-| Scoring engine recalculation (per contest) | < 2s |
-| Database query (p95) | < 50ms |
-| Page load (web, LCP) | < 2.5s |
-| App launch to interactive (mobile) | < 2s |
-
----
-
-## 10. CRITICAL: Mock Data Belongs ONLY in Test Files
-
-**Mock data, fake data, and test doubles MUST NEVER exist in application code. This is the #1 code quality rule.**
-
-### Where Mocks Belong
-
-- **Test files ONLY:** `*.test.ts`, `*.test.tsx`, files inside `__tests__/`, `__fixtures__/`, `tests/`, `e2e/`
-- **MSW handlers** for frontend API mocking (see section 4, "Frontend API Mocking")
-- **Test factories** (`tests/factories/`) using fishery for generating realistic test data
-- **Inline in test files** as `const mockResponse = { ... }` within `describe`/`it` blocks
-- **`__fixtures__/` directories** for shared test data used across multiple test files
-
-### Where Mocks MUST NEVER Exist
-
-- **NEVER in hooks** (`clients/*/src/**/hooks/*.ts`) — no `const mockData`, no `queryFn: async () => mockData`, no `initialData: mockData`, no `try/catch` returning fake data
-- **NEVER in pages or components** (`clients/*/src/pages/*.tsx`, `clients/*/src/features/**/*.tsx`)
-- **NEVER in services** (`packages/*/src/modules/*/service.ts`) — services call real repositories
-- **NEVER in handlers** (`packages/*/src/modules/*/handler.ts`) — handlers return real data from services
-- **NEVER in any file under `packages/*/src/`** or `clients/*/src/` outside of test files
-
-### Rules
-
-- **Application code MUST NEVER import from test fixtures** or contain mock data constants.
-- **Tests create their own mocks** via `vi.mock()` factories, MSW handlers, fishery factories, or inline test data.
-- **The presence of mock data in application code is a defect** to be found and fixed — not a pattern to follow.
-- **If you see mock data in a hook, page, component, service, or handler, remove it** and wire the code to the real API/database.
-
----
-
-## 11. Testing Anti-Patterns to Avoid
-
-| Anti-Pattern | Why It's Bad | Do This Instead |
-|---|---|---|
-| Mock data in application code | Hides missing APIs, schema drift, path errors — features appear to work but are completely fake | Remove mock data from app code; wire to real APIs; handle loading/error/empty states in components |
-| Mocking the database in integration tests | Hides real query issues, schema mismatches | Use testcontainers with real PostgreSQL |
-| Testing implementation details | Tests break on refactor without behaviour change | Test inputs and outputs, not internal state |
-| Shared mutable state between tests | Flaky tests, order-dependent failures | Isolate each test with fresh state |
-| Sleeping in tests | Slow, flaky | Use async awaits, event signals, or polling with timeout |
-| Ignoring flaky tests | They erode trust in the test suite | Fix or delete — never skip indefinitely |
-| Testing only happy paths | Bugs hide in edge cases | Always test error cases, boundaries, and invalid input |
-| Snapshot testing for dynamic data | Snapshots break on any data change | Use targeted assertions on specific fields |
-
----
-
-## 12. Notification Testing
-
-### Unit Tests
-Mock channel adapters directly with Jest mocks. Test the preference service, template renderer, rate limiter, event grouper, dispatcher, channels (InApp/Email/Push), scheduled runner, and weekly digest in isolation.
-
-**Test files in `tests/unit/notification-service/`:**
-- `preference-service.test.ts` — shouldDeliver, getEventCategory, DND logic
-- `template-renderer.test.ts` — {{variable}} substitution, renderNotification
-- `rate-limiter.test.ts` — per-channel limits, dedup, collapse windows
-- `event-grouper.test.ts` — event buffering and collapsing
-- `dispatcher.test.ts` — dispatch orchestration, preference suppression, rate limiting, delivery logging
-- `channels.test.ts` — InAppChannel CRUD, EmailChannel provider delegation, PushChannel device routing
-
-### Integration Tests — Email
-1. Start Mailpit via docker-compose (SMTP on `localhost:1025`)
-2. Send email through `SmtpEmailProvider`
-3. Verify delivery via Mailpit API: `GET http://localhost:8025/api/v1/messages`
-4. Assert subject, recipients, body content
-
-### Integration Tests — Push
-1. Start push-mock-server via docker-compose (port `3099`)
-2. Send push through `ApnsPushProvider` or `FcmPushProvider`
-3. Verify delivery via mock API: `GET http://localhost:3099/push-log`
-4. Assert payload structure, device token, platform
-5. Clear between tests: `DELETE http://localhost:3099/push-log`
-
-### Integration Tests — AWS SES
-- **Unit tests:** Use `aws-sdk-client-mock` to mock the SES client
-- **Integration tests:** Use LocalStack (`localhost:4566`) with real `@aws-sdk/client-ses`
-- Verify sends: `awslocal ses get-send-statistics`
-
-### Test Environment Setup
-All mock infrastructure starts with: `docker compose -f infrastructure/docker/docker-compose.dev.yml up`
-
-See `rules/architecture-rules.md` section 8 for the full local dev infrastructure reference.
-
----
-
-## 13. Schema Validation Tests
-
-### Purpose
-Catch Prisma schema drift (P2022/P2023) by performing a create+read+delete cycle on every Prisma model against the real database.
-
-**File:** `tests/integration/core-api/schema-validation.integration.ts`
-
-### When to Update
-- **Adding a new Prisma model** → Add a create+read+delete test
-- **Adding/removing columns** → Existing tests catch this automatically
-- **Running a migration** → Run schema validation tests to verify
-
----
-
-## 14. API Contract Validation Tests
-
-### Purpose
-Catch frontend/backend drift by verifying API response shapes match what webapp and admin hooks expect.
-
-**Files:**
-- `tests/integration/core-api/api-contracts-web.integration.ts` — webapp contracts
-- `tests/integration/core-api/api-contracts-admin.integration.ts` — admin contracts
-
-### When to Update
-- **Changing a handler's response shape** → Update contract assertions
-- **Adding a new API endpoint** → Add a contract test
-- **Changing a hook's expected type** → Update contract test to match
-
----
-
-## 15. Functional Smoke Tests
-
-### Purpose
-Test complete user journeys end-to-end via the API against live QA.
-
-**Location:** `tests/api/functional/*.smoke.ts` (8 suites, 52 tests)
-
-### When to Update
-- **Adding a new critical user flow** → Add a smoke test
-- **Changing an API response shape** → Update smoke test assertions
-
----
-
-## 16. Boundary Contract Tests — Enums, Events, Templates
-
-### Purpose
-Catch silent drift between system boundaries where two sides use the same values but are maintained separately. String-based enum values, event types, and template configs can drift without compile-time errors — these tests catch the drift at test time.
-
-### Test Suites
-
-| Test File | Boundary | What It Catches |
-|-----------|----------|-----------------|
-| `tests/unit/shared/enum-consistency.test.ts` | Route JSON schemas ↔ domain enums | Hardcoded `enum: [...]` in routes drifting from `enums.ts` |
-| `tests/unit/shared/event-bus-contracts.test.ts` | EventBus publishers ↔ subscribers | Event type string typos, duplicates, naming violations |
-| `tests/unit/shared/template-consistency.test.ts` | Templates ↔ domain enums | Templates using invalid sport/type/engine values |
-| `tests/unit/shared/scoring-config-validation.test.ts` | Templates ↔ Zod schema | Templates violating `ScoringConfigSchema` |
-
-### When to Update
-
-**Enum changes** (`enums.ts`):
-- Adding a new value → `enum-consistency.test.ts` will fail if route schemas don't include it. Update routes AND the test.
-- Removing a value → `template-consistency.test.ts` will fail if any template still uses it. Remove from templates too.
-
-**Event type changes** (`events/*.ts`):
-- Adding/renaming an event → `event-bus-contracts.test.ts` validates naming convention. Update publishers and subscribers to match.
-- Typo in event type string → test catches it via uniqueness and format checks.
-
-**Template changes** (scoring or selection):
-- New template → `template-consistency.test.ts` auto-validates via `it.each`. No manual test update needed.
-- Template with invalid enum value → `template-consistency.test.ts` fails immediately.
-- Template with invalid config → `scoring-config-validation.test.ts` fails on Zod parse.
-
-**Route schema changes**:
-- Adding enum value to route → `enum-consistency.test.ts` verifies it matches `enums.ts`.
-- Removing enum value from route → test verifies all remaining values are valid.
-
-### How to Run
-```bash
-npx jest --config tests/jest.config.js --testPathPattern="enum-consistency|event-bus-contracts|template-consistency|scoring-config-validation"
-```
-
----
-
-## Complete Contract Test Matrix
-
-| # | Boundary | Test File | Tests | Risk Level |
-|---|----------|-----------|-------|------------|
-| 1 | Schema ↔ Database | `schema-validation.integration.ts` | 42 | P2022/P2023 runtime errors |
-| 2 | Frontend ↔ Backend API | `api-contracts-web.integration.ts` | 25 | Webapp crashes |
-| 3 | Admin ↔ Backend API | `api-contracts-admin.integration.ts` | 5 | Admin crashes |
-| 4 | Route schemas ↔ Domain enums | `enum-consistency.test.ts` | 10 | Silent 400 rejections |
-| 5 | EventBus publishers ↔ subscribers | `event-bus-contracts.test.ts` | 5 | Silent event drops |
-| 6 | Templates ↔ Domain enums | `template-consistency.test.ts` | 15 | Invalid template values |
-| 7 | Templates ↔ Zod schema | `scoring-config-validation.test.ts` | 12 | Template parse failures |
-| | **Total** | | **114** | |
-
----
-
-*PoolMaster Testing Rules v1.3*
+- moving from manual client mocks to MSW
+- changing smoke test locations or commands
+- changing required local quality gates
+- changing contract-validation expectations

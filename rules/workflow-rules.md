@@ -1,8 +1,8 @@
 # PoolMaster — Workflow Rules
 
-## Action Plan Tracking
+## 1. Action Plan Tracking
 
-Every plan document in `plans/` has an **Action Plan** section at the bottom with a task table. These tables are the project's issue tracker — they define all work to be done and track implementation progress.
+Every plan document in `plans/` has an **Action Plan** section with a task table. These are the project's issue tracker.
 
 ### Task Table Format
 
@@ -18,34 +18,57 @@ Every plan document in `plans/` has an **Action Plan** section at the bottom wit
 
 | Status | Meaning |
 |---|---|
-| **Not Started** | Work has not begun |
-| **In Progress** | Work has started but is not complete |
-| **Done** | Fully implemented and working |
-| **Removed** | Out of scope — strikethrough the task description and explain why |
+| Not Started | Work has not begun |
+| In Progress | Work has started but is not complete |
+| Done | Fully implemented and working |
+| Removed | Out of scope; strike through the task and explain why |
 
-### Rules for Implementation
+### Required Workflow
 
-**When starting work on a task:**
-1. Find the task in the relevant plan file's Action Plan table
-2. Update its status from `Not Started` to `In Progress`
-3. Add a note describing what you're working on
+When starting work:
 
-**When completing a task:**
-1. Update its status from `In Progress` to `Done`
-2. Add a note with what was built (file paths, key decisions)
+1. Find the relevant task in the plan.
+2. Mark it `In Progress`.
+3. Add notes about the implementation slice you are taking.
 
-**When completing work that spans multiple tasks:**
-1. Update ALL affected tasks across ALL relevant plan files
-2. A single implementation may complete tasks in multiple plans (e.g. building the scoring engine touches both 01-architecture and 03-scoring-rules)
+When finishing work:
 
-**When a task is no longer relevant:**
-1. Set status to `Removed`
-2. Strikethrough the task description with `~~`
-3. Add a note explaining why (e.g. "Out of scope — no DFS in v1")
+1. Mark the task `Done` or `Removed`.
+2. Add notes with the relevant files and decisions.
+3. Update every affected plan, not just the first one you looked at.
 
-### Finding Tasks
+---
 
-The plan files and their task ID prefixes:
+## 2. Rule and Documentation Maintenance
+
+Rules are part of the codebase contract.
+
+When a refactor changes architecture, API usage, testing patterns, or generated-client workflow:
+
+- update the relevant file in `rules/` in the same change
+- do not leave stale rules behind for a future cleanup
+- prefer tightening rules after a painful refactor so the same mistake is harder to repeat
+
+Examples that require rule updates:
+
+- moving frontend API access to the generated `hey-api` client
+- changing OpenAPI generation/validation workflow
+- replacing manual-client tests with MSW
+- removing obsolete UI or endpoint patterns
+
+---
+
+## 3. Do Not Preserve Bad Patterns
+
+Do not protect obsolete architecture with inertia.
+
+- Remove or replace stale tests that enforce retired code paths.
+- Remove dead endpoints and no-op UI instead of keeping them “for later.”
+- Strengthen rules when a refactor reveals a repeated failure mode.
+
+---
+
+## 4. Finding Tasks
 
 | Prefix | Plan File | Area |
 |---|---|---|
@@ -64,10 +87,4 @@ The plan files and their task ID prefixes:
 | 13-xxx | `plans/13-poolmaster-search-discovery.md` | Search and discovery |
 | 14-xxx | `plans/14-poolmaster-localisation-i18n.md` | Localisation |
 | 15-xxx | `plans/15-poolmaster-responsible-gaming.md` | Compliance and legal |
-| ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites (API + UI) |
-
-### Important
-
-- **Always check the action plans before and after implementation.** This is how we track progress.
-- **Do not create separate issue trackers.** The plan files ARE the issue tracker.
-- **Cross-reference tasks when they depend on each other.** Use the task ID in the Notes column (e.g. "Depends on 01-006").
+| ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites |

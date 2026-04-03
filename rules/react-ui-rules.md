@@ -1,209 +1,168 @@
-You are an expert in React, TypeScript, Shadcn UI, TanStack Query, Zustand, TailwindCSS, and modern web development, focusing on scalable and maintainable applications.
+# PoolMaster — React UI Rules
 
-## React Profile Context
-You are a **senior React developer** with expertise in:
-- **Modern React patterns** (hooks, functional components, context API)
-- **TypeScript** for type-safe development
-- **Performance optimization** (memoization, lazy loading, code splitting)
-- **State management** (useState, useReducer, Context, Zustand)
-- **Component architecture** (composition, custom hooks, higher-order components)
-- **UI Components** (shadcn/ui, Radix UI primitives)
-- **Data fetching** (TanStack Query, SWR)
-- **Testing** (Vitest, React Testing Library, Cypress)
-- **Build tools** (Vite, Webpack, esbuild)
-- **Styling** (TailwindCSS, CSS Modules)
+These rules govern `clients/web` and `clients/admin`.
 
-## Style Guide (Important)
-- Be **direct and concise**, no unnecessary explanations  
-- Do **not** add comments unless requested  
-- **Simplicity first** — focus on clarity and consistency  
-- Use **subtle micro-interactions** for interactive elements  
-- **Respect the design system** and component patterns
-- Prioritize **UX** — animations should enhance, not distract  
-- Follow **React best practices** and modern patterns
+The web/admin apps are React 18 + TypeScript applications using:
 
-## Project Context
-This is a **modern React application** with the following characteristics:
-- **Component-based architecture** with reusable UI components
-- **Type-safe development** with TypeScript
-- **Responsive design** with mobile-first approach
-- **Performance-optimized** with modern React patterns
-- **Accessible** following WCAG guidelines
+- Vite
+- React Router
+- TanStack Query
+- Zustand
+- React Hook Form
+- TailwindCSS
+- shadcn/ui
+- shared generated `hey-api` SDK from `packages/shared/generated/hey-api`
 
-## Tech Stack
-- **React 18+** with hooks and functional components
-- **TypeScript** for type safety
-- **TailwindCSS** for styling
-- **shadcn/ui** for component library (Radix UI primitives + TailwindCSS)
-- **Vite** for build tooling
-- **React Router** for navigation
-- **TanStack Query** (formerly React Query) for server state management
-- **Zustand** for client state management
-- **React Hook Form** for form handling
+---
 
-## Code Conventions
-- **File naming:** kebab-case ('user-profile.tsx')  
-- '*.tsx' → React components  
-- '*.ts' → utilities, types, and configs  
-- **Named exports** for components and utilities
-- **Default exports** for main components
-- **Import order:**
-  1. React and React-related imports
-  2. Third-party libraries
-  3. Internal utilities and types
-  4. Relative imports
-- **Code style:**
-  - Use single quotes for strings  
-  - Indent with 2 spaces  
-  - No trailing whitespace  
-  - Use 'const' for immutables  
-  - Template strings for interpolation  
-  - Use optional chaining and nullish coalescing
+## 1. Core Frontend Standards
 
-## React Patterns
-- **Functional components** with hooks
-- **Custom hooks** for reusable logic
-- **Context API** for global state
-- **Compound components** for complex UI
-- **Render props** and **children as function** patterns
-- **Higher-order components** when needed
-- **Error boundaries** for error handling
-- **Suspense** for loading states
+- Use functional React components.
+- Keep components focused and composable.
+- Prefer explicit loading, error, and empty states.
+- Avoid `any`.
+- Prefer shared types and generated types over local copies.
+- Do not add comments unless they explain non-obvious behavior.
 
-## TypeScript Guidelines
-- Define **interfaces** for component props and data structures
-- Use **generic types** for reusable components
-- Avoid 'any' type, use proper typing
-- Use **union types** for component variants
-- Implement **strict mode** configurations
-- Use **utility types** (Pick, Omit, Partial, etc.)
+---
 
-## Performance Optimization
-- Use **React.memo** for expensive components
-- Implement **useMemo** and **useCallback** appropriately
-- **Code splitting** with React.lazy and Suspense
-- **Virtual scrolling** for large lists
-- **Image optimization** with lazy loading
-- **Bundle analysis** and optimization
+## 2. No Mock Data in Application Code
 
-## Testing Strategy
-- **Unit tests** for utilities and custom hooks
-- **Component tests** with React Testing Library
-- **Integration tests** for user flows
-- **E2E tests** with Cypress or Playwright
-- **Accessibility tests** with jest-axe
+This is the top frontend rule.
 
-## Accessibility
-- Use **semantic HTML** elements
-- Implement **ARIA attributes** when needed
-- Ensure **keyboard navigation** support
-- Provide **screen reader** compatibility
-- Follow **WCAG 2.1 AA** guidelines
-- Test with **accessibility tools**
+Banned in hooks, pages, components, stores, and runtime utilities:
 
-## State Management
-- **Local state** with useState and useReducer
-- **Global state** with Zustand (preferred) or Context API
-- **Server state** with TanStack Query
-- **Form state** with React Hook Form
-- **URL state** with React Router
+- `queryFn: async () => mockData`
+- `initialData: mockData`
+- `catch { return mockData }`
+- local `MOCK_*` or sample arrays used as live app data
+- conditional development-only fake API branches
 
-## shadcn/ui Guidelines
-- Use **shadcn/ui** as the primary component library
-- **Copy components** from shadcn/ui registry, don't install as package
-- **Customize components** by modifying the copied code
-- Follow **Radix UI** patterns for accessibility
-- Use **TailwindCSS** classes for styling
-- **Compose components** using shadcn/ui primitives
-- **Extend components** by adding new variants and props
+Required behavior:
 
-## Zustand State Management
-- Use **Zustand** for global state management
-- Create **store slices** for different domains
-- Use **immer** for complex state updates
-- Implement **selectors** for computed values
-- Use **subscribeWithSelector** for fine-grained subscriptions
-- **Persist state** with zustand/middleware/persist
-- **DevTools integration** for debugging
+- Call the real API.
+- Let errors propagate.
+- Render loading, error, or empty states honestly.
 
-## TanStack Query Guidelines
-- Use **TanStack Query** for all server state
-- **Query keys** should be arrays with hierarchical structure
-- Use **query invalidation** for cache updates
-- Implement **optimistic updates** with useMutation
-- Use **infinite queries** for pagination
-- **Prefetch data** for better UX
-- Handle **loading and error states** properly
-- Use **query client** for global configuration
+If an endpoint is missing, that is a backend/contract problem to fix, not a reason to add fake frontend data.
 
-## Component Architecture
-- **Feature-based** principles
-- **Composition over inheritance**
-- **Single responsibility** principle
-- **Prop drilling** avoidance
-- **Reusable** and **configurable** components
+---
 
-## Security Best Practices
-- **Input validation** on both client and server
-- **Sanitize user input** to prevent XSS attacks
-- **Use HTTPS** for all API communications
-- **Implement CSRF protection** for forms
-- **Validate file uploads** (type, size, content)
-- **Use environment variables** for sensitive data
-- **Implement proper authentication** and authorization
-- **Use Content Security Policy (CSP)** headers
-- **Avoid exposing sensitive data** in client-side code
-- **Use secure cookies** with proper flags
+## 3. API Integration Rules
 
-## Error Handling
-- **Error boundaries** for catching component errors
-- **Try-catch blocks** for async operations
-- **Custom error classes** for different error types
-- **Error logging** with proper context
-- **User-friendly error messages** (no technical details)
-- **Fallback UI** for error states
-- **Retry mechanisms** for failed requests
-- **Global error handler** for unhandled errors
-- **Validation errors** with field-specific messages
-- **Network error handling** with offline detection
+### Primary Rule
 
-## Loading States
-- **Skeleton screens** for better perceived performance
-- **Loading spinners** for quick operations
-- **Progress indicators** for long-running tasks
-- **Suspense boundaries** for code splitting
-- **Optimistic updates** for better UX
-- **Stale-while-revalidate** patterns
-- **Loading states** in forms and buttons
-- **Lazy loading** for images and components
-- **Preloading** critical resources
-- **Loading priorities** (above-fold first)
+Frontend application code must use the shared generated `hey-api` client from `@/lib/api`.
 
-## API Integration
+Examples:
 
-### CRITICAL: No Mock Data in Application Code
-
-**This is the #1 code quality rule. Every item below is BANNED in hooks, pages, and components.**
-
-- **NEVER use `queryFn: async () => mockData`** — this makes the query return fake data instead of calling a real API. The hook will appear to "work" but is completely fake.
-- **NEVER use `initialData: mockData`** — this prevents the real API call from ever being made because TanStack Query sees data already present and skips the fetch.
-- **NEVER write `try/catch` blocks that return mock data on error** — this silently hides API path errors, schema drift, and authentication failures. The component layer handles errors, not the hook.
-- **NEVER define `const mockData = [...]` or `const MOCK_*` constants in hook files, page files, or component files.** Mock data belongs ONLY in test files.
-- **NEVER import mock data from application code into tests** — tests create their own mocks via `vi.mock()`, MSW handlers, or inline fixtures.
-- **If an API endpoint does not exist yet, the hook MUST still call it.** Let the request fail. The component handles `isLoading`, `isError`, and empty data states gracefully. This makes it immediately obvious that the endpoint needs to be built.
+- `import { client, listLeagues } from '@/lib/api'`
+- `await listLeagues({ client })`
 
 ### Required Patterns
 
-- **Hooks MUST call real APIs via the api-client.** Every `useQuery` must have a `queryFn` that calls `api.get(...)`, `api.post(...)`, etc.
-- **Hooks MUST import response types from `@poolmaster/shared/dto`** — NEVER define local interfaces for API response shapes. The DTO package is the single source of truth for API contracts.
-- **API calls MUST be typed with shared DTOs:** `api.get<LeagueListResponse>(...)`. This ensures type safety flows from backend schema through to component props.
-- **If a DTO doesn't exist for your endpoint, create one in `packages/shared/dto/` FIRST** before writing the hook. Do not work around a missing DTO with a local type.
-- **Use `clientPath(API_ROUTES.xxx)` for API paths** — NEVER hardcode path strings in hooks or components. See `@poolmaster/shared/api-routes` for the route registry.
-- **Components MUST handle all query states:** `isLoading` (show skeleton/spinner), `isError` (show error message/retry), and empty data (show empty state). These are not optional — they are required for every data-fetching component.
+- Use generated SDK functions and generated response/request types first.
+- Keep app-specific API code thin:
+  - auth token injection
+  - base URL configuration
+  - very small app-local convenience helpers if truly needed
+- If the generated contract is wrong, fix the backend DTO/route schema and regenerate. Do not invent local replacement contracts.
 
-### Why This Matters
+### Banned Patterns
 
-Mock data in hooks is the single most common source of bugs in this project. It makes features appear to work during development, but they silently break when connected to the real backend. Errors are hidden, schema drift goes undetected, and API path mismatches are invisible. Every hook must call a real API endpoint.
+- New manual `fetch()` wrappers for endpoints already covered by the generated client
+- New handwritten OpenAPI client adapters when `@/lib/api` already provides the operation
+- New local interfaces duplicating generated response types just because the generated contract is inconvenient
+- `as any`, `as unknown as`, or manual shape rewriting to bypass generated types
+- Continuing to use legacy manual-client helpers when generated SDK operations now exist
 
-**Reference**
-Refer to React official documentation and modern React patterns for best practices.
+### Route Constants Clarification
+
+- Use `API_ROUTES` in tests, smoke suites, and MSW handlers.
+- Do not use route constants as the primary runtime path source in React app code if a generated SDK operation exists.
+
+---
+
+## 4. TanStack Query Rules
+
+- Use TanStack Query for server state.
+- Query functions should call real generated SDK functions.
+- Query keys should be stable arrays.
+- Handle invalidation intentionally after mutations.
+- Components must handle:
+  - loading
+  - error
+  - empty
+  - success
+
+Do not hide broken requests with local fallbacks.
+
+---
+
+## 5. Form and Component Rules
+
+- Use React Hook Form for non-trivial forms.
+- Keep validation clear and consistent with backend constraints.
+- Prefer reusable page sections/components over giant page files.
+- Keep UI state distinct from server state.
+- Use Zustand for client-side state only when local component state or query state is insufficient.
+
+---
+
+## 6. Generated Client Rules
+
+The shared generated client is part of the architecture, not an optional helper.
+
+- Import generated SDK functions/types through the app-local API module (`@/lib/api`) unless there is a strong reason to import directly from `@poolmaster/shared/generated/hey-api`.
+- Never edit generated files directly.
+- After backend contract changes, expect generated method names/types to change and update callers accordingly.
+- Remove legacy workarounds as the generated contract improves.
+
+### What Agents Must Not Do
+
+- Do not add a parallel manual API abstraction because “it is easier than fixing OpenAPI.”
+- Do not keep obsolete `openapi-fetch` or similar legacy helpers alive for new code paths.
+- Do not preserve dead compatibility code for removed endpoints or shapes.
+- Do not add new pages/hooks that depend on stale contract assumptions.
+
+---
+
+## 7. Testing Rules for React Apps
+
+- Use Vitest + React Testing Library.
+- Use MSW for tests that should exercise request construction and network behavior.
+- Keep pure presentation tests simple and hook-free where possible.
+- Prefer behavior-oriented tests over implementation-detail tests.
+
+### Banned Test Patterns
+
+- `vi.mock('@/lib/api-client')` or equivalent module-level replacement of the runtime API client for new tests
+- assertions that only check copied path strings
+- low-value tests that lock in obsolete manual-client behavior
+
+### Acceptable Cleanup
+
+It is acceptable to remove or replace tests when they enforce old architecture, as long as the resulting coverage is higher-signal and aligned with current patterns.
+
+---
+
+## 8. Accessibility and UX
+
+- Use semantic HTML.
+- Preserve keyboard accessibility.
+- Use accessible shadcn/Radix primitives correctly.
+- Provide clear empty and error states.
+- Avoid interaction dead-ends and no-op buttons.
+- Do not ship UI actions that do nothing.
+
+---
+
+## 9. Review Checklist for Web/Admin Changes
+
+Before finishing frontend work, verify:
+
+1. Is the page/hook using the generated client rather than a new manual wrapper?
+2. Are there any local API-shape interfaces that should be removed?
+3. Are loading/error/empty states present?
+4. Did the refactor remove stale no-op UI or mock fallbacks?
+5. Do tests use MSW where request wiring matters?
