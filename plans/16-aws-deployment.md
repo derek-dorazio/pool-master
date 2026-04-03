@@ -1,5 +1,7 @@
 # PoolMaster — AWS Deployment Plan
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 ## Overview
 
 Deploy PoolMaster to AWS using ECS Fargate, RDS PostgreSQL, ElastiCache Redis, and ALB. Terraform manages all infrastructure. GitHub Actions CI/CD builds and pushes Docker images. This plan covers initial setup through first production deploy.

@@ -1,10 +1,28 @@
 # PoolMaster — Scoring Rules Configuration Plan
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 > **Rules:** All technology and infrastructure choices follow [Architecture Rules](../rules/architecture-rules.md). Testing standards follow [Testing Rules](../rules/testing-rules.md).
 
 ## Overview
 
 This document defines the full scoring rule framework PoolMaster must support. The system must be sport-agnostic: scoring rules are stored as configurable JSON, interpreted by a scoring engine at runtime. No sport logic is hard-coded. Research sources include DraftKings, FanDuel, ESPN, FantasyPros, Splash Sports, BuzzFantasyGolf, EasyOfficePools, PoolTracker, and PoolGenius.
+
+## Current MVP Interpretation
+
+For the active MVP, scoring should be optimized around tournament-style contestant pools:
+
+- team-based contests
+- individual-sport contestant pools where a player is treated like the selectable team
+- tiered and budgeted roster submissions
+- draft-once scoring and final standings
+
+Deprioritize or defer scoring designs that mainly serve:
+
+- weekly season-long fantasy management
+- deep player-stat fantasy categories
+- DFS-specific slot/captain multipliers
+- bracket and knockout families that are no longer in the active MVP
 
 ---
 

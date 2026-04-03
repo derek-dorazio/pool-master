@@ -1,6 +1,8 @@
 # PoolMaster Mobile Client Architecture — Deferred (Entire Plan)
 
-> These tasks are explicitly deferred and should NOT be implemented until the web platform is complete and stable. The entire mobile client plan was moved here to prevent accidental implementation. The original plan file was at `plans/12-poolmaster-mobile-client.md`.
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
+> These tasks are explicitly deferred and should NOT be implemented until the web platform and backend contracts are much more mature, reviewable, and stable end to end. The entire mobile client plan was moved here to prevent accidental implementation. The original plan file was at `plans/12-poolmaster-mobile-client.md`.
 
 ## Deferred Tasks
 

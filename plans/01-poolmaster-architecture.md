@@ -1,5 +1,7 @@
 # PoolMaster Platform — Architecture & Build Plan
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 > **Rules:** All technology and infrastructure choices follow [Architecture Rules](../rules/architecture-rules.md). Testing standards follow [Testing Rules](../rules/testing-rules.md).
 
 ---
@@ -18,9 +20,8 @@
 | 07 | [Billing & Subscriptions](07-poolmaster-billing-subscription.md) | Plan tiers, entitlements, Stripe, trials, dunning, revenue analytics |
 | 08 | [Commissioner Tooling](08-poolmaster-commissioner-tooling.md) | League/contest wizards, overrides, dashboard, templates, audit trail |
 | 09 | [Notifications & Alerts](09-poolmaster-notifications-alerts.md) | Event taxonomy, channels, preferences, templates, scheduling |
-| 10 | [Social & Communication](10-poolmaster-social-communication.md) | Activity feed, chat, DMs, recaps, share-to-social, moderation |
+| 10 | [Social & Communication](10-poolmaster-social-communication.md) | Activity feed, commissioner/system messaging, and deferred richer social layers |
 | 11 | [Admin Dashboard](11-poolmaster-admin-dashboard.md) | Tenant/user management, feature flags, platform health, support tools |
-| 12 | [Mobile Client](12-poolmaster-mobile-client.md) | Native iOS (SwiftUI) + Android (Compose), offline caching, push, deep linking |
 | 13 | [Search & Discovery](13-poolmaster-search-discovery.md) | Draft search, pool setup filtering, public league discovery |
 | 14 | [Localisation & i18n](14-poolmaster-localisation-i18n.md) | Timezone handling, multi-currency, number formatting, translation |
 | 15 | [Responsible Gaming](15-poolmaster-responsible-gaming.md) | Age verification, geographic restrictions, GDPR/CCPA, data retention |
@@ -29,8 +30,8 @@
 
 | Subfolder | Scope |
 |---|---|
-| [webapp/](webapp/) | React web app — 14 plan files (auth, dashboard, leagues, contests, draft room, etc.) |
-| [deferred/ios-app/](deferred/ios-app/) | Native iOS (Swift/SwiftUI) — 9 plan files, 51 tasks (DEFERRED — mobile after web platform complete) |
+| [archive/](archive/) | Historical or superseded web/admin/remediation plans — reference only |
+| [deferred/](deferred/) | Deferred product areas and future enhancements, including mobile |
 
 ### Testing Plans
 
@@ -44,7 +45,33 @@
 
 A multi-tenant SaaS platform where groups of friends (or colleagues) create leagues, configure contests across any sport, draft squads, and compete on live leaderboards. The platform is sport-agnostic by design — golf, tennis, F1, NCAA brackets, horse racing, and anything else are all first-class citizens configured through a flexible domain model rather than hard-coded sport logic.
 
-**Target clients:** Web (React + shadcn/ui), iOS (Swift + SwiftUI), Android (Kotlin + Jetpack Compose)
+## 1a. Current MVP Scope Reset
+
+The active delivery target is narrower than the original all-surfaces vision.
+
+### Active MVP focus
+
+- leagues, invitations, and member management
+- contest creation and participation for draft-once tournament pools
+- team-based contests, plus individual sports where one golfer/player functions as the selectable contestant
+- tiered and budgeted roster selection as primary MVP modes
+- a shared contestant model that can support future snake drafts without forcing full snake maturity now
+- scoring, standings, results, and minimal commissioner controls for the kept contest modes
+- minimal history: active contests, finished contests, and basic result review
+- minimal social: dashboard/feed style commissioner and system messaging
+- free launch with billing concepts limited to future-facing marketing copy
+
+### Explicitly deferred from the active MVP
+
+- mobile apps until the web app and service contracts are mature and reviewable end to end
+- rich billing/subscription operations
+- deep social/chat/direct-message ecosystems
+- season-long fantasy and weekly re-draft products
+- knockout/survivor and other recurring-period contest families unless they are later re-approved
+- bracket contests as a future enhancement after the core tournament pool flows are stable
+- player-stat-heavy fantasy/DFS-style product expansion beyond tournament contestant pools
+
+**Target client for MVP:** Web (React + shadcn/ui)
 **Backend:** Node.js + Fastify + TypeScript
 **Deployment:** Docker on AWS ECS Fargate or EKS
 **Scale:** Multi-tenant SaaS, horizontally scalable per service

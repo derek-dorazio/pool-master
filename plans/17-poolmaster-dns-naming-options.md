@@ -1,5 +1,7 @@
 # Domain & Brand Research Summary - March 2026
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 ## ✅ Available Domains (Ready for Registration)
 * **ultimatepoolmaster.com** (Top Pick - Strongest Brand potential)
 * **upm.app** (Best Short Redirect for mobile users)

@@ -1,18 +1,33 @@
-# PoolMaster — Contest Structures: In-Scope for v1
+# PoolMaster — Contest Structures: Active MVP Scope
+
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
 
 ## Scope Definition
 
-PoolMaster v1 focuses on three contest categories:
+PoolMaster's active MVP focuses on one core family of contests:
 
-1. **Office / tournament pools** — participants pick teams or players once per event with no ongoing roster management.
-2. **Knockout / survivor pools** — participants are eliminated on wrong picks. Can be season-long but one pick per period max; no trades or waivers.
-3. **Tiered / budget squad pools** — participants build a roster from tiers or within a budget for a single event. Picks lock at the start; no mid-contest changes.
+1. **Draft-once tournament squad pools** — participants pick contestants once per event with no weekly roster churn or ongoing waiver/trade mechanics.
 
-**Deferred:** Season-long fantasy with weekly management, DFS, full bracket games (already saturated by major platforms).
+### Active MVP rules
+
+- support **team-based** contests first
+- also support **individual sports** where the player is effectively the selectable team/contestant, such as golf and tennis tournament pools
+- use a shared contestant model so one contest can represent either a team or an individual cleanly
+- prioritize **Tiered Pick** and **Budget Pick**
+- keep **Snake Draft** model-compatible, but sequence its full live UX only after the core non-exclusive tournament flows are stable
+- support **single-event / tournament** play, not weekly or season-long management loops
+
+### Explicitly deferred
+
+- season-long fantasy with weekly management
+- knockout/survivor families
+- bracket contests
+- DFS / player-stat-heavy fantasy product expansion
+- recurring weekly re-draft or elimination contest structures
 
 ---
 
-## Two Core Mechanics — Consistent Across Sports
+## Core Selection Mechanics — Consistent Across MVP Sports
 
 ### A. Tournament Squad Selection Types
 
@@ -26,20 +41,41 @@ Every tournament pool where participants build a squad supports three selection 
 
 All three mechanics are applied consistently to every applicable tournament in this document.
 
-### B. Survivor / Knockout Pick Styles
+### Deferred Families
 
-Every survivor pool supports two pick submission styles:
+Survivor, bracket, and other recurring-period contest types are intentionally deferred. Keep their historical analysis in deferred/archive plans, but do not treat them as active MVP structures.
 
-| Style | How it works |
-|---|---|
-| **Live Pick** | One pick per period (week/round/race), submitted before each period begins. Future picks unknown and uncommitted. |
-| **Locked Pick** | All picks submitted upfront before the event starts. Eliminated when any pick in the sequence loses. |
+---
 
-**Shared survivor config options** (all survivor contests):
-- `one_entity_per_season` — each team/player usable only once (standard: true)
-- `picks_per_period` — 1 standard; 2 = Double Pick (both must win)
-- `strikes` — N wrong picks allowed before elimination (0 = instant)
-- `buybacks` — allow one re-entry after elimination (commissioner setting)
+## MVP Contest Fit
+
+The active MVP should only keep contest structures that fit this pattern across multiple sports:
+
+- one tournament or one contained event window
+- one draft/submission period before lock
+- no weekly roster churn
+- scoring from the contest's locked roster/submission
+- compatible with team entities or individual contestants
+
+Examples that fit:
+
+- golf major: pick 6 golfers
+- tennis slam: pick 6 players
+- NCAA tournament team pool: pick contestants once before lock
+- playoff team portfolio pool: tiered/budget roster of teams before round one
+
+Examples to defer:
+
+- weekly NFL survivor
+- full bracket submissions
+- season-long managed fantasy rosters
+- knockout formats that require repeated submissions over time
+
+---
+
+## Historical Sport Catalogue
+
+The sport-specific catalogue below remains useful reference material, but only the structures that match the MVP rules above should be treated as active.
 
 ---
 

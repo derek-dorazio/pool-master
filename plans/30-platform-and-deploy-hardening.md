@@ -1,5 +1,7 @@
 # Plan 30: Platform and Deploy Hardening
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 ## Purpose
 
 Harden CI/CD, Terraform hygiene, and AWS deployment strategy so deploys are deterministic, observable, and fail fast instead of silently drifting.

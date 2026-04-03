@@ -1,5 +1,7 @@
 # PoolMaster — iOS App Plan Overview
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 > **Rules:** iOS implementation follows [Swift Rules](../../rules/swift-rules.md). Architecture decisions follow [Architecture Rules](../../rules/architecture-rules.md).
 
 ## Overview

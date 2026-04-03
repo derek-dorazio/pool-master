@@ -1,8 +1,18 @@
 # Plan 29: Webapp and Admin Hardening
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 ## Purpose
 
 Finish removing frontend TODO stubs, duplicate client layers, and placeholder interaction flows so both webapps reflect the generated API contract and only expose features that are actually wired.
+
+## Current MVP Interpretation
+
+Keep frontend hardening aligned to the narrowed launch scope:
+
+- prioritize leagues, invites, contest creation, draft-once tournament participation, standings, scoring, and results
+- treat bracket, survivor, rich social, and billing-heavy surfaces as deferred unless a fresh planning pass reactivates them
+- where a deferred feature still has UI remnants, prefer removing or archiving that surface over polishing it into the MVP
 
 ## Review Findings Driving This Plan
 

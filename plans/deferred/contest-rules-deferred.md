@@ -1,6 +1,14 @@
 # Deferred Contest Rules
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 Items removed from v1 scope. Can be added later when the core pool experience is solid.
+
+## Current Defer Guidance
+
+- finish the web app and service end-to-end around the core tournament pool experience first
+- keep future contest-family analysis here or in other deferred plans, not in the active execution set
+- when reintroducing a deferred contest type, replan it against the current contestant model, ingestion model, and scoring contracts rather than resuming old assumptions directly
 
 ## NFL Player-Based Scoring
 - PPR, Half-PPR, Standard fantasy scoring

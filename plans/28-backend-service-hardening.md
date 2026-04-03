@@ -1,8 +1,18 @@
 # Plan 28: Backend Service Hardening
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 ## Purpose
 
 Finish removing placeholder, in-memory, and mock-backed behavior from the backend service tier so production API behavior is fully backed by persistent infrastructure and real integrations.
+
+## Current MVP Interpretation
+
+Keep this hardening work aligned to the narrowed launch scope:
+
+- prioritize leagues, invitations, contests, draft-once tournament flows, scoring, and standings
+- keep billing, rich social, and non-MVP contest families secondary
+- if a backend path only serves a deferred feature family, prefer documenting or deferring it over expanding it now
 
 ## Review Findings Driving This Plan
 

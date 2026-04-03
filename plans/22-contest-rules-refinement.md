@@ -1,5 +1,7 @@
 # Ultimate Pool Manager — Contest Rules by Sport
 
+> **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
+
 This document defines all contest types, selection methods, scoring rules, and special mechanics for each supported sport.
 
 Deferred features (season-long fantasy, NFL player scoring, DFS, advanced stats) are documented in [plans/deferred/contest-rules-deferred.md](deferred/contest-rules-deferred.md).
