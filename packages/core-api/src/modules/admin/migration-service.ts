@@ -1,11 +1,12 @@
 /**
- * MigrationService — in-memory migration runner for admin tooling.
+ * MigrationService — persisted migration run tracking for admin tooling.
  *
- * Provides a catalogue of available data migrations and tracks run progress.
- * Each migration can be started, monitored, and cancelled. Runs are tracked
- * with progress counters (total, processed, succeeded, failed).
+ * Provides a catalogue of available data migrations and stores run state in
+ * Prisma so the API reflects the real execution lifecycle instead of
+ * simulating instant completion in memory.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -21,7 +22,7 @@ export interface Migration {
   lastRunStatus?: MigrationRunStatus;
 }
 
-export type MigrationRunStatus = 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+export type MigrationRunStatus = 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 
 export interface MigrationRunProgress {
   totalRecords: number;
@@ -34,12 +35,17 @@ export interface MigrationRunProgress {
 export interface MigrationRun {
   runId: string;
   migrationId: string;
+  migrationName: string;
   status: MigrationRunStatus;
   progress: MigrationRunProgress;
   dryRun: boolean;
   startedAt: Date;
   completedAt?: Date;
   startedBy: string;
+  startedByUser: {
+    email: string;
+    name: string;
+  };
   errors: { recordId: string; error: string }[];
 }
 
@@ -75,6 +81,13 @@ export class MigrationAlreadyRunningError extends Error {
   }
 }
 
+export class AdminUserNotFoundError extends Error {
+  constructor(adminUserId: string) {
+    super(`Admin user not found: ${adminUserId}`);
+    this.name = 'AdminUserNotFoundError';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Available migrations catalogue
 // ---------------------------------------------------------------------------
@@ -107,34 +120,46 @@ const AVAILABLE_MIGRATIONS: Migration[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// In-memory store
-// ---------------------------------------------------------------------------
-
-const runs = new Map<string, MigrationRun>();
-
-// ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class MigrationService {
+  constructor(private readonly prisma: PrismaClient) {}
+
   /**
    * Lists all available migrations with their last-run info.
    */
-  async listMigrations(): Promise<Migration[]> {
-    // Attach last-run data from in-memory store
-    return AVAILABLE_MIGRATIONS.map((m) => {
-      const lastRun = this.findLastRun(m.id);
+  async listMigrations(): Promise<{
+    available: Migration[];
+    activeRuns: MigrationRun[];
+    recentHistory: MigrationRun[];
+  }> {
+    const rows = await this.prisma.migrationRun.findMany({
+      orderBy: { startedAt: 'desc' },
+      include: { startedBy: true },
+    });
+
+    const runs = rows.map((row) => this.mapRowToRun(row));
+    const available = AVAILABLE_MIGRATIONS.map((migration) => {
+      const lastRun = runs.find((run) => run.migrationId === migration.id);
       return {
-        ...m,
+        ...migration,
         lastRunAt: lastRun?.completedAt ?? lastRun?.startedAt,
         lastRunStatus: lastRun?.status,
       };
     });
+
+    return {
+      available,
+      activeRuns: runs.filter((run) => run.status === 'QUEUED' || run.status === 'RUNNING'),
+      recentHistory: runs
+        .filter((run) => run.status !== 'QUEUED' && run.status !== 'RUNNING')
+        .slice(0, 20),
+    };
   }
 
   /**
-   * Starts a new migration run. Mock execution completes instantly with
-   * simulated progress for demonstration purposes.
+   * Starts a new migration run by creating a persisted queued run record.
    */
   async startRun(
     input: StartMigrationInput,
@@ -144,38 +169,47 @@ export class MigrationService {
     const migration = AVAILABLE_MIGRATIONS.find((m) => m.id === input.migrationId);
     if (!migration) throw new MigrationNotFoundError(input.migrationId);
 
-    // Prevent duplicate running migrations
-    for (const run of runs.values()) {
-      if (run.migrationId === input.migrationId && run.status === 'RUNNING') {
-        throw new MigrationAlreadyRunningError(input.migrationId);
-      }
+    const adminUser = await this.prisma.adminUser.findUnique({
+      where: { id: adminUserId },
+    });
+    if (!adminUser) {
+      throw new AdminUserNotFoundError(adminUserId);
     }
 
-    const runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const total = migration.estimatedRecords;
-    const failCount = Math.floor(total * 0.002); // simulate 0.2% failure rate
-
-    const run: MigrationRun = {
-      runId,
-      migrationId: input.migrationId,
-      status: 'COMPLETED',
-      dryRun: input.dryRun ?? false,
-      progress: {
-        totalRecords: total,
-        processed: total,
-        succeeded: total - failCount,
-        failed: failCount,
-        percentage: 100,
+    const existingRun = await this.prisma.migrationRun.findFirst({
+      where: {
+        migrationId: input.migrationId,
+        status: { in: ['QUEUED', 'RUNNING'] },
       },
-      startedAt: new Date(),
-      completedAt: new Date(),
-      startedBy: adminUserId,
-      errors: failCount > 0
-        ? [{ recordId: `rec-${Math.random().toString(36).slice(2, 8)}`, error: 'Simulated transient failure' }]
-        : [],
-    };
+      orderBy: { startedAt: 'desc' },
+    });
+    if (existingRun) {
+      throw new MigrationAlreadyRunningError(input.migrationId);
+    }
 
-    runs.set(runId, run);
+    const row = await this.prisma.migrationRun.create({
+      data: {
+        migrationId: input.migrationId,
+        status: 'QUEUED',
+        options: {
+          dryRun: input.dryRun ?? false,
+          batchSize: input.batchSize ?? null,
+          tenantIds: input.tenantIds ?? [],
+        },
+        progress: {
+          totalRecords: migration.estimatedRecords,
+          processed: 0,
+          succeeded: 0,
+          failed: 0,
+          percentage: 0,
+        },
+        errors: [],
+        startedById: adminUser.id,
+      },
+      include: { startedBy: true },
+    });
+
+    const run = this.mapRowToRun(row);
 
     await logAdminAction({
       adminUserId,
@@ -183,8 +217,8 @@ export class MigrationService {
       action: 'migration.run',
       resourceType: 'MIGRATION',
       resourceId: input.migrationId,
-      description: `Started migration "${migration.name}" (run ${runId}, dryRun=${run.dryRun})`,
-      afterState: { runId, status: run.status, processed: run.progress.processed },
+      description: `Queued migration "${migration.name}" (run ${run.runId}, dryRun=${run.dryRun})`,
+      afterState: { runId: run.runId, status: run.status, processed: run.progress.processed },
     });
 
     return run;
@@ -194,9 +228,12 @@ export class MigrationService {
    * Returns details for a specific migration run.
    */
   async getRunDetail(runId: string): Promise<MigrationRun> {
-    const run = runs.get(runId);
-    if (!run) throw new MigrationRunNotFoundError(runId);
-    return run;
+    const row = await this.prisma.migrationRun.findUnique({
+      where: { id: runId },
+      include: { startedBy: true },
+    });
+    if (!row) throw new MigrationRunNotFoundError(runId);
+    return this.mapRowToRun(row);
   }
 
   /**
@@ -207,43 +244,112 @@ export class MigrationService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<MigrationRun> {
-    const run = runs.get(runId);
-    if (!run) throw new MigrationRunNotFoundError(runId);
+    const row = await this.prisma.migrationRun.findUnique({
+      where: { id: runId },
+      include: { startedBy: true },
+    });
+    if (!row) throw new MigrationRunNotFoundError(runId);
 
-    if (run.status !== 'RUNNING') {
-      // Already completed/cancelled — return as-is
+    const run = this.mapRowToRun(row);
+    if (run.status !== 'QUEUED' && run.status !== 'RUNNING') {
       return run;
     }
 
-    run.status = 'CANCELLED';
-    run.completedAt = new Date();
-    runs.set(runId, run);
+    const updated = await this.prisma.migrationRun.update({
+      where: { id: runId },
+      data: {
+        status: 'CANCELLED',
+        completedAt: new Date(),
+      },
+      include: { startedBy: true },
+    });
+    const cancelledRun = this.mapRowToRun(updated);
 
     await logAdminAction({
       adminUserId,
       adminUserEmail,
       action: 'migration.cancel',
-      resourceType: 'MIGRATION',
-      resourceId: run.migrationId,
+      resourceType: 'MIGRATION_RUN',
+      resourceId: runId,
       description: `Cancelled migration run ${runId}`,
-      afterState: { runId, status: run.status },
+      afterState: { runId, status: cancelledRun.status },
     });
 
-    return run;
+    return cancelledRun;
   }
 
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 
-  private findLastRun(migrationId: string): MigrationRun | undefined {
-    let latest: MigrationRun | undefined;
-    for (const run of runs.values()) {
-      if (run.migrationId !== migrationId) continue;
-      if (!latest || run.startedAt > latest.startedAt) {
-        latest = run;
-      }
+  private mapRowToRun(row: {
+    id: string;
+    migrationId: string;
+    status: string;
+    options: unknown;
+    progress: unknown;
+    errors: unknown;
+    startedAt: Date;
+    completedAt: Date | null;
+    startedById: string;
+    startedBy: { id: string; email: string; name: string };
+  }): MigrationRun {
+    const options = this.asRecord(row.options);
+    const progressRecord = this.asRecord(row.progress);
+    const errors = Array.isArray(row.errors)
+      ? row.errors
+          .filter((entry): entry is Record<string, unknown> => typeof entry === 'object' && entry !== null)
+          .map((entry) => ({
+            recordId: typeof entry.recordId === 'string' ? entry.recordId : 'unknown',
+            error: typeof entry.error === 'string' ? entry.error : 'Unknown error',
+          }))
+      : [];
+
+    return {
+      runId: row.id,
+      migrationId: row.migrationId,
+      migrationName: AVAILABLE_MIGRATIONS.find((migration) => migration.id === row.migrationId)?.name ?? row.migrationId,
+      status: this.normalizeStatus(row.status),
+      dryRun: Boolean(options.dryRun),
+      progress: {
+        totalRecords: this.asNumber(progressRecord.totalRecords),
+        processed: this.asNumber(progressRecord.processed),
+        succeeded: this.asNumber(progressRecord.succeeded),
+        failed: this.asNumber(progressRecord.failed),
+        percentage: this.asNumber(progressRecord.percentage),
+      },
+      startedAt: row.startedAt,
+      completedAt: row.completedAt ?? undefined,
+      startedBy: row.startedById,
+      startedByUser: {
+        email: row.startedBy.email,
+        name: row.startedBy.name,
+      },
+      errors,
+    };
+  }
+
+  private normalizeStatus(status: string): MigrationRunStatus {
+    if (
+      status === 'QUEUED' ||
+      status === 'RUNNING' ||
+      status === 'COMPLETED' ||
+      status === 'FAILED' ||
+      status === 'CANCELLED'
+    ) {
+      return status;
     }
-    return latest;
+    return 'FAILED';
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    return {};
+  }
+
+  private asNumber(value: unknown): number {
+    return typeof value === 'number' && Number.isFinite(value) ? value : 0;
   }
 }

@@ -4,6 +4,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
 import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
@@ -16,6 +17,8 @@ import {
   AccountDeletionCancelledResponseSchema,
   SelfExclusionCreatedResponseSchema,
   ActiveExclusionResponseSchema,
+  SessionReminderResponseSchema,
+  SessionReminderUpdateRequestSchema,
   EnforcementCreatedResponseSchema,
   EnforcementHistoryResponseSchema,
   RetentionCleanupResponseSchema,
@@ -144,6 +147,42 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
         requestId: id,
         message: 'Deletion scheduled in 14 days. You can cancel before then.',
       });
+    },
+  });
+
+  // --- Session Reminders ---
+
+  fastify.get('/session-reminder', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Get session reminder settings for current user',
+      operationId: 'getSessionReminder',
+      response: { 200: zodToJsonSchema(SessionReminderResponseSchema) },
+    },
+    handler: async (request) => {
+      const userId = request.headers['x-user-id'] as string;
+      const sessionReminder = await complianceService.getSessionReminder(userId);
+      return { sessionReminder };
+    },
+  });
+
+  fastify.put('/session-reminder', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Update session reminder settings for current user',
+      operationId: 'updateSessionReminder',
+      body: zodToJsonSchema(SessionReminderUpdateRequestSchema),
+      response: { 200: zodToJsonSchema(SessionReminderResponseSchema) },
+    },
+    handler: async (request) => {
+      const userId = request.headers['x-user-id'] as string;
+      const body = request.body as z.infer<typeof SessionReminderUpdateRequestSchema>;
+      const sessionReminder = await complianceService.updateSessionReminder(
+        userId,
+        body.enabled,
+        body.intervalMinutes,
+      );
+      return { sessionReminder };
     },
   });
 

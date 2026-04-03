@@ -8,7 +8,10 @@ import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   zodToJsonSchema,
+  ContestEntryListResponseSchema,
+  ContestEntryResponseSchema,
   ContestListResponseSchema,
+  MyContestEntryResponseSchema,
   ContestResponseSchema,
   ContestStandingsRecalculationResponseSchema,
   SuccessSchema,
@@ -40,6 +43,8 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
     selectionConfigRepo,
     membershipRepo,
     leagueRepo,
+    undefined,
+    prisma,
   );
   const handlers = createContestHandlers(contestService);
 
@@ -144,6 +149,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     selectionConfigRepo,
     membershipRepo,
     leagueRepo,
+    entryRepo,
+    prisma,
   );
   const overrideService = new OverrideService(contestRepo, draftSessionRepo, entryRepo, standingRepo);
   const handlers = createContestHandlers(contestService);
@@ -158,6 +165,49 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
     handler: handlers.getContest,
+  });
+
+  fastify.get('/:contestId/entries', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'List contest entries',
+      operationId: 'listContestEntries',
+      response: { 200: zodToJsonSchema(ContestEntryListResponseSchema) },
+    },
+    handler: handlers.listEntries,
+  });
+
+  fastify.get('/:contestId/entries/me', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Get the current user contest entry',
+      operationId: 'getMyContestEntry',
+      response: { 200: zodToJsonSchema(MyContestEntryResponseSchema) },
+    },
+    handler: handlers.getMyEntry,
+  });
+
+  fastify.post('/:contestId/entries/me', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Create or return the current user contest entry',
+      operationId: 'enterContest',
+      response: {
+        200: zodToJsonSchema(ContestEntryResponseSchema),
+        201: zodToJsonSchema(ContestEntryResponseSchema),
+      },
+    },
+    handler: handlers.createMyEntry,
+  });
+
+  fastify.delete('/:contestId/entries/me', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Delete the current user contest entry',
+      operationId: 'leaveContest',
+      response: { 204: { type: 'null' } },
+    },
+    handler: handlers.deleteMyEntry,
   });
 
   fastify.put('/:contestId', {

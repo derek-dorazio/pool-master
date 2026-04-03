@@ -36,15 +36,14 @@ describe('useContestPolling', () => {
     const { result } = renderHook(() => useContestPolling({ contestId: 'c-1' }));
 
     await waitFor(() => expect(result.current.data).toBeDefined());
-    expect(result.current.data!.contestStatus).toBe('ACTIVE');
+    expect(result.current.data!.contestStatus).toBe('DRAFT');
   });
 
   it('respects enabled option', async () => {
     const { result } = renderHook(() => useContestPolling({ contestId: 'c-1', enabled: false }));
 
-    // With enabled=false, the query should still run once (initial fetch)
-    // but refetchInterval is disabled
-    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.fetchStatus).toBe('idle');
   });
 
   it('accepts custom interval', async () => {
@@ -58,7 +57,7 @@ describe('useContestPolling', () => {
     const { result } = renderHook(() => useContestPolling({ contestId: 'c-1' }));
 
     await waitFor(() => expect(result.current.data).toBeDefined());
-    const date = new Date(result.current.data!.lastUpdatedAt);
+    const date = new Date(result.current.data!.lastUpdatedAt!);
     expect(date.getTime()).not.toBeNaN();
   });
 });

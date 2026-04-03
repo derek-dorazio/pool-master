@@ -129,6 +129,40 @@ export class ComplianceService {
     });
   }
 
+  // --- Session reminders ---
+
+  async getSessionReminder(userId: string): Promise<{ enabled: boolean; intervalMinutes: number }> {
+    const prefs = await this.prisma.notificationPreference.findUnique({ where: { userId } });
+    const reminder = extractSessionReminder(prefs?.categoryPreferences);
+    if (reminder) {
+      return reminder;
+    }
+    return { enabled: false, intervalMinutes: 60 };
+  }
+
+  async updateSessionReminder(
+    userId: string,
+    enabled: boolean,
+    intervalMinutes: number,
+  ): Promise<{ enabled: boolean; intervalMinutes: number }> {
+    const existing = await this.prisma.notificationPreference.findUnique({ where: { userId } });
+    const categories = normalizeRecord(existing?.categoryPreferences);
+    categories.sessionReminder = { enabled, intervalMinutes };
+
+    await this.prisma.notificationPreference.upsert({
+      where: { userId },
+      create: {
+        userId,
+        categoryPreferences: categories as object,
+      },
+      update: {
+        categoryPreferences: categories as object,
+      },
+    });
+
+    return { enabled, intervalMinutes };
+  }
+
   async processPendingDeletions(): Promise<number> {
     const due = await this.prisma.deletionRequest.findMany({
       where: { status: 'PENDING', scheduledDeletionAt: { lte: new Date() } },
@@ -287,4 +321,19 @@ export class ComplianceService {
 
     return results;
   }
+}
+
+function extractSessionReminder(value: unknown): { enabled: boolean; intervalMinutes: number } | null {
+  const categories = normalizeRecord(value);
+  const reminder = categories.sessionReminder;
+  if (!reminder || typeof reminder !== 'object') {
+    return null;
+  }
+  const enabled = typeof reminder.enabled === 'boolean' ? reminder.enabled : false;
+  const intervalMinutes = typeof reminder.intervalMinutes === 'number' ? reminder.intervalMinutes : 60;
+  return { enabled, intervalMinutes };
+}
+
+function normalizeRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }

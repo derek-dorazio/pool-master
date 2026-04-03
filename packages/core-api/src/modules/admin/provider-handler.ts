@@ -8,7 +8,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ProviderService } from './provider-service';
-import { ProviderNotFoundError } from './provider-service';
+import { ProviderConfigUnsupportedError, ProviderNotFoundError } from './provider-service';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -49,7 +49,7 @@ export function createProviderHandlers(providerService: ProviderService) {
     _reply: FastifyReply,
   ) {
     const providers = await providerService.listProviders();
-    return providers;
+    return { items: providers };
   }
 
   // --- Provider detail ---
@@ -92,6 +92,9 @@ export function createProviderHandlers(providerService: ProviderService) {
     } catch (err) {
       if (err instanceof ProviderNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      if (err instanceof ProviderConfigUnsupportedError) {
+        return reply.status(501).send({ error: 'CONFIG_UNAVAILABLE', message: err.message });
       }
       throw err;
     }
@@ -172,14 +175,15 @@ export function createProviderHandlers(providerService: ProviderService) {
 
   async function mapParticipant(
     request: FastifyRequest<{
-      Body: { externalId: string; internalId: string };
+      Body: { providerId: string; externalId: string; internalId: string };
     }>,
     reply: FastifyReply,
   ) {
     const { adminUserId, adminUserEmail } = extractAdminContext(request);
-    const { externalId, internalId } = request.body;
+    const { providerId, externalId, internalId } = request.body;
 
     await providerService.mapParticipant(
+      providerId,
       externalId,
       internalId,
       adminUserId,

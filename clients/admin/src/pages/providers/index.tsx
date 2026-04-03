@@ -20,7 +20,7 @@ function statusIndicator(status: ProviderStatus) {
 
 export function Component() {
   const navigate = useNavigate();
-  const { data: providers = [] } = useProviderList();
+  const { data: providers = [], isError, error } = useProviderList();
   const [countdown, setCountdown] = useState(30);
 
   useEffect(() => {
@@ -57,6 +57,14 @@ export function Component() {
 
       <Card>
         <CardContent className="p-0">
+          {isError ? (
+            <div className="px-4 py-8 text-sm text-red-600">
+              Provider status is unavailable.
+              <span className="ml-2 text-muted-foreground">
+                {error instanceof Error ? error.message : 'Check the provider adapters or health logs.'}
+              </span>
+            </div>
+          ) : null}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -74,11 +82,11 @@ export function Component() {
                   const si = statusIndicator(p.status);
                   return (
                     <tr
-                      key={p.id}
+                      key={p.providerId}
                       className="border-b cursor-pointer hover:bg-muted/30 transition-colors"
-                      onClick={() => navigate(`/providers/${p.id}`)}
+                      onClick={() => navigate(`/providers/${p.providerId}`)}
                     >
-                      <td className="px-4 py-3 font-medium">{p.name}</td>
+                      <td className="px-4 py-3 font-medium">{p.providerName}</td>
                       <td className="px-4 py-3">
                         <Badge className={cn('text-xs gap-1', si.className)}>
                           <span className={cn('inline-block h-2 w-2 rounded-full', si.dot.replace('text-', 'bg-'))} />
@@ -93,12 +101,14 @@ export function Component() {
                       </td>
                       <td className={cn(
                         'px-4 py-3 text-right font-mono',
-                        p.avgLatency > 1000 ? 'text-red-600 font-medium' : '',
+                        p.latencyMs > 1000 ? 'text-red-600 font-medium' : '',
                       )}>
-                        {p.avgLatency.toLocaleString()}
+                        {p.latencyMs.toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{p.lastEvent}</td>
-                      <td className="px-4 py-3 text-right">{p.activeEvents}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {p.lastEventAt ? new Date(p.lastEventAt).toLocaleString() : 'No events yet'}
+                      </td>
+                      <td className="px-4 py-3 text-right">{p.activeEventCount}</td>
                     </tr>
                   );
                 })}

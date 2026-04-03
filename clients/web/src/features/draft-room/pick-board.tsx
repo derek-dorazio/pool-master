@@ -92,18 +92,22 @@ export function PickBoard({ draft }: { draft: DraftState }) {
                     >
                       {pick ? (
                         <div className="text-center">
-                          <p className="text-xs font-medium truncate">{pick.participantName}</p>
-                          <div className="flex items-center justify-center gap-1 mt-0.5">
-                            {pick.position && (
-                              <Badge
-                                variant="outline"
-                                className={cn('text-[9px] px-1 py-0', positionColors[pick.position])}
-                              >
-                                {pick.position}
-                              </Badge>
-                            )}
-                            <span className="text-[10px] text-muted-foreground">{pick.team}</span>
-                          </div>
+                          <p className="text-xs font-medium truncate">{pick.isSkipped ? 'Skipped' : pick.participantName}</p>
+                          {pick.isSkipped ? (
+                            <div className="mt-0.5 text-[10px] text-muted-foreground">Commissioner skip</div>
+                          ) : (
+                            <div className="flex items-center justify-center gap-1 mt-0.5">
+                              {pick.position && (
+                                <Badge
+                                  variant="outline"
+                                  className={cn('text-[9px] px-1 py-0', positionColors[pick.position])}
+                                >
+                                  {pick.position}
+                                </Badge>
+                              )}
+                              <span className="text-[10px] text-muted-foreground">{pick.team}</span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="text-center text-xs text-muted-foreground/40">

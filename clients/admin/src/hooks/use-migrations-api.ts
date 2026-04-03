@@ -1,59 +1,53 @@
-import { useQuery } from '@tanstack/react-query';
-import { client, adminListMigrations, adminGetMigrationRunDetail } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  MigrationListResponseSchema,
+  MigrationRunResponseSchema,
+  type MigrationListResponse,
+  type MigrationRunResponse,
+} from '@poolmaster/shared/dto';
+import {
+  client,
+  adminCancelMigrationRun,
+  adminGetMigrationRunDetail,
+  adminListMigrations,
+} from '@/lib/api';
 
-export interface Migration {
-  id: string;
-  name: string;
-  description: string;
-  lastRunAt: string | null;
-  lastStatus: 'Completed' | 'Failed' | 'Running' | 'Never Run';
-}
-
-export interface MigrationRun {
-  id: string;
-  migrationName: string;
-  status: 'Running' | 'Completed' | 'Failed';
-  progress: number;
-  totalRecords: number;
-  processedRecords: number;
-  succeededRecords: number;
-  failedRecords: number;
-  startedBy: string;
-  startedAt: string;
-  completedAt: string | null;
-  duration: string;
-  estimatedRemaining?: string;
-  errors: MigrationError[];
-}
-
-export interface MigrationError {
-  recordId: string;
-  error: string;
-  timestamp: string;
-}
-
-export interface MigrationsData {
-  available: Migration[];
-  activeRuns: MigrationRun[];
-  recentHistory: MigrationRun[];
-}
+type MigrationRun = MigrationRunResponse['run'];
 
 export function useMigrations() {
   return useQuery({
     queryKey: ['migrations'],
-    queryFn: async (): Promise<MigrationsData> => {
+    queryFn: async (): Promise<MigrationListResponse> => {
       const { data } = await adminListMigrations({ client });
-      return data as unknown as MigrationsData;
+      return MigrationListResponseSchema.parse(data);
     },
   });
 }
 
-export function useMigrationDetail(id: string) {
+export function useMigrationDetail(runId: string) {
   return useQuery({
-    queryKey: ['migration-detail', id],
+    queryKey: ['migration-detail', runId],
+    enabled: runId.length > 0,
     queryFn: async (): Promise<MigrationRun> => {
-      const { data } = await adminGetMigrationRunDetail({ client, path: { runId: id } });
-      return data as unknown as MigrationRun;
+      const { data } = await adminGetMigrationRunDetail({ client, path: { runId } });
+      return MigrationRunResponseSchema.parse(data).run;
+    },
+  });
+}
+
+export function useCancelMigrationRun() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (runId: string): Promise<MigrationRun> => {
+      const { data } = await adminCancelMigrationRun({ client, path: { runId } });
+      return MigrationRunResponseSchema.parse(data).run;
+    },
+    onSuccess: async (run) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['migrations'] }),
+        queryClient.invalidateQueries({ queryKey: ['migration-detail', run.id] }),
+      ]);
     },
   });
 }

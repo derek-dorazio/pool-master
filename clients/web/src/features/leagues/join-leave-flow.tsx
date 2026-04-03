@@ -8,6 +8,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { InvitePolicy } from '@poolmaster/shared/domain';
 import { UserPlus, LogOut, Clock, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { client } from '@/lib/api';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 
 type MembershipState = 'none' | 'pending' | 'member';
 
@@ -17,15 +19,21 @@ interface JoinLeagueButtonProps {
   membershipState: MembershipState;
 }
 
-export function JoinLeagueButton({ leagueId: _leagueId, joinPolicy, membershipState }: JoinLeagueButtonProps) {
+export function JoinLeagueButton({ leagueId, joinPolicy, membershipState }: JoinLeagueButtonProps) {
   const queryClient = useQueryClient();
+  const canJoinDirectly = joinPolicy === InvitePolicy.OPEN;
 
   const join = useMutation({
     mutationFn: async () => {
-      // TODO: Replace with real API
-      // return api.post(`/v1/leagues/${leagueId}/join`);
-      await new Promise((r) => setTimeout(r, 400));
-      return { success: true };
+      if (!canJoinDirectly) {
+        throw new Error('Join requests are not supported by the current backend flow.');
+      }
+
+      const result = await client.post({
+        url: API_ROUTES.search.joinDiscoverableLeague(leagueId),
+      });
+      if (result.error) throw result.error;
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leagues'] });
@@ -50,13 +58,13 @@ export function JoinLeagueButton({ leagueId: _leagueId, joinPolicy, membershipSt
   }
 
   return (
-    <Button size="sm" onClick={() => join.mutate()} disabled={join.isPending}>
+    <Button size="sm" onClick={() => join.mutate()} disabled={join.isPending || !canJoinDirectly}>
       {join.isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <>
           <UserPlus className="h-4 w-4 mr-1" />
-          {joinPolicy === InvitePolicy.OPEN ? 'Join League' : 'Request to Join'}
+          {canJoinDirectly ? 'Join League' : 'Request Unsupported'}
         </>
       )}
     </Button>
@@ -69,16 +77,17 @@ interface LeaveLeagueButtonProps {
   onLeft?: () => void;
 }
 
-export function LeaveLeagueButton({ leagueId: _leagueId, leagueName, onLeft }: LeaveLeagueButtonProps) {
+export function LeaveLeagueButton({ leagueId, leagueName, onLeft }: LeaveLeagueButtonProps) {
   const [confirming, setConfirming] = useState(false);
   const queryClient = useQueryClient();
 
   const leave = useMutation({
     mutationFn: async () => {
-      // TODO: Replace with real API
-      // return api.delete(`/v1/leagues/${leagueId}/members/me`);
-      await new Promise((r) => setTimeout(r, 400));
-      return { success: true };
+      const result = await client.delete({
+        url: API_ROUTES.leagues.leave(leagueId),
+      });
+      if (result.error) throw result.error;
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leagues'] });

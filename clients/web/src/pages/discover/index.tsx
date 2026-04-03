@@ -54,7 +54,7 @@ export function Component() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Trending Leagues</h2>
-          <Link to="/discover/leagues?sort=trending" className="text-sm text-primary hover:underline flex items-center gap-0.5">
+          <Link to="/discover/leagues?sort=ACTIVITY" className="text-sm text-primary hover:underline flex items-center gap-0.5">
             View all <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
@@ -82,7 +82,7 @@ export function Component() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Popular Contests This Week</h2>
-          <Link to="/discover/contests?sort=popular" className="text-sm text-primary hover:underline flex items-center gap-0.5">
+          <Link to="/discover/contests?sort=POPULAR" className="text-sm text-primary hover:underline flex items-center gap-0.5">
             View all <ChevronRight className="h-3 w-3" />
           </Link>
         </div>

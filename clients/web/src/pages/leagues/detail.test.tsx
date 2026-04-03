@@ -33,8 +33,8 @@ const mockContests = [
 ];
 
 const mockMembers = [
-  { id: 'm1', userId: 'u1', displayName: 'Mike Johnson', role: 'commissioner' },
-  { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'member' },
+  { id: 'm1', userId: 'u1', displayName: 'Mike Johnson', role: 'OWNER' },
+  { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'MANAGER' },
 ];
 
 vi.mock('@tanstack/react-query', async () => {
@@ -61,7 +61,7 @@ vi.mock('@tanstack/react-query', async () => {
           ...mockLeague,
           name: 'Masters Pool',
           memberCount: 8,
-          role: 'commissioner',
+          role: 'OWNER',
           description: 'A competitive pool league.',
         },
         isLoading: false,
@@ -69,6 +69,13 @@ vi.mock('@tanstack/react-query', async () => {
         error: null,
       };
     },
+    useMutation: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
+    useQueryClient: () => ({
+      invalidateQueries: vi.fn(),
+    }),
   };
 });
 
@@ -102,7 +109,7 @@ describe('LeagueDetailPage', () => {
     expect(screen.getByText('Survivor Pool 2025')).toBeInTheDocument();
   });
 
-  it('shows settings link for owners (commissioner)', () => {
+  it('shows settings link for owners', () => {
     renderPage();
     const settingsLink = screen.getByRole('link', { name: /Settings/ });
     expect(settingsLink).toBeInTheDocument();

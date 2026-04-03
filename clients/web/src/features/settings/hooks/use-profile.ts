@@ -1,25 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { client, getCurrentUser } from '@/lib/api';
-import type { UserProfileDto } from '@poolmaster/shared/dto';
+import { MeResponseSchema, type UserProfileDto } from '@poolmaster/shared/dto';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
-
-// Extends UserProfileDto with fields not yet in the shared DTO
-// TODO: migrate bio and authProvider to @poolmaster/shared/dto when DTO is updated
-export interface UserProfile extends UserProfileDto {
-  bio: string;
-  authProvider: 'email' | 'google' | 'apple';
-}
 
 export function useProfile() {
   return useQuery({
     queryKey: settingsKeys.profile(),
-    queryFn: async (): Promise<UserProfile> => {
+    queryFn: async (): Promise<UserProfileDto> => {
       const { data, error } = await getCurrentUser({ client });
       if (error) throw error;
-      // The generated type wraps the profile in a `user` object;
-      // cast to UserProfile which extends UserProfileDto with extra fields
-      return (data as unknown as { user: UserProfile }).user;
+      return MeResponseSchema.parse(data).user;
     },
     staleTime: Infinity,
   });
@@ -29,7 +20,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (body: Partial<Pick<UserProfile, 'displayName' | 'email' | 'bio'>>) => {
+    mutationFn: async (body: Partial<Pick<UserProfileDto, 'displayName' | 'email'>>) => {
       const { data, error } = await client.put({
         url: '/api/v1/auth/profile',
         body,

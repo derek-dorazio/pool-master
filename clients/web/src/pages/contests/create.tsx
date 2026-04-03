@@ -9,28 +9,33 @@ import {
   ChevronRight,
   Check,
   Trophy,
-  Calendar,
-  Clock,
-  Users,
   Settings2,
   ClipboardList,
+  FolderPlus,
 } from 'lucide-react';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, ScoringEngine, type SelectionType } from '@poolmaster/shared/domain';
+import {
+  SelectionTemplateListResponseSchema,
+  ScoringTemplateListResponseSchema,
+} from '@poolmaster/shared/dto';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { client, createContest, listLeagues } from '@/lib/api';
+import {
+  client,
+  createContest,
+  listLeagues,
+  listScoringTemplates,
+  listSelectionTemplates,
+} from '@/lib/api';
 
 const STEPS = [
-  { label: 'Sport & Event', icon: Trophy },
-  { label: 'Contest Type', icon: Settings2 },
-  { label: 'Scoring Rules', icon: ClipboardList },
-  { label: 'Draft Config', icon: Clock },
-  { label: 'Participants', icon: Users },
-  { label: 'Entry Settings', icon: Calendar },
+  { label: 'Basics', icon: FolderPlus },
+  { label: 'Selection Template', icon: Settings2 },
+  { label: 'Scoring Template', icon: ClipboardList },
   { label: 'Review', icon: Check },
 ];
 
@@ -46,181 +51,18 @@ const SPORTS = [
   { id: Sport.HORSE_RACING, name: 'Horse Racing', emoji: '🐎' },
 ];
 
-const EVENTS_BY_SPORT: Record<string, Array<{ id: string; name: string; venue: string; dates: string; field: string }>> = {
-  [Sport.GOLF]: [
-    { id: 'masters-2026', name: 'The Masters 2026', venue: 'Augusta National', dates: 'Apr 9-12', field: '90 players' },
-    { id: 'pga-2026', name: 'PGA Championship 2026', venue: 'Aronimink GC', dates: 'May 14-17', field: 'TBD' },
-    { id: 'us-open-2026', name: 'US Open 2026', venue: 'Shinnecock Hills', dates: 'Jun 18-21', field: 'TBD' },
-  ],
-  [Sport.NFL]: [
-    { id: 'nfl-week1-2026', name: 'NFL Week 1 2026', venue: 'Various', dates: 'Sep 10-13', field: '32 teams' },
-    { id: 'nfl-playoffs-2026', name: 'NFL Playoffs 2027', venue: 'Various', dates: 'Jan 9-Feb 7', field: '14 teams' },
-    { id: 'super-bowl-2027', name: 'Super Bowl LXI', venue: 'SoFi Stadium', dates: 'Feb 7, 2027', field: '2 teams' },
-  ],
-  [Sport.NBA]: [
-    { id: 'nba-playoffs-2026', name: 'NBA Playoffs 2026', venue: 'Various', dates: 'Apr 18-Jun', field: '16 teams' },
-    { id: 'nba-finals-2026', name: 'NBA Finals 2026', venue: 'TBD', dates: 'Jun 2026', field: '2 teams' },
-    { id: 'nba-allstar-2027', name: 'NBA All-Star Weekend', venue: 'TBD', dates: 'Feb 2027', field: '24 players' },
-  ],
-  [Sport.F1]: [
-    { id: 'f1-monaco-2026', name: 'Monaco Grand Prix 2026', venue: 'Circuit de Monaco', dates: 'May 24', field: '20 drivers' },
-    { id: 'f1-silverstone-2026', name: 'British Grand Prix 2026', venue: 'Silverstone', dates: 'Jul 5', field: '20 drivers' },
-    { id: 'f1-monza-2026', name: 'Italian Grand Prix 2026', venue: 'Monza', dates: 'Sep 6', field: '20 drivers' },
-  ],
-  [Sport.NCAA_BASKETBALL]: [
-    { id: 'march-madness-2027', name: 'March Madness 2027', venue: 'Various', dates: 'Mar 16-Apr 5', field: '68 teams' },
-    { id: 'cfp-2026', name: 'College Football Playoff 2026', venue: 'Various', dates: 'Dec-Jan', field: '12 teams' },
-    { id: 'ncaa-bowl-2026', name: 'Bowl Season 2026', venue: 'Various', dates: 'Dec 2026', field: '40+ teams' },
-  ],
-  [Sport.TENNIS]: [
-    { id: 'wimbledon-2026', name: 'Wimbledon 2026', venue: 'All England Club', dates: 'Jun 29-Jul 12', field: '128 players' },
-    { id: 'us-open-tennis-2026', name: 'US Open 2026', venue: 'Flushing Meadows', dates: 'Aug 31-Sep 13', field: '128 players' },
-    { id: 'aus-open-2027', name: 'Australian Open 2027', venue: 'Melbourne Park', dates: 'Jan 18-31', field: '128 players' },
-  ],
-  [Sport.SOCCER]: [
-    { id: 'world-cup-2026', name: 'FIFA World Cup 2026', venue: 'USA/CAN/MEX', dates: 'Jun-Jul 2026', field: '48 teams' },
-    { id: 'epl-2026', name: 'Premier League 2026-27', venue: 'Various', dates: 'Aug 2026-May 2027', field: '20 teams' },
-    { id: 'ucl-2026', name: 'Champions League 2026-27', venue: 'Various', dates: 'Sep 2026-Jun 2027', field: '36 teams' },
-  ],
-  [Sport.NASCAR]: [
-    { id: 'daytona-2027', name: 'Daytona 500 2027', venue: 'Daytona International', dates: 'Feb 14, 2027', field: '40 cars' },
-    { id: 'nascar-coke600-2026', name: 'Coca-Cola 600 2026', venue: 'Charlotte Motor', dates: 'May 24', field: '40 cars' },
-    { id: 'nascar-champ-2026', name: 'NASCAR Championship 2026', venue: 'Phoenix Raceway', dates: 'Nov 8', field: '4 cars' },
-  ],
-  [Sport.HORSE_RACING]: [
-    { id: 'ky-derby-2026', name: 'Kentucky Derby 2026', venue: 'Churchill Downs', dates: 'May 2', field: '20 horses' },
-    { id: 'preakness-2026', name: 'Preakness Stakes 2026', venue: 'Pimlico', dates: 'May 16', field: '14 horses' },
-    { id: 'belmont-2026', name: 'Belmont Stakes 2026', venue: 'Belmont Park', dates: 'Jun 6', field: '12 horses' },
-  ],
-};
-
-const SELECTION_TYPES = [
-  { id: 'snake-draft', name: 'Snake Draft', emoji: '🐍', description: 'Turn-based, exclusive picks each round', requiresBracket: false },
-  { id: 'tiered', name: 'Tiered Pick', emoji: '📊', description: 'Pick one from each tier of participants', requiresBracket: false },
-  { id: 'budget', name: 'Budget Pick', emoji: '💰', description: 'Build a roster within a salary cap', requiresBracket: false },
-  { id: 'open', name: 'Open Selection', emoji: '📋', description: 'Pick any N from the full field', requiresBracket: false },
-  { id: 'pickem', name: "Pick'em", emoji: '🏆', description: 'Predict winners for each matchup', requiresBracket: false },
-  { id: 'survivor', name: 'Survivor', emoji: '💀', description: 'One wrong pick and you are eliminated', requiresBracket: false },
-  { id: 'bracket', name: 'Bracket', emoji: '🏅', description: 'Fill out a tournament bracket', requiresBracket: true },
-];
-
-const SCORING_TEMPLATES: Record<string, Array<{ id: string; name: string; description: string; rules: Array<{ stat: string; points: string; condition: string }> }>> = {
-  [Sport.GOLF]: [
-    {
-      id: 'stroke-play',
-      name: 'Stroke Play (Standard)',
-      description: 'Points based on total strokes vs par; lower is better',
-      rules: [
-        { stat: 'Eagle', points: '+4', condition: 'Per hole' },
-        { stat: 'Birdie', points: '+3', condition: 'Per hole' },
-        { stat: 'Par', points: '+0.5', condition: 'Per hole' },
-        { stat: 'Bogey', points: '-1', condition: 'Per hole' },
-        { stat: 'Double+', points: '-2', condition: 'Per hole' },
-        { stat: 'Missed Cut', points: '-5', condition: 'Per event' },
-      ],
-    },
-    {
-      id: 'dfs-points',
-      name: 'DFS Points',
-      description: 'Fantasy-style scoring with position bonuses',
-      rules: [
-        { stat: 'Eagle', points: '+8', condition: 'Per hole' },
-        { stat: 'Birdie', points: '+3', condition: 'Per hole' },
-        { stat: 'Par', points: '+0.5', condition: 'Per hole' },
-        { stat: 'Bogey', points: '-0.5', condition: 'Per hole' },
-        { stat: 'Top 10 Finish', points: '+5', condition: 'Bonus' },
-        { stat: 'Win', points: '+10', condition: 'Bonus' },
-      ],
-    },
-  ],
-  [Sport.NFL]: [
-    {
-      id: 'nfl-standard',
-      name: 'NFL Standard',
-      description: 'Classic fantasy scoring with rushing, passing, and receiving',
-      rules: [
-        { stat: 'Passing TD', points: '+4', condition: 'Per TD' },
-        { stat: 'Rushing TD', points: '+6', condition: 'Per TD' },
-        { stat: 'Receiving TD', points: '+6', condition: 'Per TD' },
-        { stat: 'Passing Yard', points: '+0.04', condition: 'Per yard' },
-        { stat: 'Rushing Yard', points: '+0.1', condition: 'Per yard' },
-        { stat: 'Interception', points: '-2', condition: 'Per INT' },
-      ],
-    },
-    {
-      id: 'nfl-ppr',
-      name: 'NFL PPR',
-      description: 'Points per reception added to standard scoring',
-      rules: [
-        { stat: 'Reception', points: '+1', condition: 'Per catch' },
-        { stat: 'Passing TD', points: '+4', condition: 'Per TD' },
-        { stat: 'Rushing TD', points: '+6', condition: 'Per TD' },
-        { stat: 'Receiving TD', points: '+6', condition: 'Per TD' },
-        { stat: 'Passing Yard', points: '+0.04', condition: 'Per yard' },
-        { stat: 'Fumble', points: '-2', condition: 'Per fumble lost' },
-      ],
-    },
-  ],
-};
-
-const defaultTemplates = [
-  {
-    id: 'generic-standard',
-    name: 'Standard Scoring',
-    description: 'Balanced point system for general competition',
-    rules: [
-      { stat: 'Win', points: '+10', condition: 'Per event' },
-      { stat: 'Top 5', points: '+5', condition: 'Per event' },
-      { stat: 'Top 10', points: '+3', condition: 'Per event' },
-      { stat: 'Participation', points: '+1', condition: 'Per event' },
-    ],
-  },
-  {
-    id: 'generic-weighted',
-    name: 'Weighted Position',
-    description: 'Higher finish = exponentially more points',
-    rules: [
-      { stat: '1st Place', points: '+25', condition: 'Per event' },
-      { stat: '2nd Place', points: '+18', condition: 'Per event' },
-      { stat: '3rd Place', points: '+15', condition: 'Per event' },
-      { stat: 'Top 10', points: '+5', condition: 'Per event' },
-    ],
-  },
-];
-
 const wizardSchema = z.object({
   leagueId: z.string().min(1, 'Select a league'),
   sport: z.string().min(1, 'Select a sport'),
-  eventId: z.string().min(1, 'Select an event'),
-  duration: z.enum(['single', 'season']),
-  selectionType: z.string().min(1, 'Select a contest type'),
-  scoringTemplateId: z.string().min(1, 'Select a scoring template'),
-  customize: z.boolean(),
-  draftMode: z.enum(['live', 'async']),
-  secondsPerPick: z.number().min(15).max(300),
-  draftDate: z.string(),
-  maxEntries: z.number().min(1).max(10),
-  entryDeadline: z.string(),
-  rosterSize: z.number().min(1).max(20),
+  name: z.string().min(1, 'Enter a contest name').max(100, 'Contest name is too long'),
+  selectionTemplateId: z.string().min(1, 'Select a selection template'),
+  scoringTemplateKey: z.string().min(1, 'Select a scoring template'),
 });
 
 type WizardForm = z.infer<typeof wizardSchema>;
 
-const selectionTypeMap = {
-  'snake-draft': 'SNAKE_DRAFT',
-  tiered: 'TIERED',
-  budget: 'BUDGET_PICK',
-  open: 'OPEN_SELECTION',
-  pickem: 'PICK_EM',
-  bracket: 'BRACKET_PICK_EM',
-} as const;
-
-function getScoringEngine(selectionType: WizardForm['selectionType'], sport: string) {
-  if (selectionType === 'bracket') return 'BRACKET' as const;
-  if (sport === Sport.GOLF) return 'STROKE_PLAY' as const;
-  if (sport === Sport.NFL || sport === Sport.NBA) return 'STAT_ACCUMULATION' as const;
-  return 'POSITION' as const;
-}
+type SelectionTemplateDto = z.infer<typeof SelectionTemplateListResponseSchema>[number];
+type ScoringTemplateDto = z.infer<typeof ScoringTemplateListResponseSchema>['templates'][number];
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -234,7 +76,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
                 ? 'bg-primary text-primary-foreground'
                 : i === current
                   ? 'border-2 border-primary text-primary'
-                  : 'border border-muted-foreground/30 text-muted-foreground'
+                  : 'border border-muted-foreground/30 text-muted-foreground',
             )}
           >
             {i < current ? <Check className="h-4 w-4" /> : i + 1}
@@ -243,7 +85,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
             <div
               className={cn(
                 'mx-1 h-0.5 w-6',
-                i < current ? 'bg-primary' : 'bg-muted-foreground/30'
+                i < current ? 'bg-primary' : 'bg-muted-foreground/30',
               )}
             />
           )}
@@ -253,7 +95,43 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
   );
 }
 
-function Step1SportEvent({
+function getScoringEngine(sport: string, selectionType: string) {
+  if (selectionType === 'BRACKET_PICK_EM') return ScoringEngine.BRACKET;
+  if (selectionType === 'PICK_EM') return ScoringEngine.CUMULATIVE;
+  if (sport === Sport.GOLF) return ScoringEngine.STROKE_PLAY;
+
+  switch (sport) {
+    case Sport.NCAA_BASKETBALL:
+    case Sport.NBA:
+    case Sport.TENNIS:
+    case Sport.SOCCER:
+      return ScoringEngine.ADVANCEMENT;
+    case Sport.F1:
+    case Sport.NASCAR:
+    case Sport.HORSE_RACING:
+      return ScoringEngine.POSITION;
+    default:
+      return ScoringEngine.STAT_ACCUMULATION;
+  }
+}
+
+function formatTemplateConfig(config: Record<string, unknown>) {
+  const rows: string[] = [];
+
+  if (typeof config.rounds === 'number') rows.push(`${config.rounds} rounds`);
+  if (typeof config.draftMode === 'string') rows.push(`Draft mode: ${config.draftMode}`);
+  if (typeof config.timePerPickSeconds === 'number') rows.push(`${config.timePerPickSeconds}s per pick`);
+  if (typeof config.budget === 'number') rows.push(`Budget: $${config.budget.toLocaleString()}`);
+  if (typeof config.rosterSize === 'number') rows.push(`Roster size: ${config.rosterSize}`);
+  if (typeof config.pickCount === 'number') rows.push(`Pick count: ${config.pickCount}`);
+  if (typeof config.bestBallN === 'number') rows.push(`Best ${config.bestBallN} scores count`);
+  if (typeof config.picksPerPeriod === 'number') rows.push(`Picks per period: ${config.picksPerPeriod}`);
+  if (typeof config.strikesBeforeElimination === 'number') rows.push(`Strikes before elimination: ${config.strikesBeforeElimination}`);
+
+  return rows;
+}
+
+function Step1Basics({
   form,
   leagues,
 }: {
@@ -262,39 +140,51 @@ function Step1SportEvent({
 }) {
   const leagueId = form.watch('leagueId');
   const sport = form.watch('sport');
-  const eventId = form.watch('eventId');
-  const events = sport ? (EVENTS_BY_SPORT[sport] ?? []) : [];
 
   return (
     <div className="space-y-8">
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">
+          This flow creates single-event contests only. Event catalogs and advanced contest configuration are not wired here yet, so this page only exposes fields backed by the live API.
+        </CardContent>
+      </Card>
+
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Select League</h3>
-        <div className="space-y-2">
-          {leagues.map((league) => (
-            <button
-              key={league.id}
-              type="button"
-              onClick={() => form.setValue('leagueId', league.id, { shouldValidate: true })}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
-                leagueId === league.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-transparent bg-muted/50',
-              )}
-            >
-              <div
+        {leagues.length === 0 ? (
+          <Card>
+            <CardContent className="p-4 text-sm text-muted-foreground">
+              You need an owner or commissioner role in a league before you can create a contest.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {leagues.map((league) => (
+              <button
+                key={league.id}
+                type="button"
+                onClick={() => form.setValue('leagueId', league.id, { shouldValidate: true })}
                 className={cn(
-                  'h-4 w-4 shrink-0 rounded-full border-2',
-                  leagueId === league.id ? 'border-primary bg-primary' : 'border-muted-foreground/40',
+                  'flex w-full items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
+                  leagueId === league.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-transparent bg-muted/50',
                 )}
-              />
-              <div>
-                <p className="font-medium">{league.name}</p>
-                <p className="text-sm text-muted-foreground">{league.role ?? 'member'}</p>
-              </div>
-            </button>
-          ))}
-        </div>
+              >
+                <div
+                  className={cn(
+                    'h-4 w-4 shrink-0 rounded-full border-2',
+                    leagueId === league.id ? 'border-primary bg-primary' : 'border-muted-foreground/40',
+                  )}
+                />
+                <div>
+                  <p className="font-medium">{league.name}</p>
+                  <p className="text-sm text-muted-foreground">{league.role ?? 'member'}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
         {form.formState.errors.leagueId && (
           <p className="text-sm text-destructive">{form.formState.errors.leagueId.message}</p>
         )}
@@ -309,13 +199,14 @@ function Step1SportEvent({
               type="button"
               onClick={() => {
                 form.setValue('sport', s.id, { shouldValidate: true });
-                form.setValue('eventId', '');
+                form.setValue('selectionTemplateId', '');
+                form.setValue('scoringTemplateKey', '');
               }}
               className={cn(
                 'flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors hover:border-primary/50',
                 sport === s.id
                   ? 'border-primary bg-primary/5'
-                  : 'border-transparent bg-muted/50'
+                  : 'border-transparent bg-muted/50',
               )}
             >
               <span className="text-2xl">{s.emoji}</span>
@@ -328,386 +219,199 @@ function Step1SportEvent({
         )}
       </div>
 
-      {sport && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Select Event</h3>
-          <div className="space-y-2">
-            {events.map((event) => (
-              <button
-                key={event.id}
-                type="button"
-                onClick={() => form.setValue('eventId', event.id, { shouldValidate: true })}
-                className={cn(
-                  'flex w-full items-start gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
-                  eventId === event.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-transparent bg-muted/50'
-                )}
-              >
-                <div
-                  className={cn(
-                    'mt-0.5 h-4 w-4 shrink-0 rounded-full border-2',
-                    eventId === event.id
-                      ? 'border-primary bg-primary'
-                      : 'border-muted-foreground/40'
-                  )}
-                />
-                <div>
-                  <p className="font-medium">{event.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {event.venue} &middot; {event.dates} &middot; Field: {event.field}
-                  </p>
-                </div>
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => form.setValue('eventId', 'custom', { shouldValidate: true })}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-lg border-2 border-dashed p-4 text-left transition-colors hover:border-primary/50',
-                eventId === 'custom'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-muted-foreground/30'
-              )}
-            >
-              <span className="text-lg">+</span>
-              <span className="text-sm font-medium text-muted-foreground">Create custom event</span>
-            </button>
-          </div>
-          {form.formState.errors.eventId && (
-            <p className="text-sm text-destructive">{form.formState.errors.eventId.message}</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Step2ContestType({
-  form,
-}: {
-  form: ReturnType<typeof useForm<WizardForm>>;
-}) {
-  const duration = form.watch('duration');
-  const selectionType = form.watch('selectionType');
-  const sport = form.watch('sport');
-  const bracketSports: string[] = [Sport.NCAA_BASKETBALL, Sport.NBA];
-
-  return (
-    <div className="space-y-8">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Contest Duration</h3>
-        <div className="space-y-3">
-          {[
-            { value: 'single' as const, label: 'Single Event', desc: 'One tournament, race, or playoff round' },
-            { value: 'season' as const, label: 'Season Long', desc: 'Spans the full competition season' },
-          ].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => form.setValue('duration', opt.value, { shouldValidate: true })}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
-                duration === opt.value
-                  ? 'border-primary bg-primary/5'
-                  : 'border-transparent bg-muted/50'
-              )}
-            >
-              <div
-                className={cn(
-                  'h-4 w-4 shrink-0 rounded-full border-2',
-                  duration === opt.value
-                    ? 'border-primary bg-primary'
-                    : 'border-muted-foreground/40'
-                )}
-              />
-              <div>
-                <p className="font-medium">{opt.label}</p>
-                <p className="text-sm text-muted-foreground">{opt.desc}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Selection Type</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {SELECTION_TYPES.filter(
-            (t) => !t.requiresBracket || bracketSports.includes(sport)
-          ).map((type) => (
-            <button
-              key={type.id}
-              type="button"
-              onClick={() => form.setValue('selectionType', type.id, { shouldValidate: true })}
-              className={cn(
-                'flex flex-col items-start gap-1 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
-                selectionType === type.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-transparent bg-muted/50'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{type.emoji}</span>
-                <span className="font-medium">{type.name}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">{type.description}</p>
-            </button>
-          ))}
-        </div>
-        {form.formState.errors.selectionType && (
-          <p className="text-sm text-destructive">{form.formState.errors.selectionType.message}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Step3ScoringRules({
-  form,
-}: {
-  form: ReturnType<typeof useForm<WizardForm>>;
-}) {
-  const sport = form.watch('sport');
-  const scoringTemplateId = form.watch('scoringTemplateId');
-  const customize = form.watch('customize');
-  const templates = SCORING_TEMPLATES[sport] ?? defaultTemplates;
-  const selectedTemplate = templates.find((t) => t.id === scoringTemplateId);
-
-  return (
-    <div className="space-y-8">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Scoring Template</h3>
-        <div className="space-y-2">
-          {templates.map((tmpl) => (
-            <button
-              key={tmpl.id}
-              type="button"
-              onClick={() => form.setValue('scoringTemplateId', tmpl.id, { shouldValidate: true })}
-              className={cn(
-                'flex w-full items-start gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
-                scoringTemplateId === tmpl.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-transparent bg-muted/50'
-              )}
-            >
-              <div
-                className={cn(
-                  'mt-0.5 h-4 w-4 shrink-0 rounded-full border-2',
-                  scoringTemplateId === tmpl.id
-                    ? 'border-primary bg-primary'
-                    : 'border-muted-foreground/40'
-                )}
-              />
-              <div>
-                <p className="font-medium">{tmpl.name}</p>
-                <p className="text-sm text-muted-foreground">{tmpl.description}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-        {form.formState.errors.scoringTemplateId && (
-          <p className="text-sm text-destructive">{form.formState.errors.scoringTemplateId.message}</p>
-        )}
-      </div>
-
-      {selectedTemplate && (
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-lg border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-2 text-left font-medium">Stat</th>
-                  <th className="px-4 py-2 text-left font-medium">Points</th>
-                  <th className="px-4 py-2 text-left font-medium">Condition</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedTemplate.rules.map((rule, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="px-4 py-2">{rule.stat}</td>
-                    <td className="px-4 py-2 font-mono">{rule.points}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{rule.condition}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => form.setValue('customize', !customize)}
-              className={cn(
-                'relative h-6 w-11 rounded-full transition-colors',
-                customize ? 'bg-primary' : 'bg-muted-foreground/30'
-              )}
-            >
-              <span
-                className={cn(
-                  'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
-                  customize ? 'translate-x-5' : 'translate-x-0.5'
-                )}
-              />
-            </button>
-            <span className="text-sm font-medium">Customize scoring rules</span>
-          </div>
-
-          {customize && (
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">
-                  Custom rule editing will be available in a future update. The selected template rules will be used as-is.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Step4DraftConfig() {
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Draft Configuration</h3>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>Draft Mode</Label>
-          <div className="flex gap-2">
-            <div className="flex-1 rounded-lg border-2 border-primary bg-primary/5 p-3 text-center text-sm font-medium">
-              LIVE
-            </div>
-            <div className="flex-1 rounded-lg border-2 border-transparent bg-muted/50 p-3 text-center text-sm font-medium text-muted-foreground">
-              ASYNC
-            </div>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Seconds Per Pick</Label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min={15}
-              max={300}
-              defaultValue={90}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-muted-foreground/20 accent-primary"
-              disabled
+      <div className="space-y-2">
+        <Label htmlFor="name">Contest Name</Label>
+        <Controller
+          name="name"
+          control={form.control}
+          render={({ field }) => (
+            <Input
+              id="name"
+              placeholder="Masters Pick 6"
+              {...field}
             />
-            <span className="w-12 text-right text-sm font-mono">90s</span>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Draft Date</Label>
-          <Input type="date" defaultValue="2026-04-07" disabled />
-        </div>
+          )}
+        />
+        {form.formState.errors.name && (
+          <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+        )}
       </div>
     </div>
   );
 }
 
-function Step5Participants() {
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Participant Pool</h3>
+function Step2SelectionTemplate({
+  form,
+  templates,
+  isLoading,
+}: {
+  form: ReturnType<typeof useForm<WizardForm>>;
+  templates: SelectionTemplateDto[];
+  isLoading: boolean;
+}) {
+  const selectedId = form.watch('selectionTemplateId');
+
+  if (!form.watch('sport')) {
+    return (
       <Card>
-        <CardContent className="flex items-center gap-3 p-6">
-          <Users className="h-8 w-8 text-primary" />
-          <div>
-            <p className="font-medium">Full field selected</p>
-            <p className="text-sm text-muted-foreground">90 participants available for this event</p>
-          </div>
+        <CardContent className="p-4 text-sm text-muted-foreground">
+          Choose a sport first to load the live selection templates for single-event contests.
         </CardContent>
       </Card>
-      <p className="text-sm text-muted-foreground">
-        Participant pool customization (include/exclude specific players) will be available in a future update.
-      </p>
-    </div>
-  );
-}
+    );
+  }
 
-function Step6EntrySettings({
-  form,
-}: {
-  form: ReturnType<typeof useForm<WizardForm>>;
-}) {
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading selection templates...</p>;
+  }
+
+  if (templates.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">
+          No live selection templates are available for this sport yet.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Entry Settings</h3>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="maxEntries">Max Entries Per Member</Label>
-          <Controller
-            name="maxEntries"
-            control={form.control}
-            render={({ field }) => (
-              <Input
-                id="maxEntries"
-                type="number"
-                min={1}
-                max={10}
-                {...field}
-                onChange={(e) => field.onChange(Number(e.target.value))}
-              />
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Selection Template</h3>
+      <div className="space-y-2">
+        {templates.map((template) => (
+          <button
+            key={template.id}
+            type="button"
+            onClick={() => form.setValue('selectionTemplateId', template.id, { shouldValidate: true })}
+            className={cn(
+              'flex w-full items-start gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
+              selectedId === template.id
+                ? 'border-primary bg-primary/5'
+                : 'border-transparent bg-muted/50',
             )}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="entryDeadline">Entry Deadline</Label>
-          <Controller
-            name="entryDeadline"
-            control={form.control}
-            render={({ field }) => (
-              <Input id="entryDeadline" type="date" {...field} />
-            )}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="rosterSize">Roster Size</Label>
-          <Controller
-            name="rosterSize"
-            control={form.control}
-            render={({ field }) => (
-              <Input
-                id="rosterSize"
-                type="number"
-                min={1}
-                max={20}
-                {...field}
-                onChange={(e) => field.onChange(Number(e.target.value))}
-              />
-            )}
-          />
-        </div>
+          >
+            <div
+              className={cn(
+                'mt-0.5 h-4 w-4 shrink-0 rounded-full border-2',
+                selectedId === template.id
+                  ? 'border-primary bg-primary'
+                  : 'border-muted-foreground/40',
+              )}
+            />
+            <div className="space-y-1">
+              <p className="font-medium">{template.name}</p>
+              <p className="text-sm text-muted-foreground">{template.description}</p>
+              <p className="text-xs text-muted-foreground">Selection type: {template.selectionType}</p>
+              {formatTemplateConfig(template.config).length > 0 && (
+                <p className="text-xs text-muted-foreground">{formatTemplateConfig(template.config).join(' • ')}</p>
+              )}
+            </div>
+          </button>
+        ))}
       </div>
+      {form.formState.errors.selectionTemplateId && (
+        <p className="text-sm text-destructive">{form.formState.errors.selectionTemplateId.message}</p>
+      )}
     </div>
   );
 }
 
-function Step7Review({
+function Step3ScoringTemplate({
   form,
+  templates,
+  isLoading,
 }: {
   form: ReturnType<typeof useForm<WizardForm>>;
+  templates: ScoringTemplateDto[];
+  isLoading: boolean;
+}) {
+  const selectedKey = form.watch('scoringTemplateKey');
+
+  if (!form.watch('sport')) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">
+          Choose a sport first to load live scoring templates.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading scoring templates...</p>;
+  }
+
+  if (templates.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">
+          No live scoring templates are available for this sport yet.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Scoring Template</h3>
+      <div className="space-y-2">
+        {templates.map((template) => (
+          <button
+            key={template.key}
+            type="button"
+            onClick={() => form.setValue('scoringTemplateKey', template.key, { shouldValidate: true })}
+            className={cn(
+              'flex w-full items-start gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
+              selectedKey === template.key
+                ? 'border-primary bg-primary/5'
+                : 'border-transparent bg-muted/50',
+            )}
+          >
+            <div
+              className={cn(
+                'mt-0.5 h-4 w-4 shrink-0 rounded-full border-2',
+                selectedKey === template.key
+                  ? 'border-primary bg-primary'
+                  : 'border-muted-foreground/40',
+              )}
+            />
+            <div>
+              <p className="font-medium">{template.key}</p>
+              <p className="text-sm text-muted-foreground">{template.sport}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+      {form.formState.errors.scoringTemplateKey && (
+        <p className="text-sm text-destructive">{form.formState.errors.scoringTemplateKey.message}</p>
+      )}
+    </div>
+  );
+}
+
+function Step4Review({
+  form,
+  leagues,
+  selectionTemplates,
+}: {
+  form: ReturnType<typeof useForm<WizardForm>>;
+  leagues: Array<{ id: string; name: string }>;
+  selectionTemplates: SelectionTemplateDto[];
 }) {
   const values = form.getValues();
   const sportObj = SPORTS.find((s) => s.id === values.sport);
-  const events = values.sport ? (EVENTS_BY_SPORT[values.sport] ?? []) : [];
-  const event = events.find((e) => e.id === values.eventId);
-  const templates = SCORING_TEMPLATES[values.sport] ?? defaultTemplates;
-  const template = templates.find((t) => t.id === values.scoringTemplateId);
-  const selType = SELECTION_TYPES.find((t) => t.id === values.selectionType);
+  const league = leagues.find((item) => item.id === values.leagueId);
+  const selectionTemplate = selectionTemplates.find((item) => item.id === values.selectionTemplateId);
 
   const items = [
+    { label: 'League', value: league?.name ?? '-' },
     { label: 'Sport', value: sportObj ? `${sportObj.emoji} ${sportObj.name}` : '-' },
-    { label: 'Event', value: event?.name ?? (values.eventId === 'custom' ? 'Custom Event' : '-') },
-    { label: 'Duration', value: values.duration === 'single' ? 'Single Event' : 'Season Long' },
-    { label: 'Selection Type', value: selType?.name ?? '-' },
-    { label: 'Scoring', value: template?.name ?? '-' },
-    { label: 'Draft Mode', value: values.draftMode === 'live' ? 'Live' : 'Async' },
-    { label: 'Max Entries', value: String(values.maxEntries) },
-    { label: 'Entry Deadline', value: values.entryDeadline || '-' },
-    { label: 'Roster Size', value: String(values.rosterSize) },
+    { label: 'Contest Type', value: 'Single Event' },
+    { label: 'Contest Name', value: values.name || '-' },
+    { label: 'Selection Template', value: selectionTemplate?.name ?? '-' },
+    { label: 'Selection Type', value: selectionTemplate?.selectionType ?? '-' },
+    { label: 'Scoring Template', value: values.scoringTemplateKey || '-' },
   ];
 
   return (
@@ -718,7 +422,7 @@ function Step7Review({
           {items.map((item) => (
             <div key={item.label} className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-muted-foreground">{item.label}</span>
-              <span className="text-sm font-medium">{item.value}</span>
+              <span className="text-sm font-medium text-right">{item.value}</span>
             </div>
           ))}
         </CardContent>
@@ -730,6 +434,19 @@ function Step7Review({
 export function Component() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const form = useForm<WizardForm>({
+    resolver: zodResolver(wizardSchema),
+    defaultValues: {
+      leagueId: '',
+      sport: '',
+      name: '',
+      selectionTemplateId: '',
+      scoringTemplateKey: '',
+    },
+    mode: 'onChange',
+  });
+  const sport = form.watch('sport');
+
   const { data: leagueResponse } = useQuery({
     queryKey: ['my-leagues', 'contest-create'],
     queryFn: async () => {
@@ -738,34 +455,41 @@ export function Component() {
       return data;
     },
   });
+
+  const { data: selectionTemplates = [], isLoading: selectionTemplatesLoading } = useQuery({
+    queryKey: ['selection-templates', 'contest-create', sport],
+    queryFn: async () => {
+      const { data, error } = await listSelectionTemplates({
+        client,
+        query: {
+          sport,
+          contestType: 'SINGLE_EVENT',
+        },
+      });
+      if (error) throw error;
+      return SelectionTemplateListResponseSchema.parse(data ?? []);
+    },
+    enabled: !!sport,
+  });
+
+  const { data: scoringTemplatesResponse, isLoading: scoringTemplatesLoading } = useQuery({
+    queryKey: ['scoring-templates', 'contest-create'],
+    queryFn: async () => {
+      const { data, error } = await listScoringTemplates({ client });
+      if (error) throw error;
+      return ScoringTemplateListResponseSchema.parse(data);
+    },
+  });
+
+  const scoringTemplates = (scoringTemplatesResponse?.templates ?? []).filter((template) => template.sport === sport);
   const commissionerLeagues = (leagueResponse?.leagues ?? []).filter(
     (league) => league.role === 'owner' || league.role === 'commissioner',
   );
 
-  const form = useForm<WizardForm>({
-    resolver: zodResolver(wizardSchema),
-    defaultValues: {
-      leagueId: '',
-      sport: '',
-      eventId: '',
-      duration: 'single',
-      selectionType: '',
-      scoringTemplateId: '',
-      customize: false,
-      draftMode: 'live',
-      secondsPerPick: 90,
-      draftDate: '2026-04-07',
-      maxEntries: 1,
-      entryDeadline: '2026-04-08',
-      rosterSize: 4,
-    },
-    mode: 'onChange',
-  });
-
   const stepValidation: Record<number, (keyof WizardForm)[]> = {
-    0: ['leagueId', 'sport', 'eventId'],
-    1: ['duration', 'selectionType'],
-    2: ['scoringTemplateId'],
+    0: ['leagueId', 'sport', 'name'],
+    1: ['selectionTemplateId'],
+    2: ['scoringTemplateKey'],
   };
 
   async function handleNext() {
@@ -784,20 +508,29 @@ export function Component() {
   async function handleCreate() {
     try {
       const values = form.getValues();
-      const selectedEvent = (EVENTS_BY_SPORT[values.sport] ?? []).find((event) => event.id === values.eventId);
+      const selectionTemplate = selectionTemplates.find((template) => template.id === values.selectionTemplateId);
+
+      if (!selectionTemplate) {
+        throw new Error('Selection template is missing.');
+      }
+
+      const selectionType = selectionTemplate.selectionType as SelectionType;
+
       const { data: result, error } = await createContest({
         client,
         path: { id: values.leagueId },
         body: {
-          name: selectedEvent?.name ?? `${values.sport} Contest`,
+          name: values.name,
           contestType: 'SINGLE_EVENT',
-          selectionType: selectionTypeMap[values.selectionType as keyof typeof selectionTypeMap],
-          scoringEngine: getScoringEngine(values.selectionType, values.sport),
-          scoringTemplateKey: values.scoringTemplateId,
-          startsAt: values.draftDate ? new Date(`${values.draftDate}T12:00:00.000Z`).toISOString() : undefined,
+          selectionType,
+          selectionConfig: selectionTemplate.config,
+          scoringEngine: getScoringEngine(values.sport, selectionType),
+          scoringTemplateKey: values.scoringTemplateKey,
         },
       });
+
       if (error) throw error;
+
       toast({
         title: 'Contest created',
         description: 'Your contest has been created successfully.',
@@ -817,7 +550,7 @@ export function Component() {
         <div>
           <h1 className="text-3xl font-bold">Create Contest</h1>
           <p className="text-sm text-muted-foreground">
-            Step {step + 1} of {STEPS.length} &mdash; {STEPS[step].label}
+            Step {step + 1} of {STEPS.length} - {STEPS[step].label}
           </p>
         </div>
         <StepIndicator current={step} total={STEPS.length} />
@@ -825,13 +558,28 @@ export function Component() {
 
       <Card>
         <CardContent className="p-6">
-          {step === 0 && <Step1SportEvent form={form} leagues={commissionerLeagues} />}
-          {step === 1 && <Step2ContestType form={form} />}
-          {step === 2 && <Step3ScoringRules form={form} />}
-          {step === 3 && <Step4DraftConfig />}
-          {step === 4 && <Step5Participants />}
-          {step === 5 && <Step6EntrySettings form={form} />}
-          {step === 6 && <Step7Review form={form} />}
+          {step === 0 && <Step1Basics form={form} leagues={commissionerLeagues} />}
+          {step === 1 && (
+            <Step2SelectionTemplate
+              form={form}
+              templates={selectionTemplates}
+              isLoading={selectionTemplatesLoading}
+            />
+          )}
+          {step === 2 && (
+            <Step3ScoringTemplate
+              form={form}
+              templates={scoringTemplates}
+              isLoading={scoringTemplatesLoading}
+            />
+          )}
+          {step === 3 && (
+            <Step4Review
+              form={form}
+              leagues={commissionerLeagues}
+              selectionTemplates={selectionTemplates}
+            />
+          )}
         </CardContent>
       </Card>
 

@@ -5,25 +5,36 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { useContestList } from '@/hooks/use-contests-api';
-import type { Contest, ContestFilters } from '@/hooks/use-contests-api';
+import type { ContestFilters } from '@/hooks/use-contests-api';
 
-const SPORTS = ['All', Sport.NFL, Sport.NBA, Sport.GOLF, Sport.F1, Sport.NCAA_BASKETBALL, Sport.SOCCER, Sport.HORSE_RACING, Sport.NASCAR];
-const STATUSES = ['All', ContestStatus.OPEN, ContestStatus.DRAFTING, ContestStatus.ACTIVE, ContestStatus.COMPLETED, ContestStatus.CANCELLED];
+const STATUSES = ['All', 'draft', 'open', 'active', 'completed', 'cancelled'];
 const TYPES = ['All', 'Single Event', 'Season Long'];
-const TENANTS = ['All', 'Ultimate Pool Manager Pro', 'FanDraft', 'RaceFan'];
 
 const PAGE_SIZE = 5;
 
-function statusColor(status: Contest['status']) {
-  switch (status) {
-    case ContestStatus.OPEN: return 'bg-blue-100 text-blue-800';
-    case ContestStatus.DRAFTING: return 'bg-yellow-100 text-yellow-800';
-    case ContestStatus.ACTIVE: return 'bg-green-100 text-green-800';
-    case ContestStatus.COMPLETED: return 'bg-gray-100 text-gray-800';
-    case ContestStatus.CANCELLED: return 'bg-red-100 text-red-800';
+function statusColor(status: string) {
+  switch (status.toLowerCase()) {
+    case 'open': return 'bg-blue-100 text-blue-800';
+    case 'draft':
+    case 'drafting': return 'bg-yellow-100 text-yellow-800';
+    case 'active': return 'bg-green-100 text-green-800';
+    case 'completed': return 'bg-gray-100 text-gray-800';
+    case 'cancelled': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
   }
+}
+
+function contestTypeLabel(contestType: string): string {
+  return contestType === 'SINGLE_EVENT' ? 'Single Event' : 'Season Long';
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 function FilterSelect({
@@ -63,6 +74,8 @@ export function Component() {
   });
   const [page, setPage] = useState(0);
   const { data: contests = [] } = useContestList(filters);
+  const tenantOptions = ['All', ...Array.from(new Set(contests.map((contest) => contest.tenantName)))];
+  const sportOptions = ['All', ...Array.from(new Set(contests.map((contest) => contest.sport)))];
 
   const totalPages = Math.max(1, Math.ceil(contests.length / PAGE_SIZE));
   const paged = contests.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -85,8 +98,8 @@ export function Component() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            <FilterSelect label="Tenant" value={filters.tenant ?? 'All'} options={TENANTS} onChange={(v) => updateFilter('tenant', v)} />
-            <FilterSelect label="Sport" value={filters.sport ?? 'All'} options={SPORTS} onChange={(v) => updateFilter('sport', v)} />
+            <FilterSelect label="Tenant" value={filters.tenant ?? 'All'} options={tenantOptions} onChange={(v) => updateFilter('tenant', v)} />
+            <FilterSelect label="Sport" value={filters.sport ?? 'All'} options={sportOptions} onChange={(v) => updateFilter('sport', v)} />
             <FilterSelect label="Status" value={filters.status ?? 'All'} options={STATUSES} onChange={(v) => updateFilter('status', v)} />
             <FilterSelect label="Contest Type" value={filters.type ?? 'All'} options={TYPES} onChange={(v) => updateFilter('type', v)} />
           </div>
@@ -118,16 +131,16 @@ export function Component() {
                     onClick={() => navigate(`/contests/${c.id}`)}
                   >
                     <td className="px-4 py-3 font-medium">{c.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.league}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.tenant}</td>
-                    <td className="px-4 py-3">{c.sportEmoji} {c.sport}</td>
-                    <td className="px-4 py-3">{c.type}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{c.leagueName}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{c.tenantName}</td>
+                    <td className="px-4 py-3">{c.sport}</td>
+                    <td className="px-4 py-3">{contestTypeLabel(c.contestType)}</td>
                     <td className="px-4 py-3">{c.selectionType}</td>
                     <td className="px-4 py-3">
                       <Badge className={cn('text-xs', statusColor(c.status))}>{c.status}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-right">{c.entries}/{c.maxEntries}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.created}</td>
+                    <td className="px-4 py-3 text-right">{c.entryCount}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{formatDate(c.createdAt)}</td>
                   </tr>
                 ))}
                 {paged.length === 0 && (

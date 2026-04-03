@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -41,6 +41,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export function Component() {
   const { t } = useTranslation('auth');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const setUser = useAuthStore((s) => s.setUser);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -61,6 +62,7 @@ export function Component() {
   });
 
   const rememberMe = watch('rememberMe');
+  const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 
   async function onSubmit(data: LoginForm) {
     setServerError('');
@@ -79,7 +81,7 @@ export function Component() {
       }
       localStorage.setItem('access_token', auth.tokens.accessToken);
       setUser({ ...auth.user, avatarUrl: auth.user.avatarUrl ?? undefined });
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (err) {
       if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 401) {
         setServerError(t('errors.invalidCredentials'));
@@ -160,10 +162,10 @@ export function Component() {
                   {t('login.rememberMe')}
                 </Label>
               </div>
-              <Link
-                to="/forgot-password"
-                className="text-sm text-primary hover:underline"
-              >
+            <Link
+              to={`/forgot-password${redirectTo !== '/dashboard' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`}
+              className="text-sm text-primary hover:underline"
+            >
                 {t('login.forgotPassword')}
               </Link>
             </div>
@@ -195,7 +197,10 @@ export function Component() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t('login.noAccount')}{' '}
-            <Link to="/register" className="text-primary hover:underline">
+            <Link
+              to={`/register${redirectTo !== '/dashboard' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`}
+              className="text-primary hover:underline"
+            >
               {t('login.signUp')}
             </Link>
           </p>

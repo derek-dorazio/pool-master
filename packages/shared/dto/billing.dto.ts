@@ -46,6 +46,28 @@ export const InvoiceDtoSchema = z.object({
 });
 export type InvoiceDto = z.infer<typeof InvoiceDtoSchema>;
 
+export const SubscriptionDtoSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  stripeCustomerId: z.string(),
+  stripeSubscriptionId: z.string().nullable(),
+  planSlug: z.string(),
+  billingCycle: z.enum(['MONTHLY', 'ANNUAL']),
+  status: z.string(),
+  trialStart: z.string().datetime().nullable(),
+  trialEnd: z.string().datetime().nullable(),
+  currentPeriodStart: z.string().datetime(),
+  currentPeriodEnd: z.string().datetime(),
+  cancelledAt: z.string().datetime().nullable(),
+  cancelAtPeriodEnd: z.boolean(),
+  paymentMethodLast4: z.string().nullable(),
+  paymentMethodBrand: z.string().nullable(),
+  currency: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type SubscriptionDto = z.infer<typeof SubscriptionDtoSchema>;
+
 // --- Responses ---
 
 export const PlanResponseSchema = PlanDtoSchema;
@@ -71,6 +93,19 @@ export const EntitlementsResponseSchema = z.object({
   entitlements: z.record(z.unknown()),
 });
 export type EntitlementsResponse = z.infer<typeof EntitlementsResponseSchema>;
+
+export const SubscriptionResponseSchema = z.object({
+  subscription: SubscriptionDtoSchema,
+});
+export type SubscriptionResponse = z.infer<typeof SubscriptionResponseSchema>;
+
+export const PaymentMethodSetupResponseSchema = z.object({
+  clientSecret: z.string(),
+});
+
+export const BillingPortalResponseSchema = z.object({
+  url: z.string(),
+});
 
 export const InvoiceListResponseSchema = z.object({
   items: z.array(InvoiceDtoSchema),

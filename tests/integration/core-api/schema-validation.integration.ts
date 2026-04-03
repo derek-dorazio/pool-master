@@ -585,18 +585,35 @@ describe('Schema Validation — Contest Children', () => {
 
   it('ContestPick: create + read + delete', async () => {
     const prisma = getPrisma();
+    const eventId = randomUUID();
     const record = await prisma.contestPick.create({
       data: {
         entryId,
         contestId,
         participantId,
+        eventId,
         period: 99,
+        matchupIndex: 1,
+      },
+    });
+    const secondRecord = await prisma.contestPick.create({
+      data: {
+        entryId,
+        contestId,
+        participantId,
+        eventId,
+        period: 99,
+        matchupIndex: 2,
       },
     });
     expect(record.id).toBeDefined();
+    expect(secondRecord.id).toBeDefined();
     const found = await prisma.contestPick.findFirst({ where: { id: record.id } });
     expect(found).not.toBeNull();
+    expect(found?.eventId).toBe(eventId);
+    expect(found?.matchupIndex).toBe(1);
     await prisma.contestPick.delete({ where: { id: record.id } });
+    await prisma.contestPick.delete({ where: { id: secondRecord.id } });
   });
 
   it('BracketPrediction: create + read + delete', async () => {
@@ -612,6 +629,39 @@ describe('Schema Validation — Contest Children', () => {
     const found = await prisma.bracketPrediction.findFirst({ where: { id: record.id } });
     expect(found).not.toBeNull();
     await prisma.bracketPrediction.delete({ where: { id: record.id } });
+  });
+
+  it('ContestMatchup: create + read + delete', async () => {
+    const prisma = getPrisma();
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `evt-${randomUUID()}`,
+        providerId: 'test-provider',
+        sport: 'NFL',
+        name: 'Test Matchup Event',
+        startDate: new Date('2026-09-01T00:00:00.000Z'),
+        status: 'SCHEDULED',
+        fieldLocked: false,
+        metadata: {},
+      },
+    });
+    const record = await prisma.contestMatchup.create({
+      data: {
+        contestId,
+        eventId: sportEvent.id,
+        period: 1,
+        matchupIndex: 1,
+        label: 'Week 1 Game 1',
+        homeParticipantId: participantId,
+        metadata: { source: 'schema-validation' },
+      },
+    });
+    expect(record.id).toBeDefined();
+    const found = await prisma.contestMatchup.findFirst({ where: { id: record.id } });
+    expect(found).not.toBeNull();
+    expect(found?.eventId).toBe(sportEvent.id);
+    await prisma.contestMatchup.delete({ where: { id: record.id } });
+    await prisma.sportEvent.delete({ where: { id: sportEvent.id } });
   });
 
   it('DraftPick: create + read + delete', async () => {

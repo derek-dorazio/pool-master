@@ -4,24 +4,68 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useMigrationDetail } from '@/hooks/use-migrations-api';
+import { useCancelMigrationRun, useMigrationDetail } from '@/hooks/use-migrations-api';
 
 function statusClass(status: string): string {
   switch (status) {
-    case 'Completed':
+    case 'COMPLETED':
       return 'bg-green-100 text-green-800 border-green-200';
-    case 'Failed':
+    case 'FAILED':
       return 'bg-red-100 text-red-800 border-red-200';
-    case 'Running':
+    case 'RUNNING':
       return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'QUEUED':
+      return 'bg-amber-100 text-amber-800 border-amber-200';
+    case 'CANCELLED':
+      return 'bg-gray-100 text-gray-700 border-gray-300';
     default:
       return '';
   }
 }
 
+function formatStatus(status: string): string {
+  return status
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function formatDuration(startedAt: string, completedAt: string | null): string {
+  const start = new Date(startedAt).getTime();
+  const end = completedAt ? new Date(completedAt).getTime() : Date.now();
+  const totalSeconds = Math.max(0, Math.round((end - start) / 1000));
+
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) return `${minutes}m ${seconds}s`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m`;
+}
+
 export function Component() {
-  const { id } = useParams<{ id: string }>();
-  const { data: run, isLoading } = useMigrationDetail(id ?? 'run-001');
+  const { runId } = useParams<{ runId: string }>();
+  const { data: run, isLoading, isError } = useMigrationDetail(runId ?? '');
+  const cancelRun = useCancelMigrationRun();
+
+  if (!runId) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Migration Detail</h1>
+        <p className="text-destructive">Missing migration run ID.</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Migration Detail</h1>
+        <p className="text-destructive">Unable to load this migration run.</p>
+      </div>
+    );
+  }
 
   if (isLoading || !run) {
     return (
@@ -32,7 +76,7 @@ export function Component() {
     );
   }
 
-  const isRunning = run.status === 'Running';
+  const isCancellable = run.status === 'QUEUED' || run.status === 'RUNNING';
 
   return (
     <div className="space-y-6">
@@ -45,12 +89,12 @@ export function Component() {
         </Button>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold font-mono">{run.migrationName}</h1>
-          <Badge className={cn('text-xs', statusClass(run.status))}>{run.status}</Badge>
+          <Badge className={cn('text-xs', statusClass(run.status))}>{formatStatus(run.status)}</Badge>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-        <span>Started by <span className="font-medium text-foreground">{run.startedBy}</span></span>
+        <span>Started by <span className="font-medium text-foreground">{run.startedBy.email}</span></span>
         <span>Started at <span className="font-medium text-foreground">{new Date(run.startedAt).toLocaleString()}</span></span>
         {run.completedAt && (
           <span>Completed at <span className="font-medium text-foreground">{new Date(run.completedAt).toLocaleString()}</span></span>
@@ -63,19 +107,19 @@ export function Component() {
           <div className="flex justify-between text-sm">
             <span className="font-medium">Progress</span>
             <span className="text-muted-foreground">
-              {run.processedRecords.toLocaleString()} of {run.totalRecords.toLocaleString()} records processed
+              {run.progress.processed.toLocaleString()} of {run.progress.totalRecords.toLocaleString()} records processed
             </span>
           </div>
           <div className="h-4 w-full overflow-hidden rounded-full bg-muted">
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                run.status === 'Failed' ? 'bg-red-500' : 'bg-primary',
+                run.status === 'FAILED' ? 'bg-red-500' : 'bg-primary',
               )}
-              style={{ width: `${run.progress}%` }}
+              style={{ width: `${run.progress.percentage}%` }}
             />
           </div>
-          <div className="text-right text-lg font-bold">{run.progress}%</div>
+          <div className="text-right text-lg font-bold">{run.progress.percentage}%</div>
         </CardContent>
       </Card>
 
@@ -87,7 +131,7 @@ export function Component() {
               <CheckCircle className="h-4 w-4 text-green-500" />
               <span className="text-xs font-medium">Succeeded</span>
             </div>
-            <div className="text-2xl font-bold">{run.succeededRecords.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{run.progress.succeeded.toLocaleString()}</div>
           </CardContent>
         </Card>
         <Card>
@@ -96,7 +140,7 @@ export function Component() {
               <XCircle className="h-4 w-4 text-red-500" />
               <span className="text-xs font-medium">Failed</span>
             </div>
-            <div className="text-2xl font-bold text-red-600">{run.failedRecords}</div>
+            <div className="text-2xl font-bold text-red-600">{run.progress.failed}</div>
           </CardContent>
         </Card>
         <Card>
@@ -105,7 +149,7 @@ export function Component() {
               <Clock className="h-4 w-4" />
               <span className="text-xs font-medium">Duration</span>
             </div>
-            <div className="text-2xl font-bold">{run.duration}</div>
+            <div className="text-2xl font-bold">{formatDuration(run.startedAt, run.completedAt)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -114,9 +158,7 @@ export function Component() {
               <Clock className="h-4 w-4" />
               <span className="text-xs font-medium">Est. Completion</span>
             </div>
-            <div className="text-2xl font-bold">
-              {run.estimatedRemaining ?? '--'}
-            </div>
+            <div className="text-2xl font-bold">{run.status === 'QUEUED' ? 'Queued' : '--'}</div>
           </CardContent>
         </Card>
       </div>
@@ -158,9 +200,13 @@ export function Component() {
       )}
 
       {/* Cancel button */}
-      {isRunning && (
+      {isCancellable && (
         <div className="flex justify-end">
-          <Button variant="destructive" onClick={() => window.alert('Migration cancelled.')}>
+          <Button
+            variant="destructive"
+            disabled={cancelRun.isPending}
+            onClick={() => cancelRun.mutate(run.id)}
+          >
             Cancel Migration
           </Button>
         </div>

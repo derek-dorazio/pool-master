@@ -16,6 +16,7 @@ export const router = createBrowserRouter([
       { path: 'register', lazy: () => import('@/pages/auth/register') },
       { path: 'forgot-password', lazy: () => import('@/pages/auth/forgot-password') },
       { path: 'callback', lazy: () => import('@/pages/auth/callback') },
+      { path: 'join/:inviteCode', lazy: () => import('@/pages/join') },
       { path: 'privacy', lazy: () => import('@/pages/legal/privacy') },
       { path: 'terms', lazy: () => import('@/pages/legal/terms') },
       { path: 'responsible-gaming', lazy: () => import('@/pages/legal/responsible-gaming') },

@@ -2,6 +2,7 @@ export type {
   ActionItemRepository,
   BracketPredictionRepository,
   ContestEntryRepository,
+  ContestMatchupRepository,
   ContestParticipantPoolRepository,
   ContestPickRepository,
   ContestPoolRepository,

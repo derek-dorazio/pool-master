@@ -22,13 +22,16 @@ interface LeagueCardProps {
 }
 
 export function LeagueDiscoveryCard({ league, onJoin, isJoining, joinState = 'none' }: LeagueCardProps) {
+  const supportsDirectJoin = league.joinPolicy === InvitePolicy.OPEN;
+  const leagueSportEmoji = league.sport ? sportEmoji[league.sport] : undefined;
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{sportEmoji[league.sport] ?? '\uD83C\uDFC6'}</span>
+              <span className="text-lg">{leagueSportEmoji ?? '\uD83C\uDFC6'}</span>
               <Link
                 to={`/leagues/${league.id}`}
                 className="text-sm font-semibold hover:text-primary truncate"
@@ -56,7 +59,7 @@ export function LeagueDiscoveryCard({ league, onJoin, isJoining, joinState = 'no
               >
                 {league.joinPolicy === InvitePolicy.OPEN ? 'Open' : 'Approval'}
               </Badge>
-              <span className="text-[10px] text-muted-foreground">by {league.commissionerName}</span>
+              <span className="text-[10px] text-muted-foreground">by {league.commissionerName ?? 'Unknown commissioner'}</span>
             </div>
           </div>
 
@@ -70,11 +73,11 @@ export function LeagueDiscoveryCard({ league, onJoin, isJoining, joinState = 'no
                 <Clock className="h-3 w-3 mr-1" /> Pending
               </Button>
             ) : (
-              <Button size="sm" className="h-8 text-xs" onClick={onJoin} disabled={isJoining}>
+              <Button size="sm" className="h-8 text-xs" onClick={onJoin} disabled={isJoining || !supportsDirectJoin}>
                 {isJoining ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  <><UserPlus className="h-3 w-3 mr-1" /> {league.joinPolicy === InvitePolicy.OPEN ? 'Join' : 'Request'}</>
+                  <><UserPlus className="h-3 w-3 mr-1" /> {supportsDirectJoin ? 'Join' : 'Approval Required'}</>
                 )}
               </Button>
             )}
@@ -94,6 +97,7 @@ interface ContestCardProps {
 export function ContestDiscoveryCard({ contest }: ContestCardProps) {
   const lockDate = contest.lockTime ? new Date(contest.lockTime) : null;
   const daysUntilLock = lockDate ? Math.ceil((lockDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+  const contestSportEmoji = contest.sport ? sportEmoji[contest.sport] : undefined;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -101,7 +105,7 @@ export function ContestDiscoveryCard({ contest }: ContestCardProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{sportEmoji[contest.sport] ?? '\uD83C\uDFC6'}</span>
+              <span className="text-lg">{contestSportEmoji ?? '\uD83C\uDFC6'}</span>
               <Link
                 to={`/contests/${contest.id}`}
                 className="text-sm font-semibold hover:text-primary truncate"

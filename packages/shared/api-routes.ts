@@ -61,6 +61,7 @@ export const API_ROUTES = {
     create: '/api/v1/leagues',
     detail: (id: string) => `/api/v1/leagues/${id}`,
     members: (id: string) => `/api/v1/leagues/${id}/members`,
+    leave: (id: string) => `/api/v1/leagues/${id}/members/me`,
     memberRole: (leagueId: string, memberId: string) =>
       `/api/v1/leagues/${leagueId}/members/${memberId}/role`,
     removeMember: (leagueId: string, memberId: string) =>
@@ -79,8 +80,18 @@ export const API_ROUTES = {
   contests: {
     list: '/api/v1/contests',
     detail: (id: string) => `/api/v1/contests/${id}`,
+    entries: (id: string) => `/api/v1/contests/${id}/entries`,
+    myEntry: (id: string) => `/api/v1/contests/${id}/entries/me`,
     standings: (id: string) => `/api/v1/contests/${id}/standings`,
     pool: (id: string) => `/api/v1/contests/${id}/pool`,
+  },
+
+  scoring: {
+    leaderboard: (contestId: string) => `/api/v1/scoring/contests/${contestId}/leaderboard`,
+    entry: (contestId: string, entryId: string) => `/api/v1/scoring/contests/${contestId}/entry/${entryId}`,
+    participant: (contestId: string, participantId: string) => `/api/v1/scoring/contests/${contestId}/participant/${participantId}`,
+    rollup: (contestId: string) => `/api/v1/scoring/contests/${contestId}/rollup`,
+    health: '/api/v1/scoring/health',
   },
 
   // Drafts
@@ -105,6 +116,9 @@ export const API_ROUTES = {
     participants: '/api/v1/search/participants',
     leagues: '/api/v1/search/leagues',
     contests: '/api/v1/search/contests',
+    discoverLeagues: '/api/v1/search/discover/leagues',
+    discoverContests: '/api/v1/search/discover/contests',
+    joinDiscoverableLeague: (leagueId: string) => `/api/v1/search/discover/leagues/${leagueId}/join`,
   },
 
   // Templates

@@ -516,7 +516,7 @@ CREATE INDEX idx_discoverable_contests_draft ON discoverable_contests(draft_star
 | 13-011 | 3 | Discovery browse API (`GET /api/v1/discover/leagues`, `/contests`) | Done | GET /search/discover/leagues + /search/discover/contests |
 | 13-012 | 3 | Quality controls (minimum members, activity, spam prevention) | Done | Auto-hide after 3 reports |
 | 13-013 | 3 | `discovery_reports` table + report mechanism | Done | DiscoveryReport model + POST /search/discover/report |
-| 13-014 | 3 | Discovery UI (browse, sort, join) | Not Started | Webapp UI — tracked in plans/webapp/ |
+| 13-014 | 3 | Discovery UI (browse, sort, join) | In Progress | Discovery browse cards now align with the real DTO shape, unsupported approval-request joins are disabled instead of faked, and open public leagues are being wired through a real `/search/discover/leagues/:leagueId/join` membership flow; contest discovery and broader browser coverage still remain |
 | — | — | Deferred tasks moved to [plans/deferred/13-search-deferred.md](deferred/13-search-deferred.md) | — | See deferred file for details |
 
 ---

@@ -7,6 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import { DraftSearchResponseSchema } from '@poolmaster/shared/dto/participants.dto';
 import {
+  PrismaContestMatchupRepository,
   PrismaContestPoolRepository,
   PrismaContestParticipantPoolRepository,
   PrismaParticipantRepository,
@@ -17,8 +18,17 @@ import { createPoolHandlers } from './pool-handler';
 import { PricingAndTierService } from './pricing-service';
 import { createPricingHandlers } from './pricing-handler';
 import { DraftSearchService } from './draft-search-service';
+import type { ProviderRegistry } from '../ingestion/core/provider-registry';
+import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
 
-export async function contestPoolModule(fastify: FastifyInstance): Promise<void> {
+export interface ContestPoolModuleOpts {
+  registry?: ProviderRegistry;
+}
+
+export async function contestPoolModule(
+  fastify: FastifyInstance,
+  opts: ContestPoolModuleOpts = {},
+): Promise<void> {
   const passthroughResponseSchema = {
     type: 'object',
     additionalProperties: true,
@@ -26,11 +36,21 @@ export async function contestPoolModule(fastify: FastifyInstance): Promise<void>
   const prisma = new PrismaClient();
   const poolRepo = new PrismaContestPoolRepository(prisma);
   const poolParticipantRepo = new PrismaContestParticipantPoolRepository(prisma);
+  const contestMatchupRepo = new PrismaContestMatchupRepository(prisma);
   const participantRepo = new PrismaParticipantRepository(prisma);
 
   const seasonRecordRepo = new PrismaParticipantSeasonRecordRepository(prisma);
+  const ingestionPersistence = new IngestionPersistence(prisma);
 
-  const poolService = new ContestPoolService(poolRepo, poolParticipantRepo, participantRepo);
+  const poolService = new ContestPoolService(
+    poolRepo,
+    poolParticipantRepo,
+    participantRepo,
+    contestMatchupRepo,
+    prisma,
+    ingestionPersistence,
+    opts.registry,
+  );
   const pricingService = new PricingAndTierService(poolRepo, poolParticipantRepo, seasonRecordRepo);
   const draftSearchService = new DraftSearchService(poolRepo, poolParticipantRepo, participantRepo);
   const handler = createPoolHandlers(poolService);

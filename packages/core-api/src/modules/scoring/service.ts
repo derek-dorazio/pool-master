@@ -2,6 +2,7 @@
  * ScoringService — reads from ScoreStore and returns formatted leaderboard data.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import type { ScoreStore, EntryContestScore, ParticipantEventScore } from './storage/score-store';
 import type { StandingsRollup, RollupResult } from './rollup/standings-rollup';
 import { assignRanks } from './rollup/standings-rollup';
@@ -42,16 +43,19 @@ export interface HealthDetail {
 export interface ScoringServiceDeps {
   scoreStore: ScoreStore;
   standingsRollup: StandingsRollup;
+  prisma: PrismaClient;
 }
 
 /** Service layer for leaderboard and scoring queries. */
 export class ScoringService {
   private readonly scoreStore: ScoreStore;
   private readonly standingsRollup: StandingsRollup;
+  private readonly prisma: PrismaClient;
 
   constructor(deps: ScoringServiceDeps) {
     this.scoreStore = deps.scoreStore;
     this.standingsRollup = deps.standingsRollup;
+    this.prisma = deps.prisma;
   }
 
   /** Get full leaderboard for a contest with ranks. */
@@ -64,11 +68,28 @@ export class ScoringService {
   async getEntryScore(contestId: string, entryId: string): Promise<EntryScoreDetail> {
     const timeline = await this.scoreStore.getEntryTimeline(contestId, entryId);
     const totalScore = await this.scoreStore.getEntryTotal(contestId, entryId);
+    const participantIds = Array.from(new Set(
+      timeline.flatMap((event) => event.participantBreakdowns.map((breakdown) => breakdown.participantId)),
+    ));
+    const participants = participantIds.length === 0
+      ? []
+      : await this.prisma.participant.findMany({
+          where: { id: { in: participantIds } },
+          select: { id: true, name: true },
+        });
+    const participantNameById = new Map(participants.map((participant) => [participant.id, participant.name]));
+
     return {
       entryId,
       contestId,
       totalScore,
-      timeline,
+      timeline: timeline.map((event) => ({
+        ...event,
+        participantBreakdowns: event.participantBreakdowns.map((breakdown) => ({
+          ...breakdown,
+          participantName: participantNameById.get(breakdown.participantId) ?? null,
+        })),
+      })),
     };
   }
 

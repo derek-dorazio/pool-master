@@ -12,6 +12,7 @@ import {
   SuccessSchema,
 } from '@poolmaster/shared/dto';
 import {
+  LeagueMembersResponseSchema,
   LeagueMembershipResponseSchema,
   TransferOwnershipResponseSchema,
   LeagueAuditEntriesResponseSchema,
@@ -29,6 +30,7 @@ import { requirePermission, requireOwner } from '../../core/require-permission';
 import { LeagueService } from './service';
 import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
+import { MemberDirectoryService } from './member-directory-service';
 import { DashboardService } from './dashboard-service';
 import { AuditService } from './audit-service';
 import { BulkService } from './bulk-service';
@@ -55,6 +57,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const leagueService = new LeagueService(leagueRepo, membershipRepo);
   const invitationService = new InvitationService(invitationRepo, membershipRepo, leagueRepo);
   const memberService = new MemberService(membershipRepo);
+  const memberDirectoryService = new MemberDirectoryService(prisma);
   const dashboardService = new DashboardService(
     leagueRepo,
     membershipRepo,
@@ -73,7 +76,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   const league = createLeagueHandlers(leagueService);
   const invitation = createInvitationHandlers(invitationService);
-  const member = createMemberHandlers(memberService);
+  const member = createMemberHandlers(memberService, memberDirectoryService);
   const dashboard = createDashboardHandlers(dashboardService);
   const audit = createAuditHandlers(auditService);
   const bulk = createBulkHandlers(bulkService);
@@ -205,6 +208,16 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
 
   // --- Member Management ---
 
+  fastify.get('/:id/members', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'List league members',
+      operationId: 'listLeagueMembers',
+      response: { 200: zodToJsonSchema(LeagueMembersResponseSchema) },
+    },
+    handler: member.listMembers,
+  });
+
   fastify.put('/:id/members/:uid/role', {
     schema: {
       tags: ['Leagues'],
@@ -236,6 +249,16 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_REMOVE),
     handler: member.removeMember,
+  });
+
+  fastify.delete('/:id/members/me', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Leave a league as the current member',
+      operationId: 'leaveLeague',
+      response: { 200: zodToJsonSchema(SuccessSchema) },
+    },
+    handler: member.leaveLeague,
   });
 
   fastify.post('/:id/transfer-ownership', {

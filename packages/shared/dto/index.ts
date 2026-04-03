@@ -4,6 +4,7 @@ export * from './leagues.dto';
 export * from './contests.dto';
 export * from './billing.dto';
 export * from './drafts.dto';
+export * from './scoring.dto';
 export * from './standings.dto';
 export * from './participants.dto';
 export * from './search.dto';

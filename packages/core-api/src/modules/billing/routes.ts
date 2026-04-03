@@ -37,27 +37,38 @@ import { PrismaClient } from '@prisma/client';
 import type { EntitlementKey } from '@poolmaster/shared/domain';
 import {
   zodToJsonSchema,
+} from '@poolmaster/shared/dto/json-schema';
+import {
+  ApiErrorSchema,
+  SuccessSchema,
+} from '@poolmaster/shared/dto/common.dto';
+import {
   PlanResponseSchema,
   PlansListResponseSchema,
   UsageResponseSchema,
   EntitlementsResponseSchema,
+  SubscriptionResponseSchema,
   InvoiceListResponseSchema,
   UpcomingInvoiceResponseSchema,
   InvoiceDetailResponseSchema,
-  SuccessSchema,
-} from '@poolmaster/shared/dto';
+  PaymentMethodSetupResponseSchema,
+  BillingPortalResponseSchema,
+} from '@poolmaster/shared/dto/billing.dto';
 import { EntitlementService } from './entitlement-service';
 import { UsageService } from './usage-service';
 import { SubscriptionService } from './subscription-service';
 import { TrialService } from './trial-service';
 import { PlanChangeService } from './plan-change-service';
 import { CancellationService } from './cancellation-service';
-import { InvoiceService } from './invoice-service';
+import {
+  InvoicePersistenceUnavailableError,
+  InvoiceService,
+} from './invoice-service';
 import { DunningService } from './dunning-service';
 import { RevenueAnalyticsService } from './revenue-analytics-service';
-import { EnterpriseService } from './enterprise-service';
+import { EnterprisePlanUnavailableError, EnterpriseService } from './enterprise-service';
 import { isBillingEnabled } from './billing-feature-gate';
-import { stripeClient } from './stripe-service';
+import { BillingProviderUnavailableError, stripeClient } from './stripe-service';
 
 const ALL_ENTITLEMENT_KEYS: EntitlementKey[] = [
   'league.create',
@@ -79,6 +90,13 @@ function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknow
   return reply.status(statusCode).send(payload);
 }
 
+function sendBillingProviderUnavailable(reply: FastifyReply, message: string) {
+  return sendWithStatus(reply, 501, {
+    error: 'BILLING_PROVIDER_UNAVAILABLE',
+    message,
+  });
+}
+
 export async function billingModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const usageService = new UsageService(prisma);
@@ -88,8 +106,8 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
   const planChangeService = new PlanChangeService(prisma);
   const cancellationService = new CancellationService(prisma);
   const invoiceService = new InvoiceService(prisma);
-  const dunningService = new DunningService();
-  const revenueAnalyticsService = new RevenueAnalyticsService();
+  const dunningService = new DunningService(prisma);
+  const revenueAnalyticsService = new RevenueAnalyticsService(prisma);
   const enterpriseService = new EnterpriseService();
 
   // -------------------------------------------------------------------------
@@ -238,7 +256,10 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Create a new subscription',
       operationId: 'createSubscription',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        201: zodToJsonSchema(SubscriptionResponseSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -256,8 +277,15 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       if (!planSlug || !cycle) {
         return sendWithStatus(reply, 400, { error: 'INVALID_INPUT', message: 'planSlug and cycle are required.' });
       }
-      const subscription = await subscriptionService.createSubscription({ tenantId, planSlug, cycle });
-      return sendWithStatus(reply, 201, { subscription });
+      try {
+        const subscription = await subscriptionService.createSubscription({ tenantId, planSlug, cycle });
+        return sendWithStatus(reply, 201, { subscription });
+      } catch (error) {
+        if (error instanceof BillingProviderUnavailableError) {
+          return sendBillingProviderUnavailable(reply, error.message);
+        }
+        throw error;
+      }
     },
   });
 
@@ -270,7 +298,10 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Change subscription plan',
       operationId: 'changePlan',
-      response: { 200: zodToJsonSchema(PlanResponseSchema) },
+      response: {
+        200: zodToJsonSchema(SubscriptionResponseSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -288,8 +319,15 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       if (!planSlug) {
         return sendWithStatus(reply, 400, { error: 'INVALID_INPUT', message: 'planSlug is required.' });
       }
-      const subscription = await subscriptionService.changePlan(tenantId, planSlug);
-      return reply.send({ subscription });
+      try {
+        const subscription = await subscriptionService.changePlan(tenantId, planSlug);
+        return reply.send({ subscription });
+      } catch (error) {
+        if (error instanceof BillingProviderUnavailableError) {
+          return sendBillingProviderUnavailable(reply, error.message);
+        }
+        throw error;
+      }
     },
   });
 
@@ -302,7 +340,10 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Resume a cancelled subscription',
       operationId: 'resumeSubscription',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SubscriptionResponseSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -316,8 +357,15 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
           message: 'Billing features are not yet available.',
         });
       }
-      const subscription = await subscriptionService.resumeSubscription(tenantId);
-      return reply.send({ subscription });
+      try {
+        const subscription = await subscriptionService.resumeSubscription(tenantId);
+        return reply.send({ subscription });
+      } catch (error) {
+        if (error instanceof BillingProviderUnavailableError) {
+          return sendBillingProviderUnavailable(reply, error.message);
+        }
+        throw error;
+      }
     },
   });
 
@@ -330,7 +378,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get current subscription details',
       operationId: 'getSubscription',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(SubscriptionResponseSchema) },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -351,7 +399,11 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Create setup intent for Stripe payment method',
       operationId: 'createPaymentMethodSetup',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(PaymentMethodSetupResponseSchema),
+        400: zodToJsonSchema(ApiErrorSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -369,10 +421,17 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       if (!subscription.stripeCustomerId) {
         return sendWithStatus(reply, 400, { error: 'NO_CUSTOMER', message: 'No Stripe customer found.' });
       }
-      const intent = await stripeClient.setupIntents.create({
-        customer: subscription.stripeCustomerId,
-      });
-      return reply.send({ clientSecret: intent.client_secret });
+      try {
+        const intent = await stripeClient.setupIntents.create({
+          customer: subscription.stripeCustomerId,
+        });
+        return reply.send({ clientSecret: intent.client_secret });
+      } catch (error) {
+        if (error instanceof BillingProviderUnavailableError) {
+          return sendBillingProviderUnavailable(reply, error.message);
+        }
+        throw error;
+      }
     },
   });
 
@@ -385,7 +444,11 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get Stripe billing portal session URL',
       operationId: 'getBillingPortal',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(BillingPortalResponseSchema),
+        400: zodToJsonSchema(ApiErrorSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -404,11 +467,18 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 400, { error: 'NO_CUSTOMER', message: 'No Stripe customer found.' });
       }
       const returnUrl = (request.query as { returnUrl?: string }).returnUrl ?? '/billing';
-      const session = await stripeClient.billingPortal.sessions.create({
-        customer: subscription.stripeCustomerId,
-        return_url: returnUrl,
-      });
-      return reply.send({ url: session.url });
+      try {
+        const session = await stripeClient.billingPortal.sessions.create({
+          customer: subscription.stripeCustomerId,
+          return_url: returnUrl,
+        });
+        return reply.send({ url: session.url });
+      } catch (error) {
+        if (error instanceof BillingProviderUnavailableError) {
+          return sendBillingProviderUnavailable(reply, error.message);
+        }
+        throw error;
+      }
     },
   });
 
@@ -494,15 +564,28 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Preview upcoming invoice',
       operationId: 'getUpcomingInvoice',
-      response: { 200: zodToJsonSchema(UpcomingInvoiceResponseSchema) },
+      response: {
+        200: zodToJsonSchema(UpcomingInvoiceResponseSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
       if (!tenantId) {
         return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED' });
       }
-      const invoice = await invoiceService.getUpcomingInvoice(tenantId);
-      return reply.send(invoice);
+      try {
+        const invoice = await invoiceService.getUpcomingInvoice(tenantId);
+        return reply.send(invoice);
+      } catch (error) {
+        if (error instanceof InvoicePersistenceUnavailableError) {
+          return sendWithStatus(reply, 501, {
+            error: 'INVOICE_SYNC_UNAVAILABLE',
+            message: error.message,
+          });
+        }
+        throw error;
+      }
     },
   });
 
@@ -515,14 +598,24 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get invoice detail by ID',
       operationId: 'getInvoiceDetail',
-      response: { 200: zodToJsonSchema(InvoiceDetailResponseSchema) },
+      response: {
+        200: zodToJsonSchema(InvoiceDetailResponseSchema),
+        404: zodToJsonSchema(ApiErrorSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: async (request, reply) => {
       const { invoiceId } = request.params as { invoiceId: string };
       try {
         const invoice = await invoiceService.getInvoiceDetail(invoiceId);
         return reply.send(invoice);
-      } catch {
+      } catch (error) {
+        if (error instanceof InvoicePersistenceUnavailableError) {
+          return sendWithStatus(reply, 501, {
+            error: 'INVOICE_SYNC_UNAVAILABLE',
+            message: error.message,
+          });
+        }
         return sendWithStatus(reply, 404, { error: 'INVOICE_NOT_FOUND' });
       }
     },
@@ -623,7 +716,10 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Cancel subscription with feedback',
       operationId: 'cancelSubscription',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: async (request, reply) => {
       const tenantId = request.tenantContext?.tenantId;
@@ -641,9 +737,16 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       if (!body.reason) {
         return sendWithStatus(reply, 400, { error: 'REASON_REQUIRED' });
       }
-      await subscriptionService.cancelSubscription(tenantId, body.immediate ?? false);
-      await cancellationService.cancel(tenantId, body.reason, body.feedback);
-      return reply.send({ success: true });
+      try {
+        await subscriptionService.cancelSubscription(tenantId, body.immediate ?? false);
+        await cancellationService.cancel(tenantId, body.reason, body.feedback);
+        return reply.send({ success: true });
+      } catch (error) {
+        if (error instanceof BillingProviderUnavailableError) {
+          return sendBillingProviderUnavailable(reply, error.message);
+        }
+        throw error;
+      }
     },
   });
 
@@ -749,8 +852,15 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       if (!isAdmin) {
         return sendWithStatus(reply, 403, { error: 'ADMIN_REQUIRED' });
       }
-      const plans = await enterpriseService.listEnterprisePlans();
-      return reply.send({ plans });
+      try {
+        const plans = await enterpriseService.listEnterprisePlans();
+        return reply.send({ plans });
+      } catch (error) {
+        if (error instanceof EnterprisePlanUnavailableError) {
+          return sendBillingProviderUnavailable(reply, error.message);
+        }
+        throw error;
+      }
     },
   });
 
@@ -787,20 +897,28 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       if (!body.tenantId || !body.customName || !body.customMonthlyPriceCents) {
         return sendWithStatus(reply, 400, { error: 'MISSING_REQUIRED_FIELDS' });
       }
-      const plan = await enterpriseService.createEnterprisePlan({
-        tenantId: body.tenantId,
-        customName: body.customName,
-        customMonthlyPriceCents: body.customMonthlyPriceCents,
-        basePlan: body.basePlan,
-        billingMethod: body.billingMethod as 'STRIPE' | 'INVOICE' | 'CONTRACT',
-        contractStart: body.contractStart ? new Date(body.contractStart) : undefined,
-        contractEnd: body.contractEnd ? new Date(body.contractEnd) : undefined,
-        slaTier: body.slaTier as 'STANDARD' | 'PREMIUM',
-        whiteLabel: body.whiteLabel,
-        dedicatedSupportContact: body.dedicatedSupportContact,
-        notes: body.notes,
-      });
-      return sendWithStatus(reply, 201, plan);
+      try {
+        const plan = await enterpriseService.createEnterprisePlan({
+          tenantId: body.tenantId,
+          customName: body.customName,
+          customMonthlyPriceCents: body.customMonthlyPriceCents,
+          basePlan: body.basePlan,
+          customEntitlements: body.customEntitlements,
+          billingMethod: body.billingMethod as 'STRIPE' | 'INVOICE' | 'CONTRACT',
+          contractStart: body.contractStart ? new Date(body.contractStart) : undefined,
+          contractEnd: body.contractEnd ? new Date(body.contractEnd) : undefined,
+          slaTier: body.slaTier as 'STANDARD' | 'PREMIUM',
+          whiteLabel: body.whiteLabel,
+          dedicatedSupportContact: body.dedicatedSupportContact,
+          notes: body.notes,
+        });
+        return sendWithStatus(reply, 201, plan);
+      } catch (error) {
+        if (error instanceof EnterprisePlanUnavailableError) {
+          return sendBillingProviderUnavailable(reply, error.message);
+        }
+        throw error;
+      }
     },
   });
 

@@ -14,32 +14,34 @@ vi.mock('react-router-dom', async () => {
 const mockContest = {
   id: 'contest-789',
   name: 'Masters 2026 Pool',
-  tenant: 'Acme Corp',
-  league: 'Sunday Picks',
+  tenantName: 'Acme Corp',
+  leagueName: 'Sunday Picks',
   sport: 'Golf',
-  sportEmoji: '⛳',
-  type: 'Single Event',
+  contestType: 'SINGLE_EVENT',
   selectionType: 'Snake Draft',
-  status: 'ACTIVE',
-  lastStatEvent: '2 minutes ago',
-  statEventsProcessed: 1250,
-  corrections: 3,
+  status: 'active',
+  scoringEngine: 'STROKE_PLAY',
+  entryCount: 2,
+  createdAt: '2025-04-01T18:00:00Z',
   standings: [
-    { rank: 1, entryName: 'Team Alpha', ownerEmail: 'alpha@example.com', totalScore: 287.5 },
-    { rank: 2, entryName: 'Team Bravo', ownerEmail: 'bravo@example.com', totalScore: 275.0 },
+    { entryId: 'entry-1', rank: 1, entryName: 'Team Alpha', ownerEmail: 'alpha@example.com', totalScore: 287.5 },
+    { entryId: 'entry-2', rank: 2, entryName: 'Team Bravo', ownerEmail: 'bravo@example.com', totalScore: 275.0 },
   ],
   draftStatus: {
-    status: 'Completed',
+    status: 'COMPLETED',
     currentPick: 48,
     totalPicks: 48,
-    started: '2025-04-01T18:00:00Z',
+    startedAt: '2025-04-01T18:00:00Z',
   },
   picks: [
-    { round: 1, pick: 1, participant: 'Scottie Scheffler', owner: 'alpha@example.com', autoPicked: false, time: '45s' },
+    { round: 1, pick: 1, participant: 'Scottie Scheffler', owner: 'alpha@example.com', autoPicked: false, time: '2025-04-01T18:00:45Z' },
   ],
   overrides: [
-    { admin: 'admin@poolmaster.io', entry: 'Team Alpha', oldScore: 280, newScore: 287.5, reason: 'Correction applied', date: '2025-04-05' },
+    { id: 'override-1', adminEmail: 'admin@poolmaster.io', entryId: 'entry-1', oldScore: 280, newScore: 287.5, reason: 'Correction applied', createdAt: '2025-04-05T12:00:00Z' },
   ],
+  scoringFreshness: { lastStatEvent: '2025-04-01T18:00:00Z', isStale: false, staleMinutes: 2 },
+  statEventCount: 1250,
+  correctionsApplied: 3,
 };
 
 vi.mock('@/hooks/use-contests-api', () => ({
@@ -76,9 +78,8 @@ describe('ContestDetailPage', () => {
     expect(screen.getByRole('tab', { name: 'Admin Actions' })).toBeInTheDocument();
   });
 
-  it('shows sport badge with emoji', () => {
+  it('shows the sport badge', () => {
     renderPage();
-    // The badge text combines emoji and sport name
     expect(screen.getByText(/Golf/)).toBeInTheDocument();
   });
 
@@ -92,8 +93,8 @@ describe('ContestDetailPage', () => {
     expect(screen.getByText('Recalculate Standings')).toBeInTheDocument();
   });
 
-  it('shows the ACTIVE status badge', () => {
+  it('shows the active status badge', () => {
     renderPage();
-    expect(screen.getAllByText('ACTIVE').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('active').length).toBeGreaterThanOrEqual(1);
   });
 });

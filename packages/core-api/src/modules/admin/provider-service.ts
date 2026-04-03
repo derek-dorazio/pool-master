@@ -1,12 +1,21 @@
 /**
  * ProviderService — business logic for admin sports data provider management.
  *
- * Provides provider health monitoring, ingestion stats, configuration
- * management, re-ingestion triggers, and participant mapping.
- * Uses mock data — will be replaced with real provider registry integration.
+ * The service is backed by the live provider registry plus persisted Prisma
+ * tables for health logs, sport events, ingestion jobs, and participant
+ * mappings. It no longer synthesizes provider state from static mock data.
  */
 
+import { PrismaClient, Prisma } from '@prisma/client';
+import { Sport } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
+import { ProviderRegistry } from '../ingestion/core/provider-registry';
+import { EspnAdapter, OpenF1Adapter, OddsApiAdapter, PgaTourAdapter } from '../ingestion/adapters';
+import type {
+  SportDataProvider,
+  ProviderHealthStatus as AdapterHealthStatus,
+} from '../ingestion/core/provider-interface';
+import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,45 +25,30 @@ export type ProviderHealthStatus = 'HEALTHY' | 'DEGRADED' | 'DOWN';
 
 export interface ProviderSummary {
   providerId: string;
-  name: string;
+  providerName: string;
   status: ProviderHealthStatus;
   errorRate: number;
   latencyMs: number;
-  lastEventAt: Date;
-  sports: string[];
+  lastEventAt: Date | null;
+  sportsCovered: string[];
+  activeEventCount: number;
 }
 
-export interface ProviderDetail {
+export interface ProviderHealthCheck {
   providerId: string;
-  name: string;
+  providerName: string;
   status: ProviderHealthStatus;
   errorRate: number;
   latencyMs: number;
-  lastEventAt: Date;
-  sports: string[];
-  config: ProviderConfig;
-  ingestionStats: SportIngestionStat[];
+  checkedAt: Date;
+  details: string;
 }
 
-export interface ProviderConfig {
-  apiKey: string;
-  apiSecret?: string;
-  webhookSecret?: string;
-  webhookUrl: string;
-  webhookEvents: string[];
-  degradedErrorRate: number;
-  downErrorRate: number;
-  maxLatencyMs: number;
-  monthlyBudgetUsd: number;
-  currentMonthSpendUsd: number;
-  budgetAlertThreshold: number;
-}
-
-export interface SportIngestionStat {
+export interface ProviderIngestionStat {
   sport: string;
   providerId: string;
-  lastPollAt: Date;
-  lastEventReceivedAt: Date;
+  lastPollAt: Date | null;
+  lastEventReceivedAt: Date | null;
   eventsToday: number;
   errorsToday: number;
   activeEventCount: number;
@@ -65,10 +59,10 @@ export interface IngestionJob {
   id: string;
   providerId: string;
   sport: string;
-  eventId: string;
-  status: 'RUNNING' | 'COMPLETED' | 'FAILED';
-  startedAt: Date;
-  completedAt?: Date;
+  eventId: string | null;
+  status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  startedAt: Date | null;
+  completedAt: Date | null;
   recordsProcessed: number;
   errors: number;
 }
@@ -78,34 +72,32 @@ export interface IngestionError {
   errorType: string;
   message: string;
   occurredAt: Date;
-  eventId?: string;
+  eventId?: string | null;
 }
 
 export interface IngestionDashboard {
-  sportProviderStatus: SportIngestionStat[];
+  sportProviderStatus: ProviderIngestionStat[];
   recentErrors: IngestionError[];
   activeJobs: IngestionJob[];
   recentCompletedJobs: IngestionJob[];
+  throughputPerMinute: number;
 }
 
 export interface UnmappedParticipant {
-  id: string;
-  externalId: string;
   providerId: string;
   providerName: string;
+  externalId: string;
   externalName: string;
   sport: string;
-  firstSeenAt: Date;
-  eventCount: number;
 }
 
-export interface HealthCheckResult {
-  providerId: string;
-  name: string;
-  status: ProviderHealthStatus;
-  latencyMs: number;
-  checkedAt: Date;
-  details: string;
+export interface ProviderDetail extends ProviderSummary {
+  recentHealthChecks: ProviderHealthCheck[];
+  ingestionStats: ProviderIngestionStat[];
+  recentErrors: IngestionError[];
+  recentJobs: IngestionJob[];
+  unmappedParticipants: UnmappedParticipant[];
+  mappedParticipantCount: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -119,415 +111,386 @@ export class ProviderNotFoundError extends Error {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-
-const now = new Date();
-
-function minutesAgo(m: number): Date {
-  return new Date(now.getTime() - m * 60_000);
+export class ProviderConfigUnsupportedError extends Error {
+  constructor(providerId: string) {
+    super(`Provider configuration is not persisted for ${providerId}`);
+    this.name = 'ProviderConfigUnsupportedError';
+  }
 }
 
-const MOCK_PROVIDERS: Map<string, ProviderDetail> = new Map([
-  ['sportsdataio', {
-    providerId: 'sportsdataio',
-    name: 'SportsDataIO',
-    status: 'HEALTHY' as ProviderHealthStatus,
-    errorRate: 0.2,
-    latencyMs: 245,
-    lastEventAt: minutesAgo(0.5),
-    sports: ['NFL', 'NBA', 'NCAA'],
-    config: {
-      apiKey: 'sd-****-****-7a3f',
-      webhookUrl: 'https://api.poolmaster.io/webhooks/sportsdataio',
-      webhookEvents: ['score.update', 'game.start', 'game.end', 'injury.update'],
-      degradedErrorRate: 5,
-      downErrorRate: 20,
-      maxLatencyMs: 5000,
-      monthlyBudgetUsd: 2500,
-      currentMonthSpendUsd: 1840,
-      budgetAlertThreshold: 0.8,
-    },
-    ingestionStats: [
-      {
-        sport: 'NFL',
-        providerId: 'sportsdataio',
-        lastPollAt: minutesAgo(1),
-        lastEventReceivedAt: minutesAgo(0.5),
-        eventsToday: 1245,
-        errorsToday: 3,
-        activeEventCount: 8,
-        contestsDepending: 42,
-      },
-      {
-        sport: 'NBA',
-        providerId: 'sportsdataio',
-        lastPollAt: minutesAgo(1),
-        lastEventReceivedAt: minutesAgo(2),
-        eventsToday: 890,
-        errorsToday: 1,
-        activeEventCount: 12,
-        contestsDepending: 31,
-      },
-    ],
-  }],
-  ['sportradar', {
-    providerId: 'sportradar',
-    name: 'Sportradar',
-    status: 'HEALTHY' as ProviderHealthStatus,
-    errorRate: 0.1,
-    latencyMs: 180,
-    lastEventAt: minutesAgo(1),
-    sports: ['NFL', 'NBA', 'NCAA', 'Soccer'],
-    config: {
-      apiKey: 'sr-****-****-9b2e',
-      apiSecret: 'sr-sec-****',
-      webhookUrl: 'https://api.poolmaster.io/webhooks/sportradar',
-      webhookEvents: ['score.live', 'game.status', 'player.stats'],
-      degradedErrorRate: 5,
-      downErrorRate: 20,
-      maxLatencyMs: 3000,
-      monthlyBudgetUsd: 4000,
-      currentMonthSpendUsd: 2950,
-      budgetAlertThreshold: 0.8,
-    },
-    ingestionStats: [
-      {
-        sport: 'Soccer',
-        providerId: 'sportradar',
-        lastPollAt: minutesAgo(2),
-        lastEventReceivedAt: minutesAgo(3),
-        eventsToday: 2100,
-        errorsToday: 2,
-        activeEventCount: 18,
-        contestsDepending: 15,
-      },
-    ],
-  }],
-  ['equibase', {
-    providerId: 'equibase',
-    name: 'Equibase',
-    status: 'DEGRADED' as ProviderHealthStatus,
-    errorRate: 8.5,
-    latencyMs: 2100,
-    lastEventAt: minutesAgo(15),
-    sports: ['Horse Racing'],
-    config: {
-      apiKey: 'eq-****-****-4d1c',
-      webhookUrl: 'https://api.poolmaster.io/webhooks/equibase',
-      webhookEvents: ['race.result', 'race.scratches', 'odds.update'],
-      degradedErrorRate: 5,
-      downErrorRate: 20,
-      maxLatencyMs: 5000,
-      monthlyBudgetUsd: 1500,
-      currentMonthSpendUsd: 1100,
-      budgetAlertThreshold: 0.8,
-    },
-    ingestionStats: [
-      {
-        sport: 'Horse Racing',
-        providerId: 'equibase',
-        lastPollAt: minutesAgo(5),
-        lastEventReceivedAt: minutesAgo(15),
-        eventsToday: 320,
-        errorsToday: 28,
-        activeEventCount: 4,
-        contestsDepending: 8,
-      },
-    ],
-  }],
-  ['theoddsapi', {
-    providerId: 'theoddsapi',
-    name: 'TheOddsAPI',
-    status: 'HEALTHY' as ProviderHealthStatus,
-    errorRate: 0.0,
-    latencyMs: 120,
-    lastEventAt: minutesAgo(5),
-    sports: ['NFL', 'NBA', 'NCAA', 'Soccer', 'Tennis'],
-    config: {
-      apiKey: 'oa-****-****-8e5f',
-      webhookUrl: 'https://api.poolmaster.io/webhooks/theoddsapi',
-      webhookEvents: ['odds.update', 'line.movement'],
-      degradedErrorRate: 5,
-      downErrorRate: 20,
-      maxLatencyMs: 3000,
-      monthlyBudgetUsd: 800,
-      currentMonthSpendUsd: 520,
-      budgetAlertThreshold: 0.8,
-    },
-    ingestionStats: [
-      {
-        sport: 'NFL',
-        providerId: 'theoddsapi',
-        lastPollAt: minutesAgo(5),
-        lastEventReceivedAt: minutesAgo(5),
-        eventsToday: 4500,
-        errorsToday: 0,
-        activeEventCount: 22,
-        contestsDepending: 0,
-      },
-    ],
-  }],
-  ['espn', {
-    providerId: 'espn',
-    name: 'ESPN',
-    status: 'HEALTHY' as ProviderHealthStatus,
-    errorRate: 0.3,
-    latencyMs: 310,
-    lastEventAt: minutesAgo(2),
-    sports: ['NFL', 'NBA', 'NCAA', 'Golf', 'Tennis'],
-    config: {
-      apiKey: 'espn-****-****-2c7a',
-      webhookUrl: 'https://api.poolmaster.io/webhooks/espn',
-      webhookEvents: ['score.update', 'schedule.change'],
-      degradedErrorRate: 5,
-      downErrorRate: 20,
-      maxLatencyMs: 5000,
-      monthlyBudgetUsd: 3000,
-      currentMonthSpendUsd: 2100,
-      budgetAlertThreshold: 0.8,
-    },
-    ingestionStats: [
-      {
-        sport: 'Golf',
-        providerId: 'espn',
-        lastPollAt: minutesAgo(2),
-        lastEventReceivedAt: minutesAgo(2),
-        eventsToday: 650,
-        errorsToday: 2,
-        activeEventCount: 3,
-        contestsDepending: 12,
-      },
-    ],
-  }],
-  ['openf1', {
-    providerId: 'openf1',
-    name: 'OpenF1',
-    status: 'HEALTHY' as ProviderHealthStatus,
-    errorRate: 0.0,
-    latencyMs: 95,
-    lastEventAt: minutesAgo(30),
-    sports: ['F1'],
-    config: {
-      apiKey: 'of1-****-****-6b9d',
-      webhookUrl: 'https://api.poolmaster.io/webhooks/openf1',
-      webhookEvents: ['session.update', 'lap.data', 'position.change'],
-      degradedErrorRate: 5,
-      downErrorRate: 20,
-      maxLatencyMs: 3000,
-      monthlyBudgetUsd: 500,
-      currentMonthSpendUsd: 180,
-      budgetAlertThreshold: 0.8,
-    },
-    ingestionStats: [
-      {
-        sport: 'F1',
-        providerId: 'openf1',
-        lastPollAt: minutesAgo(10),
-        lastEventReceivedAt: minutesAgo(30),
-        eventsToday: 120,
-        errorsToday: 0,
-        activeEventCount: 1,
-        contestsDepending: 5,
-      },
-    ],
-  }],
-]);
+export class ProviderEventNotFoundError extends Error {
+  constructor(providerId: string, eventId: string) {
+    super(`Event ${eventId} was not found for provider ${providerId}`);
+    this.name = 'ProviderEventNotFoundError';
+  }
+}
 
-const MOCK_UNMAPPED: UnmappedParticipant[] = [
-  {
-    id: 'unmap-001',
-    externalId: 'ext-player-99821',
-    providerId: 'sportsdataio',
-    providerName: 'SportsDataIO',
-    externalName: 'J. Rodriguez III',
-    sport: 'NFL',
-    firstSeenAt: minutesAgo(120),
-    eventCount: 3,
-  },
-  {
-    id: 'unmap-002',
-    externalId: 'ext-horse-4412',
-    providerId: 'equibase',
-    providerName: 'Equibase',
-    externalName: 'Midnight Thunder',
-    sport: 'Horse Racing',
-    firstSeenAt: minutesAgo(60),
-    eventCount: 1,
-  },
-  {
-    id: 'unmap-003',
-    externalId: 'ext-driver-55',
-    providerId: 'openf1',
-    providerName: 'OpenF1',
-    externalName: 'A. Antonelli',
-    sport: 'F1',
-    firstSeenAt: minutesAgo(45),
-    eventCount: 2,
-  },
-];
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-const MOCK_ACTIVE_JOBS: IngestionJob[] = [
-  {
-    id: 'job-001',
-    providerId: 'sportsdataio',
-    sport: 'NFL',
-    eventId: 'nfl-game-2026-week12-001',
-    status: 'RUNNING',
-    startedAt: minutesAgo(2),
-    recordsProcessed: 1240,
-    errors: 0,
-  },
-  {
-    id: 'job-002',
-    providerId: 'sportradar',
-    sport: 'Soccer',
-    eventId: 'epl-match-2026-gw28-003',
-    status: 'RUNNING',
-    startedAt: minutesAgo(1),
-    recordsProcessed: 580,
-    errors: 0,
-  },
-];
+function startOfUtcDay(date = new Date()): Date {
+  const next = new Date(date);
+  next.setUTCHours(0, 0, 0, 0);
+  return next;
+}
 
-const MOCK_RECENT_COMPLETED: IngestionJob[] = [
-  {
-    id: 'job-003',
-    providerId: 'espn',
-    sport: 'Golf',
-    eventId: 'pga-masters-2026-rd2',
-    status: 'COMPLETED',
-    startedAt: minutesAgo(30),
-    completedAt: minutesAgo(25),
-    recordsProcessed: 4800,
-    errors: 0,
-  },
-  {
-    id: 'job-004',
-    providerId: 'equibase',
-    sport: 'Horse Racing',
-    eventId: 'ky-derby-2026-race5',
-    status: 'FAILED',
-    startedAt: minutesAgo(20),
-    completedAt: minutesAgo(18),
-    recordsProcessed: 120,
-    errors: 8,
-  },
-];
+function mapHealthStatus(status: AdapterHealthStatus['status']): ProviderHealthStatus {
+  return status;
+}
 
-const MOCK_RECENT_ERRORS: IngestionError[] = [
-  {
-    providerId: 'equibase',
-    errorType: 'TIMEOUT',
-    message: 'Request timed out after 5000ms fetching race results',
-    occurredAt: minutesAgo(15),
-    eventId: 'ky-derby-2026-race5',
-  },
-  {
-    providerId: 'equibase',
-    errorType: 'PARSE_ERROR',
-    message: 'Unexpected field "scratched_at" in race result payload',
-    occurredAt: minutesAgo(12),
-    eventId: 'ky-derby-2026-race5',
-  },
-  {
-    providerId: 'sportsdataio',
-    errorType: 'RATE_LIMIT',
-    message: 'Rate limit exceeded — 429 response from /v3/nfl/scores',
-    occurredAt: minutesAgo(45),
-  },
-];
+function buildProviderRegistry(): ProviderRegistry {
+  const registry = new ProviderRegistry();
+  registry.register(Sport.GOLF, new PgaTourAdapter(), 'PRIMARY');
+  registry.register(Sport.F1, new OpenF1Adapter(), 'PRIMARY');
+  registry.register(Sport.NFL, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.NBA, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.MLB, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.NHL, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.NCAA_BASKETBALL, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.SOCCER, new OddsApiAdapter(), 'PRIMARY');
+  return registry;
+}
+
+function parseErrorLogEntry(entry: unknown): { errorType: string; message: string } | null {
+  if (!entry || typeof entry !== 'object') return null;
+  const row = entry as Record<string, unknown>;
+  const errorType = typeof row.errorType === 'string' ? row.errorType : typeof row.type === 'string' ? row.type : null;
+  const message = typeof row.message === 'string' ? row.message : typeof row.error === 'string' ? row.error : null;
+  if (!errorType || !message) return null;
+  return { errorType, message };
+}
+
+function providerDisplayName(provider: SportDataProvider): string {
+  return provider.providerName;
+}
 
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class ProviderService {
-  /**
-   * Returns all providers with health status summaries.
-   */
-  async listProviders(): Promise<ProviderSummary[]> {
-    const summaries: ProviderSummary[] = [];
-    for (const p of MOCK_PROVIDERS.values()) {
-      summaries.push({
-        providerId: p.providerId,
-        name: p.name,
-        status: p.status,
-        errorRate: p.errorRate,
-        latencyMs: p.latencyMs,
-        lastEventAt: p.lastEventAt,
-        sports: p.sports,
-      });
-    }
-    return summaries;
+  private readonly ingestionPersistence: IngestionPersistence;
+
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly registry: ProviderRegistry = buildProviderRegistry(),
+  ) {
+    this.ingestionPersistence = new IngestionPersistence(prisma);
   }
 
-  /**
-   * Returns full detail for a single provider including config and ingestion stats.
-   */
-  async getProviderDetail(providerId: string): Promise<ProviderDetail> {
-    const provider = MOCK_PROVIDERS.get(providerId);
+  private getProviderOrThrow(providerId: string): SportDataProvider {
+    const provider = this.registry.getProviderById(providerId);
     if (!provider) {
       throw new ProviderNotFoundError(providerId);
     }
     return provider;
   }
 
-  /**
-   * Updates provider configuration (thresholds, credentials).
-   */
-  async updateProviderConfig(
-    providerId: string,
-    updates: Partial<ProviderConfig>,
-    adminUserId: string,
-    adminUserEmail: string,
-  ): Promise<ProviderConfig> {
-    const provider = MOCK_PROVIDERS.get(providerId);
-    if (!provider) {
-      throw new ProviderNotFoundError(providerId);
+  private async fetchProviderHealth(
+    provider: SportDataProvider,
+  ): Promise<{ health: AdapterHealthStatus; checkedAt: Date }> {
+    try {
+      const health = await provider.healthCheck();
+      return { health, checkedAt: new Date() };
+    } catch (error) {
+      const lastLog = await this.prisma.providerHealthLog.findFirst({
+        where: { providerId: provider.providerId },
+        orderBy: { recordedAt: 'desc' },
+      });
+
+      if (!lastLog) {
+        throw error;
+      }
+
+      return {
+        health: {
+          providerId: provider.providerId,
+          status: (lastLog.status === 'HEALTHY' || lastLog.status === 'DEGRADED' || lastLog.status === 'DOWN')
+            ? lastLog.status
+            : 'DOWN',
+          errorRateLastHour: Number(lastLog.errorRate ?? 0),
+          latencyMsP95: lastLog.avgLatencyMs ?? 0,
+          lastSuccessfulPoll: undefined,
+          message: 'Using the most recent persisted provider health log because the live health check failed.',
+        },
+        checkedAt: lastLog.recordedAt,
+      };
     }
-
-    const beforeConfig = { ...provider.config };
-    Object.assign(provider.config, updates);
-
-    await logAdminAction({
-      adminUserId,
-      adminUserEmail,
-      action: 'sportsdata.update_config',
-      resourceType: 'PROVIDER',
-      resourceId: providerId,
-      description: `Updated provider config for ${provider.name}`,
-      beforeState: beforeConfig as unknown as Record<string, unknown>,
-      afterState: provider.config as unknown as Record<string, unknown>,
-    });
-
-    return provider.config;
   }
 
-  /**
-   * Triggers a manual health check for a provider.
-   */
+  private async buildProviderSummary(provider: SportDataProvider): Promise<ProviderSummary> {
+    const healthResult = await this.fetchProviderHealth(provider);
+    const [lastEvent, activeEvents] = await Promise.all([
+      this.prisma.sportEvent.findFirst({
+        where: { providerId: provider.providerId },
+        orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+        select: { updatedAt: true, createdAt: true },
+      }),
+      this.prisma.sportEvent.count({
+        where: {
+          providerId: provider.providerId,
+          status: { in: ['SCHEDULED', 'IN_PROGRESS'] },
+        },
+      }),
+    ]);
+
+    return {
+      providerId: provider.providerId,
+      providerName: providerDisplayName(provider),
+      status: mapHealthStatus(healthResult.health.status),
+      errorRate: healthResult.health.errorRateLastHour,
+      latencyMs: healthResult.health.latencyMsP95,
+      lastEventAt: lastEvent?.updatedAt ?? lastEvent?.createdAt ?? healthResult.health.lastSuccessfulPoll ?? null,
+      sportsCovered: provider.sportsCovered.map(String),
+      activeEventCount: activeEvents,
+    };
+  }
+
+  private async buildIngestionStat(
+    provider: SportDataProvider,
+    sport: Sport,
+  ): Promise<ProviderIngestionStat> {
+    const dayStart = startOfUtcDay();
+
+    const [lastPollJob, lastEvent, eventsToday, errorsToday, activeEventRows] =
+      await Promise.all([
+        this.prisma.ingestionJob.findFirst({
+          where: { providerId: provider.providerId, sport },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true, startedAt: true },
+        }),
+        this.prisma.sportEvent.findFirst({
+          where: { providerId: provider.providerId, sport },
+          orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+          select: { updatedAt: true, createdAt: true },
+        }),
+        this.prisma.sportEvent.count({
+          where: { providerId: provider.providerId, sport, createdAt: { gte: dayStart } },
+        }),
+        this.prisma.ingestionJob.findMany({
+          where: {
+            providerId: provider.providerId,
+            sport,
+            createdAt: { gte: dayStart },
+            errors: { gt: 0 },
+          },
+          select: { errors: true },
+        }).then((rows) => rows.reduce((sum, row) => sum + row.errors, 0)),
+        this.prisma.sportEvent.findMany({
+          where: {
+            providerId: provider.providerId,
+            sport,
+            status: { in: ['SCHEDULED', 'IN_PROGRESS'] },
+          },
+          select: { id: true },
+        }),
+      ]);
+
+    const contestMatchups = activeEventRows.length > 0
+      ? await this.prisma.contestMatchup.count({
+          where: {
+            eventId: { in: activeEventRows.map((row) => row.id) },
+          },
+        })
+      : 0;
+
+    return {
+      sport,
+      providerId: provider.providerId,
+      lastPollAt: lastPollJob?.startedAt ?? lastPollJob?.createdAt ?? null,
+      lastEventReceivedAt: lastEvent?.updatedAt ?? lastEvent?.createdAt ?? null,
+      eventsToday,
+      errorsToday,
+      activeEventCount: activeEventRows.length,
+      contestsDepending: contestMatchups,
+    };
+  }
+
+  private mapJob(row: {
+    id: string;
+    providerId: string;
+    sport: string;
+    eventExternalId: string | null;
+    status: string;
+    startedAt: Date | null;
+    completedAt: Date | null;
+    recordsProcessed: number;
+    errors: number;
+  }): IngestionJob {
+    return {
+      id: row.id,
+      providerId: row.providerId,
+      sport: row.sport,
+      eventId: row.eventExternalId,
+      status: row.status as IngestionJob['status'],
+      startedAt: row.startedAt,
+      completedAt: row.completedAt,
+      recordsProcessed: row.recordsProcessed,
+      errors: row.errors,
+    };
+  }
+
+  private mapErrorFromJob(row: {
+    providerId: string;
+    sport: string;
+    eventExternalId: string | null;
+    errorLog: Prisma.JsonValue;
+    createdAt: Date;
+  }): IngestionError[] {
+    const entries = Array.isArray(row.errorLog) ? row.errorLog : [];
+    const parsed = entries
+      .map((entry) => parseErrorLogEntry(entry))
+      .filter((entry): entry is { errorType: string; message: string } => entry !== null);
+    if (parsed.length > 0) {
+      return parsed.map((entry) => ({
+        providerId: row.providerId,
+        errorType: entry.errorType,
+        message: entry.message,
+        occurredAt: row.createdAt,
+        eventId: row.eventExternalId,
+      }));
+    }
+
+    return [{
+      providerId: row.providerId,
+      errorType: 'INGESTION_FAILURE',
+      message: `${row.providerId} ingestion failed for ${row.sport}`,
+      occurredAt: row.createdAt,
+      eventId: row.eventExternalId,
+    }];
+  }
+
+  private async buildUnmappedParticipantsForProvider(provider: SportDataProvider): Promise<UnmappedParticipant[]> {
+    const mappings = await this.prisma.participantProviderMapping.findMany({
+      where: { providerId: provider.providerId },
+      select: { externalId: true },
+    });
+    const mappedIds = new Set(mappings.map((row) => row.externalId));
+    const results: UnmappedParticipant[] = [];
+
+    for (const sport of provider.sportsCovered) {
+      const participants = await provider.getParticipants(sport);
+      for (const participant of participants) {
+        if (mappedIds.has(participant.externalId)) {
+          continue;
+        }
+        results.push({
+          providerId: provider.providerId,
+          providerName: providerDisplayName(provider),
+          externalId: participant.externalId,
+          externalName: participant.name,
+          sport,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  // -------------------------------------------------------------------------
+  // Public API
+  // -------------------------------------------------------------------------
+
+  async listProviders(): Promise<ProviderSummary[]> {
+    const providers = this.registry.getAllProviders();
+    const summaries = await Promise.all(
+      providers.map((provider) => this.buildProviderSummary(provider)),
+    );
+    return summaries.sort((a, b) => a.providerName.localeCompare(b.providerName));
+  }
+
+  async getProviderDetail(providerId: string): Promise<ProviderDetail> {
+    const provider = this.getProviderOrThrow(providerId);
+    const summary = await this.buildProviderSummary(provider);
+    const recentHealthChecks = await this.prisma.providerHealthLog.findMany({
+      where: { providerId },
+      orderBy: { recordedAt: 'desc' },
+      take: 10,
+    });
+
+    const ingestionStats = await Promise.all(
+      provider.sportsCovered.map((sport) => this.buildIngestionStat(provider, sport)),
+    );
+
+    const recentJobsRows = await this.prisma.ingestionJob.findMany({
+      where: { providerId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    const failedJobRows = await this.prisma.ingestionJob.findMany({
+      where: { providerId, errors: { gt: 0 } },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    const unmappedParticipants = await this.buildUnmappedParticipantsForProvider(provider);
+    const mappedParticipantCount = await this.prisma.participantProviderMapping.count({
+      where: { providerId },
+    });
+
+    return {
+      ...summary,
+      recentHealthChecks: recentHealthChecks.map((log) => ({
+        providerId: log.providerId,
+        providerName: summary.providerName,
+        status: mapHealthStatus(log.status as AdapterHealthStatus['status']),
+        errorRate: Number(log.errorRate ?? 0),
+        latencyMs: log.avgLatencyMs ?? 0,
+        checkedAt: log.recordedAt,
+        details: log.consecutiveFailures > 0
+          ? `${log.consecutiveFailures} consecutive failures`
+          : `Status ${log.status}`,
+      })),
+      ingestionStats,
+      recentErrors: failedJobRows.flatMap((row) => this.mapErrorFromJob(row)),
+      recentJobs: recentJobsRows.map((row) => this.mapJob(row)),
+      unmappedParticipants,
+      mappedParticipantCount,
+    };
+  }
+
+  async updateProviderConfig(
+    providerId: string,
+    _updates: Record<string, unknown>,
+    _adminUserId: string,
+    _adminUserEmail: string,
+  ): Promise<never> {
+    this.getProviderOrThrow(providerId);
+    throw new ProviderConfigUnsupportedError(providerId);
+  }
+
   async triggerHealthCheck(
     providerId: string,
     adminUserId: string,
     adminUserEmail: string,
-  ): Promise<HealthCheckResult> {
-    const provider = MOCK_PROVIDERS.get(providerId);
-    if (!provider) {
-      throw new ProviderNotFoundError(providerId);
-    }
+  ): Promise<ProviderHealthCheck> {
+    const provider = this.getProviderOrThrow(providerId);
+    const health = await provider.healthCheck();
+    const checkedAt = new Date();
 
-    // Mock health check result
-    const result: HealthCheckResult = {
+    await this.prisma.providerHealthLog.create({
+      data: {
+        providerId,
+        status: health.status,
+        errorRate: new Prisma.Decimal(health.errorRateLastHour),
+        avgLatencyMs: health.latencyMsP95,
+        consecutiveFailures: health.status === 'DOWN' ? 1 : 0,
+        recordedAt: checkedAt,
+      },
+    });
+
+    const result: ProviderHealthCheck = {
       providerId,
-      name: provider.name,
-      status: provider.status,
-      latencyMs: provider.latencyMs + Math.floor(Math.random() * 50),
-      checkedAt: new Date(),
-      details: provider.status === 'HEALTHY'
-        ? 'All endpoints responding normally'
-        : `Elevated error rate: ${provider.errorRate}%, latency: ${provider.latencyMs}ms`,
+      providerName: providerDisplayName(provider),
+      status: mapHealthStatus(health.status),
+      errorRate: health.errorRateLastHour,
+      latencyMs: health.latencyMsP95,
+      checkedAt,
+      details: health.message ?? (health.status === 'HEALTHY'
+        ? 'Provider responded successfully.'
+        : 'Provider returned a degraded health status.'),
     };
 
     await logAdminAction({
@@ -536,54 +499,122 @@ export class ProviderService {
       action: 'sportsdata.health_check',
       resourceType: 'PROVIDER',
       resourceId: providerId,
-      description: `Manual health check for ${provider.name} — status: ${result.status}`,
+      description: `Manual health check for ${provider.providerName} — status: ${result.status}`,
       afterState: result as unknown as Record<string, unknown>,
     });
 
     return result;
   }
 
-  /**
-   * Returns the ingestion monitoring dashboard with jobs, errors, and throughput.
-   */
   async getIngestionDashboard(): Promise<IngestionDashboard> {
-    const sportProviderStatus: SportIngestionStat[] = [];
-    for (const p of MOCK_PROVIDERS.values()) {
-      sportProviderStatus.push(...p.ingestionStats);
-    }
+    const providers = this.registry.getAllProviders();
+    const sportProviderStatus = (await Promise.all(
+      providers.flatMap((provider) => provider.sportsCovered.map((sport) => this.buildIngestionStat(provider, sport))),
+    )).sort((a, b) => `${a.providerId}:${a.sport}`.localeCompare(`${b.providerId}:${b.sport}`));
+
+    const activeJobsRows = await this.prisma.ingestionJob.findMany({
+      where: { status: { in: ['QUEUED', 'RUNNING'] } },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    const completedJobsRows = await this.prisma.ingestionJob.findMany({
+      where: { status: 'COMPLETED' },
+      orderBy: { completedAt: 'desc' },
+      take: 10,
+    });
+
+    const failedJobsRows = await this.prisma.ingestionJob.findMany({
+      where: { status: 'FAILED' },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    const recentErrors = failedJobsRows.flatMap((row) => this.mapErrorFromJob(row));
+    const activeJobs = activeJobsRows.map((row) => this.mapJob(row));
+    const recentCompletedJobs = completedJobsRows.map((row) => this.mapJob(row));
+
+    const now = new Date();
+    const lastHour = new Date(now.getTime() - 60 * 60_000);
+    const throughputRows = await this.prisma.ingestionJob.findMany({
+      where: {
+        status: 'COMPLETED',
+        completedAt: { gte: lastHour },
+      },
+      select: { recordsProcessed: true },
+    });
+    const throughputPerMinute = throughputRows.reduce((sum, row) => sum + row.recordsProcessed, 0) / 60;
 
     return {
       sportProviderStatus,
-      recentErrors: MOCK_RECENT_ERRORS,
-      activeJobs: MOCK_ACTIVE_JOBS,
-      recentCompletedJobs: MOCK_RECENT_COMPLETED,
+      recentErrors,
+      activeJobs,
+      recentCompletedJobs,
+      throughputPerMinute,
     };
   }
 
-  /**
-   * Triggers re-ingestion for a specific event from a provider.
-   */
   async reIngestEvent(
     providerId: string,
     eventId: string,
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<IngestionJob> {
-    const provider = MOCK_PROVIDERS.get(providerId);
-    if (!provider) {
-      throw new ProviderNotFoundError(providerId);
+    const provider = this.getProviderOrThrow(providerId);
+    const job = await this.prisma.ingestionJob.create({
+      data: {
+        jobType: 'MANUAL_REINGEST',
+        providerId,
+        sport: provider.sportsCovered[0] ?? 'UNKNOWN',
+        eventExternalId: eventId,
+        status: 'RUNNING',
+        startedAt: new Date(),
+        recordsProcessed: 0,
+        errors: 0,
+        errorLog: [],
+      },
+    });
+
+    const detail = await provider.getEventDetails(eventId);
+    if (!detail) {
+      await this.prisma.ingestionJob.update({
+        where: { id: job.id },
+        data: {
+          status: 'FAILED',
+          completedAt: new Date(),
+          errors: 1,
+          errorLog: [{ errorType: 'NOT_FOUND', message: `Event ${eventId} was not returned by ${provider.providerName}` }],
+        },
+      });
+      throw new ProviderEventNotFoundError(providerId, eventId);
     }
 
-    const job: IngestionJob = {
-      id: `job-reingest-${Date.now()}`,
-      providerId,
-      sport: provider.sports[0],
-      eventId,
-      status: 'RUNNING',
-      startedAt: new Date(),
-      recordsProcessed: 0,
-      errors: 0,
-    };
+    await this.prisma.ingestionJob.update({
+      where: { id: job.id },
+      data: { sport: detail.sport },
+    });
+
+    await this.ingestionPersistence.persistEvents([detail]);
+    if (detail.participants.length > 0) {
+      await this.ingestionPersistence.persistParticipants(detail.participants);
+    }
+
+    await this.prisma.ingestionJob.update({
+      where: { id: job.id },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+        recordsProcessed: 1 + detail.participants.length,
+        errors: 0,
+      },
+    });
+
+    const completed = await this.prisma.ingestionJob.findUnique({
+      where: { id: job.id },
+    });
+    if (!completed) {
+      throw new Error(`Re-ingestion job ${job.id} was not persisted`);
+    }
 
     await logAdminAction({
       adminUserId,
@@ -591,37 +622,67 @@ export class ProviderService {
       action: 'sportsdata.re_ingest',
       resourceType: 'PROVIDER',
       resourceId: providerId,
-      description: `Triggered re-ingestion for event ${eventId} from ${provider.name}`,
-      afterState: { jobId: job.id, eventId },
+      description: `Triggered re-ingestion for event ${eventId} from ${provider.providerName}`,
+      afterState: { jobId: completed.id, eventId },
     });
 
-    return job;
+    return this.mapJob(completed);
   }
 
-  /**
-   * Returns unmapped participants awaiting manual mapping.
-   */
   async getUnmappedParticipants(): Promise<UnmappedParticipant[]> {
-    return MOCK_UNMAPPED;
+    const providers = this.registry.getAllProviders();
+    const unmapped: UnmappedParticipant[] = [];
+
+    for (const provider of providers) {
+      unmapped.push(...await this.buildUnmappedParticipantsForProvider(provider));
+    }
+
+    return unmapped;
   }
 
-  /**
-   * Maps an external participant ID to an internal participant ID.
-   */
   async mapParticipant(
+    providerId: string,
     externalId: string,
     internalId: string,
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
+    const provider = this.getProviderOrThrow(providerId);
+    const participant = await this.prisma.participant.findUnique({
+      where: { id: internalId },
+      select: { id: true },
+    });
+    if (!participant) {
+      throw new Error(`Participant not found: ${internalId}`);
+    }
+
+    await this.prisma.participantProviderMapping.upsert({
+      where: {
+        providerId_externalId: {
+          providerId,
+          externalId,
+        },
+      },
+      create: {
+        participantId: participant.id,
+        providerId,
+        externalId,
+        confidence: 'MANUAL',
+      },
+      update: {
+        participantId: participant.id,
+        confidence: 'MANUAL',
+      },
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
       action: 'sportsdata.map_participant',
       resourceType: 'PARTICIPANT',
       resourceId: externalId,
-      description: `Mapped external participant ${externalId} to internal ${internalId}`,
-      afterState: { externalId, internalId },
+      description: `Mapped provider participant ${externalId} from ${provider.providerName} to internal participant ${internalId}`,
+      afterState: { providerId, externalId, internalId },
     });
   }
 }

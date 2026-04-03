@@ -36,9 +36,9 @@ vi.mock('@/lib/api-client', () => ({
   },
 }));
 
-function renderRegister() {
+function renderRegister(initialEntry = '/register') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <RegisterPage />
     </MemoryRouter>,
   );
@@ -62,6 +62,14 @@ describe('RegisterPage', () => {
     const link = screen.getByRole('link', { name: 'register.logIn' });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/login');
+  });
+
+  it('preserves redirectTo in the login link when present', () => {
+    renderRegister('/register?redirectTo=%2Fjoin%2Finvite-123');
+    expect(screen.getByRole('link', { name: 'register.logIn' })).toHaveAttribute(
+      'href',
+      '/login?redirectTo=%2Fjoin%2Finvite-123',
+    );
   });
 
   it('renders progress indicators', () => {

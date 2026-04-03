@@ -1,63 +1,94 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Trophy, RefreshCw, AlertTriangle, XCircle,
-  RotateCcw, Calculator, DollarSign, Download,
-  CheckCircle, Clock,
+  Trophy,
+  RefreshCw,
+  AlertTriangle,
+  XCircle,
+  RotateCcw,
+  Calculator,
+  DollarSign,
+  Download,
+  CheckCircle,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ContestStatus } from '@poolmaster/shared/domain';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  client,
+  adminForceCloseContest,
+  adminReopenContest,
+  adminRecalculateStandings,
+  adminRecalculatePayouts,
+  adminReIngestScoring,
+  adminOverrideScore,
+} from '@/lib/api';
 import { useContestDetail } from '@/hooks/use-contests-api';
 
 function statusColor(status: string) {
-  switch (status) {
-    case ContestStatus.OPEN: return 'bg-blue-100 text-blue-800';
-    case ContestStatus.DRAFTING: return 'bg-yellow-100 text-yellow-800';
-    case ContestStatus.ACTIVE: return 'bg-green-100 text-green-800';
-    case ContestStatus.COMPLETED: return 'bg-gray-100 text-gray-800';
-    case ContestStatus.CANCELLED: return 'bg-red-100 text-red-800';
+  switch (status.toLowerCase()) {
+    case 'open': return 'bg-blue-100 text-blue-800';
+    case 'draft':
+    case 'drafting': return 'bg-yellow-100 text-yellow-800';
+    case 'active': return 'bg-green-100 text-green-800';
+    case 'completed': return 'bg-gray-100 text-gray-800';
+    case 'cancelled': return 'bg-red-100 text-red-800';
     default: return 'bg-gray-100 text-gray-800';
   }
 }
 
+function formatDate(iso?: string | null): string {
+  if (!iso) return 'Unavailable';
+  return new Date(iso).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function contestTypeLabel(contestType: string): string {
+  return contestType === 'SINGLE_EVENT' ? 'Single Event' : 'Season Long';
+}
+
 export function Component() {
   const { contestId } = useParams<{ contestId: string }>();
+  const queryClient = useQueryClient();
   const { data: contest } = useContestDetail(contestId ?? '');
   const [recalcResult, setRecalcResult] = useState<string | null>(null);
   const dialog = useConfirmDialog();
 
   if (!contest) return null;
 
-  async function confirmAction(label: string, callback?: () => void) {
+  async function promptReason(action: string): Promise<string | null> {
+    const reason = window.prompt(`Reason for ${action}:`);
+    if (!reason) return null;
     const confirmed = await dialog.confirm(
       'Confirm Action',
-      `Are you sure you want to ${label}?`,
+      `Are you sure you want to ${action}?`,
       { confirmLabel: 'Confirm', variant: 'destructive' },
     );
-    if (confirmed) {
-      callback?.();
-    }
+    return confirmed ? reason : null;
   }
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link to="/contests" className="hover:text-foreground">Contests</Link>
         <span>/</span>
-        <span>{contest.tenant}</span>
+        <span>{contest.tenantName}</span>
         <span>/</span>
-        <span>{contest.league}</span>
+        <span>{contest.leagueName}</span>
         <span>/</span>
         <span className="text-foreground">{contest.name}</span>
       </nav>
 
-      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -65,15 +96,14 @@ export function Component() {
             <h1 className="text-2xl font-bold">{contest.name}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className="bg-purple-100 text-purple-800">{contest.sportEmoji} {contest.sport}</Badge>
-            <Badge variant="outline">{contest.type}</Badge>
+            <Badge className="bg-purple-100 text-purple-800">{contest.sport}</Badge>
+            <Badge variant="outline">{contestTypeLabel(contest.contestType)}</Badge>
             <Badge variant="outline">{contest.selectionType}</Badge>
             <Badge className={cn(statusColor(contest.status))}>{contest.status}</Badge>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="standings">
         <TabsList>
           <TabsTrigger value="standings">Standings</TabsTrigger>
@@ -83,7 +113,6 @@ export function Component() {
           <TabsTrigger value="actions">Admin Actions</TabsTrigger>
         </TabsList>
 
-        {/* Standings */}
         <TabsContent value="standings">
           <Card>
             <CardHeader>
@@ -102,7 +131,7 @@ export function Component() {
                 </thead>
                 <tbody>
                   {contest.standings.map((entry) => (
-                    <tr key={entry.rank} className="border-b">
+                    <tr key={entry.entryId} className="border-b">
                       <td className="px-4 py-3 font-medium">#{entry.rank}</td>
                       <td className="px-4 py-3">{entry.entryName}</td>
                       <td className="px-4 py-3 text-muted-foreground">{entry.ownerEmail}</td>
@@ -115,7 +144,6 @@ export function Component() {
           </Card>
         </TabsContent>
 
-        {/* Scoring Data */}
         <TabsContent value="scoring">
           <div className="space-y-4">
             <Card>
@@ -124,26 +152,49 @@ export function Component() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
-                  {contest.lastStatEvent.includes('minute') && parseInt(contest.lastStatEvent) <= 5 ? (
-                    <>
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-green-700 font-medium">
-                        Last stat event: {contest.lastStatEvent}
-                      </span>
-                    </>
+                  {contest.scoringFreshness.lastStatEvent ? (
+                    contest.scoringFreshness.isStale ? (
+                      <>
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                        <span className="text-red-700 font-medium">
+                          STALE by {contest.scoringFreshness.staleMinutes} minutes
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-green-700 font-medium">
+                          Last stat event: {formatDate(contest.scoringFreshness.lastStatEvent)}
+                        </span>
+                      </>
+                    )
                   ) : (
                     <>
                       <AlertTriangle className="h-5 w-5 text-red-600" />
                       <span className="text-red-700 font-medium">
-                        STALE: {contest.lastStatEvent}
+                        No stat events have been recorded yet.
                       </span>
                     </>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {contest.statEventsProcessed.toLocaleString()} stat events processed, {contest.corrections} corrections applied
+                  {contest.statEventCount.toLocaleString()} stat events processed, {contest.correctionsApplied} corrections applied
                 </p>
-                <Button variant="outline" onClick={() => confirmAction('re-ingest scoring data')}>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    const eventId = window.prompt('Event ID to re-ingest:');
+                    if (!eventId) return;
+                  const confirmed = await dialog.confirm(
+                      'Re-ingest Scoring Data',
+                      `Re-ingest scoring data for event ${eventId}?`,
+                    );
+                    if (confirmed && contestId) {
+                      await adminReIngestScoring({ client, path: { contestId }, body: { eventId } as any });
+                      await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
+                    }
+                  }}
+                >
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Re-ingest Scoring Data
                 </Button>
@@ -152,7 +203,6 @@ export function Component() {
           </div>
         </TabsContent>
 
-        {/* Draft */}
         <TabsContent value="draft">
           <div className="space-y-4">
             <Card>
@@ -160,24 +210,28 @@ export function Component() {
                 <CardTitle className="text-base">Draft Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Status</p>
-                    <p className="font-medium">{contest.draftStatus.status}</p>
+                {contest.draftStatus ? (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Status</p>
+                      <p className="font-medium">{contest.draftStatus.status}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Current Pick</p>
+                      <p className="font-medium">{contest.draftStatus.currentPick}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total Picks</p>
+                      <p className="font-medium">{contest.draftStatus.totalPicks}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Started</p>
+                      <p className="font-medium">{formatDate(contest.draftStatus.startedAt ?? null)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Current Pick</p>
-                    <p className="font-medium">{contest.draftStatus.currentPick}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total Picks</p>
-                    <p className="font-medium">{contest.draftStatus.totalPicks}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Started</p>
-                    <p className="font-medium">{new Date(contest.draftStatus.started).toLocaleString()}</p>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">This contest does not have a draft session yet.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -199,7 +253,7 @@ export function Component() {
                   </thead>
                   <tbody>
                     {contest.picks.map((pick) => (
-                      <tr key={pick.pick} className="border-b">
+                      <tr key={`${pick.round}-${pick.pick}`} className="border-b">
                         <td className="px-4 py-3">{pick.round}</td>
                         <td className="px-4 py-3 font-medium">{pick.pick}</td>
                         <td className="px-4 py-3">{pick.participant}</td>
@@ -211,10 +265,17 @@ export function Component() {
                         </td>
                         <td className="px-4 py-3 font-mono text-muted-foreground">
                           <Clock className="mr-1 inline h-3 w-3" />
-                          {pick.time}
+                          {formatDate(pick.time)}
                         </td>
                       </tr>
                     ))}
+                    {contest.picks.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                          No draft picks have been recorded yet.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </CardContent>
@@ -222,7 +283,6 @@ export function Component() {
           </div>
         </TabsContent>
 
-        {/* Overrides */}
         <TabsContent value="overrides">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -230,7 +290,24 @@ export function Component() {
                 <CardTitle className="text-base">Score Overrides</CardTitle>
                 <CardDescription>{contest.overrides.length} overrides applied</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => confirmAction('override a score')}>
+              <Button
+                variant="outline"
+                size="sm"
+                  onClick={async () => {
+                    const entryId = window.prompt('Entry ID to override:');
+                    if (!entryId) return;
+                    const score = window.prompt('New score:');
+                    if (!score) return;
+                    const reason = await promptReason('override a score');
+                    if (!reason || !contestId) return;
+                    await adminOverrideScore({
+                      client,
+                      path: { contestId },
+                      body: { entryId, newScore: Number(score), reason } as any,
+                    });
+                    await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
+                  }}
+                >
                 Override Score
               </Button>
             </CardHeader>
@@ -247,23 +324,29 @@ export function Component() {
                   </tr>
                 </thead>
                 <tbody>
-                  {contest.overrides.map((o, i) => (
-                    <tr key={i} className="border-b">
-                      <td className="px-4 py-3 text-muted-foreground">{o.admin}</td>
-                      <td className="px-4 py-3 font-medium">{o.entry}</td>
+                  {contest.overrides.map((o) => (
+                    <tr key={o.id} className="border-b">
+                      <td className="px-4 py-3 text-muted-foreground">{o.adminEmail}</td>
+                      <td className="px-4 py-3 font-medium">{o.entryId}</td>
                       <td className="px-4 py-3 text-right font-mono">{o.oldScore}</td>
                       <td className="px-4 py-3 text-right font-mono font-medium">{o.newScore}</td>
                       <td className="px-4 py-3">{o.reason}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{o.date}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatDate(o.createdAt)}</td>
                     </tr>
                   ))}
+                  {contest.overrides.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                        No score overrides have been applied.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Admin Actions */}
         <TabsContent value="actions">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
@@ -277,7 +360,12 @@ export function Component() {
               <CardContent>
                 <Button
                   variant="destructive"
-                  onClick={() => confirmAction('force close this contest')}
+                onClick={async () => {
+                    const reason = await promptReason('force close this contest');
+                    if (!reason || !contestId) return;
+                    await adminForceCloseContest({ client, path: { contestId }, body: { reason } });
+                    await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
+                  }}
                 >
                   Force Close
                 </Button>
@@ -295,7 +383,12 @@ export function Component() {
               <CardContent>
                 <Button
                   variant="outline"
-                  onClick={() => confirmAction('reopen this contest')}
+                onClick={async () => {
+                    const reason = await promptReason('reopen this contest');
+                    if (!reason || !contestId) return;
+                    await adminReopenContest({ client, path: { contestId }, body: { reason } });
+                    await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
+                  }}
                 >
                   Reopen
                 </Button>
@@ -318,9 +411,14 @@ export function Component() {
                       'Recalculate Standings',
                       'Are you sure you want to recalculate standings?',
                     );
-                    if (confirmed) {
-                      setRecalcResult('3 rank changes');
-                    }
+                    if (!confirmed || !contestId) return;
+                    const result = await adminRecalculateStandings({ client, path: { contestId } });
+                    setRecalcResult(
+                      typeof result.data === 'object' && result.data
+                        ? `${(result.data as any).entriesAffected ?? 0} entries affected`
+                        : 'Standings recalculated',
+                    );
+                    await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
                   }}
                 >
                   Recalculate
@@ -345,7 +443,12 @@ export function Component() {
               <CardContent>
                 <Button
                   variant="outline"
-                  onClick={() => confirmAction('recalculate payouts')}
+                onClick={async () => {
+                    const reason = await promptReason('recalculate payouts');
+                    if (!reason || !contestId) return;
+                    await adminRecalculatePayouts({ client, path: { contestId } });
+                    await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
+                  }}
                 >
                   Recalculate Payouts
                 </Button>
@@ -363,9 +466,19 @@ export function Component() {
               <CardContent>
                 <Button
                   variant="outline"
-                  onClick={() => confirmAction('re-ingest event data')}
+                  onClick={async () => {
+                    const eventId = window.prompt('Event ID to re-ingest:');
+                    if (!eventId || !contestId) return;
+                    const result = await adminReIngestScoring({ client, path: { contestId }, body: { eventId } as any });
+                    setRecalcResult(
+                      typeof result.data === 'object' && result.data
+                        ? `${(result.data as any).entriesAffected ?? 0} entries affected`
+                        : 'Standings refreshed',
+                    );
+                    await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
+                  }}
                 >
-                  Re-ingest
+                  Refresh Standings
                 </Button>
               </CardContent>
             </Card>

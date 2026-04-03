@@ -10,6 +10,10 @@ import {
   PoolLockedError,
   PoolAlreadyLockedError,
   PoolEmptyError,
+  PoolEventMatchupsUnavailableError,
+  PoolEventNotFoundError,
+  PoolEventParticipantsUnavailableError,
+  PoolEventRequiredError,
   ParticipantNotInPoolError,
 } from './pool-service';
 import type { PoolType, Sport } from '@poolmaster/shared/domain';
@@ -195,6 +199,22 @@ function handlePoolError(err: unknown, reply: FastifyReply): void {
   }
   if (err instanceof PoolEmptyError) {
     reply.status(422).send({ error: 'POOL_EMPTY', message: err.message });
+    return;
+  }
+  if (err instanceof PoolEventRequiredError) {
+    reply.status(422).send({ error: 'POOL_EVENT_REQUIRED', message: err.message });
+    return;
+  }
+  if (err instanceof PoolEventNotFoundError) {
+    reply.status(404).send({ error: 'POOL_EVENT_NOT_FOUND', message: err.message });
+    return;
+  }
+  if (err instanceof PoolEventParticipantsUnavailableError) {
+    reply.status(422).send({ error: 'POOL_EVENT_PARTICIPANTS_UNAVAILABLE', message: err.message });
+    return;
+  }
+  if (err instanceof PoolEventMatchupsUnavailableError) {
+    reply.status(422).send({ error: 'POOL_EVENT_MATCHUPS_UNAVAILABLE', message: err.message });
     return;
   }
   if (err instanceof ParticipantNotInPoolError) {

@@ -17,6 +17,12 @@
 | `/contests/:contestId/results` | Contest Results | Authenticated |
 | `/contests/:contestId/head-to-head` | Head-to-Head Comparison | Authenticated |
 
+## Current Implementation Notes
+
+- The contest detail route now uses real contest-entry APIs for enter/leave state instead of a disconnected placeholder join surface.
+- Pre-draft contests (`DRAFT`, `OPEN`) render live entry rosters from `/api/v1/contests/:contestId/entries` and create/delete the current user's entry through `/entries/me`.
+- Remaining contest work should keep extending those truthful contracts instead of reintroducing frontend-only contest models.
+
 ---
 
 ## 1. Contest Creation Wizard (`/contests/create`)
@@ -942,14 +948,14 @@ function useContestPolling(contestId: string, status: ContestStatus) {
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| W-C-001 | 1 | Contest creation wizard shell (multi-step form, routing, Zustand state) | Done | 7-step wizard with React Hook Form + zod in `pages/contests/create.tsx`; steps 1-3 fully interactive, steps 4-7 simplified with mock data |
-| W-C-002 | 1 | Event picker component (sport selector + event list from ingested data) | Done | Sport grid (9 sports) + event list with mock data per sport + custom event option; part of create wizard step 1 |
-| W-C-003 | 1 | Contest type selector (duration + selection type with compatibility filter) | Done | Duration radio + selection type card grid with bracket filtering for NCAA/NBA; part of create wizard step 2 |
-| W-C-004 | 2 | Scoring rule editor (template selector + custom rule editing + preview) | Done | Template selector with preview table + customize toggle (read-only placeholder); part of create wizard step 3 |
-| W-C-005 | 2 | Draft config panel (mode, order, timing, commissioner controls) | Done | Static mock UI with mode toggle, seconds-per-pick slider, draft date picker; part of create wizard step 4 |
-| W-C-006 | 2 | Pool builder (full field, custom, tier assignment, budget pricing) | Done | Simplified info card showing full field selected (90 participants); part of create wizard step 5 |
-| W-C-007 | 2 | Entry settings form (max entries, deadline, roster size, survivor/confidence config) | Done | Functional form fields for max entries, entry deadline, roster size; part of create wizard step 6 |
-| W-C-008 | 2 | Review & create step (summary + POST /contests + POST /drafts) | Done | Summary card of all steps + Create Contest button with toast + navigate; part of create wizard step 7 |
+| W-C-001 | 1 | Contest creation wizard shell (multi-step form, routing, Zustand state) | Done | Reworked into a 4-step live wizard in `pages/contests/create.tsx` that only exposes fields backed by the current API: league, sport, contest name, selection template, scoring template, and review |
+| W-C-002 | 1 | Event picker component (sport selector + event list from ingested data) | Deferred | Removed the fake event catalog and custom-event placeholder from production until a real ingested event source exists for the web app |
+| W-C-003 | 1 | Contest type selector (duration + selection type with compatibility filter) | Done | The web flow is now explicitly scoped to live single-event creation, and selection choices come from the real `/api/v1/drafts/templates` endpoint instead of a hardcoded compatibility matrix |
+| W-C-004 | 2 | Scoring rule editor (template selector + custom rule editing + preview) | Partial | Replaced the fake local scoring-template list with the live `/api/v1/scoring/templates` endpoint; custom editing is still not exposed until a real editable scoring-config flow exists |
+| W-C-005 | 2 | Draft config panel (mode, order, timing, commissioner controls) | Deferred | Removed the static mock draft-config step from production until the create flow can persist those fields end to end |
+| W-C-006 | 2 | Pool builder (full field, custom, tier assignment, budget pricing) | Deferred | Removed the fake participant-pool card and count from production until a real contest-pool setup flow is wired |
+| W-C-007 | 2 | Entry settings form (max entries, deadline, roster size, survivor/confidence config) | Deferred | Removed the unsupported entry-settings step from production rather than implying those values were saved |
+| W-C-008 | 2 | Review & create step (summary + POST /contests + POST /drafts) | Done | Review now summarizes only live fields and `POST /contests` creates a contest from the selected live template/config instead of fake wizard state |
 | W-C-009 | 3 | Contest detail page — pre-draft/open state (info card, countdown, entry list, join CTA) | Done | PreDraftView with countdown timer, entry list, spots remaining, join CTA, contest details sidebar |
 | W-C-010 | 3 | Contest detail page — in-progress state (live standings, my entry, timeline, stale indicator) | Done | Contest header, My Entry card with picks, standings snapshot, contest info sidebar; uses `useContest` hook with mock data |
 | W-C-011 | 3 | Contest detail page — completed state (results summary, winner highlight, link to results) | Done | Winner spotlight card, final standings table, contest summary; implemented in `pages/contests/results.tsx` |

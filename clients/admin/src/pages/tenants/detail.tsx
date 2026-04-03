@@ -75,7 +75,15 @@ export function Component() {
           await adminChangeTenantPlan({ client, path: { tenantId: id }, body: { planTier: 'Pro', reason: 'Admin action' } });
           break;
         case 'Apply Credit':
-          await adminApplyCredit({ client, path: { tenantId: id }, body: { amount: 0, reason: 'Admin action' } });
+          {
+            const amountInput = window.prompt('Credit amount to apply (e.g. 25.00):');
+            if (!amountInput) return;
+            const amount = Number(amountInput);
+            if (!Number.isFinite(amount) || amount <= 0) return;
+            const reason = window.prompt('Reason for credit:');
+            if (!reason) return;
+            await adminApplyCredit({ client, path: { tenantId: id }, body: { amount, reason } });
+          }
           break;
         case 'Extend Trial':
           await adminExtendTrial({ client, path: { tenantId: id }, body: { days: 30, reason: 'Admin action' } });

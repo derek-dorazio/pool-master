@@ -71,7 +71,7 @@ export const leagueHandlers = [
   http.get('/api/v1/leagues', () => {
     return HttpResponse.json({
       leagues: [
-        { id: 'league-1', name: 'Test League', visibility: 'PRIVATE', memberCount: 5, activeContestCount: 1, role: 'commissioner', createdAt: new Date().toISOString() },
+        { id: 'league-1', name: 'Test League', visibility: 'PRIVATE', memberCount: 5, activeContestCount: 1, role: 'OWNER', createdAt: new Date().toISOString() },
       ],
     });
   }),
@@ -84,14 +84,37 @@ export const leagueHandlers = [
 
   http.get('/api/v1/leagues/:id', () => {
     return HttpResponse.json({
-      league: { id: 'league-1', name: 'Test League', visibility: 'PRIVATE', memberCount: 5, activeContestCount: 1, createdAt: new Date().toISOString() },
+      league: {
+        id: 'league-1',
+        name: 'Test League',
+        description: 'A competitive pool league.',
+        visibility: 'PRIVATE',
+        memberCount: 5,
+        activeContestCount: 1,
+        role: 'OWNER',
+        createdAt: new Date().toISOString(),
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+          allowMidSeasonJoin: false,
+          requireApproval: false,
+          activityFeedEnabled: true,
+          weeklyRecapEnabled: false,
+          weeklyRecapDay: 'MONDAY',
+          timezone: 'America/New_York',
+          currency: 'USD',
+        },
+        invitePolicy: 'COMMISSIONER_ONLY',
+      },
     });
   }),
 
   http.get('/api/v1/leagues/:id/members', () => {
-    return HttpResponse.json([
-      { id: 'm-1', userId: 'u-1', displayName: 'Test User', role: 'OWNER', joinedAt: new Date().toISOString() },
-    ]);
+    return HttpResponse.json({
+      members: [
+        { id: 'm-1', userId: 'u-1', displayName: 'Test User', role: 'OWNER', joinedAt: new Date().toISOString() },
+        { id: 'm-2', userId: 'u-2', displayName: 'Jordan Lee', role: 'MANAGER', joinedAt: new Date().toISOString() },
+      ],
+    });
   }),
 
   http.get('/api/v1/leagues/:id/contests', () => {
@@ -99,15 +122,62 @@ export const leagueHandlers = [
   }),
 
   http.post('/api/v1/leagues/:id/invite-link', () => {
-    return HttpResponse.json({ success: true });
+    return HttpResponse.json({
+      invitation: {
+        inviteCode: 'test-code',
+      },
+    }, { status: 201 });
   }),
 
-  http.get('/api/v1/leagues/:id/settings', () => {
+  http.put('/api/v1/leagues/:id/settings', () => {
     return HttpResponse.json({
-      name: 'Test League',
-      description: 'A test league description.',
-      invitePolicy: 'Invite Only',
-      inviteLink: 'https://poolmaster.app/join/test-code',
+      league: {
+        id: 'league-1',
+        name: 'Test League',
+        description: 'A competitive pool league.',
+        visibility: 'PRIVATE',
+        memberCount: 5,
+        activeContestCount: 1,
+        role: 'OWNER',
+        createdAt: new Date().toISOString(),
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+          allowMidSeasonJoin: false,
+          requireApproval: false,
+          activityFeedEnabled: true,
+          weeklyRecapEnabled: false,
+          weeklyRecapDay: 'MONDAY',
+          timezone: 'America/New_York',
+          currency: 'USD',
+        },
+        invitePolicy: 'COMMISSIONER_ONLY',
+      },
+    });
+  }),
+
+  http.post('/api/v1/leagues/:id/transfer-ownership', () => {
+    const now = new Date().toISOString();
+    return HttpResponse.json({
+      previousOwner: {
+        id: 'm-1',
+        leagueId: 'league-1',
+        userId: 'u-1',
+        role: 'COMMISSIONER',
+        permissions: [],
+        joinedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      },
+      newOwner: {
+        id: 'm-2',
+        leagueId: 'league-1',
+        userId: 'u-2',
+        role: 'OWNER',
+        permissions: [],
+        joinedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      },
     });
   }),
 
@@ -152,11 +222,155 @@ export const contestHandlers = [
   http.get('/api/v1/contests/:id', () => {
     return HttpResponse.json({
       contest: { id: 'contest-1', name: 'Test Contest', status: 'DRAFT', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY', leagueId: 'league-1' },
+      selectionConfig: null,
     });
   }),
 
+  http.get('/api/v1/contests/:id/entries', () => {
+    const now = new Date().toISOString();
+    return HttpResponse.json({
+      contestId: 'contest-1',
+      total: 2,
+      isJoined: true,
+      myEntryId: 'entry-1',
+      entries: [
+        {
+          id: 'entry-1',
+          contestId: 'contest-1',
+          leagueMembershipId: 'm-1',
+          name: 'Test User\'s Entry',
+          totalScore: 0,
+          rank: null,
+          isEliminated: false,
+          ownerId: 'u-1',
+          ownerDisplayName: 'Test User',
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: 'entry-2',
+          contestId: 'contest-1',
+          leagueMembershipId: 'm-2',
+          name: 'Jordan Lee\'s Entry',
+          totalScore: 0,
+          rank: null,
+          isEliminated: false,
+          ownerId: 'u-2',
+          ownerDisplayName: 'Jordan Lee',
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+    });
+  }),
+
+  http.get('/api/v1/contests/:id/entries/me', () => {
+    const now = new Date().toISOString();
+    return HttpResponse.json({
+      contestId: 'contest-1',
+      entry: {
+        id: 'entry-1',
+        contestId: 'contest-1',
+        leagueMembershipId: 'm-1',
+        name: 'Test User\'s Entry',
+        totalScore: 0,
+        rank: null,
+        isEliminated: false,
+        ownerId: 'u-1',
+        ownerDisplayName: 'Test User',
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+  }),
+
+  http.post('/api/v1/contests/:id/entries/me', () => {
+    const now = new Date().toISOString();
+    return HttpResponse.json({
+      contestId: 'contest-1',
+      entry: {
+        id: 'entry-1',
+        contestId: 'contest-1',
+        leagueMembershipId: 'm-1',
+        name: 'Test User\'s Entry',
+        totalScore: 0,
+        rank: null,
+        isEliminated: false,
+        ownerId: 'u-1',
+        ownerDisplayName: 'Test User',
+        createdAt: now,
+        updatedAt: now,
+      },
+    }, { status: 201 });
+  }),
+
+  http.delete('/api/v1/contests/:id/entries/me', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get('/api/v1/contests/:id/standings', () => {
-    return HttpResponse.json({ standings: [], total: 0, contestId: 'contest-1' });
+    const now = new Date().toISOString();
+    return HttpResponse.json({
+      standings: [
+        {
+          rank: 1,
+          entryId: 'entry-1',
+          entryName: 'Eagle Eye',
+          ownerDisplayName: 'Sarah K.',
+          ownerId: 'user-1',
+          totalScore: 298,
+          previousRank: 2,
+          movement: 'up',
+          isEliminated: false,
+          lastUpdatedAt: now,
+        },
+        {
+          rank: 2,
+          entryId: 'entry-2',
+          entryName: 'Birdie Brigade',
+          ownerDisplayName: 'Jake M.',
+          ownerId: 'user-2',
+          totalScore: 285,
+          previousRank: 1,
+          movement: 'down',
+          isEliminated: false,
+          lastUpdatedAt: now,
+        },
+      ],
+      total: 2,
+      page: 1,
+      pageSize: 25,
+      contestId: 'contest-1',
+    });
+  }),
+
+  http.get('/api/v1/scoring/contests/:contestId/entry/:entryId', ({ params }) => {
+    return HttpResponse.json({
+      entryId: params.entryId,
+      contestId: params.contestId,
+      totalScore: 298,
+      timeline: [
+        {
+          contestId: params.contestId,
+          entryId: params.entryId,
+          eventTimestamp: new Date().toISOString(),
+          pointsEarned: 12,
+          runningTotal: 298,
+          participantBreakdowns: [
+            {
+              participantId: 'participant-1',
+              statPoints: 10,
+              positionPoints: 2,
+              bonusPoints: 0,
+              penaltyPoints: 0,
+              multipliedTotal: 12,
+              dnfAdjustment: 0,
+              finalScore: 12,
+            },
+          ],
+        },
+      ],
+    });
   }),
 
   http.get('/api/v1/contests/:id/head-to-head', () => {
@@ -249,6 +463,21 @@ export const searchHandlers = [
       { id: 'c1', leagueName: 'Masters Pool 2026', contestName: 'The Masters — Pick 6', sport: 'GOLF', eventName: 'The Masters 2026', draftType: 'SNAKE', memberCount: 10, maxMembers: 20, entryFee: null, prizePool: null, draftStart: null, lockTime: null, status: 'OPEN' },
     ];
     return HttpResponse.json({ contests, total: contests.length });
+  }),
+
+  http.post('/api/v1/search/discover/leagues/:leagueId/join', ({ params }) => {
+    return HttpResponse.json({
+      membership: {
+        id: 'membership-1',
+        leagueId: String(params.leagueId),
+        userId: 'u-1',
+        role: 'MANAGER',
+        permissions: [],
+        joinedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    }, { status: 201 });
   }),
 ];
 

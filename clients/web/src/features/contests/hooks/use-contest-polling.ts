@@ -1,19 +1,22 @@
 /**
- * useContestPolling — visibility-aware polling hook for live contest data.
+ * useContestPolling — visibility-aware polling hook for live contest standings.
  *
  * Polls at a configurable interval while the page is visible.
  * Pauses when the tab is hidden. Refetches immediately when the
- * tab becomes visible again (catches up on missed updates).
+ * tab becomes visible again.
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { client, getContest, getStandings } from '@/lib/api';
+import {
+  ContestResponseSchema,
+  StandingsResponseSchema,
+} from '@poolmaster/shared/dto';
 
 interface ContestPollingOptions {
   contestId: string;
-  /** Polling interval in ms. Default: 10s. */
   interval?: number;
-  /** Whether polling is enabled. Default: true. */
   enabled?: boolean;
 }
 
@@ -23,23 +26,25 @@ interface PolledContestData {
     entryName: string;
     rank: number;
     totalScore: number;
-    previousRank: number;
+    previousRank: number | null;
   }>;
-  lastUpdatedAt: string;
+  lastUpdatedAt: string | null;
   contestStatus: string;
 }
 
-export function useContestPolling({ contestId, interval = 10_000, enabled = true }: ContestPollingOptions) {
+export function useContestPolling({
+  contestId,
+  interval = 10_000,
+  enabled = true,
+}: ContestPollingOptions) {
   const [isVisible, setIsVisible] = useState(!document.hidden);
   const queryClient = useQueryClient();
 
-  // Track page visibility
   useEffect(() => {
     function handleVisibility() {
       const visible = !document.hidden;
       setIsVisible(visible);
 
-      // Immediate refetch when tab becomes visible
       if (visible) {
         queryClient.invalidateQueries({ queryKey: ['contests', contestId, 'poll'] });
       }
@@ -52,22 +57,40 @@ export function useContestPolling({ contestId, interval = 10_000, enabled = true
   return useQuery({
     queryKey: ['contests', contestId, 'poll'],
     queryFn: async (): Promise<PolledContestData> => {
-      // TODO: Replace with real API call with ETag support
-      // const response = await fetch(`/api/v1/contests/${contestId}/standings`, {
-      //   headers: lastEtag ? { 'If-None-Match': lastEtag } : {},
-      // });
-      // if (response.status === 304) return previous data (no change);
-      await new Promise((r) => setTimeout(r, 100));
+      const [{ data: standingsData, error: standingsError }, { data: contestData, error: contestError }] =
+        await Promise.all([
+          getStandings({ client, path: { contestId } }),
+          getContest({ client, path: { contestId } }),
+        ]);
+
+      if (standingsError) throw standingsError;
+      if (contestError) throw contestError;
+      if (!standingsData || !contestData) {
+        throw new Error('Contest polling response was empty.');
+      }
+
+      const standings = StandingsResponseSchema.parse(standingsData);
+      const contest = ContestResponseSchema.parse(contestData);
+      const lastUpdatedAt = standings.standings.reduce<string | null>((latest, entry) => {
+        if (!latest) return entry.lastUpdatedAt;
+        return new Date(entry.lastUpdatedAt).getTime() > new Date(latest).getTime()
+          ? entry.lastUpdatedAt
+          : latest;
+      }, null);
+
       return {
-        standings: [
-          { entryId: 'e1', entryName: 'Eagle Eye', rank: 1, totalScore: 298, previousRank: 2 },
-          { entryId: 'e2', entryName: 'Birdie Brigade', rank: 2, totalScore: 285, previousRank: 1 },
-          { entryId: 'e3', entryName: 'My Entry', rank: 3, totalScore: 274, previousRank: 3 },
-        ],
-        lastUpdatedAt: new Date().toISOString(),
-        contestStatus: 'ACTIVE',
+        standings: standings.standings.map((entry) => ({
+          entryId: entry.entryId,
+          entryName: entry.entryName,
+          rank: entry.rank,
+          totalScore: entry.totalScore,
+          previousRank: entry.previousRank,
+        })),
+        lastUpdatedAt,
+        contestStatus: contest.contest.status,
       };
     },
+    enabled,
     refetchInterval: isVisible && enabled ? interval : false,
     refetchOnWindowFocus: true,
     refetchIntervalInBackground: false,

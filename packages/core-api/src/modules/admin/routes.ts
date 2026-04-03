@@ -30,6 +30,8 @@ import { createMigrationHandlers } from './migration-handler';
 import { SupportService } from './support-service';
 import { createSupportHandlers } from './support-handler';
 import { createQuickActionsHandlers } from './quick-actions-handler';
+import { EntitlementService } from '../billing/entitlement-service';
+import { UsageService } from '../billing/usage-service';
 import { ExportService } from './export-service';
 import { createExportHandlers } from './export-handler';
 import { PollConfigService } from './poll-config-service';
@@ -52,6 +54,26 @@ const {
   TenantDetailResponseSchema,
   UserListResponseSchema,
   UserDetailResponseSchema,
+  ProviderListResponseSchema,
+  ProviderDetailResponseSchema,
+  ProviderIngestionDashboardResponseSchema,
+  ProviderUnmappedParticipantListResponseSchema,
+  ProviderHealthCheckDtoSchema,
+  AdminContestListResponseSchema,
+  ContestAdminDetailResponseSchema,
+  ContestRecalculationResultDtoSchema,
+  SupportInvestigationResponseSchema,
+  SupportErrorListResponseSchema,
+  SupportNotificationFailureListResponseSchema,
+  SupportActivityListResponseSchema,
+  QuickResetPasswordResponseSchema,
+  QuickProviderCheckResponseSchema,
+  QuickEntitlementsResponseSchema,
+  QuickNotificationsResponseSchema,
+  QuickReIngestScoresResponseSchema,
+  MigrationListResponseSchema,
+  MigrationRunResponseSchema,
+  StartMigrationRunRequestSchema,
   ServiceHealthListResponseSchema,
   InfrastructureMetricsResponseSchema,
   BusinessMetricsResponseSchema,
@@ -98,12 +120,14 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const userService = new UserService(prisma);
   const contestService = new ContestService(prisma);
   const healthService = new HealthService(prisma);
-  const providerService = new ProviderService();
+  const providerService = new ProviderService(prisma);
   const flagService = new FlagService(prisma);
   const impersonationService = new ImpersonationService(prisma);
   const announcementService = new AnnouncementService(prisma);
-  const migrationService = new MigrationService();
-  const supportService = new SupportService();
+  const migrationService = new MigrationService(prisma);
+  const usageService = new UsageService(prisma);
+  const entitlementService = new EntitlementService(prisma, usageService);
+  const supportService = new SupportService(prisma);
   const exportService = new ExportService(prisma);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
@@ -123,7 +147,13 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const announcement = createAnnouncementHandlers(announcementService);
   const migration = createMigrationHandlers(migrationService);
   const support = createSupportHandlers(supportService);
-  const quickActions = createQuickActionsHandlers();
+  const quickActions = createQuickActionsHandlers({
+    prisma,
+    userService,
+    providerService,
+    contestService,
+    entitlementService,
+  });
   const tenantExport = createExportHandlers(exportService);
 
   // --- Tenant Management Routes ---
@@ -381,7 +411,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List contests with filters',
       operationId: 'adminListContests',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminContestListResponseSchema) },
       querystring: {
         type: 'object',
         properties: {
@@ -404,7 +434,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get contest detail',
       operationId: 'adminGetContestDetail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ContestAdminDetailResponseSchema) },
     },
     handler: contest.getContestDetail,
   });
@@ -467,7 +497,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Recalculate contest standings',
       operationId: 'adminRecalculateStandings',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ContestRecalculationResultDtoSchema) },
     },
     handler: contest.recalculateStandings,
   });
@@ -487,7 +517,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Re-ingest scoring data for an event',
       operationId: 'adminReIngestScoring',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ContestRecalculationResultDtoSchema) },
       body: {
         type: 'object',
         required: ['eventId'],
@@ -507,7 +537,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List sports data providers and health status',
       operationId: 'adminListProviders',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ProviderListResponseSchema) },
     },
     handler: provider.listProviders,
   });
@@ -517,7 +547,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get ingestion dashboard metrics',
       operationId: 'adminGetIngestionDashboard',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ProviderIngestionDashboardResponseSchema) },
     },
     handler: provider.getIngestionDashboard,
   });
@@ -527,7 +557,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List unmapped participants from providers',
       operationId: 'adminGetUnmappedParticipants',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ProviderUnmappedParticipantListResponseSchema) },
     },
     handler: provider.getUnmappedParticipants,
   });
@@ -540,8 +570,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       response: { 200: zodToJsonSchema(SuccessSchema) },
       body: {
         type: 'object',
-        required: ['externalId', 'internalId'],
+        required: ['providerId', 'externalId', 'internalId'],
         properties: {
+          providerId: { type: 'string', minLength: 1 },
           externalId: { type: 'string', minLength: 1 },
           internalId: { type: 'string', minLength: 1 },
         },
@@ -555,7 +586,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get provider detail and configuration',
       operationId: 'adminGetProviderDetail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ProviderDetailResponseSchema) },
     },
     handler: provider.getProviderDetail,
   });
@@ -590,7 +621,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Trigger manual health check for a provider',
       operationId: 'adminTriggerHealthCheck',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ProviderHealthCheckDtoSchema) },
     },
     handler: provider.triggerHealthCheck,
   });
@@ -1009,7 +1040,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List available data migrations',
       operationId: 'adminListMigrations',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(MigrationListResponseSchema) },
     },
     handler: migration.listMigrations,
   });
@@ -1019,17 +1050,8 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Start a data migration run',
       operationId: 'adminStartMigrationRun',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['migrationId'],
-        properties: {
-          migrationId: { type: 'string', minLength: 1 },
-          dryRun: { type: 'boolean' },
-          batchSize: { type: 'integer', minimum: 1 },
-          tenantIds: { type: 'array', items: { type: 'string' } },
-        },
-      },
+      response: { 201: zodToJsonSchema(MigrationRunResponseSchema) },
+      body: zodToJsonSchema(StartMigrationRunRequestSchema),
     },
     handler: migration.startRun,
   });
@@ -1039,7 +1061,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get migration run detail',
       operationId: 'adminGetMigrationRunDetail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(MigrationRunResponseSchema) },
     },
     handler: migration.getRunDetail,
   });
@@ -1049,7 +1071,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Cancel a migration run',
       operationId: 'adminCancelMigrationRun',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(MigrationRunResponseSchema) },
     },
     handler: migration.cancelRun,
   });
@@ -1062,7 +1084,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get support investigation overview for a tenant',
       operationId: 'adminGetInvestigation',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(SupportInvestigationResponseSchema) },
     },
     handler: support.getInvestigation,
   });
@@ -1072,7 +1094,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get recent errors for a tenant',
       operationId: 'adminGetTenantErrors',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(SupportErrorListResponseSchema) },
     },
     handler: support.getErrors,
   });
@@ -1082,7 +1104,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get recent notifications for a tenant',
       operationId: 'adminGetTenantNotifications',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(SupportNotificationFailureListResponseSchema) },
     },
     handler: support.getNotifications,
   });
@@ -1090,9 +1112,9 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   fastify.get('/support/tenant/:tenantId/requests', {
     schema: {
       tags: ['Admin'],
-      summary: 'Get recent API requests for a tenant',
+      summary: 'Get recent support activity for a tenant',
       operationId: 'adminGetTenantRequests',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(SupportActivityListResponseSchema) },
     },
     handler: support.getRequests,
   });
@@ -1105,7 +1127,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Quick action: reset user password',
       operationId: 'adminQuickResetPassword',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(QuickResetPasswordResponseSchema) },
       body: {
         type: 'object',
         required: ['userId', 'email'],
@@ -1123,7 +1145,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Quick action: check sports data provider',
       operationId: 'adminQuickCheckProvider',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(QuickProviderCheckResponseSchema) },
       body: {
         type: 'object',
         required: ['providerId', 'sport'],
@@ -1141,7 +1163,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Quick action: check tenant entitlements',
       operationId: 'adminQuickCheckEntitlements',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(QuickEntitlementsResponseSchema) },
       body: {
         type: 'object',
         required: ['tenantId'],
@@ -1158,7 +1180,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Quick action: check user notifications',
       operationId: 'adminQuickCheckNotifications',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(QuickNotificationsResponseSchema) },
       body: {
         type: 'object',
         required: ['userId'],
@@ -1175,7 +1197,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Quick action: re-ingest scoring data',
       operationId: 'adminQuickReIngestScores',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(QuickReIngestScoresResponseSchema) },
       body: {
         type: 'object',
         required: ['contestId', 'eventId'],

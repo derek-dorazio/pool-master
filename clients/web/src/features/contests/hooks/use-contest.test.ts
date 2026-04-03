@@ -8,9 +8,7 @@ describe('useContest', () => {
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const data = result.current.data! as any;
-    // MSW returns { contest: { id, name, status, contestType, selectionType, scoringEngine, leagueId } }
-    const contest = data.contest as any;
+    const contest = result.current.data!.contest;
     expect(contest).toHaveProperty('id', 'contest-1');
     expect(contest).toHaveProperty('name', 'Test Contest');
     expect(contest).toHaveProperty('status', 'DRAFT');
@@ -23,8 +21,7 @@ describe('useContest', () => {
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const data = result.current.data! as any;
-    const contest = data.contest as any;
+    const contest = result.current.data!.contest;
     expect(contest).toHaveProperty('selectionType', 'SNAKE_DRAFT');
     expect(contest).toHaveProperty('scoringEngine', 'STROKE_PLAY');
   });

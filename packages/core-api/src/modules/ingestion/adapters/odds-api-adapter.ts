@@ -94,6 +94,10 @@ export class OddsApiAdapter implements SportDataProvider {
         homeTeam: e.home_team,
         awayTeam: e.away_team,
         sportKey: e.sport_key,
+        competitors: [
+          { name: e.home_team, homeAway: 'home' },
+          { name: e.away_team, homeAway: 'away' },
+        ],
       },
     }));
   }

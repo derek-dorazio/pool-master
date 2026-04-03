@@ -399,6 +399,25 @@ export interface ContestParticipantPool extends DomainEntity {
   unavailableReason?: string;
 }
 
+/**
+ * A contest-owned matchup or bracket slot that entries can predict.
+ * Used by pick'em and bracket contests to define the actual prediction surface.
+ */
+export interface ContestMatchup extends DomainEntity {
+  contestId: string;
+  eventId?: string;
+  period: number;                             // week / round / slate number
+  matchupIndex: number;                       // stable order within the period
+  roundNumber?: number;                       // bracket round, if applicable
+  matchNumber?: number;                       // bracket match number, if applicable
+  label?: string;                             // "Week 5 Game 3", "Sweet 16 - Midwest 1"
+  homeParticipantId?: string;
+  awayParticipantId?: string;
+  startsAt?: Date;
+  lockAt?: Date;
+  metadata: Record<string, unknown>;
+}
+
 // --- Entry & Picks ---
 
 /**
@@ -430,13 +449,15 @@ export interface RosterPick extends DomainEntity {
 
 /**
  * A single pick within a survivor or pick'em contest.
- * One per entry per period (week, round, day).
+ * Pick'em contests may have multiple matchup picks per entry per period.
  */
 export interface ContestPick extends DomainEntity {
   entryId: string;
   contestId: string;
   participantId: string;
+  eventId?: string;                           // optional linked sport event for matchup-based contests
   period: number;
+  matchupIndex: number;                       // 1..N within the period; survivor/live-pick usually uses 1
   periodLabel?: string;                        // "Week 5", "Round 2", "Quarterfinals"
   pickedAt: Date;
   isCorrect?: boolean;                         // resolved after period ends

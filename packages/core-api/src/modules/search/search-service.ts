@@ -7,7 +7,13 @@
 
 import type { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
-import type { Participant, InjuryStatus } from '@poolmaster/shared/domain';
+import type {
+  CommissionerPermission,
+  LeagueMembership,
+  Participant,
+  InjuryStatus,
+} from '@poolmaster/shared/domain';
+import { InvitePolicy, LeagueRole } from '@poolmaster/shared/domain';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
 
 // --- Participant Search (PostgreSQL full-text) ---
@@ -46,6 +52,17 @@ export interface SearchFacets {
 export interface FacetBucket {
   value: string;
   count: number;
+}
+
+export class DiscoverLeagueJoinError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly statusCode: number,
+  ) {
+    super(message);
+    this.name = 'DiscoverLeagueJoinError';
+  }
 }
 
 const DEFAULT_LIMIT = 50;
@@ -328,7 +345,33 @@ export class SearchService {
       this.prisma.discoverableLeague.count({ where }),
     ]);
 
-    return { leagues, total };
+    const leagueIds = leagues.map((league) => league.id);
+    const ownerMemberships = leagueIds.length > 0
+      ? await this.prisma.leagueMembership.findMany({
+          where: {
+            leagueId: { in: leagueIds },
+            role: LeagueRole.OWNER,
+          },
+          include: {
+            user: {
+              select: { displayName: true },
+            },
+          },
+        })
+      : [];
+
+    const commissionerNameByLeagueId = new Map(
+      ownerMemberships.map((membership) => [membership.leagueId, membership.user.displayName]),
+    );
+
+    return {
+      leagues: leagues.map((league) => ({
+        ...league,
+        commissionerName: commissionerNameByLeagueId.get(league.id) ?? null,
+        visibility: 'PUBLIC',
+      })),
+      total,
+    };
   }
 
   // --- Contest Discovery Search ---
@@ -365,6 +408,93 @@ export class SearchService {
     ]);
 
     return { contests, total };
+  }
+
+  async joinDiscoverableLeague(leagueId: string, userId: string): Promise<LeagueMembership> {
+    const discoverableLeague = await this.prisma.discoverableLeague.findFirst({
+      where: { id: leagueId, isHidden: false },
+    });
+    if (!discoverableLeague) {
+      throw new DiscoverLeagueJoinError('League not found', 'NOT_FOUND', 404);
+    }
+
+    if (discoverableLeague.joinPolicy !== InvitePolicy.OPEN) {
+      throw new DiscoverLeagueJoinError(
+        'Join requests for non-open leagues are not implemented yet',
+        'JOIN_REQUEST_UNSUPPORTED',
+        501,
+      );
+    }
+
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      select: { id: true, maxMembers: true, visibility: true },
+    });
+    if (!league || league.visibility !== 'PUBLIC') {
+      throw new DiscoverLeagueJoinError('League not found', 'NOT_FOUND', 404);
+    }
+
+    const now = new Date();
+    const row = await this.prisma.$transaction(async (tx) => {
+      const existingMembership = await tx.leagueMembership.findUnique({
+        where: { leagueId_userId: { leagueId, userId } },
+      });
+      if (existingMembership) {
+        throw new DiscoverLeagueJoinError(
+          'You are already a member of this league',
+          'ALREADY_MEMBER',
+          409,
+        );
+      }
+
+      if (league.maxMembers != null) {
+        const memberCount = await tx.leagueMembership.count({
+          where: { leagueId },
+        });
+        if (memberCount >= league.maxMembers) {
+          throw new DiscoverLeagueJoinError(
+            'League has reached its member limit',
+            'LEAGUE_FULL',
+            400,
+          );
+        }
+      }
+
+      const membership = await tx.leagueMembership.create({
+        data: {
+          leagueId,
+          userId,
+          role: LeagueRole.MANAGER,
+          permissions: [],
+          joinedAt: now,
+        },
+      });
+
+      await tx.discoverableLeague.update({
+        where: { id: leagueId },
+        data: {
+          memberCount: { increment: 1 },
+          lastActivityAt: now,
+        },
+      });
+
+      return membership;
+    });
+
+    const permissions = Array.isArray(row.permissions)
+      ? (row.permissions as CommissionerPermission[])
+      : [];
+
+    return {
+      id: row.id,
+      leagueId: row.leagueId,
+      userId: row.userId,
+      role: row.role as LeagueMembership['role'],
+      permissions,
+      joinedAt: row.joinedAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
   }
 }
 

@@ -25,8 +25,9 @@ export interface DraftPickRecord {
   round: number;
   pickInRound: number;
   entryId: string;
-  participantId: string;
+  participantId: string | null;
   autoPicked: boolean;
+  isSkipped: boolean;
   pickedAt: Date;
 }
 
@@ -101,6 +102,7 @@ export class SnakeDraftEngine {
       entryId: pick.entryId,
       participantId: pick.participantId,
       autoPicked,
+      isSkipped: false,
       pickedAt: new Date(),
     };
 
@@ -119,7 +121,7 @@ export class SnakeDraftEngine {
    * Determine the auto-pick for an entry that missed their window.
    */
   resolveAutoPick(state: DraftState, input: AutoPickInput): string | null {
-    const takenIds = new Set(state.picks.map((p) => p.participantId));
+    const takenIds = new Set(state.picks.map((p) => p.participantId).filter((id): id is string => Boolean(id)));
     const available = input.availableParticipantIds.filter((id) => !takenIds.has(id));
 
     if (available.length === 0) {
@@ -166,6 +168,6 @@ export class SnakeDraftEngine {
    * Get all participant IDs that have been drafted.
    */
   getTakenParticipantIds(state: DraftState): string[] {
-    return state.picks.map((p) => p.participantId);
+    return state.picks.map((p) => p.participantId).filter((id): id is string => Boolean(id));
   }
 }

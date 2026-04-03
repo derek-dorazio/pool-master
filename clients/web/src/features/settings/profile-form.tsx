@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AvatarUpload } from './avatar-upload';
 import { useProfile, useUpdateProfile } from './hooks/use-profile';
 
 export function ProfileForm() {
@@ -14,14 +12,12 @@ export function ProfileForm() {
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
-  const [bio, setBio] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.displayName);
       setEmail(profile.email);
-      setBio(profile.bio);
     }
   }, [profile]);
 
@@ -36,7 +32,6 @@ export function ProfileForm() {
           </div>
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-20 w-full" />
         </CardContent>
       </Card>
     );
@@ -57,8 +52,7 @@ export function ProfileForm() {
 
   const isDirty =
     displayName !== profile.displayName ||
-    email !== profile.email ||
-    bio !== profile.bio;
+    email !== profile.email;
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
@@ -78,12 +72,9 @@ export function ProfileForm() {
     const changes: Record<string, string> = {};
     if (displayName !== profile.displayName) changes.displayName = displayName.trim();
     if (email !== profile.email) changes.email = email;
-    if (bio !== profile.bio) changes.bio = bio;
 
     updateProfile.mutate(changes);
   }
-
-  const isSsoUser = profile.authProvider === 'google' || profile.authProvider === 'apple';
 
   return (
     <Card>
@@ -92,8 +83,6 @@ export function ProfileForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <AvatarUpload avatarUrl={profile.avatarUrl ?? null} displayName={profile.displayName} />
-
           <div className="space-y-2">
             <Label htmlFor="displayName">Display Name</Label>
             <Input
@@ -125,20 +114,6 @@ export function ProfileForm() {
             {errors.email && (
               <p className="text-xs text-destructive">{errors.email}</p>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              maxLength={200}
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {bio.length}/200 characters
-            </p>
           </div>
 
           <Button type="submit" disabled={!isDirty || updateProfile.isPending}>

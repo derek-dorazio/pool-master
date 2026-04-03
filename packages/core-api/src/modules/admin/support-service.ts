@@ -1,10 +1,13 @@
 /**
  * SupportService — consolidated investigation data for support staff.
  *
- * Provides a unified view of tenant health: recent errors, notification
- * failures, API request samples, and scoring staleness. All data is mock
- * for now, to be wired to real observability backends later.
+ * This service is backed by persisted notification delivery logs, admin audit
+ * entries, contest standings, and contest results. It no longer synthesizes
+ * tenant incidents from static mock payloads.
  */
+
+import type { PrismaClient } from '@prisma/client';
+import { TenantNotFoundError } from './tenant-service';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -15,9 +18,8 @@ export interface TenantError {
   service: string;
   errorType: string;
   message: string;
-  stackTrace?: string;
-  occurredAt: Date;
   requestId: string;
+  occurredAt: Date;
 }
 
 export interface NotificationFailure {
@@ -29,13 +31,13 @@ export interface NotificationFailure {
   occurredAt: Date;
 }
 
-export interface ApiRequestSample {
+export interface SupportActivitySample {
   id: string;
-  method: string;
-  path: string;
-  statusCode: number;
-  latencyMs: number;
-  userId?: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  description: string;
+  adminUserEmail: string;
   occurredAt: Date;
 }
 
@@ -51,121 +53,65 @@ export interface TenantInvestigation {
   tenantId: string;
   recentErrors: TenantError[];
   notificationFailures: NotificationFailure[];
-  recentRequests: ApiRequestSample[];
+  recentActivity: SupportActivitySample[];
   scoringStaleness: ScoringStaleness[];
   pendingCorrections: number;
   failedWebhooks: number;
 }
 
+interface TenantScope {
+  tenantId: string;
+  userIds: string[];
+  leagueIds: string[];
+  contestIds: string[];
+  activeContests: Array<{
+    id: string;
+    name: string;
+    sport: string;
+    updatedAt: Date;
+  }>;
+}
+
 // ---------------------------------------------------------------------------
-// Mock data generators
+// Helpers
 // ---------------------------------------------------------------------------
 
-function mockErrors(tenantId: string): TenantError[] {
-  const now = new Date();
-  return [
-    {
-      id: `err-${tenantId}-001`,
-      service: 'scoring-engine',
-      errorType: 'TimeoutError',
-      message: 'Timed out fetching scores from SportsDataIO after 10000ms',
-      stackTrace: 'TimeoutError: Timed out\n  at ScoringClient.fetch (scoring-client.ts:42)',
-      occurredAt: new Date(now.getTime() - 15 * 60_000),
-      requestId: `req-${Math.random().toString(36).slice(2, 10)}`,
-    },
-    {
-      id: `err-${tenantId}-002`,
-      service: 'contest-service',
-      errorType: 'ValidationError',
-      message: 'Contest entry submission failed: roster size exceeds limit',
-      occurredAt: new Date(now.getTime() - 45 * 60_000),
-      requestId: `req-${Math.random().toString(36).slice(2, 10)}`,
-    },
-    {
-      id: `err-${tenantId}-003`,
-      service: 'notification-service',
-      errorType: 'DeliveryError',
-      message: 'Push notification delivery failed: device token expired',
-      occurredAt: new Date(now.getTime() - 2 * 3_600_000),
-      requestId: `req-${Math.random().toString(36).slice(2, 10)}`,
-    },
-  ];
+function toFailedDelivery(row: {
+  id: string;
+  notificationEventId: string;
+  channel: string;
+  failedReason: string | null;
+  userId: string;
+  createdAt: Date;
+}): NotificationFailure {
+  return {
+    id: row.id,
+    eventType: row.notificationEventId,
+    channel: row.channel,
+    failureReason: row.failedReason ?? 'Delivery failed',
+    userId: row.userId,
+    occurredAt: row.createdAt,
+  };
 }
 
-function mockNotificationFailures(tenantId: string): NotificationFailure[] {
-  const now = new Date();
-  return [
-    {
-      id: `nf-${tenantId}-001`,
-      eventType: 'draft.pick_made',
-      channel: 'PUSH',
-      failureReason: 'Device token expired',
-      userId: `user-${tenantId}-101`,
-      occurredAt: new Date(now.getTime() - 30 * 60_000),
-    },
-    {
-      id: `nf-${tenantId}-002`,
-      eventType: 'contest.scoring_update',
-      channel: 'EMAIL',
-      failureReason: 'Mailbox full — 552 5.2.2',
-      userId: `user-${tenantId}-205`,
-      occurredAt: new Date(now.getTime() - 3 * 3_600_000),
-    },
-  ];
-}
-
-function mockRequests(tenantId: string): ApiRequestSample[] {
-  const now = new Date();
-  return [
-    {
-      id: `api-${tenantId}-001`,
-      method: 'GET',
-      path: '/api/v1/contests/active',
-      statusCode: 200,
-      latencyMs: 45,
-      userId: `user-${tenantId}-101`,
-      occurredAt: new Date(now.getTime() - 5_000),
-    },
-    {
-      id: `api-${tenantId}-002`,
-      method: 'POST',
-      path: '/api/v1/entries',
-      statusCode: 422,
-      latencyMs: 120,
-      userId: `user-${tenantId}-205`,
-      occurredAt: new Date(now.getTime() - 30_000),
-    },
-    {
-      id: `api-${tenantId}-003`,
-      method: 'GET',
-      path: '/api/v1/standings',
-      statusCode: 200,
-      latencyMs: 88,
-      userId: `user-${tenantId}-310`,
-      occurredAt: new Date(now.getTime() - 60_000),
-    },
-    {
-      id: `api-${tenantId}-004`,
-      method: 'GET',
-      path: '/api/v1/scores/live',
-      statusCode: 504,
-      latencyMs: 10_000,
-      occurredAt: new Date(now.getTime() - 15 * 60_000),
-    },
-  ];
-}
-
-function mockStaleness(tenantId: string): ScoringStaleness[] {
-  void tenantId;
-  return [
-    {
-      contestId: 'contest-golf-001',
-      contestName: 'Masters 2026 Pool',
-      sport: 'golf',
-      lastScoringUpdate: new Date(Date.now() - 18 * 60_000),
-      staleMinutes: 18,
-    },
-  ];
+function toActivity(row: {
+  id: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  description: string;
+  adminUserEmail: string;
+  createdAt: Date;
+}): SupportActivitySample {
+  return {
+    id: row.id,
+    action: row.action,
+    resourceType: row.resourceType,
+    resourceId: row.resourceId,
+    description: row.description,
+    adminUserEmail: row.adminUserEmail,
+    occurredAt: row.createdAt,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -173,40 +119,201 @@ function mockStaleness(tenantId: string): ScoringStaleness[] {
 // ---------------------------------------------------------------------------
 
 export class SupportService {
-  /**
-   * Returns a consolidated investigation view for a tenant. Combines recent
-   * errors, notification failures, API request samples, and scoring staleness.
-   */
-  async getInvestigation(tenantId: string): Promise<TenantInvestigation> {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  private async loadTenantScope(tenantId: string): Promise<TenantScope> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true },
+    });
+
+    if (!tenant) {
+      throw new TenantNotFoundError(tenantId);
+    }
+
+    const [users, leagues, contests] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { tenantId },
+        select: { id: true },
+      }),
+      this.prisma.league.findMany({
+        where: { tenantId },
+        select: { id: true },
+      }),
+      this.prisma.contest.findMany({
+        where: {
+          league: { tenantId },
+          status: { in: ['ACTIVE', 'OPEN', 'IN_PROGRESS', 'DRAFT'] },
+        },
+        select: {
+          id: true,
+          name: true,
+          sport: true,
+          updatedAt: true,
+        },
+      }),
+    ]);
+
     return {
       tenantId,
-      recentErrors: mockErrors(tenantId),
-      notificationFailures: mockNotificationFailures(tenantId),
-      recentRequests: mockRequests(tenantId),
-      scoringStaleness: mockStaleness(tenantId),
-      pendingCorrections: 2,
-      failedWebhooks: 1,
+      userIds: users.map((row) => row.id),
+      leagueIds: leagues.map((row) => row.id),
+      contestIds: contests.map((row) => row.id),
+      activeContests: contests.map((row) => ({
+        id: row.id,
+        name: row.name,
+        sport: row.sport ?? 'unknown',
+        updatedAt: row.updatedAt,
+      })),
     };
   }
 
-  /**
-   * Returns recent errors for a tenant.
-   */
+  private async loadNotificationFailures(userIds: string[]): Promise<NotificationFailure[]> {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    const rows = await this.prisma.notificationDeliveryLog.findMany({
+      where: {
+        userId: { in: userIds },
+        status: 'FAILED',
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 25,
+    });
+
+    return rows.map((row) => toFailedDelivery(row)).slice(0, 10);
+  }
+
+  private async loadActivity(scope: TenantScope): Promise<SupportActivitySample[]> {
+    const auditRows = await this.prisma.adminAuditEntry.findMany({
+      where: {
+        OR: [
+          { resourceType: 'TENANT', resourceId: scope.tenantId },
+          { resourceType: 'LEAGUE', resourceId: { in: scope.leagueIds } },
+          { resourceType: 'CONTEST', resourceId: { in: scope.contestIds } },
+          { resourceType: 'USER', resourceId: { in: scope.userIds } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    return auditRows.map((row) => toActivity(row));
+  }
+
+  private async loadStaleness(scope: TenantScope): Promise<ScoringStaleness[]> {
+    if (scope.activeContests.length === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const staleness = await Promise.all(
+      scope.activeContests.map(async (contest) => {
+        const [lastStanding, lastResult] = await Promise.all([
+          this.prisma.contestStanding.findFirst({
+            where: { contestId: contest.id },
+            orderBy: { lastUpdatedAt: 'desc' },
+            select: { lastUpdatedAt: true },
+          }),
+          this.prisma.contestResult.findFirst({
+            where: { contestId: contest.id },
+            orderBy: { updatedAt: 'desc' },
+            select: { updatedAt: true },
+          }),
+        ]);
+
+        const lastScoringUpdate = lastStanding?.lastUpdatedAt ?? lastResult?.updatedAt ?? contest.updatedAt;
+        const staleMinutes = Math.max(0, Math.floor((now.getTime() - lastScoringUpdate.getTime()) / 60_000));
+
+        return {
+          contestId: contest.id,
+          contestName: contest.name,
+          sport: contest.sport,
+          lastScoringUpdate,
+          staleMinutes,
+        };
+      }),
+    );
+
+    return staleness.sort((a, b) => b.staleMinutes - a.staleMinutes);
+  }
+
+  private async loadRecentErrors(
+    notificationFailures: NotificationFailure[],
+    scoringStaleness: ScoringStaleness[],
+  ): Promise<TenantError[]> {
+    const staleThreshold = 15;
+    const staleErrors = scoringStaleness
+      .filter((row) => row.staleMinutes >= staleThreshold)
+      .map<TenantError>((row) => ({
+        id: `stale-${row.contestId}`,
+        service: 'scoring-service',
+        errorType: 'STALE_SCORING',
+        message: `${row.contestName} has not been refreshed in ${row.staleMinutes} minutes`,
+        requestId: row.contestId,
+        occurredAt: row.lastScoringUpdate,
+      }));
+
+    const deliveryErrors = notificationFailures.map<TenantError>((row) => ({
+      id: row.id,
+      service: 'notification-delivery',
+      errorType: 'DELIVERY_FAILURE',
+      message: row.failureReason,
+      requestId: row.eventType,
+      occurredAt: row.occurredAt,
+    }));
+
+    return [...deliveryErrors, ...staleErrors]
+      .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
+      .slice(0, 10);
+  }
+
+  // -------------------------------------------------------------------------
+  // Public API
+  // -------------------------------------------------------------------------
+
+  async getInvestigation(tenantId: string): Promise<TenantInvestigation> {
+    const scope = await this.loadTenantScope(tenantId);
+    const [notificationFailures, scoringStaleness, recentActivity] = await Promise.all([
+      this.loadNotificationFailures(scope.userIds),
+      this.loadStaleness(scope),
+      this.loadActivity(scope),
+    ]);
+
+    return {
+      tenantId,
+      recentErrors: await this.loadRecentErrors(notificationFailures, scoringStaleness),
+      notificationFailures,
+      recentActivity,
+      scoringStaleness,
+      pendingCorrections: await this.prisma.adminAuditEntry.count({
+        where: {
+          action: 'contest.override_score',
+          resourceType: 'CONTEST',
+          resourceId: { in: scope.contestIds },
+        },
+      }),
+      failedWebhooks: notificationFailures.length,
+    };
+  }
+
   async getErrors(tenantId: string): Promise<TenantError[]> {
-    return mockErrors(tenantId);
+    const scope = await this.loadTenantScope(tenantId);
+    const [notificationFailures, scoringStaleness] = await Promise.all([
+      this.loadNotificationFailures(scope.userIds),
+      this.loadStaleness(scope),
+    ]);
+    return this.loadRecentErrors(notificationFailures, scoringStaleness);
   }
 
-  /**
-   * Returns notification failures for a tenant.
-   */
   async getNotificationFailures(tenantId: string): Promise<NotificationFailure[]> {
-    return mockNotificationFailures(tenantId);
+    const scope = await this.loadTenantScope(tenantId);
+    return this.loadNotificationFailures(scope.userIds);
   }
 
-  /**
-   * Returns recent API request samples for a tenant.
-   */
-  async getRequests(tenantId: string): Promise<ApiRequestSample[]> {
-    return mockRequests(tenantId);
+  async getActivity(tenantId: string): Promise<SupportActivitySample[]> {
+    const scope = await this.loadTenantScope(tenantId);
+    return this.loadActivity(scope);
   }
 }

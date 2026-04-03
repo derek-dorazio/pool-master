@@ -215,8 +215,8 @@ export function createContestHandlers(contestService: ContestService) {
     const { eventId } = request.body;
 
     try {
-      await contestService.reIngestScoring(contestId, eventId, adminUserId, adminUserEmail);
-      return reply.status(204).send();
+      const result = await contestService.reIngestScoring(contestId, eventId, adminUserId, adminUserEmail);
+      return reply.send(result);
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

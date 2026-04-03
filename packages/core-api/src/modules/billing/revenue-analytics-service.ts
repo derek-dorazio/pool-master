@@ -1,8 +1,12 @@
 /**
- * RevenueAnalyticsService — provides SaaS revenue metrics including
- * MRR, ARR, churn, trial conversion, and subscriber distribution.
- * Returns realistic mock data for a platform with ~200 tenants.
+ * RevenueAnalyticsService — provides SaaS revenue metrics from persisted
+ * subscription rows and plan tiers.
+ *
+ * The repo does not persist historic billing events yet, so history-oriented
+ * metrics are derived from current rows instead of fake sample data.
  */
+
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,71 +55,92 @@ export interface ChurnMetrics {
   monthlyHistory: Array<{ month: string; churnRate: number; churned: number }>;
 }
 
-// ---------------------------------------------------------------------------
-// Mock data constants
-// ---------------------------------------------------------------------------
-
-const MOCK_SUBSCRIBERS_BY_PLAN: Record<string, number> = {
-  free: 98,
-  starter: 52,
-  pro: 38,
-  league_plus: 14,
+type SubscriptionRow = {
+  planTierSlug: string;
+  status: string;
+  billingCycle: string;
+  trialStart: Date | null;
+  trialEnd: Date | null;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  cancelledAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
-const MOCK_TOTAL_SUBSCRIBERS = 202;
-const MOCK_PAID_SUBSCRIBERS = 104;
-const MOCK_MRR = (52 * 900) + (38 * 2900) + (14 * 7900); // 46,800 + 110,200 + 110,600 = 267,600 cents
+type PlanTierRow = {
+  slug: string;
+  monthlyPriceCents: number | null;
+};
 
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class RevenueAnalyticsService {
-  /**
-   * Get all key revenue metrics.
-   */
+  constructor(private readonly prisma: PrismaClient) {}
+
   async getMetrics(): Promise<RevenueMetrics> {
+    const [subscriptions, planTiers] = await Promise.all([
+      this.loadSubscriptions(),
+      this.loadPlanTiers(),
+    ]);
+
+    const totalSubscribers = subscriptions.length;
+    const subscribersByPlan = this.countByPlan(subscriptions, planTiers);
+    const activeSubscriptions = subscriptions.filter((row) => row.status === 'ACTIVE');
+    const trialSubscriptions = subscriptions.filter((row) => row.status === 'TRIALING');
+    const pastDueSubscriptions = subscriptions.filter((row) => row.status === 'PAST_DUE' || row.status === 'UNPAID');
+    const cancelledThisMonth = subscriptions.filter((row) => row.cancelledAt && this.isCurrentMonth(row.cancelledAt));
+    const createdThisMonth = subscriptions.filter((row) => this.isCurrentMonth(row.createdAt));
+
+    const mrr = this.sumMonthlyRevenue(activeSubscriptions, planTiers);
+    const revenueAtRisk = this.sumMonthlyRevenue(pastDueSubscriptions, planTiers);
+    const churnRate = totalSubscribers > 0
+      ? (cancelledThisMonth.length / totalSubscribers) * 100
+      : 0;
+    const trialConversionRate = trialSubscriptions.length > 0
+      ? (subscriptions.filter((row) => row.status === 'ACTIVE' && row.trialStart).length / trialSubscriptions.length) * 100
+      : 0;
+    const arpu = activeSubscriptions.length > 0 ? mrr / activeSubscriptions.length : 0;
+
     return {
-      mrr: MOCK_MRR,
-      arr: MOCK_MRR * 12,
-      mrrGrowthRate: 8.3,
-      totalSubscribers: MOCK_TOTAL_SUBSCRIBERS,
-      subscribersByPlan: { ...MOCK_SUBSCRIBERS_BY_PLAN },
-      newSubscribersThisMonth: 18,
-      churnedSubscribersThisMonth: 5,
-      churnRate: 4.8,
-      netRevenueRetention: 112.5,
-      activeTrials: 12,
-      trialConversionRate: 42.0,
-      arpu: Math.round(MOCK_MRR / MOCK_PAID_SUBSCRIBERS),
-      pastDueSubscriptions: 6,
-      recoveryRate: 72.2,
-      revenueAtRisk: 14500,
+      mrr,
+      arr: mrr * 12,
+      mrrGrowthRate: totalSubscribers > 0
+        ? ((createdThisMonth.length - cancelledThisMonth.length) / totalSubscribers) * 100
+        : 0,
+      totalSubscribers,
+      subscribersByPlan,
+      newSubscribersThisMonth: createdThisMonth.length,
+      churnedSubscribersThisMonth: cancelledThisMonth.length,
+      churnRate: Math.round(churnRate * 10) / 10,
+      netRevenueRetention: mrr > 0 ? Math.round(((mrr - revenueAtRisk) / mrr) * 1000) / 10 : 0,
+      activeTrials: trialSubscriptions.length,
+      trialConversionRate: Math.round(trialConversionRate * 10) / 10,
+      arpu: Math.round(arpu),
+      pastDueSubscriptions: pastDueSubscriptions.length,
+      recoveryRate: 0,
+      revenueAtRisk,
     };
   }
 
-  /**
-   * Get historical data points for a specific metric.
-   */
   async getMetricHistory(metric: string, days: number): Promise<MetricDataPoint[]> {
-    const dataPoints: MetricDataPoint[] = [];
-    const now = new Date();
-    const baseValues: Record<string, number> = {
-      mrr: MOCK_MRR,
-      arr: MOCK_MRR * 12,
-      totalSubscribers: MOCK_TOTAL_SUBSCRIBERS,
-      churnRate: 4.8,
-      trialConversionRate: 42.0,
-      arpu: Math.round(MOCK_MRR / MOCK_PAID_SUBSCRIBERS),
+    const current = await this.getMetrics();
+    const lookup: Record<string, number> = {
+      mrr: current.mrr,
+      arr: current.arr,
+      totalSubscribers: current.totalSubscribers,
+      churnRate: current.churnRate,
+      trialConversionRate: current.trialConversionRate,
+      arpu: current.arpu,
     };
-    const baseValue = baseValues[metric] ?? 100;
-    for (let i = days; i >= 0; i--) {
+    const value = lookup[metric] ?? 0;
+    const now = new Date();
+    const dataPoints: MetricDataPoint[] = [];
+    for (let i = days; i >= 0; i -= 1) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      // Simulate growth trend with minor daily variance
-      const growthFactor = 1 - (i / days) * 0.15;
-      const variance = 1 + (Math.sin(i * 0.7) * 0.03);
-      const value = Math.round(baseValue * growthFactor * variance);
       dataPoints.push({
         date: date.toISOString().split('T')[0],
         value,
@@ -124,66 +149,139 @@ export class RevenueAnalyticsService {
     return dataPoints;
   }
 
-  /**
-   * Get subscriber counts grouped by plan.
-   */
   async getSubscribersByPlan(): Promise<Record<string, number>> {
-    return { ...MOCK_SUBSCRIBERS_BY_PLAN };
+    const [subscriptions, planTiers] = await Promise.all([
+      this.loadSubscriptions(),
+      this.loadPlanTiers(),
+    ]);
+    return this.countByPlan(subscriptions, planTiers);
   }
 
-  /**
-   * Get trial-specific metrics.
-   */
   async getTrialMetrics(): Promise<TrialMetrics> {
+    const subscriptions = await this.loadSubscriptions();
+    const trialSubscriptions = subscriptions.filter((row) => row.status === 'TRIALING');
+    const convertedTrials = subscriptions.filter((row) => row.status === 'ACTIVE' && row.trialStart);
+    const expiredTrials = subscriptions.filter((row) => row.status === 'PAST_DUE' && row.trialEnd && this.isCurrentMonth(row.trialEnd));
+    const startedThisMonth = subscriptions.filter((row) => row.trialStart && this.isCurrentMonth(row.trialStart));
+
+    const totalTrialDays = convertedTrials.reduce((sum, row) => {
+      if (!row.trialStart) {
+        return sum;
+      }
+      return sum + this.diffDays(row.trialStart, row.updatedAt);
+    }, 0);
+
+    const conversionsByPlan: Record<string, number> = {};
+    for (const row of convertedTrials) {
+      conversionsByPlan[row.planTierSlug] = (conversionsByPlan[row.planTierSlug] ?? 0) + 1;
+    }
+
     return {
-      activeTrials: 12,
-      trialConversionRate: 42.0,
-      averageTrialToPaidDays: 9.2,
-      trialsStartedThisMonth: 22,
-      trialsConvertedThisMonth: 8,
-      trialsExpiredThisMonth: 6,
-      conversionsByPlan: {
-        starter: 4,
-        pro: 3,
-        league_plus: 1,
-      },
+      activeTrials: trialSubscriptions.length,
+      trialConversionRate: subscriptions.filter((row) => row.trialStart).length > 0
+        ? Math.round((convertedTrials.length / subscriptions.filter((row) => row.trialStart).length) * 1000) / 10
+        : 0,
+      averageTrialToPaidDays: convertedTrials.length > 0
+        ? Math.round((totalTrialDays / convertedTrials.length) * 10) / 10
+        : 0,
+      trialsStartedThisMonth: startedThisMonth.length,
+      trialsConvertedThisMonth: this.countThisMonth(convertedTrials.map((row) => row.updatedAt)),
+      trialsExpiredThisMonth: expiredTrials.length,
+      conversionsByPlan,
     };
   }
 
-  /**
-   * Get churn metrics over the specified number of months.
-   */
   async getChurnMetrics(months: number): Promise<ChurnMetrics> {
-    const now = new Date();
+    const subscriptions = await this.loadSubscriptions();
+    const planTiers = await this.loadPlanTiers();
+    const cancelled = subscriptions.filter((row) => row.cancelledAt);
     const monthlyHistory: ChurnMetrics['monthlyHistory'] = [];
-    for (let i = months - 1; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+
+    for (let i = months - 1; i >= 0; i -= 1) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i, 1);
       const monthLabel = date.toISOString().slice(0, 7);
-      const churnRate = 3.5 + Math.sin(i * 0.8) * 1.5;
-      const churned = Math.round(MOCK_PAID_SUBSCRIBERS * (churnRate / 100));
+      const churned = cancelled.filter((row) => row.cancelledAt && this.isMonth(row.cancelledAt, date)).length;
       monthlyHistory.push({
         month: monthLabel,
-        churnRate: Math.round(churnRate * 10) / 10,
+        churnRate: subscriptions.length > 0 ? Math.round((churned / subscriptions.length) * 1000) / 10 : 0,
         churned,
       });
     }
+
+    const churnByPlan: Record<string, number> = {};
+    for (const row of cancelled) {
+      churnByPlan[row.planTierSlug] = (churnByPlan[row.planTierSlug] ?? 0) + 1;
+    }
+
+    const revenueChurnedCents = this.sumMonthlyRevenue(cancelled, planTiers);
+    const currentChurned = monthlyHistory[monthlyHistory.length - 1]?.churned ?? 0;
+
     return {
-      monthlyChurnRate: 4.8,
-      churnedSubscribers: 5,
-      churnReasons: {
-        TOO_EXPENSIVE: 2,
-        NOT_ENOUGH_FEATURES: 1,
-        SWITCHING_TO_COMPETITOR: 1,
-        NO_LONGER_NEEDED: 1,
-      },
-      churnByPlan: {
-        starter: 3,
-        pro: 1,
-        league_plus: 1,
-      },
-      revenueChurnRate: 3.2,
-      revenueChurnedCents: 8600,
+      monthlyChurnRate: subscriptions.length > 0 ? Math.round((currentChurned / subscriptions.length) * 1000) / 10 : 0,
+      churnedSubscribers: cancelled.length,
+      churnReasons: {},
+      churnByPlan,
+      revenueChurnRate: 0,
+      revenueChurnedCents,
       monthlyHistory,
     };
+  }
+
+  private async loadSubscriptions(): Promise<SubscriptionRow[]> {
+    return this.prisma.tenantSubscription.findMany({
+      select: {
+        planTierSlug: true,
+        status: true,
+        billingCycle: true,
+        trialStart: true,
+        trialEnd: true,
+        currentPeriodStart: true,
+        currentPeriodEnd: true,
+        cancelledAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  private async loadPlanTiers(): Promise<PlanTierRow[]> {
+    return this.prisma.planTier.findMany({
+      select: {
+        slug: true,
+        monthlyPriceCents: true,
+      },
+    });
+  }
+
+  private countByPlan(subscriptions: SubscriptionRow[], planTiers: PlanTierRow[]): Record<string, number> {
+    const counts: Record<string, number> = Object.fromEntries(planTiers.map((tier) => [tier.slug, 0]));
+    for (const subscription of subscriptions) {
+      counts[subscription.planTierSlug] = (counts[subscription.planTierSlug] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  private sumMonthlyRevenue(subscriptions: SubscriptionRow[], planTiers: PlanTierRow[]): number {
+    const priceByPlan = new Map(planTiers.map((tier) => [tier.slug, tier.monthlyPriceCents ?? 0]));
+    return subscriptions.reduce((sum, row) => sum + (priceByPlan.get(row.planTierSlug) ?? 0), 0);
+  }
+
+  private isCurrentMonth(date: Date): boolean {
+    const now = new Date();
+    return date.getUTCFullYear() === now.getUTCFullYear() && date.getUTCMonth() === now.getUTCMonth();
+  }
+
+  private isMonth(date: Date, monthStart: Date): boolean {
+    return date.getUTCFullYear() === monthStart.getUTCFullYear() && date.getUTCMonth() === monthStart.getUTCMonth();
+  }
+
+  private diffDays(start: Date, end: Date): number {
+    const diffMs = end.getTime() - start.getTime();
+    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  }
+
+  private countThisMonth(dates: Date[]): number {
+    return dates.filter((date) => this.isCurrentMonth(date)).length;
   }
 }

@@ -45,18 +45,29 @@ export const DiscoverableLeagueDtoSchema = z.object({
   description: z.string().nullable().optional(),
   sport: z.string().nullable().optional(),
   memberCount: z.number(),
-  visibility: z.string(),
+  maxMembers: z.number().nullable().optional(),
+  activeContestCount: z.number(),
+  activityLevel: z.string(),
+  joinPolicy: z.string(),
+  commissionerName: z.string().nullable().optional(),
+  visibility: z.string().optional(),
   createdAt: z.string().datetime().optional(),
 });
 export type DiscoverableLeagueDto = z.infer<typeof DiscoverableLeagueDtoSchema>;
 
 export const DiscoverableContestDtoSchema = z.object({
   id: z.string(),
+  leagueName: z.string().nullable().optional(),
   contestName: z.string(),
   sport: z.string().nullable().optional(),
+  eventName: z.string().nullable().optional(),
+  draftType: z.string().nullable().optional(),
   status: z.string(),
   memberCount: z.number(),
+  maxMembers: z.number().nullable().optional(),
+  entryFee: z.number().nullable().optional(),
   prizePool: z.number().nullable().optional(),
+  draftStart: z.string().datetime().nullable().optional(),
   lockTime: z.string().datetime().nullable().optional(),
 });
 export type DiscoverableContestDto = z.infer<typeof DiscoverableContestDtoSchema>;
@@ -74,11 +85,13 @@ export const DiscoverLeaguesResponseSchema = z.object({
   leagues: z.array(DiscoverableLeagueDtoSchema),
   total: z.number(),
 });
+export type DiscoverLeaguesResponse = z.infer<typeof DiscoverLeaguesResponseSchema>;
 
 export const DiscoverContestsResponseSchema = z.object({
   contests: z.array(DiscoverableContestDtoSchema),
   total: z.number(),
 });
+export type DiscoverContestsResponse = z.infer<typeof DiscoverContestsResponseSchema>;
 
 export const DiscoveryReportResponseSchema = z.object({
   report: z.object({
@@ -86,3 +99,4 @@ export const DiscoveryReportResponseSchema = z.object({
   }),
   reportCount: z.number(),
 });
+export type DiscoveryReportResponse = z.infer<typeof DiscoveryReportResponseSchema>;

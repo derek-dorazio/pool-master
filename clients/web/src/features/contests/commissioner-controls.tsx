@@ -1,16 +1,26 @@
 /**
- * Commissioner contest controls — score override, recalculate, close/cancel, extend deadline.
+ * Commissioner contest controls — score adjustment, recalculate, close, reopen, extend deadline.
  */
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ContestStatus } from '@poolmaster/shared/domain';
-import { Shield, Calculator, XCircle, CheckCircle, Clock, Edit3 } from 'lucide-react';
+import { Shield, Calculator, CheckCircle, Clock, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from '@/hooks/use-toast';
+import {
+  adjustScore,
+  client,
+  closeContest,
+  extendContestDeadline,
+  recalculateStandings,
+  reopenContest,
+} from '@/lib/api';
 
 interface CommissionerContestControlsProps {
   contestId: string;
@@ -18,26 +28,112 @@ interface CommissionerContestControlsProps {
   isCommissioner: boolean;
 }
 
-export function CommissionerContestControls({ contestId, contestStatus, isCommissioner }: CommissionerContestControlsProps) {
-  const [confirming, setConfirming] = useState<string | null>(null);
-  const [overrideEntryId, setOverrideEntryId] = useState('');
-  const [overrideScore, setOverrideScore] = useState('');
-  const [overrideReason, setOverrideReason] = useState('');
-  const [extendHours, setExtendHours] = useState('24');
-  const queryClient = useQueryClient();
+type ContestAction = 'recalculate' | 'close' | 'reopen' | 'extend';
 
-  const action = useMutation({
-    mutationFn: async (_params: { action: string; data?: Record<string, unknown> }) => {
-      // TODO: Replace with real API
-      await new Promise((r) => setTimeout(r, 300));
-      return { success: true };
+export function CommissionerContestControls({
+  contestId,
+  contestStatus,
+  isCommissioner,
+}: CommissionerContestControlsProps) {
+  const [scoreEntryId, setScoreEntryId] = useState('');
+  const [scoreAdjustment, setScoreAdjustment] = useState('');
+  const [scoreReason, setScoreReason] = useState('');
+  const [lifecycleReason, setLifecycleReason] = useState('');
+  const [deadlineValue, setDeadlineValue] = useState('');
+  const queryClient = useQueryClient();
+  const dialog = useConfirmDialog();
+
+  const invalidateContestQueries = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['contests', contestId] });
+    await queryClient.invalidateQueries({ queryKey: ['contests', contestId, 'standings'] });
+    await queryClient.invalidateQueries({ queryKey: ['contests', contestId, 'poll'] });
+  };
+
+  const scoreAdjustmentMutation = useMutation({
+    mutationFn: async () => {
+      const parsedAdjustment = Number(scoreAdjustment);
+      const { error } = await adjustScore({
+        client,
+        path: { contestId },
+        body: {
+          entryId: scoreEntryId,
+          adjustment: parsedAdjustment,
+          reason: scoreReason,
+        },
+      });
+      if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contests', contestId] });
-      setConfirming(null);
-      setOverrideEntryId('');
-      setOverrideScore('');
-      setOverrideReason('');
+    onSuccess: async () => {
+      await invalidateContestQueries();
+      setScoreEntryId('');
+      setScoreAdjustment('');
+      setScoreReason('');
+      toast({ title: 'Score adjusted', description: 'The contest entry score was updated.' });
+    },
+  });
+
+  const lifecycleActionMutation = useMutation({
+    mutationFn: async (action: ContestAction) => {
+      if (action === 'recalculate') {
+        const { error } = await recalculateStandings({
+          client,
+          path: { contestId },
+        });
+        if (error) throw error;
+        return;
+      }
+
+      if (action === 'close') {
+        const { error } = await closeContest({
+          client,
+          path: { contestId },
+          body: { reason: lifecycleReason },
+        });
+        if (error) throw error;
+        return;
+      }
+
+      if (action === 'reopen') {
+        const { error } = await reopenContest({
+          client,
+          path: { contestId },
+          body: { reason: lifecycleReason },
+        });
+        if (error) throw error;
+        return;
+      }
+
+      const newEnd = new Date(deadlineValue);
+      if (Number.isNaN(newEnd.getTime())) {
+        throw new Error('Enter a valid new deadline.');
+      }
+      const { error } = await extendContestDeadline({
+        client,
+        path: { contestId },
+        body: {
+          newEnd: newEnd.toISOString(),
+          reason: lifecycleReason,
+        },
+      });
+      if (error) throw error;
+    },
+    onSuccess: async (_, action) => {
+      await invalidateContestQueries();
+      setLifecycleReason('');
+      if (action === 'extend') {
+        setDeadlineValue('');
+      }
+      toast({
+        title: 'Contest updated',
+        description:
+          action === 'recalculate'
+            ? 'Standings were recalculated.'
+            : action === 'extend'
+              ? 'Contest deadline was extended.'
+              : action === 'close'
+                ? 'Contest was closed.'
+                : 'Contest was reopened.',
+      });
     },
   });
 
@@ -45,6 +141,40 @@ export function CommissionerContestControls({ contestId, contestStatus, isCommis
 
   const isActive = contestStatus === ContestStatus.ACTIVE || contestStatus === ContestStatus.LOCKED;
   const isCompleted = contestStatus === ContestStatus.COMPLETED;
+
+  async function handleLifecycleAction(action: ContestAction) {
+    const descriptions: Record<ContestAction, string> = {
+      recalculate: 'Recalculate standings from current entry scores. Rankings may change immediately.',
+      close: 'Close this contest and mark it completed.',
+      reopen: 'Reopen this contest and allow standings or score changes again.',
+      extend: 'Extend the contest deadline to the new timestamp below.',
+    };
+
+    const confirmed = await dialog.confirm(
+      action === 'recalculate'
+        ? 'Recalculate Standings'
+        : action === 'close'
+          ? 'Close Contest'
+          : action === 'reopen'
+            ? 'Reopen Contest'
+            : 'Extend Deadline',
+      descriptions[action],
+      { confirmLabel: 'Confirm', variant: action === 'close' ? 'destructive' : 'default' },
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await lifecycleActionMutation.mutateAsync(action);
+    } catch (error) {
+      toast({
+        title: 'Unable to update contest',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
+  }
 
   return (
     <Card className="border-amber-200 dark:border-amber-800">
@@ -55,98 +185,134 @@ export function CommissionerContestControls({ contestId, contestStatus, isCommis
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Score Override */}
         {isActive && (
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Score Override</Label>
+            <Label className="text-xs font-medium">Score Adjustment</Label>
             <div className="flex gap-2">
-              <Input placeholder="Entry ID" value={overrideEntryId} onChange={(e) => setOverrideEntryId(e.target.value)} className="h-8 text-xs" />
-              <Input type="number" placeholder="Score" value={overrideScore} onChange={(e) => setOverrideScore(e.target.value)} className="h-8 text-xs w-24" />
+              <Input
+                placeholder="Entry ID"
+                value={scoreEntryId}
+                onChange={(event) => setScoreEntryId(event.target.value)}
+                className="h-8 text-xs"
+              />
+              <Input
+                type="number"
+                placeholder="Delta"
+                value={scoreAdjustment}
+                onChange={(event) => setScoreAdjustment(event.target.value)}
+                className="h-8 text-xs w-24"
+              />
             </div>
-            <Input placeholder="Reason for override" value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)} className="h-8 text-xs" />
+            <Input
+              placeholder="Reason for adjustment"
+              value={scoreReason}
+              onChange={(event) => setScoreReason(event.target.value)}
+              className="h-8 text-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+              Use a positive or negative delta. This API adjusts the current score instead of replacing it.
+            </p>
             <Button
               size="sm"
               variant="outline"
               className="h-7 text-xs"
-              onClick={() => action.mutate({ action: 'score-override', data: { entryId: overrideEntryId, score: Number(overrideScore), reason: overrideReason } })}
-              disabled={!overrideEntryId || !overrideScore || !overrideReason || action.isPending}
+              onClick={() => scoreAdjustmentMutation.mutate()}
+              disabled={
+                !scoreEntryId
+                || !scoreAdjustment
+                || !scoreReason
+                || scoreAdjustmentMutation.isPending
+              }
             >
-              <Edit3 className="h-3 w-3 mr-1" /> Apply Override
+              <Edit3 className="h-3 w-3 mr-1" />
+              Apply Adjustment
             </Button>
           </div>
         )}
 
         {isActive && <Separator />}
 
-        {/* Quick actions */}
+        <div className="space-y-2">
+          {(isActive || isCompleted) && (
+            <Input
+              placeholder="Reason for lifecycle change"
+              value={lifecycleReason}
+              onChange={(event) => setLifecycleReason(event.target.value)}
+              className="h-8 text-xs"
+            />
+          )}
+
+          {isActive && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">New Deadline</Label>
+              <Input
+                type="datetime-local"
+                value={deadlineValue}
+                onChange={(event) => setDeadlineValue(event.target.value)}
+                className="h-8 text-xs"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-wrap gap-2">
           {isActive && (
             <>
-              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setConfirming('recalculate')} disabled={action.isPending}>
-                <Calculator className="h-3 w-3 mr-1" /> Recalculate Scores
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => handleLifecycleAction('recalculate')}
+                disabled={lifecycleActionMutation.isPending}
+              >
+                <Calculator className="h-3 w-3 mr-1" />
+                Recalculate Standings
               </Button>
-              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setConfirming('extend')} disabled={action.isPending}>
-                <Clock className="h-3 w-3 mr-1" /> Extend Deadline
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => handleLifecycleAction('extend')}
+                disabled={!deadlineValue || !lifecycleReason || lifecycleActionMutation.isPending}
+              >
+                <Clock className="h-3 w-3 mr-1" />
+                Extend Deadline
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => handleLifecycleAction('close')}
+                disabled={!lifecycleReason || lifecycleActionMutation.isPending}
+              >
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Close Contest
               </Button>
             </>
           )}
 
-          {isActive && (
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setConfirming('close')} disabled={action.isPending}>
-              <CheckCircle className="h-3 w-3 mr-1" /> Close Contest
-            </Button>
-          )}
-
-          {(isActive || contestStatus === ContestStatus.OPEN || contestStatus === ContestStatus.DRAFTING) && (
-            <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={() => setConfirming('cancel')} disabled={action.isPending}>
-              <XCircle className="h-3 w-3 mr-1" /> Cancel Contest
-            </Button>
-          )}
-
           {isCompleted && (
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setConfirming('reopen')} disabled={action.isPending}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={() => handleLifecycleAction('reopen')}
+              disabled={!lifecycleReason || lifecycleActionMutation.isPending}
+            >
               Reopen Contest
             </Button>
           )}
         </div>
 
-        {/* Confirmation dialogs */}
-        {confirming && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-background rounded-lg shadow-lg p-6 max-w-sm w-full mx-4 space-y-4">
-              <h3 className="text-lg font-semibold">
-                {confirming === 'recalculate' && 'Recalculate Scores'}
-                {confirming === 'close' && 'Close Contest'}
-                {confirming === 'cancel' && 'Cancel Contest'}
-                {confirming === 'reopen' && 'Reopen Contest'}
-                {confirming === 'extend' && 'Extend Deadline'}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {confirming === 'recalculate' && 'This will recalculate all scores from the source data. Standings may change.'}
-                {confirming === 'close' && 'Close this contest and finalize results. This triggers payouts and awards.'}
-                {confirming === 'cancel' && 'Cancel this contest? All entries and scores will be preserved but the contest will be marked as cancelled.'}
-                {confirming === 'reopen' && 'Reopen this completed contest? This will allow score changes and delay final results.'}
-                {confirming === 'extend' && 'Extend the contest deadline.'}
-              </p>
-              {confirming === 'extend' && (
-                <div className="flex items-center gap-2">
-                  <Label className="text-xs">Hours:</Label>
-                  <Input type="number" value={extendHours} onChange={(e) => setExtendHours(e.target.value)} className="h-8 w-24 text-xs" />
-                </div>
-              )}
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setConfirming(null)}>Cancel</Button>
-                <Button
-                  variant={confirming === 'cancel' ? 'destructive' : 'default'}
-                  onClick={() => action.mutate({ action: confirming, data: confirming === 'extend' ? { hours: Number(extendHours) } : undefined })}
-                  disabled={action.isPending}
-                >
-                  {action.isPending ? 'Processing...' : 'Confirm'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmDialog
+          open={dialog.open}
+          title={dialog.title}
+          description={dialog.description}
+          confirmLabel={dialog.confirmLabel}
+          variant={dialog.variant}
+          onConfirm={dialog.onConfirm}
+          onCancel={dialog.onCancel}
+        />
       </CardContent>
     </Card>
   );

@@ -10,10 +10,9 @@ describe('useStandings', () => {
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const data = result.current.data! as any;
-    // MSW returns { standings: [], total: 0, contestId: 'contest-1' }
+    const data = result.current.data!;
     expect(data).toHaveProperty('standings');
-    expect(data).toHaveProperty('total', 0);
+    expect(data).toHaveProperty('total', 2);
     expect(data).toHaveProperty('contestId', 'contest-1');
     expect(Array.isArray(data.standings)).toBe(true);
   });
@@ -21,13 +20,16 @@ describe('useStandings', () => {
   it('returns entries with expected shape when server provides data', async () => {
     server.use(
       http.get('/api/v1/contests/:id/standings', () => {
+        const now = new Date().toISOString();
         return HttpResponse.json({
           standings: [
-            { id: 'e1', rank: 1, entryName: 'Eagle Eye', ownerName: 'Sarah K.', totalScore: 298, movement: 'none', isCurrentUser: false, isEliminated: false },
-            { id: 'e2', rank: 2, entryName: 'Birdie Brigade', ownerName: 'Jake M.', totalScore: 285, movement: 'up', isCurrentUser: false, isEliminated: false },
-            { id: 'e3', rank: 3, entryName: 'My Entry', ownerName: 'You', totalScore: 274, movement: 'up', isCurrentUser: true, isEliminated: false },
+            { rank: 1, entryId: 'e1', entryName: 'Eagle Eye', ownerDisplayName: 'Sarah K.', ownerId: 'u1', totalScore: 298, previousRank: 2, movement: 'up', isEliminated: false, lastUpdatedAt: now },
+            { rank: 2, entryId: 'e2', entryName: 'Birdie Brigade', ownerDisplayName: 'Jake M.', ownerId: 'u2', totalScore: 285, previousRank: 1, movement: 'down', isEliminated: false, lastUpdatedAt: now },
+            { rank: 3, entryId: 'e3', entryName: 'My Entry', ownerDisplayName: 'You', ownerId: 'u3', totalScore: 274, previousRank: 3, movement: 'same', isEliminated: false, lastUpdatedAt: now },
           ],
           total: 3,
+          page: 1,
+          pageSize: 25,
           contestId: 'contest-1',
         });
       }),
@@ -37,31 +39,35 @@ describe('useStandings', () => {
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const data = result.current.data! as any;
-    const standings = data.standings as Array<Record<string, unknown>>;
+    const standings = result.current.data!.standings;
     expect(standings.length).toBe(3);
 
     const entry = standings[0];
-    expect(entry).toHaveProperty('id');
+    expect(entry).toHaveProperty('entryId');
     expect(entry).toHaveProperty('rank');
     expect(entry).toHaveProperty('entryName');
-    expect(entry).toHaveProperty('ownerName');
+    expect(entry).toHaveProperty('ownerDisplayName');
+    expect(entry).toHaveProperty('ownerId');
     expect(entry).toHaveProperty('totalScore');
     expect(entry).toHaveProperty('movement');
-    expect(entry).toHaveProperty('isCurrentUser');
+    expect(entry).toHaveProperty('previousRank');
     expect(entry).toHaveProperty('isEliminated');
+    expect(entry).toHaveProperty('lastUpdatedAt');
   });
 
   it('returns entries sorted by rank', async () => {
     server.use(
       http.get('/api/v1/contests/:id/standings', () => {
+        const now = new Date().toISOString();
         return HttpResponse.json({
           standings: [
-            { id: 'e1', rank: 1, entryName: 'Eagle Eye', ownerName: 'Sarah K.', totalScore: 298, movement: 'none', isCurrentUser: false, isEliminated: false },
-            { id: 'e2', rank: 2, entryName: 'Birdie Brigade', ownerName: 'Jake M.', totalScore: 285, movement: 'up', isCurrentUser: false, isEliminated: false },
-            { id: 'e3', rank: 3, entryName: 'My Entry', ownerName: 'You', totalScore: 274, movement: 'up', isCurrentUser: true, isEliminated: false },
+            { rank: 1, entryId: 'e1', entryName: 'Eagle Eye', ownerDisplayName: 'Sarah K.', ownerId: 'u1', totalScore: 298, previousRank: 2, movement: 'up', isEliminated: false, lastUpdatedAt: now },
+            { rank: 2, entryId: 'e2', entryName: 'Birdie Brigade', ownerDisplayName: 'Jake M.', ownerId: 'u2', totalScore: 285, previousRank: 1, movement: 'down', isEliminated: false, lastUpdatedAt: now },
+            { rank: 3, entryId: 'e3', entryName: 'My Entry', ownerDisplayName: 'You', ownerId: 'u3', totalScore: 274, previousRank: 3, movement: 'same', isEliminated: false, lastUpdatedAt: now },
           ],
           total: 3,
+          page: 1,
+          pageSize: 25,
           contestId: 'contest-1',
         });
       }),
@@ -71,8 +77,7 @@ describe('useStandings', () => {
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const data = result.current.data! as any;
-    const standings = data.standings as Array<Record<string, number>>;
+    const standings = result.current.data!.standings;
     for (let i = 1; i < standings.length; i++) {
       expect(standings[i].rank).toBeGreaterThanOrEqual(standings[i - 1].rank);
     }

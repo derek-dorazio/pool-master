@@ -2,12 +2,14 @@
  * DunningService — handles failed payment recovery including retry
  * scheduling, grace periods, feature degradation, and auto-cancellation.
  *
- * Default schedule:
- *   - Retry at 1, 3, 5, 7 days after failure
- *   - Grace period: 7 days (full access)
- *   - Degraded period: 14 days (read-only)
- *   - Auto-cancel: 21 days
+ * The repo does not persist dunning events yet, so write-side operations are
+ * intentionally unavailable. Read-side status/metrics are derived from the
+ * current subscription rows instead of in-memory state.
  */
+
+import type { PrismaClient } from '@prisma/client';
+import { SubscriptionStatus } from '@poolmaster/shared/domain';
+import { getDunningConfig } from '../admin/dunning-config-service';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,11 +59,16 @@ export interface RecoveryMetrics {
   revenueAtRiskCents: number;
 }
 
-// ---------------------------------------------------------------------------
-// Default config — now also available via DunningConfigService for admin tuning
-// ---------------------------------------------------------------------------
+export class DunningStateUnavailableError extends Error {
+  constructor(operation: string) {
+    super(`Dunning state is unavailable for ${operation} until payment-failure persistence exists`);
+    this.name = 'DunningStateUnavailableError';
+  }
+}
 
-import { getDunningConfig } from '../admin/dunning-config-service';
+// ---------------------------------------------------------------------------
+// Default config
+// ---------------------------------------------------------------------------
 
 const DEFAULT_CONFIG: DunningConfig = {
   retryAttempts: [
@@ -76,58 +83,37 @@ const DEFAULT_CONFIG: DunningConfig = {
 };
 
 // ---------------------------------------------------------------------------
-// In-memory dunning state
-// TODO: Add Prisma model for DunningEntry — no model exists in schema yet.
-// Could also be stored as a JSON column on TenantSubscription.
-// ---------------------------------------------------------------------------
-
-interface DunningEntry {
-  tenantId: string;
-  invoiceId: string;
-  failedAt: Date;
-  retryCount: number;
-  lastRetryAt: Date | null;
-  isRecovered: boolean;
-}
-
-const dunningStore: Map<string, DunningEntry> = new Map();
-
-// ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class DunningService {
   private readonly config: DunningConfig;
 
-  constructor(config?: Partial<DunningConfig>) {
-    // Merge: explicit constructor arg > admin-configured > hardcoded defaults
+  constructor(
+    private readonly prisma: PrismaClient,
+    config?: Partial<DunningConfig>,
+  ) {
     const adminConfig = getDunningConfig();
     this.config = { ...DEFAULT_CONFIG, ...adminConfig, ...config };
   }
 
-  /**
-   * Handle a newly failed payment for a tenant.
-   */
   async handlePaymentFailure(tenantId: string, invoiceId: string): Promise<void> {
-    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
-    const entry: DunningEntry = {
-      tenantId,
-      invoiceId,
-      failedAt: new Date(),
-      retryCount: 0,
-      lastRetryAt: null,
-      isRecovered: false,
-    };
-    dunningStore.set(tenantId, entry);
+    void tenantId;
+    void invoiceId;
+    throw new DunningStateUnavailableError('payment failure tracking');
   }
 
-  /**
-   * Get dunning status for a tenant.
-   */
   async getDunningStatus(tenantId: string): Promise<DunningStatus> {
-    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
-    const entry = dunningStore.get(tenantId);
-    if (!entry || entry.isRecovered) {
+    const subscription = await this.prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+      select: {
+        status: true,
+        currentPeriodEnd: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!subscription) {
       return {
         tenantId,
         phase: 'NONE',
@@ -139,137 +125,89 @@ export class DunningService {
         cancellationAt: null,
       };
     }
-    const daysSinceFailure = this.computeDaysSince(entry.failedAt);
+
+    if (
+      subscription.status !== SubscriptionStatus.PAST_DUE &&
+      subscription.status !== SubscriptionStatus.UNPAID
+    ) {
+      return {
+        tenantId,
+        phase: 'NONE',
+        failedAt: null,
+        retryCount: 0,
+        nextRetryAt: null,
+        gracePeriodEndsAt: null,
+        degradedPeriodEndsAt: null,
+        cancellationAt: null,
+      };
+    }
+
+    const failedAt = subscription.currentPeriodEnd ?? subscription.updatedAt;
+    const daysSinceFailure = this.computeDaysSince(failedAt);
     const phase = this.resolvePhase(daysSinceFailure);
-    const nextRetryAt = this.computeNextRetry(entry);
+
     return {
       tenantId,
       phase,
-      failedAt: entry.failedAt,
-      retryCount: entry.retryCount,
-      nextRetryAt,
-      gracePeriodEndsAt: this.addDays(entry.failedAt, this.config.gracePeriodDays),
-      degradedPeriodEndsAt: this.addDays(entry.failedAt, this.config.degradedPeriodDays),
-      cancellationAt: this.addDays(entry.failedAt, this.config.cancellationDays),
+      failedAt,
+      retryCount: 0,
+      nextRetryAt: this.addDays(failedAt, this.config.retryAttempts[0]?.daysAfterFailure ?? 1),
+      gracePeriodEndsAt: this.addDays(failedAt, this.config.gracePeriodDays),
+      degradedPeriodEndsAt: this.addDays(failedAt, this.config.degradedPeriodDays),
+      cancellationAt: this.addDays(failedAt, this.config.cancellationDays),
     };
   }
 
-  /**
-   * Process scheduled retries for all tenants in dunning.
-   */
   async processRetries(): Promise<RetryResult[]> {
-    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
-    const results: RetryResult[] = [];
-    const now = new Date();
-    for (const [tenantId, entry] of dunningStore.entries()) {
-      if (entry.isRecovered) {
-        continue;
-      }
-      const nextRetry = this.computeNextRetry(entry);
-      if (!nextRetry || nextRetry > now) {
-        continue;
-      }
-      entry.retryCount += 1;
-      entry.lastRetryAt = now;
-      // Simulate ~30% recovery rate per retry attempt
-      const isSuccessful = Math.random() < 0.3;
-      if (isSuccessful) {
-        entry.isRecovered = true;
-      }
-      results.push({
-        tenantId,
-        invoiceId: entry.invoiceId,
-        attempt: entry.retryCount,
-        isSuccessful,
-        nextRetryAt: isSuccessful ? null : this.computeNextRetry(entry),
-      });
-    }
-    return results;
+    throw new DunningStateUnavailableError('retry processing');
   }
 
-  /**
-   * Check and process escalations (grace -> degraded -> cancelled).
-   */
   async processEscalations(): Promise<EscalationResult[]> {
-    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
-    const results: EscalationResult[] = [];
-    for (const [tenantId, entry] of dunningStore.entries()) {
-      if (entry.isRecovered) {
-        continue;
-      }
-      const daysSinceFailure = this.computeDaysSince(entry.failedAt);
-      const currentPhase = this.resolvePhase(daysSinceFailure);
-      // Check if tenant should be escalated
-      if (currentPhase === 'DEGRADED') {
-        results.push({
-          tenantId,
-          previousPhase: 'GRACE',
-          newPhase: 'DEGRADED',
-          action: 'Feature access degraded to read-only',
-        });
-      }
-      if (currentPhase === 'PENDING_CANCEL') {
-        results.push({
-          tenantId,
-          previousPhase: 'DEGRADED',
-          newPhase: 'PENDING_CANCEL',
-          action: 'Final warning sent — cancellation in 7 days',
-        });
-      }
-      if (daysSinceFailure >= this.config.cancellationDays) {
-        entry.isRecovered = false;
-        results.push({
-          tenantId,
-          previousPhase: currentPhase,
-          newPhase: 'CANCELLED',
-          action: 'Subscription auto-cancelled due to non-payment',
-        });
-      }
-    }
-    return results;
+    throw new DunningStateUnavailableError('escalation processing');
   }
 
-  /**
-   * Get aggregate recovery metrics.
-   */
   async getRecoveryMetrics(): Promise<RecoveryMetrics> {
-    // TODO: Add Prisma model for DunningEntry — using in-memory Map for now
-    let totalFailed = 0;
-    let recovered = 0;
-    let totalRecoveryDays = 0;
-    for (const entry of dunningStore.values()) {
-      totalFailed += 1;
-      if (entry.isRecovered) {
-        recovered += 1;
-        totalRecoveryDays += this.computeDaysSince(entry.failedAt);
+    const failedSubscriptions = await this.prisma.tenantSubscription.findMany({
+      where: {
+        status: {
+          in: [SubscriptionStatus.PAST_DUE, SubscriptionStatus.UNPAID],
+        },
+      },
+      select: {
+        updatedAt: true,
+        currentPeriodEnd: true,
+      },
+    });
+    const recoveredSubscriptions = await this.prisma.tenantSubscription.findMany({
+      where: {
+        status: SubscriptionStatus.ACTIVE,
+        trialStart: { not: null },
+      },
+      select: {
+        trialStart: true,
+      },
+    });
+
+    const totalFailed = failedSubscriptions.length;
+    const recovered = recoveredSubscriptions.length;
+    const totalRecoveryDays = recoveredSubscriptions.reduce((sum, entry) => {
+      if (!entry.trialStart) {
+        return sum;
       }
-    }
-    // If no real data, return realistic mock metrics
-    if (totalFailed === 0) {
-      return {
-        totalFailedPayments: 18,
-        recoveredPayments: 13,
-        recoveryRate: 72.2,
-        averageRecoveryDays: 3.8,
-        revenueRecoveredCents: 48700,
-        revenueAtRiskCents: 14500,
-      };
-    }
-    const recoveryRate = totalFailed > 0 ? (recovered / totalFailed) * 100 : 0;
-    const averageRecoveryDays = recovered > 0 ? totalRecoveryDays / recovered : 0;
+      return sum + this.computeDaysSince(entry.trialStart);
+    }, 0);
+
     return {
       totalFailedPayments: totalFailed,
       recoveredPayments: recovered,
-      recoveryRate: Math.round(recoveryRate * 10) / 10,
-      averageRecoveryDays: Math.round(averageRecoveryDays * 10) / 10,
-      revenueRecoveredCents: recovered * 2900,
-      revenueAtRiskCents: (totalFailed - recovered) * 2900,
+      recoveryRate: totalFailed > 0 ? Math.round((recovered / totalFailed) * 1000) / 10 : 0,
+      averageRecoveryDays: recovered > 0
+        ? Math.round((totalRecoveryDays / recovered) * 10) / 10
+        : 0,
+      revenueRecoveredCents: 0,
+      revenueAtRiskCents: 0,
     };
   }
-
-  // -------------------------------------------------------------------------
-  // Private helpers
-  // -------------------------------------------------------------------------
 
   private resolvePhase(daysSinceFailure: number): DunningPhase {
     if (daysSinceFailure >= this.config.cancellationDays) {
@@ -282,14 +220,6 @@ export class DunningService {
       return 'DEGRADED';
     }
     return 'GRACE';
-  }
-
-  private computeNextRetry(entry: DunningEntry): Date | null {
-    if (entry.retryCount >= this.config.retryAttempts.length) {
-      return null;
-    }
-    const attempt = this.config.retryAttempts[entry.retryCount];
-    return this.addDays(entry.failedAt, attempt.daysAfterFailure);
   }
 
   private computeDaysSince(date: Date): number {

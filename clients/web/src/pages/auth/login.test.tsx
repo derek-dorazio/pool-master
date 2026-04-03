@@ -36,9 +36,9 @@ vi.mock('@/lib/api-client', () => ({
   },
 }));
 
-function renderLogin() {
+function renderLogin(initialEntry = '/login') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <LoginPage />
     </MemoryRouter>,
   );
@@ -74,6 +74,18 @@ describe('LoginPage', () => {
     const link = screen.getByRole('link', { name: 'login.forgotPassword' });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/forgot-password');
+  });
+
+  it('preserves redirectTo in auth links when present', () => {
+    renderLogin('/login?redirectTo=%2Fjoin%2Finvite-123');
+    expect(screen.getByRole('link', { name: 'login.signUp' })).toHaveAttribute(
+      'href',
+      '/register?redirectTo=%2Fjoin%2Finvite-123',
+    );
+    expect(screen.getByRole('link', { name: 'login.forgotPassword' })).toHaveAttribute(
+      'href',
+      '/forgot-password?redirectTo=%2Fjoin%2Finvite-123',
+    );
   });
 
   it('shows validation errors on empty submit', async () => {

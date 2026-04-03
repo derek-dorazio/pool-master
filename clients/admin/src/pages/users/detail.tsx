@@ -90,7 +90,13 @@ export function Component() {
           await adminDisableUser({ client, path: { userId: id }, body: { reason: 'Admin action' } });
           break;
         case 'Send Email':
-          await adminSendEmail({ client, path: { userId: id }, body: { subject: '', body: '' } });
+          {
+            const subject = window.prompt('Email subject:');
+            if (!subject) return;
+            const body = window.prompt('Email body:');
+            if (!body) return;
+            await adminSendEmail({ client, path: { userId: id }, body: { subject, body } });
+          }
           break;
       }
     }

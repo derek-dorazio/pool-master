@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 interface BracketTeam {
   id: string;
   name: string;
-  seed: number;
+  seed: number | null;
 }
 
 interface BracketMatchup {
@@ -153,7 +153,7 @@ function BracketMatchupCard({
           )}
         >
           <span className="flex items-center gap-1.5">
-            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">{matchup.topTeam.seed}</Badge>
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">{matchup.topTeam.seed ?? '-'}</Badge>
             <span className="truncate">{matchup.topTeam.name}</span>
           </span>
           {matchup.winnerId === matchup.topTeam.id && (
@@ -177,7 +177,7 @@ function BracketMatchupCard({
           )}
         >
           <span className="flex items-center gap-1.5">
-            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">{matchup.bottomTeam.seed}</Badge>
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">{matchup.bottomTeam.seed ?? '-'}</Badge>
             <span className="truncate">{matchup.bottomTeam.name}</span>
           </span>
           {matchup.winnerId === matchup.bottomTeam.id && (

@@ -267,6 +267,28 @@ describe('Billing deep integration', () => {
       expect(body).toHaveProperty('total');
       expect(typeof body.total).toBe('number');
     });
+
+    it('returns explicit provider-sync errors for unsupported invoice detail and preview paths', async () => {
+      const upcomingRes = await getApp().inject({
+        method: 'GET',
+        url: `${API_ROUTES.billing.invoices}/upcoming`,
+        headers,
+      });
+      expect(upcomingRes.statusCode).toBe(501);
+      expect(upcomingRes.json()).toMatchObject({
+        error: 'INVOICE_SYNC_UNAVAILABLE',
+      });
+
+      const detailRes = await getApp().inject({
+        method: 'GET',
+        url: `${API_ROUTES.billing.invoices}/inv-test-123`,
+        headers,
+      });
+      expect(detailRes.statusCode).toBe(501);
+      expect(detailRes.json()).toMatchObject({
+        error: 'INVOICE_SYNC_UNAVAILABLE',
+      });
+    });
   });
 
   // ---------------------------------------------------------------------------

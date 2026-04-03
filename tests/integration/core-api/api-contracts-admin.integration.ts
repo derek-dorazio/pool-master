@@ -10,8 +10,13 @@ import {
   getApp,
   createTestUser,
   cleanupTestData,
+  getPrisma,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import {
+  MigrationListResponseSchema,
+  MigrationRunResponseSchema,
+} from '@poolmaster/shared/dto';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -29,8 +34,36 @@ describe('Admin API Contract Validation', () => {
     headers = user.headers;
     userId = user.user.id;
 
+    await getPrisma().adminUser.upsert({
+      where: { id: userId },
+      update: {
+        email: user.user.email,
+        name: user.user.displayName,
+        isActive: true,
+      },
+      create: {
+        id: userId,
+        email: user.user.email,
+        name: user.user.displayName,
+        role: 'SUPER_ADMIN',
+        permissions: [],
+        isActive: true,
+      },
+    });
+
     // Admin routes require x-admin-user-id header for auth
-    adminHeaders = { ...headers, 'x-admin-user-id': userId };
+    adminHeaders = {
+      ...headers,
+      'x-admin-user-id': userId,
+      'x-admin-user-email': user.user.email,
+    };
+  });
+
+  afterAll(async () => {
+    const prisma = getPrisma();
+    await prisma.adminAuditEntry.deleteMany({ where: { adminUserId: userId } }).catch(() => {});
+    await prisma.migrationRun.deleteMany({ where: { startedById: userId } }).catch(() => {});
+    await prisma.adminUser.deleteMany({ where: { id: userId } }).catch(() => {});
   });
 
   // -------------------------------------------------------------------------
@@ -197,6 +230,81 @@ describe('Admin API Contract Validation', () => {
         // Expected: 200 with [{ id, type, title, body, severity, startsAt, endsAt, ... }]
         expect([200, 403, 500]).toContain(res.statusCode);
       }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 6. Migration run contracts
+  // -------------------------------------------------------------------------
+  describe('Admin migration run contracts', () => {
+    let runId: string;
+
+    it('GET /api/v1/admin/migrations returns the migration dashboard contract', async () => {
+      const res = await getApp().inject({
+        method: 'GET',
+        url: '/api/v1/admin/migrations',
+        headers: adminHeaders,
+      });
+
+      expect(res.statusCode).toBe(200);
+      const parsed = MigrationListResponseSchema.safeParse(res.json());
+      expect(parsed.success).toBe(true);
+    });
+
+    it('POST /api/v1/admin/migrations/run returns a queued persisted run', async () => {
+      const res = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/admin/migrations/run',
+        headers: adminHeaders,
+        payload: {
+          migrationId: 'backfill-analytics',
+          dryRun: true,
+        },
+      });
+
+      expect(res.statusCode).toBe(201);
+      const parsed = MigrationRunResponseSchema.safeParse(res.json());
+      expect(parsed.success).toBe(true);
+      if (!parsed.success) return;
+
+      runId = parsed.data.run.id;
+      expect(parsed.data.run.status).toBe('QUEUED');
+      expect(parsed.data.run.dryRun).toBe(true);
+      expect(parsed.data.run.progress.totalRecords).toBeGreaterThan(0);
+      expect(parsed.data.run.progress.processed).toBe(0);
+    });
+
+    it('GET /api/v1/admin/migrations/runs/:runId returns the run contract', async () => {
+      const res = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/migrations/runs/${runId}`,
+        headers: adminHeaders,
+      });
+
+      expect(res.statusCode).toBe(200);
+      const parsed = MigrationRunResponseSchema.safeParse(res.json());
+      expect(parsed.success).toBe(true);
+      if (!parsed.success) return;
+
+      expect(parsed.data.run.id).toBe(runId);
+      expect(parsed.data.run.migrationId).toBe('backfill-analytics');
+    });
+
+    it('POST /api/v1/admin/migrations/runs/:runId/cancel cancels a queued run', async () => {
+      const res = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/admin/migrations/runs/${runId}/cancel`,
+        headers: adminHeaders,
+      });
+
+      expect(res.statusCode).toBe(200);
+      const parsed = MigrationRunResponseSchema.safeParse(res.json());
+      expect(parsed.success).toBe(true);
+      if (!parsed.success) return;
+
+      expect(parsed.data.run.id).toBe(runId);
+      expect(parsed.data.run.status).toBe('CANCELLED');
+      expect(parsed.data.run.completedAt).not.toBeNull();
     });
   });
 });

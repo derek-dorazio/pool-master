@@ -7,6 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import { SearchService } from './search-service';
 import {
   zodToJsonSchema,
+  ApiErrorSchema,
 } from '@poolmaster/shared/dto';
 import {
   SearchResultsResponseSchema,
@@ -14,11 +15,14 @@ import {
   DiscoverContestsResponseSchema,
   DiscoveryReportResponseSchema,
 } from '@poolmaster/shared/dto/search.dto';
+import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto/leagues.dto';
 import {
+  mapLeagueMembershipToDto,
   mapDiscoverableContestToDto,
   mapDiscoverableLeagueToDto,
   mapSearchParticipantsResponseToDto,
 } from '../../mappers';
+import { DiscoverLeagueJoinError } from './search-service';
 
 export async function searchModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -91,6 +95,16 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Search'],
       summary: 'Discover public leagues',
       operationId: 'discoverLeagues',
+      querystring: {
+        type: 'object',
+        properties: {
+          q: { type: 'string' },
+          sport: { type: 'string' },
+          sort: { type: 'string', enum: ['POPULAR', 'NEWEST', 'ACTIVITY'] },
+          limit: { type: 'string' },
+          offset: { type: 'string' },
+        },
+      },
       response: { 200: zodToJsonSchema(DiscoverLeaguesResponseSchema) },
     },
     handler: async (request) => {
@@ -126,6 +140,16 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Search'],
       summary: 'Discover open contests',
       operationId: 'discoverContests',
+      querystring: {
+        type: 'object',
+        properties: {
+          q: { type: 'string' },
+          sport: { type: 'string' },
+          sort: { type: 'string', enum: ['STARTING_SOON', 'POPULAR', 'PRIZE_POOL'] },
+          limit: { type: 'string' },
+          offset: { type: 'string' },
+        },
+      },
       response: { 200: zodToJsonSchema(DiscoverContestsResponseSchema) },
     },
     handler: async (request) => {
@@ -143,6 +167,52 @@ export async function searchModule(fastify: FastifyInstance): Promise<void> {
         ),
         total: result.total,
       };
+    },
+  });
+
+  fastify.post<{
+    Params: { leagueId: string };
+  }>('/discover/leagues/:leagueId/join', {
+    schema: {
+      tags: ['Search'],
+      summary: 'Join an open public league from discovery',
+      operationId: 'joinDiscoverableLeague',
+      params: {
+        type: 'object',
+        required: ['leagueId'],
+        properties: {
+          leagueId: { type: 'string' },
+        },
+      },
+      response: {
+        201: zodToJsonSchema(LeagueMembershipResponseSchema),
+        400: zodToJsonSchema(ApiErrorSchema),
+        401: zodToJsonSchema(ApiErrorSchema),
+        404: zodToJsonSchema(ApiErrorSchema),
+        409: zodToJsonSchema(ApiErrorSchema),
+        501: zodToJsonSchema(ApiErrorSchema),
+      },
+    },
+    handler: async (request, reply) => {
+      const userId = request.headers['x-user-id'] as string | undefined;
+      if (!userId) {
+        return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+      }
+
+      try {
+        const membership = await searchService.joinDiscoverableLeague(request.params.leagueId, userId);
+        return reply.status(201).send({
+          membership: mapLeagueMembershipToDto(membership),
+        });
+      } catch (error) {
+        if (error instanceof DiscoverLeagueJoinError) {
+          return reply.status(error.statusCode).send({
+            error: error.code,
+            message: error.message,
+          });
+        }
+        throw error;
+      }
     },
   });
 

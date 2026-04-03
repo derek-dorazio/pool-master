@@ -73,11 +73,22 @@ export function buildApp() {
 
   registerScoringTemplates(SCORING_TEMPLATES as Record<string, Record<string, unknown>>);
 
+  const registry = new ProviderRegistry();
+  registry.register(Sport.GOLF, new PgaTourAdapter(), 'PRIMARY');
+  registry.register(Sport.F1, new OpenF1Adapter(), 'PRIMARY');
+  registry.register(Sport.NFL, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.NBA, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.MLB, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.NHL, new EspnAdapter(), 'PRIMARY');
+  registry.register(Sport.NCAA_BASKETBALL, new EspnAdapter(), 'PRIMARY');
+  const oddsAdapter = new OddsApiAdapter();
+  const ingestionPersistence = new IngestionPersistence(prisma);
+
   // --- Scoring subsystem (Prisma-backed) ---
   const scoreStore = new ScoreStore(prisma);
   const contestLookup = new ContestLookup(prisma);
   const standingsRollup = new StandingsRollup({ eventBus, scoreStore, prisma });
-  const scoringService = new ScoringService({ scoreStore, standingsRollup });
+  const scoringService = new ScoringService({ scoreStore, standingsRollup, prisma });
 
   // =========================================================================
   // Core plugins
@@ -103,7 +114,7 @@ export function buildApp() {
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   app.register(templatesModule, { prefix: '/api/v1/templates' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
-  app.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool' });
+  app.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool', registry });
   app.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
   app.register(historyModule, { prefix: '/api/v1' });
   app.register(searchModule, { prefix: '/api/v1/search' });
@@ -159,18 +170,6 @@ export function buildApp() {
   // =========================================================================
   // Ingestion module (from ingestion-worker)
   // =========================================================================
-  const registry = new ProviderRegistry();
-  registry.register(Sport.GOLF, new PgaTourAdapter(), 'PRIMARY');
-  registry.register(Sport.F1, new OpenF1Adapter(), 'PRIMARY');
-  registry.register(Sport.NFL, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.NBA, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.MLB, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.NHL, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.NCAA_BASKETBALL, new EspnAdapter(), 'PRIMARY');
-  const oddsAdapter = new OddsApiAdapter();
-
-  const ingestionPersistence = new IngestionPersistence(prisma);
-
   const ingestionCallbacks: IngestionCallbacks = {
     async onEvents(events: SportEvent[]) {
       app.log.info({ count: events.length }, 'Ingested events');

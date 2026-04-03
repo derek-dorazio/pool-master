@@ -42,6 +42,17 @@ export const SelfExclusionCreatedResponseSchema = z.object({
   exclusionId: z.string(),
 });
 
+export const SessionReminderDtoSchema = z.object({
+  enabled: z.boolean(),
+  intervalMinutes: z.number(),
+});
+
+export const SessionReminderResponseSchema = z.object({
+  sessionReminder: SessionReminderDtoSchema,
+});
+
+export const SessionReminderUpdateRequestSchema = SessionReminderDtoSchema;
+
 export const SelfExclusionDtoSchema = z.object({
   id: z.string(),
   userId: z.string(),

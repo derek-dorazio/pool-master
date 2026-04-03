@@ -15,6 +15,9 @@ const statusColors: Record<string, string> = {
 
 export function DraftHeader({ draft }: { draft: DraftState }) {
   const [soundOn, setSoundOn] = useState(false);
+  const progressLabel = draft.isTurnBased
+    ? `Round ${draft.currentRound}, Pick ${draft.currentPickNumber} of ${draft.totalPicks}`
+    : `Selections ${draft.myEntryId ? draft.picks.filter((pick) => pick.entryId === draft.myEntryId).length : 0} of ${draft.rosterSize}`;
 
   return (
     <div className="flex items-center justify-between border-b bg-background px-4 h-14 shrink-0">
@@ -27,11 +30,11 @@ export function DraftHeader({ draft }: { draft: DraftState }) {
       </div>
 
       <div className="flex items-center gap-2 text-sm">
-        <span className="font-medium">
-          Round {draft.currentRound}, Pick {draft.currentPickNumber} of {draft.totalPicks}
-        </span>
+        <span className="font-medium">{progressLabel}</span>
         {draft.isMyPick && (
-          <Badge className="bg-green-600 text-white animate-pulse">Your Pick!</Badge>
+          <Badge className="bg-green-600 text-white animate-pulse">
+            {draft.isTurnBased ? 'Your Pick!' : 'You Can Submit'}
+          </Badge>
         )}
       </div>
 

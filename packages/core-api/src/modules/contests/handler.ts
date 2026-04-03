@@ -6,16 +6,28 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { extractTenantContext } from '../../core/tenant-context';
 import {
   toContestListResponse,
+  toContestEntryListResponse,
+  toContestEntryResponse,
+  toMyContestEntryResponse,
   toContestResponse,
 } from '../../mappers/contests.mapper';
 import type { ContestService } from './service';
-import { ContestNotFoundError, ContestOperationError } from './service';
+import {
+  ContestEntryNotFoundError,
+  ContestEntryOperationError,
+  ContestNotFoundError,
+  ContestOperationError,
+} from './service';
 
 export function createContestHandlers(contestService: ContestService) {
   return {
     createContest,
     listContests,
     getContest,
+    listEntries,
+    getMyEntry,
+    createMyEntry,
+    deleteMyEntry,
     updateContest,
     deleteContest,
   };
@@ -80,6 +92,93 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'Contest not found' });
     }
     return reply.send(toContestResponse(result.contest, result.selectionConfig));
+  }
+
+  async function listEntries(
+    request: FastifyRequest<{ Params: { contestId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const { tenantId } = extractTenantContext(request);
+    const userId = request.headers['x-user-id'] as string;
+    try {
+      const result = await contestService.listEntries(request.params.contestId, tenantId, userId);
+      return reply.send(toContestEntryListResponse({
+        contestId: request.params.contestId,
+        entries: result.entries,
+        isJoined: result.isJoined,
+        myEntryId: result.myEntryId,
+      }));
+    } catch (err) {
+      if (err instanceof ContestNotFoundError) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      if (err instanceof ContestEntryOperationError) {
+        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+      }
+      throw err;
+    }
+  }
+
+  async function getMyEntry(
+    request: FastifyRequest<{ Params: { contestId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const { tenantId } = extractTenantContext(request);
+    const userId = request.headers['x-user-id'] as string;
+    try {
+      const entry = await contestService.getMyEntry(request.params.contestId, tenantId, userId);
+      return reply.send(toMyContestEntryResponse(request.params.contestId, entry));
+    } catch (err) {
+      if (err instanceof ContestNotFoundError) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      if (err instanceof ContestEntryOperationError) {
+        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+      }
+      throw err;
+    }
+  }
+
+  async function createMyEntry(
+    request: FastifyRequest<{ Params: { contestId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const { tenantId } = extractTenantContext(request);
+    const userId = request.headers['x-user-id'] as string;
+    try {
+      const result = await contestService.createEntry(request.params.contestId, tenantId, userId);
+      return reply.status(result.created ? 201 : 200).send(
+        toContestEntryResponse(request.params.contestId, result.entry),
+      );
+    } catch (err) {
+      if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      if (err instanceof ContestEntryOperationError) {
+        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+      }
+      throw err;
+    }
+  }
+
+  async function deleteMyEntry(
+    request: FastifyRequest<{ Params: { contestId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const { tenantId } = extractTenantContext(request);
+    const userId = request.headers['x-user-id'] as string;
+    try {
+      await contestService.deleteMyEntry(request.params.contestId, tenantId, userId);
+      return reply.status(204).send();
+    } catch (err) {
+      if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      if (err instanceof ContestEntryOperationError) {
+        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+      }
+      throw err;
+    }
   }
 
   async function updateContest(

@@ -120,6 +120,69 @@ describe('Contests Integration', () => {
     });
   });
 
+  describe('contest entry self-service', () => {
+    let entryContestId: string;
+
+    beforeAll(async () => {
+      const res = await getApp().inject({
+        method: 'POST',
+        url: API_ROUTES.leagues.contests(leagueId),
+        headers: ownerHeaders,
+        payload: {
+          name: 'Entry Flow Pool',
+          contestType: ContestType.SINGLE_EVENT,
+          selectionType: SelectionType.SNAKE_DRAFT,
+          scoringEngine: ScoringEngine.STROKE_PLAY,
+        },
+      });
+      entryContestId = (res.json().contest ?? res.json()).id;
+    });
+
+    it('creates, lists, returns, and deletes the current user entry', async () => {
+      const createRes = await getApp().inject({
+        method: 'POST',
+        url: API_ROUTES.contests.myEntry(entryContestId),
+        headers: ownerHeaders,
+      });
+      expect([200, 201]).toContain(createRes.statusCode);
+      expect(createRes.json().entry.name).toContain('Contest Owner');
+
+      const listRes = await getApp().inject({
+        method: 'GET',
+        url: API_ROUTES.contests.entries(entryContestId),
+        headers: ownerHeaders,
+      });
+      expect(listRes.statusCode).toBe(200);
+      expect(listRes.json().isJoined).toBe(true);
+      expect(listRes.json().total).toBe(1);
+
+      const myEntryRes = await getApp().inject({
+        method: 'GET',
+        url: API_ROUTES.contests.myEntry(entryContestId),
+        headers: ownerHeaders,
+      });
+      expect(myEntryRes.statusCode).toBe(200);
+      expect(myEntryRes.json().entry.ownerDisplayName).toBe('Contest Owner');
+
+      const headersNoContentType = { ...ownerHeaders };
+      delete headersNoContentType['content-type'];
+      const deleteRes = await getApp().inject({
+        method: 'DELETE',
+        url: API_ROUTES.contests.myEntry(entryContestId),
+        headers: headersNoContentType,
+      });
+      expect(deleteRes.statusCode).toBe(204);
+
+      const afterDeleteRes = await getApp().inject({
+        method: 'GET',
+        url: API_ROUTES.contests.myEntry(entryContestId),
+        headers: ownerHeaders,
+      });
+      expect(afterDeleteRes.statusCode).toBe(200);
+      expect(afterDeleteRes.json().entry).toBeNull();
+    });
+  });
+
   describe('PUT /api/v1/contests/:contestId', () => {
     it('updates the contest name', async () => {
       const res = await getApp().inject({

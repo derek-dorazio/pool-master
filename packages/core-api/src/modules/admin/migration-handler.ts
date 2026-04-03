@@ -6,8 +6,13 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import {
+  toMigrationListResponse,
+  toMigrationRunResponse,
+} from '../../mappers/admin-migration.mapper';
 import type { MigrationService, StartMigrationInput } from './migration-service';
 import {
+  AdminUserNotFoundError,
   MigrationNotFoundError,
   MigrationRunNotFoundError,
   MigrationAlreadyRunningError,
@@ -46,8 +51,8 @@ export function createMigrationHandlers(service: MigrationService) {
     _request: FastifyRequest,
     reply: FastifyReply,
   ) {
-    const items = await service.listMigrations();
-    return reply.send({ items, total: items.length });
+    const data = await service.listMigrations();
+    return reply.send(toMigrationListResponse(data));
   }
 
   // --- Start a migration run ---
@@ -60,13 +65,16 @@ export function createMigrationHandlers(service: MigrationService) {
 
     try {
       const run = await service.startRun(request.body, adminUserId, adminUserEmail);
-      return reply.status(201).send(run);
+      return reply.status(201).send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
       }
       if (err instanceof MigrationAlreadyRunningError) {
         return reply.status(409).send({ error: 'ALREADY_RUNNING', message: err.message });
+      }
+      if (err instanceof AdminUserNotFoundError) {
+        return reply.status(403).send({ error: 'FORBIDDEN', message: err.message });
       }
       throw err;
     }
@@ -80,7 +88,7 @@ export function createMigrationHandlers(service: MigrationService) {
   ) {
     try {
       const run = await service.getRunDetail(request.params.runId);
-      return reply.send(run);
+      return reply.send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationRunNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -103,10 +111,13 @@ export function createMigrationHandlers(service: MigrationService) {
         adminUserId,
         adminUserEmail,
       );
-      return reply.send(run);
+      return reply.send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationRunNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      if (err instanceof AdminUserNotFoundError) {
+        return reply.status(403).send({ error: 'FORBIDDEN', message: err.message });
       }
       throw err;
     }

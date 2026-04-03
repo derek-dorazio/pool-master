@@ -49,6 +49,10 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     });
     return mapToEntry(row);
   }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.contestEntry.delete({ where: { id } });
+  }
 }
 
 function mapToEntry(row: {

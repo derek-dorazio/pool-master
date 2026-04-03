@@ -11,9 +11,9 @@ vi.mock('react-router-dom', async () => {
 });
 
 const mockMembers = [
-  { id: 'm1', userId: 'u1', displayName: 'Mike Johnson', role: 'commissioner', joinedAt: '2025-08-15T00:00:00Z' },
-  { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'co-commissioner', joinedAt: '2025-08-16T00:00:00Z' },
-  { id: 'm3', userId: 'u3', displayName: 'Dan Miller', role: 'member', joinedAt: '2025-08-20T00:00:00Z' },
+  { id: 'm1', userId: 'u1', displayName: 'Mike Johnson', role: 'OWNER', joinedAt: '2025-08-15T00:00:00Z' },
+  { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'COMMISSIONER', joinedAt: '2025-08-16T00:00:00Z' },
+  { id: 'm3', userId: 'u3', displayName: 'Dan Miller', role: 'MANAGER', joinedAt: '2025-08-20T00:00:00Z' },
 ];
 
 const mockLeague = {
@@ -22,7 +22,7 @@ const mockLeague = {
   memberCount: 3,
   activeContestCount: 0,
   visibility: 'PRIVATE',
-  role: 'commissioner',
+  role: 'OWNER',
 };
 
 vi.mock('@tanstack/react-query', async () => {
@@ -42,6 +42,14 @@ vi.mock('@tanstack/react-query', async () => {
       }
       return { data: undefined, isLoading: false, isError: false, error: null };
     },
+    useMutation: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      isSuccess: false,
+    }),
+    useQueryClient: () => ({
+      invalidateQueries: vi.fn(),
+    }),
   };
 });
 
@@ -72,11 +80,9 @@ describe('LeagueMembersPage', () => {
 
   it('shows role badge for each member', () => {
     renderPage();
+    expect(screen.getByText('Owner')).toBeInTheDocument();
     expect(screen.getByText('Commissioner')).toBeInTheDocument();
-    expect(screen.getByText('Co-Commissioner')).toBeInTheDocument();
-    // "Member" appears both as a table header and as a role badge; use getAllByText
-    const memberTexts = screen.getAllByText('Member');
-    expect(memberTexts.length).toBeGreaterThanOrEqual(2); // header + badge
+    expect(screen.getByText('Manager')).toBeInTheDocument();
   });
 
   it('shows invite button', () => {

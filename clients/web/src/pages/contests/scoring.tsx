@@ -1,163 +1,72 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useContest } from '@/features/contests/hooks/use-contest';
-import { client, getStandings } from '@/lib/api';
-
-interface ParticipantScoring {
-  id: string;
-  name: string;
-  tier: string;
-  score: number;
-  pctOfTotal: number;
-  stats: Array<{ label: string; detail: string; points: number }>;
-}
-
-interface ScoringEntry {
-  id: string;
-  name: string;
-}
-
-interface ScoringRule {
-  stat: string;
-  points: string;
-  condition: string;
-}
-
-interface ScoringResponse {
-  entries: ScoringEntry[];
-  participants: ParticipantScoring[];
-  rules: ScoringRule[];
-}
-
-function buildScoringResponse(
-  standings:
-    | {
-        standings: Array<{
-          rank: number;
-          entryId: string;
-          entryName: string;
-          ownerDisplayName: string;
-          totalScore: number;
-        }>;
-      }
-    | undefined,
-): ScoringResponse {
-  const participants = (standings?.standings ?? []).map((entry) => ({
-    id: entry.entryId,
-    name: entry.entryName,
-    tier: `Rank ${entry.rank}`,
-    score: entry.totalScore,
-    pctOfTotal: 0,
-    stats: [
-      {
-        label: 'Standing',
-        detail: `${entry.ownerDisplayName} · Rank ${entry.rank}`,
-        points: entry.totalScore,
-      },
-    ],
-  }));
-  const totalScore = participants.reduce((sum, participant) => sum + participant.score, 0);
-
-  return {
-    entries: participants.map((participant) => ({
-      id: participant.id,
-      name: participant.name,
-    })),
-    participants: participants.map((participant) => ({
-      ...participant,
-      pctOfTotal: totalScore > 0 ? (participant.score / totalScore) * 100 : 0,
-    })),
-    rules: [],
-  };
-}
-
-
-function ParticipantRow({ participant }: { participant: ParticipantScoring }) {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <>
-      <tr
-        className="cursor-pointer border-b transition-colors hover:bg-muted/50"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-2">
-            {expanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span className="font-medium">{participant.name}</span>
-          </div>
-        </td>
-        <td className="px-4 py-3 text-muted-foreground">{participant.tier}</td>
-        <td className="px-4 py-3 text-right font-mono font-medium">{participant.score}</td>
-        <td className="px-4 py-3 text-right text-muted-foreground">{participant.pctOfTotal.toFixed(1)}%</td>
-      </tr>
-      {expanded && (
-        <tr className="border-b">
-          <td colSpan={4} className="bg-muted/30 px-4 py-3">
-            <div className="ml-6 space-y-1">
-              {participant.stats.map((stat, i) => (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {stat.label}{' '}
-                    <span className="font-mono text-xs">({stat.detail})</span>
-                  </span>
-                  <span
-                    className={cn(
-                      'font-mono font-medium',
-                      stat.points >= 0 ? 'text-green-600' : 'text-red-600'
-                    )}
-                  >
-                    {stat.points >= 0 ? '+' : ''}{stat.points}
-                  </span>
-                </div>
-              ))}
-              <div className="mt-2 flex items-center justify-between border-t pt-2 text-sm font-medium">
-                <span>Total</span>
-                <span className="font-mono">{participant.score} pts</span>
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
-  );
-}
+import { useStandings } from '@/features/contests/hooks/use-standings';
+import { client } from '@/lib/api';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import {
+  EntryScoreDetailResponseSchema,
+  type StandingsResponse,
+} from '@poolmaster/shared/dto';
 
 export function Component() {
   const { contestId } = useParams();
   const { data: contest } = useContest(contestId);
+  const { data: standings, isLoading: standingsLoading, isError: standingsError, error: standingsQueryError } =
+    useStandings(contestId) as {
+      data: StandingsResponse | undefined;
+      isLoading: boolean;
+      isError: boolean;
+      error: unknown;
+    };
   const [selectedEntry, setSelectedEntry] = useState('');
-  const [rulesExpanded, setRulesExpanded] = useState(false);
 
-  const { data: scoring, isLoading } = useQuery({
-    queryKey: ['contests', contestId, 'scoring', selectedEntry],
-    queryFn: async (): Promise<ScoringResponse> => {
-      const { data, error } = await getStandings({
-        client,
-        path: { contestId: contestId! },
+  useEffect(() => {
+    if (!selectedEntry && standings?.standings[0]?.entryId) {
+      setSelectedEntry(standings.standings[0].entryId);
+    }
+  }, [selectedEntry, standings]);
+
+  const { data: scoreDetail, isLoading: scoreLoading, isError: scoreError, error: scoreQueryError } = useQuery({
+    queryKey: ['contests', contestId, 'entry-score', selectedEntry],
+    queryFn: async () => {
+      const { data, error } = await client.get({
+        url: API_ROUTES.scoring.entry(contestId!, selectedEntry),
       });
       if (error) throw error;
-      return buildScoringResponse(data);
+      return EntryScoreDetailResponseSchema.parse(data);
     },
+    enabled: !!contestId && !!selectedEntry,
     staleTime: 2 * 60 * 1000,
   });
 
-  const entries = scoring?.entries ?? [];
-  const participants = scoring?.participants ?? [];
-  const scoringRules = scoring?.rules ?? [];
-  const totalScore = participants.reduce((sum, p) => sum + p.score, 0);
-
-  if (isLoading) {
+  if (standingsLoading) {
     return <div className="space-y-6"><div className="h-8 w-64 rounded bg-muted animate-pulse" /></div>;
+  }
+
+  if (standingsError || !standings) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/contests/${contestId}`}>
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Back to Contest
+          </Link>
+        </Button>
+        <Card>
+          <CardContent className="py-10 text-center">
+            <h1 className="text-2xl font-bold">Score breakdown unavailable</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {standingsQueryError instanceof Error ? standingsQueryError.message : 'Standings are unavailable for this contest.'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -174,7 +83,7 @@ export function Component() {
       <div>
         <h1 className="text-3xl font-bold">Score Breakdown</h1>
         <p className="text-sm text-muted-foreground">
-          {contest?.name ?? 'Contest'} &middot; DFS Points scoring
+          {contest?.contest.name ?? 'Contest'} · real entry scoring timeline
         </p>
       </div>
 
@@ -183,80 +92,83 @@ export function Component() {
         <select
           id="entry-select"
           value={selectedEntry}
-          onChange={(e) => setSelectedEntry(e.target.value)}
+          onChange={(event) => setSelectedEntry(event.target.value)}
           className="flex h-10 w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {entries.map((entry) => (
-            <option key={entry.id} value={entry.id}>{entry.name}</option>
+          {standings.standings.map((entry) => (
+            <option key={entry.entryId} value={entry.entryId}>
+              {entry.entryName} ({entry.ownerDisplayName})
+            </option>
           ))}
         </select>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Entry Scorecard</CardTitle>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Total Score</p>
-              <p className="text-2xl font-bold">{totalScore}</p>
-            </div>
-          </div>
+          <CardTitle>Entry Timeline</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2 text-left font-medium">Participant</th>
-                <th className="px-4 py-2 text-left font-medium">Position</th>
-                <th className="px-4 py-2 text-right font-medium">Score</th>
-                <th className="px-4 py-2 text-right font-medium">% of Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {participants.map((p) => (
-                <ParticipantRow key={p.id} participant={p} />
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+        <CardContent>
+          {scoreLoading && <p className="text-sm text-muted-foreground">Loading score details...</p>}
 
-      <Card>
-        <CardHeader>
-          <button
-            className="flex w-full items-center justify-between text-left"
-            onClick={() => setRulesExpanded(!rulesExpanded)}
-          >
-            <CardTitle>Scoring Rules Reference</CardTitle>
-            {rulesExpanded ? (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            )}
-          </button>
-        </CardHeader>
-        {rulesExpanded && (
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-2 text-left font-medium">Stat</th>
-                  <th className="px-4 py-2 text-left font-medium">Points</th>
-                  <th className="px-4 py-2 text-left font-medium">Condition</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scoringRules.map((rule, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="px-4 py-2">{rule.stat}</td>
-                    <td className="px-4 py-2 font-mono">{rule.points}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{rule.condition}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        )}
+          {scoreError && (
+            <p className="text-sm text-muted-foreground">
+              {scoreQueryError instanceof Error ? scoreQueryError.message : 'Score detail is unavailable for this entry.'}
+            </p>
+          )}
+
+          {!scoreLoading && !scoreError && scoreDetail && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Current Total</p>
+                  <p className="text-2xl font-bold">{scoreDetail.totalScore}</p>
+                </div>
+                <div className="text-right text-sm text-muted-foreground">
+                  <p>{scoreDetail.timeline.length} scoring events</p>
+                </div>
+              </div>
+
+              {scoreDetail.timeline.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No score events have been recorded for this entry yet.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="px-4 py-2 text-left font-medium">Timestamp</th>
+                        <th className="px-4 py-2 text-right font-medium">Points Earned</th>
+                        <th className="px-4 py-2 text-right font-medium">Running Total</th>
+                        <th className="px-4 py-2 text-left font-medium">Participant Contributions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scoreDetail.timeline.map((event, index) => (
+                        <tr key={`${event.eventTimestamp}-${index}`} className="border-b last:border-0">
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {new Date(event.eventTimestamp).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono font-medium">
+                            {event.pointsEarned >= 0 ? '+' : ''}{event.pointsEarned}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono">{event.runningTotal}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {event.participantBreakdowns.map((breakdown) => (
+                              <div key={breakdown.participantId}>
+                                {breakdown.participantName ?? breakdown.participantId}: {breakdown.finalScore}
+                              </div>
+                            ))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   );

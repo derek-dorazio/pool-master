@@ -1,6 +1,6 @@
+import { act, waitFor } from '@testing-library/react';
 import { renderHook } from '@/test-utils';
-import { waitFor } from '@testing-library/react';
-import { useTrendingLeagues, usePopularContests } from './use-discovery';
+import { useTrendingLeagues, usePopularContests, useJoinLeague } from './use-discovery';
 
 describe('useTrendingLeagues', () => {
   it('returns leagues array', async () => {
@@ -64,5 +64,19 @@ describe('usePopularContests', () => {
     expect(contest).toHaveProperty('sport');
     expect(contest).toHaveProperty('memberCount');
     expect(contest).toHaveProperty('status');
+  });
+});
+
+describe('useJoinLeague', () => {
+  it('posts to the real discovery join route and returns the membership response', async () => {
+    const { result } = renderHook(() => useJoinLeague());
+
+    await act(async () => {
+      await result.current.mutateAsync('league-joinable');
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.membership.leagueId).toBe('league-joinable');
+    expect(result.current.data?.membership.role).toBe('MANAGER');
   });
 });

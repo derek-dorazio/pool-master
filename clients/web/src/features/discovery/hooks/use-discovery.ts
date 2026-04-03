@@ -1,61 +1,83 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type {
+  DiscoverableContestDto,
+  DiscoverableLeagueDto,
+  DiscoverContestsResponse,
+  DiscoverLeaguesResponse,
+} from '@poolmaster/shared/dto/search.dto';
+import {
+  DiscoverContestsResponseSchema,
+  DiscoverLeaguesResponseSchema,
+} from '@poolmaster/shared/dto/search.dto';
+import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto/leagues.dto';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { client } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 
-export interface DiscoverableLeague {
-  id: string;
-  name: string;
-  description: string | null;
-  sport: string;
-  memberCount: number;
-  maxMembers: number | null;
-  activeContestCount: number;
-  activityLevel: string;
-  joinPolicy: string;
-  commissionerName: string;
-}
-
-export interface DiscoverableContest {
-  id: string;
-  leagueName: string;
-  contestName: string;
-  sport: string;
-  eventName: string | null;
-  draftType: string | null;
-  memberCount: number;
-  maxMembers: number | null;
-  entryFee: number | null;
-  prizePool: number | null;
-  draftStart: string | null;
-  lockTime: string | null;
-  status: string;
-}
-
-interface LeaguesResponse {
-  leagues: DiscoverableLeague[];
-  total: number;
-}
-
-interface ContestsResponse {
-  contests: DiscoverableContest[];
-  total: number;
-}
+export type DiscoverableLeague = DiscoverableLeagueDto;
+export type DiscoverableContest = DiscoverableContestDto;
 
 async function fetchDiscoverLeagues(query: Record<string, string>) {
-  const { data, error } = await client.get<LeaguesResponse>({
-    url: '/api/v1/search/discover/leagues',
+  const { data, error } = await client.get<DiscoverLeaguesResponse>({
+    url: API_ROUTES.search.discoverLeagues,
     query,
   });
   if (error) throw error;
-  return data as LeaguesResponse;
+  return DiscoverLeaguesResponseSchema.parse(data);
 }
 
 async function fetchDiscoverContests(query: Record<string, string>) {
-  const { data, error } = await client.get<ContestsResponse>({
-    url: '/api/v1/search/discover/contests',
+  const { data, error } = await client.get<DiscoverContestsResponse>({
+    url: API_ROUTES.search.discoverContests,
     query,
   });
   if (error) throw error;
-  return data as ContestsResponse;
+  return DiscoverContestsResponseSchema.parse(data);
+}
+
+function normalizeLeagueSort(sort?: string): string | undefined {
+  switch (sort) {
+    case 'active':
+    case 'ACTIVITY':
+      return 'ACTIVITY';
+    case 'newest':
+    case 'NEWEST':
+      return 'NEWEST';
+    case 'members':
+    case 'popular':
+    case 'POPULAR':
+      return 'POPULAR';
+    default:
+      return undefined;
+  }
+}
+
+function normalizeContestSort(sort?: string): string | undefined {
+  switch (sort) {
+    case 'popular':
+    case 'POPULAR':
+      return 'POPULAR';
+    case 'starting':
+    case 'STARTING_SOON':
+      return 'STARTING_SOON';
+    case 'prize':
+    case 'PRIZE_POOL':
+      return 'PRIZE_POOL';
+    default:
+      return undefined;
+  }
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+    if ('error' in error && typeof error.error === 'string') {
+      return error.error;
+    }
+  }
+  return 'Please try again.';
 }
 
 export function useTrendingLeagues(sport?: string) {
@@ -88,7 +110,8 @@ export function useBrowseLeagues(filters: { sport?: string; sort?: string; q?: s
     queryFn: async () => {
       const query: Record<string, string> = {};
       if (filters.sport && filters.sport !== 'ALL') query.sport = filters.sport;
-      if (filters.sort) query.sort = filters.sort;
+      const sort = normalizeLeagueSort(filters.sort);
+      if (sort) query.sort = sort;
       if (filters.q) query.q = filters.q;
       return fetchDiscoverLeagues(query);
     },
@@ -101,7 +124,8 @@ export function useBrowseContests(filters: { sport?: string; sort?: string; q?: 
     queryFn: async () => {
       const query: Record<string, string> = {};
       if (filters.sport && filters.sport !== 'ALL') query.sport = filters.sport;
-      if (filters.sort) query.sort = filters.sort;
+      const sort = normalizeContestSort(filters.sort);
+      if (sort) query.sort = sort;
       if (filters.q) query.q = filters.q;
       return fetchDiscoverContests(query);
     },
@@ -113,15 +137,25 @@ export function useJoinLeague() {
   return useMutation({
     mutationFn: async (leagueId: string) => {
       const { data, error } = await client.post({
-        url: '/api/v1/search/discover/leagues/{leagueId}/join',
+        url: API_ROUTES.search.joinDiscoverableLeague('{leagueId}'),
         path: { leagueId },
       });
       if (error) throw error;
-      return data;
+      return LeagueMembershipResponseSchema.parse(data);
     },
     onSuccess: () => {
+      toast({
+        title: 'League joined',
+        description: 'You are now a member of this league.',
+      });
       queryClient.invalidateQueries({ queryKey: ['discover'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'leagues'] });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Unable to join league',
+        description: getErrorMessage(error),
+      });
     },
   });
 }

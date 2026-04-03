@@ -12,7 +12,7 @@ export function ProfilePage() {
       <div>
         <h1 className="text-3xl font-bold">Profile</h1>
         <p className="mt-1 text-muted-foreground">
-          Manage your display name, avatar, bio, and public profile information.
+          Manage your display name and sign-in details.
         </p>
       </div>
 

@@ -23,7 +23,8 @@ export function Component() {
   const { data: billingEnabled, isLoading: enabledLoading } = useBillingEnabled();
   const { data: invoices, isLoading: invoicesLoading } = useInvoices();
 
-  const showEmptyFreeState = !billingEnabled || (invoices && invoices.length === 0);
+  const invoiceItems = invoices?.items ?? [];
+  const showEmptyFreeState = !billingEnabled || (invoices && invoiceItems.length === 0);
 
   return (
     <div className="space-y-6">
@@ -60,7 +61,7 @@ export function Component() {
           <CardHeader>
             <CardTitle className="text-lg">Invoices</CardTitle>
             <CardDescription>
-              {invoices?.length ?? 0} invoice{invoices?.length !== 1 ? 's' : ''} found
+              {invoices?.total ?? 0} invoice{invoices?.total !== 1 ? 's' : ''} found
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -75,7 +76,7 @@ export function Component() {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoices?.map((invoice) => (
+                  {invoiceItems.map((invoice) => (
                     <tr key={invoice.id} className="border-b last:border-0">
                       <td className="py-3 pr-4">{invoice.date}</td>
                       <td className="py-3 pr-4 font-mono text-xs">

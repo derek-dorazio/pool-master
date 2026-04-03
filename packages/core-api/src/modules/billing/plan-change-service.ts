@@ -74,12 +74,6 @@ const RESOURCE_DEGRADATION_ACTION: Record<string, UsageExceedance['action']> = {
 };
 
 // ---------------------------------------------------------------------------
-// In-memory degradation store
-// ---------------------------------------------------------------------------
-
-const degradationStore: Map<string, DegradationResult> = new Map();
-
-// ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
@@ -139,7 +133,7 @@ export class PlanChangeService {
     if (!entitlements) {
       return [];
     }
-    const usageCounts = await this.getMockUsageCounts(tenantId);
+    const usageCounts = await this.getUsageCounts(tenantId);
     const exceedances: UsageExceedance[] = [];
     const limits: Array<{ resource: string; field: keyof PlanEntitlements }> = [
       { resource: 'LEAGUES', field: 'max_leagues' },
@@ -170,13 +164,11 @@ export class PlanChangeService {
     toPlan: string,
   ): Promise<DegradationResult> {
     const exceedances = await this.checkUsageExceedsLimits(tenantId, toPlan);
-    const result: DegradationResult = {
+    return {
       tenantId,
       degradedResources: exceedances,
       appliedAt: new Date(),
     };
-    degradationStore.set(tenantId, result);
-    return result;
   }
 
   // -------------------------------------------------------------------------
@@ -224,16 +216,16 @@ export class PlanChangeService {
     return lost;
   }
 
-  /**
-   * Mock usage counts for a tenant. Returns realistic defaults.
-   */
-  private async getMockUsageCounts(
-    _tenantId: string,
-  ): Promise<Record<string, number>> {
+  private async getUsageCounts(tenantId: string): Promise<Record<string, number>> {
+    const [leagues, members, contests] = await Promise.all([
+      this.prisma.league.count({ where: { tenantId } }),
+      this.prisma.leagueMembership.count({ where: { league: { tenantId } } }),
+      this.prisma.contest.count({ where: { league: { tenantId } } }),
+    ]);
     return {
-      LEAGUES: 4,
-      MEMBERS: 25,
-      CONTESTS: 8,
+      LEAGUES: leagues,
+      MEMBERS: members,
+      CONTESTS: contests,
     };
   }
 }

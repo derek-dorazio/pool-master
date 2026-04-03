@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   Settings,
@@ -30,10 +30,26 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { client, getLeague, listContests, getLeagueRecords, getSeasonSummaries } from '@/lib/api';
-import type { LeagueDetailDto, LeagueMemberDto } from '@poolmaster/shared/dto';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import {
+  LeagueMembersResponseSchema,
+  type LeagueDetailDto,
+  type LeagueMemberDto,
+} from '@poolmaster/shared/dto';
 import type { ContestSummaryDto } from '@poolmaster/shared/dto';
+
+function normalizeRole(role: string | undefined): string {
+  return role?.toUpperCase() ?? '';
+}
+
+function isCommissionerRole(role: string | undefined): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole === 'OWNER' || normalizedRole === 'COMMISSIONER';
+}
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -65,11 +81,32 @@ function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const { data, error } = await client.get<LeagueMemberDto[]>({
-        url: `/api/v1/leagues/${leagueId}/members`,
+      const { data, error } = await client.get({
+        url: API_ROUTES.leagues.members(leagueId),
       });
       if (error) throw error;
-      return data ?? [];
+      return LeagueMembersResponseSchema.parse(data).members;
+    },
+  });
+}
+
+function useLeaveLeague(leagueId: string) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await client.delete({
+        url: API_ROUTES.leagues.leave(leagueId),
+      });
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast({ title: 'Left league', description: 'You have left the league.' });
+      await queryClient.invalidateQueries({ queryKey: ['league', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: ['league-members', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard', 'leagues'] });
+      navigate('/leagues');
     },
   });
 }
@@ -146,7 +183,7 @@ function getRecordIcon(category: string) {
 
 function OverviewTab({ league, leagueId }: { league: LeagueDetailDto; leagueId: string }) {
   const { data: contests = [] } = useLeagueContests(leagueId);
-  const isCommissioner = league.role === 'commissioner';
+  const isCommissioner = isCommissionerRole(league.role);
 
   return (
     <div className="space-y-6">
@@ -348,12 +385,20 @@ function MembersTab({ leagueId }: { leagueId: string }) {
                         <td className="p-4">
                           <Badge
                             className={cn(
-                              member.role === 'commissioner'
+                              normalizeRole(member.role) === 'OWNER'
                                 ? 'bg-amber-100 text-amber-800 border-amber-200'
-                                : 'bg-blue-100 text-blue-800 border-blue-200',
+                                : normalizeRole(member.role) === 'COMMISSIONER'
+                                  ? 'bg-purple-100 text-purple-800 border-purple-200'
+                                  : 'bg-blue-100 text-blue-800 border-blue-200',
                             )}
                           >
-                            {member.role === 'commissioner' ? 'Commissioner' : 'Member'}
+                            {normalizeRole(member.role) === 'OWNER'
+                              ? 'Owner'
+                              : normalizeRole(member.role) === 'COMMISSIONER'
+                                ? 'Commissioner'
+                                : normalizeRole(member.role) === 'MANAGER'
+                                  ? 'Manager'
+                                  : 'Viewer'}
                           </Badge>
                         </td>
                         <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">
@@ -545,6 +590,8 @@ function HistoryTab({ leagueId }: { leagueId: string }) {
 export function Component() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const { data: league, isLoading, isError } = useLeagueDetail(leagueId!);
+  const leaveLeague = useLeaveLeague(leagueId!);
+  const leaveDialog = useConfirmDialog();
 
   if (isError) {
     return (
@@ -564,7 +611,7 @@ export function Component() {
     );
   }
 
-  const isCommissioner = league.role === 'commissioner';
+  const isCommissioner = isCommissionerRole(league.role);
 
   return (
     <div className="space-y-6">
@@ -588,9 +635,30 @@ export function Component() {
               </Link>
             </Button>
           ) : (
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const confirmed = await leaveDialog.confirm(
+                  'Leave League',
+                  'Leave this league? You will lose access to league content until you are invited again.',
+                  { confirmLabel: 'Leave', variant: 'destructive' },
+                );
+
+                if (!confirmed) return;
+
+                try {
+                  await leaveLeague.mutateAsync();
+                } catch (error) {
+                  toast({
+                    title: 'Unable to leave league',
+                    description: error instanceof Error ? error.message : 'Please try again.',
+                  });
+                }
+              }}
+              disabled={leaveLeague.isPending}
+            >
               <LogOut className="h-4 w-4 mr-2" />
-              Leave League
+              {leaveLeague.isPending ? 'Leaving...' : 'Leave League'}
             </Button>
           )}
         </div>
@@ -626,6 +694,15 @@ export function Component() {
           <HistoryTab leagueId={league.id} />
         </TabsContent>
       </Tabs>
+      <ConfirmDialog
+        open={leaveDialog.open}
+        title={leaveDialog.title}
+        description={leaveDialog.description}
+        confirmLabel={leaveDialog.confirmLabel}
+        variant={leaveDialog.variant}
+        onConfirm={leaveDialog.onConfirm}
+        onCancel={leaveDialog.onCancel}
+      />
     </div>
   );
 }

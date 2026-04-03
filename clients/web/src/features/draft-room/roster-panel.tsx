@@ -2,19 +2,26 @@ import { Badge } from '@/components/ui/badge';
 import type { DraftState, DraftPick } from './hooks/use-draft';
 
 export function RosterPanel({ draft }: { draft: DraftState }) {
-  const myEntry = draft.entries.find((e) => e.userId === 'me');
-  const myPicks = draft.picks.filter((p) => p.entryId === myEntry?.id);
-
-  // Group by position
-  const byPosition = new Map<string, DraftPick[]>();
+  const myPicks = draft.myEntryId
+    ? draft.picks.filter((p) => p.entryId === draft.myEntryId)
+    : [];
+  const isBudgetPick = draft.selectionType === 'BUDGET_PICK';
+  const totalBudget = isBudgetPick && typeof draft.selectionConfig?.budget === 'number'
+    ? draft.selectionConfig.budget
+    : null;
+  const spentBudget = myPicks.reduce((sum, pick) => sum + (pick.price ?? 0), 0);
+  const remainingBudget = totalBudget != null ? Math.max(totalBudget - spentBudget, 0) : null;
+  const groupedPicks = new Map<string, DraftPick[]>();
   for (const pick of myPicks) {
-    const pos = pick.position ?? 'Other';
-    const existing = byPosition.get(pos) ?? [];
+    const group = draft.selectionType === 'TIERED'
+      ? (pick.tierName ?? 'Other')
+      : (pick.position ?? 'Other');
+    const existing = groupedPicks.get(group) ?? [];
     existing.push(pick);
-    byPosition.set(pos, existing);
+    groupedPicks.set(group, existing);
   }
 
-  const totalSlots = draft.totalRounds;
+  const totalSlots = draft.rosterSize;
   const filledSlots = myPicks.length;
 
   return (
@@ -24,6 +31,11 @@ export function RosterPanel({ draft }: { draft: DraftState }) {
         <p className="text-xs text-muted-foreground mt-0.5">
           Picks: {filledSlots} / {totalSlots}
         </p>
+        {totalBudget != null ? (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Budget: ${spentBudget.toLocaleString()} / ${totalBudget.toLocaleString()} spent
+          </p>
+        ) : null}
         {/* Progress bar */}
         <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
           <div
@@ -34,14 +46,14 @@ export function RosterPanel({ draft }: { draft: DraftState }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
-        {byPosition.size === 0 ? (
+        {groupedPicks.size === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-4">
-            No picks yet. Select players from the available list.
+            {draft.myEntryId ? 'No picks yet. Select participants from the available list.' : 'Your contest entry is not available in this draft yet.'}
           </p>
         ) : (
-          Array.from(byPosition.entries()).map(([position, picks]) => (
-            <div key={position}>
-              <h4 className="text-xs font-medium text-muted-foreground mb-1.5">{position}</h4>
+          Array.from(groupedPicks.entries()).map(([group, picks]) => (
+            <div key={group}>
+              <h4 className="text-xs font-medium text-muted-foreground mb-1.5">{group}</h4>
               <div className="space-y-1">
                 {picks.map((pick) => (
                   <div
@@ -49,13 +61,18 @@ export function RosterPanel({ draft }: { draft: DraftState }) {
                     className="flex items-center justify-between rounded-md border px-2.5 py-1.5"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{pick.participantName}</p>
+                      <p className="text-sm font-medium truncate">{pick.isSkipped ? 'Skipped Pick' : pick.participantName}</p>
                       <p className="text-[10px] text-muted-foreground">
-                        {pick.team} &middot; Rd {pick.round}, Pick #{pick.pickNumber}
+                        {pick.isSkipped
+                          ? `Rd ${pick.round}, Pick #${pick.pickNumber}`
+                          : `${pick.team}${draft.selectionType === 'TIERED' ? ` · ${pick.tierName ?? 'Tier'}` : ` · Rd ${pick.round}, Pick #${pick.pickNumber}`}${isBudgetPick && typeof pick.price === 'number' ? ` · $${pick.price.toLocaleString()}` : ''}`}
                       </p>
                     </div>
                     {pick.autoPicked && (
                       <Badge variant="outline" className="text-[10px] shrink-0">Auto</Badge>
+                    )}
+                    {pick.isSkipped && (
+                      <Badge variant="outline" className="text-[10px] shrink-0">Skipped</Badge>
                     )}
                   </div>
                 ))}
@@ -85,6 +102,12 @@ export function RosterPanel({ draft }: { draft: DraftState }) {
             </div>
           </div>
         )}
+
+        {remainingBudget != null ? (
+          <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            Remaining budget: <span className="font-medium text-foreground">${remainingBudget.toLocaleString()}</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );

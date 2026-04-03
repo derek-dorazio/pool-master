@@ -780,7 +780,7 @@ POST   /api/v1/admin/participants/import       # Bulk import
 | 05-006 | 1 | Provider ID mapping table and resolution | Done | ParticipantProviderMapping model + adapter + findByProvider |
 | 05-007 | 2 | `contest_participant_pools` table + migrations | Done | ContestPool Prisma model + adapter for pool config |
 | 05-008 | 2 | `contest_pool_participants` table + migrations | Done | Enhanced ContestParticipantPool with poolId, ranking, unavailableReason |
-| 05-009 | 2 | Contest pool creation and resolution (EVENT_FIELD, RANKING_CUTOFF, CUSTOM) | Done | ContestPoolService.resolvePool — CUSTOM, FULL_SPORT, RANKING_CUTOFF; EVENT_FIELD deferred to Plan 06 |
+| 05-009 | 2 | Contest pool creation and resolution (EVENT_FIELD, RANKING_CUTOFF, CUSTOM) | Done | ContestPoolService.resolvePool — CUSTOM, FULL_SPORT, RANKING_CUTOFF, and EVENT_FIELD. Event-field pools now resolve real participants from persisted sport-event metadata/provider mappings, hydrate event details when available, and seed pick'em/bracket `contest_matchups` for single-event contests |
 | 05-010 | 2 | Pool lifecycle (create → resolve → review → lock) | Done | Full lifecycle: create → resolve → refresh → lock |
 | 05-011 | 2 | Pool refresh on field changes | Done | refreshPool re-resolves from source |
 | 05-012 | 2 | Withdrawal/scratch handling post-lock | Done | markUnavailable/markAvailable on locked pools |

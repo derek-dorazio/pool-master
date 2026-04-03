@@ -7,21 +7,32 @@ import { useAvailableParticipants, type AvailableParticipant } from './hooks/use
 
 interface AvailablePanelProps {
   draftId: string;
+  draftedParticipantIds: string[];
   onDraft: (participantId: string) => void;
   onSelect: (participant: AvailableParticipant) => void;
   isDrafting: boolean;
   isMyPick: boolean;
+  selectionType?: string;
 }
 
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
 
-export function AvailablePanel({ draftId, onDraft, onSelect, isDrafting, isMyPick }: AvailablePanelProps) {
+export function AvailablePanel({
+  draftId,
+  draftedParticipantIds,
+  onDraft,
+  onSelect,
+  isDrafting,
+  isMyPick,
+  selectionType,
+}: AvailablePanelProps) {
   const [query, setQuery] = useState('');
   const [position, setPosition] = useState<string>('');
   const [sort, setSort] = useState('ranking');
   const [showFilters, setShowFilters] = useState(false);
+  const isBudgetPick = selectionType === 'BUDGET_PICK';
 
-  const { data: participants, isLoading } = useAvailableParticipants(draftId, {
+  const { data: participants, isLoading } = useAvailableParticipants(draftId, draftedParticipantIds, {
     query: query || undefined,
     position: position || undefined,
     sort,
@@ -82,6 +93,7 @@ export function AvailablePanel({ draftId, onDraft, onSelect, isDrafting, isMyPic
               <option value="ranking">Sort: Ranking</option>
               <option value="name">Sort: Name</option>
               <option value="form">Sort: Form Rating</option>
+              {isBudgetPick ? <option value="price">Sort: Price</option> : null}
             </select>
           </div>
         )}
@@ -107,6 +119,7 @@ export function AvailablePanel({ draftId, onDraft, onSelect, isDrafting, isMyPic
                 onDraft={() => onDraft(p.id)}
                 onSelect={() => onSelect(p)}
                 canDraft={isMyPick && !isDrafting}
+                showPrice={isBudgetPick}
               />
             ))}
           </div>
@@ -121,11 +134,13 @@ function ParticipantRow({
   onDraft,
   onSelect,
   canDraft,
+  showPrice,
 }: {
   participant: AvailableParticipant;
   onDraft: () => void;
   onSelect: () => void;
   canDraft: boolean;
+  showPrice: boolean;
 }) {
   const isInjured = participant.injuryStatus !== 'HEALTHY';
 
@@ -146,7 +161,9 @@ function ParticipantRow({
             <Badge variant="outline" className="text-[10px] px-1 py-0">{participant.position}</Badge>
           )}
           <span>{participant.team}</span>
-          <span>#{participant.ranking}</span>
+          {showPrice && typeof participant.price === 'number'
+            ? <span>${participant.price.toLocaleString()}</span>
+            : <span>#{participant.ranking}</span>}
           <span>Form: {participant.formRating.toFixed(1)}</span>
         </div>
       </div>
@@ -157,7 +174,7 @@ function ParticipantRow({
           className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2 h-7 text-xs"
           onClick={(e) => { e.stopPropagation(); onDraft(); }}
         >
-          Draft
+          {showPrice ? 'Add' : 'Draft'}
         </Button>
       )}
     </div>

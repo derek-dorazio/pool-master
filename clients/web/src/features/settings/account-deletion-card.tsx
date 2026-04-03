@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProfile } from './hooks/use-profile';
 import { toast } from '@/hooks/use-toast';
+import { cancelAccountDeletion, requestAccountDeletion } from '@/lib/api';
+import { client } from '@/lib/api';
 
 type Step = 'idle' | 'consequences' | 'confirm' | 'waiting';
 
@@ -11,21 +14,44 @@ export function AccountDeletionCard() {
   const { data: profile } = useProfile();
   const [step, setStep] = useState<Step>('idle');
   const [typedName, setTypedName] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [requestId, setRequestId] = useState<string | null>(null);
+
+  const requestDeletion = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await requestAccountDeletion({ client, body: { reason: 'user_requested' } });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      setRequestId(data.requestId);
+      setStep('waiting');
+    },
+    onError: () => {
+      toast({ title: 'Request failed', description: 'Please try again.' });
+    },
+  });
+
+  const cancelDeletion = useMutation({
+    mutationFn: async () => {
+      if (!requestId) throw new Error('No pending deletion request');
+      const { error } = await cancelAccountDeletion({ client, path: { id: requestId } });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setRequestId(null);
+      setStep('idle');
+      setTypedName('');
+      toast({ title: 'Deletion cancelled', description: 'Your account will remain active.' });
+    },
+    onError: () => {
+      toast({ title: 'Request failed', description: 'Please try again.' });
+    },
+  });
 
   const displayName = profile?.displayName ?? '';
 
   async function handleDelete() {
-    setIsDeleting(true);
-    try {
-      // TODO: await api.post('/account/delete');
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setStep('waiting');
-    } catch {
-      toast({ title: 'Request failed', description: 'Please try again.' });
-    } finally {
-      setIsDeleting(false);
-    }
+    await requestDeletion.mutateAsync();
   }
 
   return (
@@ -83,9 +109,9 @@ export function AccountDeletionCard() {
               <Button
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={typedName !== displayName || isDeleting}
+                disabled={typedName !== displayName || requestDeletion.isPending}
               >
-                {isDeleting ? 'Deleting...' : 'Permanently Delete'}
+                {requestDeletion.isPending ? 'Deleting...' : 'Permanently Delete'}
               </Button>
               <Button variant="ghost" onClick={() => { setStep('idle'); setTypedName(''); }}>
                 Cancel
@@ -101,6 +127,15 @@ export function AccountDeletionCard() {
               Your account will be deactivated immediately and permanently deleted after 14 days.
               You can cancel deletion by signing in within this period.
             </p>
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                onClick={() => void cancelDeletion.mutateAsync()}
+                disabled={!requestId || cancelDeletion.isPending}
+              >
+                {cancelDeletion.isPending ? 'Cancelling...' : 'Cancel Deletion'}
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

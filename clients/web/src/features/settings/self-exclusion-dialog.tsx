@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { client, createSelfExclusion, getActiveExclusion } from '@/lib/api';
+import { ActiveExclusionResponseSchema } from '@poolmaster/shared/dto/compliance.dto';
 
 const coolDownOptions = [
   { value: '24H', label: '24 Hours' },
@@ -14,24 +17,44 @@ const coolDownOptions = [
 ];
 
 export function SelfExclusionCard() {
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [period, setPeriod] = useState('24H');
   const [typed, setTyped] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const activeExclusionQuery = useQuery({
+    queryKey: ['settings', 'self-exclusion'],
+    queryFn: async () => {
+      const { data, error } = await getActiveExclusion({ client });
+      if (error) throw error;
+      return ActiveExclusionResponseSchema.parse(data);
+    },
+  });
 
-  async function handleConfirm() {
-    setIsSubmitting(true);
-    try {
-      // TODO: await api.post('/account/self-exclusion', { period });
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      toast({ title: 'Self-exclusion activated', description: `Your account will be paused for ${coolDownOptions.find((o) => o.value === period)?.label}.` });
+  const createExclusion = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await createSelfExclusion({
+        client,
+        body: { type: 'COOL_DOWN', duration: period },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async () => {
+      toast({
+        title: 'Self-exclusion activated',
+        description: `Your account will be paused for ${coolDownOptions.find((o) => o.value === period)?.label}.`,
+      });
       setDialogOpen(false);
       setTyped('');
-    } catch {
+      await queryClient.invalidateQueries({ queryKey: ['settings', 'self-exclusion'] });
+    },
+    onError: () => {
       toast({ title: 'Failed to activate self-exclusion' });
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  async function handleConfirm() {
+    await createExclusion.mutateAsync();
   }
 
   return (
@@ -45,6 +68,15 @@ export function SelfExclusionCard() {
             Take a break from Ultimate Pool Manager. During the cool-down period, you won't be able to enter
             contests or participate in drafts.
           </p>
+          {activeExclusionQuery.data?.exclusion ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <p className="font-medium">Self-exclusion is active</p>
+              <p className="mt-1">
+                {activeExclusionQuery.data.exclusion.duration} cool-down started on{' '}
+                {new Date(activeExclusionQuery.data.exclusion.startedAt).toLocaleDateString()}.
+              </p>
+            </div>
+          ) : null}
           <Button variant="outline" onClick={() => setDialogOpen(true)}>
             Take a Break
           </Button>
@@ -101,9 +133,9 @@ export function SelfExclusionCard() {
               <Button
                 variant="destructive"
                 onClick={handleConfirm}
-                disabled={typed !== 'CONFIRM' || isSubmitting}
+                disabled={typed !== 'CONFIRM' || createExclusion.isPending}
               >
-                {isSubmitting ? 'Activating...' : 'Activate Self-Exclusion'}
+                {createExclusion.isPending ? 'Activating...' : 'Activate Self-Exclusion'}
               </Button>
             </div>
           </div>

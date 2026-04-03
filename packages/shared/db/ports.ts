@@ -10,6 +10,7 @@ import type {
   BracketPrediction,
   Contest,
   ContestEntry,
+  ContestMatchup,
   ContestParticipantPool,
   ContestPick,
   ContestPool,
@@ -159,6 +160,15 @@ export interface ContestParticipantPoolRepository {
   deleteByPool(poolId: string): Promise<number>;
 }
 
+export interface ContestMatchupRepository {
+  findByContest(contestId: string): Promise<ContestMatchup[]>;
+  findByPeriod(contestId: string, period: number): Promise<ContestMatchup[]>;
+  create(matchup: Omit<ContestMatchup, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestMatchup>;
+  createMany(matchups: Omit<ContestMatchup, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
+  update(id: string, updates: Partial<ContestMatchup>): Promise<ContestMatchup>;
+  deleteByContest(contestId: string): Promise<number>;
+}
+
 // --- Entries & Picks ---
 
 export interface ContestEntryRepository {
@@ -167,6 +177,7 @@ export interface ContestEntryRepository {
   findByMember(leagueMembershipId: string): Promise<ContestEntry[]>;
   create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntry>;
   update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry>;
+  delete(id: string): Promise<void>;
 }
 
 export interface RosterPickRepository {

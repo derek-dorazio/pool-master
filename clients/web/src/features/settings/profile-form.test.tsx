@@ -5,8 +5,6 @@ const mockProfile = {
   id: 'user-1',
   displayName: 'Dave O',
   email: 'dave@example.com',
-  bio: 'Fantasy sports enthusiast',
-  avatarUrl: null,
   authProvider: 'email' as const,
 };
 
@@ -23,17 +21,12 @@ vi.mock('./hooks/use-profile', () => ({
   })),
 }));
 
-vi.mock('./avatar-upload', () => ({
-  AvatarUpload: () => <div data-testid="avatar-upload" />,
-}));
-
 describe('ProfileForm', () => {
-  it('renders form fields (displayName, email, bio)', () => {
+  it('renders form fields (displayName, email)', () => {
     render(<ProfileForm />);
 
     expect(screen.getByLabelText('Display Name')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
-    expect(screen.getByLabelText('Bio')).toBeInTheDocument();
   });
 
   it('populates fields with profile data', () => {
@@ -41,7 +34,6 @@ describe('ProfileForm', () => {
 
     expect(screen.getByLabelText('Display Name')).toHaveValue('Dave O');
     expect(screen.getByLabelText('Email')).toHaveValue('dave@example.com');
-    expect(screen.getByLabelText('Bio')).toHaveValue('Fantasy sports enthusiast');
   });
 
   it('save button is disabled when form is clean (no changes)', () => {
@@ -51,11 +43,9 @@ describe('ProfileForm', () => {
     expect(saveButton).toBeDisabled();
   });
 
-  it('shows character count for bio', () => {
+  it('does not render the unsupported bio field', () => {
     render(<ProfileForm />);
-
-    // "Fantasy sports enthusiast" is 25 characters
-    expect(screen.getByText(`${mockProfile.bio.length}/200 characters`)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Bio')).not.toBeInTheDocument();
   });
 
   it('renders loading state when isLoading', async () => {

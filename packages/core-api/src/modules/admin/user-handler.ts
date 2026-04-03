@@ -7,7 +7,11 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { UserService } from './user-service';
-import { UserNotFoundError } from './user-service';
+import {
+  UserEmailDeliveryError,
+  UserNotFoundError,
+  UserPasswordResetUnsupportedError,
+} from './user-service';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -131,6 +135,12 @@ export function createUserHandlers(userService: UserService) {
       if (err instanceof UserNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
       }
+      if (err instanceof UserPasswordResetUnsupportedError) {
+        return reply.status(400).send({ error: 'PASSWORD_RESET_UNSUPPORTED', message: err.message });
+      }
+      if (err instanceof UserEmailDeliveryError) {
+        return reply.status(502).send({ error: 'EMAIL_DELIVERY_FAILED', message: err.message });
+      }
       throw err;
     }
   }
@@ -218,6 +228,9 @@ export function createUserHandlers(userService: UserService) {
     } catch (err) {
       if (err instanceof UserNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      if (err instanceof UserEmailDeliveryError) {
+        return reply.status(502).send({ error: 'EMAIL_DELIVERY_FAILED', message: err.message });
       }
       throw err;
     }

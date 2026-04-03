@@ -6,6 +6,10 @@ import type {
   ContestDetailDto,
   ContestResponse,
   ContestListResponse,
+  ContestEntryDto,
+  ContestEntryListResponse,
+  ContestEntryResponse,
+  MyContestEntryResponse,
 } from '@poolmaster/shared/dto';
 import type { SelectionConfig } from '@poolmaster/shared/domain';
 
@@ -24,6 +28,18 @@ interface ContestRow {
   startsAt?: Date | null;
   endsAt?: Date | null;
   lockAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ContestEntryRow {
+  id: string;
+  contestId: string;
+  leagueMembershipId: string;
+  name: string;
+  totalScore: number;
+  rank?: number | null;
+  isEliminated: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,4 +94,49 @@ export function toContestListResponse(
   return {
     contests: contests.map((c) => toContestSummaryDto(c)),
   };
+}
+
+export function toContestEntryDto(
+  entry: ContestEntryRow,
+  owner: { id: string; displayName: string },
+): ContestEntryDto {
+  return {
+    id: entry.id,
+    contestId: entry.contestId,
+    leagueMembershipId: entry.leagueMembershipId,
+    name: entry.name,
+    totalScore: entry.totalScore,
+    rank: entry.rank ?? null,
+    isEliminated: entry.isEliminated,
+    ownerId: owner.id,
+    ownerDisplayName: owner.displayName,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+  };
+}
+
+export function toContestEntryResponse(contestId: string, entry: ContestEntryDto): ContestEntryResponse {
+  return { contestId, entry };
+}
+
+export function toContestEntryListResponse(input: {
+  contestId: string;
+  entries: ContestEntryDto[];
+  isJoined: boolean;
+  myEntryId: string | null;
+}): ContestEntryListResponse {
+  return {
+    contestId: input.contestId,
+    total: input.entries.length,
+    isJoined: input.isJoined,
+    myEntryId: input.myEntryId,
+    entries: input.entries,
+  };
+}
+
+export function toMyContestEntryResponse(
+  contestId: string,
+  entry: ContestEntryDto | null,
+): MyContestEntryResponse {
+  return { contestId, entry };
 }

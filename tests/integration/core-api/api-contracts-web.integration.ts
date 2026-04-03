@@ -11,9 +11,15 @@ import {
   getApp,
   createTestUser,
   cleanupTestData,
+  getPrisma,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ContestType, SelectionType, ScoringEngine, ContestStatus, LeagueVisibility } from '@poolmaster/shared/domain';
+import {
+  DiscoverContestsResponseSchema,
+  DiscoverLeaguesResponseSchema,
+} from '@poolmaster/shared/dto/search.dto';
+import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto/leagues.dto';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -27,6 +33,9 @@ describe('Web API Contract Validation', () => {
   let userId: string;
   let leagueId: string;
   let contestId: string;
+  let publicLeagueId: string;
+  let publicContestId: string;
+  let joinerHeaders: Record<string, string>;
   let refreshToken: string;
 
   const testEmail = `contract-${Date.now()}@integration.test`;
@@ -37,6 +46,7 @@ describe('Web API Contract Validation', () => {
     const testUser = await createTestUser({ displayName: 'Contract Test User' });
     headers = testUser.headers;
     userId = testUser.user.id;
+    joinerHeaders = (await createTestUser({ displayName: 'Discovery Joiner' })).headers;
 
     // Create a league for league/contest contract tests
     const leagueRes = await getApp().inject({
@@ -63,6 +73,64 @@ describe('Web API Contract Validation', () => {
     expect(contestRes.statusCode).toBe(201);
     const contestBody = contestRes.json();
     contestId = (contestBody.contest ?? contestBody).id;
+
+    const publicLeagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.list,
+      headers,
+      payload: { name: 'Contract Discovery League', visibility: LeagueVisibility.PUBLIC, maxMembers: 8 },
+    });
+    expect(publicLeagueRes.statusCode).toBe(201);
+    publicLeagueId = publicLeagueRes.json().league.id;
+
+    const publicContestRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(publicLeagueId),
+      headers,
+      payload: {
+        name: 'Contract Discovery Contest',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.SNAKE_DRAFT,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+      },
+    });
+    expect(publicContestRes.statusCode).toBe(201);
+    publicContestId = (publicContestRes.json().contest ?? publicContestRes.json()).id;
+
+    const prisma = getPrisma();
+    const now = new Date();
+    await prisma.discoverableLeague.create({
+      data: {
+        id: publicLeagueId,
+        name: 'Contract Discovery League',
+        description: 'Public search contract test',
+        sports: ['GOLF'],
+        memberCount: 1,
+        maxMembers: 8,
+        activeContestCount: 1,
+        activityLevel: 'HIGH',
+        joinPolicy: 'OPEN',
+        lastActivityAt: now,
+      },
+    });
+    await prisma.discoverableContest.create({
+      data: {
+        id: publicContestId,
+        leagueId: publicLeagueId,
+        leagueName: 'Contract Discovery League',
+        contestName: 'Contract Discovery Contest',
+        sport: 'GOLF',
+        eventName: 'Contract Invitational',
+        draftType: 'SNAKE_DRAFT',
+        memberCount: 1,
+        maxMembers: 8,
+        entryFee: 10,
+        prizePool: 80,
+        draftStart: now,
+        lockTime: new Date(now.getTime() + 86_400_000),
+        status: 'OPEN',
+      },
+    });
   });
 
   // ===========================================================================
@@ -555,33 +623,61 @@ describe('Web API Contract Validation', () => {
     });
 
     // 23. GET /search/discover/leagues
-    it('GET /search/discover/leagues returns { leagues: [...], total }', async () => {
+    it('GET /search/discover/leagues matches the shared discovery league contract', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/search/discover/leagues',
+        url: API_ROUTES.search.discoverLeagues,
         headers,
       });
       expect(res.statusCode).toBe(200);
       const body = res.json();
+      const parsed = DiscoverLeaguesResponseSchema.safeParse(body);
+      expect(parsed.success).toBe(true);
+      if (!parsed.success) return;
 
-      expect(body).toHaveProperty('leagues');
-      expect(Array.isArray(body.leagues)).toBe(true);
-      expect(typeof body.total).toBe('number');
+      const league = parsed.data.leagues.find((item) => item.id === publicLeagueId);
+      expect(league).toMatchObject({
+        id: publicLeagueId,
+        activeContestCount: 1,
+        joinPolicy: 'OPEN',
+      });
     });
 
     // 24. GET /search/discover/contests
-    it('GET /search/discover/contests returns { contests: [...], total }', async () => {
+    it('GET /search/discover/contests matches the shared discovery contest contract', async () => {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/search/discover/contests',
+        url: API_ROUTES.search.discoverContests,
         headers,
       });
       expect(res.statusCode).toBe(200);
       const body = res.json();
+      const parsed = DiscoverContestsResponseSchema.safeParse(body);
+      expect(parsed.success).toBe(true);
+      if (!parsed.success) return;
 
-      expect(body).toHaveProperty('contests');
-      expect(Array.isArray(body.contests)).toBe(true);
-      expect(typeof body.total).toBe('number');
+      const contest = parsed.data.contests.find((item) => item.id === publicContestId);
+      expect(contest).toMatchObject({
+        id: publicContestId,
+        leagueName: 'Contract Discovery League',
+        draftType: 'SNAKE_DRAFT',
+      });
+    });
+
+    // 25. POST /search/discover/leagues/:leagueId/join
+    it('POST /search/discover/leagues/:leagueId/join matches the shared membership contract', async () => {
+      const res = await getApp().inject({
+        method: 'POST',
+        url: API_ROUTES.search.joinDiscoverableLeague(publicLeagueId),
+        headers: joinerHeaders,
+      });
+      expect(res.statusCode).toBe(201);
+      const body = res.json();
+      const parsed = LeagueMembershipResponseSchema.safeParse(body);
+      expect(parsed.success).toBe(true);
+      if (!parsed.success) return;
+
+      expect(parsed.data.membership.leagueId).toBe(publicLeagueId);
     });
   });
 
@@ -589,7 +685,7 @@ describe('Web API Contract Validation', () => {
   // Compliance Contract
   // ===========================================================================
   describe('Compliance Contract', () => {
-    // 25. GET /account/consent
+    // 26. GET /account/consent
     it('GET /account/consent returns { consents: [...] }', async () => {
       const res = await getApp().inject({
         method: 'GET',

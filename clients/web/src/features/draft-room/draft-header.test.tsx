@@ -6,6 +6,10 @@ import type { DraftState } from './hooks/use-draft';
 function makeDraft(overrides: Partial<DraftState> = {}): DraftState {
   return {
     contestName: 'NFL Fantasy Draft 2026',
+    selectionType: 'SNAKE_DRAFT',
+    isTurnBased: true,
+    rosterSize: 15,
+    selectionConfig: { isExclusive: true, rounds: 15, rosterSize: 15 },
     status: 'LIVE',
     currentRound: 3,
     currentPickNumber: 7,

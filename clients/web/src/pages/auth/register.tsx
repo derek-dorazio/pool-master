@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -87,6 +87,7 @@ const stepFields: Record<number, (keyof RegisterForm)[]> = {
 export function Component() {
   const { t } = useTranslation('auth');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const setUser = useAuthStore((s) => s.setUser);
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
@@ -129,6 +130,7 @@ export function Component() {
     () => (password ? getPasswordStrength(password) : null),
     [password],
   );
+  const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 
   const initials = useMemo(() => {
     if (!displayName) return '?';
@@ -194,7 +196,7 @@ export function Component() {
       }
       localStorage.setItem('access_token', auth.tokens.accessToken);
       setUser({ ...auth.user, avatarUrl: auth.user.avatarUrl ?? undefined });
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (err: any) {
       if (err?.message) {
         setServerError(err.message);
@@ -626,7 +628,10 @@ export function Component() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t('register.haveAccount')}{' '}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link
+              to={`/login${redirectTo !== '/dashboard' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`}
+              className="text-primary hover:underline"
+            >
               {t('register.logIn')}
             </Link>
           </p>

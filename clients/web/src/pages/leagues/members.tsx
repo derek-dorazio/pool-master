@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   UserPlus,
   MoreHorizontal,
@@ -22,18 +22,38 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { client, getLeague, generateInviteLink } from '@/lib/api';
-import type { LeagueMemberDto } from '@poolmaster/shared/dto';
+import {
+  client,
+  getLeague,
+  generateInviteLink,
+  removeMember,
+  sendLeagueInvitations,
+} from '@/lib/api';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import {
+  LeagueMembersResponseSchema,
+  type LeagueMemberDto,
+  type LeagueDetailDto,
+} from '@poolmaster/shared/dto';
+
+function normalizeRole(role: string | undefined): string {
+  return role?.toUpperCase() ?? '';
+}
+
+function isCommissionerRole(role: string | undefined): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole === 'OWNER' || normalizedRole === 'COMMISSIONER';
+}
 
 function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const { data, error } = await client.get<LeagueMemberDto[]>({
-        url: `/api/v1/leagues/${leagueId}/members`,
+      const { data, error } = await client.get({
+        url: API_ROUTES.leagues.members(leagueId),
       });
       if (error) throw error;
-      return data ?? [];
+      return LeagueMembersResponseSchema.parse(data).members;
     },
   });
 }
@@ -41,54 +61,107 @@ function useLeagueMembers(leagueId: string) {
 function useLeagueDetail(leagueId: string) {
   return useQuery({
     queryKey: ['league', leagueId],
-    queryFn: async () => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const { data, error } = await getLeague({ client, path: { id: leagueId } });
       if (error) throw error;
-      return (data as any).league;
+      if (!data) {
+        throw new Error('League detail response was empty.');
+      }
+      return data.league;
     },
   });
 }
 
-function useInviteLink(leagueId: string) {
-  return useQuery({
-    queryKey: ['league-invite-link', leagueId],
-    queryFn: async (): Promise<string> => {
+function useInviteLinkMutation(leagueId: string) {
+  return useMutation({
+    mutationFn: async (): Promise<string> => {
       const { data, error } = await generateInviteLink({
         client,
         path: { id: leagueId },
         body: {},
       });
       if (error) throw error;
-      return data ? `${window.location.origin}/join/${leagueId}` : '';
+      const inviteCode = (data as { invitation?: { inviteCode?: string } } | undefined)?.invitation?.inviteCode;
+      if (!inviteCode) {
+        throw new Error('Invite link generation did not return an invite code.');
+      }
+      return `${window.location.origin}/join/${inviteCode}`;
+    },
+  });
+}
+
+function useSendInvitations(leagueId: string) {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const { error } = await sendLeagueInvitations({
+        client,
+        path: { id: leagueId },
+        body: { emails: [email] },
+      });
+      if (error) throw error;
+    },
+  });
+}
+
+function useRemoveLeagueMember(leagueId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await removeMember({
+        client,
+        path: { id: leagueId, uid: userId },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['league-members', leagueId] });
+      queryClient.invalidateQueries({ queryKey: ['league', leagueId] });
     },
   });
 }
 
 function RoleBadge({ role }: { role: string }) {
+  const normalizedRole = normalizeRole(role);
+
   return (
     <Badge
       className={cn(
-        role === 'commissioner'
+        normalizedRole === 'OWNER'
           ? 'bg-amber-100 text-amber-800 border-amber-200'
-          : role === 'co-commissioner'
+          : normalizedRole === 'COMMISSIONER'
             ? 'bg-purple-100 text-purple-800 border-purple-200'
-            : 'bg-blue-100 text-blue-800 border-blue-200',
+            : normalizedRole === 'MANAGER'
+              ? 'bg-blue-100 text-blue-800 border-blue-200'
+              : 'bg-slate-100 text-slate-800 border-slate-200',
       )}
     >
-      {role === 'commissioner'
-        ? 'Commissioner'
-        : role === 'co-commissioner'
-          ? 'Co-Commissioner'
-          : 'Member'}
+      {normalizedRole === 'OWNER'
+        ? 'Owner'
+        : normalizedRole === 'COMMISSIONER'
+          ? 'Commissioner'
+          : normalizedRole === 'MANAGER'
+            ? 'Manager'
+            : 'Viewer'}
     </Badge>
   );
 }
 
-function MemberActions({ member, isCommissioner }: { member: LeagueMemberDto; isCommissioner: boolean }) {
+function MemberActions({
+  member,
+  isCommissioner,
+  onRemove,
+  isRemoving,
+}: {
+  member: LeagueMemberDto;
+  isCommissioner: boolean;
+  onRemove: (member: LeagueMemberDto) => Promise<void>;
+  isRemoving: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const dialog = useConfirmDialog();
 
-  if (!isCommissioner || member.role === 'commissioner') return null;
+  if (!isCommissioner || normalizeRole(member.role) === 'OWNER') return null;
 
   return (
     <div className="relative">
@@ -107,15 +180,6 @@ function MemberActions({ member, isCommissioner }: { member: LeagueMemberDto; is
           />
           <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-md border bg-popover p-1 shadow-md">
             <button
-              className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-              onClick={() => {
-                toast({ title: 'Role changed', description: `${member.displayName} is now a Co-Commissioner.` });
-                setOpen(false);
-              }}
-            >
-              Change Role
-            </button>
-            <button
               className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-accent"
               onClick={async () => {
                 setOpen(false);
@@ -125,9 +189,10 @@ function MemberActions({ member, isCommissioner }: { member: LeagueMemberDto; is
                   { confirmLabel: 'Remove', variant: 'destructive' },
                 );
                 if (confirmed) {
-                  toast({ title: 'Member removed', description: `${member.displayName} has been removed.` });
+                  await onRemove(member);
                 }
               }}
+              disabled={isRemoving}
             >
               Remove
             </button>
@@ -151,23 +216,74 @@ export function Component() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const { data: members = [], isLoading, isError } = useLeagueMembers(leagueId!);
   const { data: league } = useLeagueDetail(leagueId!);
-  const { data: inviteLink = '' } = useInviteLink(leagueId!);
+  const inviteLinkMutation = useInviteLinkMutation(leagueId!);
+  const sendInvitation = useSendInvitations(leagueId!);
+  const removeLeagueMember = useRemoveLeagueMember(leagueId!);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
 
-  const isCommissioner = league?.role === 'commissioner';
+  const isCommissioner = isCommissionerRole(league?.role);
 
-  function handleSendInvite() {
-    if (inviteEmail) {
-      toast({ title: 'Invite sent', description: `Invitation sent to ${inviteEmail}.` });
+  async function handleSendInvite() {
+    if (!inviteEmail.trim()) return;
+
+    try {
+      await sendInvitation.mutateAsync(inviteEmail.trim());
+      toast({ title: 'Invite sent', description: `Invitation sent to ${inviteEmail.trim()}.` });
       setInviteEmail('');
       setShowInviteDialog(false);
+    } catch (error) {
+      toast({
+        title: 'Failed to send invite',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
+  }
+
+  async function openInviteDialog() {
+    if (!isCommissioner) return;
+
+    setShowInviteDialog(true);
+
+    if (inviteLink || inviteLinkMutation.isPending) {
+      return;
+    }
+
+    try {
+      const generatedInviteLink = await inviteLinkMutation.mutateAsync();
+      setInviteLink(generatedInviteLink);
+    } catch (error) {
+      toast({
+        title: 'Failed to generate invite link',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
+  }
+
+  async function handleRemoveMember(member: LeagueMemberDto) {
+    try {
+      await removeLeagueMember.mutateAsync(member.userId);
+      toast({ title: 'Member removed', description: `${member.displayName} has been removed.` });
+    } catch (error) {
+      toast({
+        title: 'Failed to remove member',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
     }
   }
 
   function copyInviteLink() {
-    navigator.clipboard.writeText(inviteLink).catch(() => {});
-    toast({ title: 'Copied!', description: 'Invite link copied to clipboard.' });
+    if (!inviteLink) {
+      toast({ title: 'Invite link unavailable', description: 'Generate a fresh invite link first.' });
+      return;
+    }
+
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      toast({ title: 'Copied!', description: 'Invite link copied to clipboard.' });
+    }).catch(() => {
+      toast({ title: 'Copy failed', description: 'Please copy the invite link manually.' });
+    });
   }
 
   if (isError) {
@@ -195,7 +311,7 @@ export function Component() {
           <h1 className="text-3xl font-bold">Members</h1>
           <p className="text-muted-foreground">{members.length} members in this league</p>
         </div>
-        <Button onClick={() => setShowInviteDialog(true)}>
+        <Button onClick={openInviteDialog} disabled={!isCommissioner}>
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Member
         </Button>
@@ -227,9 +343,9 @@ export function Component() {
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                   />
-                  <Button onClick={handleSendInvite}>
+                  <Button onClick={handleSendInvite} disabled={sendInvitation.isPending || !inviteEmail.trim()}>
                     <Mail className="h-4 w-4 mr-1" />
-                    Send
+                    {sendInvitation.isPending ? 'Sending...' : 'Send'}
                   </Button>
                 </div>
               </div>
@@ -246,8 +362,9 @@ export function Component() {
                   value={inviteLink}
                   readOnly
                   className="bg-muted font-mono text-xs"
+                  placeholder={inviteLinkMutation.isPending ? 'Generating invite link...' : 'Invite link unavailable'}
                 />
-                <Button variant="outline" size="icon" onClick={copyInviteLink}>
+                <Button variant="outline" size="icon" onClick={copyInviteLink} disabled={!inviteLink}>
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
@@ -304,7 +421,12 @@ export function Component() {
                       </td>
                       {isCommissioner && (
                         <td className="p-4">
-                          <MemberActions member={member} isCommissioner={isCommissioner} />
+                          <MemberActions
+                            member={member}
+                            isCommissioner={isCommissioner}
+                            onRemove={handleRemoveMember}
+                            isRemoving={removeLeagueMember.isPending}
+                          />
                         </td>
                       )}
                     </tr>

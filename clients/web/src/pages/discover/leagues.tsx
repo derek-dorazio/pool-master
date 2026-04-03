@@ -8,16 +8,15 @@ import { Badge } from '@/components/ui/badge';
 
 const SPORTS = ['ALL', Sport.GOLF, Sport.NFL, Sport.NBA, Sport.F1, Sport.NCAA_BASKETBALL, Sport.SOCCER, Sport.TENNIS, Sport.HORSE_RACING];
 const SORT_OPTIONS = [
-  { value: 'active', label: 'Most Active' },
-  { value: 'newest', label: 'Newest' },
-  { value: 'members', label: 'Most Members' },
-  { value: 'alpha', label: 'A-Z' },
+  { value: 'ACTIVITY', label: 'Most Active' },
+  { value: 'NEWEST', label: 'Newest' },
+  { value: 'POPULAR', label: 'Most Members' },
 ];
 
 export function Component() {
   const [searchParams, setSearchParams] = useSearchParams();
   const sport = searchParams.get('sport') ?? 'ALL';
-  const sort = searchParams.get('sort') ?? 'active';
+  const sort = searchParams.get('sort') ?? 'ACTIVITY';
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
 
   const { data, isLoading } = useBrowseLeagues({ sport: sport !== 'ALL' ? sport : undefined, sort, q: query || undefined });

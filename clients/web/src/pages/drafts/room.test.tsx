@@ -3,14 +3,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Component as DraftRoomPage } from './room';
 import type { DraftState } from '@/features/draft-room/hooks/use-draft';
 
-const mockNavigate = vi.fn();
-
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
     useParams: () => ({ draftId: 'test-draft' }),
-    useNavigate: () => mockNavigate,
   };
 });
 
@@ -21,6 +18,8 @@ vi.mock('@/features/draft-room/hooks/use-draft', () => ({
   useDraft: () => mockDraftReturn,
   useAvailableParticipants: () => ({ data: [], isLoading: false }),
   useMakePick: () => ({ mutate: mockMutate, isPending: false }),
+  useResetBracket: () => ({ mutate: mockMutate, isPending: false }),
+  useAutoFillBracket: () => ({ mutate: mockMutate, isPending: false }),
 }));
 
 vi.mock('@/features/draft-room/draft-header', () => ({
@@ -41,14 +40,39 @@ vi.mock('@/features/draft-room/roster-panel', () => ({
   RosterPanel: () => <div data-testid="roster-panel" />,
 }));
 
+vi.mock('@/features/draft-room/tiered-board', () => ({
+  TieredBoard: () => <div data-testid="tiered-board" />,
+}));
+
+vi.mock('@/features/draft-room/selection-overview', () => ({
+  SelectionOverview: () => <div data-testid="selection-overview" />,
+}));
+
+vi.mock('@/features/draft-room/pickem-panel', () => ({
+  PickEmPanel: () => <div data-testid="pickem-panel" />,
+}));
+
+vi.mock('@/features/draft-room/bracket-panel', () => ({
+  BracketPanel: () => <div data-testid="bracket-panel" />,
+}));
+
+vi.mock('@/features/draft-room/commissioner-controls', () => ({
+  CommissionerControls: () => <div data-testid="commissioner-controls" />,
+}));
+
+vi.mock('@/features/social/chat-panel', () => ({
+  ChatPanel: (props: { contestId: string }) => (
+    <div data-testid="chat-panel">Chat for {props.contestId}</div>
+  ),
+}));
+
 const mockDraft: DraftState = {
-  id: 'test-draft',
   contestId: 'contest-1',
   contestName: 'Masters 2026',
-  leagueName: 'Sunday Picks',
-  sport: 'GOLF',
-  draftType: 'SNAKE',
-  mode: 'LIVE' as DraftState['mode'],
+  selectionType: 'SNAKE_DRAFT',
+  isTurnBased: true,
+  rosterSize: 4,
+  selectionConfig: { isExclusive: true, rounds: 4, rosterSize: 4 },
   status: 'LIVE' as DraftState['status'],
   currentPickNumber: 3,
   totalPicks: 24,
@@ -56,12 +80,15 @@ const mockDraft: DraftState = {
   totalRounds: 4,
   currentEntryId: 'entry-1',
   currentEntryName: 'My Team',
+  myEntryId: 'entry-1',
   isMyPick: true,
   timePerPickSeconds: 90,
   pickDeadline: new Date(Date.now() + 60000).toISOString(),
+  availableParticipantIds: ['p2', 'p3'],
+  isComplete: false,
   entries: [
-    { id: 'entry-1', name: 'My Team', userId: 'me', isCommissioner: false, pickOrder: 1 },
-    { id: 'entry-2', name: 'Team Alpha', userId: 'u2', isCommissioner: true, pickOrder: 2 },
+    { id: 'entry-1', name: 'My Team', userId: 'me', isOnClock: true },
+    { id: 'entry-2', name: 'Team Alpha', userId: 'u2', isOnClock: false },
   ],
   picks: [
     {
@@ -75,6 +102,7 @@ const mockDraft: DraftState = {
       position: 'G',
       team: 'USA',
       autoPicked: false,
+      pickedAt: new Date().toISOString(),
     },
   ],
 };
@@ -84,7 +112,6 @@ function renderPage() {
     <MemoryRouter initialEntries={['/drafts/test-draft']}>
       <Routes>
         <Route path="/drafts/:draftId" element={<DraftRoomPage />} />
-        <Route path="/dashboard" element={<div data-testid="dashboard-redirect">Dashboard</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -130,15 +157,17 @@ describe('DraftRoomPage', () => {
     renderPage();
 
     expect(screen.getByTestId('draft-header')).toBeInTheDocument();
+    expect(screen.getByTestId('commissioner-controls')).toBeInTheDocument();
     expect(screen.getByTestId('pick-board')).toBeInTheDocument();
-    expect(screen.getByText('Draft Chat')).toBeInTheDocument();
+    expect(screen.getByTestId('chat-panel')).toHaveTextContent('Chat for contest-1');
   });
 
-  it('redirects to dashboard when draft has error', () => {
+  it('shows an honest unavailable state when the draft has an error', () => {
     mockDraftReturn = { data: undefined, isLoading: false, error: new Error('Not found') };
     renderPage();
 
-    expect(screen.getByTestId('dashboard-redirect')).toBeInTheDocument();
+    expect(screen.getByText('Draft room unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Back to Contest/ })).toBeInTheDocument();
   });
 
   it('does not crash when draft status is COMPLETE', () => {
@@ -151,5 +180,130 @@ describe('DraftRoomPage', () => {
 
     expect(screen.getByTestId('draft-header')).toBeInTheDocument();
     expect(screen.getByTestId('pick-board')).toBeInTheDocument();
+  });
+
+  it('renders tiered board for tiered contests', () => {
+    mockDraftReturn = {
+      data: {
+        ...mockDraft,
+        selectionType: 'TIERED',
+        isTurnBased: false,
+        selectionConfig: {
+          isExclusive: false,
+          rosterSize: 4,
+          tierConfig: [
+            { tierId: 'Tier 1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 1 },
+          ],
+        },
+      },
+      isLoading: false,
+      error: null,
+    };
+
+    renderPage();
+
+    expect(screen.getByTestId('tiered-board')).toBeInTheDocument();
+  });
+
+  it('renders selection overview for non-turn-based open selection contests', () => {
+    mockDraftReturn = {
+      data: {
+        ...mockDraft,
+        selectionType: 'OPEN_SELECTION',
+        isTurnBased: false,
+        selectionConfig: { isExclusive: false, pickCount: 4, rosterSize: 4 },
+      },
+      isLoading: false,
+      error: null,
+    };
+
+    renderPage();
+
+    expect(screen.getByTestId('selection-overview')).toBeInTheDocument();
+  });
+
+  it('renders pickem panel for pickem contests', () => {
+    mockDraftReturn = {
+      data: {
+        ...mockDraft,
+        selectionType: 'PICK_EM',
+        isTurnBased: false,
+        selectionConfig: { isExclusive: false, picksPerPeriod: 2, rosterSize: 2 },
+        pickEmEvents: [
+          {
+            id: 'matchup-1',
+            eventId: 'event-1',
+            period: 1,
+            matchupIndex: 1,
+            homeParticipantId: 'home-1',
+            homeParticipantName: 'Home',
+            awayParticipantId: 'away-1',
+            awayParticipantName: 'Away',
+            eventTime: new Date().toISOString(),
+            deadline: new Date(Date.now() + 60_000).toISOString(),
+            isLocked: false,
+            myPickParticipantId: null,
+            confidenceWeight: null,
+            label: 'Game 1',
+          },
+        ],
+      },
+      isLoading: false,
+      error: null,
+    };
+
+    renderPage();
+
+    expect(screen.getByTestId('pickem-panel')).toBeInTheDocument();
+  });
+
+  it('renders bracket panel for bracket contests', () => {
+    mockDraftReturn = {
+      data: {
+        ...mockDraft,
+        selectionType: 'BRACKET_PICK_EM',
+        isTurnBased: false,
+        selectionConfig: { isExclusive: false, roundValues: [1, 2, 4] },
+        bracketMatchups: [
+          {
+            id: 'bracket-1',
+            roundNumber: 1,
+            matchNumber: 1,
+            label: 'Round 1 Match 1',
+            isLocked: false,
+            topTeam: { id: 'team-1', name: 'Team 1', seed: 1 },
+            bottomTeam: { id: 'team-2', name: 'Team 2', seed: 16 },
+            winnerId: null,
+          },
+        ],
+      },
+      isLoading: false,
+      error: null,
+    };
+
+    renderPage();
+
+    expect(screen.getByTestId('bracket-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('available-panel')).not.toBeInTheDocument();
+  });
+
+  it('shows an entry-required state when the user does not have a contest entry', () => {
+    mockDraftReturn = {
+      data: {
+        ...mockDraft,
+        myEntryId: null,
+        currentEntryId: null,
+        currentEntryName: null,
+        isMyPick: false,
+      },
+      isLoading: false,
+      error: null,
+    };
+
+    renderPage();
+
+    expect(screen.getByText('Contest entry required')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Create or join your entry/ })).toBeInTheDocument();
+    expect(screen.queryByTestId('pick-board')).not.toBeInTheDocument();
   });
 });

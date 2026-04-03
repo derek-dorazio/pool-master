@@ -60,6 +60,7 @@ export type {
   ContestPoolConfig,
   ContestHighlights,
   ContestHistorySummary,
+  ContestMatchup,
   ContestResult,
   ContestStanding,
   ContestTemplate,

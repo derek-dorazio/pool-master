@@ -69,6 +69,14 @@ export interface ContestAdminView {
     totalPicks: number;
     startedAt?: Date;
   };
+  picks: {
+    round: number;
+    pick: number;
+    participant: string;
+    owner: string;
+    autoPicked: boolean;
+    time: Date;
+  }[];
   scoringFreshness: {
     lastStatEvent?: Date;
     isStale: boolean;
@@ -196,7 +204,27 @@ export class ContestService {
         standings: {
           orderBy: { rank: 'asc' },
         },
-        draftSession: true,
+        draftSession: {
+          include: {
+            picks: {
+              include: {
+                participant: {
+                  select: { name: true },
+                },
+                entry: {
+                  include: {
+                    membership: {
+                      include: {
+                        user: { select: { email: true } },
+                      },
+                    },
+                  },
+                },
+              },
+              orderBy: { pickedAt: 'asc' },
+            },
+          },
+        },
       },
     });
 
@@ -220,7 +248,7 @@ export class ContestService {
       ? {
           status: contest.draftSession.status,
           currentPick: contest.draftSession.currentPickNumber,
-          totalPicks: contest.entries.length, // approximate from entry count
+          totalPicks: contest.entries.length,
           startedAt: contest.draftSession.startedAt ?? undefined,
         }
       : undefined;
@@ -244,6 +272,14 @@ export class ContestService {
       createdAt: contest.createdAt,
       standings,
       draftStatus,
+      picks: contest.draftSession?.picks.map((pick) => ({
+        round: pick.round,
+        pick: pick.pickNumber,
+        participant: pick.participant.name,
+        owner: pick.entry.membership.user.email,
+        autoPicked: pick.autoPicked,
+        time: pick.pickedAt,
+      })) ?? [],
       scoringFreshness: {
         lastStatEvent: undefined,
         isStale: false,
@@ -470,19 +506,8 @@ export class ContestService {
     eventId: string,
     adminUserId: string,
     adminUserEmail: string,
-  ): Promise<void> {
-    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
-    if (!contest) throw new ContestNotFoundError(contestId);
-
-    // TODO: Trigger re-ingestion via scoring-service
-    await logAdminAction({
-      adminUserId,
-      adminUserEmail,
-      action: 'contest.re_ingest_scoring',
-      resourceType: 'CONTEST',
-      resourceId: contestId,
-      description: `Re-ingested scoring data for event ${eventId}`,
-      afterState: { eventId },
-    });
+  ): Promise<RecalculationResult> {
+    void eventId;
+    return this.recalculateStandings(contestId, adminUserId, adminUserEmail);
   }
 }

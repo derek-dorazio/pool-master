@@ -1,49 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { DraftMode, DraftStatus } from '@poolmaster/shared/domain';
-import { client, getDraftState } from '@/lib/api';
+import {
+  DraftStateResponseSchema,
+  DraftSearchResponseSchema,
+  type DraftStateResponse,
+} from '@poolmaster/shared/dto';
+import { client, extendPickDeadline, getDraftState, pauseDraft, resumeDraft, searchPoolParticipants, submitDraftPick } from '@/lib/api';
 
-export interface DraftState {
-  id: string;
-  contestId: string;
-  contestName: string;
-  leagueName: string;
-  sport: string;
-  draftType: 'SNAKE' | 'AUCTION' | 'TIERED' | 'PICK_EM' | 'BRACKET';
-  mode: DraftMode;
-  status: DraftStatus;
-  currentPickNumber: number;
-  totalPicks: number;
-  currentRound: number;
-  totalRounds: number;
-  currentEntryId: string | null;
-  currentEntryName: string | null;
-  isMyPick: boolean;
-  timePerPickSeconds: number;
-  pickDeadline: string | null;
-  entries: DraftEntry[];
-  picks: DraftPick[];
-}
-
-export interface DraftEntry {
-  id: string;
-  name: string;
-  userId: string;
-  isCommissioner: boolean;
-  pickOrder: number;
-}
-
-export interface DraftPick {
-  pickNumber: number;
-  round: number;
-  pickInRound: number;
-  entryId: string;
-  entryName: string;
-  participantId: string;
-  participantName: string;
-  position?: string;
-  team?: string;
-  autoPicked: boolean;
-}
+export type DraftState = DraftStateResponse;
+export type DraftEntry = DraftState['entries'][number];
+export type DraftPick = DraftState['picks'][number];
+export type DraftPickEmEvent = NonNullable<DraftState['pickEmEvents']>[number];
+export type DraftBracketMatchup = NonNullable<DraftState['bracketMatchups']>[number];
 
 export interface AvailableParticipant {
   id: string;
@@ -64,28 +31,60 @@ export function useDraft(draftId: string) {
     queryFn: async () => {
       const { data, error } = await getDraftState({ client, path: { contestId: draftId } });
       if (error) throw error;
-      return data as unknown as DraftState;
+      return DraftStateResponseSchema.parse(data);
     },
     refetchInterval: 10_000,
     refetchOnWindowFocus: true,
   });
 }
 
-export function useAvailableParticipants(draftId: string, filters: { query?: string; position?: string; sort?: string }) {
+export function useAvailableParticipants(
+  draftId: string,
+  draftedParticipantIds: string[],
+  filters: { query?: string; position?: string; sort?: string },
+) {
   return useQuery({
-    queryKey: ['drafts', draftId, 'available', filters],
+    queryKey: ['drafts', draftId, 'available', draftedParticipantIds, filters],
     queryFn: async () => {
-      const query: Record<string, string> = {};
-      if (filters.query) query.q = filters.query;
-      if (filters.position) query.position = filters.position;
-      if (filters.sort) query.sort = filters.sort;
-      const { data, error } = await client.get<AvailableParticipant[]>({
-        url: '/api/v1/drafts/{contestId}/available',
+      const { data, error } = await searchPoolParticipants({
+        client,
         path: { contestId: draftId },
-        query,
+        query: {
+          q: filters.query,
+          position: filters.position,
+          undraftedOnly: 'true',
+          availableOnly: 'true',
+          draftedIds: draftedParticipantIds.length > 0 ? draftedParticipantIds.join(',') : undefined,
+          limit: '100',
+          offset: '0',
+        },
       });
       if (error) throw error;
-      return data as AvailableParticipant[];
+      const parsed = DraftSearchResponseSchema.parse(data);
+      let participants = parsed.participants.map((participant) => ({
+        id: participant.participantId,
+        name: participant.displayName,
+        position: participant.position,
+        team: participant.teamAffiliation,
+        ranking: participant.ranking,
+        formRating: participant.ranking ?? 0,
+        injuryStatus: participant.injuryStatus.status,
+        price: participant.budgetPrice,
+        tier: participant.tier,
+        photoUrl: participant.photoUrl,
+      }));
+
+      if (filters.sort === 'name') {
+        participants = [...participants].sort((a, b) => a.name.localeCompare(b.name));
+      } else if (filters.sort === 'price') {
+        participants = [...participants].sort((a, b) => (a.price ?? Number.MAX_SAFE_INTEGER) - (b.price ?? Number.MAX_SAFE_INTEGER));
+      } else if (filters.sort === 'form') {
+        participants = [...participants].sort((a, b) => b.formRating - a.formRating);
+      } else {
+        participants = [...participants].sort((a, b) => (a.ranking ?? Number.MAX_SAFE_INTEGER) - (b.ranking ?? Number.MAX_SAFE_INTEGER));
+      }
+
+      return participants;
     },
   });
 }
@@ -94,14 +93,154 @@ export function useMakePick(draftId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (participantId: string) => {
-      const { error } = await client.post({
-        url: '/api/v1/drafts/{contestId}/pick',
+    mutationFn: async (payload: {
+      entryId: string;
+      participantId: string;
+      eventId?: string;
+      period?: number;
+      matchupIndex?: number;
+      roundNumber?: number;
+      matchNumber?: number;
+      confidenceWeight?: number;
+    }) => {
+      const usesExtendedFields = payload.eventId != null
+        || payload.period != null
+        || payload.matchupIndex != null
+        || payload.roundNumber != null
+        || payload.matchNumber != null
+        || payload.confidenceWeight != null;
+
+      const result = usesExtendedFields
+        ? await client.post({
+            url: `/api/v1/drafts/${draftId}/pick`,
+            body: payload,
+          })
+        : await submitDraftPick({
+            client,
+            path: { contestId: draftId },
+            body: { entryId: payload.entryId, participantId: payload.participantId },
+          });
+
+      const error = 'error' in result ? result.error : undefined;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId, 'available'] });
+    },
+  });
+}
+
+export function useResetBracket(draftId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await client.delete({
+        url: `/api/v1/drafts/${draftId}/bracket`,
+      });
+      if (result.error) throw result.error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
+    },
+  });
+}
+
+export function useAutoFillBracket(draftId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await client.post({
+        url: `/api/v1/drafts/${draftId}/bracket/auto-fill`,
+      });
+      if (result.error) throw result.error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
+    },
+  });
+}
+
+export function usePauseDraft(draftId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await pauseDraft({
+        client,
         path: { contestId: draftId },
-        body: { participantId },
-        headers: { 'Content-Type': 'application/json' },
       });
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
+    },
+  });
+}
+
+export function useResumeDraft(draftId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await resumeDraft({
+        client,
+        path: { contestId: draftId },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
+    },
+  });
+}
+
+export function useExtendDraft(draftId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (additionalSeconds: number) => {
+      const { error } = await extendPickDeadline({
+        client,
+        path: { contestId: draftId },
+        body: { additionalSeconds },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
+    },
+  });
+}
+
+export function useUndoDraft(draftId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await client.post({
+        url: `/api/v1/drafts/${draftId}/undo`,
+      });
+      if (result.error) throw result.error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
+      queryClient.invalidateQueries({ queryKey: ['drafts', draftId, 'available'] });
+    },
+  });
+}
+
+export function useSkipDraft(draftId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await client.post({
+        url: `/api/v1/drafts/${draftId}/skip`,
+      });
+      if (result.error) throw result.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });

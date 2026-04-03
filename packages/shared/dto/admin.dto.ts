@@ -282,6 +282,82 @@ export const UserDetailResponseSchema = z.object({
 });
 export type UserDetailResponse = z.infer<typeof UserDetailResponseSchema>;
 
+export const MigrationRunStatusSchema = z.enum([
+  'QUEUED',
+  'RUNNING',
+  'COMPLETED',
+  'FAILED',
+  'CANCELLED',
+]);
+export type MigrationRunStatus = z.infer<typeof MigrationRunStatusSchema>;
+
+export const MigrationRunProgressDtoSchema = z.object({
+  totalRecords: z.number(),
+  processed: z.number(),
+  succeeded: z.number(),
+  failed: z.number(),
+  percentage: z.number(),
+});
+export type MigrationRunProgressDto = z.infer<typeof MigrationRunProgressDtoSchema>;
+
+export const MigrationRunErrorDtoSchema = z.object({
+  recordId: z.string(),
+  error: z.string(),
+  timestamp: z.string().datetime(),
+});
+export type MigrationRunErrorDto = z.infer<typeof MigrationRunErrorDtoSchema>;
+
+export const MigrationStartedByDtoSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  name: z.string(),
+});
+export type MigrationStartedByDto = z.infer<typeof MigrationStartedByDtoSchema>;
+
+export const MigrationDefinitionDtoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  estimatedRecords: z.number(),
+  lastRunAt: z.string().datetime().nullable(),
+  lastRunStatus: MigrationRunStatusSchema.nullable(),
+});
+export type MigrationDefinitionDto = z.infer<typeof MigrationDefinitionDtoSchema>;
+
+export const MigrationRunDtoSchema = z.object({
+  id: z.string(),
+  migrationId: z.string(),
+  migrationName: z.string(),
+  status: MigrationRunStatusSchema,
+  dryRun: z.boolean(),
+  progress: MigrationRunProgressDtoSchema,
+  startedAt: z.string().datetime(),
+  completedAt: z.string().datetime().nullable(),
+  startedBy: MigrationStartedByDtoSchema,
+  errors: z.array(MigrationRunErrorDtoSchema),
+});
+export type MigrationRunDto = z.infer<typeof MigrationRunDtoSchema>;
+
+export const StartMigrationRunRequestSchema = z.object({
+  migrationId: z.string().min(1),
+  dryRun: z.boolean().optional(),
+  batchSize: z.number().int().positive().optional(),
+  tenantIds: z.array(z.string()).optional(),
+});
+export type StartMigrationRunRequest = z.infer<typeof StartMigrationRunRequestSchema>;
+
+export const MigrationListResponseSchema = z.object({
+  available: z.array(MigrationDefinitionDtoSchema),
+  activeRuns: z.array(MigrationRunDtoSchema),
+  recentHistory: z.array(MigrationRunDtoSchema),
+});
+export type MigrationListResponse = z.infer<typeof MigrationListResponseSchema>;
+
+export const MigrationRunResponseSchema = z.object({
+  run: MigrationRunDtoSchema,
+});
+export type MigrationRunResponse = z.infer<typeof MigrationRunResponseSchema>;
+
 export const AdminServiceDependencyDtoSchema = z.object({
   name: z.string(),
   status: z.enum(['UP', 'DOWN']),
@@ -357,6 +433,361 @@ export const BusinessMetricsResponseSchema = z.object({
   checkedAt: z.string().datetime(),
 });
 export type BusinessMetricsResponse = z.infer<typeof BusinessMetricsResponseSchema>;
+
+export const ProviderHealthStatusSchema = z.enum(['HEALTHY', 'DEGRADED', 'DOWN']);
+export type ProviderHealthStatus = z.infer<typeof ProviderHealthStatusSchema>;
+
+export const ProviderSummaryDtoSchema = z.object({
+  providerId: z.string(),
+  providerName: z.string(),
+  status: ProviderHealthStatusSchema,
+  errorRate: z.number(),
+  latencyMs: z.number(),
+  lastEventAt: z.string().datetime().nullable(),
+  sportsCovered: z.array(z.string()),
+  activeEventCount: z.number(),
+});
+export type ProviderSummaryDto = z.infer<typeof ProviderSummaryDtoSchema>;
+
+export const ProviderHealthCheckDtoSchema = z.object({
+  providerId: z.string(),
+  providerName: z.string(),
+  status: ProviderHealthStatusSchema,
+  errorRate: z.number(),
+  latencyMs: z.number(),
+  checkedAt: z.string().datetime(),
+  details: z.string(),
+});
+export type ProviderHealthCheckDto = z.infer<typeof ProviderHealthCheckDtoSchema>;
+
+export const ProviderIngestionStatDtoSchema = z.object({
+  sport: z.string(),
+  providerId: z.string(),
+  lastPollAt: z.string().datetime().nullable(),
+  lastEventReceivedAt: z.string().datetime().nullable(),
+  eventsToday: z.number(),
+  errorsToday: z.number(),
+  activeEventCount: z.number(),
+  contestsDepending: z.number(),
+});
+export type ProviderIngestionStatDto = z.infer<typeof ProviderIngestionStatDtoSchema>;
+
+export const ProviderIngestionErrorDtoSchema = z.object({
+  providerId: z.string(),
+  errorType: z.string(),
+  message: z.string(),
+  occurredAt: z.string().datetime(),
+  eventId: z.string().nullable().optional(),
+});
+export type ProviderIngestionErrorDto = z.infer<typeof ProviderIngestionErrorDtoSchema>;
+
+export const ProviderIngestionJobDtoSchema = z.object({
+  id: z.string(),
+  providerId: z.string(),
+  sport: z.string(),
+  eventId: z.string().nullable(),
+  status: z.enum(['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED']),
+  startedAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  recordsProcessed: z.number(),
+  errors: z.number(),
+});
+export type ProviderIngestionJobDto = z.infer<typeof ProviderIngestionJobDtoSchema>;
+
+export const ProviderUnmappedParticipantDtoSchema = z.object({
+  providerId: z.string(),
+  providerName: z.string(),
+  externalId: z.string(),
+  externalName: z.string(),
+  sport: z.string(),
+});
+export type ProviderUnmappedParticipantDto = z.infer<typeof ProviderUnmappedParticipantDtoSchema>;
+
+export const ProviderUnmappedParticipantListResponseSchema = z.array(ProviderUnmappedParticipantDtoSchema);
+export type ProviderUnmappedParticipantListResponse = z.infer<typeof ProviderUnmappedParticipantListResponseSchema>;
+
+export const ProviderDetailResponseSchema = ProviderSummaryDtoSchema.extend({
+  recentHealthChecks: z.array(ProviderHealthCheckDtoSchema),
+  ingestionStats: z.array(ProviderIngestionStatDtoSchema),
+  recentErrors: z.array(ProviderIngestionErrorDtoSchema),
+  recentJobs: z.array(ProviderIngestionJobDtoSchema),
+  unmappedParticipants: z.array(ProviderUnmappedParticipantDtoSchema),
+  mappedParticipantCount: z.number(),
+});
+export type ProviderDetailResponse = z.infer<typeof ProviderDetailResponseSchema>;
+
+export const ProviderListResponseSchema = z.object({
+  items: z.array(ProviderSummaryDtoSchema),
+});
+export type ProviderListResponse = z.infer<typeof ProviderListResponseSchema>;
+
+export const ProviderIngestionDashboardResponseSchema = z.object({
+  sportProviderStatus: z.array(ProviderIngestionStatDtoSchema),
+  recentErrors: z.array(ProviderIngestionErrorDtoSchema),
+  activeJobs: z.array(ProviderIngestionJobDtoSchema),
+  recentCompletedJobs: z.array(ProviderIngestionJobDtoSchema),
+  throughputPerMinute: z.number(),
+});
+export type ProviderIngestionDashboardResponse = z.infer<typeof ProviderIngestionDashboardResponseSchema>;
+
+export const ContestListItemDtoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  leagueName: z.string(),
+  tenantName: z.string(),
+  sport: z.string(),
+  contestType: z.string(),
+  selectionType: z.string(),
+  status: z.string(),
+  entryCount: z.number(),
+  createdAt: z.string().datetime(),
+});
+export type ContestListItemDto = z.infer<typeof ContestListItemDtoSchema>;
+
+export const AdminContestListResponseSchema = z.object({
+  items: z.array(ContestListItemDtoSchema),
+  total: z.number(),
+});
+export type AdminContestListResponse = z.infer<typeof AdminContestListResponseSchema>;
+
+export const ContestStandingDtoSchema = z.object({
+  entryId: z.string(),
+  entryName: z.string(),
+  ownerEmail: z.string(),
+  rank: z.number(),
+  totalScore: z.number(),
+});
+export type ContestStandingDto = z.infer<typeof ContestStandingDtoSchema>;
+
+export const ContestDraftStatusDtoSchema = z.object({
+  status: z.string(),
+  currentPick: z.number(),
+  totalPicks: z.number(),
+  startedAt: z.string().datetime().nullable().optional(),
+});
+export type ContestDraftStatusDto = z.infer<typeof ContestDraftStatusDtoSchema>;
+
+export const ContestPickDtoSchema = z.object({
+  round: z.number(),
+  pick: z.number(),
+  participant: z.string(),
+  owner: z.string(),
+  autoPicked: z.boolean(),
+  time: z.string().datetime(),
+});
+export type ContestPickDto = z.infer<typeof ContestPickDtoSchema>;
+
+export const ContestOverrideDtoSchema = z.object({
+  id: z.string(),
+  adminEmail: z.string(),
+  entryId: z.string(),
+  oldScore: z.number(),
+  newScore: z.number(),
+  reason: z.string(),
+  createdAt: z.string().datetime(),
+});
+export type ContestOverrideDto = z.infer<typeof ContestOverrideDtoSchema>;
+
+export const ContestRankChangeDtoSchema = z.object({
+  entryId: z.string(),
+  oldRank: z.number(),
+  newRank: z.number(),
+});
+export type ContestRankChangeDto = z.infer<typeof ContestRankChangeDtoSchema>;
+
+export const ContestRecalculationResultDtoSchema = z.object({
+  contestId: z.string(),
+  entriesAffected: z.number(),
+  rankChanges: z.array(ContestRankChangeDtoSchema),
+  recalculatedAt: z.string().datetime(),
+});
+export type ContestRecalculationResultDto = z.infer<typeof ContestRecalculationResultDtoSchema>;
+
+export const ContestAdminDetailResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sport: z.string(),
+  contestType: z.string(),
+  selectionType: z.string(),
+  scoringEngine: z.string(),
+  status: z.string(),
+  leagueName: z.string(),
+  leagueId: z.string(),
+  tenantName: z.string(),
+  tenantId: z.string(),
+  entryCount: z.number(),
+  startsAt: z.string().datetime().nullable().optional(),
+  endsAt: z.string().datetime().nullable().optional(),
+  lockAt: z.string().datetime().nullable().optional(),
+  createdAt: z.string().datetime(),
+  standings: z.array(ContestStandingDtoSchema),
+  draftStatus: ContestDraftStatusDtoSchema.optional(),
+  picks: z.array(ContestPickDtoSchema),
+  scoringFreshness: z.object({
+    lastStatEvent: z.string().datetime().nullable().optional(),
+    isStale: z.boolean(),
+    staleMinutes: z.number(),
+  }),
+  statEventCount: z.number(),
+  correctionsApplied: z.number(),
+  overrides: z.array(ContestOverrideDtoSchema),
+});
+export type ContestAdminDetailResponse = z.infer<typeof ContestAdminDetailResponseSchema>;
+
+export const SupportTenantErrorDtoSchema = z.object({
+  id: z.string(),
+  service: z.string(),
+  errorType: z.string(),
+  message: z.string(),
+  requestId: z.string(),
+  occurredAt: z.string().datetime(),
+});
+export type SupportTenantErrorDto = z.infer<typeof SupportTenantErrorDtoSchema>;
+
+export const SupportNotificationFailureDtoSchema = z.object({
+  id: z.string(),
+  eventType: z.string(),
+  channel: z.string(),
+  failureReason: z.string(),
+  userId: z.string(),
+  occurredAt: z.string().datetime(),
+});
+export type SupportNotificationFailureDto = z.infer<typeof SupportNotificationFailureDtoSchema>;
+
+export const SupportActivitySampleDtoSchema = z.object({
+  id: z.string(),
+  action: z.string(),
+  resourceType: z.string(),
+  resourceId: z.string(),
+  description: z.string(),
+  adminUserEmail: z.string(),
+  occurredAt: z.string().datetime(),
+});
+export type SupportActivitySampleDto = z.infer<typeof SupportActivitySampleDtoSchema>;
+
+export const SupportScoringStalenessDtoSchema = z.object({
+  contestId: z.string(),
+  contestName: z.string(),
+  sport: z.string(),
+  lastScoringUpdate: z.string().datetime(),
+  staleMinutes: z.number(),
+});
+export type SupportScoringStalenessDto = z.infer<typeof SupportScoringStalenessDtoSchema>;
+
+export const SupportInvestigationResponseSchema = z.object({
+  tenantId: z.string(),
+  recentErrors: z.array(SupportTenantErrorDtoSchema),
+  notificationFailures: z.array(SupportNotificationFailureDtoSchema),
+  recentActivity: z.array(SupportActivitySampleDtoSchema),
+  scoringStaleness: z.array(SupportScoringStalenessDtoSchema),
+  pendingCorrections: z.number(),
+  failedWebhooks: z.number(),
+});
+export type SupportInvestigationResponse = z.infer<typeof SupportInvestigationResponseSchema>;
+
+export const SupportErrorListResponseSchema = z.object({
+  items: z.array(SupportTenantErrorDtoSchema),
+  total: z.number(),
+});
+export type SupportErrorListResponse = z.infer<typeof SupportErrorListResponseSchema>;
+
+export const SupportNotificationFailureListResponseSchema = z.object({
+  items: z.array(SupportNotificationFailureDtoSchema),
+  total: z.number(),
+});
+export type SupportNotificationFailureListResponse = z.infer<typeof SupportNotificationFailureListResponseSchema>;
+
+export const SupportActivityListResponseSchema = z.object({
+  items: z.array(SupportActivitySampleDtoSchema),
+  total: z.number(),
+});
+export type SupportActivityListResponse = z.infer<typeof SupportActivityListResponseSchema>;
+
+export const EntitlementResultDtoSchema = z.object({
+  entitled: z.boolean(),
+  reason: z.string().optional(),
+  currentUsage: z.number().optional(),
+  limit: z.number().optional(),
+  upgradePlan: z.string().optional(),
+});
+export type EntitlementResultDto = z.infer<typeof EntitlementResultDtoSchema>;
+
+export const UsageResultDtoSchema = z.object({
+  resource: z.enum(['LEAGUES', 'MEMBERS', 'CONTESTS']),
+  current: z.number(),
+  limit: z.number(),
+  percentage: z.number(),
+});
+export type UsageResultDto = z.infer<typeof UsageResultDtoSchema>;
+
+export const QuickResetPasswordResponseSchema = z.object({
+  action: z.literal('reset-password'),
+  userId: z.string(),
+  email: z.string(),
+  result: z.literal('PASSWORD_RESET_TRIGGERED'),
+  triggeredAt: z.string().datetime(),
+});
+export type QuickResetPasswordResponse = z.infer<typeof QuickResetPasswordResponseSchema>;
+
+export const QuickProviderCheckResponseSchema = z.object({
+  action: z.literal('check-provider'),
+  requestedSport: z.string(),
+  matchesSportCoverage: z.boolean(),
+  provider: ProviderSummaryDtoSchema,
+  checkedAt: z.string().datetime(),
+});
+export type QuickProviderCheckResponse = z.infer<typeof QuickProviderCheckResponseSchema>;
+
+export const QuickEntitlementsResponseSchema = z.object({
+  action: z.literal('check-entitlements'),
+  tenantId: z.string(),
+  planTier: z.string(),
+  entitlements: z.record(EntitlementResultDtoSchema),
+  usage: z.object({
+    leagues: UsageResultDtoSchema,
+    members: UsageResultDtoSchema,
+    contests: UsageResultDtoSchema,
+  }),
+  withinLimits: z.boolean(),
+  checkedAt: z.string().datetime(),
+});
+export type QuickEntitlementsResponse = z.infer<typeof QuickEntitlementsResponseSchema>;
+
+export const QuickNotificationDeviceDtoSchema = z.object({
+  platform: z.string(),
+  lastSeen: z.string().datetime(),
+  tokenStatus: z.string(),
+});
+export type QuickNotificationDeviceDto = z.infer<typeof QuickNotificationDeviceDtoSchema>;
+
+export const QuickNotificationsResponseSchema = z.object({
+  action: z.literal('check-notifications'),
+  userId: z.string(),
+  preferences: z.object({
+    doNotDisturb: z.boolean(),
+    categories: z.record(z.boolean()),
+  }),
+  devices: z.array(QuickNotificationDeviceDtoSchema),
+  recentDelivery: z.object({
+    sent: z.number(),
+    delivered: z.number(),
+    failed: z.number(),
+    deliveryRate: z.number(),
+  }),
+  failures: z.array(z.object({
+    eventType: z.string(),
+    channel: z.string(),
+    reason: z.string(),
+    at: z.string().datetime(),
+  })),
+  checkedAt: z.string().datetime(),
+});
+export type QuickNotificationsResponse = z.infer<typeof QuickNotificationsResponseSchema>;
+
+export const QuickReIngestScoresResponseSchema = ContestRecalculationResultDtoSchema.extend({
+  action: z.literal('re-ingest-scores'),
+});
+export type QuickReIngestScoresResponse = z.infer<typeof QuickReIngestScoresResponseSchema>;
 
 export const ErrorLogEntryDtoSchema = z.object({
   id: z.string(),

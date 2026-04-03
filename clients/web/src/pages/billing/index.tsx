@@ -33,6 +33,10 @@ export function Component() {
   const { data: subscription } = useBillingSubscription();
 
   const isFree = !subscription || plan?.tier === 'free';
+  const subscriptionPrice =
+    plan && subscription
+      ? (subscription.cycle === 'annual' ? plan.annualPrice : plan.price)
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -92,7 +96,7 @@ export function Component() {
                 ) : (
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p>
-                      ${subscription!.price.toFixed(2)}/{subscription!.cycle === 'monthly' ? 'mo' : 'yr'}
+                      ${subscriptionPrice.toFixed(2)}/{subscription!.cycle === 'monthly' ? 'mo' : 'yr'}
                     </p>
                     {subscription!.renewalDate && (
                       <p>Renews {subscription!.renewalDate}</p>
@@ -185,7 +189,7 @@ export function Component() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold">
-                  ${subscription.price.toFixed(2)}
+                  ${subscriptionPrice.toFixed(2)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {subscription.renewalDate} &middot; {plan?.name} Plan

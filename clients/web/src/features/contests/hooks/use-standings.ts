@@ -1,27 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { client, getStandings } from '@/lib/api';
-
-export interface StandingsEntry {
-  id: string;
-  rank: number;
-  entryName: string;
-  ownerName: string;
-  totalScore: number;
-  round1: number;
-  round2: number;
-  round3: number;
-  round4: number;
-  movement: 'up' | 'down' | 'none';
-  movementAmount: number;
-  isCurrentUser: boolean;
-  isEliminated: boolean;
-}
-
-interface StandingsResponse {
-  standings: StandingsEntry[];
-  total: number;
-  contestId: string;
-}
+import {
+  StandingsResponseSchema,
+  type StandingsResponse,
+} from '@poolmaster/shared/dto';
 
 export function useStandings(contestId: string | undefined) {
   return useQuery({
@@ -29,7 +11,10 @@ export function useStandings(contestId: string | undefined) {
     queryFn: async (): Promise<StandingsResponse> => {
       const { data, error } = await getStandings({ client, path: { contestId: contestId! } });
       if (error) throw error;
-      return data as unknown as StandingsResponse;
+      if (!data) {
+        throw new Error('Standings response was empty.');
+      }
+      return StandingsResponseSchema.parse(data);
     },
     enabled: !!contestId,
   });

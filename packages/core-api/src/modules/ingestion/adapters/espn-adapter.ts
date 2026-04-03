@@ -70,6 +70,11 @@ export class EspnAdapter implements SportDataProvider {
         shortName: e.shortName,
         seasonType: e.season?.type,
         week: e.week?.number,
+        competitors: e.competitions?.[0]?.competitors?.map((competitor) => ({
+          externalId: competitor.id,
+          name: competitor.team?.displayName ?? competitor.team?.name,
+          homeAway: competitor.homeAway,
+        })) ?? [],
       },
     }));
   }
@@ -253,6 +258,11 @@ interface EspnCompetitor {
   score?: string;
   homeAway?: string;
   winner?: boolean;
+  team?: {
+    id?: string;
+    displayName?: string;
+    name?: string;
+  };
 }
 
 interface EspnTeamsResponse {

@@ -141,8 +141,11 @@ export class StandingsService {
     });
 
     if (standings.length === 0) {
-      // Fall back to contest entries if no standings have been computed yet
-      return this.fallbackToEntries(contestId);
+      throw new StandingsError(
+        'Standings have not been generated for this contest yet',
+        'STANDINGS_UNAVAILABLE',
+        409,
+      );
     }
 
     // Fetch all entries for this contest with their owner info
@@ -177,33 +180,6 @@ export class StandingsService {
     });
   }
 
-  /**
-   * When no standings records exist, build a leaderboard from entries directly.
-   */
-  private async fallbackToEntries(contestId: string): Promise<StandingEntry[]> {
-    const entries = await this.prisma.contestEntry.findMany({
-      where: { contestId },
-      include: {
-        membership: {
-          include: { user: true },
-        },
-      },
-      orderBy: { totalScore: 'desc' },
-    });
-
-    return entries.map((e, idx) => ({
-      rank: e.rank ?? idx + 1,
-      previousRank: null,
-      movement: 'new' as const,
-      entryId: e.id,
-      entryName: e.name,
-      ownerDisplayName: e.membership?.user?.displayName ?? 'Unknown',
-      ownerId: e.membership?.user?.id ?? '',
-      totalScore: e.totalScore,
-      isEliminated: e.isEliminated,
-      lastUpdatedAt: e.updatedAt,
-    }));
-  }
 }
 
 // ---------------------------------------------------------------------------

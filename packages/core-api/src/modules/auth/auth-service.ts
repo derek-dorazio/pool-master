@@ -32,6 +32,7 @@ export interface UserProfile {
   id: string;
   email: string;
   displayName: string;
+  authProvider?: 'email' | 'google' | 'apple';
   tenantId: string;
   timezone?: string | null;
   locale?: string | null;
@@ -232,6 +233,7 @@ function mapUserProfile(user: {
   email: string;
   displayName: string;
   tenantId: string;
+  authProvider: string | null;
   timezone: string | null;
   locale: string | null;
   createdAt: Date;
@@ -240,9 +242,17 @@ function mapUserProfile(user: {
     id: user.id,
     email: user.email,
     displayName: user.displayName,
+    authProvider: mapAuthProvider(user.authProvider),
     tenantId: user.tenantId,
     timezone: user.timezone,
     locale: user.locale,
     createdAt: user.createdAt,
   };
+}
+
+function mapAuthProvider(provider: string | null): UserProfile['authProvider'] {
+  if (provider === 'local') return 'email';
+  if (provider === 'google') return 'google';
+  if (provider === 'apple') return 'apple';
+  return undefined;
 }

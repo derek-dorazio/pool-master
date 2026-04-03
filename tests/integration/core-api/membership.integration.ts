@@ -90,6 +90,21 @@ describe('Membership Integration', () => {
     });
   });
 
+  describe('GET /api/v1/leagues/:id/members', () => {
+    it('returns the real wrapped members response', async () => {
+      const res = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/leagues/${leagueId}/members`,
+        headers: ownerHeaders,
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(Array.isArray(body.members)).toBe(true);
+      expect(body.members.some((member: { userId: string }) => member.userId === ownerId)).toBe(true);
+    });
+  });
+
   describe('PUT /api/v1/leagues/:id/members/:uid/role', () => {
     it('owner promotes member2 to COMMISSIONER', async () => {
       const res = await getApp().inject({
@@ -132,6 +147,20 @@ describe('Membership Integration', () => {
       });
       // May return league (same tenant) or 403 (not a member)
       expect([200, 403]).toContain(res.statusCode);
+    });
+  });
+
+  describe('DELETE /api/v1/leagues/:id/members/me', () => {
+    it('member2 can leave the league through the self-leave route after ownership transfer', async () => {
+      const { 'content-type': _, ...h } = member2Headers;
+      const res = await getApp().inject({
+        method: 'DELETE',
+        url: `/api/v1/leagues/${leagueId}/members/me`,
+        headers: h,
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ success: true });
     });
   });
 

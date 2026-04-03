@@ -1,105 +1,95 @@
-import { useState } from 'react';
 import { DraftStatus } from '@poolmaster/shared/domain';
-import { Shield, Pause, Play, Undo2, SkipForward } from 'lucide-react';
+import { Loader2, Pause, Play, Plus, RotateCcw, Shield, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useExtendDraft, usePauseDraft, useResumeDraft, useSkipDraft, useUndoDraft } from './hooks/use-draft';
+import type { DraftState } from './hooks/use-draft';
 
 interface CommissionerControlsProps {
   draftId: string;
-  draftStatus: DraftStatus;
+  draftStatus: DraftState['status'];
   isCommissioner: boolean;
 }
 
-export function CommissionerControls({ draftId, draftStatus, isCommissioner }: CommissionerControlsProps) {
-  const [confirming, setConfirming] = useState<string | null>(null);
-  const queryClient = useQueryClient();
+export function CommissionerControls({
+  draftId,
+  draftStatus,
+  isCommissioner,
+}: CommissionerControlsProps) {
+  const pauseMutation = usePauseDraft(draftId);
+  const resumeMutation = useResumeDraft(draftId);
+  const extendMutation = useExtendDraft(draftId);
+  const undoMutation = useUndoDraft(draftId);
+  const skipMutation = useSkipDraft(draftId);
 
-  const action = useMutation({
-    mutationFn: async (_actionType: string) => {
-      // TODO: Replace with real API calls
-      // await api.post(`/v1/drafts/${draftId}/commissioner/${actionType}`);
-      await new Promise((r) => setTimeout(r, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['drafts', draftId] });
-      setConfirming(null);
-    },
-  });
+  if (!isCommissioner || draftStatus === DraftStatus.COMPLETE) {
+    return null;
+  }
 
-  if (!isCommissioner || draftStatus === DraftStatus.COMPLETE) return null;
-
-  const actions = [
-    {
-      key: 'pause',
-      label: 'Pause Draft',
-      icon: Pause,
-      show: draftStatus === DraftStatus.LIVE,
-      confirm: 'Pause the draft? All timers will stop until you resume.',
-    },
-    {
-      key: 'resume',
-      label: 'Resume Draft',
-      icon: Play,
-      show: draftStatus === DraftStatus.PAUSED,
-      confirm: 'Resume the draft? Timers will restart.',
-    },
-    {
-      key: 'undo',
-      label: 'Undo Last Pick',
-      icon: Undo2,
-      show: draftStatus === DraftStatus.LIVE || draftStatus === DraftStatus.PAUSED,
-      confirm: 'Undo the last pick? The player will return to the available pool.',
-    },
-    {
-      key: 'skip',
-      label: 'Skip Pick',
-      icon: SkipForward,
-      show: draftStatus === DraftStatus.LIVE,
-      confirm: 'Skip the current pick? It will be marked as skipped.',
-    },
-  ];
+  const isPending = pauseMutation.isPending || resumeMutation.isPending || extendMutation.isPending || undoMutation.isPending || skipMutation.isPending;
+  const canPause = draftStatus === DraftStatus.LIVE;
+  const canResume = draftStatus === DraftStatus.PAUSED;
+  const canExtend = draftStatus === DraftStatus.LIVE;
+  const canUndo = draftStatus === DraftStatus.LIVE || draftStatus === DraftStatus.PAUSED;
+  const canSkip = draftStatus === DraftStatus.LIVE;
 
   return (
-    <>
-      <div className="flex items-center gap-1 border-l pl-3 ml-3">
-        <Shield className="h-4 w-4 text-amber-600" />
-        <span className="text-xs font-medium text-amber-600 mr-1">Commissioner</span>
-        {actions.filter((a) => a.show).map((a) => (
-          <Button
-            key={a.key}
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setConfirming(a.key)}
-            disabled={action.isPending}
-          >
-            <a.icon className="h-3.5 w-3.5 mr-1" />
-            {a.label}
-          </Button>
-        ))}
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+      <div className="flex items-center gap-2 font-medium">
+        <Shield className="h-4 w-4" />
+        <span>Commissioner Controls</span>
       </div>
 
-      {/* Confirmation dialog */}
-      {confirming && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background rounded-lg shadow-lg p-6 max-w-sm w-full mx-4 space-y-4">
-            <h3 className="text-lg font-semibold">Confirm Action</h3>
-            <p className="text-sm text-muted-foreground">
-              {actions.find((a) => a.key === confirming)?.confirm}
-            </p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setConfirming(null)}>Cancel</Button>
-              <Button
-                onClick={() => action.mutate(confirming)}
-                disabled={action.isPending}
-              >
-                {action.isPending ? 'Processing...' : 'Confirm'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!canPause || isPending}
+          onClick={() => pauseMutation.mutate()}
+        >
+          {pauseMutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Pause className="mr-1 h-4 w-4" />}
+          Pause
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!canResume || isPending}
+          onClick={() => resumeMutation.mutate()}
+        >
+          {resumeMutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Play className="mr-1 h-4 w-4" />}
+          Resume
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!canExtend || isPending}
+          onClick={() => extendMutation.mutate(60)}
+        >
+          {extendMutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Plus className="mr-1 h-4 w-4" />}
+          Add 60s
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!canUndo || isPending}
+          onClick={() => undoMutation.mutate()}
+        >
+          {undoMutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-1 h-4 w-4" />}
+          Undo
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!canSkip || isPending}
+          onClick={() => skipMutation.mutate()}
+        >
+          {skipMutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <SkipForward className="mr-1 h-4 w-4" />}
+          Skip
+        </Button>
+      </div>
+    </div>
   );
 }

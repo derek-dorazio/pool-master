@@ -42,11 +42,12 @@ export interface CreateEnterprisePlanInput {
   notes?: string;
 }
 
-// ---------------------------------------------------------------------------
-// In-memory store
-// ---------------------------------------------------------------------------
-
-const enterpriseStore: Map<string, EnterprisePlan> = new Map();
+export class EnterprisePlanUnavailableError extends Error {
+  constructor(operation: string) {
+    super(`Enterprise plan storage is unavailable for ${operation} until a persisted model exists`);
+    this.name = 'EnterprisePlanUnavailableError';
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Service
@@ -57,43 +58,23 @@ export class EnterpriseService {
    * Create a new enterprise plan for a tenant.
    */
   async createEnterprisePlan(input: CreateEnterprisePlanInput): Promise<EnterprisePlan> {
-    const now = new Date();
-    const defaultContractEnd = new Date(now);
-    defaultContractEnd.setFullYear(defaultContractEnd.getFullYear() + 1);
-    const plan: EnterprisePlan = {
-      id: `ep-${Date.now()}-${input.tenantId}`,
-      tenantId: input.tenantId,
-      customName: input.customName,
-      basePlan: input.basePlan ?? 'league_plus',
-      customEntitlements: input.customEntitlements ?? {},
-      customMonthlyPriceCents: input.customMonthlyPriceCents,
-      billingMethod: input.billingMethod ?? 'INVOICE',
-      contractStart: input.contractStart ?? now,
-      contractEnd: input.contractEnd ?? defaultContractEnd,
-      slaTier: input.slaTier ?? 'STANDARD',
-      whiteLabel: input.whiteLabel ?? false,
-      dedicatedSupportContact: input.dedicatedSupportContact,
-      notes: input.notes ?? '',
-      createdAt: now,
-      updatedAt: now,
-    };
-    enterpriseStore.set(input.tenantId, plan);
-    return plan;
+    void input;
+    throw new EnterprisePlanUnavailableError('enterprise plan creation');
   }
 
   /**
    * List all enterprise plans.
    */
   async listEnterprisePlans(): Promise<EnterprisePlan[]> {
-    return Array.from(enterpriseStore.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    throw new EnterprisePlanUnavailableError('enterprise plan listing');
   }
 
   /**
    * Get enterprise plan for a specific tenant.
    */
   async getEnterprisePlan(tenantId: string): Promise<EnterprisePlan | null> {
-    return enterpriseStore.get(tenantId) ?? null;
+    void tenantId;
+    return null;
   }
 
   /**
@@ -103,19 +84,8 @@ export class EnterpriseService {
     tenantId: string,
     updates: Partial<EnterprisePlan>,
   ): Promise<EnterprisePlan> {
-    const existing = enterpriseStore.get(tenantId);
-    if (!existing) {
-      throw new Error(`Enterprise plan not found for tenant: ${tenantId}`);
-    }
-    const updated: EnterprisePlan = {
-      ...existing,
-      ...updates,
-      id: existing.id,
-      tenantId: existing.tenantId,
-      createdAt: existing.createdAt,
-      updatedAt: new Date(),
-    };
-    enterpriseStore.set(tenantId, updated);
-    return updated;
+    void tenantId;
+    void updates;
+    throw new EnterprisePlanUnavailableError('enterprise plan updates');
   }
 }

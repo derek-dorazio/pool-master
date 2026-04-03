@@ -55,6 +55,21 @@ export const ContestDetailDtoSchema = ContestSummaryDtoSchema.extend({
 });
 export type ContestDetailDto = z.infer<typeof ContestDetailDtoSchema>;
 
+export const ContestEntryDtoSchema = z.object({
+  id: z.string(),
+  contestId: z.string(),
+  leagueMembershipId: z.string(),
+  name: z.string(),
+  totalScore: z.number(),
+  rank: z.number().nullable().optional(),
+  isEliminated: z.boolean(),
+  ownerId: z.string(),
+  ownerDisplayName: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
+
 // --- Responses ---
 
 export const ContestResponseSchema = z.object({
@@ -67,6 +82,27 @@ export const ContestListResponseSchema = z.object({
   contests: z.array(ContestSummaryDtoSchema),
 });
 export type ContestListResponse = z.infer<typeof ContestListResponseSchema>;
+
+export const ContestEntryResponseSchema = z.object({
+  contestId: z.string(),
+  entry: ContestEntryDtoSchema,
+});
+export type ContestEntryResponse = z.infer<typeof ContestEntryResponseSchema>;
+
+export const ContestEntryListResponseSchema = z.object({
+  contestId: z.string(),
+  total: z.number(),
+  isJoined: z.boolean(),
+  myEntryId: z.string().nullable(),
+  entries: z.array(ContestEntryDtoSchema),
+});
+export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;
+
+export const MyContestEntryResponseSchema = z.object({
+  contestId: z.string(),
+  entry: ContestEntryDtoSchema.nullable(),
+});
+export type MyContestEntryResponse = z.infer<typeof MyContestEntryResponseSchema>;
 
 export const ContestStandingsRecalculationResponseSchema = z.object({
   contestId: z.string(),

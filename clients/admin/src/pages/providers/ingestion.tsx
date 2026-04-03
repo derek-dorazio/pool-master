@@ -5,7 +5,11 @@ import { cn } from '@/lib/utils';
 import { useIngestionJobs } from '@/hooks/use-providers-api';
 
 export function Component() {
-  const { jobs, errors, throughput } = useIngestionJobs();
+  const { dashboard, isError, error } = useIngestionJobs();
+  const jobs = dashboard?.activeJobs ?? [];
+  const errors = dashboard?.recentErrors ?? [];
+  const throughput = dashboard?.throughputPerMinute ?? 0;
+  const recentCompletedJobs = dashboard?.recentCompletedJobs ?? [];
 
   return (
     <div className="space-y-6">
@@ -24,6 +28,15 @@ export function Component() {
           </div>
         </CardContent>
       </Card>
+
+      {isError ? (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Ingestion dashboard is unavailable.
+          <span className="ml-2 text-red-600/80">
+            {error instanceof Error ? error.message : 'Check provider health logs and ingestion jobs.'}
+          </span>
+        </div>
+      ) : null}
 
       {/* Active Jobs */}
       <Card>
@@ -56,6 +69,35 @@ export function Component() {
           ))}
           {jobs.length === 0 && (
             <p className="text-sm text-muted-foreground">No active ingestion jobs.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Recently Completed</CardTitle>
+          <CardDescription>{recentCompletedJobs.length} completed jobs</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {recentCompletedJobs.map((job) => (
+            <div key={job.id} className="space-y-1 rounded-md border p-4 text-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{job.eventId ?? job.id}</p>
+                  <p className="text-muted-foreground">
+                    {job.providerId} / {job.sport}
+                  </p>
+                </div>
+                <Badge variant="outline">{job.status}</Badge>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Processed {job.recordsProcessed.toLocaleString()}</span>
+                <span>{job.completedAt ? new Date(job.completedAt).toLocaleString() : 'Unavailable'}</span>
+              </div>
+            </div>
+          ))}
+          {recentCompletedJobs.length === 0 && (
+            <p className="text-sm text-muted-foreground">No completed jobs yet.</p>
           )}
         </CardContent>
       </Card>

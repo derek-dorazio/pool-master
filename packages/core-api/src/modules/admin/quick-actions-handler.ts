@@ -1,16 +1,19 @@
 /**
  * Quick actions handler — one-click support shortcuts for common scenarios.
  *
- * Each action performs a mock check / operation and returns a summary result.
- * These map to the most frequent support requests:
- *   - User can't log in -> reset password
- *   - Scores aren't updating -> check provider health
- *   - Can't create contest -> check entitlements
- *   - Missing notifications -> check notification delivery
- *   - Stale scores -> re-ingest scoring data
+ * The actions now delegate to real backend services and persisted data instead
+ * of returning canned support-staff examples.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { ContestService } from './contest-service';
+import { ContestNotFoundError } from './contest-service';
+import type { ProviderService } from './provider-service';
+import { ProviderNotFoundError } from './provider-service';
+import type { UserService } from './user-service';
+import { UserNotFoundError } from './user-service';
+import type { EntitlementService } from '../billing/entitlement-service';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -28,10 +31,40 @@ function extractAdminContext(request: FastifyRequest): AdminContext {
 }
 
 // ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+const ENTITLEMENT_KEYS = [
+  'league.create',
+  'league.member.add',
+  'contest.create',
+  'sport.access',
+  'draft.type',
+  'draft.mode',
+  'leaderboard.realtime',
+  'scoring.custom',
+  'history.access',
+  'analytics.access',
+  'branding.custom',
+  'prizes.intermediate',
+  'api.access',
+] as const;
+
+type EntitlementKey = typeof ENTITLEMENT_KEYS[number];
+
+export interface QuickActionsDeps {
+  prisma: PrismaClient;
+  userService: UserService;
+  providerService: ProviderService;
+  contestService: ContestService;
+  entitlementService: EntitlementService;
+}
+
+// ---------------------------------------------------------------------------
 // Handler factory
 // ---------------------------------------------------------------------------
 
-export function createQuickActionsHandlers() {
+export function createQuickActionsHandlers(deps: QuickActionsDeps) {
   return {
     resetPassword,
     checkProvider,
@@ -46,22 +79,24 @@ export function createQuickActionsHandlers() {
     request: FastifyRequest<{ Body: { userId: string; email: string } }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId } = extractAdminContext(request);
+    const { adminUserId, adminUserEmail } = extractAdminContext(request);
     const { userId, email } = request.body;
 
-    return reply.send({
-      action: 'reset-password',
-      performedBy: adminUserId,
-      userId,
-      email,
-      result: 'PASSWORD_RESET_EMAIL_SENT',
-      message: `Password reset email sent to ${email}. Link expires in 24 hours.`,
-      authEvents: [
-        { event: 'password_reset_requested', at: new Date().toISOString(), by: 'admin' },
-        { event: 'last_login', at: new Date(Date.now() - 3 * 86_400_000).toISOString() },
-        { event: 'last_password_change', at: new Date(Date.now() - 90 * 86_400_000).toISOString() },
-      ],
-    });
+    try {
+      await deps.userService.resetUserPassword(userId, adminUserId, adminUserEmail);
+      return reply.send({
+        action: 'reset-password',
+        userId,
+        email,
+        result: 'PASSWORD_RESET_TRIGGERED',
+        triggeredAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      if (err instanceof UserNotFoundError) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      throw err;
+    }
   }
 
   // --- Check provider health ---
@@ -72,17 +107,30 @@ export function createQuickActionsHandlers() {
   ) {
     const { providerId, sport } = request.body;
 
-    return reply.send({
-      action: 'check-provider',
-      providerId,
-      sport,
-      status: 'HEALTHY',
-      latencyMs: 245,
-      errorRate: 0.2,
-      lastEventReceivedAt: new Date(Date.now() - 30_000).toISOString(),
-      activeEvents: 4,
-      message: `Provider "${providerId}" is healthy for ${sport}. Last event received 30s ago.`,
-    });
+    try {
+      const detail = await deps.providerService.getProviderDetail(providerId);
+      return reply.send({
+        action: 'check-provider',
+        requestedSport: sport,
+        matchesSportCoverage: detail.sportsCovered.some((covered) => covered.toUpperCase() === sport.toUpperCase()),
+        provider: {
+          providerId: detail.providerId,
+          providerName: detail.providerName,
+          status: detail.status,
+          errorRate: detail.errorRate,
+          latencyMs: detail.latencyMs,
+          lastEventAt: detail.lastEventAt,
+          sportsCovered: detail.sportsCovered,
+          activeEventCount: detail.activeEventCount,
+        },
+        checkedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      if (err instanceof ProviderNotFoundError) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      throw err;
+    }
   }
 
   // --- Check entitlements ---
@@ -92,27 +140,36 @@ export function createQuickActionsHandlers() {
     reply: FastifyReply,
   ) {
     const { tenantId } = request.body;
+    const tenant = await deps.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { planTier: true },
+    });
+    if (!tenant) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: `Tenant not found: ${tenantId}` });
+    }
+
+    const results = await deps.entitlementService.checkMultiple(tenantId, [...ENTITLEMENT_KEYS] as unknown as EntitlementKey[]);
+    const entitlements: Record<string, unknown> = {};
+    let withinLimits = true;
+    for (const [key, result] of results) {
+      entitlements[key] = result;
+      withinLimits = withinLimits && result.entitled;
+    }
+
+    const [leagues, members, contests] = await Promise.all([
+      deps.entitlementService.getUsage(tenantId, 'LEAGUES'),
+      deps.entitlementService.getUsage(tenantId, 'MEMBERS'),
+      deps.entitlementService.getUsage(tenantId, 'CONTESTS'),
+    ]);
 
     return reply.send({
       action: 'check-entitlements',
       tenantId,
-      plan: 'Pro',
-      limits: {
-        maxLeagues: 25,
-        currentLeagues: 12,
-        maxContestsPerLeague: 50,
-        maxMembers: 200,
-        currentMembers: 45,
-      },
-      features: {
-        salaryCapDrafts: true,
-        auctionDrafts: true,
-        liveScoring: true,
-        customScoring: true,
-        dataExport: true,
-      },
-      withinLimits: true,
-      message: `Tenant "${tenantId}" is on the Pro plan. All entitlements are within limits.`,
+      planTier: tenant.planTier,
+      entitlements,
+      usage: { leagues, members, contests },
+      withinLimits,
+      checkedAt: new Date().toISOString(),
     });
   }
 
@@ -123,61 +180,81 @@ export function createQuickActionsHandlers() {
     reply: FastifyReply,
   ) {
     const { userId } = request.body;
+    const user = await deps.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: `User not found: ${userId}` });
+    }
+
+    const [prefs, devices, deliveryLogs] = await Promise.all([
+      deps.prisma.notificationPreference.findUnique({ where: { userId } }),
+      deps.prisma.deviceRegistration.findMany({
+        where: { userId, isActive: true },
+        orderBy: { lastActiveAt: 'desc' },
+      }),
+      deps.prisma.notificationDeliveryLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 25,
+      }),
+    ]);
+
+    const failed = deliveryLogs.filter((row) => row.status === 'FAILED');
+    const sent = deliveryLogs.filter((row) => row.sentAt !== null || row.status !== 'FAILED').length;
+    const delivered = deliveryLogs.filter((row) => row.deliveredAt !== null).length;
+    const deliveryRate = deliveryLogs.length > 0 ? Number(((delivered / deliveryLogs.length) * 100).toFixed(1)) : 0;
 
     return reply.send({
       action: 'check-notifications',
       userId,
       preferences: {
-        email: true,
-        push: true,
-        inApp: true,
+        doNotDisturb: prefs?.doNotDisturb ?? false,
+        categories: (prefs?.categoryPreferences as Record<string, boolean> | null) ?? {},
       },
-      devices: [
-        { platform: 'iOS', token: '***redacted***', lastSeen: new Date(Date.now() - 3_600_000).toISOString() },
-      ],
+      devices: devices.map((device) => ({
+        platform: device.platform,
+        lastSeen: device.lastActiveAt.toISOString(),
+        tokenStatus: device.isActive ? 'ACTIVE' : 'INACTIVE',
+      })),
       recentDelivery: {
-        sent: 24,
-        delivered: 22,
-        failed: 2,
-        deliveryRate: 91.7,
+        sent,
+        delivered,
+        failed: failed.length,
+        deliveryRate,
       },
-      failures: [
-        {
-          eventType: 'contest.scoring_update',
-          channel: 'PUSH',
-          reason: 'Device token expired',
-          at: new Date(Date.now() - 30 * 60_000).toISOString(),
-        },
-        {
-          eventType: 'draft.reminder',
-          channel: 'EMAIL',
-          reason: 'Mailbox full',
-          at: new Date(Date.now() - 3 * 3_600_000).toISOString(),
-        },
-      ],
-      message: `User "${userId}" has 2 recent notification failures. Push token may need refresh.`,
+      failures: failed.slice(0, 10).map((row) => ({
+        eventType: row.notificationEventId,
+        channel: row.channel,
+        reason: row.failedReason ?? row.suppressionReason ?? 'Delivery failed',
+        at: row.createdAt.toISOString(),
+      })),
+      checkedAt: new Date().toISOString(),
     });
   }
 
-  // --- Re-ingest scores ---
+  // --- Refresh scoring / recalculate standings ---
 
   async function reIngestScores(
     request: FastifyRequest<{ Body: { contestId: string; eventId: string } }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId } = extractAdminContext(request);
+    const { adminUserId, adminUserEmail } = extractAdminContext(request);
     const { contestId, eventId } = request.body;
 
-    return reply.send({
-      action: 're-ingest-scores',
-      performedBy: adminUserId,
-      contestId,
-      eventId,
-      result: 'RE_INGEST_STARTED',
-      eventsProcessed: 142,
-      scoresUpdated: 38,
-      duration: '2.4s',
-      message: `Re-ingested scoring data for event "${eventId}" in contest "${contestId}". 38 scores updated.`,
-    });
+    try {
+      const result = await deps.contestService.recalculateStandings(contestId, adminUserId, adminUserEmail);
+      return reply.send({
+        action: 're-ingest-scores',
+        ...result,
+        eventId,
+      });
+    } catch (err) {
+      if (err instanceof ContestNotFoundError) {
+        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+      }
+      throw err;
+    }
   }
 }

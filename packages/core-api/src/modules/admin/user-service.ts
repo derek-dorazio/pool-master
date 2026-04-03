@@ -8,7 +8,12 @@
  * Persisted via Prisma to the users table.
  */
 
+import { randomBytes } from 'node:crypto';
+import bcrypt from 'bcryptjs';
 import type { PrismaClient } from '@prisma/client';
+import { createChannels } from '../../notifications/channels/channel-factory';
+import type { EmailChannel } from '../../notifications/channels/email-channel';
+import { loadConfig } from '../../notifications/core/config';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -68,12 +73,33 @@ export class UserNotFoundError extends Error {
   }
 }
 
+export class UserPasswordResetUnsupportedError extends Error {
+  constructor(userId: string) {
+    super(`Password reset is only supported for local-auth users: ${userId}`);
+    this.name = 'UserPasswordResetUnsupportedError';
+  }
+}
+
+export class UserEmailDeliveryError extends Error {
+  constructor(userId: string, reason: string) {
+    super(`Failed to deliver email to user ${userId}: ${reason}`);
+    this.name = 'UserEmailDeliveryError';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class UserService {
-  constructor(private readonly prisma: PrismaClient) {}
+  private readonly emailChannel: Pick<EmailChannel, 'sendToUser'>;
+
+  constructor(
+    private readonly prisma: PrismaClient,
+    emailChannel: Pick<EmailChannel, 'sendToUser'> = createChannels(loadConfig(), prisma).email,
+  ) {
+    this.emailChannel = emailChannel;
+  }
 
   /**
    * Searches users across all tenants with filtering and pagination.
@@ -263,17 +289,56 @@ export class UserService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, authProvider: true },
+    });
     if (!user) throw new UserNotFoundError(userId);
 
-    // TODO: Trigger password reset email via auth service
+    if (user.authProvider && user.authProvider !== 'local') {
+      throw new UserPasswordResetUnsupportedError(userId);
+    }
+
+    const temporaryPassword = randomBytes(9).toString('base64url');
+    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+
+    const delivery = await this.emailChannel.sendToUser(
+      user.email,
+      'Your PoolMaster password has been reset',
+      [
+        'An admin reset your PoolMaster password.',
+        '',
+        `Temporary password: ${temporaryPassword}`,
+        '',
+        'Sign in and change it immediately.',
+      ].join('\n'),
+    );
+
+    if (!delivery.success) {
+      throw new UserEmailDeliveryError(userId, delivery.error ?? 'Email provider rejected the message');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          passwordHash,
+          authProvider: 'local',
+        },
+      });
+      await tx.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    });
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
       action: 'user.reset_password',
       resourceType: 'USER',
       resourceId: userId,
-      description: `Triggered password reset for user ${userId}`,
+      description: `Reset password and issued a temporary credential for user ${userId}`,
     });
   }
 
@@ -368,10 +433,17 @@ export class UserService {
     adminUserId: string,
     adminUserEmail: string,
   ): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true },
+    });
     if (!user) throw new UserNotFoundError(userId);
 
-    // TODO: Send email via notification service
+    const delivery = await this.emailChannel.sendToUser(user.email, subject, body);
+    if (!delivery.success) {
+      throw new UserEmailDeliveryError(userId, delivery.error ?? 'Email provider rejected the message');
+    }
+
     await logAdminAction({
       adminUserId,
       adminUserEmail,
