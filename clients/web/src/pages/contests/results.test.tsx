@@ -155,6 +155,8 @@ describe('ContestResultsPage', () => {
     expect(screen.getByText("Pick'em Standings Snapshot")).toBeInTheDocument();
     expect(screen.getByText('Prediction')).toBeInTheDocument();
     expect(screen.getByText("Pick'em Leader")).toBeInTheDocument();
+    expect(screen.getAllByText('Prediction Score').length).toBeGreaterThan(0);
+    expect(screen.getByText('Lead Over 2nd Prediction')).toBeInTheDocument();
   });
 
   it('shows the persisted winner even when only one standings entry exists', () => {
@@ -188,7 +190,7 @@ describe('ContestResultsPage', () => {
 
     expect(screen.getByText("Pick'em Results")).toBeInTheDocument();
     expect(screen.getAllByText('Solo Entry')).toHaveLength(2);
-    expect(screen.queryByText('Lead Over 2nd')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lead Over 2nd Prediction')).not.toBeInTheDocument();
     expect(screen.queryByText('Results unavailable')).not.toBeInTheDocument();
   });
 });

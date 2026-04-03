@@ -2,7 +2,10 @@
 module.exports = {
   testEnvironment: 'node',
   rootDir: '..',
-  testMatch: ['<rootDir>/tests/**/*.test.ts'],
+  testMatch: [
+    '<rootDir>/tests/**/*.test.ts',
+    '<rootDir>/tests/integration/core-api/social.integration.ts',
+  ],
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tests/tsconfig.json' }],
   },

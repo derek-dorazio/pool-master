@@ -3,6 +3,13 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import {
+  ContestType,
+  ScoringEngine,
+  SelectionType,
+} from '@poolmaster/shared/domain';
+import type { z } from 'zod';
+import { z as zod } from 'zod';
 import { extractTenantContext } from '../../core/tenant-context';
 import {
   toContestListResponse,
@@ -15,9 +22,104 @@ import type { ContestService } from './service';
 import {
   ContestEntryNotFoundError,
   ContestEntryOperationError,
+  type CreateContestInput,
   ContestNotFoundError,
   ContestOperationError,
 } from './service';
+
+const TierDefinitionBodySchema = zod.object({
+  tierId: zod.string(),
+  tierName: zod.string(),
+  tierNumber: zod.number().int(),
+  picksFromTier: zod.number().int(),
+  rankingRange: zod.tuple([zod.number(), zod.number()]).optional(),
+  priceRange: zod.tuple([zod.number(), zod.number()]).optional(),
+  maxParticipants: zod.number().int().optional(),
+  participantIds: zod.array(zod.string()),
+});
+
+const SelectionConfigBodySchema = zod.object({
+  draftMode: zod.string().optional(),
+  rounds: zod.number().int().optional(),
+  timePerPickSeconds: zod.number().int().optional(),
+  autoPickPolicy: zod.string().optional(),
+  tierConfig: zod.array(TierDefinitionBodySchema).optional(),
+  tierAssignmentMethod: zod.string().optional(),
+  budget: zod.number().optional(),
+  pricingMethod: zod.string().optional(),
+  rosterSize: zod.number().int().optional(),
+  pickCount: zod.number().int().optional(),
+  survivorStyle: zod.string().optional(),
+  picksPerPeriod: zod.number().int().optional(),
+  oneEntityPerSeason: zod.boolean().optional(),
+  strikesBeforeElimination: zod.number().int().optional(),
+  buybacksAllowed: zod.boolean().optional(),
+  roundValues: zod.array(zod.number()).optional(),
+  startRound: zod.string().optional(),
+  isExclusive: zod.boolean().optional(),
+  bestBallN: zod.number().int().optional(),
+  missedCutPenalty: zod.number().optional(),
+  captainSlot: zod.boolean().optional(),
+  captainMultiplier: zod.number().optional(),
+});
+
+const PayoutConfigBodySchema = zod.object({
+  entryFee: zod.number().int().min(0).optional(),
+  prizePool: zod.number().int().min(0).optional(),
+  payoutStructure: zod.array(zod.object({
+    rank: zod.number().int().min(1),
+    percentage: zod.number().min(0).max(100),
+    fixedAmount: zod.number().int().min(0).optional(),
+  })),
+  intermediatePrizes: zod.array(zod.object({
+    name: zod.string(),
+    description: zod.string().optional(),
+    amount: zod.number().int().min(0).optional(),
+    percentage: zod.number().min(0).max(100).optional(),
+  })),
+});
+
+const CreateContestBodySchema = zod.object({
+  name: zod.string().min(1).max(100),
+  seasonId: zod.string().optional(),
+  contestType: zod.enum([ContestType.SINGLE_EVENT]),
+  selectionType: zod.enum([
+    SelectionType.SNAKE_DRAFT,
+    SelectionType.TIERED,
+    SelectionType.BUDGET_PICK,
+    SelectionType.OPEN_SELECTION,
+    SelectionType.PICK_EM,
+    SelectionType.BRACKET_PICK_EM,
+  ]),
+  selectionConfig: SelectionConfigBodySchema.optional(),
+  scoringEngine: zod.enum([
+    ScoringEngine.ADVANCEMENT,
+    ScoringEngine.STAT_ACCUMULATION,
+    ScoringEngine.STROKE_PLAY,
+    ScoringEngine.POSITION,
+    ScoringEngine.BRACKET,
+    ScoringEngine.FIGHT_RESULT,
+    ScoringEngine.CUMULATIVE,
+  ]),
+  scoringRules: zod.record(zod.unknown()).optional(),
+  scoringTemplateKey: zod.string().optional(),
+  payoutConfig: PayoutConfigBodySchema.optional(),
+  startsAt: zod.string().datetime().optional(),
+  endsAt: zod.string().datetime().optional(),
+  lockAt: zod.string().datetime().optional(),
+  isExclusive: zod.boolean().optional(),
+  scoringStopsOnElimination: zod.boolean().optional(),
+});
+
+const UpdateContestBodySchema = zod.object({
+  name: zod.string().min(1).max(100).optional(),
+  scoringRules: zod.record(zod.unknown()).optional(),
+  payoutConfig: PayoutConfigBodySchema.optional(),
+  startsAt: zod.string().datetime().optional(),
+  endsAt: zod.string().datetime().optional(),
+  lockAt: zod.string().datetime().optional(),
+  isExclusive: zod.boolean().optional(),
+});
 
 export function createContestHandlers(contestService: ContestService) {
   return {
@@ -35,7 +137,7 @@ export function createContestHandlers(contestService: ContestService) {
   async function createContest(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: Record<string, unknown>;
+      Body: z.infer<typeof CreateContestBodySchema>;
     }>,
     reply: FastifyReply,
   ): Promise<void> {
@@ -44,26 +146,26 @@ export function createContestHandlers(contestService: ContestService) {
     if (!userId) {
       return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
     }
-    const body = request.body;
+    const body = CreateContestBodySchema.parse(request.body);
     try {
       const result = await contestService.createContest({
         leagueId: request.params.id,
         tenantId,
         createdBy: userId,
-        seasonId: body.seasonId as string | undefined,
-        name: body.name as string,
-        contestType: body.contestType as string as any,
-        selectionType: body.selectionType as string as any,
-        selectionConfig: (body.selectionConfig ?? {}) as any,
-        scoringEngine: body.scoringEngine as string as any,
-        scoringRules: body.scoringRules as Record<string, unknown> | undefined,
-        scoringTemplateKey: body.scoringTemplateKey as string | undefined,
-        payoutConfig: body.payoutConfig as any,
-        startsAt: body.startsAt ? new Date(body.startsAt as string) : undefined,
-        endsAt: body.endsAt ? new Date(body.endsAt as string) : undefined,
-        lockAt: body.lockAt ? new Date(body.lockAt as string) : undefined,
-        isExclusive: body.isExclusive as boolean | undefined,
-        scoringStopsOnElimination: body.scoringStopsOnElimination as boolean | undefined,
+        seasonId: body.seasonId,
+        name: body.name,
+        contestType: body.contestType,
+        selectionType: body.selectionType,
+        selectionConfig: mapSelectionConfig(body.selectionConfig),
+        scoringEngine: body.scoringEngine,
+        scoringRules: body.scoringRules,
+        scoringTemplateKey: body.scoringTemplateKey,
+        payoutConfig: body.payoutConfig,
+        startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
+        endsAt: body.endsAt ? new Date(body.endsAt) : undefined,
+        lockAt: body.lockAt ? new Date(body.lockAt) : undefined,
+        isExclusive: body.isExclusive,
+        scoringStopsOnElimination: body.scoringStopsOnElimination,
       });
       return reply.status(201).send(toContestResponse(result.contest, result.selectionConfig));
     } catch (err) {
@@ -184,16 +286,25 @@ export function createContestHandlers(contestService: ContestService) {
   async function updateContest(
     request: FastifyRequest<{
       Params: { contestId: string };
-      Body: Record<string, unknown>;
+      Body: z.infer<typeof UpdateContestBodySchema>;
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     const { tenantId } = extractTenantContext(request);
     try {
+      const body = UpdateContestBodySchema.parse(request.body);
       const contest = await contestService.updateContest(
         request.params.contestId,
         tenantId,
-        request.body as any,
+        {
+          name: body.name,
+          scoringRules: body.scoringRules,
+          payoutConfig: body.payoutConfig,
+          startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
+          endsAt: body.endsAt ? new Date(body.endsAt) : undefined,
+          lockAt: body.lockAt ? new Date(body.lockAt) : undefined,
+          isExclusive: body.isExclusive,
+        },
       );
       return reply.send(toContestResponse(contest, null));
     } catch (err) {
@@ -225,4 +336,21 @@ export function createContestHandlers(contestService: ContestService) {
       throw err;
     }
   }
+}
+
+function mapSelectionConfig(
+  selectionConfig: z.infer<typeof SelectionConfigBodySchema> | undefined,
+): CreateContestInput['selectionConfig'] {
+  if (!selectionConfig) {
+    return {};
+  }
+
+  return {
+    ...selectionConfig,
+    tierConfig: selectionConfig.tierConfig?.map((tier) => ({
+      ...tier,
+      rankingRange: tier.rankingRange ? [tier.rankingRange[0], tier.rankingRange[1]] as [number, number] : undefined,
+      priceRange: tier.priceRange ? [tier.priceRange[0], tier.priceRange[1]] as [number, number] : undefined,
+    })),
+  } as CreateContestInput['selectionConfig'];
 }

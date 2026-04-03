@@ -18,8 +18,9 @@ import {
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 
 interface ParticipantContribution {
-  participantId: string;
-  participantName: string | null;
+  key: string;
+  label: string;
+  contextLabel: string | null;
   totalScore: number;
 }
 
@@ -86,10 +87,12 @@ function aggregateParticipantContributions(
 
   for (const event of scoreDetail?.timeline ?? []) {
     for (const breakdown of event.participantBreakdowns) {
-      const existing = contributionByParticipant.get(breakdown.participantId);
-      contributionByParticipant.set(breakdown.participantId, {
-        participantId: breakdown.participantId,
-        participantName: breakdown.participantName ?? existing?.participantName ?? null,
+      const contributionKey = `${breakdown.participantId}:${breakdown.contextLabel ?? ''}`;
+      const existing = contributionByParticipant.get(contributionKey);
+      contributionByParticipant.set(contributionKey, {
+        key: contributionKey,
+        label: breakdown.participantName ?? breakdown.participantId,
+        contextLabel: breakdown.contextLabel ?? existing?.contextLabel ?? null,
         totalScore: (existing?.totalScore ?? 0) + breakdown.finalScore,
       });
     }
@@ -132,11 +135,14 @@ function EntryColumn({
           </div>
         ) : (
           entry.participants.map((participant) => (
-            <div key={participant.participantId} className="rounded-lg bg-muted/50 px-3 py-2">
+            <div key={participant.key} className="rounded-lg bg-muted/50 px-3 py-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{participant.participantName ?? participant.participantId}</span>
+                <span className="text-sm font-medium">{participant.label}</span>
                 <span className="text-sm font-mono font-medium">{participant.totalScore}</span>
               </div>
+              {participant.contextLabel && (
+                <p className="text-xs text-muted-foreground">{participant.contextLabel}</p>
+              )}
               <p className="text-xs text-muted-foreground">{contributionLabel}</p>
             </div>
           ))

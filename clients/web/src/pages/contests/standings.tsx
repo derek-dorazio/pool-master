@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useContest } from '@/features/contests/hooks/use-contest';
 import { useStandings } from '@/features/contests/hooks/use-standings';
 import type { StandingEntryDto } from '@poolmaster/shared/dto';
+import { SelectionType } from '@poolmaster/shared/domain';
 
 type SortKey = 'rank' | 'totalScore' | 'entryName';
 
@@ -76,6 +77,32 @@ function SortHeader({
   );
 }
 
+function getStandingsCopy(selectionType: string | undefined) {
+  switch (selectionType) {
+    case SelectionType.PICK_EM:
+      return {
+        pageTitle: "Pick'em Standings",
+        subtitle: "Saved predictions ranked by the latest standings rollup",
+        entryColumnLabel: 'Prediction',
+        totalColumnLabel: 'Prediction Score',
+      };
+    case SelectionType.BRACKET_PICK_EM:
+      return {
+        pageTitle: "Bracket Pick'em Standings",
+        subtitle: 'Saved bracket predictions ranked by the latest standings rollup',
+        entryColumnLabel: 'Bracket',
+        totalColumnLabel: 'Bracket Score',
+      };
+    default:
+      return {
+        pageTitle: 'Standings',
+        subtitle: 'Entries ranked by the latest standings rollup',
+        entryColumnLabel: 'Entry',
+        totalColumnLabel: 'Total',
+      };
+  }
+}
+
 export function Component() {
   const { contestId } = useParams();
   const { data: contest } = useContest(contestId);
@@ -105,6 +132,7 @@ export function Component() {
         return descending ? -result : result;
       })
     : [];
+  const copy = getStandingsCopy(contest?.contest.selectionType);
 
   if (isLoading) {
     return (
@@ -150,10 +178,10 @@ export function Component() {
 
       <div>
         <h1 className="text-3xl font-bold">
-          Standings{contest ? ` — ${contest.contest.name}` : ''}
+          {copy.pageTitle}{contest ? ` — ${contest.contest.name}` : ''}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {standingsResponse?.total ?? 0} entries ranked by the latest standings rollup
+          {standingsResponse?.total ?? 0} {copy.entryColumnLabel.toLowerCase()}s. {copy.subtitle}
         </p>
       </div>
 
@@ -165,9 +193,9 @@ export function Component() {
                 <tr className="border-b bg-muted/50">
                   <SortHeader label="Rank" sortKey="rank" currentSort={sortKey} descending={descending} onSort={handleSort} />
                   <th className="w-10 px-2 py-2" />
-                  <SortHeader label="Entry" sortKey="entryName" currentSort={sortKey} descending={descending} onSort={handleSort} />
+                  <SortHeader label={copy.entryColumnLabel} sortKey="entryName" currentSort={sortKey} descending={descending} onSort={handleSort} />
                   <th className="px-4 py-2 text-left font-medium">Owner</th>
-                  <SortHeader label="Total" sortKey="totalScore" currentSort={sortKey} descending={descending} onSort={handleSort} align="right" />
+                  <SortHeader label={copy.totalColumnLabel} sortKey="totalScore" currentSort={sortKey} descending={descending} onSort={handleSort} align="right" />
                   <th className="px-4 py-2 text-right font-medium">Previous</th>
                   <th className="px-4 py-2 text-right font-medium">Updated</th>
                 </tr>

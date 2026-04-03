@@ -28,6 +28,7 @@ export type ScoringConfigValidationResponse = z.infer<typeof ScoringConfigValida
 export const ScoreBreakdownDtoSchema = z.object({
   participantId: z.string(),
   participantName: z.string().nullable().optional(),
+  contextLabel: z.string().nullable().optional(),
   statPoints: z.number(),
   positionPoints: z.number(),
   bonusPoints: z.number(),

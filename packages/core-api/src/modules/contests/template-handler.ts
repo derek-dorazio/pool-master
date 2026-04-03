@@ -3,9 +3,49 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { ContestType, Sport } from '@poolmaster/shared/domain';
 import type { ContestTemplateService } from './template-service';
 import { TemplateNotFoundError, TemplateOperationError } from './template-service';
 import { mapContestTemplateToDto } from '../../mappers';
+import { z } from 'zod';
+
+const CreateTemplateBodySchema = z.object({
+  leagueId: z.string().min(1),
+  name: z.string().min(1).max(255),
+  description: z.string().max(1000).optional(),
+  sport: z.enum([
+    Sport.GOLF,
+    Sport.NFL,
+    Sport.NBA,
+    Sport.F1,
+    Sport.NASCAR,
+    Sport.NCAA_BASKETBALL,
+    Sport.NCAA_HOCKEY,
+    Sport.NCAA_FOOTBALL,
+    Sport.TENNIS,
+    Sport.HORSE_RACING,
+    Sport.SOCCER,
+    Sport.NHL,
+    Sport.MLB,
+    Sport.UFC,
+  ]),
+  contestType: z.enum([ContestType.SINGLE_EVENT]),
+  draftConfig: z.record(z.unknown()).optional(),
+  scoringConfig: z.record(z.unknown()).optional(),
+  payoutConfig: z.record(z.unknown()).optional(),
+  poolConfig: z.record(z.unknown()).optional(),
+  sharedWithTenant: z.boolean().optional(),
+});
+
+const UpdateTemplateBodySchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  description: z.string().max(1000).optional(),
+  draftConfig: z.record(z.unknown()).optional(),
+  scoringConfig: z.record(z.unknown()).optional(),
+  payoutConfig: z.record(z.unknown()).optional(),
+  poolConfig: z.record(z.unknown()).optional(),
+  sharedWithTenant: z.boolean().optional(),
+});
 
 export function createTemplateHandlers(templateService: ContestTemplateService) {
   return {
@@ -25,26 +65,26 @@ export function createTemplateHandlers(templateService: ContestTemplateService) 
   }
 
   async function createTemplate(
-    request: FastifyRequest<{ Body: Record<string, unknown> }>,
+    request: FastifyRequest<{ Body: z.infer<typeof CreateTemplateBodySchema> }>,
     reply: FastifyReply,
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string;
     if (!userId) {
       return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
     }
-    const body = request.body;
+    const body = CreateTemplateBodySchema.parse(request.body);
     const template = await templateService.createTemplate({
-      leagueId: body.leagueId as string,
+      leagueId: body.leagueId,
       createdBy: userId,
-      name: body.name as string,
-      description: body.description as string | undefined,
-      sport: body.sport as any,
-      contestType: body.contestType as any,
-      draftConfig: (body.draftConfig ?? {}) as Record<string, unknown>,
-      scoringConfig: (body.scoringConfig ?? {}) as Record<string, unknown>,
-      payoutConfig: (body.payoutConfig ?? {}) as Record<string, unknown>,
-      poolConfig: (body.poolConfig ?? {}) as Record<string, unknown>,
-      sharedWithTenant: body.sharedWithTenant as boolean | undefined,
+      name: body.name,
+      description: body.description,
+      sport: body.sport,
+      contestType: body.contestType,
+      draftConfig: body.draftConfig ?? {},
+      scoringConfig: body.scoringConfig ?? {},
+      payoutConfig: body.payoutConfig ?? {},
+      poolConfig: body.poolConfig ?? {},
+      sharedWithTenant: body.sharedWithTenant,
     });
     return reply.status(201).send({ template: mapContestTemplateToDto(template) });
   }
@@ -63,14 +103,23 @@ export function createTemplateHandlers(templateService: ContestTemplateService) 
   async function updateTemplate(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: Record<string, unknown>;
+      Body: z.infer<typeof UpdateTemplateBodySchema>;
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
+      const body = UpdateTemplateBodySchema.parse(request.body);
       const template = await templateService.updateTemplate(
         request.params.id,
-        request.body as any,
+        {
+          name: body.name,
+          description: body.description,
+          draftConfig: body.draftConfig,
+          scoringConfig: body.scoringConfig,
+          payoutConfig: body.payoutConfig,
+          poolConfig: body.poolConfig,
+          sharedWithTenant: body.sharedWithTenant,
+        },
       );
       return reply.send({ template: mapContestTemplateToDto(template) });
     } catch (err) {

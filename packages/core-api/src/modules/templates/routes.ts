@@ -53,7 +53,7 @@ export async function templatesModule(fastify: FastifyInstance): Promise<void> {
           name: { type: 'string', minLength: 1, maxLength: 255 },
           description: { type: 'string', maxLength: 1000 },
           sport: { type: 'string' },
-          contestType: { type: 'string', enum: ['SINGLE_EVENT', 'SEASON_LONG'] },
+          contestType: { type: 'string', enum: ['SINGLE_EVENT'] },
           draftConfig: { type: 'object' },
           scoringConfig: { type: 'object' },
           payoutConfig: { type: 'object' },

@@ -2,26 +2,107 @@
  * Contest DTOs — request/response schemas for contest endpoints.
  */
 import { z } from 'zod';
+import {
+  ContestType,
+  ScoringEngine,
+  SelectionType,
+} from '@poolmaster/shared/domain';
 
 // --- Requests ---
 
+export const TierDefinitionRequestSchema = z.object({
+  tierId: z.string(),
+  tierName: z.string(),
+  tierNumber: z.number().int(),
+  picksFromTier: z.number().int(),
+  rankingRange: z.tuple([z.number(), z.number()]).optional(),
+  priceRange: z.tuple([z.number(), z.number()]).optional(),
+  maxParticipants: z.number().int().optional(),
+  participantIds: z.array(z.string()),
+});
+
+export const SelectionConfigRequestSchema = z.object({
+  draftMode: z.string().optional(),
+  rounds: z.number().int().optional(),
+  timePerPickSeconds: z.number().int().optional(),
+  autoPickPolicy: z.string().optional(),
+  tierConfig: z.array(TierDefinitionRequestSchema).optional(),
+  tierAssignmentMethod: z.string().optional(),
+  budget: z.number().optional(),
+  pricingMethod: z.string().optional(),
+  rosterSize: z.number().int().optional(),
+  pickCount: z.number().int().optional(),
+  survivorStyle: z.string().optional(),
+  picksPerPeriod: z.number().int().optional(),
+  oneEntityPerSeason: z.boolean().optional(),
+  strikesBeforeElimination: z.number().int().optional(),
+  buybacksAllowed: z.boolean().optional(),
+  roundValues: z.array(z.number()).optional(),
+  startRound: z.string().optional(),
+  isExclusive: z.boolean().optional(),
+  bestBallN: z.number().int().optional(),
+  missedCutPenalty: z.number().optional(),
+  captainSlot: z.boolean().optional(),
+  captainMultiplier: z.number().optional(),
+});
+
+export const PayoutSlotRequestSchema = z.object({
+  rank: z.number().int().min(1),
+  percentage: z.number().min(0).max(100),
+  fixedAmount: z.number().int().min(0).optional(),
+});
+
+export const IntermediatePrizeRequestSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  amount: z.number().int().min(0).optional(),
+  percentage: z.number().min(0).max(100).optional(),
+});
+
+export const PayoutConfigRequestSchema = z.object({
+  entryFee: z.number().int().min(0).optional(),
+  prizePool: z.number().int().min(0).optional(),
+  payoutStructure: z.array(PayoutSlotRequestSchema),
+  intermediatePrizes: z.array(IntermediatePrizeRequestSchema),
+});
+
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100),
-  contestType: z.string(),
-  selectionType: z.string(),
-  scoringEngine: z.string(),
+  seasonId: z.string().optional(),
+  contestType: z.enum([ContestType.SINGLE_EVENT]),
+  selectionType: z.enum([
+    SelectionType.SNAKE_DRAFT,
+    SelectionType.TIERED,
+    SelectionType.BUDGET_PICK,
+    SelectionType.OPEN_SELECTION,
+    SelectionType.PICK_EM,
+    SelectionType.BRACKET_PICK_EM,
+  ]),
+  selectionConfig: SelectionConfigRequestSchema.optional(),
+  scoringEngine: z.enum([
+    ScoringEngine.ADVANCEMENT,
+    ScoringEngine.STAT_ACCUMULATION,
+    ScoringEngine.STROKE_PLAY,
+    ScoringEngine.POSITION,
+    ScoringEngine.BRACKET,
+    ScoringEngine.FIGHT_RESULT,
+    ScoringEngine.CUMULATIVE,
+  ]),
   scoringRules: z.record(z.unknown()).optional(),
   scoringTemplateKey: z.string().optional(),
+  payoutConfig: PayoutConfigRequestSchema.optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
   lockAt: z.string().datetime().optional(),
   isExclusive: z.boolean().optional(),
+  scoringStopsOnElimination: z.boolean().optional(),
 });
 export type CreateContestRequest = z.infer<typeof CreateContestRequestSchema>;
 
 export const UpdateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   scoringRules: z.record(z.unknown()).optional(),
+  payoutConfig: PayoutConfigRequestSchema.optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
   lockAt: z.string().datetime().optional(),

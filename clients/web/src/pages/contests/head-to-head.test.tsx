@@ -92,6 +92,7 @@ vi.mock('@tanstack/react-query', async () => {
                   {
                     participantId: 'participant-1',
                     participantName: 'Scottie Scheffler',
+                    contextLabel: 'Week 5 Game 3',
                     statPoints: 10,
                     positionPoints: 0,
                     bonusPoints: 0,
@@ -126,6 +127,7 @@ vi.mock('@tanstack/react-query', async () => {
                   {
                     participantId: 'participant-2',
                     participantName: 'Rory McIlroy',
+                    contextLabel: 'Week 5 Game 4',
                     statPoints: 8,
                     positionPoints: 0,
                     bonusPoints: 0,
@@ -173,6 +175,8 @@ describe('HeadToHeadPage', () => {
     expect(screen.getByText('+8')).toBeInTheDocument();
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
     expect(screen.getByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.getByText('Week 5 Game 3')).toBeInTheDocument();
+    expect(screen.getByText('Week 5 Game 4')).toBeInTheDocument();
     expect(screen.getAllByText('Selection contribution').length).toBeGreaterThan(0);
     expect(screen.getByText("Pick'em Entry 1")).toBeInTheDocument();
     expect(screen.getByText("Pick'em Entry 2")).toBeInTheDocument();

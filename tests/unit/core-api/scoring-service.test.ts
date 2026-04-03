@@ -1,7 +1,7 @@
 import { ScoringService } from '../../../packages/core-api/src/modules/scoring/service';
 
 describe('ScoringService', () => {
-  it('enriches entry score timelines with participant names from persisted records', async () => {
+  it('enriches entry score timelines with participant names and pickem matchup context from persisted records', async () => {
     const scoreStore = {
       getEntryTimeline: jest.fn().mockResolvedValue([
         {
@@ -32,10 +32,39 @@ describe('ScoringService', () => {
       getActiveContestIds: jest.fn().mockReturnValue(new Set()),
     };
     const prisma = {
+      contest: {
+        findUnique: jest.fn().mockResolvedValue({
+          selectionType: 'PICK_EM',
+        }),
+      },
       participant: {
         findMany: jest.fn().mockResolvedValue([
           { id: 'participant-1', name: 'Scottie Scheffler' },
         ]),
+      },
+      contestPick: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            participantId: 'participant-1',
+            period: 5,
+            matchupIndex: 3,
+            periodLabel: 'Week 5',
+            eventId: 'event-1',
+          },
+        ]),
+      },
+      contestMatchup: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            eventId: 'event-1',
+            period: 5,
+            matchupIndex: 3,
+            label: 'Week 5 Game 3',
+          },
+        ]),
+      },
+      bracketPrediction: {
+        findUnique: jest.fn(),
       },
     } as any;
 
@@ -50,11 +79,22 @@ describe('ScoringService', () => {
     expect(result.timeline[0].participantBreakdowns[0]).toMatchObject({
       participantId: 'participant-1',
       participantName: 'Scottie Scheffler',
+      contextLabel: 'Week 5 Game 3',
       finalScore: 10,
     });
     expect(prisma.participant.findMany).toHaveBeenCalledWith({
       where: { id: { in: ['participant-1'] } },
       select: { id: true, name: true },
+    });
+    expect(prisma.contestPick.findMany).toHaveBeenCalledWith({
+      where: { contestId: 'contest-1', entryId: 'entry-1' },
+      select: {
+        participantId: true,
+        period: true,
+        matchupIndex: true,
+        periodLabel: true,
+        eventId: true,
+      },
     });
   });
 });

@@ -189,7 +189,14 @@ export function Component() {
                           <td className="px-4 py-3 text-muted-foreground">
                             {event.participantBreakdowns.map((breakdown) => (
                               <div key={breakdown.participantId}>
-                                {breakdown.participantName ?? breakdown.participantId}: {breakdown.finalScore}
+                                <div>
+                                  {breakdown.participantName ?? breakdown.participantId}: {breakdown.finalScore}
+                                </div>
+                                {breakdown.contextLabel && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {breakdown.contextLabel}
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </td>

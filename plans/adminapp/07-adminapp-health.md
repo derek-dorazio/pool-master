@@ -294,12 +294,12 @@ This plan covers the platform health dashboard, error log viewer, and alert conf
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| AH-001 | 1 | Build Health Dashboard page layout with three sections (Services, Infrastructure, Key Metrics) and 30s polling infrastructure | Done | Implemented in health/index.tsx with useHealthDashboard hook (30s refetchInterval) |
-| AH-002 | 1 | Build ServiceTable and ServiceRow components with status dots, metrics columns, and expandable detail | Done | Inline in health/index.tsx — services table with green/yellow/red status dots via cn() |
+| AH-001 | 1 | Build Health Dashboard page layout with three sections (Services, Infrastructure, Key Metrics) and 30s polling infrastructure | Done | Implemented in health/index.tsx with useHealthDashboard hook; this is UI/polling work, not a claim that the backend health store is fully durable |
+| AH-002 | 1 | Build ServiceTable and ServiceRow components with status dots, metrics columns, and expandable detail | Done | Inline in health/index.tsx — service table renders contract-backed health data and status dots |
 | AH-003 | 1 | Build InfraCard components for PostgreSQL, Redis, Message Bus, S3/CDN with key metrics and status indicators | Done | 4 infrastructure cards in health/index.tsx with icons and dual metrics |
 | AH-004 | 1 | Build MetricStatCard components for Active Users, API Requests, Notifications, Active Contests, Live Drafts | Done | 5 key metric stat cards in health/index.tsx |
-| AH-005 | 1 | Build DependencyList and HealthStatusDot shared components; wire up polling with TanStack Query refetchInterval | Done | Status dots implemented inline; polling via useHealthDashboard 30s refetch; "Last refreshed Xs ago" indicator |
-| AH-006 | 2 | Build Error Log page with ErrorLogTable, ErrorRow, ErrorFilters (service, type, severity, date range, tenant, search) | Done | health/errors.tsx with service/severity dropdowns, date range inputs, pagination |
+| AH-005 | 1 | Build DependencyList and HealthStatusDot shared components; wire up polling with TanStack Query refetchInterval | Done | Status dots implemented inline; polling via useHealthDashboard; "Last refreshed Xs ago" indicator |
+| AH-006 | 2 | Build Error Log page with ErrorLogTable, ErrorRow, ErrorFilters (service, type, severity, date range, tenant, search) | Done | health/errors.tsx with filters and pagination; keep the wording scoped to current error-log contract coverage |
 | AH-007 | 2 | Build ErrorDetail expandable panel and StackTraceViewer with syntax highlighting, line numbers, and copy-to-clipboard | Done | Click-to-expand rows with monospace stack traces in grey background |
-| AH-008 | 3 | Build AlertRulesTable and AlertRow with SeverityBadge, ChannelSelector icons, and Active/Muted status display | Done | health/alerts.tsx with 9 alert rules, severity/status badges, channel badges |
-| AH-009 | 3 | Build AlertEditDialog (threshold, window, channels) and MuteDialog (duration selector, reason) with audit logging | Done | Edit via window.prompt, mute/unmute toggle per row |
+| AH-008 | 3 | Build AlertRulesTable and AlertRow with SeverityBadge, ChannelSelector icons, and Active/Muted status display | Done | health/alerts.tsx with alert rules and status badges; this should not imply fully finalized alert persistence |
+| AH-009 | 3 | Build AlertEditDialog (threshold, window, channels) and MuteDialog (duration selector, reason) with audit logging | Done | Alert edits/mutes are surfaced in the UI; note that the storage backend still needs truthfulness treatment elsewhere in the plan |

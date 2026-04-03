@@ -40,6 +40,7 @@ function getResultsCopy(selectionType: string | undefined) {
         entryColumnLabel: 'Prediction',
         leaderLabel: "Pick'em Leader",
         scoreLabel: 'Prediction Score',
+        marginLabel: 'Lead Over 2nd Prediction',
       };
     case SelectionType.BRACKET_PICK_EM:
       return {
@@ -49,6 +50,7 @@ function getResultsCopy(selectionType: string | undefined) {
         entryColumnLabel: 'Bracket',
         leaderLabel: 'Bracket Leader',
         scoreLabel: 'Bracket Score',
+        marginLabel: 'Lead Over 2nd Bracket',
       };
     default:
       return {
@@ -58,6 +60,7 @@ function getResultsCopy(selectionType: string | undefined) {
         entryColumnLabel: 'Entry',
         leaderLabel: 'Leader',
         scoreLabel: 'Total Score',
+        marginLabel: 'Lead Over 2nd',
       };
   }
 }
@@ -187,7 +190,7 @@ export function Component() {
             {runnerUp ? (
               <div>
                 <p className="text-3xl font-bold">+{margin}</p>
-                <p className="text-xs text-muted-foreground">Lead Over 2nd</p>
+                <p className="text-xs text-muted-foreground">{copy.marginLabel}</p>
               </div>
             ) : null}
           </div>
@@ -206,7 +209,7 @@ export function Component() {
                   <th className="px-4 py-2 text-left font-medium">Rank</th>
                   <th className="px-4 py-2 text-left font-medium">{copy.entryColumnLabel}</th>
                   <th className="px-4 py-2 text-left font-medium">Owner</th>
-                  <th className="px-4 py-2 text-right font-medium">Score</th>
+                  <th className="px-4 py-2 text-right font-medium">{copy.scoreLabel}</th>
                 </tr>
               </thead>
               <tbody>

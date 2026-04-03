@@ -4,7 +4,7 @@
 **Layout:** Authenticated (sidebar + top nav)
 **Maps to:** 07 (Billing & Subscription)
 
-Billing pages allow users to view their current plan, compare available tiers, manage payment methods, and review invoice history. Phase 1 launches as free-only — the billing UI is scaffolded but most features are deferred until Stripe integration. Components render gracefully in free-only mode: plan cards show "Free" with no payment details, upgrade CTAs are visible but link to a "coming soon" state, and invoice/payment sections are hidden entirely.
+Billing pages allow users to view their current plan, compare available tiers, and see truthful free-only placeholders for payment and invoice surfaces. Phase 1 launches as free-only — the billing UI is scaffolded but most features are deferred until Stripe integration. Components render gracefully in free-only mode: plan cards show "Free" with no payment details, upgrade CTAs are visible but link to a "coming soon" state, and invoice/payment sections remain hidden or unavailable until the real provider-backed flows exist.
 
 ---
 
@@ -672,8 +672,8 @@ During Phase 1, the billing UI is scaffolded but operates in free-only mode:
 | W-B-003 | 1 | Usage meter component — progress bars for leagues, contests, and members against plan limits with colour thresholds | Done | UsageMeter in features/billing/usage-meter.tsx with green/amber/red thresholds and unlimited mode |
 | W-B-004 | 1 | Plan comparison table — side-by-side tier matrix with feature rows, current plan highlight, responsive accordion on mobile | Done | Plan comparison page with 4-tier grid, billing cycle toggle, FAQ accordion |
 | W-B-005 | 2 | Plan change flow — PlanChangeDialog modal with upgrade (Stripe Checkout redirect), downgrade (warnings + confirmation), and cancel (retention offer) paths | Deferred | Depends on 07-xxx (Stripe integration) |
-| W-B-006 | 2 | Invoice history table — paginated table with date/status filters, status badges, PDF download links | Done | Invoice history page with table, status badges, empty state for free tier, PDF download placeholder |
-| W-B-007 | 2 | Payment method management — card on file display, update button redirecting to Stripe Customer Portal | Done | Payment method card in billing overview, hidden when billing disabled or free tier |
+| W-B-006 | 2 | Invoice history table — paginated table with date/status filters, status badges, PDF download links | In Progress | Invoice history page has the table shell, status badges, and free-tier empty state, but the PDF/download path is still a placeholder until real invoice storage and sync exist |
+| W-B-007 | 2 | Payment method management — card on file display, update button redirecting to Stripe Customer Portal | In Progress | Payment method card is wired into the billing overview shell and hidden when billing is disabled or free tier, but the Stripe Customer Portal flow is still not provider-backed end to end |
 | W-B-008 | 2 | Trial banner + countdown — conditional banner with days remaining, colour urgency progression, session-dismissible | Deferred | Depends on 07-xxx (trial status in subscription API) |
 | W-B-009 | 1 | Entitlement-gated UI components — EntitlementGate wrapper, useEntitlement hook, "Coming Soon" fallback for Phase 1 | Done | Built in features/leagues/entitlement-gate.tsx — free tier always passes |
 

@@ -78,6 +78,7 @@ vi.mock('@tanstack/react-query', async () => {
                   {
                     participantId: 'participant-1',
                     participantName: 'Bills',
+                    contextLabel: 'Week 5 Game 3',
                     statPoints: 10,
                     positionPoints: 0,
                     bonusPoints: 0,
@@ -114,5 +115,6 @@ describe('ContestScoringPage', () => {
     expect(screen.getByText('Prediction Timeline')).toBeInTheDocument();
     expect(screen.getByText('Selection Contributions')).toBeInTheDocument();
     expect(screen.getByLabelText("Select Pick'em Entry")).toBeInTheDocument();
+    expect(screen.getByText('Week 5 Game 3')).toBeInTheDocument();
   });
 });
