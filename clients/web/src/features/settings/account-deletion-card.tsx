@@ -5,7 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProfile } from './hooks/use-profile';
 import { toast } from '@/hooks/use-toast';
-import { cancelAccountDeletion, requestAccountDeletion } from '@/lib/api';
+import {
+  AccountDeletionAcceptedResponseSchema,
+} from '@poolmaster/shared/dto/compliance.dto';
+import { cancelAccountDeletion } from '@/lib/api';
 import { client } from '@/lib/api';
 
 type Step = 'idle' | 'consequences' | 'confirm' | 'waiting';
@@ -18,9 +21,13 @@ export function AccountDeletionCard() {
 
   const requestDeletion = useMutation({
     mutationFn: async () => {
-      const { data, error } = await requestAccountDeletion({ client, body: { reason: 'user_requested' } });
+      const { data, error } = await client.post({
+        url: '/api/v1/account/delete-account',
+        body: { reason: 'user_requested' },
+        headers: { 'Content-Type': 'application/json' },
+      });
       if (error) throw error;
-      return data;
+      return AccountDeletionAcceptedResponseSchema.parse(data);
     },
     onSuccess: (data) => {
       setRequestId(data.requestId);

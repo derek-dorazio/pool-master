@@ -1,8 +1,8 @@
 /**
  * Integration: Social / Feed module — create posts, list feed, replies, reactions, delete.
  *
- * The social feed service is currently backed by in-memory storage (not Postgres),
- * but these tests exercise the real Fastify routes with a real test app instance.
+ * The social feed service is backed by the repository store used by the module,
+ * and these tests exercise the real Fastify routes with a real test app instance.
  */
 import {
   setupIntegrationTests,
@@ -198,7 +198,7 @@ describe('Social Feed Integration', () => {
 
   // ---- 8. Non-existent league feed ----
   describe('GET feed for non-existent league', () => {
-    it('returns 200 with empty or seeded array for unknown league', async () => {
+    it('returns 200 with an empty array for unknown league', async () => {
       const fakeLeagueId = '00000000-0000-0000-0000-000000000099';
       const res = await getApp().inject({
         method: 'GET',
@@ -206,13 +206,11 @@ describe('Social Feed Integration', () => {
         headers,
       });
 
-      // The in-memory feed service auto-seeds, so it returns 200 with posts
-      expect([200, 404]).toContain(res.statusCode);
-      if (res.statusCode === 200) {
-        const body = res.json();
-        expect(body.posts).toBeDefined();
-        expect(Array.isArray(body.posts)).toBe(true);
-      }
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.posts).toBeDefined();
+      expect(Array.isArray(body.posts)).toBe(true);
+      expect(body.posts).toHaveLength(0);
     });
   });
 });

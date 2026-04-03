@@ -200,6 +200,38 @@ export class ComplianceService {
     return { enabled, intervalMinutes };
   }
 
+  async getActivityLimit(userId: string): Promise<{ enabled: boolean; weeklyContestLimit: number }> {
+    const prefs = await this.prisma.notificationPreference.findUnique({ where: { userId } });
+    const activityLimit = extractActivityLimit(prefs?.categoryPreferences);
+    if (activityLimit) {
+      return activityLimit;
+    }
+    return { enabled: false, weeklyContestLimit: 10 };
+  }
+
+  async updateActivityLimit(
+    userId: string,
+    enabled: boolean,
+    weeklyContestLimit: number,
+  ): Promise<{ enabled: boolean; weeklyContestLimit: number }> {
+    const existing = await this.prisma.notificationPreference.findUnique({ where: { userId } });
+    const categories = normalizeRecord(existing?.categoryPreferences);
+    categories.activityLimit = { enabled, weeklyContestLimit };
+
+    await this.prisma.notificationPreference.upsert({
+      where: { userId },
+      create: {
+        userId,
+        categoryPreferences: categories as object,
+      },
+      update: {
+        categoryPreferences: categories as object,
+      },
+    });
+
+    return { enabled, weeklyContestLimit };
+  }
+
   async processPendingDeletions(): Promise<number> {
     const due = await this.prisma.deletionRequest.findMany({
       where: { status: 'PENDING', scheduledDeletionAt: { lte: new Date() } },
@@ -370,6 +402,20 @@ function extractSessionReminder(value: unknown): { enabled: boolean; intervalMin
   const enabled = typeof reminderRecord.enabled === 'boolean' ? reminderRecord.enabled : false;
   const intervalMinutes = typeof reminderRecord.intervalMinutes === 'number' ? reminderRecord.intervalMinutes : 60;
   return { enabled, intervalMinutes };
+}
+
+function extractActivityLimit(value: unknown): { enabled: boolean; weeklyContestLimit: number } | null {
+  const categories = normalizeRecord(value);
+  const activityLimit = categories.activityLimit;
+  if (!activityLimit || typeof activityLimit !== 'object') {
+    return null;
+  }
+  const limitRecord = activityLimit as Record<string, unknown>;
+  const enabled = typeof limitRecord.enabled === 'boolean' ? limitRecord.enabled : false;
+  const weeklyContestLimit = typeof limitRecord.weeklyContestLimit === 'number'
+    ? limitRecord.weeklyContestLimit
+    : 10;
+  return { enabled, weeklyContestLimit };
 }
 
 function normalizeRecord(value: unknown): Record<string, unknown> {

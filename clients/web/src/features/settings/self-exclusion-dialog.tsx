@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { client, createSelfExclusion, getActiveExclusion } from '@/lib/api';
-import { ActiveExclusionResponseSchema } from '@poolmaster/shared/dto/compliance.dto';
+import {
+  ActiveExclusionResponseSchema,
+  type SelfExclusionDuration,
+} from '@poolmaster/shared/dto/compliance.dto';
 
 const coolDownOptions = [
   { value: '24H', label: '24 Hours' },
@@ -14,12 +17,12 @@ const coolDownOptions = [
   { value: '30D', label: '30 Days' },
   { value: '6M', label: '6 Months' },
   { value: '1Y', label: '1 Year' },
-];
+] as const satisfies ReadonlyArray<{ value: SelfExclusionDuration; label: string }>;
 
 export function SelfExclusionCard() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [period, setPeriod] = useState('24H');
+  const [period, setPeriod] = useState<SelfExclusionDuration>('24H');
   const [typed, setTyped] = useState('');
   const activeExclusionQuery = useQuery({
     queryKey: ['settings', 'self-exclusion'],

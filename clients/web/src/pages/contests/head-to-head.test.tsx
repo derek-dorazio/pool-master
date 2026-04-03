@@ -165,7 +165,8 @@ describe('HeadToHeadPage', () => {
   it('renders comparison using persisted standings and score timelines', () => {
     renderPage();
 
-    expect(screen.getByText('Head-to-Head')).toBeInTheDocument();
+    expect(screen.getByText('NFL Weekly Pickem')).toBeInTheDocument();
+    expect(screen.getByText("Pick'em Head-to-Head")).toBeInTheDocument();
     expect(screen.getByText(/pick'em scoring timelines/i)).toBeInTheDocument();
     expect(screen.getByText('Alpha Entry')).toBeInTheDocument();
     expect(screen.getByText('Beta Entry')).toBeInTheDocument();
@@ -173,5 +174,7 @@ describe('HeadToHeadPage', () => {
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
     expect(screen.getByText('Rory McIlroy')).toBeInTheDocument();
     expect(screen.getAllByText('Selection contribution').length).toBeGreaterThan(0);
+    expect(screen.getByText("Pick'em Entry 1")).toBeInTheDocument();
+    expect(screen.getByText("Pick'em Entry 2")).toBeInTheDocument();
   });
 });

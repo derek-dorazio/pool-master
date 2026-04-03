@@ -9,6 +9,9 @@ import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import {
+  ActivityLimitResponseSchema,
+  ActivityLimitUpdateRequestSchema,
+  AccountDeletionRequestSchema,
   AgeVerificationResponseSchema,
   ConsentHistoryResponseSchema,
   DataExportAcceptedResponseSchema,
@@ -17,6 +20,7 @@ import {
   AccountDeletionAcceptedResponseSchema,
   AccountDeletionCancelledResponseSchema,
   SelfExclusionCreatedResponseSchema,
+  SelfExclusionDurationSchema,
   ActiveExclusionResponseSchema,
   SessionReminderResponseSchema,
   SessionReminderUpdateRequestSchema,
@@ -162,6 +166,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Request account deletion',
       operationId: 'requestAccountDeletion',
+      body: zodToJsonSchema(AccountDeletionRequestSchema),
       response: { 202: zodToJsonSchema(AccountDeletionAcceptedResponseSchema) },
     },
     handler: async (request, reply) => {
@@ -175,6 +180,40 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
   });
 
   // --- Session Reminders ---
+
+  fastify.get('/activity-limit', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Get activity limit settings for current user',
+      operationId: 'getActivityLimit',
+      response: { 200: zodToJsonSchema(ActivityLimitResponseSchema) },
+    },
+    handler: async (request) => {
+      const userId = request.headers['x-user-id'] as string;
+      const activityLimit = await complianceService.getActivityLimit(userId);
+      return { activityLimit };
+    },
+  });
+
+  fastify.put('/activity-limit', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Update activity limit settings for current user',
+      operationId: 'updateActivityLimit',
+      body: zodToJsonSchema(ActivityLimitUpdateRequestSchema),
+      response: { 200: zodToJsonSchema(ActivityLimitResponseSchema) },
+    },
+    handler: async (request) => {
+      const userId = request.headers['x-user-id'] as string;
+      const body = request.body as z.infer<typeof ActivityLimitUpdateRequestSchema>;
+      const activityLimit = await complianceService.updateActivityLimit(
+        userId,
+        body.enabled,
+        body.weeklyContestLimit,
+      );
+      return { activityLimit };
+    },
+  });
 
   fastify.get('/session-reminder', {
     schema: {
@@ -238,7 +277,7 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
           required: ['type', 'duration'],
           properties: {
             type: { type: 'string', enum: ['COOL_DOWN', 'SELF_EXCLUSION'] },
-            duration: { type: 'string', enum: ['24H', '7D', '30D', '6M', '1Y', 'INDEFINITE'] },
+            duration: zodToJsonSchema(SelfExclusionDurationSchema),
           },
         },
       },

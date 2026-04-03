@@ -108,9 +108,11 @@ describe('ContestScoringPage', () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByText("NFL Weekly Pickem")).toBeInTheDocument();
     expect(screen.getByText("Pick'em Score Breakdown")).toBeInTheDocument();
-    expect(screen.getByText(/saved predictions/i)).toBeInTheDocument();
+    expect(screen.getByText(/timeline of persisted scores for saved predictions/i)).toBeInTheDocument();
     expect(screen.getByText('Prediction Timeline')).toBeInTheDocument();
     expect(screen.getByText('Selection Contributions')).toBeInTheDocument();
+    expect(screen.getByLabelText("Select Pick'em Entry")).toBeInTheDocument();
   });
 });

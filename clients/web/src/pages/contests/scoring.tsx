@@ -19,23 +19,26 @@ function getScoringCopy(selectionType: string | undefined) {
     case SelectionType.PICK_EM:
       return {
         pageTitle: "Pick'em Score Breakdown",
-        subtitle: 'real entry scoring timeline for saved predictions',
+        subtitle: 'Timeline of persisted scores for saved predictions.',
         timelineTitle: 'Prediction Timeline',
         contributionTitle: 'Selection Contributions',
+        entryLabel: "Pick'em Entry",
       };
     case SelectionType.BRACKET_PICK_EM:
       return {
         pageTitle: 'Bracket Score Breakdown',
-        subtitle: 'real entry scoring timeline for saved bracket predictions',
+        subtitle: 'Timeline of persisted scores for saved bracket predictions.',
         timelineTitle: 'Bracket Timeline',
         contributionTitle: 'Prediction Contributions',
+        entryLabel: 'Bracket Entry',
       };
     default:
       return {
         pageTitle: 'Score Breakdown',
-        subtitle: 'real entry scoring timeline',
+        subtitle: 'Timeline of persisted scores for this contest.',
         timelineTitle: 'Entry Timeline',
         contributionTitle: 'Participant Contributions',
+        entryLabel: 'Entry',
       };
   }
 }
@@ -110,14 +113,15 @@ export function Component() {
       </div>
 
       <div>
+        <p className="text-sm text-muted-foreground">{contest?.contest.name ?? 'Contest'}</p>
         <h1 className="text-3xl font-bold">{copy.pageTitle}</h1>
         <p className="text-sm text-muted-foreground">
-          {contest?.contest.name ?? 'Contest'} · {copy.subtitle}
+          {copy.subtitle}
         </p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="entry-select">Select Entry</label>
+        <label className="text-sm font-medium" htmlFor="entry-select">{`Select ${copy.entryLabel}`}</label>
         <select
           id="entry-select"
           value={selectedEntry}

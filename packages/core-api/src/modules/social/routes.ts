@@ -17,7 +17,7 @@ import {
   RecapDtoSchema,
   ShareCardDtoSchema,
 } from '@poolmaster/shared/dto/social.dto';
-import { SuccessSchema } from '@poolmaster/shared/dto/common.dto';
+import { ApiErrorSchema, SuccessSchema } from '@poolmaster/shared/dto/common.dto';
 
 export async function socialModule(fastify: FastifyInstance): Promise<void> {
   const feedService = new FeedService();
@@ -205,7 +205,10 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Social'],
       summary: 'List direct message conversations',
       operationId: 'listSocialConversations',
-      response: { 200: zodToJsonSchema(ConversationDtoSchema.array()) },
+      response: {
+        200: zodToJsonSchema(ConversationDtoSchema.array()),
+        401: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: communicationHandlers.getConversations,
   });
@@ -220,7 +223,11 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
         required: ['conversationId'],
         properties: { conversationId: { type: 'string' } },
       },
-      response: { 200: zodToJsonSchema(DirectMessageDtoSchema.array()) },
+      response: {
+        200: zodToJsonSchema(DirectMessageDtoSchema.array()),
+        401: zodToJsonSchema(ApiErrorSchema),
+        404: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: communicationHandlers.getConversationMessages,
   });
@@ -240,7 +247,11 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
         required: ['content'],
         properties: { content: { type: 'string', minLength: 1, maxLength: 500 } },
       },
-      response: { 201: zodToJsonSchema(DirectMessageDtoSchema) },
+      response: {
+        201: zodToJsonSchema(DirectMessageDtoSchema),
+        401: zodToJsonSchema(ApiErrorSchema),
+        404: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: communicationHandlers.sendConversationMessage,
   });
@@ -255,7 +266,11 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
         required: ['conversationId'],
         properties: { conversationId: { type: 'string' } },
       },
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        401: zodToJsonSchema(ApiErrorSchema),
+        404: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: communicationHandlers.markConversationRead,
   });
@@ -270,7 +285,10 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string' } },
       },
-      response: { 200: zodToJsonSchema(ChatMessageDtoSchema.array()) },
+      response: {
+        200: zodToJsonSchema(ChatMessageDtoSchema.array()),
+        401: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: communicationHandlers.getContestChat,
   });
@@ -290,7 +308,10 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
         required: ['content'],
         properties: { content: { type: 'string', minLength: 1, maxLength: 500 } },
       },
-      response: { 201: zodToJsonSchema(ChatMessageDtoSchema) },
+      response: {
+        201: zodToJsonSchema(ChatMessageDtoSchema),
+        401: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: communicationHandlers.sendContestChatMessage,
   });
@@ -305,7 +326,10 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
         required: ['shareId'],
         properties: { shareId: { type: 'string' } },
       },
-      response: { 200: zodToJsonSchema(ShareCardDtoSchema) },
+      response: {
+        200: zodToJsonSchema(ShareCardDtoSchema),
+        404: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: communicationHandlers.getShareCard,
   });
@@ -324,7 +348,10 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
         type: 'object',
         properties: { week: { type: 'string' } },
       },
-      response: { 200: zodToJsonSchema(RecapDtoSchema) },
+      response: {
+        200: zodToJsonSchema(RecapDtoSchema),
+        404: zodToJsonSchema(ApiErrorSchema),
+      },
     },
     handler: communicationHandlers.getRecap,
   });

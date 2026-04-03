@@ -5,5 +5,6 @@ export const settingsKeys = {
   preferences: () => [...settingsKeys.all, 'preferences'] as const,
   consent: () => [...settingsKeys.all, 'consent'] as const,
   dataExport: () => [...settingsKeys.all, 'data-export'] as const,
+  activityLimit: () => [...settingsKeys.all, 'activity-limit'] as const,
   sessionReminder: () => [...settingsKeys.all, 'session-reminder'] as const,
 };

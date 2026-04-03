@@ -168,7 +168,7 @@ A slice is only done when all of the following are true:
 - tests validate the repaired behavior
 - plan docs note both what was fixed and what root causes still remain
 
-Recent examples of compliant remediation in progress include the settings/compliance lane and the social contract lane: both now use shared DTO-backed routes and truthful frontend states, but some backend persistence layers are still intentionally marked as follow-up work rather than being overstated as finished.
+Recent examples of compliant remediation in progress include the admin, billing, settings/compliance, and social contract lanes: they now use shared DTO-backed routes and truthful frontend states, but some backend persistence layers are still intentionally marked as follow-up work rather than being overstated as finished.
 
 ## Safe Parallelization Rules
 

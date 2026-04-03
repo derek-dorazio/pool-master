@@ -42,18 +42,24 @@ function getComparisonCopy(selectionType: string | undefined) {
   switch (selectionType) {
     case SelectionType.PICK_EM:
       return {
+        pageTitle: "Pick'em Head-to-Head",
         subtitle: "Compare two contest entries using persisted standings and pick'em scoring timelines",
         contributionLabel: 'Selection contribution',
+        entryLabel: "Pick'em Entry",
       };
     case SelectionType.BRACKET_PICK_EM:
       return {
+        pageTitle: "Bracket Pick'em Head-to-Head",
         subtitle: 'Compare two contest entries using persisted standings and bracket scoring timelines',
         contributionLabel: 'Prediction contribution',
+        entryLabel: 'Bracket Entry',
       };
     default:
       return {
+        pageTitle: 'Head-to-Head',
         subtitle: 'Compare two contest entries using persisted standings and score timelines',
         contributionLabel: 'Participant contribution',
+        entryLabel: 'Entry',
       };
   }
 }
@@ -194,7 +200,8 @@ export function Component() {
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold">Head-to-Head</h1>
+        <p className="text-sm text-muted-foreground">{contest?.contest.name ?? 'Contest'}</p>
+        <h1 className="text-3xl font-bold">{copy.pageTitle}</h1>
         <p className="text-sm text-muted-foreground">
           {copy.subtitle}
         </p>
@@ -226,7 +233,7 @@ export function Component() {
         <>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="left-entry">Entry 1</label>
+              <label className="text-sm font-medium" htmlFor="left-entry">{`${copy.entryLabel} 1`}</label>
               <select
                 id="left-entry"
                 value={leftId}
@@ -239,7 +246,7 @@ export function Component() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="right-entry">Entry 2</label>
+              <label className="text-sm font-medium" htmlFor="right-entry">{`${copy.entryLabel} 2`}</label>
               <select
                 id="right-entry"
                 value={rightId}

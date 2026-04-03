@@ -587,6 +587,41 @@ export const accountHandlers = [
     return HttpResponse.json({ success: true });
   }),
 
+  http.get('/api/v1/account/activity-limit', () => {
+    return HttpResponse.json({
+      activityLimit: {
+        enabled: false,
+        weeklyContestLimit: 10,
+      },
+    });
+  }),
+
+  http.put('/api/v1/account/activity-limit', async ({ request }) => {
+    const body = await request.json() as { enabled: boolean; weeklyContestLimit: number };
+    return HttpResponse.json({
+      activityLimit: body,
+    });
+  }),
+
+  http.post('/api/v1/account/delete-account', () => {
+    return HttpResponse.json({
+      requestId: 'del-1',
+      message: 'Deletion scheduled in 14 days. You can cancel before then.',
+    }, { status: 202 });
+  }),
+
+  http.post('/api/v1/account/delete-account/:id/cancel', () => {
+    return HttpResponse.json({ success: true, message: 'Deletion cancelled' });
+  }),
+
+  http.get('/api/v1/account/self-exclusion', () => {
+    return HttpResponse.json({ exclusion: null });
+  }),
+
+  http.post('/api/v1/account/self-exclusion', () => {
+    return HttpResponse.json({ exclusionId: 'ex-1' }, { status: 201 });
+  }),
+
   http.get('/api/v1/auth/linked-accounts', () => {
     return HttpResponse.json([
       { provider: 'google', connected: true, email: 'dave@gmail.com' },

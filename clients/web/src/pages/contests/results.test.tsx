@@ -49,6 +49,23 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+vi.mock('@/features/contests/hooks/use-contest', () => ({
+  useContest: () => ({
+    data: {
+      contest: {
+        id: 'contest-1',
+        name: "NFL Weekly Pick'em",
+        status: 'ACTIVE',
+        contestType: 'SINGLE_EVENT',
+        selectionType: 'PICK_EM',
+        scoringEngine: 'CUMULATIVE',
+        leagueId: 'league-1',
+      },
+      selectionConfig: null,
+    },
+  }),
+}));
+
 vi.mock('@/hooks/use-toast', () => ({
   toast: (...args: unknown[]) => mockToast(...args),
 }));
@@ -129,6 +146,17 @@ describe('ContestResultsPage', () => {
     });
   });
 
+  it("renders mode-aware pick'em result context", () => {
+    renderPage();
+
+    expect(screen.getByText("NFL Weekly Pick'em")).toBeInTheDocument();
+    expect(screen.getByText("Pick'em Results")).toBeInTheDocument();
+    expect(screen.getByText(/Pick'em mode/i)).toBeInTheDocument();
+    expect(screen.getByText("Pick'em Standings Snapshot")).toBeInTheDocument();
+    expect(screen.getByText('Prediction')).toBeInTheDocument();
+    expect(screen.getByText("Pick'em Leader")).toBeInTheDocument();
+  });
+
   it('shows the persisted winner even when only one standings entry exists', () => {
     mockQueryResult = {
       data: {
@@ -158,7 +186,7 @@ describe('ContestResultsPage', () => {
 
     renderPage();
 
-    expect(screen.getByText('Contest Results')).toBeInTheDocument();
+    expect(screen.getByText("Pick'em Results")).toBeInTheDocument();
     expect(screen.getAllByText('Solo Entry')).toHaveLength(2);
     expect(screen.queryByText('Lead Over 2nd')).not.toBeInTheDocument();
     expect(screen.queryByText('Results unavailable')).not.toBeInTheDocument();

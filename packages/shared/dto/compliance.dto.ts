@@ -51,6 +51,10 @@ export const AccountDeletionAcceptedResponseSchema = z.object({
   message: z.string(),
 });
 
+export const AccountDeletionRequestSchema = z.object({
+  reason: z.string().optional(),
+});
+
 export const AccountDeletionCancelledResponseSchema = SuccessSchema.extend({
   message: z.string(),
 });
@@ -58,6 +62,17 @@ export const AccountDeletionCancelledResponseSchema = SuccessSchema.extend({
 export const SelfExclusionCreatedResponseSchema = z.object({
   exclusionId: z.string(),
 });
+
+export const ActivityLimitDtoSchema = z.object({
+  enabled: z.boolean(),
+  weeklyContestLimit: z.number().int().min(1).max(100),
+});
+
+export const ActivityLimitResponseSchema = z.object({
+  activityLimit: ActivityLimitDtoSchema,
+});
+
+export const ActivityLimitUpdateRequestSchema = ActivityLimitDtoSchema;
 
 export const SessionReminderDtoSchema = z.object({
   enabled: z.boolean(),
@@ -69,6 +84,9 @@ export const SessionReminderResponseSchema = z.object({
 });
 
 export const SessionReminderUpdateRequestSchema = SessionReminderDtoSchema;
+
+export const SelfExclusionDurationSchema = z.enum(['24H', '7D', '30D', '6M', '1Y', 'INDEFINITE']);
+export type SelfExclusionDuration = z.infer<typeof SelfExclusionDurationSchema>;
 
 export const SelfExclusionDtoSchema = z.object({
   id: z.string(),

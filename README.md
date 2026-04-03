@@ -88,6 +88,7 @@ Fastify + TypeScript modular monolith. All modules run in a single process on po
 - League activity feed, threaded replies, commissioner pinning, and moderation
 - Contest chat, direct messages, weekly recaps, and share-card surfaces
 - Compliance/settings flows for consent, data export, and self-exclusion now use the live backend contract
+- Admin, billing, compliance, and social surfaces are contract-aligned, but any persistence follow-up remains tracked explicitly in the relevant plans
 
 ### Contests
 - Multi-step contest wizard (sport, draft config, scoring, payouts, schedule)
