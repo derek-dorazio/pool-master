@@ -34,6 +34,7 @@ Modular monolith — all backend modules run in a single Fastify process on port
 | **standings** | `/api/v1/contests/:id/standings` | Leaderboards, rankings |
 | **history** | `/api/v1/` | Standings history, timelines, records, rivalries, analytics |
 | **search** | `/api/v1/search` | Full-text search, league/contest discovery |
+| **social** | `/api/v1/social` | League feed, contest chat, direct messages, recaps, share cards |
 | **compliance** | `/api/v1/account` | Age verify, consent, data export, deletion, self-exclusion |
 | **billing** | `/api/v1/billing` | Entitlements, plan tiers, usage (free tier) |
 | **admin** | `/api/v1/admin` | Platform admin operations |

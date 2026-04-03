@@ -25,10 +25,6 @@ vi.mock('@/hooks/use-flags-api', () => ({
   }),
 }));
 
-vi.mock('@/lib/api-client', () => ({
-  adminApi: { put: vi.fn() },
-}));
-
 function renderFlags() {
   return render(
     <MemoryRouter>

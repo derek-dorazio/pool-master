@@ -71,6 +71,43 @@ export class ComplianceService {
     return request.id;
   }
 
+  async getDataExportStatus(userId: string): Promise<{
+    status: 'none' | 'pending' | 'ready';
+    requestedAt: string | null;
+    downloadUrl: string | null;
+    expiresAt: string | null;
+    nextAllowedAt: string | null;
+  }> {
+    const latest = await this.prisma.dataExportRequest.findFirst({
+      where: { userId },
+      orderBy: { requestedAt: 'desc' },
+    });
+
+    if (!latest) {
+      return {
+        status: 'none',
+        requestedAt: null,
+        downloadUrl: null,
+        expiresAt: null,
+        nextAllowedAt: null,
+      };
+    }
+
+    const status = latest.status === 'COMPLETED'
+      ? 'ready'
+      : latest.status === 'PENDING'
+        ? 'pending'
+        : 'none';
+
+    return {
+      status,
+      requestedAt: latest.requestedAt.toISOString(),
+      downloadUrl: latest.downloadUrl ?? null,
+      expiresAt: latest.downloadExpiresAt?.toISOString() ?? null,
+      nextAllowedAt: null,
+    };
+  }
+
   async processDataExport(requestId: string): Promise<Record<string, unknown>> {
     const request = await this.prisma.dataExportRequest.findUnique({ where: { id: requestId } });
     if (!request) throw new Error('Export request not found');
@@ -329,8 +366,9 @@ function extractSessionReminder(value: unknown): { enabled: boolean; intervalMin
   if (!reminder || typeof reminder !== 'object') {
     return null;
   }
-  const enabled = typeof reminder.enabled === 'boolean' ? reminder.enabled : false;
-  const intervalMinutes = typeof reminder.intervalMinutes === 'number' ? reminder.intervalMinutes : 60;
+  const reminderRecord = reminder as Record<string, unknown>;
+  const enabled = typeof reminderRecord.enabled === 'boolean' ? reminderRecord.enabled : false;
+  const intervalMinutes = typeof reminderRecord.intervalMinutes === 'number' ? reminderRecord.intervalMinutes : 60;
   return { enabled, intervalMinutes };
 }
 

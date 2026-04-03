@@ -22,12 +22,29 @@ export const ConsentHistoryResponseSchema = z.object({
   consents: z.array(ConsentRecordDtoSchema),
 });
 
+export const ConsentPreferencesDtoSchema = z.object({
+  marketingEmails: z.boolean(),
+  analytics: z.boolean(),
+  thirdPartyIntegrations: z.boolean(),
+  doNotSell: z.boolean(),
+});
+
 export const DataExportAcceptedResponseSchema = z.object({
   requestId: z.string(),
   message: z.string(),
 });
 
 export const DataExportResponseSchema = JsonObjectSchema;
+
+export const DataExportStatusDtoSchema = z.object({
+  status: z.enum(['none', 'pending', 'ready']),
+  requestedAt: DateTimeSchema.nullable(),
+  downloadUrl: z.string().nullable(),
+  expiresAt: DateTimeSchema.nullable(),
+  nextAllowedAt: DateTimeSchema.nullable(),
+});
+
+export const DataExportStatusResponseSchema = DataExportStatusDtoSchema;
 
 export const AccountDeletionAcceptedResponseSchema = z.object({
   requestId: z.string(),

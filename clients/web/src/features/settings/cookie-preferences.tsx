@@ -41,7 +41,7 @@ export function CookiePreferencesDialog({ open, onOpenChange }: CookiePreference
   const [prefs, setPrefs] = useState<Record<string, boolean>>({
     necessary: true,
     functional: true,
-    analytics: consent?.analytics ?? true,
+    analytics: consent?.analytics ?? false,
   });
 
   useEffect(() => {

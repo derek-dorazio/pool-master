@@ -70,6 +70,7 @@ Fastify + TypeScript modular monolith. All modules run in a single process on po
 | **drafts** | Draft engines -- snake, tiered, budget, survivor, pick'em, bracket |
 | **scoring** | Score calculation -- 7 engines, 16 templates across 9 sports |
 | **ingestion** | Sports data polling from external providers (ESPN, OpenF1, PGA Tour) |
+| **social** | League feed, contest chat, direct messages, recaps, share cards |
 | **notifications** | Push, email, in-app notifications with preferences and scheduling |
 | **admin, billing** | Platform admin, subscription management |
 
@@ -82,6 +83,11 @@ Fastify + TypeScript modular monolith. All modules run in a single process on po
 - Email invitations, shareable invite links, CSV bulk import
 - Role hierarchy: Owner > Commissioner > Manager > Viewer
 - 25 granular commissioner permissions
+
+### Social & Communication
+- League activity feed, threaded replies, commissioner pinning, and moderation
+- Contest chat, direct messages, weekly recaps, and share-card surfaces
+- Compliance/settings flows for consent, data export, and self-exclusion now use the live backend contract
 
 ### Contests
 - Multi-step contest wizard (sport, draft config, scoring, payouts, schedule)

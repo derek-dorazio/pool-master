@@ -13,6 +13,7 @@ import {
   ConsentHistoryResponseSchema,
   DataExportAcceptedResponseSchema,
   DataExportResponseSchema,
+  DataExportStatusResponseSchema,
   AccountDeletionAcceptedResponseSchema,
   AccountDeletionCancelledResponseSchema,
   SelfExclusionCreatedResponseSchema,
@@ -68,7 +69,17 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
           type: 'object',
           required: ['consentType', 'granted', 'version'],
           properties: {
-            consentType: { type: 'string', enum: ['terms_of_service', 'privacy_policy', 'marketing_email', 'analytics_cookies'] },
+            consentType: {
+              type: 'string',
+              enum: [
+                'terms_of_service',
+                'privacy_policy',
+                'marketing_email',
+                'analytics_cookies',
+                'third_party_integrations',
+                'do_not_sell',
+              ],
+            },
             granted: { type: 'boolean' },
             version: { type: 'string' },
           },
@@ -116,6 +127,19 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       const userId = request.headers['x-user-id'] as string;
       const id = await complianceService.requestDataExport(userId);
       return reply.status(202).send({ requestId: id, message: 'Export request accepted' });
+    },
+  });
+
+  fastify.get('/data-export', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Check current personal data export status',
+      operationId: 'getDataExportStatus',
+      response: { 200: zodToJsonSchema(DataExportStatusResponseSchema) },
+    },
+    handler: async (request) => {
+      const userId = request.headers['x-user-id'] as string;
+      return complianceService.getDataExportStatus(userId);
     },
   });
 

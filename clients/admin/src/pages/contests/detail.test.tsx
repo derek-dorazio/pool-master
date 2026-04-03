@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as ContestDetailPage } from './detail';
+import { createTestQueryClient } from '../../test-utils';
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -51,15 +53,14 @@ vi.mock('@/hooks/use-contests-api', () => ({
   }),
 }));
 
-vi.mock('@/lib/api-client', () => ({
-  adminApi: { post: vi.fn() },
-}));
-
 function renderPage() {
+  const queryClient = createTestQueryClient();
   return render(
-    <MemoryRouter>
-      <ContestDetailPage />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <ContestDetailPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 

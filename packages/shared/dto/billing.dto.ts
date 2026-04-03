@@ -107,6 +107,18 @@ export const BillingPortalResponseSchema = z.object({
   url: z.string(),
 });
 
+export const DunningStatusSchema = z.object({
+  tenantId: z.string(),
+  phase: z.enum(['NONE', 'GRACE', 'DEGRADED', 'PENDING_CANCEL', 'CANCELLED']),
+  failedAt: z.string().datetime().nullable(),
+  retryCount: z.number(),
+  nextRetryAt: z.string().datetime().nullable(),
+  gracePeriodEndsAt: z.string().datetime().nullable(),
+  degradedPeriodEndsAt: z.string().datetime().nullable(),
+  cancellationAt: z.string().datetime().nullable(),
+});
+export type DunningStatus = z.infer<typeof DunningStatusSchema>;
+
 export const InvoiceListResponseSchema = z.object({
   items: z.array(InvoiceDtoSchema),
   total: z.number(),

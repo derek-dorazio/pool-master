@@ -799,15 +799,15 @@ CREATE INDEX idx_share_cards_slug ON share_cards(share_id);
 | 10-014 | 3 | WebSocket infrastructure for feed (shared with draft room) | Not Started | |
 | 10-015 | 3 | Real-time feed updates (new post, reaction) via WebSocket | Not Started | |
 | 10-016 | 3 | `chat_messages` table + migrations | Not Started | |
-| 10-017 | 3 | Contest chat API (messages + interleaved score/draft events) | Not Started | |
+| 10-017 | 3 | Contest chat API (messages + interleaved score/draft events) | In Progress | Shared DTO-backed contest chat routes now exist under `/api/v1/social/contests/:contestId/chat`, and the web chat hooks now hit a real backend contract instead of relying on MSW-only behavior. The contract layer and UI wiring are complete; current backend storage is still in-memory, so persistence and interleaved score/draft event injection remain follow-up work |
 | 10-018 | 3 | Online presence indicators | Not Started | |
 | 10-019 | 4 | `dm_conversations` and `direct_messages` tables | Not Started | |
-| 10-020 | 4 | DM API (list conversations, send message, mark read) | Not Started | |
+| 10-020 | 4 | DM API (list conversations, send message, mark read) | In Progress | Shared DTO-backed DM routes now exist for listing conversations, loading messages, sending replies, and marking conversations read. The DM drawer render-time `markRead` bug is fixed on the web side. The contract layer is complete; current backend storage is still in-memory, so league-scoping/persistence restrictions remain follow-up work |
 | 10-021 | 4 | `poll_votes` table + poll creation and voting | Not Started | |
 | 10-022 | 4 | @mention parsing and notification integration | Not Started | |
-| 10-023 | 5 | Weekly auto-generated recap (content generation + feed post) | Not Started | |
-| 10-024 | 5 | `share_cards` table + share card image generation (OG images) | Not Started | |
-| 10-025 | 5 | Public share URL resolution (`/share/:shareId`) | Not Started | |
+| 10-023 | 5 | Weekly auto-generated recap (content generation + feed post) | In Progress | A real recap route now exists under `/api/v1/social/leagues/:leagueId/recap` with shared DTOs and backend handling. The content/response contract is in place, but the implementation is still in-memory and not yet integrated with feed posting or scheduled recap generation |
+| 10-024 | 5 | `share_cards` table + share card image generation (OG images) | In Progress | Shared DTO-backed share card routes now exist, but the current implementation serves in-memory share data rather than persisted share-card records or generated OG assets |
+| 10-025 | 5 | Public share URL resolution (`/share/:shareId`) | In Progress | Share-card payload resolution now exists behind the social route contract, but still needs true persisted share-link generation and public share-page integration instead of seeded in-memory data |
 | 10-026 | 5 | Share-to-social integration (Twitter, Facebook, iMessage) | Not Started | |
 | 10-027 | 5 | `member_mutes` table + mute/unmute | Not Started | |
 | 10-028 | 5 | `content_reports` table + report mechanism | Not Started | |

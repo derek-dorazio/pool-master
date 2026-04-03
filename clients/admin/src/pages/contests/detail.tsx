@@ -185,12 +185,12 @@ export function Component() {
                   onClick={async () => {
                     const eventId = window.prompt('Event ID to re-ingest:');
                     if (!eventId) return;
-                  const confirmed = await dialog.confirm(
+                    const confirmed = await dialog.confirm(
                       'Re-ingest Scoring Data',
                       `Re-ingest scoring data for event ${eventId}?`,
                     );
                     if (confirmed && contestId) {
-                      await adminReIngestScoring({ client, path: { contestId }, body: { eventId } as any });
+                      await adminReIngestScoring({ client, path: { contestId }, body: { eventId } });
                       await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
                     }
                   }}
@@ -303,7 +303,7 @@ export function Component() {
                     await adminOverrideScore({
                       client,
                       path: { contestId },
-                      body: { entryId, newScore: Number(score), reason } as any,
+                      body: { entryId, newScore: Number(score), reason },
                     });
                     await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
                   }}
@@ -412,12 +412,8 @@ export function Component() {
                       'Are you sure you want to recalculate standings?',
                     );
                     if (!confirmed || !contestId) return;
-                    const result = await adminRecalculateStandings({ client, path: { contestId } });
-                    setRecalcResult(
-                      typeof result.data === 'object' && result.data
-                        ? `${(result.data as any).entriesAffected ?? 0} entries affected`
-                        : 'Standings recalculated',
-                    );
+                    await adminRecalculateStandings({ client, path: { contestId } });
+                    setRecalcResult('Standings recalculated');
                     await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
                   }}
                 >
@@ -469,12 +465,8 @@ export function Component() {
                   onClick={async () => {
                     const eventId = window.prompt('Event ID to re-ingest:');
                     if (!eventId || !contestId) return;
-                    const result = await adminReIngestScoring({ client, path: { contestId }, body: { eventId } as any });
-                    setRecalcResult(
-                      typeof result.data === 'object' && result.data
-                        ? `${(result.data as any).entriesAffected ?? 0} entries affected`
-                        : 'Standings refreshed',
-                    );
+                    await adminReIngestScoring({ client, path: { contestId }, body: { eventId } });
+                    setRecalcResult('Standings refreshed');
                     await queryClient.invalidateQueries({ queryKey: ['admin', 'contest', contestId] });
                   }}
                 >

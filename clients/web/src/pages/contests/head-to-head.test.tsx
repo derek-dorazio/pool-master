@@ -52,6 +52,23 @@ vi.mock('@/features/contests/hooks/use-standings', () => ({
   }),
 }));
 
+vi.mock('@/features/contests/hooks/use-contest', () => ({
+  useContest: () => ({
+    data: {
+      contest: {
+        id: 'contest-1',
+        name: 'NFL Weekly Pickem',
+        status: 'ACTIVE',
+        contestType: 'SINGLE_EVENT',
+        selectionType: 'PICK_EM',
+        scoringEngine: 'CUMULATIVE',
+        leagueId: 'league-1',
+      },
+      selectionConfig: null,
+    },
+  }),
+}));
+
 vi.mock('@tanstack/react-query', async () => {
   const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
   return {
@@ -149,10 +166,12 @@ describe('HeadToHeadPage', () => {
     renderPage();
 
     expect(screen.getByText('Head-to-Head')).toBeInTheDocument();
+    expect(screen.getByText(/pick'em scoring timelines/i)).toBeInTheDocument();
     expect(screen.getByText('Alpha Entry')).toBeInTheDocument();
     expect(screen.getByText('Beta Entry')).toBeInTheDocument();
     expect(screen.getByText('+8')).toBeInTheDocument();
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
     expect(screen.getByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.getAllByText('Selection contribution').length).toBeGreaterThan(0);
   });
 });

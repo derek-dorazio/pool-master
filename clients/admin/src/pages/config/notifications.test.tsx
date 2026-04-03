@@ -1,10 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { Component as NotificationConfigPage } from './notifications';
 
-vi.mock('@/lib/api-client', () => ({
-  adminApi: { put: vi.fn() },
-}));
-
 vi.mock('@/hooks/use-config-api', () => ({
   usePushTriggers: () => ({
     data: [

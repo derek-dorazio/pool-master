@@ -127,8 +127,7 @@ export class DunningService {
     }
 
     if (
-      subscription.status !== SubscriptionStatus.PAST_DUE &&
-      subscription.status !== SubscriptionStatus.UNPAID
+      subscription.status !== SubscriptionStatus.PAST_DUE
     ) {
       return {
         tenantId,
@@ -170,7 +169,7 @@ export class DunningService {
     const failedSubscriptions = await this.prisma.tenantSubscription.findMany({
       where: {
         status: {
-          in: [SubscriptionStatus.PAST_DUE, SubscriptionStatus.UNPAID],
+          in: [SubscriptionStatus.PAST_DUE],
         },
       },
       select: {

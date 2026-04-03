@@ -8,10 +8,37 @@ import { useContest } from '@/features/contests/hooks/use-contest';
 import { useStandings } from '@/features/contests/hooks/use-standings';
 import { client } from '@/lib/api';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { SelectionType } from '@poolmaster/shared/domain';
 import {
   EntryScoreDetailResponseSchema,
   type StandingsResponse,
 } from '@poolmaster/shared/dto';
+
+function getScoringCopy(selectionType: string | undefined) {
+  switch (selectionType) {
+    case SelectionType.PICK_EM:
+      return {
+        pageTitle: "Pick'em Score Breakdown",
+        subtitle: 'real entry scoring timeline for saved predictions',
+        timelineTitle: 'Prediction Timeline',
+        contributionTitle: 'Selection Contributions',
+      };
+    case SelectionType.BRACKET_PICK_EM:
+      return {
+        pageTitle: 'Bracket Score Breakdown',
+        subtitle: 'real entry scoring timeline for saved bracket predictions',
+        timelineTitle: 'Bracket Timeline',
+        contributionTitle: 'Prediction Contributions',
+      };
+    default:
+      return {
+        pageTitle: 'Score Breakdown',
+        subtitle: 'real entry scoring timeline',
+        timelineTitle: 'Entry Timeline',
+        contributionTitle: 'Participant Contributions',
+      };
+  }
+}
 
 export function Component() {
   const { contestId } = useParams();
@@ -69,6 +96,8 @@ export function Component() {
     );
   }
 
+  const copy = getScoringCopy(contest?.contest.selectionType);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -81,9 +110,9 @@ export function Component() {
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold">Score Breakdown</h1>
+        <h1 className="text-3xl font-bold">{copy.pageTitle}</h1>
         <p className="text-sm text-muted-foreground">
-          {contest?.contest.name ?? 'Contest'} · real entry scoring timeline
+          {contest?.contest.name ?? 'Contest'} · {copy.subtitle}
         </p>
       </div>
 
@@ -105,7 +134,7 @@ export function Component() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Entry Timeline</CardTitle>
+          <CardTitle>{copy.timelineTitle}</CardTitle>
         </CardHeader>
         <CardContent>
           {scoreLoading && <p className="text-sm text-muted-foreground">Loading score details...</p>}
@@ -140,7 +169,7 @@ export function Component() {
                         <th className="px-4 py-2 text-left font-medium">Timestamp</th>
                         <th className="px-4 py-2 text-right font-medium">Points Earned</th>
                         <th className="px-4 py-2 text-right font-medium">Running Total</th>
-                        <th className="px-4 py-2 text-left font-medium">Participant Contributions</th>
+                        <th className="px-4 py-2 text-left font-medium">{copy.contributionTitle}</th>
                       </tr>
                     </thead>
                     <tbody>

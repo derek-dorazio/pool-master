@@ -3,25 +3,17 @@ import { waitFor } from '@testing-library/react';
 import { useConsent, useUpdateConsent } from './use-consent';
 
 describe('useConsent', () => {
-  it('returns consent data from API', async () => {
+  it('returns current consent preferences derived from consent history', async () => {
     const { result } = renderHook(() => useConsent());
 
     await waitFor(() => expect(result.current.data).toBeDefined());
 
-    const data = result.current.data! as any;
-    // MSW returns { consents: [] }
-    expect(data).toHaveProperty('consents');
-    expect(Array.isArray(data.consents)).toBe(true);
-  });
-
-  it('returns empty consents array from default MSW handler', async () => {
-    const { result } = renderHook(() => useConsent());
-
-    await waitFor(() => expect(result.current.data).toBeDefined());
-
-    const data = result.current.data! as any;
-    const consents = data.consents as unknown[];
-    expect(consents.length).toBe(0);
+    expect(result.current.data).toEqual({
+      marketingEmails: false,
+      analytics: false,
+      thirdPartyIntegrations: false,
+      doNotSell: false,
+    });
   });
 });
 

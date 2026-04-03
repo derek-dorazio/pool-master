@@ -91,7 +91,16 @@ jest.mock('../../../packages/core-api/src/modules/billing/invoice-service', () =
 
 jest.mock('../../../packages/core-api/src/modules/billing/dunning-service', () => ({
   DunningService: jest.fn().mockImplementation(() => ({
-    getDunningStatus: jest.fn().mockResolvedValue({ status: 'NONE' }),
+    getDunningStatus: jest.fn().mockResolvedValue({
+      tenantId: 'tenant-1',
+      phase: 'NONE',
+      failedAt: null,
+      retryCount: 0,
+      nextRetryAt: null,
+      gracePeriodEndsAt: null,
+      degradedPeriodEndsAt: null,
+      cancellationAt: null,
+    }),
   })),
 }));
 
@@ -279,6 +288,31 @@ describe('Billing routes', () => {
       expect(body.entitlements).toBeDefined();
       // Should have entries for all entitlement keys
       expect(Object.keys(body.entitlements).length).toBeGreaterThan(0);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // GET /dunning/:tenantId
+  // -----------------------------------------------------------------------
+  describe('GET /api/v1/billing/dunning/:tenantId', () => {
+    it('returns dunning status for an admin request', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/billing/dunning/tenant-1',
+        headers: { 'x-admin-user-id': 'admin-1' },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({
+        tenantId: 'tenant-1',
+        phase: 'NONE',
+        failedAt: null,
+        retryCount: 0,
+        nextRetryAt: null,
+        gracePeriodEndsAt: null,
+        degradedPeriodEndsAt: null,
+        cancellationAt: null,
+      });
     });
   });
 });

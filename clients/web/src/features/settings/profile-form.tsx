@@ -53,6 +53,8 @@ export function ProfileForm() {
   const isDirty =
     displayName !== profile.displayName ||
     email !== profile.email;
+  const authProvider = profile.authProvider ?? 'email';
+  const isSsoUser = authProvider !== 'email';
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
@@ -108,7 +110,7 @@ export function ProfileForm() {
             />
             {isSsoUser && (
               <p className="text-xs text-muted-foreground">
-                Email is managed by your {profile.authProvider === 'google' ? 'Google' : 'Apple'} account
+                Email is managed by your {authProvider === 'google' ? 'Google' : 'Apple'} account
               </p>
             )}
             {errors.email && (

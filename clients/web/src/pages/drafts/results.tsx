@@ -71,6 +71,45 @@ function formatPickContext(selectionType: string, round: number, pickNumber: num
   return `Rd ${round}, Pick #${pickNumber}`;
 }
 
+function getPickEmMatchupLabel(
+  draft: z.infer<typeof DraftStateResponseSchema>,
+  round: number,
+  pickInRound: number,
+) {
+  const matchup = draft.pickEmEvents?.find((event) => event.period === round && event.matchupIndex === pickInRound);
+  if (!matchup) return null;
+
+  const fallbackLabel = [matchup.awayParticipantName, matchup.homeParticipantName].filter(Boolean).join(' at ');
+  return matchup.label ?? (fallbackLabel || `Matchup ${pickInRound}`);
+}
+
+function getBracketMatchupLabel(
+  draft: z.infer<typeof DraftStateResponseSchema>,
+  round: number,
+  pickInRound: number,
+) {
+  const matchup = draft.bracketMatchups?.find((item) => item.roundNumber === round && item.matchNumber === pickInRound);
+  if (!matchup) return null;
+
+  const fallbackLabel = [matchup.topTeam?.name, matchup.bottomTeam?.name].filter(Boolean).join(' vs ');
+  return matchup.label ?? (fallbackLabel || `Match ${pickInRound}`);
+}
+
+function getPickDetailLabel(
+  draft: z.infer<typeof DraftStateResponseSchema>,
+  pick: z.infer<typeof DraftStateResponseSchema>['picks'][number],
+) {
+  if (draft.selectionType === SelectionType.PICK_EM) {
+    return getPickEmMatchupLabel(draft, pick.round, pick.pickInRound);
+  }
+
+  if (draft.selectionType === SelectionType.BRACKET_PICK_EM) {
+    return getBracketMatchupLabel(draft, pick.round, pick.pickInRound);
+  }
+
+  return null;
+}
+
 export function Component() {
   const { draftId } = useParams<{ draftId: string }>();
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
@@ -137,11 +176,16 @@ export function Component() {
                 </tr></thead>
                 <tbody>
                   {draft.picks.map((pick) => (
-                    <tr key={pick.pickNumber} className="border-b hover:bg-accent/50">
+                    <tr key={`${pick.entryId}-${pick.pickNumber}`} className="border-b hover:bg-accent/50">
                       <td className="px-3 py-2 text-muted-foreground">{pick.pickNumber}</td>
                       <td className="px-3 py-2">{pick.round}</td>
                       <td className="px-3 py-2 font-medium">{pick.entryName}</td>
-                      <td className="px-3 py-2">{pick.isSkipped ? 'Skipped' : pick.participantName}</td>
+                      <td className="px-3 py-2">
+                        <div>{pick.isSkipped ? 'Skipped' : pick.participantName}</div>
+                        {!pick.isSkipped && getPickDetailLabel(draft, pick) ? (
+                          <div className="text-xs text-muted-foreground">{getPickDetailLabel(draft, pick)}</div>
+                        ) : null}
+                      </td>
                       <td className="px-3 py-2">{pick.position ? <Badge variant="outline" className="text-xs">{pick.position}</Badge> : '-'}</td>
                       <td className="px-3 py-2 text-muted-foreground">{pick.team ?? '-'}</td>
                       <td className="px-3 py-2">
@@ -187,13 +231,18 @@ export function Component() {
                       <p className="text-sm text-muted-foreground">No {copy.itemLabel} recorded yet.</p>
                     ) : (
                       entryPicks.map((pick) => (
-                        <div key={pick.pickNumber} className="flex items-center gap-3 text-sm py-1">
+                        <div key={`${pick.entryId}-${pick.pickNumber}`} className="flex items-center gap-3 text-sm py-1">
                           {pick.position ? (
                             <Badge variant="outline" className="text-[10px] w-10 justify-center">{pick.position}</Badge>
                           ) : (
                             <Badge variant="outline" className="text-[10px] w-10 justify-center">-</Badge>
                           )}
-                          <span>{pick.isSkipped ? 'Skipped' : pick.participantName}</span>
+                          <div className="min-w-0">
+                            <div>{pick.isSkipped ? 'Skipped' : pick.participantName}</div>
+                            {!pick.isSkipped && getPickDetailLabel(draft, pick) ? (
+                              <div className="text-xs text-muted-foreground">{getPickDetailLabel(draft, pick)}</div>
+                            ) : null}
+                          </div>
                           <span className="text-muted-foreground">{pick.isSkipped ? 'Commissioner skip' : pick.team ?? '-'}</span>
                           <span className="text-xs text-muted-foreground ml-auto">
                             {formatPickContext(draft.selectionType, pick.round, pick.pickNumber, pick.pickInRound)}

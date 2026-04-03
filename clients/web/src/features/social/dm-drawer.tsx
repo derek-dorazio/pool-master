@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowLeft, X, Send, MessageSquarePlus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -89,8 +89,9 @@ function ConversationThread({ conversationId, participantName, onBack }: { conve
   const markRead = useMarkConversationRead(conversationId);
   const [input, setInput] = useState('');
 
-  // Mark as read on open
-  useState(() => { markRead.mutate(); });
+  useEffect(() => {
+    markRead.mutate();
+  }, [conversationId, markRead]);
 
   function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -190,9 +191,6 @@ export function DMDrawer({ open, onClose }: DMDrawerProps) {
               )}
             </div>
             <div className="flex gap-1">
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                <MessageSquarePlus className="h-4 w-4" />
-              </Button>
               <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onClose}>
                 <X className="h-4 w-4" />
               </Button>

@@ -35,6 +35,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import type { EntitlementKey } from '@poolmaster/shared/domain';
+import { z } from 'zod';
 import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto/json-schema';
@@ -53,7 +54,7 @@ import {
   InvoiceDetailResponseSchema,
   PaymentMethodSetupResponseSchema,
   BillingPortalResponseSchema,
-} from '@poolmaster/shared/dto/billing.dto';
+} from '@poolmaster/shared/dto';
 import { EntitlementService } from './entitlement-service';
 import { UsageService } from './usage-service';
 import { SubscriptionService } from './subscription-service';
@@ -85,6 +86,17 @@ const ALL_ENTITLEMENT_KEYS: EntitlementKey[] = [
   'prizes.intermediate',
   'api.access',
 ];
+
+const DunningStatusSchema = z.object({
+  tenantId: z.string(),
+  phase: z.enum(['NONE', 'GRACE', 'DEGRADED', 'PENDING_CANCEL', 'CANCELLED']),
+  failedAt: z.string().datetime().nullable(),
+  retryCount: z.number(),
+  nextRetryAt: z.string().datetime().nullable(),
+  gracePeriodEndsAt: z.string().datetime().nullable(),
+  degradedPeriodEndsAt: z.string().datetime().nullable(),
+  cancellationAt: z.string().datetime().nullable(),
+});
 
 function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknown) {
   return reply.status(statusCode).send(payload);
@@ -931,7 +943,7 @@ export async function billingModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Billing'],
       summary: 'Get dunning status for a tenant',
       operationId: 'getDunningStatus',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(DunningStatusSchema) },
     },
     handler: async (request, reply) => {
       const isAdmin = request.headers['x-admin-user-id'];

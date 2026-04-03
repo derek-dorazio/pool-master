@@ -1,33 +1,29 @@
-/**
- * Social module — registers league activity feed routes.
- *
- * Routes:
- *   GET    /leagues/:leagueId/feed                    — Get feed (cursor, limit)
- *   POST   /leagues/:leagueId/feed                    — Create post
- *   GET    /leagues/:leagueId/feed/:postId            — Get post with replies
- *   POST   /leagues/:leagueId/feed/:postId/replies    — Create reply
- *   POST   /leagues/:leagueId/feed/:postId/reactions  — Toggle reaction
- *   POST   /leagues/:leagueId/feed/:postId/pin        — Pin post
- *   DELETE /leagues/:leagueId/feed/:postId/pin        — Unpin post
- *   DELETE /leagues/:leagueId/feed/:postId            — Delete post
- */
-
 import type { FastifyInstance } from 'fastify';
 import { FeedService } from './feed-service';
 import { createFeedHandlers } from './feed-handler';
+import { SocialCommunicationService } from './communication-service';
+import { createCommunicationHandlers } from './communication-handler';
 import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import {
+  ChatMessageDtoSchema,
+  ConversationDtoSchema,
+  DirectMessageDtoSchema,
   FeedResponseSchema,
   FeedPostResponseSchema,
   FeedReactionResponseSchema,
   FeedPinResponseSchema,
+  RecapDtoSchema,
+  ShareCardDtoSchema,
 } from '@poolmaster/shared/dto/social.dto';
+import { SuccessSchema } from '@poolmaster/shared/dto/common.dto';
 
 export async function socialModule(fastify: FastifyInstance): Promise<void> {
   const feedService = new FeedService();
   const handlers = createFeedHandlers(feedService);
+  const communicationService = new SocialCommunicationService();
+  const communicationHandlers = createCommunicationHandlers(communicationService);
 
   // --- Get Feed (paginated, cursor-based) ---
   fastify.get('/leagues/:leagueId/feed', {
@@ -202,5 +198,134 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
       response: { 200: zodToJsonSchema(FeedPinResponseSchema) },
     },
     handler: handlers.deletePost,
+  });
+
+  fastify.get('/social/messages/conversations', {
+    schema: {
+      tags: ['Social'],
+      summary: 'List direct message conversations',
+      operationId: 'listSocialConversations',
+      response: { 200: zodToJsonSchema(ConversationDtoSchema.array()) },
+    },
+    handler: communicationHandlers.getConversations,
+  });
+
+  fastify.get('/social/messages/conversations/:conversationId', {
+    schema: {
+      tags: ['Social'],
+      summary: 'Get messages in a direct message conversation',
+      operationId: 'getSocialConversationMessages',
+      params: {
+        type: 'object',
+        required: ['conversationId'],
+        properties: { conversationId: { type: 'string' } },
+      },
+      response: { 200: zodToJsonSchema(DirectMessageDtoSchema.array()) },
+    },
+    handler: communicationHandlers.getConversationMessages,
+  });
+
+  fastify.post('/social/messages/conversations/:conversationId', {
+    schema: {
+      tags: ['Social'],
+      summary: 'Send a direct message',
+      operationId: 'sendSocialConversationMessage',
+      params: {
+        type: 'object',
+        required: ['conversationId'],
+        properties: { conversationId: { type: 'string' } },
+      },
+      body: {
+        type: 'object',
+        required: ['content'],
+        properties: { content: { type: 'string', minLength: 1, maxLength: 500 } },
+      },
+      response: { 201: zodToJsonSchema(DirectMessageDtoSchema) },
+    },
+    handler: communicationHandlers.sendConversationMessage,
+  });
+
+  fastify.patch('/social/messages/conversations/:conversationId/read', {
+    schema: {
+      tags: ['Social'],
+      summary: 'Mark a direct message conversation as read',
+      operationId: 'markSocialConversationRead',
+      params: {
+        type: 'object',
+        required: ['conversationId'],
+        properties: { conversationId: { type: 'string' } },
+      },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
+    },
+    handler: communicationHandlers.markConversationRead,
+  });
+
+  fastify.get('/social/contests/:contestId/chat', {
+    schema: {
+      tags: ['Social'],
+      summary: 'Get contest chat messages',
+      operationId: 'getContestChat',
+      params: {
+        type: 'object',
+        required: ['contestId'],
+        properties: { contestId: { type: 'string' } },
+      },
+      response: { 200: zodToJsonSchema(ChatMessageDtoSchema.array()) },
+    },
+    handler: communicationHandlers.getContestChat,
+  });
+
+  fastify.post('/social/contests/:contestId/chat', {
+    schema: {
+      tags: ['Social'],
+      summary: 'Send a contest chat message',
+      operationId: 'sendContestChatMessage',
+      params: {
+        type: 'object',
+        required: ['contestId'],
+        properties: { contestId: { type: 'string' } },
+      },
+      body: {
+        type: 'object',
+        required: ['content'],
+        properties: { content: { type: 'string', minLength: 1, maxLength: 500 } },
+      },
+      response: { 201: zodToJsonSchema(ChatMessageDtoSchema) },
+    },
+    handler: communicationHandlers.sendContestChatMessage,
+  });
+
+  fastify.get('/social/shares/:shareId', {
+    schema: {
+      tags: ['Social'],
+      summary: 'Get share card details',
+      operationId: 'getShareCard',
+      params: {
+        type: 'object',
+        required: ['shareId'],
+        properties: { shareId: { type: 'string' } },
+      },
+      response: { 200: zodToJsonSchema(ShareCardDtoSchema) },
+    },
+    handler: communicationHandlers.getShareCard,
+  });
+
+  fastify.get('/social/leagues/:leagueId/recap', {
+    schema: {
+      tags: ['Social'],
+      summary: 'Get league recap',
+      operationId: 'getLeagueRecap',
+      params: {
+        type: 'object',
+        required: ['leagueId'],
+        properties: { leagueId: { type: 'string' } },
+      },
+      querystring: {
+        type: 'object',
+        properties: { week: { type: 'string' } },
+      },
+      response: { 200: zodToJsonSchema(RecapDtoSchema) },
+    },
+    handler: communicationHandlers.getRecap,
   });
 }

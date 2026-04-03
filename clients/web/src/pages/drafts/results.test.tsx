@@ -135,6 +135,24 @@ describe('DraftResultsPage', () => {
           pickedAt: new Date().toISOString(),
         },
       ],
+      pickEmEvents: [
+        {
+          id: 'matchup-1',
+          eventId: 'event-1',
+          period: 2,
+          matchupIndex: 1,
+          homeParticipantId: 'team-2',
+          homeParticipantName: 'Chiefs',
+          awayParticipantId: 'team-1',
+          awayParticipantName: 'Bills',
+          eventTime: new Date().toISOString(),
+          deadline: new Date().toISOString(),
+          isLocked: false,
+          myPickParticipantId: 'team-1',
+          confidenceWeight: 1,
+          label: 'Bills at Chiefs',
+        },
+      ],
     };
 
     render(
@@ -148,5 +166,54 @@ describe('DraftResultsPage', () => {
     expect(screen.getByText('Entry Predictions')).toBeInTheDocument();
     expect(screen.getByText("Current Pick'em State")).toBeInTheDocument();
     expect(screen.getAllByText('Selection').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Bills at Chiefs').length).toBeGreaterThan(0);
+  });
+
+  it('shows bracket matchup context from the live room contract', () => {
+    mockDraftState = {
+      ...mockDraftState,
+      contestName: 'March Bracket',
+      selectionType: 'BRACKET_PICK_EM',
+      currentPickNumber: 2,
+      currentRound: 1,
+      totalPicks: 1,
+      picks: [
+        {
+          pickNumber: 1,
+          round: 1,
+          pickInRound: 1,
+          entryId: 'entry-1',
+          entryName: 'My Team',
+          participantId: 'team-1',
+          participantName: 'Duke',
+          position: undefined,
+          team: 'DUK',
+          autoPicked: false,
+          pickedAt: new Date().toISOString(),
+        },
+      ],
+      bracketMatchups: [
+        {
+          id: 'bracket-1',
+          roundNumber: 1,
+          matchNumber: 1,
+          label: 'East Regional 1',
+          isLocked: false,
+          topTeam: { id: 'team-1', name: 'Duke', seed: 1 },
+          bottomTeam: { id: 'team-2', name: 'VCU', seed: 8 },
+          winnerId: 'team-1',
+        },
+      ],
+    };
+
+    render(
+      <MemoryRouter>
+        <DraftResultsPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('March Bracket - Bracket Results')).toBeInTheDocument();
+    expect(screen.getByText('Entry Brackets')).toBeInTheDocument();
+    expect(screen.getAllByText('East Regional 1').length).toBeGreaterThan(0);
   });
 });

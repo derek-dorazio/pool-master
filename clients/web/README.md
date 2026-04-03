@@ -22,6 +22,7 @@ Opens at http://localhost:5173. Proxies API calls to `http://localhost:3000`.
 | **Draft Room** | `/drafts/:id` | Full-screen 4-panel layout (available, pick board, roster, chat). Snake, auction, tiered, pick'em, bracket variants |
 | **Standings** | `/contests/:id/standings` | Sortable table, rank badges, movement arrows, score timeline chart, mobile view |
 | **History** | `/leagues/:id/records`, `/leagues/:id/history` | Record book, season archive, contest results, H2H rivalry, personal stats |
+| **Social** | `/leagues/:id/feed`, `/contests/:id/chat`, `/messages`, `/leagues/:id/recap`, `/share/:shareId` | League activity feed, contest chat, direct messages, weekly recap preview, share cards |
 | **Discovery** | `/discover/*` | Hub with sport tabs, browse leagues/contests, global search with tabs |
 | **Notifications** | `/notifications` | Notification centre, preferences matrix, DND scheduler, push permission |
 | **Settings** | `/settings/*` | Profile, password, linked accounts, timezone, privacy, consent, self-exclusion |
@@ -43,6 +44,7 @@ src/
 │   ├── history/          # Personal stats widget
 │   ├── leagues/          # Join/leave flow, role guard, entitlement gate
 │   ├── contests/         # Pre-draft view, polling hook, commissioner controls
+│   ├── social/           # Feed, chat, DMs, share cards, recap previews
 │   ├── notifications/    # Bell, dropdown, list, preferences, DND, push permission
 │   └── settings/         # Profile form, password, privacy, consent, data export
 ├── pages/                # One component per route (lazy-loaded)

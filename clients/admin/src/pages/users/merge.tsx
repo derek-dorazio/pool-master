@@ -16,7 +16,7 @@ function UserSearchSelect({
 }: {
   label: string;
   selected: UserResult | null;
-  onSelect: (user: UserResult) => void;
+  onSelect: (user: UserResult | null) => void;
 }) {
   const [query, setQuery] = useState('');
   const { data: results } = useUserSearch(query);
@@ -72,7 +72,7 @@ function UserSearchSelect({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onSelect(null as unknown as UserResult)}
+                onClick={() => onSelect(null)}
               >
                 Change
               </Button>

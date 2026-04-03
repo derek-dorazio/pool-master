@@ -6,7 +6,9 @@ import { cn } from '@/lib/utils';
 import { client } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useContest } from '@/features/contests/hooks/use-contest';
 import { useStandings } from '@/features/contests/hooks/use-standings';
+import { SelectionType } from '@poolmaster/shared/domain';
 import {
   EntryScoreDetailResponseSchema,
   type EntryScoreDetailResponse,
@@ -34,6 +36,26 @@ function getErrorMessage(error: unknown, fallback: string) {
     return error.message;
   }
   return fallback;
+}
+
+function getComparisonCopy(selectionType: string | undefined) {
+  switch (selectionType) {
+    case SelectionType.PICK_EM:
+      return {
+        subtitle: "Compare two contest entries using persisted standings and pick'em scoring timelines",
+        contributionLabel: 'Selection contribution',
+      };
+    case SelectionType.BRACKET_PICK_EM:
+      return {
+        subtitle: 'Compare two contest entries using persisted standings and bracket scoring timelines',
+        contributionLabel: 'Prediction contribution',
+      };
+    default:
+      return {
+        subtitle: 'Compare two contest entries using persisted standings and score timelines',
+        contributionLabel: 'Participant contribution',
+      };
+  }
 }
 
 function useEntryScore(contestId: string | undefined, entryId: string) {
@@ -80,7 +102,15 @@ function aggregateParticipantContributions(
   };
 }
 
-function EntryColumn({ entry, isWinning }: { entry: ComparisonEntry; isWinning: boolean }) {
+function EntryColumn({
+  entry,
+  isWinning,
+  contributionLabel,
+}: {
+  entry: ComparisonEntry;
+  isWinning: boolean;
+  contributionLabel: string;
+}) {
   return (
     <div className="flex-1 space-y-4">
       <div className={cn('rounded-lg border p-4', isWinning && 'border-primary bg-primary/5')}>
@@ -101,7 +131,7 @@ function EntryColumn({ entry, isWinning }: { entry: ComparisonEntry; isWinning: 
                 <span className="text-sm font-medium">{participant.participantName ?? participant.participantId}</span>
                 <span className="text-sm font-mono font-medium">{participant.totalScore}</span>
               </div>
-              <p className="text-xs text-muted-foreground">Participant contribution</p>
+              <p className="text-xs text-muted-foreground">{contributionLabel}</p>
             </div>
           ))
         )}
@@ -112,6 +142,7 @@ function EntryColumn({ entry, isWinning }: { entry: ComparisonEntry; isWinning: 
 
 export function Component() {
   const { contestId } = useParams();
+  const { data: contest } = useContest(contestId);
   const {
     data: standings,
     isLoading,
@@ -149,6 +180,7 @@ export function Component() {
   const leftEntry = leftStanding ? aggregateParticipantContributions(leftStanding, leftScore.data) : null;
   const rightEntry = rightStanding ? aggregateParticipantContributions(rightStanding, rightScore.data) : null;
   const diff = leftEntry && rightEntry ? leftEntry.totalScore - rightEntry.totalScore : 0;
+  const copy = getComparisonCopy(contest?.contest.selectionType);
 
   return (
     <div className="space-y-6">
@@ -164,7 +196,7 @@ export function Component() {
       <div>
         <h1 className="text-3xl font-bold">Head-to-Head</h1>
         <p className="text-sm text-muted-foreground">
-          Compare two contest entries using persisted standings and score timelines
+          {copy.subtitle}
         </p>
       </div>
 
@@ -257,10 +289,12 @@ export function Component() {
                 <EntryColumn
                   entry={leftEntry}
                   isWinning={leftEntry.totalScore >= rightEntry.totalScore}
+                  contributionLabel={copy.contributionLabel}
                 />
                 <EntryColumn
                   entry={rightEntry}
                   isWinning={rightEntry.totalScore >= leftEntry.totalScore}
+                  contributionLabel={copy.contributionLabel}
                 />
               </div>
             </>

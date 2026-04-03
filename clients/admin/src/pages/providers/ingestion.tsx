@@ -1,8 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Zap, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useIngestionJobs } from '@/hooks/use-providers-api';
+
+function statusTone(status: string): string {
+  switch (status) {
+    case 'RUNNING':
+      return 'bg-blue-100 text-blue-800';
+    case 'COMPLETED':
+      return 'bg-green-100 text-green-800';
+    case 'FAILED':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-yellow-100 text-yellow-800';
+  }
+}
 
 export function Component() {
   const { dashboard, isError, error } = useIngestionJobs();
@@ -49,21 +61,18 @@ export function Component() {
             <div key={job.id} className="space-y-2 rounded-md border p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{job.event}</p>
+                  <p className="font-medium">{job.eventId ?? job.id}</p>
                   <p className="text-sm text-muted-foreground">
-                    {job.provider} / {job.sport}
+                    {job.providerId} / {job.sport}
                   </p>
                 </div>
-                <Badge variant="outline" className="font-mono">{job.progress}%</Badge>
+                <Badge variant="outline" className={statusTone(job.status)}>
+                  {job.status}
+                </Badge>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className={cn(
-                    'h-full rounded-full transition-all',
-                    job.progress > 60 ? 'bg-green-500' : 'bg-blue-500',
-                  )}
-                  style={{ width: `${job.progress}%` }}
-                />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Processed {job.recordsProcessed.toLocaleString()} records</span>
+                <span>Errors {job.errors.toLocaleString()}</span>
               </div>
             </div>
           ))}
@@ -125,14 +134,14 @@ export function Component() {
               {errors.map((err, i) => (
                 <tr key={i} className="border-b">
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                    {new Date(err.timestamp).toLocaleTimeString()}
+                    {new Date(err.occurredAt).toLocaleTimeString()}
                   </td>
-                  <td className="px-4 py-3">{err.message.split(' \u2014 ')[0]}</td>
+                  <td className="px-4 py-3">{err.providerId}</td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className="text-xs">{err.errorType}</Badge>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {err.message.includes(' \u2014 ') ? err.message.split(' \u2014 ')[1] : err.message}
+                    {err.message}
                   </td>
                 </tr>
               ))}
