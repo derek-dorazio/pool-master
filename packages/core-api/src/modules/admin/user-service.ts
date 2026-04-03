@@ -11,9 +11,9 @@
 import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import type { PrismaClient } from '@prisma/client';
-import { createChannels } from '../../notifications/channels/channel-factory';
-import type { EmailChannel } from '../../notifications/channels/email-channel';
-import { loadConfig } from '../../notifications/core/config';
+import { createChannels } from '../notifications/channels/channel-factory';
+import type { EmailChannel } from '../notifications/channels/email-channel';
+import { loadConfig } from '../notifications/core/config';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------

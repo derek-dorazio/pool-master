@@ -7,4 +7,5 @@ export const settingsKeys = {
   dataExport: () => [...settingsKeys.all, 'data-export'] as const,
   activityLimit: () => [...settingsKeys.all, 'activity-limit'] as const,
   sessionReminder: () => [...settingsKeys.all, 'session-reminder'] as const,
+  selfExclusion: () => [...settingsKeys.all, 'self-exclusion'] as const,
 };

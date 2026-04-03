@@ -10,22 +10,40 @@ import {
   ActiveExclusionResponseSchema,
   type SelfExclusionDuration,
 } from '@poolmaster/shared/dto/compliance.dto';
+import { settingsKeys } from './hooks/query-keys';
 
-const coolDownOptions = [
-  { value: '24H', label: '24 Hours' },
-  { value: '7D', label: '7 Days' },
-  { value: '30D', label: '30 Days' },
-  { value: '6M', label: '6 Months' },
-  { value: '1Y', label: '1 Year' },
-] as const satisfies ReadonlyArray<{ value: SelfExclusionDuration; label: string }>;
+type ExclusionType = 'COOL_DOWN' | 'SELF_EXCLUSION';
+
+const exclusionOptions = {
+  COOL_DOWN: [
+    { value: '24H', label: '24 Hours' },
+    { value: '7D', label: '7 Days' },
+    { value: '30D', label: '30 Days' },
+  ],
+  SELF_EXCLUSION: [
+    { value: '6M', label: '6 Months' },
+    { value: '1Y', label: '1 Year' },
+    { value: 'INDEFINITE', label: 'Until I Reactivate My Account' },
+  ],
+} as const satisfies Record<ExclusionType, ReadonlyArray<{ value: SelfExclusionDuration; label: string }>>;
+
+const exclusionDescriptions: Record<ExclusionType, string> = {
+  COOL_DOWN: 'Take a temporary break. You can return automatically when the cool-down ends.',
+  SELF_EXCLUSION: 'Use this for a longer pause. Indefinite exclusions stay active until you reactivate them.',
+};
+
+function getDurationLabel(type: ExclusionType, duration: SelfExclusionDuration): string {
+  return exclusionOptions[type].find((option) => option.value === duration)?.label ?? duration;
+}
 
 export function SelfExclusionCard() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [exclusionType, setExclusionType] = useState<ExclusionType>('COOL_DOWN');
   const [period, setPeriod] = useState<SelfExclusionDuration>('24H');
   const [typed, setTyped] = useState('');
   const activeExclusionQuery = useQuery({
-    queryKey: ['settings', 'self-exclusion'],
+    queryKey: settingsKeys.selfExclusion(),
     queryFn: async () => {
       const { data, error } = await getActiveExclusion({ client });
       if (error) throw error;
@@ -37,19 +55,26 @@ export function SelfExclusionCard() {
     mutationFn: async () => {
       const { data, error } = await createSelfExclusion({
         client,
-        body: { type: 'COOL_DOWN', duration: period },
+        body: { type: exclusionType, duration: period },
       });
       if (error) throw error;
       return data;
     },
     onSuccess: async () => {
+      const periodLabel = getDurationLabel(exclusionType, period);
       toast({
         title: 'Self-exclusion activated',
-        description: `Your account will be paused for ${coolDownOptions.find((o) => o.value === period)?.label}.`,
+        description: exclusionType === 'COOL_DOWN'
+          ? `Your account will be paused for ${periodLabel}.`
+          : period === 'INDEFINITE'
+            ? 'Your account will remain paused until you reactivate it.'
+            : `Your account will be paused for ${periodLabel}.`,
       });
       setDialogOpen(false);
+      setExclusionType('COOL_DOWN');
+      setPeriod('24H');
       setTyped('');
-      await queryClient.invalidateQueries({ queryKey: ['settings', 'self-exclusion'] });
+      await queryClient.invalidateQueries({ queryKey: settingsKeys.selfExclusion() });
     },
     onError: () => {
       toast({ title: 'Failed to activate self-exclusion' });
@@ -73,9 +98,17 @@ export function SelfExclusionCard() {
           </p>
           {activeExclusionQuery.data?.exclusion ? (
             <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <p className="font-medium">Self-exclusion is active</p>
+              <p className="font-medium">
+                {activeExclusionQuery.data.exclusion.exclusionType === 'SELF_EXCLUSION'
+                  ? 'Self-exclusion is active'
+                  : 'Cool-down is active'}
+              </p>
               <p className="mt-1">
-                {activeExclusionQuery.data.exclusion.duration} cool-down started on{' '}
+                {getDurationLabel(
+                  activeExclusionQuery.data.exclusion.exclusionType === 'SELF_EXCLUSION' ? 'SELF_EXCLUSION' : 'COOL_DOWN',
+                  activeExclusionQuery.data.exclusion.duration as SelfExclusionDuration,
+                )}{' '}
+                started on{' '}
                 {new Date(activeExclusionQuery.data.exclusion.startedAt).toLocaleDateString()}.
               </p>
             </div>
@@ -97,7 +130,48 @@ export function SelfExclusionCard() {
             </p>
 
             <div className="mt-4 space-y-2">
-              {coolDownOptions.map((opt) => (
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Break type
+              </p>
+              <div className="space-y-2">
+                {(
+                  [
+                    ['COOL_DOWN', 'Temporary cool-down'],
+                    ['SELF_EXCLUSION', 'Long-term self-exclusion'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <label
+                    key={value}
+                    className={cn(
+                      'flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2 transition-colors',
+                      exclusionType === value ? 'border-primary bg-accent' : 'border-input hover:bg-accent/50',
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="exclusion-type"
+                      value={value}
+                      checked={exclusionType === value}
+                      onChange={() => {
+                        setExclusionType(value);
+                        setPeriod(exclusionOptions[value][0].value);
+                      }}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm">{label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {exclusionDescriptions[exclusionType]}
+              </p>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Duration
+              </p>
+              {exclusionOptions[exclusionType].map((opt) => (
                 <label
                   key={opt.value}
                   className={cn(

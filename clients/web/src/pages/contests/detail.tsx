@@ -95,6 +95,96 @@ function getContestRoomLabel(selectionType: string) {
   }
 }
 
+function getContestDetailCopy(selectionType: string) {
+  switch (selectionType) {
+    case SelectionType.PICK_EM:
+      return {
+        standingsTitle: "Pick'em Standings Snapshot",
+        standingsLinkLabel: "View full pick'em standings",
+        myEntryTitle: "My Pick'em Entry",
+        currentRankLabel: "Current Prediction Rank",
+        totalScoreLabel: 'Prediction Score',
+        entryNameLabel: 'Prediction Name',
+        snapshotEntryLabel: 'Prediction',
+        snapshotScoreLabel: 'Prediction Score',
+        countLabel: 'predictions',
+      };
+    case SelectionType.BRACKET_PICK_EM:
+      return {
+        standingsTitle: 'Bracket Standings Snapshot',
+        standingsLinkLabel: 'View full bracket standings',
+        myEntryTitle: 'My Bracket Entry',
+        currentRankLabel: 'Current Bracket Rank',
+        totalScoreLabel: 'Bracket Score',
+        entryNameLabel: 'Bracket Name',
+        snapshotEntryLabel: 'Bracket',
+        snapshotScoreLabel: 'Bracket Score',
+        countLabel: 'brackets',
+      };
+    default:
+      return {
+        standingsTitle: 'Standings Snapshot',
+        standingsLinkLabel: 'View full standings',
+        myEntryTitle: 'My Entry',
+        currentRankLabel: 'Current Rank',
+        totalScoreLabel: 'Total Score',
+        entryNameLabel: 'Entry Name',
+        snapshotEntryLabel: 'Entry',
+        snapshotScoreLabel: 'Score',
+        countLabel: 'entries',
+      };
+  }
+}
+
+function getSelectionTypeLabel(selectionType: string) {
+  switch (selectionType) {
+    case SelectionType.SNAKE_DRAFT:
+      return 'Snake Draft';
+    case SelectionType.PICK_EM:
+      return "Pick'em";
+    case SelectionType.BRACKET_PICK_EM:
+      return "Bracket Pick'em";
+    case SelectionType.BUDGET_PICK:
+      return 'Budget Pick';
+    case SelectionType.TIERED:
+      return 'Tiered';
+    case SelectionType.OPEN_SELECTION:
+      return 'Open Selection';
+    default:
+      return selectionType;
+  }
+}
+
+function getContestTypeLabel(contestType: string) {
+  switch (contestType) {
+    case 'SINGLE_EVENT':
+      return 'Single Event';
+    default:
+      return contestType;
+  }
+}
+
+function getScoringEngineLabel(scoringEngine: string) {
+  switch (scoringEngine) {
+    case 'ADVANCEMENT':
+      return 'Advancement';
+    case 'STAT_ACCUMULATION':
+      return 'Stat Accumulation';
+    case 'STROKE_PLAY':
+      return 'Stroke Play';
+    case 'POSITION':
+      return 'Position';
+    case 'BRACKET':
+      return 'Bracket';
+    case 'FIGHT_RESULT':
+      return 'Fight Result';
+    case 'CUMULATIVE':
+      return 'Cumulative';
+    default:
+      return scoringEngine;
+  }
+}
+
 export function Component() {
   const { contestId } = useParams();
   const queryClient = useQueryClient();
@@ -214,6 +304,10 @@ export function Component() {
 
   const contest = contestData.contest;
   const joinedEntry = myContestEntry?.entry;
+  const copy = getContestDetailCopy(contest.selectionType);
+  const selectionTypeLabel = getSelectionTypeLabel(contest.selectionType);
+  const contestTypeLabel = getContestTypeLabel(contest.contestType);
+  const scoringEngineLabel = getScoringEngineLabel(contest.scoringEngine);
 
   if (isPreDraftContest && contest) {
     return (
@@ -280,14 +374,14 @@ export function Component() {
               {contest.sport ?? 'Sport unavailable'}
             </span>
             <span>&middot;</span>
-            <span>{contest.selectionType}</span>
+            <span>{selectionTypeLabel}</span>
           </div>
           <p className="text-sm text-muted-foreground">
             League:{' '}
             <Link to={`/leagues/${contest.leagueId}`} className="text-primary hover:underline">
               {contest.leagueId}
             </Link>
-            <span className="ml-2">&middot; {summary?.totalEntries ?? contest.entryCount ?? 0} entries</span>
+            <span className="ml-2">&middot; {summary?.totalEntries ?? contest.entryCount ?? 0} {copy.countLabel}</span>
           </p>
         </div>
         <div className="flex gap-2">
@@ -312,7 +406,7 @@ export function Component() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-primary" />
-                My Entry
+                {copy.myEntryTitle}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -320,7 +414,7 @@ export function Component() {
                 <>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Current Rank</p>
+                      <p className="text-sm text-muted-foreground">{copy.currentRankLabel}</p>
                       <p className="text-2xl font-bold">
                         {myEntry.entry.rank}
                         <span className="text-base font-normal text-muted-foreground">
@@ -329,7 +423,7 @@ export function Component() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Total Score</p>
+                      <p className="text-sm text-muted-foreground">{copy.totalScoreLabel}</p>
                       <p className="text-2xl font-bold">{myEntry.entry.totalScore}</p>
                     </div>
                   </div>
@@ -338,7 +432,7 @@ export function Component() {
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Entry Name</span>
+                      <span className="text-muted-foreground">{copy.entryNameLabel}</span>
                       <span className="font-medium">{myEntry.entry.entryName}</span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -359,7 +453,7 @@ export function Component() {
                 <>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Contest Entry</p>
+                      <p className="text-sm text-muted-foreground">{copy.myEntryTitle}</p>
                       <p className="text-2xl font-bold">{joinedEntry.name}</p>
                     </div>
                     <div className="text-right">
@@ -384,12 +478,12 @@ export function Component() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Standings Snapshot</CardTitle>
+              <CardTitle>{copy.standingsTitle}</CardTitle>
               <Link
                 to={`/contests/${contestId}/standings`}
                 className="text-sm text-primary hover:underline"
               >
-                View full standings
+                {copy.standingsLinkLabel}
               </Link>
             </CardHeader>
             <CardContent>
@@ -400,8 +494,8 @@ export function Component() {
                       <tr className="border-b bg-muted/50">
                         <th className="px-4 py-2 text-left font-medium">Rank</th>
                         <th className="w-8 px-2 py-2" />
-                        <th className="px-4 py-2 text-left font-medium">Entry</th>
-                        <th className="px-4 py-2 text-right font-medium">Score</th>
+                        <th className="px-4 py-2 text-left font-medium">{copy.snapshotEntryLabel}</th>
+                        <th className="px-4 py-2 text-right font-medium">{copy.snapshotScoreLabel}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -446,9 +540,9 @@ export function Component() {
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { label: 'Contest Type', value: contest.contestType },
-                { label: 'Selection', value: contest.selectionType },
-                { label: 'Scoring Engine', value: contest.scoringEngine },
+                { label: 'Contest Type', value: contestTypeLabel },
+                { label: 'Selection', value: selectionTypeLabel },
+                { label: 'Scoring Engine', value: scoringEngineLabel },
                 { label: 'Starts', value: contest.startsAt ? new Date(contest.startsAt).toLocaleString() : 'Not scheduled' },
                 { label: 'Ends', value: contest.endsAt ? new Date(contest.endsAt).toLocaleString() : 'Not scheduled' },
                 { label: 'Locks', value: contest.lockAt ? new Date(contest.lockAt).toLocaleString() : 'No lock time' },

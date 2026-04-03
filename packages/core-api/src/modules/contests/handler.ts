@@ -271,7 +271,10 @@ export function createContestHandlers(contestService: ContestService) {
     const userId = request.headers['x-user-id'] as string;
     try {
       await contestService.deleteMyEntry(request.params.contestId, tenantId, userId);
-      return reply.status(204).send();
+      return reply.send({
+        contestId: request.params.contestId,
+        deleted: true as const,
+      });
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

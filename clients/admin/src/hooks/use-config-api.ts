@@ -21,9 +21,29 @@ export interface ScoringTemplate {
   id: string;
   name: string;
   sport: string;
-  type: string;
+  type: 'Scoring';
   description: string;
   lastModified: string;
+  config: Record<string, unknown>;
+}
+
+export function mapAdminScoringTemplateToUiTemplate(template: {
+  id: string;
+  sport: string;
+  name: string;
+  description: string;
+  config: Record<string, unknown>;
+  updatedAt: string;
+}): ScoringTemplate {
+  return {
+    id: template.id,
+    name: template.name,
+    sport: template.sport,
+    type: 'Scoring',
+    description: template.description,
+    lastModified: template.updatedAt,
+    config: template.config,
+  };
 }
 
 export function useScoringTemplates() {
@@ -31,7 +51,16 @@ export function useScoringTemplates() {
     queryKey: ['admin', 'config', 'scoring-templates'],
     queryFn: async (): Promise<ScoringTemplate[]> => {
       const { data } = await adminListScoringTemplates({ client });
-      return data as unknown as ScoringTemplate[];
+      const templates = (data ?? []) as Array<{
+        id: string;
+        sport: string;
+        name: string;
+        description: string;
+        config: Record<string, unknown>;
+        updatedAt: string;
+      }>;
+
+      return templates.map(mapAdminScoringTemplateToUiTemplate);
     },
   });
 }
@@ -42,9 +71,35 @@ export interface SelectionTemplate {
   id: string;
   name: string;
   sport: string;
-  type: string;
+  type: 'Selection';
   description: string;
   lastModified: string;
+  contestType: string;
+  selectionType: string;
+  config: Record<string, unknown>;
+}
+
+export function mapAdminSelectionTemplateToUiTemplate(template: {
+  id: string;
+  name: string;
+  sport: string;
+  description: string;
+  contestType: string;
+  selectionType: string;
+  config: Record<string, unknown>;
+  updatedAt: string;
+}): SelectionTemplate {
+  return {
+    id: template.id,
+    name: template.name,
+    sport: template.sport,
+    type: 'Selection',
+    description: template.description,
+    lastModified: template.updatedAt,
+    contestType: template.contestType,
+    selectionType: template.selectionType,
+    config: template.config,
+  };
 }
 
 export function useSelectionTemplates() {
@@ -52,7 +107,18 @@ export function useSelectionTemplates() {
     queryKey: ['admin', 'config', 'selection-templates'],
     queryFn: async (): Promise<SelectionTemplate[]> => {
       const { data } = await adminListSelectionTemplatesConfig({ client });
-      return data as unknown as SelectionTemplate[];
+      const templates = (data ?? []) as Array<{
+        id: string;
+        name: string;
+        description: string;
+        sport: string;
+        contestType: string;
+        selectionType: string;
+        config: Record<string, unknown>;
+        updatedAt: string;
+      }>;
+
+      return templates.map(mapAdminSelectionTemplateToUiTemplate);
     },
   });
 }

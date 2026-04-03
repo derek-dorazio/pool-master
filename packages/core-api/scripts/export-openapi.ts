@@ -26,7 +26,8 @@ async function main() {
   // Prisma will fail to connect but routes are still registered
   try {
     await app.ready();
-  } catch {
+  } catch (err) {
+    console.error('OpenAPI export app.ready() failed:', err);
     // Ignore Prisma connection errors — we only need routes registered
   }
 

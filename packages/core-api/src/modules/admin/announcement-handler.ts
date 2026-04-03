@@ -124,7 +124,7 @@ export function createAnnouncementHandlers(service: AnnouncementService) {
         adminUserId,
         adminUserEmail,
       );
-      return reply.status(204).send();
+      return reply.send({ success: true });
     } catch (err) {
       if (err instanceof AnnouncementNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

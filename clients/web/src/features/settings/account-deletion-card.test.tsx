@@ -3,8 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountDeletionCard } from './account-deletion-card';
 
+const requestAccountDeletion = vi.fn();
 const cancelAccountDeletion = vi.fn();
-const post = vi.fn();
 
 vi.mock('./hooks/use-profile', () => ({
   useProfile: () => ({
@@ -16,7 +16,8 @@ vi.mock('./hooks/use-profile', () => ({
 }));
 
 vi.mock('@/lib/api', () => ({
-  client: { post: (...args: unknown[]) => post(...args) },
+  client: {},
+  requestAccountDeletion: (...args: unknown[]) => requestAccountDeletion(...args),
   cancelAccountDeletion: (...args: unknown[]) => cancelAccountDeletion(...args),
 }));
 
@@ -37,7 +38,7 @@ function renderCard() {
 
 describe('AccountDeletionCard', () => {
   beforeEach(() => {
-    post.mockResolvedValue({ data: { requestId: 'del-1', message: 'ok' }, error: null });
+    requestAccountDeletion.mockResolvedValue({ data: { requestId: 'del-1', message: 'ok' }, error: null });
     cancelAccountDeletion.mockResolvedValue({ data: { success: true }, error: null });
   });
 
@@ -51,7 +52,9 @@ describe('AccountDeletionCard', () => {
     await user.click(screen.getByRole('button', { name: /permanently delete/i }));
 
     await waitFor(() => {
-      expect(post).toHaveBeenCalled();
+      expect(requestAccountDeletion).toHaveBeenCalledWith(expect.objectContaining({
+        body: { reason: 'user_requested' },
+      }));
     });
     expect(screen.getByText(/account scheduled for deletion/i)).toBeInTheDocument();
   });
@@ -64,7 +67,7 @@ describe('AccountDeletionCard', () => {
     await user.click(screen.getByRole('button', { name: /continue/i }));
     await user.type(screen.getByPlaceholderText('Test User'), 'Test User');
     await user.click(screen.getByRole('button', { name: /permanently delete/i }));
-    await waitFor(() => expect(post).toHaveBeenCalled());
+    await waitFor(() => expect(requestAccountDeletion).toHaveBeenCalled());
 
     await user.click(screen.getByRole('button', { name: /cancel deletion/i }));
 

@@ -11,6 +11,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
+const draftsDtoModule = require('../../../../shared/dto/drafts.dto.ts') as typeof import('../../../../shared/dto/drafts.dto');
 import { TemplateConfigService } from './template-config-service';
 import { createTemplateConfigHandlers } from './template-config-handler';
 import { NotificationConfigService } from './notification-config-service';
@@ -19,6 +20,16 @@ import { PushTriggerConfigService } from './push-trigger-config-service';
 import { createPushTriggerConfigHandlers } from './push-trigger-config-handler';
 import { RateLimitConfigService } from './rate-limit-config-service';
 import { createRateLimitConfigHandlers } from './rate-limit-config-handler';
+
+const {
+  SelectionTemplateListResponseSchema,
+  SelectionTemplateResponseSchema,
+} = draftsDtoModule;
+const adminDtoModule = require('../../../../shared/dto/admin.dto.ts') as typeof import('../../../../shared/dto/admin.dto');
+const {
+  AdminScoringTemplateListResponseSchema,
+  AdminScoringTemplateResponseSchema,
+} = adminDtoModule;
 
 export async function configRoutes(fastify: FastifyInstance): Promise<void> {
   // --- Services ---
@@ -43,7 +54,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List scoring templates',
       operationId: 'adminListScoringTemplates',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminScoringTemplateListResponseSchema) },
     },
     handler: templateConfig.listScoringTemplates,
   });
@@ -53,7 +64,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get scoring template by ID',
       operationId: 'adminGetScoringTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminScoringTemplateResponseSchema) },
     },
     handler: templateConfig.getScoringTemplate,
   });
@@ -63,7 +74,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Create a scoring template',
       operationId: 'adminCreateScoringTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 201: zodToJsonSchema(AdminScoringTemplateResponseSchema) },
       body: {
         type: 'object',
         required: ['id', 'sport', 'name', 'description', 'config'],
@@ -84,7 +95,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update a scoring template',
       operationId: 'adminUpdateScoringTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminScoringTemplateResponseSchema) },
       body: {
         type: 'object',
         properties: {
@@ -118,7 +129,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List selection templates',
       operationId: 'adminListSelectionTemplatesConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(SelectionTemplateListResponseSchema) },
     },
     handler: templateConfig.listSelectionTemplates,
   });
@@ -128,7 +139,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get selection template by ID',
       operationId: 'adminGetSelectionTemplateConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(SelectionTemplateResponseSchema) },
     },
     handler: templateConfig.getSelectionTemplate,
   });
@@ -138,7 +149,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Create a selection template',
       operationId: 'adminCreateSelectionTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 201: zodToJsonSchema(SelectionTemplateResponseSchema) },
       body: {
         type: 'object',
         required: ['id', 'name', 'description', 'sport', 'contestType', 'selectionType', 'config'],
@@ -161,7 +172,7 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update a selection template',
       operationId: 'adminUpdateSelectionTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(SelectionTemplateResponseSchema) },
       body: {
         type: 'object',
         properties: {

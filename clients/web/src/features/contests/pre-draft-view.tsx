@@ -96,6 +96,32 @@ function getRoomReadyLabel(selectionType: string) {
   return 'Entry room opens 5 min before start';
 }
 
+function getPreDraftCopy(selectionType: string) {
+  switch (selectionType) {
+    case SelectionType.PICK_EM:
+      return {
+        countdownLabel: 'Contest opens in',
+        entryListTitle: 'Predictions',
+        joinButtonLabel: "Enter Pick'em Contest",
+        spotsUnit: 'prediction slot',
+      };
+    case SelectionType.BRACKET_PICK_EM:
+      return {
+        countdownLabel: 'Bracket locks in',
+        entryListTitle: 'Brackets',
+        joinButtonLabel: 'Enter Bracket Contest',
+        spotsUnit: 'bracket slot',
+      };
+    default:
+      return {
+        countdownLabel: 'Draft starts in',
+        entryListTitle: 'Entries',
+        joinButtonLabel: 'Enter Contest',
+        spotsUnit: 'spot',
+      };
+  }
+}
+
 function formatScoringEngine(scoringEngine: string) {
   const labels: Record<ScoringEngineValue, string> = {
     [ScoringEngine.ADVANCEMENT]: 'Advancement',
@@ -183,6 +209,7 @@ export function PreDraftView({
   const isJoined = joinMeta?.isJoined ?? false;
   const selectionDetailRows = getSelectionDetailRows(selectionConfig);
   const showJoinCta = !isJoined && !!onJoin;
+  const copy = getPreDraftCopy(contest.selectionType);
 
   return (
     <div className="space-y-6">
@@ -216,7 +243,7 @@ export function PreDraftView({
             <Card className="border-primary/30">
               <CardContent className="py-6 text-center">
                 <Clock className="h-8 w-8 text-primary mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Draft starts in</p>
+                <p className="text-sm text-muted-foreground">{copy.countdownLabel}</p>
                 <p className="text-3xl font-bold font-mono mt-1">{countdown}</p>
                 <p className="text-xs text-muted-foreground mt-2">
                   {new Date(contest.startsAt).toLocaleString(undefined, {
@@ -233,11 +260,11 @@ export function PreDraftView({
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Entries ({currentEntries}{maxEntries ? ` / ${maxEntries}` : ''})
+                  {copy.entryListTitle} ({currentEntries}{maxEntries ? ` / ${maxEntries}` : ''})
                 </CardTitle>
                 {spotsLeft !== null && spotsLeft > 0 && (
                   <Badge variant="outline" className="text-green-700 border-green-300">
-                    {spotsLeft} spot{spotsLeft !== 1 ? 's' : ''} left
+                    {spotsLeft} {copy.spotsUnit}{spotsLeft !== 1 ? 's' : ''} left
                   </Badge>
                 )}
               </div>
@@ -279,7 +306,7 @@ export function PreDraftView({
                 )}
                 <Button className="w-full" onClick={onJoin} disabled={isJoining}>
                   <UserPlus className="h-4 w-4 mr-1" />
-                  {isJoining ? 'Joining...' : 'Enter Contest'}
+                  {isJoining ? 'Joining...' : copy.joinButtonLabel}
                 </Button>
               </CardContent>
             </Card>

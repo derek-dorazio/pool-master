@@ -25,11 +25,27 @@ vi.mock('@tanstack/react-query', async () => {
       }
 
       if (queryKey[0] === 'selection-templates') {
-        return { data: [], isLoading: false };
+        return {
+          data: [
+            {
+              id: 'template-1',
+              name: 'Weekly Pickem',
+              description: 'Pick game winners each week.',
+              sport: 'NFL',
+              contestType: 'SINGLE_EVENT',
+              selectionType: 'PICK_EM',
+              config: { picksPerPeriod: 5 },
+            },
+          ],
+          isLoading: false,
+        };
       }
 
       if (queryKey[0] === 'scoring-templates') {
-        return { data: { templates: [] }, isLoading: false };
+        return {
+          data: { templates: [{ key: 'pickem-default', sport: 'NFL' }] },
+          isLoading: false,
+        };
       }
 
       return { data: undefined, isLoading: false };

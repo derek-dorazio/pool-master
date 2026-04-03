@@ -151,7 +151,16 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Delete the current user contest entry',
       operationId: 'leaveContest',
-      response: { 204: { type: 'null' } },
+      response: {
+        200: {
+          type: 'object',
+          required: ['contestId', 'deleted'],
+          properties: {
+            contestId: { type: 'string' },
+            deleted: { type: 'boolean', enum: [true] },
+          },
+        },
+      },
     },
     handler: handlers.deleteMyEntry,
   });

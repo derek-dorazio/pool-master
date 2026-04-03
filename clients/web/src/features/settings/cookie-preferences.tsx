@@ -21,7 +21,8 @@ const cookieCategories: CookieCategory[] = [
   {
     key: 'functional',
     label: 'Functional',
-    description: 'Remember your preferences like timezone and display settings.',
+    description: 'Always active so we can remember preferences like timezone and display settings.',
+    locked: true,
   },
   {
     key: 'analytics',

@@ -115,6 +115,46 @@ function getScoringEngine(sport: string, selectionType: string) {
   }
 }
 
+function formatSelectionType(selectionType: string) {
+  switch (selectionType) {
+    case 'SNAKE_DRAFT':
+      return 'Snake Draft';
+    case 'TIERED':
+      return 'Tiered';
+    case 'BUDGET_PICK':
+      return 'Budget Pick';
+    case 'OPEN_SELECTION':
+      return 'Open Selection';
+    case 'PICK_EM':
+      return "Pick'em";
+    case 'BRACKET_PICK_EM':
+      return "Bracket Pick'em";
+    default:
+      return selectionType;
+  }
+}
+
+function formatScoringEngine(scoringEngine: string) {
+  switch (scoringEngine) {
+    case ScoringEngine.ADVANCEMENT:
+      return 'Advancement';
+    case ScoringEngine.STAT_ACCUMULATION:
+      return 'Stat Accumulation';
+    case ScoringEngine.STROKE_PLAY:
+      return 'Stroke Play';
+    case ScoringEngine.POSITION:
+      return 'Position';
+    case ScoringEngine.BRACKET:
+      return 'Bracket';
+    case ScoringEngine.FIGHT_RESULT:
+      return 'Fight Result';
+    case ScoringEngine.CUMULATIVE:
+      return 'Cumulative';
+    default:
+      return scoringEngine;
+  }
+}
+
 function formatTemplateConfig(config: Record<string, unknown>) {
   const rows: string[] = [];
 
@@ -302,7 +342,7 @@ function Step2SelectionTemplate({
             <div className="space-y-1">
               <p className="font-medium">{template.name}</p>
               <p className="text-sm text-muted-foreground">{template.description}</p>
-              <p className="text-xs text-muted-foreground">Selection type: {template.selectionType}</p>
+              <p className="text-xs text-muted-foreground">Selection type: {formatSelectionType(template.selectionType)}</p>
               {formatTemplateConfig(template.config).length > 0 && (
                 <p className="text-xs text-muted-foreground">{formatTemplateConfig(template.config).join(' • ')}</p>
               )}
@@ -403,6 +443,9 @@ function Step4Review({
   const sportObj = SPORTS.find((s) => s.id === values.sport);
   const league = leagues.find((item) => item.id === values.leagueId);
   const selectionTemplate = selectionTemplates.find((item) => item.id === values.selectionTemplateId);
+  const scoringEngine = selectionTemplate
+    ? formatScoringEngine(getScoringEngine(values.sport, selectionTemplate.selectionType))
+    : '-';
 
   const items = [
     { label: 'League', value: league?.name ?? '-' },
@@ -410,8 +453,9 @@ function Step4Review({
     { label: 'Contest Type', value: 'Single Event' },
     { label: 'Contest Name', value: values.name || '-' },
     { label: 'Selection Template', value: selectionTemplate?.name ?? '-' },
-    { label: 'Selection Type', value: selectionTemplate?.selectionType ?? '-' },
+    { label: 'Selection Type', value: selectionTemplate ? formatSelectionType(selectionTemplate.selectionType) : '-' },
     { label: 'Scoring Template', value: values.scoringTemplateKey || '-' },
+    { label: 'Scoring Engine', value: scoringEngine },
   ];
 
   return (

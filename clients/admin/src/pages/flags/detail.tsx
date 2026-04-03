@@ -188,7 +188,7 @@ export function Component() {
             <CardTitle className="text-base">Tenant Overrides</CardTitle>
             <CardDescription>{flag.overrides.length} overrides configured</CardDescription>
           </div>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" disabled title="Override creation is not wired yet">
             <Plus className="mr-1 h-4 w-4" />
             Add Override
           </Button>

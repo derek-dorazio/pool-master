@@ -135,7 +135,7 @@ export function createTemplateConfigHandlers(service: TemplateConfigService) {
         adminUserId,
         adminUserEmail,
       );
-      return reply.status(204).send();
+      return reply.send({ success: true });
     } catch (err) {
       if (err instanceof TemplateNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
@@ -238,7 +238,7 @@ export function createTemplateConfigHandlers(service: TemplateConfigService) {
         adminUserId,
         adminUserEmail,
       );
-      return reply.status(204).send();
+      return reply.send({ success: true });
     } catch (err) {
       if (err instanceof TemplateNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

@@ -53,7 +53,7 @@ export function SessionReminderCard() {
       setEnabled(data.sessionReminder.enabled);
       setInterval(data.sessionReminder.intervalMinutes);
       toast({ title: data.sessionReminder.enabled ? 'Session reminders enabled' : 'Session reminders disabled' });
-      await queryClient.invalidateQueries({ queryKey: ['settings', 'session-reminder'] });
+      await queryClient.invalidateQueries({ queryKey: settingsKeys.sessionReminder() });
     },
     onError: () => {
       toast({ title: 'Failed to save session reminders', description: 'Please try again.' });

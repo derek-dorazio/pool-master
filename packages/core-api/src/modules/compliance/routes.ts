@@ -8,10 +8,10 @@ import { z } from 'zod';
 import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
-import {
+const complianceDtoModule = require('../../../../shared/dto/compliance.dto.ts') as typeof import('../../../../shared/dto/compliance.dto');
+const {
   ActivityLimitResponseSchema,
   ActivityLimitUpdateRequestSchema,
-  AccountDeletionRequestSchema,
   AgeVerificationResponseSchema,
   ConsentHistoryResponseSchema,
   DataExportAcceptedResponseSchema,
@@ -27,7 +27,7 @@ import {
   EnforcementCreatedResponseSchema,
   EnforcementHistoryResponseSchema,
   RetentionCleanupResponseSchema,
-} from '@poolmaster/shared/dto/compliance.dto';
+} = complianceDtoModule;
 import { ComplianceService, verifyAge } from './compliance-service';
 import {
   mapConsentRecordToDto,
@@ -166,7 +166,12 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       tags: ['Account'],
       summary: 'Request account deletion',
       operationId: 'requestAccountDeletion',
-      body: zodToJsonSchema(AccountDeletionRequestSchema),
+      body: {
+        type: 'object',
+        properties: {
+          reason: { type: 'string' },
+        },
+      },
       response: { 202: zodToJsonSchema(AccountDeletionAcceptedResponseSchema) },
     },
     handler: async (request, reply) => {

@@ -74,4 +74,21 @@ describe('PreDraftView', () => {
     expect(screen.getByText('Entry room opens 5 min before start')).toBeInTheDocument();
     expect(screen.queryByText('Draft room opens 5 min before start')).not.toBeInTheDocument();
   });
+
+  it("uses pick'em wording for non-snake countdown and entry actions", () => {
+    render(
+      <MemoryRouter>
+        <PreDraftView
+          contest={{ ...contest, selectionType: 'PICK_EM' }}
+          entryMeta={{ currentEntries: 12, maxEntries: 20 }}
+          onJoin={() => {}}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Contest opens in')).toBeInTheDocument();
+    expect(screen.getByText('Predictions (12 / 20)')).toBeInTheDocument();
+    expect(screen.getByText('8 prediction slots left')).toBeInTheDocument();
+    expect(screen.getByText("Enter Pick'em Contest")).toBeInTheDocument();
+  });
 });

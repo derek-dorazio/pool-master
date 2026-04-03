@@ -9,6 +9,8 @@ import {
   client,
   adminDeleteScoringTemplate,
   adminUpdateScoringTemplate,
+  adminDeleteSelectionTemplate,
+  adminUpdateSelectionTemplate,
 } from '@/lib/api';
 import {
   useScoringTemplates,
@@ -17,6 +19,7 @@ import {
 import type { ScoringTemplate, SelectionTemplate } from '@/hooks/use-config-api';
 
 type AnyTemplate = ScoringTemplate | SelectionTemplate;
+type TemplateKind = 'scoring' | 'selection';
 
 function TemplateTable({
   templates,
@@ -24,8 +27,8 @@ function TemplateTable({
   onDelete,
 }: {
   templates: AnyTemplate[];
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onEdit: (template: AnyTemplate) => void;
+  onDelete: (template: AnyTemplate) => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
@@ -59,7 +62,7 @@ function TemplateTable({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onEdit(t.id)}
+                    onClick={() => onEdit(t)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
@@ -70,7 +73,7 @@ function TemplateTable({
                         size="sm"
                         className="text-red-600 hover:text-red-700"
                         onClick={() => {
-                          onDelete(t.id);
+                          onDelete(t);
                           setConfirmDelete(null);
                         }}
                       >
@@ -135,6 +138,18 @@ function EditModal({
             <label className="mb-1 block text-sm font-medium">Type</label>
             <Input value={template.type} disabled />
           </div>
+          {'contestType' in template && (
+            <div>
+              <label className="mb-1 block text-sm font-medium">Contest Type</label>
+              <Input value={template.contestType} disabled />
+            </div>
+          )}
+          {'selectionType' in template && (
+            <div>
+              <label className="mb-1 block text-sm font-medium">Selection Type</label>
+              <Input value={template.selectionType} disabled />
+            </div>
+          )}
           <div>
             <label className="mb-1 block text-sm font-medium">Description</label>
             <Input value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -155,19 +170,52 @@ export function Component() {
   const { data: scoringTemplates = [] } = useScoringTemplates();
   const { data: selectionTemplates = [] } = useSelectionTemplates();
   const [editingTemplate, setEditingTemplate] = useState<AnyTemplate | null>(null);
+  const [editingKind, setEditingKind] = useState<TemplateKind | null>(null);
 
-  function handleEdit(id: string, list: AnyTemplate[]) {
-    const found = list.find((t) => t.id === id);
-    if (found) setEditingTemplate(found);
+  function openEditor(template: AnyTemplate, kind: TemplateKind) {
+    setEditingTemplate(template);
+    setEditingKind(kind);
   }
 
-  async function handleDelete(id: string) {
-    await adminDeleteScoringTemplate({ client, path: { id } });
+  async function handleDelete(template: AnyTemplate, kind: TemplateKind) {
+    if (kind === 'selection') {
+      await adminDeleteSelectionTemplate({ client, path: { id: template.id } });
+      return;
+    }
+
+    await adminDeleteScoringTemplate({ client, path: { id: template.id } });
   }
 
   async function handleSave(updated: AnyTemplate) {
-    await adminUpdateScoringTemplate({ client, path: { id: updated.id }, body: { name: updated.name, description: updated.description, sport: updated.sport } });
+    if (editingKind === 'selection') {
+      const selectionTemplate = updated as SelectionTemplate;
+      await adminUpdateSelectionTemplate({
+        client,
+        path: { id: selectionTemplate.id },
+        body: {
+          name: selectionTemplate.name,
+          description: selectionTemplate.description,
+          sport: selectionTemplate.sport,
+          contestType: selectionTemplate.contestType,
+          selectionType: selectionTemplate.selectionType,
+          config: selectionTemplate.config,
+        },
+      });
+    } else {
+      const scoringTemplate = updated as ScoringTemplate;
+      await adminUpdateScoringTemplate({
+        client,
+        path: { id: scoringTemplate.id },
+        body: {
+          name: scoringTemplate.name,
+          description: scoringTemplate.description,
+          sport: scoringTemplate.sport,
+          config: scoringTemplate.config,
+        },
+      });
+    }
     setEditingTemplate(null);
+    setEditingKind(null);
   }
 
   return (
@@ -187,7 +235,7 @@ export function Component() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Scoring Templates</CardTitle>
-              <Button size="sm">
+              <Button size="sm" disabled title="Template creation is not wired here yet">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Template
               </Button>
@@ -195,8 +243,8 @@ export function Component() {
             <CardContent className="p-0">
               <TemplateTable
                 templates={scoringTemplates}
-                onEdit={(id) => handleEdit(id, scoringTemplates)}
-                onDelete={handleDelete}
+                onEdit={(template) => openEditor(template, 'scoring')}
+                onDelete={(template) => handleDelete(template, 'scoring')}
               />
             </CardContent>
           </Card>
@@ -206,7 +254,7 @@ export function Component() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Selection Templates</CardTitle>
-              <Button size="sm">
+              <Button size="sm" disabled title="Template creation is not wired here yet">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Template
               </Button>
@@ -214,18 +262,21 @@ export function Component() {
             <CardContent className="p-0">
               <TemplateTable
                 templates={selectionTemplates}
-                onEdit={(id) => handleEdit(id, selectionTemplates)}
-                onDelete={handleDelete}
+                onEdit={(template) => openEditor(template, 'selection')}
+                onDelete={(template) => handleDelete(template, 'selection')}
               />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {editingTemplate && (
+      {editingTemplate && editingKind && (
         <EditModal
           template={editingTemplate}
-          onClose={() => setEditingTemplate(null)}
+          onClose={() => {
+            setEditingTemplate(null);
+            setEditingKind(null);
+          }}
           onSave={handleSave}
         />
       )}

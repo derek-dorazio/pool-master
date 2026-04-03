@@ -72,7 +72,7 @@ export function Component() {
           <Flag className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Feature Flags</h1>
         </div>
-        <Button>
+        <Button disabled title="Create flag flow is not wired yet">
           <Plus className="mr-2 h-4 w-4" />
           Create Flag
         </Button>

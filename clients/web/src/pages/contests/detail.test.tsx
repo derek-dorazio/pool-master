@@ -204,13 +204,36 @@ describe('ContestDetailPage', () => {
     expect(screen.getByRole('link', { name: /Open Pick'em Room/ })).toBeInTheDocument();
   });
 
+  it("uses mode-aware labels for active pick'em contests", () => {
+    contestState = {
+      contest: {
+        ...mockActiveContest.contest,
+        name: "NFL Weekly Pick'em",
+        selectionType: 'PICK_EM',
+      },
+      selectionConfig: null,
+    };
+
+    renderPage();
+
+    expect(screen.getByText("My Pick'em Entry")).toBeInTheDocument();
+    expect(screen.getByText("Pick'em Standings Snapshot")).toBeInTheDocument();
+    expect(screen.getAllByText('Prediction Score').length).toBeGreaterThan(0);
+    expect(screen.getByText('Prediction')).toBeInTheDocument();
+    expect(screen.getByText(/view full pick'em standings/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Pick'em").length).toBeGreaterThan(0);
+    expect(screen.getByText(/12 predictions/i)).toBeInTheDocument();
+    expect(screen.getByText('Single Event')).toBeInTheDocument();
+    expect(screen.getByText('Stroke Play')).toBeInTheDocument();
+  });
+
   it('shows the real contest entry when standings are not available yet', () => {
     mockStandingsSummary = undefined;
     mockStandingsEntry = undefined;
 
     renderPage();
 
-    expect(screen.getByText('Contest Entry')).toBeInTheDocument();
+    expect(screen.getAllByText('My Entry').length).toBeGreaterThan(0);
     expect(screen.getByText("Derek's Entry")).toBeInTheDocument();
     expect(screen.getByText(/standings have not been generated/i)).toBeInTheDocument();
   });

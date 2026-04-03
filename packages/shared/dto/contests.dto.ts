@@ -185,6 +185,12 @@ export const MyContestEntryResponseSchema = z.object({
 });
 export type MyContestEntryResponse = z.infer<typeof MyContestEntryResponseSchema>;
 
+export const ContestEntryDeletionResponseSchema = z.object({
+  contestId: z.string(),
+  deleted: z.literal(true),
+});
+export type ContestEntryDeletionResponse = z.infer<typeof ContestEntryDeletionResponseSchema>;
+
 export const ContestStandingsRecalculationResponseSchema = z.object({
   contestId: z.string(),
   teamsAffected: z.number(),

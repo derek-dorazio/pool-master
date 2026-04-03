@@ -8,8 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import {
   AccountDeletionAcceptedResponseSchema,
 } from '@poolmaster/shared/dto/compliance.dto';
-import { cancelAccountDeletion } from '@/lib/api';
-import { client } from '@/lib/api';
+import { cancelAccountDeletion, requestAccountDeletion, client } from '@/lib/api';
 
 type Step = 'idle' | 'consequences' | 'confirm' | 'waiting';
 
@@ -21,10 +20,9 @@ export function AccountDeletionCard() {
 
   const requestDeletion = useMutation({
     mutationFn: async () => {
-      const { data, error } = await client.post({
-        url: '/api/v1/account/delete-account',
+      const { data, error } = await requestAccountDeletion({
+        client,
         body: { reason: 'user_requested' },
-        headers: { 'Content-Type': 'application/json' },
       });
       if (error) throw error;
       return AccountDeletionAcceptedResponseSchema.parse(data);

@@ -811,7 +811,7 @@ CREATE INDEX idx_enforcement_user ON account_enforcement(user_id, created_at);
 | 15-010 | 2 | Anonymisation pipeline for deleted accounts | Done | anonymiseUser — email hashed, name blanked, devices/notifications deleted |
 | 15-011 | 2 | Consent management UI in user settings | Done | consent-manager.tsx implemented |
 | 15-012 | 2 | "Do Not Sell My Personal Information" page (CCPA) | Done | ccpa-toggle.tsx implemented |
-| 15-013 | 3 | `self_exclusions` table + self-exclusion tool (cool-down + long-term) | Done | SelfExclusion model + POST/GET /api/v1/account/self-exclusion |
+| 15-013 | 3 | `self_exclusions` table + self-exclusion tool (cool-down + long-term) | Done | SelfExclusion model + POST/GET /api/v1/account/self-exclusion; web settings UI now surfaces both temporary and long-term exclusion paths |
 | 15-014 | 3 | Session time reminders (configurable interval) | Partial | UI exists, backend API deferred |
 | 15-015 | 3 | Activity limit configuration (contests/week, session time) | Partial | UI exists, backend API deferred |
 | 15-016 | 3 | Responsible gaming information page + external resources | Done | responsible-gaming.tsx implemented |

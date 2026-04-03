@@ -81,6 +81,8 @@ const {
   ErrorLogDetailResponseSchema,
   AlertRulesResponseSchema,
   AlertRuleDtoSchema,
+  AdminAnnouncementDtoSchema,
+  AdminAnnouncementListResponseSchema,
 } = adminDtoModule;
 const { zodToJsonSchema } = jsonSchemaModule;
 
@@ -925,7 +927,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get active announcements',
       operationId: 'adminGetActiveAnnouncements',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminAnnouncementListResponseSchema) },
     },
     handler: announcement.getActiveAnnouncements,
   });
@@ -935,7 +937,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List all announcements',
       operationId: 'adminListAnnouncements',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminAnnouncementListResponseSchema) },
     },
     handler: announcement.listAnnouncements,
   });
@@ -945,7 +947,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Create a new announcement',
       operationId: 'adminCreateAnnouncement',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 201: zodToJsonSchema(AdminAnnouncementDtoSchema) },
       body: {
         type: 'object',
         required: ['type', 'title', 'body', 'severity'],
@@ -972,7 +974,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get announcement by ID',
       operationId: 'adminGetAnnouncement',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminAnnouncementDtoSchema) },
     },
     handler: announcement.getAnnouncement,
   });
@@ -982,7 +984,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update an announcement',
       operationId: 'adminUpdateAnnouncement',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminAnnouncementDtoSchema) },
       body: {
         type: 'object',
         properties: {
@@ -1017,7 +1019,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Activate an announcement',
       operationId: 'adminActivateAnnouncement',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminAnnouncementDtoSchema) },
     },
     handler: announcement.activateAnnouncement,
   });
@@ -1027,7 +1029,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Deactivate an announcement',
       operationId: 'adminDeactivateAnnouncement',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(AdminAnnouncementDtoSchema) },
     },
     handler: announcement.deactivateAnnouncement,
   });

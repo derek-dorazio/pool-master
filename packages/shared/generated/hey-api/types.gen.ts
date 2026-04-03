@@ -38,6 +38,7 @@ export type RegisterUserResponses = {
             id: string;
             email: string;
             displayName: string;
+            authProvider?: 'email' | 'google' | 'apple';
             tenantId?: string;
             timezone?: string;
             locale?: string;
@@ -73,6 +74,7 @@ export type LoginUserResponses = {
             id: string;
             email: string;
             displayName: string;
+            authProvider?: 'email' | 'google' | 'apple';
             tenantId?: string;
             timezone?: string;
             locale?: string;
@@ -190,6 +192,7 @@ export type GetCurrentUserResponses = {
             id: string;
             email: string;
             displayName: string;
+            authProvider?: 'email' | 'google' | 'apple';
             tenantId?: string;
             timezone?: string;
             locale?: string;
@@ -412,6 +415,32 @@ export type RevokeInviteLinkResponses = {
 
 export type RevokeInviteLinkResponse = RevokeInviteLinkResponses[keyof RevokeInviteLinkResponses];
 
+export type ListLeagueMembersData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/members';
+};
+
+export type ListLeagueMembersResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        members: Array<{
+            id: string;
+            userId: string;
+            displayName: string;
+            role: string;
+            joinedAt?: string;
+        }>;
+    };
+};
+
+export type ListLeagueMembersResponse = ListLeagueMembersResponses[keyof ListLeagueMembersResponses];
+
 export type ChangeMemberRoleData = {
     body: {
         role: 'COMMISSIONER' | 'MANAGER' | 'VIEWER';
@@ -465,6 +494,26 @@ export type RemoveMemberResponses = {
 };
 
 export type RemoveMemberResponse = RemoveMemberResponses[keyof RemoveMemberResponses];
+
+export type LeaveLeagueData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/members/me';
+};
+
+export type LeaveLeagueResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        success: true;
+    };
+};
+
+export type LeaveLeagueResponse = LeaveLeagueResponses[keyof LeaveLeagueResponses];
 
 export type TransferOwnershipData = {
     body: {
@@ -676,12 +725,50 @@ export type AcceptInvitationData = {
     url: '/api/v1/invitations/accept';
 };
 
+export type AcceptInvitationErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type AcceptInvitationError = AcceptInvitationErrors[keyof AcceptInvitationErrors];
+
 export type AcceptInvitationResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        membership: {
+            id: string;
+            leagueId: string;
+            userId: string;
+            role: string;
+            permissions: Array<string>;
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -723,37 +810,17 @@ export type ListContestsResponse = ListContestsResponses[keyof ListContestsRespo
 export type CreateContestData = {
     body: {
         name: string;
-        contestType: 'SINGLE_EVENT';
-        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-        scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
-        seasonId?: string;
-        selectionConfig?: {
-            [key: string]: unknown;
-        };
+        contestType: string;
+        selectionType: string;
+        scoringEngine: string;
         scoringRules?: {
             [key: string]: unknown;
         };
         scoringTemplateKey?: string;
-        payoutConfig?: {
-            entryFee?: number;
-            prizePool?: number;
-            payoutStructure?: Array<{
-                rank: number;
-                percentage: number;
-                fixedAmount?: number;
-            }>;
-            intermediatePrizes?: Array<{
-                name: string;
-                description?: string;
-                amount?: number;
-                percentage?: number;
-            }>;
-        };
         startsAt?: string;
         endsAt?: string;
         lockAt?: string;
         isExclusive?: boolean;
-        scoringStopsOnElimination?: boolean;
     };
     path: {
         id: string;
@@ -863,9 +930,6 @@ export type UpdateContestData = {
         scoringRules?: {
             [key: string]: unknown;
         };
-        payoutConfig?: {
-            [key: string]: unknown;
-        };
         startsAt?: string;
         endsAt?: string;
         lockAt?: string;
@@ -910,6 +974,148 @@ export type UpdateContestResponses = {
 };
 
 export type UpdateContestResponse = UpdateContestResponses[keyof UpdateContestResponses];
+
+export type ListContestEntriesData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/contests/{contestId}/entries';
+};
+
+export type ListContestEntriesResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contestId: string;
+        total: number;
+        isJoined: boolean;
+        myEntryId: string;
+        entries: Array<{
+            id: string;
+            contestId: string;
+            leagueMembershipId: string;
+            name: string;
+            totalScore: number;
+            rank?: number;
+            isEliminated: boolean;
+            ownerId: string;
+            ownerDisplayName: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
+    };
+};
+
+export type ListContestEntriesResponse = ListContestEntriesResponses[keyof ListContestEntriesResponses];
+
+export type LeaveContestData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/contests/{contestId}/entries/me';
+};
+
+export type LeaveContestResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contestId: string;
+        deleted: true;
+    };
+};
+
+export type LeaveContestResponse = LeaveContestResponses[keyof LeaveContestResponses];
+
+export type GetMyContestEntryData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/contests/{contestId}/entries/me';
+};
+
+export type GetMyContestEntryResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contestId: string;
+        entry: {
+            id: string;
+            contestId: string;
+            leagueMembershipId: string;
+            name: string;
+            totalScore: number;
+            rank?: number;
+            isEliminated: boolean;
+            ownerId: string;
+            ownerDisplayName: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type GetMyContestEntryResponse = GetMyContestEntryResponses[keyof GetMyContestEntryResponses];
+
+export type EnterContestData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/contests/{contestId}/entries/me';
+};
+
+export type EnterContestResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contestId: string;
+        entry: {
+            id: string;
+            contestId: string;
+            leagueMembershipId: string;
+            name: string;
+            totalScore: number;
+            rank?: number;
+            isEliminated: boolean;
+            ownerId: string;
+            ownerDisplayName: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+    /**
+     * Default Response
+     */
+    201: {
+        contestId: string;
+        entry: {
+            id: string;
+            contestId: string;
+            leagueMembershipId: string;
+            name: string;
+            totalScore: number;
+            rank?: number;
+            isEliminated: boolean;
+            ownerId: string;
+            ownerDisplayName: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
 
 export type UndoDraftPickData = {
     body: {
@@ -1321,7 +1527,7 @@ export type CreateTemplateData = {
         name: string;
         description?: string;
         sport: string;
-        contestType: 'SINGLE_EVENT' | 'SEASON_LONG';
+        contestType: 'SINGLE_EVENT';
         draftConfig?: {
             [key: string]: unknown;
         };
@@ -3267,7 +3473,13 @@ export type SearchParticipantsResponse = SearchParticipantsResponses[keyof Searc
 export type DiscoverLeaguesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        q?: string;
+        sport?: string;
+        sort?: 'POPULAR' | 'NEWEST' | 'ACTIVITY';
+        limit?: string;
+        offset?: string;
+    };
     url: '/api/v1/search/discover/leagues';
 };
 
@@ -3282,7 +3494,12 @@ export type DiscoverLeaguesResponses = {
             description?: string;
             sport?: string;
             memberCount: number;
-            visibility: string;
+            maxMembers?: number;
+            activeContestCount: number;
+            activityLevel: string;
+            joinPolicy: string;
+            commissionerName?: string;
+            visibility?: string;
             createdAt?: string;
         }>;
         total: number;
@@ -3294,7 +3511,13 @@ export type DiscoverLeaguesResponse = DiscoverLeaguesResponses[keyof DiscoverLea
 export type DiscoverContestsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        q?: string;
+        sport?: string;
+        sort?: 'STARTING_SOON' | 'POPULAR' | 'PRIZE_POOL';
+        limit?: string;
+        offset?: string;
+    };
     url: '/api/v1/search/discover/contests';
 };
 
@@ -3305,11 +3528,17 @@ export type DiscoverContestsResponses = {
     200: {
         contests: Array<{
             id: string;
+            leagueName?: string;
             contestName: string;
             sport?: string;
+            eventName?: string;
+            draftType?: string;
             status: string;
             memberCount: number;
+            maxMembers?: number;
+            entryFee?: number;
             prizePool?: number;
+            draftStart?: string;
             lockTime?: string;
         }>;
         total: number;
@@ -3317,6 +3546,80 @@ export type DiscoverContestsResponses = {
 };
 
 export type DiscoverContestsResponse = DiscoverContestsResponses[keyof DiscoverContestsResponses];
+
+export type JoinDiscoverableLeagueData = {
+    body?: never;
+    path: {
+        leagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/search/discover/leagues/{leagueId}/join';
+};
+
+export type JoinDiscoverableLeagueErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    409: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type JoinDiscoverableLeagueError = JoinDiscoverableLeagueErrors[keyof JoinDiscoverableLeagueErrors];
+
+export type JoinDiscoverableLeagueResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        membership: {
+            id: string;
+            leagueId: string;
+            userId: string;
+            role: string;
+            permissions: Array<string>;
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type JoinDiscoverableLeagueResponse = JoinDiscoverableLeagueResponses[keyof JoinDiscoverableLeagueResponses];
 
 export type ReportDiscoveryEntityData = {
     body: {
@@ -3394,7 +3697,7 @@ export type GetConsentHistoryResponse = GetConsentHistoryResponses[keyof GetCons
 
 export type RecordConsentData = {
     body: {
-        consentType: 'terms_of_service' | 'privacy_policy' | 'marketing_email' | 'analytics_cookies';
+        consentType: 'terms_of_service' | 'privacy_policy' | 'marketing_email' | 'analytics_cookies' | 'third_party_integrations' | 'do_not_sell';
         granted: boolean;
         version: string;
     };
@@ -3413,6 +3716,28 @@ export type RecordConsentResponses = {
 };
 
 export type RecordConsentResponse = RecordConsentResponses[keyof RecordConsentResponses];
+
+export type GetDataExportStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/data-export';
+};
+
+export type GetDataExportStatusResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        status: 'none' | 'pending' | 'ready';
+        requestedAt: string;
+        downloadUrl: string;
+        expiresAt: string;
+        nextAllowedAt: string;
+    };
+};
+
+export type GetDataExportStatusResponse = GetDataExportStatusResponses[keyof GetDataExportStatusResponses];
 
 export type RequestDataExportData = {
     body?: never;
@@ -3454,7 +3779,9 @@ export type GetDataExportResponses = {
 export type GetDataExportResponse = GetDataExportResponses[keyof GetDataExportResponses];
 
 export type RequestAccountDeletionData = {
-    body?: never;
+    body: {
+        reason?: string;
+    };
     path?: never;
     query?: never;
     url: '/api/v1/account/delete-account';
@@ -3471,6 +3798,96 @@ export type RequestAccountDeletionResponses = {
 };
 
 export type RequestAccountDeletionResponse = RequestAccountDeletionResponses[keyof RequestAccountDeletionResponses];
+
+export type GetActivityLimitData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/activity-limit';
+};
+
+export type GetActivityLimitResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        activityLimit: {
+            enabled: boolean;
+            weeklyContestLimit: number;
+        };
+    };
+};
+
+export type GetActivityLimitResponse = GetActivityLimitResponses[keyof GetActivityLimitResponses];
+
+export type UpdateActivityLimitData = {
+    body: {
+        enabled: boolean;
+        weeklyContestLimit: number;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/activity-limit';
+};
+
+export type UpdateActivityLimitResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        activityLimit: {
+            enabled: boolean;
+            weeklyContestLimit: number;
+        };
+    };
+};
+
+export type UpdateActivityLimitResponse = UpdateActivityLimitResponses[keyof UpdateActivityLimitResponses];
+
+export type GetSessionReminderData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/session-reminder';
+};
+
+export type GetSessionReminderResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        sessionReminder: {
+            enabled: boolean;
+            intervalMinutes: number;
+        };
+    };
+};
+
+export type GetSessionReminderResponse = GetSessionReminderResponses[keyof GetSessionReminderResponses];
+
+export type UpdateSessionReminderData = {
+    body: {
+        enabled: boolean;
+        intervalMinutes: number;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/session-reminder';
+};
+
+export type UpdateSessionReminderResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        sessionReminder: {
+            enabled: boolean;
+            intervalMinutes: number;
+        };
+    };
+};
+
+export type UpdateSessionReminderResponse = UpdateSessionReminderResponses[keyof UpdateSessionReminderResponses];
 
 export type CancelAccountDeletionData = {
     body?: never;
@@ -4095,7 +4512,19 @@ export type AdminListContestsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            name: string;
+            leagueName: string;
+            tenantName: string;
+            sport: string;
+            contestType: string;
+            selectionType: string;
+            status: string;
+            entryCount: number;
+            createdAt: string;
+        }>;
+        total: number;
     };
 };
 
@@ -4115,7 +4544,59 @@ export type AdminGetContestDetailResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        name: string;
+        sport: string;
+        contestType: string;
+        selectionType: string;
+        scoringEngine: string;
+        status: string;
+        leagueName: string;
+        leagueId: string;
+        tenantName: string;
+        tenantId: string;
+        entryCount: number;
+        startsAt?: string;
+        endsAt?: string;
+        lockAt?: string;
+        createdAt: string;
+        standings: Array<{
+            entryId: string;
+            entryName: string;
+            ownerEmail: string;
+            rank: number;
+            totalScore: number;
+        }>;
+        draftStatus?: {
+            status: string;
+            currentPick: number;
+            totalPicks: number;
+            startedAt?: string;
+        };
+        picks: Array<{
+            round: number;
+            pick: number;
+            participant: string;
+            owner: string;
+            autoPicked: boolean;
+            time: string;
+        }>;
+        scoringFreshness: {
+            lastStatEvent?: string;
+            isStale: boolean;
+            staleMinutes: number;
+        };
+        statEventCount: number;
+        correctionsApplied: number;
+        overrides: Array<{
+            id: string;
+            adminEmail: string;
+            entryId: string;
+            oldScore: number;
+            newScore: number;
+            reason: string;
+            createdAt: string;
+        }>;
     };
 };
 
@@ -4203,7 +4684,14 @@ export type AdminRecalculateStandingsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contestId: string;
+        entriesAffected: number;
+        rankChanges: Array<{
+            entryId: string;
+            oldRank: number;
+            newRank: number;
+        }>;
+        recalculatedAt: string;
     };
 };
 
@@ -4245,7 +4733,14 @@ export type AdminReIngestScoringResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contestId: string;
+        entriesAffected: number;
+        rankChanges: Array<{
+            entryId: string;
+            oldRank: number;
+            newRank: number;
+        }>;
+        recalculatedAt: string;
     };
 };
 
@@ -4263,7 +4758,16 @@ export type AdminListProvidersResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            providerId: string;
+            providerName: string;
+            status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+            errorRate: number;
+            latencyMs: number;
+            lastEventAt: string;
+            sportsCovered: Array<string>;
+            activeEventCount: number;
+        }>;
     };
 };
 
@@ -4281,7 +4785,46 @@ export type AdminGetIngestionDashboardResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        sportProviderStatus: Array<{
+            sport: string;
+            providerId: string;
+            lastPollAt: string;
+            lastEventReceivedAt: string;
+            eventsToday: number;
+            errorsToday: number;
+            activeEventCount: number;
+            contestsDepending: number;
+        }>;
+        recentErrors: Array<{
+            providerId: string;
+            errorType: string;
+            message: string;
+            occurredAt: string;
+            eventId?: string;
+        }>;
+        activeJobs: Array<{
+            id: string;
+            providerId: string;
+            sport: string;
+            eventId: string;
+            status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt: string;
+            completedAt: string;
+            recordsProcessed: number;
+            errors: number;
+        }>;
+        recentCompletedJobs: Array<{
+            id: string;
+            providerId: string;
+            sport: string;
+            eventId: string;
+            status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt: string;
+            completedAt: string;
+            recordsProcessed: number;
+            errors: number;
+        }>;
+        throughputPerMinute: number;
     };
 };
 
@@ -4298,15 +4841,20 @@ export type AdminGetUnmappedParticipantsResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
-    };
+    200: Array<{
+        providerId: string;
+        providerName: string;
+        externalId: string;
+        externalName: string;
+        sport: string;
+    }>;
 };
 
 export type AdminGetUnmappedParticipantsResponse = AdminGetUnmappedParticipantsResponses[keyof AdminGetUnmappedParticipantsResponses];
 
 export type AdminMapParticipantData = {
     body: {
+        providerId: string;
         externalId: string;
         internalId: string;
     };
@@ -4340,7 +4888,59 @@ export type AdminGetProviderDetailResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        providerId: string;
+        providerName: string;
+        status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+        errorRate: number;
+        latencyMs: number;
+        lastEventAt: string;
+        sportsCovered: Array<string>;
+        activeEventCount: number;
+        recentHealthChecks: Array<{
+            providerId: string;
+            providerName: string;
+            status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+            errorRate: number;
+            latencyMs: number;
+            checkedAt: string;
+            details: string;
+        }>;
+        ingestionStats: Array<{
+            sport: string;
+            providerId: string;
+            lastPollAt: string;
+            lastEventReceivedAt: string;
+            eventsToday: number;
+            errorsToday: number;
+            activeEventCount: number;
+            contestsDepending: number;
+        }>;
+        recentErrors: Array<{
+            providerId: string;
+            errorType: string;
+            message: string;
+            occurredAt: string;
+            eventId?: string;
+        }>;
+        recentJobs: Array<{
+            id: string;
+            providerId: string;
+            sport: string;
+            eventId: string;
+            status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt: string;
+            completedAt: string;
+            recordsProcessed: number;
+            errors: number;
+        }>;
+        unmappedParticipants: Array<{
+            providerId: string;
+            providerName: string;
+            externalId: string;
+            externalName: string;
+            sport: string;
+        }>;
+        mappedParticipantCount: number;
     };
 };
 
@@ -4391,7 +4991,13 @@ export type AdminTriggerHealthCheckResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        providerId: string;
+        providerName: string;
+        status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+        errorRate: number;
+        latencyMs: number;
+        checkedAt: string;
+        details: string;
     };
 };
 
@@ -5010,7 +5616,25 @@ export type AdminGetActiveAnnouncementsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
+            title: string;
+            body: string;
+            linkUrl?: string;
+            linkText?: string;
+            severity: 'INFO' | 'WARNING' | 'CRITICAL';
+            dismissable: boolean;
+            target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
+            targetTenantIds?: Array<string>;
+            startsAt: string;
+            endsAt?: string;
+            isActive: boolean;
+            createdBy: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        total: number;
     };
 };
 
@@ -5028,7 +5652,25 @@ export type AdminListAnnouncementsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
+            title: string;
+            body: string;
+            linkUrl?: string;
+            linkText?: string;
+            severity: 'INFO' | 'WARNING' | 'CRITICAL';
+            dismissable: boolean;
+            target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
+            targetTenantIds?: Array<string>;
+            startsAt: string;
+            endsAt?: string;
+            isActive: boolean;
+            createdBy: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        total: number;
     };
 };
 
@@ -5057,8 +5699,23 @@ export type AdminCreateAnnouncementResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        id: string;
+        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
+        title: string;
+        body: string;
+        linkUrl?: string;
+        linkText?: string;
+        severity: 'INFO' | 'WARNING' | 'CRITICAL';
+        dismissable: boolean;
+        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
+        targetTenantIds?: Array<string>;
+        startsAt: string;
+        endsAt?: string;
+        isActive: boolean;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -5098,7 +5755,22 @@ export type AdminGetAnnouncementResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
+        title: string;
+        body: string;
+        linkUrl?: string;
+        linkText?: string;
+        severity: 'INFO' | 'WARNING' | 'CRITICAL';
+        dismissable: boolean;
+        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
+        targetTenantIds?: Array<string>;
+        startsAt: string;
+        endsAt?: string;
+        isActive: boolean;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -5129,7 +5801,22 @@ export type AdminUpdateAnnouncementResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
+        title: string;
+        body: string;
+        linkUrl?: string;
+        linkText?: string;
+        severity: 'INFO' | 'WARNING' | 'CRITICAL';
+        dismissable: boolean;
+        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
+        targetTenantIds?: Array<string>;
+        startsAt: string;
+        endsAt?: string;
+        isActive: boolean;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -5149,7 +5836,22 @@ export type AdminActivateAnnouncementResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
+        title: string;
+        body: string;
+        linkUrl?: string;
+        linkText?: string;
+        severity: 'INFO' | 'WARNING' | 'CRITICAL';
+        dismissable: boolean;
+        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
+        targetTenantIds?: Array<string>;
+        startsAt: string;
+        endsAt?: string;
+        isActive: boolean;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -5169,7 +5871,22 @@ export type AdminDeactivateAnnouncementResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
+        title: string;
+        body: string;
+        linkUrl?: string;
+        linkText?: string;
+        severity: 'INFO' | 'WARNING' | 'CRITICAL';
+        dismissable: boolean;
+        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
+        targetTenantIds?: Array<string>;
+        startsAt: string;
+        endsAt?: string;
+        isActive: boolean;
+        createdBy: string;
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -5187,7 +5904,66 @@ export type AdminListMigrationsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        available: Array<{
+            id: string;
+            name: string;
+            description: string;
+            estimatedRecords: number;
+            lastRunAt: string;
+            lastRunStatus: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+        }>;
+        activeRuns: Array<{
+            id: string;
+            migrationId: string;
+            migrationName: string;
+            status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+            dryRun: boolean;
+            progress: {
+                totalRecords: number;
+                processed: number;
+                succeeded: number;
+                failed: number;
+                percentage: number;
+            };
+            startedAt: string;
+            completedAt: string;
+            startedBy: {
+                id: string;
+                email: string;
+                name: string;
+            };
+            errors: Array<{
+                recordId: string;
+                error: string;
+                timestamp: string;
+            }>;
+        }>;
+        recentHistory: Array<{
+            id: string;
+            migrationId: string;
+            migrationName: string;
+            status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+            dryRun: boolean;
+            progress: {
+                totalRecords: number;
+                processed: number;
+                succeeded: number;
+                failed: number;
+                percentage: number;
+            };
+            startedAt: string;
+            completedAt: string;
+            startedBy: {
+                id: string;
+                email: string;
+                name: string;
+            };
+            errors: Array<{
+                recordId: string;
+                error: string;
+                timestamp: string;
+            }>;
+        }>;
     };
 };
 
@@ -5209,8 +5985,33 @@ export type AdminStartMigrationRunResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        run: {
+            id: string;
+            migrationId: string;
+            migrationName: string;
+            status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+            dryRun: boolean;
+            progress: {
+                totalRecords: number;
+                processed: number;
+                succeeded: number;
+                failed: number;
+                percentage: number;
+            };
+            startedAt: string;
+            completedAt: string;
+            startedBy: {
+                id: string;
+                email: string;
+                name: string;
+            };
+            errors: Array<{
+                recordId: string;
+                error: string;
+                timestamp: string;
+            }>;
+        };
     };
 };
 
@@ -5230,7 +6031,32 @@ export type AdminGetMigrationRunDetailResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        run: {
+            id: string;
+            migrationId: string;
+            migrationName: string;
+            status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+            dryRun: boolean;
+            progress: {
+                totalRecords: number;
+                processed: number;
+                succeeded: number;
+                failed: number;
+                percentage: number;
+            };
+            startedAt: string;
+            completedAt: string;
+            startedBy: {
+                id: string;
+                email: string;
+                name: string;
+            };
+            errors: Array<{
+                recordId: string;
+                error: string;
+                timestamp: string;
+            }>;
+        };
     };
 };
 
@@ -5250,7 +6076,32 @@ export type AdminCancelMigrationRunResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        run: {
+            id: string;
+            migrationId: string;
+            migrationName: string;
+            status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+            dryRun: boolean;
+            progress: {
+                totalRecords: number;
+                processed: number;
+                succeeded: number;
+                failed: number;
+                percentage: number;
+            };
+            startedAt: string;
+            completedAt: string;
+            startedBy: {
+                id: string;
+                email: string;
+                name: string;
+            };
+            errors: Array<{
+                recordId: string;
+                error: string;
+                timestamp: string;
+            }>;
+        };
     };
 };
 
@@ -5270,7 +6121,41 @@ export type AdminGetInvestigationResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        tenantId: string;
+        recentErrors: Array<{
+            id: string;
+            service: string;
+            errorType: string;
+            message: string;
+            requestId: string;
+            occurredAt: string;
+        }>;
+        notificationFailures: Array<{
+            id: string;
+            eventType: string;
+            channel: string;
+            failureReason: string;
+            userId: string;
+            occurredAt: string;
+        }>;
+        recentActivity: Array<{
+            id: string;
+            action: string;
+            resourceType: string;
+            resourceId: string;
+            description: string;
+            adminUserEmail: string;
+            occurredAt: string;
+        }>;
+        scoringStaleness: Array<{
+            contestId: string;
+            contestName: string;
+            sport: string;
+            lastScoringUpdate: string;
+            staleMinutes: number;
+        }>;
+        pendingCorrections: number;
+        failedWebhooks: number;
     };
 };
 
@@ -5290,7 +6175,15 @@ export type AdminGetTenantErrorsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            service: string;
+            errorType: string;
+            message: string;
+            requestId: string;
+            occurredAt: string;
+        }>;
+        total: number;
     };
 };
 
@@ -5310,7 +6203,15 @@ export type AdminGetTenantNotificationsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            eventType: string;
+            channel: string;
+            failureReason: string;
+            userId: string;
+            occurredAt: string;
+        }>;
+        total: number;
     };
 };
 
@@ -5330,7 +6231,16 @@ export type AdminGetTenantRequestsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        items: Array<{
+            id: string;
+            action: string;
+            resourceType: string;
+            resourceId: string;
+            description: string;
+            adminUserEmail: string;
+            occurredAt: string;
+        }>;
+        total: number;
     };
 };
 
@@ -5351,7 +6261,11 @@ export type AdminQuickResetPasswordResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        action: 'reset-password';
+        userId: string;
+        email: string;
+        result: 'PASSWORD_RESET_TRIGGERED';
+        triggeredAt: string;
     };
 };
 
@@ -5372,7 +6286,20 @@ export type AdminQuickCheckProviderResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        action: 'check-provider';
+        requestedSport: string;
+        matchesSportCoverage: boolean;
+        provider: {
+            providerId: string;
+            providerName: string;
+            status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+            errorRate: number;
+            latencyMs: number;
+            lastEventAt: string;
+            sportsCovered: Array<string>;
+            activeEventCount: number;
+        };
+        checkedAt: string;
     };
 };
 
@@ -5392,7 +6319,40 @@ export type AdminQuickCheckEntitlementsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        action: 'check-entitlements';
+        tenantId: string;
+        planTier: string;
+        entitlements: {
+            [key: string]: {
+                entitled: boolean;
+                reason?: string;
+                currentUsage?: number;
+                limit?: number;
+                upgradePlan?: string;
+            };
+        };
+        usage: {
+            leagues: {
+                resource: 'LEAGUES' | 'MEMBERS' | 'CONTESTS';
+                current: number;
+                limit: number;
+                percentage: number;
+            };
+            members: {
+                resource: 'LEAGUES' | 'MEMBERS' | 'CONTESTS';
+                current: number;
+                limit: number;
+                percentage: number;
+            };
+            contests: {
+                resource: 'LEAGUES' | 'MEMBERS' | 'CONTESTS';
+                current: number;
+                limit: number;
+                percentage: number;
+            };
+        };
+        withinLimits: boolean;
+        checkedAt: string;
     };
 };
 
@@ -5412,7 +6372,32 @@ export type AdminQuickCheckNotificationsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        action: 'check-notifications';
+        userId: string;
+        preferences: {
+            doNotDisturb: boolean;
+            categories: {
+                [key: string]: boolean;
+            };
+        };
+        devices: Array<{
+            platform: string;
+            lastSeen: string;
+            tokenStatus: string;
+        }>;
+        recentDelivery: {
+            sent: number;
+            delivered: number;
+            failed: number;
+            deliveryRate: number;
+        };
+        failures: Array<{
+            eventType: string;
+            channel: string;
+            reason: string;
+            at: string;
+        }>;
+        checkedAt: string;
     };
 };
 
@@ -5433,7 +6418,15 @@ export type AdminQuickReIngestScoresResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contestId: string;
+        entriesAffected: number;
+        rankChanges: Array<{
+            entryId: string;
+            oldRank: number;
+            newRank: number;
+        }>;
+        recalculatedAt: string;
+        action: 're-ingest-scores';
     };
 };
 
@@ -6095,9 +7088,17 @@ export type AdminListScoringTemplatesResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
-    };
+    200: Array<{
+        id: string;
+        sport: string;
+        name: string;
+        description: string;
+        config: {
+            [key: string]: unknown;
+        };
+        createdAt: string;
+        updatedAt: string;
+    }>;
 };
 
 export type AdminListScoringTemplatesResponse = AdminListScoringTemplatesResponses[keyof AdminListScoringTemplatesResponses];
@@ -6121,8 +7122,16 @@ export type AdminCreateScoringTemplateResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        id: string;
+        sport: string;
+        name: string;
+        description: string;
+        config: {
+            [key: string]: unknown;
+        };
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -6162,7 +7171,15 @@ export type AdminGetScoringTemplateResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        sport: string;
+        name: string;
+        description: string;
+        config: {
+            [key: string]: unknown;
+        };
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -6189,7 +7206,15 @@ export type AdminUpdateScoringTemplateResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        sport: string;
+        name: string;
+        description: string;
+        config: {
+            [key: string]: unknown;
+        };
+        createdAt: string;
+        updatedAt: string;
     };
 };
 
@@ -6206,9 +7231,17 @@ export type AdminListSelectionTemplatesConfigResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
-    };
+    200: Array<{
+        id: string;
+        name: string;
+        description: string;
+        sport: string;
+        contestType: string;
+        selectionType: string;
+        config: {
+            [key: string]: unknown;
+        };
+    }>;
 };
 
 export type AdminListSelectionTemplatesConfigResponse = AdminListSelectionTemplatesConfigResponses[keyof AdminListSelectionTemplatesConfigResponses];
@@ -6234,8 +7267,16 @@ export type AdminCreateSelectionTemplateResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        id: string;
+        name: string;
+        description: string;
+        sport: string;
+        contestType: string;
+        selectionType: string;
+        config: {
+            [key: string]: unknown;
+        };
     };
 };
 
@@ -6275,7 +7316,15 @@ export type AdminGetSelectionTemplateConfigResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        name: string;
+        description: string;
+        sport: string;
+        contestType: string;
+        selectionType: string;
+        config: {
+            [key: string]: unknown;
+        };
     };
 };
 
@@ -6304,7 +7353,15 @@ export type AdminUpdateSelectionTemplateResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        id: string;
+        name: string;
+        description: string;
+        sport: string;
+        contestType: string;
+        selectionType: string;
+        config: {
+            [key: string]: unknown;
+        };
     };
 };
 
@@ -6614,18 +7671,43 @@ export type ChangePlanData = {
     url: '/api/v1/billing/plan';
 };
 
+export type ChangePlanErrors = {
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type ChangePlanError = ChangePlanErrors[keyof ChangePlanErrors];
+
 export type ChangePlanResponses = {
     /**
      * Default Response
      */
     200: {
-        slug: string;
-        name: string;
-        displayOrder?: number;
-        monthlyPriceCents?: number;
-        annualPriceCents?: number;
-        entitlements: {
-            [key: string]: unknown;
+        subscription: {
+            id: string;
+            tenantId: string;
+            stripeCustomerId: string;
+            stripeSubscriptionId: string;
+            planSlug: string;
+            billingCycle: 'MONTHLY' | 'ANNUAL';
+            status: string;
+            trialStart: string;
+            trialEnd: string;
+            currentPeriodStart: string;
+            currentPeriodEnd: string;
+            cancelledAt: string;
+            cancelAtPeriodEnd: boolean;
+            paymentMethodLast4: string;
+            paymentMethodBrand: string;
+            currency: string;
+            createdAt: string;
+            updatedAt: string;
         };
     };
 };
@@ -6725,12 +7807,44 @@ export type CreateSubscriptionData = {
     url: '/api/v1/billing/subscribe';
 };
 
+export type CreateSubscriptionErrors = {
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type CreateSubscriptionError = CreateSubscriptionErrors[keyof CreateSubscriptionErrors];
+
 export type CreateSubscriptionResponses = {
     /**
      * Default Response
      */
-    200: {
-        success: true;
+    201: {
+        subscription: {
+            id: string;
+            tenantId: string;
+            stripeCustomerId: string;
+            stripeSubscriptionId: string;
+            planSlug: string;
+            billingCycle: 'MONTHLY' | 'ANNUAL';
+            status: string;
+            trialStart: string;
+            trialEnd: string;
+            currentPeriodStart: string;
+            currentPeriodEnd: string;
+            cancelledAt: string;
+            cancelAtPeriodEnd: boolean;
+            paymentMethodLast4: string;
+            paymentMethodBrand: string;
+            currency: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -6743,12 +7857,44 @@ export type ResumeSubscriptionData = {
     url: '/api/v1/billing/resume';
 };
 
+export type ResumeSubscriptionErrors = {
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type ResumeSubscriptionError = ResumeSubscriptionErrors[keyof ResumeSubscriptionErrors];
+
 export type ResumeSubscriptionResponses = {
     /**
      * Default Response
      */
     200: {
-        success: true;
+        subscription: {
+            id: string;
+            tenantId: string;
+            stripeCustomerId: string;
+            stripeSubscriptionId: string;
+            planSlug: string;
+            billingCycle: 'MONTHLY' | 'ANNUAL';
+            status: string;
+            trialStart: string;
+            trialEnd: string;
+            currentPeriodStart: string;
+            currentPeriodEnd: string;
+            cancelledAt: string;
+            cancelAtPeriodEnd: boolean;
+            paymentMethodLast4: string;
+            paymentMethodBrand: string;
+            currency: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -6766,7 +7912,26 @@ export type GetSubscriptionResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        subscription: {
+            id: string;
+            tenantId: string;
+            stripeCustomerId: string;
+            stripeSubscriptionId: string;
+            planSlug: string;
+            billingCycle: 'MONTHLY' | 'ANNUAL';
+            status: string;
+            trialStart: string;
+            trialEnd: string;
+            currentPeriodStart: string;
+            currentPeriodEnd: string;
+            cancelledAt: string;
+            cancelAtPeriodEnd: boolean;
+            paymentMethodLast4: string;
+            paymentMethodBrand: string;
+            currency: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -6779,12 +7944,33 @@ export type CreatePaymentMethodSetupData = {
     url: '/api/v1/billing/payment-method';
 };
 
+export type CreatePaymentMethodSetupErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type CreatePaymentMethodSetupError = CreatePaymentMethodSetupErrors[keyof CreatePaymentMethodSetupErrors];
+
 export type CreatePaymentMethodSetupResponses = {
     /**
      * Default Response
      */
     200: {
-        success: true;
+        clientSecret: string;
     };
 };
 
@@ -6797,12 +7983,33 @@ export type GetBillingPortalData = {
     url: '/api/v1/billing/portal';
 };
 
+export type GetBillingPortalErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type GetBillingPortalError = GetBillingPortalErrors[keyof GetBillingPortalErrors];
+
 export type GetBillingPortalResponses = {
     /**
      * Default Response
      */
     200: {
-        success: true;
+        url: string;
     };
 };
 
@@ -6888,6 +8095,19 @@ export type GetUpcomingInvoiceData = {
     url: '/api/v1/billing/invoices/upcoming';
 };
 
+export type GetUpcomingInvoiceErrors = {
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type GetUpcomingInvoiceError = GetUpcomingInvoiceErrors[keyof GetUpcomingInvoiceErrors];
+
 export type GetUpcomingInvoiceResponses = {
     /**
      * Default Response
@@ -6923,6 +8143,27 @@ export type GetInvoiceDetailData = {
     query?: never;
     url: '/api/v1/billing/invoices/{invoiceId}';
 };
+
+export type GetInvoiceDetailErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type GetInvoiceDetailError = GetInvoiceDetailErrors[keyof GetInvoiceDetailErrors];
 
 export type GetInvoiceDetailResponses = {
     /**
@@ -7033,6 +8274,19 @@ export type CancelSubscriptionData = {
     query?: never;
     url: '/api/v1/billing/cancel';
 };
+
+export type CancelSubscriptionErrors = {
+    /**
+     * Default Response
+     */
+    501: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type CancelSubscriptionError = CancelSubscriptionErrors[keyof CancelSubscriptionErrors];
 
 export type CancelSubscriptionResponses = {
     /**
@@ -7167,7 +8421,14 @@ export type GetDunningStatusResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        tenantId: string;
+        phase: 'NONE' | 'GRACE' | 'DEGRADED' | 'PENDING_CANCEL' | 'CANCELLED';
+        failedAt: string;
+        retryCount: number;
+        nextRetryAt: string;
+        gracePeriodEndsAt: string;
+        degradedPeriodEndsAt: string;
+        cancellationAt: string;
     };
 };
 
@@ -7421,6 +8682,363 @@ export type PinFeedPostResponses = {
 
 export type PinFeedPostResponse = PinFeedPostResponses[keyof PinFeedPostResponses];
 
+export type ListSocialConversationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/social/messages/conversations';
+};
+
+export type ListSocialConversationsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type ListSocialConversationsError = ListSocialConversationsErrors[keyof ListSocialConversationsErrors];
+
+export type ListSocialConversationsResponses = {
+    /**
+     * Default Response
+     */
+    200: Array<{
+        id: string;
+        participantName: string;
+        participantInitials: string;
+        participantAvatarUrl: string;
+        lastMessage: string;
+        lastMessageAt: string;
+        unreadCount: number;
+    }>;
+};
+
+export type ListSocialConversationsResponse = ListSocialConversationsResponses[keyof ListSocialConversationsResponses];
+
+export type GetSocialConversationMessagesData = {
+    body?: never;
+    path: {
+        conversationId: string;
+    };
+    query?: never;
+    url: '/api/v1/social/messages/conversations/{conversationId}';
+};
+
+export type GetSocialConversationMessagesErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type GetSocialConversationMessagesError = GetSocialConversationMessagesErrors[keyof GetSocialConversationMessagesErrors];
+
+export type GetSocialConversationMessagesResponses = {
+    /**
+     * Default Response
+     */
+    200: Array<{
+        id: string;
+        senderId: string;
+        senderName: string;
+        content: string;
+        createdAt: string;
+        isOwn: boolean;
+        delivered: boolean;
+        read: boolean;
+    }>;
+};
+
+export type GetSocialConversationMessagesResponse = GetSocialConversationMessagesResponses[keyof GetSocialConversationMessagesResponses];
+
+export type SendSocialConversationMessageData = {
+    body: {
+        content: string;
+    };
+    path: {
+        conversationId: string;
+    };
+    query?: never;
+    url: '/api/v1/social/messages/conversations/{conversationId}';
+};
+
+export type SendSocialConversationMessageErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type SendSocialConversationMessageError = SendSocialConversationMessageErrors[keyof SendSocialConversationMessageErrors];
+
+export type SendSocialConversationMessageResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        id: string;
+        senderId: string;
+        senderName: string;
+        content: string;
+        createdAt: string;
+        isOwn: boolean;
+        delivered: boolean;
+        read: boolean;
+    };
+};
+
+export type SendSocialConversationMessageResponse = SendSocialConversationMessageResponses[keyof SendSocialConversationMessageResponses];
+
+export type MarkSocialConversationReadData = {
+    body?: never;
+    path: {
+        conversationId: string;
+    };
+    query?: never;
+    url: '/api/v1/social/messages/conversations/{conversationId}/read';
+};
+
+export type MarkSocialConversationReadErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type MarkSocialConversationReadError = MarkSocialConversationReadErrors[keyof MarkSocialConversationReadErrors];
+
+export type MarkSocialConversationReadResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        success: true;
+    };
+};
+
+export type MarkSocialConversationReadResponse = MarkSocialConversationReadResponses[keyof MarkSocialConversationReadResponses];
+
+export type GetContestChatData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/social/contests/{contestId}/chat';
+};
+
+export type GetContestChatErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type GetContestChatError = GetContestChatErrors[keyof GetContestChatErrors];
+
+export type GetContestChatResponses = {
+    /**
+     * Default Response
+     */
+    200: Array<{
+        id: string;
+        type: 'user' | 'system';
+        authorName: string;
+        authorInitials: string;
+        content: string;
+        createdAt: string;
+        isOwn: boolean;
+    }>;
+};
+
+export type GetContestChatResponse = GetContestChatResponses[keyof GetContestChatResponses];
+
+export type SendContestChatMessageData = {
+    body: {
+        content: string;
+    };
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/social/contests/{contestId}/chat';
+};
+
+export type SendContestChatMessageErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type SendContestChatMessageError = SendContestChatMessageErrors[keyof SendContestChatMessageErrors];
+
+export type SendContestChatMessageResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        id: string;
+        type: 'user' | 'system';
+        authorName: string;
+        authorInitials: string;
+        content: string;
+        createdAt: string;
+        isOwn: boolean;
+    };
+};
+
+export type SendContestChatMessageResponse = SendContestChatMessageResponses[keyof SendContestChatMessageResponses];
+
+export type GetShareCardData = {
+    body?: never;
+    path: {
+        shareId: string;
+    };
+    query?: never;
+    url: '/api/v1/social/shares/{shareId}';
+};
+
+export type GetShareCardErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type GetShareCardError = GetShareCardErrors[keyof GetShareCardErrors];
+
+export type GetShareCardResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        id: string;
+        type: 'contest_result' | 'season_champion' | 'achievement';
+        title: string;
+        sport: string;
+        sportIcon: string;
+        winnerName: string;
+        winnerAvatarUrl: string;
+        winnerScore: string;
+        leaderboard: Array<{
+            rank: number;
+            name: string;
+            score: string;
+        }>;
+        dateRange: string;
+        imageUrl: string;
+        ogTitle: string;
+        ogDescription: string;
+    };
+};
+
+export type GetShareCardResponse = GetShareCardResponses[keyof GetShareCardResponses];
+
+export type GetLeagueRecapData = {
+    body?: never;
+    path: {
+        leagueId: string;
+    };
+    query?: {
+        week?: string;
+    };
+    url: '/api/v1/social/leagues/{leagueId}/recap';
+};
+
+export type GetLeagueRecapErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: string;
+        message: string;
+        details?: unknown;
+    };
+};
+
+export type GetLeagueRecapError = GetLeagueRecapErrors[keyof GetLeagueRecapErrors];
+
+export type GetLeagueRecapResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        weekLabel: string;
+        standings: Array<{
+            rank: number;
+            name: string;
+            initials: string;
+            points: number;
+            change: number;
+        }>;
+        highlights: Array<{
+            icon: string;
+            title: string;
+            detail: string;
+        }>;
+        upcoming: Array<{
+            name: string;
+            dateTime: string;
+            daysUntil: number;
+        }>;
+    };
+};
+
+export type GetLeagueRecapResponse = GetLeagueRecapResponses[keyof GetLeagueRecapResponses];
+
 export type ListSelectionTemplatesData = {
     body?: never;
     path?: never;
@@ -7492,7 +9110,100 @@ export type GetDraftStateResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
     };
 };
 
@@ -7518,7 +9229,100 @@ export type StartDraftResponses = {
      * Default Response
      */
     201: {
-        [key: string]: unknown;
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
     };
 };
 
@@ -7528,6 +9332,12 @@ export type SubmitDraftPickData = {
     body: {
         entryId: string;
         participantId: string;
+        eventId?: string;
+        period?: number;
+        matchupIndex?: number;
+        roundNumber?: number;
+        matchNumber?: number;
+        confidenceWeight?: number;
     };
     path: {
         contestId: string;
@@ -7541,11 +9351,330 @@ export type SubmitDraftPickResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
     };
 };
 
 export type SubmitDraftPickResponse = SubmitDraftPickResponses[keyof SubmitDraftPickResponses];
+
+export type ResetBracketSubmissionData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/drafts/{contestId}/bracket';
+};
+
+export type ResetBracketSubmissionResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
+    };
+};
+
+export type ResetBracketSubmissionResponse = ResetBracketSubmissionResponses[keyof ResetBracketSubmissionResponses];
+
+export type AutoFillBracketSubmissionData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/drafts/{contestId}/bracket/auto-fill';
+};
+
+export type AutoFillBracketSubmissionResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
+    };
+};
+
+export type AutoFillBracketSubmissionResponse = AutoFillBracketSubmissionResponses[keyof AutoFillBracketSubmissionResponses];
 
 export type PauseDraftData = {
     body?: never;
@@ -7561,7 +9690,100 @@ export type PauseDraftResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
     };
 };
 
@@ -7581,7 +9803,100 @@ export type ResumeDraftResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
     };
 };
 
@@ -7603,11 +9918,330 @@ export type ExtendPickDeadlineResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
     };
 };
 
 export type ExtendPickDeadlineResponse = ExtendPickDeadlineResponses[keyof ExtendPickDeadlineResponses];
+
+export type UndoLiveDraftPickData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/drafts/{contestId}/undo';
+};
+
+export type UndoLiveDraftPickResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
+    };
+};
+
+export type UndoLiveDraftPickResponse = UndoLiveDraftPickResponses[keyof UndoLiveDraftPickResponses];
+
+export type SkipLiveDraftPickData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/drafts/{contestId}/skip';
+};
+
+export type SkipLiveDraftPickResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contestId: string;
+        contestName: string;
+        selectionType: string;
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        selectionConfig?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            pricingMethod?: string;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        };
+        status: string;
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string;
+        currentEntryName: string;
+        myEntryId: string;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        pickDeadline: string;
+        entries: Array<{
+            id: string;
+            userId: string;
+            name: string;
+            isOnClock: boolean;
+        }>;
+        picks: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string;
+            participantName: string;
+            position?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string;
+            homeParticipantName: string;
+            awayParticipantId: string;
+            awayParticipantName: string;
+            eventTime: string;
+            deadline: string;
+            isLocked: boolean;
+            myPickParticipantId: string;
+            confidenceWeight: number;
+            label: string;
+        }>;
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string;
+            isLocked: boolean;
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number;
+            };
+            winnerId: string;
+        }>;
+    };
+};
+
+export type SkipLiveDraftPickResponse = SkipLiveDraftPickResponses[keyof SkipLiveDraftPickResponses];
 
 export type ListScoringTemplatesData = {
     body?: never;
@@ -7621,7 +10255,10 @@ export type ListScoringTemplatesResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        templates: Array<{
+            key: string;
+            sport: string;
+        }>;
     };
 };
 
@@ -7641,7 +10278,10 @@ export type GetScoringTemplateResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        key: string;
+        config: {
+            [key: string]: unknown;
+        };
     };
 };
 
@@ -7654,12 +10294,33 @@ export type ValidateScoringConfigData = {
     url: '/api/v1/scoring/config/validate';
 };
 
+export type ValidateScoringConfigErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        valid: boolean;
+        config?: {
+            [key: string]: unknown;
+        };
+        warnings?: Array<string>;
+        errors?: Array<unknown>;
+    };
+};
+
+export type ValidateScoringConfigError = ValidateScoringConfigErrors[keyof ValidateScoringConfigErrors];
+
 export type ValidateScoringConfigResponses = {
     /**
      * Default Response
      */
     200: {
-        success: true;
+        valid: boolean;
+        config?: {
+            [key: string]: unknown;
+        };
+        warnings?: Array<string>;
+        errors?: Array<unknown>;
     };
 };
 
@@ -7679,7 +10340,13 @@ export type GetContestLeaderboardResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contestId: string;
+        leaderboard: Array<{
+            entryId: string;
+            rank: number;
+            totalScore: number;
+            isTied: boolean;
+        }>;
     };
 };
 
@@ -7700,7 +10367,27 @@ export type GetEntryScoreResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        entryId: string;
+        contestId: string;
+        totalScore: number;
+        timeline: Array<{
+            contestId: string;
+            entryId: string;
+            eventTimestamp: string;
+            pointsEarned: number;
+            runningTotal: number;
+            participantBreakdowns: Array<{
+                participantId: string;
+                participantName?: string;
+                statPoints: number;
+                positionPoints: number;
+                bonusPoints: number;
+                penaltyPoints: number;
+                multipliedTotal: number;
+                dnfAdjustment: number;
+                finalScore: number;
+            }>;
+        }>;
     };
 };
 
@@ -7721,7 +10408,29 @@ export type GetParticipantScoreResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        participantId: string;
+        contestId: string;
+        scores: Array<{
+            contestId: string;
+            participantId: string;
+            eventTimestamp: string;
+            stats: {
+                [key: string]: number;
+            };
+            points: number;
+            breakdown: {
+                participantId: string;
+                participantName?: string;
+                statPoints: number;
+                positionPoints: number;
+                bonusPoints: number;
+                penaltyPoints: number;
+                multipliedTotal: number;
+                dnfAdjustment: number;
+                finalScore: number;
+            };
+        }>;
+        totalPoints: number;
     };
 };
 
@@ -7741,7 +10450,10 @@ export type TriggerStandingsRollupResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        contestId: string;
+        entriesUpdated: number;
+        rankChanges: number;
+        rolledUpAt: string;
     };
 };
 
@@ -7759,7 +10471,11 @@ export type GetScoringHealthResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        status: string;
+        service: string;
+        rollupRunning: boolean;
+        activeContests: number;
+        timestamp: string;
     };
 };
 

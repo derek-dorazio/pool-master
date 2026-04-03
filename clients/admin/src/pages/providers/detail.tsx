@@ -96,7 +96,7 @@ export function Component() {
 
     await adminMapParticipant({
       client,
-      body: { externalId, internalId },
+      body: { providerId, externalId, internalId },
     });
     await queryClient.invalidateQueries({ queryKey: ['admin', 'provider', providerId] });
   }

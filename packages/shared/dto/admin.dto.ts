@@ -157,6 +157,49 @@ export const AnnouncementDtoSchema = z.object({
 });
 export type AnnouncementDto = z.infer<typeof AnnouncementDtoSchema>;
 
+export const AdminAnnouncementDtoSchema = z.object({
+  id: z.string(),
+  type: z.enum(['BANNER', 'NOTIFICATION', 'BOTH']),
+  title: z.string(),
+  body: z.string(),
+  linkUrl: z.string().optional(),
+  linkText: z.string().optional(),
+  severity: z.enum(['INFO', 'WARNING', 'CRITICAL']),
+  dismissable: z.boolean(),
+  target: z.enum(['ALL_USERS', 'ALL_TENANTS', 'SPECIFIC_TENANTS']),
+  targetTenantIds: z.array(z.string()).optional(),
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime().nullable().optional(),
+  isActive: z.boolean(),
+  createdBy: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type AdminAnnouncementDto = z.infer<typeof AdminAnnouncementDtoSchema>;
+
+export const AdminAnnouncementListResponseSchema = z.object({
+  items: z.array(AdminAnnouncementDtoSchema),
+  total: z.number(),
+});
+export type AdminAnnouncementListResponse = z.infer<typeof AdminAnnouncementListResponseSchema>;
+
+export const AdminScoringTemplateDtoSchema = z.object({
+  id: z.string(),
+  sport: z.string(),
+  name: z.string(),
+  description: z.string(),
+  config: z.record(z.unknown()),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type AdminScoringTemplateDto = z.infer<typeof AdminScoringTemplateDtoSchema>;
+
+export const AdminScoringTemplateListResponseSchema = z.array(AdminScoringTemplateDtoSchema);
+export type AdminScoringTemplateListResponse = z.infer<typeof AdminScoringTemplateListResponseSchema>;
+
+export const AdminScoringTemplateResponseSchema = AdminScoringTemplateDtoSchema;
+export type AdminScoringTemplateResponse = z.infer<typeof AdminScoringTemplateResponseSchema>;
+
 export const TenantListItemDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -341,7 +384,7 @@ export type MigrationRunDto = z.infer<typeof MigrationRunDtoSchema>;
 export const StartMigrationRunRequestSchema = z.object({
   migrationId: z.string().min(1),
   dryRun: z.boolean().optional(),
-  batchSize: z.number().int().positive().optional(),
+  batchSize: z.number().int().min(1).optional(),
   tenantIds: z.array(z.string()).optional(),
 });
 export type StartMigrationRunRequest = z.infer<typeof StartMigrationRunRequestSchema>;

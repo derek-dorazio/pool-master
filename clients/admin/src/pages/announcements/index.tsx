@@ -1,10 +1,15 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Megaphone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import {
+  client,
+  adminActivateAnnouncement,
+  adminDeactivateAnnouncement,
+} from '@/lib/api';
 import { useAnnouncements, type Announcement } from '@/hooks/use-announcements-api';
 
 function typeClass(type: string): string {
@@ -47,19 +52,19 @@ function statusClass(status: string): string {
 }
 
 export function Component() {
+  const queryClient = useQueryClient();
   const { data: announcements, isLoading } = useAnnouncements();
-  const [localData, setLocalData] = useState<Announcement[] | null>(null);
 
-  const items = localData ?? announcements ?? [];
+  const items = announcements ?? [];
 
-  function toggleStatus(id: string) {
-    setLocalData(
-      items.map((a) =>
-        a.id === id
-          ? { ...a, status: a.status === 'Active' ? 'Expired' : 'Active' }
-          : a,
-      ),
-    );
+  async function toggleStatus(announcement: Announcement) {
+    if (announcement.status === 'Active') {
+      await adminDeactivateAnnouncement({ client, path: { id: announcement.id } });
+    } else {
+      await adminActivateAnnouncement({ client, path: { id: announcement.id } });
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ['announcements'] });
   }
 
   return (
@@ -125,7 +130,7 @@ export function Component() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => toggleStatus(ann.id)}
+                          onClick={() => toggleStatus(ann)}
                         >
                           {ann.status === 'Active' ? 'Deactivate' : 'Activate'}
                         </Button>

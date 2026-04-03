@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, X, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { client, adminCreateAnnouncement } from '@/lib/api';
 
 type AnnouncementType = 'Banner' | 'Notification' | 'Both';
 type Severity = 'Info' | 'Warning' | 'Critical';
@@ -31,6 +33,8 @@ const SEVERITY_COLORS: Record<Severity, { dot: string; bar: string; bg: string }
 };
 
 export function Component() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>({
     type: 'Banner',
     title: '',
@@ -45,15 +49,35 @@ export function Component() {
     endsAt: '',
   });
 
-  const [published, setPublished] = useState(false);
-
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handlePublish() {
-    setPublished(true);
-    setTimeout(() => setPublished(false), 3000);
+  async function handlePublish() {
+    const response = await adminCreateAnnouncement({
+      client,
+      body: {
+        type: form.type === 'Banner' ? 'BANNER' : form.type === 'Notification' ? 'NOTIFICATION' : 'BOTH',
+        title: form.title,
+        body: form.body,
+        linkUrl: form.linkUrl || undefined,
+        linkText: form.linkText || undefined,
+        severity: form.severity === 'Info' ? 'INFO' : form.severity === 'Warning' ? 'WARNING' : 'CRITICAL',
+        dismissable: form.dismissable,
+        target: form.target === 'All Users' ? 'ALL_USERS' : 'SPECIFIC_TENANTS',
+        targetTenantIds: form.target === 'Specific Tenants'
+          ? form.tenantIds.split(',').map((tenantId) => tenantId.trim()).filter(Boolean)
+          : undefined,
+        startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
+        endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : undefined,
+      },
+    });
+
+    await queryClient.invalidateQueries({ queryKey: ['announcements'] });
+
+    if (response.data?.id) {
+      navigate('/announcements');
+    }
   }
 
   const colors = SEVERITY_COLORS[form.severity];
@@ -277,12 +301,6 @@ export function Component() {
             </CardContent>
           </Card>
 
-          {/* Toast */}
-          {published && (
-            <div className="rounded-lg border bg-green-50 border-green-200 p-4 text-sm text-green-800">
-              Announcement published successfully.
-            </div>
-          )}
         </div>
       </div>
     </div>
