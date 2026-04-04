@@ -16,6 +16,7 @@ import {
   getApp,
   createTestUser,
   cleanupTestData,
+  withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { InviteType, InvitationStatus, LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
@@ -135,25 +136,19 @@ describe('Member and Invitation CRUD Integration', () => {
       ]),
     );
 
-    const removeMemberHeaders = Object.fromEntries(
-      Object.entries(ownerHeaders).filter(([key]) => key.toLowerCase() !== 'content-type'),
-    );
     const removeRes = await getApp().inject({
       method: 'DELETE',
       url: API_ROUTES.leagues.removeMember(leagueId, emailInvitee.user.id),
-      headers: removeMemberHeaders,
+      headers: withoutJsonBodyHeaders(ownerHeaders),
     });
 
     expect(removeRes.statusCode).toBe(200);
     expect(removeRes.json()).toEqual({ success: true });
 
-    const leaveHeaders = Object.fromEntries(
-      Object.entries(linkInvitee.headers).filter(([key]) => key.toLowerCase() !== 'content-type'),
-    );
     const leaveRes = await getApp().inject({
       method: 'DELETE',
       url: API_ROUTES.leagues.leave(leagueId),
-      headers: leaveHeaders,
+      headers: withoutJsonBodyHeaders(linkInvitee.headers),
     });
 
     expect(leaveRes.statusCode).toBe(200);

@@ -138,6 +138,10 @@ Do not keep bad tests just because they already exist.
 - Use shared route constants from `@poolmaster/shared/api-routes`.
 - Keep smoke flows aligned with real critical-path behavior.
 - When endpoint contracts change, smoke tests must change with them.
+- Smoke tests must not rely on seed data, ambient discovery data, fake UUIDs, or preexisting contest/pool state.
+- Smoke tests should create the minimum live data they need through real deployed routes whenever the product supports it.
+- Smoke assertions should be strong and intentional; do not accept broad fallback status ranges like `200 | 400 | 500` on critical-path checks.
+- Keep API smoke coverage small and MVP-focused: health, auth, league/invite flow, one supported contest creation flow, one supported selection flow, and one standings/results read flow.
 
 ### Browser Smoke / E2E
 
@@ -145,6 +149,9 @@ Do not keep bad tests just because they already exist.
 - Uses Playwright against a running local app or deployed environment.
 - Focus on high-value user journeys and runtime error detection.
 - Remove or update browser tests when they reference retired UI paths or dead buttons.
+- Browser smoke/E2E should prove the narrowed MVP path, not just public-page rendering.
+- Avoid tests that inject fake app state or bypass core product setup unless that is the explicit subject under test.
+- Prefer one or two durable end-to-end flows over a wide set of shallow page-load checks.
 
 ---
 

@@ -213,6 +213,17 @@ export function authHeaders(userId: string, email: string): Record<string, strin
 }
 
 /**
+ * Removes JSON body headers for bodyless POST/DELETE requests.
+ * Some live Fastify routes reject an empty request body when the
+ * content-type implies JSON content is present.
+ */
+export function withoutJsonBodyHeaders(headers: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers).filter(([key]) => key.toLowerCase() !== 'content-type'),
+  );
+}
+
+/**
  * Clean up test data created during tests.
  * Deletes in reverse dependency order using raw SQL for reliability.
  */

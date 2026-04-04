@@ -15,6 +15,7 @@ import {
   getApp,
   createTestUser,
   cleanupTestData,
+  withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
@@ -130,13 +131,10 @@ describe('Contest CRUD Integration', () => {
     expect(updatedContest.id).toBe(contestId);
     expect(updatedContest.name).toBe('Contest CRUD Pool Updated');
 
-    const deleteHeaders = Object.fromEntries(
-      Object.entries(ownerHeaders).filter(([key]) => key.toLowerCase() !== 'content-type'),
-    );
     const deleteRes = await getApp().inject({
       method: 'DELETE',
       url: API_ROUTES.contests.detail(contestId),
-      headers: deleteHeaders,
+      headers: withoutJsonBodyHeaders(ownerHeaders),
     });
 
     expect(deleteRes.statusCode).toBe(204);

@@ -16,6 +16,7 @@ import {
   getApp,
   createTestUser,
   cleanupTestData,
+  withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
@@ -89,14 +90,10 @@ describe('Contest Entry CRUD Integration', () => {
   });
 
   it('creates, lists, fetches, deletes, and verifies deletion of the current user contest entry', async () => {
-    const bodylessHeaders = Object.fromEntries(
-      Object.entries(ownerHeaders).filter(([key]) => key.toLowerCase() !== 'content-type'),
-    );
-
     const createEntryRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.contests.myEntry(contestId),
-      headers: bodylessHeaders,
+      headers: withoutJsonBodyHeaders(ownerHeaders),
     });
 
     expect([200, 201]).toContain(createEntryRes.statusCode);
@@ -134,7 +131,7 @@ describe('Contest Entry CRUD Integration', () => {
     const deleteRes = await getApp().inject({
       method: 'DELETE',
       url: API_ROUTES.contests.myEntry(contestId),
-      headers: bodylessHeaders,
+      headers: withoutJsonBodyHeaders(ownerHeaders),
     });
 
     expect(deleteRes.statusCode).toBe(200);
