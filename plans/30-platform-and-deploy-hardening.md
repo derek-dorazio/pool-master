@@ -27,6 +27,19 @@ Harden CI/CD, Terraform hygiene, and AWS deployment strategy so deploys are dete
 - Separate migrate/seed/app rollout concerns cleanly.
 - Clean Terraform hygiene and remote-state usage.
 
+## Decision
+
+For the current platform, keep database migration and seed execution on the ECS/Fargate path rather than trying to grant GitHub-hosted runners network access to private RDS.
+
+Why this remains the chosen path:
+
+- RDS stays private inside the VPC
+- migration and seed run from the same AWS runtime boundary as the app
+- the pattern fits an ECS-based deployment model well
+- the current issue is deploy determinism and observability, not the basic choice to run migrations from AWS-side compute
+
+This means the next fixes should improve the existing ECS approach rather than replace it immediately.
+
 ## Priorities
 
 ### Priority 1
@@ -71,6 +84,7 @@ Reduce platform drift and operational ambiguity:
 - Move from “force new deployment” semantics toward registering new task definitions per release.
 - Separate service rollout, migration, and seeding into explicit deployment primitives with dedicated commands and logs.
 - Decide whether migrate/seed should remain one-shot ECS tasks, distinct task definitions, or another runner abstraction.
+- Keep the migration path on ECS for now; treat any CodeBuild-based migration runner as a future optional alternative, not the current target architecture.
 
 ### Phase 4: Post-deploy verification and runtime checks
 
@@ -118,7 +132,7 @@ This means the current blocker is not schema migration drift. It is lack of visi
 | PDH-001 | CI/CD | Remove or sharply reduce `continue-on-error` from deploy-critical steps in [ci.yml](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/.github/workflows/ci.yml) | In Progress | The QA ECS backend rollout path now fails at `Deploy QA services` instead of silently swallowing `update-service` errors. Remaining work is to review the web/admin S3+CloudFront steps and any other deploy-critical actions that should stop the pipeline instead of degrading into best-effort drift |
 | PDH-002 | Deploy Strategy | Stop deploying ECS from `:latest` tags referenced in [ci.yml](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/.github/workflows/ci.yml) and [main.tf](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/infrastructure/terraform/main.tf) | Not Started | Use image digest or explicit SHA-pinned task definitions so smoke tests target the exact build that passed CI |
 | PDH-003 | Deploy Strategy | Move away from “force new deployment against latest image” and register new ECS task definitions per release | Not Started | This improves rollback, auditability, and deploy determinism |
-| PDH-004 | QA Jobs | Promote migrate and seed into first-class deploy primitives | Not Started | Consider dedicated ECS task definitions/log groups for `migrate` and `seed` instead of overloading one task definition long term |
+| PDH-004 | QA Jobs | Promote migrate and seed into first-class deploy primitives | In Progress | Keep this on ECS. Next fixes should split `migrate`, `seed`, and `service rollout` more explicitly, consider dedicated ECS task definitions/log groups for `migrate` and `seed`, and rename CI steps/jobs so rollout verification is not conflated with the migration primitive |
 | PDH-005 | Verification | Add explicit post-deploy verification before smoke | In Progress | Current CI already proved a real rollout-stabilization failure mode: run `23969314887` completed build/test/publish, migration, and seed successfully, then failed waiting for `aws ecs wait services-stable` on `poolmaster-qa-core-api` after 10 minutes. The first diagnostics slice is now in `.github/workflows/ci.yml`: capture the reported/PRIMARY task definition before waiting, and dump ECS service description, service events, task definition metadata, running tasks, recently stopped tasks, and latest stopped-task logs before failing. Latest evidence from run `23978252221` shows the QA `core-api` container repeatedly exiting with code `1` while running the `:latest` image, so the next hardening slice after log capture is immutable image/task-definition rollout verification and removal of deploy-time drift. |
 | PDH-006 | Terraform Hygiene | Remove local Terraform artifacts from version control, especially [infrastructure/terraform/.terraform/terraform.tfstate](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/infrastructure/terraform/.terraform/terraform.tfstate) | Not Started | Add/update `.gitignore` and ensure only remote state/backends are used |
 | PDH-007 | Terraform Structure | Split monolithic Terraform concerns where helpful and document environment promotion flow | Not Started | Networking, compute, app delivery, and observability can likely be factored more cleanly over time |
@@ -138,3 +152,18 @@ This means the current blocker is not schema migration drift. It is lack of visi
    - capacity/placement issue
    - image/task-definition drift
 5. Only run smoke/E2E after that verification step succeeds.
+
+## Immediate ECS Hardening Follow-Up
+
+1. Stop using `:latest` for the QA ECS service and migration task definitions.
+2. Register or render release-specific ECS task definitions per CI run.
+3. Deploy the exact release task definition instead of forcing a rollout against a mutable image tag.
+4. Split CI naming and control flow so:
+   - migration means the one-shot schema task
+   - seed means the one-shot bootstrap task
+   - rollout verification means the ECS service stabilization and health check phase
+5. Consider separate ECS task definitions and CloudWatch log groups for:
+   - `core-api`
+   - `migrate`
+   - `seed`
+6. Keep smoke and E2E gated behind successful rollout verification only.

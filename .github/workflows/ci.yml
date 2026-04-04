@@ -582,11 +582,24 @@ jobs:
 
               if [ -n "$LOG_GROUP" ] && [ "$LOG_GROUP" != "None" ] && [ -n "$LOG_PREFIX" ] && [ "$LOG_PREFIX" != "None" ]; then
                 echo "--- Latest Stopped Task Logs (${TASK_ID}) ---"
-                aws logs get-log-events \
+                LOG_STREAM=$(aws logs describe-log-streams \
                   --log-group-name "$LOG_GROUP" \
-                  --log-stream-name "${LOG_PREFIX}/core-api/${TASK_ID}" \
-                  --query 'events[].message' \
-                  --output text 2>/dev/null || echo "(no task logs available)"
+                  --log-stream-name-prefix "${LOG_PREFIX}/core-api/${TASK_ID}" \
+                  --order-by LastEventTime \
+                  --descending \
+                  --max-items 1 \
+                  --query 'logStreams[0].logStreamName' \
+                  --output text 2>/dev/null || echo "")
+
+                if [ -n "$LOG_STREAM" ] && [ "$LOG_STREAM" != "None" ]; then
+                  aws logs get-log-events \
+                    --log-group-name "$LOG_GROUP" \
+                    --log-stream-name "$LOG_STREAM" \
+                    --query 'events[].message' \
+                    --output text 2>/dev/null || echo "(no task logs available)"
+                else
+                  echo "(no task log stream found for ${TASK_ID})"
+                fi
               fi
             fi
           else
