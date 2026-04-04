@@ -42,7 +42,7 @@ All services and clients must follow these testing standards. This document defi
 | Layer | Scope | Real DB | Notes |
 |---|---|---|---|
 | Unit | function/service behavior | no | mock dependencies intentionally |
-| Integration | Fastify + services + persistence | yes | validates real behavior |
+| Integration | Fastify + services + persistence | yes | validates real behavior; if the test needs a local Postgres instance that is not reachable from the sandbox/container, run it outside the sandbox with explicit user permission |
 | Contract | response/request shape vs DTO schema | yes | catches drift |
 | Smoke | deployed API black-box flow | deployed env | post-build/post-deploy confidence |
 
@@ -70,6 +70,11 @@ Contract-specific commands:
 
 6. `npm run api:refresh` when API schemas change
 7. `npm run api:validate` when OpenAPI output changes
+
+Notes:
+
+- DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
+- In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
 
 ---
 
