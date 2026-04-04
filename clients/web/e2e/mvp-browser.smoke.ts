@@ -19,8 +19,9 @@ test.describe('Browser CI sanity checks', () => {
 
     await page.getByTestId('hero-cta').click();
     await expect(page).toHaveURL(/\/register$/);
-    await expect(page.getByRole('heading', { name: /^Create Account$/ })).toBeVisible();
+    await expect(page.getByTestId('auth-register-title')).toBeVisible();
     await expect(page.locator('#email')).toBeVisible();
+    await expect(page.getByTestId('auth-register-submit')).toBeVisible();
 
     await assertNoErrorBoundary(page);
     await assertNoErrors(pageErrors);
@@ -29,10 +30,10 @@ test.describe('Browser CI sanity checks', () => {
   test('login page renders the real auth form', async ({ page, pageErrors }) => {
     await page.goto('/login');
 
-    await expect(page.getByRole('heading', { name: /Welcome Back/i })).toBeVisible();
+    await expect(page.getByTestId('auth-login-title')).toBeVisible();
     await expect(page.locator('#email')).toBeVisible();
     await expect(page.locator('#password')).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Log In$/ })).toBeVisible();
+    await expect(page.getByTestId('auth-login-submit')).toBeVisible();
 
     await assertNoErrorBoundary(page);
     await assertNoErrors(pageErrors);

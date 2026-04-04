@@ -93,12 +93,12 @@ export function Component() {
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
+      <Card data-testid="auth-login-card" className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
             <Logo size={48} />
           </div>
-          <CardTitle className="text-2xl">{t('login.title')}</CardTitle>
+          <CardTitle data-testid="auth-login-title" className="text-2xl">{t('login.title')}</CardTitle>
           <CardDescription>{t('login.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -170,7 +170,7 @@ export function Component() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" data-testid="auth-login-submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? '...' : t('login.button')}
             </Button>
           </form>

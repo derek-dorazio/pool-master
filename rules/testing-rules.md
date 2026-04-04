@@ -155,6 +155,15 @@ Do not keep bad tests just because they already exist.
 - Browser smoke/E2E should prove the narrowed MVP path, not just public-page rendering.
 - Avoid tests that inject fake app state or bypass core product setup unless that is the explicit subject under test.
 - Prefer one or two durable end-to-end flows over a wide set of shallow page-load checks.
+- Browser automation must prefer stable machine selectors (`data-testid`, stable `id`) over human-readable copy.
+- Do not anchor deploy-gate browser tests to marketing headings, button labels, or translated strings unless the explicit purpose of the test is to validate that copy.
+- If a browser flow needs to click or read an element repeatedly, add a stable selector in the product code rather than teaching the test to depend on visible text.
+
+### React Testing Library Selector Rule
+
+- Do not use visible string literals as the default selector strategy for automation-critical UI.
+- Prefer `getByTestId`, stable field `id`s, and other machine-oriented selectors for controls that represent product workflow steps.
+- Use visible text assertions only when the test is intentionally validating copy, localization, or accessibility wording.
 
 ---
 

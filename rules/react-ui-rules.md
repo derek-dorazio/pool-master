@@ -157,7 +157,55 @@ It is acceptable to remove or replace tests when they enforce old architecture, 
 
 ---
 
-## 9. Review Checklist for Web/Admin Changes
+## 9. Stable Automation Selectors
+
+UI surfaces that participate in automation must expose stable machine-oriented selectors. Do not make browser automation depend on changing copy, marketing text, or translated visible labels.
+
+### Required Selector Strategy
+
+- Interactive controls used by smoke/E2E or repeated UI automation must expose a stable selector:
+  - prefer `data-testid` for buttons, links, panels, banners, tabs, and cards
+  - keep semantic `id` attributes for form inputs and fields
+- Page-level anchors should expose stable `data-testid` markers for the main hero, primary CTA, page title, form shell, and other high-value landmarks.
+- Reusable features should use consistent selector prefixes by domain, for example:
+  - `league-create-submit`
+  - `contest-create-hero`
+  - `auth-register-email`
+  - `draft-room-available-panel`
+- New web/admin UI code should add these stable selectors as part of implementation, not later as test-only cleanup.
+- If a DOM element may need to be addressed from browser automation or app-side JavaScript, give it a stable selector when the component is created.
+
+### Selector Naming Rules
+
+- Use lowercase kebab-case.
+- Prefer domain-oriented names over presentational names.
+- Name by product meaning, not current copy text.
+- Do not encode translation text in selector names.
+- Do not generate random test IDs from props unless the entity itself has a stable identifier.
+- Do not generate runtime-random GUIDs/UUIDs for DOM selectors. Tests and automation need stable deterministic selectors that do not change between renders.
+- If JavaScript needs to target an element directly, use a stable semantic `id` or stable `data-testid`, not a random identifier.
+
+### Testing Rules
+
+- Browser smoke/E2E should prefer `getByTestId()` or stable input `id` selectors over visible-copy selectors.
+- React Testing Library tests should also prefer stable selectors for automation-critical UI paths.
+- Only assert visible text when the test is explicitly about copy, localization, accessibility wording, or user-facing content.
+- Do not use headings, button text, or link text as the primary selector for automation-critical navigation if a stable machine selector can be provided.
+- Treat stable selectors as part of the UI contract for both `clients/web` and `clients/admin`.
+
+### Exceptions
+
+It is acceptable to assert visible copy when:
+
+- verifying the actual content shown to the user is correct
+- verifying accessibility names intentionally
+- verifying localized strings intentionally
+
+But those tests should still avoid using copy text as the only way to find critical UI elements when a stable selector exists.
+
+---
+
+## 10. Review Checklist for Web/Admin Changes
 
 Before finishing frontend work, verify:
 
@@ -166,3 +214,4 @@ Before finishing frontend work, verify:
 3. Are loading/error/empty states present?
 4. Did the refactor remove stale no-op UI or mock fallbacks?
 5. Do tests use MSW where request wiring matters?
+6. Do automation-critical UI elements expose stable `data-testid` or `id` selectors?

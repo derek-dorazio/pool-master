@@ -212,12 +212,12 @@ export function Component() {
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
+      <Card data-testid="auth-register-card" className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
             <Logo size={48} />
           </div>
-          <CardTitle className="text-2xl">{t('register.title')}</CardTitle>
+          <CardTitle data-testid="auth-register-title" className="text-2xl">{t('register.title')}</CardTitle>
           <CardDescription>
             {t('register.stepOf', { current: step, total: TOTAL_STEPS })}
           </CardDescription>
@@ -616,6 +616,7 @@ export function Component() {
                 ) : (
                   <Button
                     type="submit"
+                    data-testid="auth-register-submit"
                     className="flex-1"
                     disabled={isSubmitting}
                   >
