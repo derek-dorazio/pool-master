@@ -8,22 +8,13 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { client, getSeasonSummaries } from '@/lib/api';
+import {
+  HistorySeasonsResponseSchema,
+  type HistorySeasonChampionDto,
+  type HistorySeasonSummaryDto,
+} from '@poolmaster/shared/dto';
 
-interface ContestResult {
-  id: string;
-  contestName: string;
-  winnerName: string;
-  score: string;
-  date: string;
-}
-
-interface SeasonSummary {
-  id: string;
-  season: string;
-  year: number;
-  contestCount: number;
-  results?: ContestResult[];
-}
+type SeasonSummary = HistorySeasonSummaryDto;
 
 function useHistory(leagueId: string) {
   return useQuery({
@@ -31,13 +22,29 @@ function useHistory(leagueId: string) {
     queryFn: async (): Promise<SeasonSummary[]> => {
       const { data, error } = await getSeasonSummaries({ client, path: { id: leagueId } });
       if (error) throw error;
-      return (data as any).seasons ?? [];
+      return HistorySeasonsResponseSchema.parse(data).seasons;
     },
   });
 }
 
+function formatSeasonDate(summary: SeasonSummary): string | null {
+  const rawDate = summary.closedAt ?? summary.openedAt ?? null;
+  if (!rawDate) return null;
+  return new Date(rawDate).toLocaleDateString();
+}
+
+function formatPrizePool(totalPrizePool: number): string {
+  if (totalPrizePool <= 0) return 'No prize pool recorded';
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(totalPrizePool);
+}
+
 function SeasonAccordion({ season }: { season: SeasonSummary }) {
   const [open, setOpen] = useState(false);
+  const closedLabel = formatSeasonDate(season);
 
   return (
     <Card>
@@ -48,9 +55,9 @@ function SeasonAccordion({ season }: { season: SeasonSummary }) {
         <div className="flex items-center gap-3">
           <Calendar className="h-5 w-5 text-muted-foreground" />
           <div>
-            <div className="font-semibold">{season.season}</div>
+            <div className="font-semibold">{season.seasonName}</div>
             <div className="text-sm text-muted-foreground">
-              {season.contestCount} contest{season.contestCount !== 1 ? 's' : ''}
+              {season.numContests} finished contest{season.numContests !== 1 ? 's' : ''}
             </div>
           </div>
         </div>
@@ -63,12 +70,27 @@ function SeasonAccordion({ season }: { season: SeasonSummary }) {
       {open && (
         <CardContent className="pt-0 pb-4">
           <div className="space-y-3 border-t pt-4">
-            {(season.results ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">No results available for this season.</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">Members</div>
+                <div className="mt-1 text-lg font-semibold">{season.numMembers}</div>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">Prize Pool</div>
+                <div className="mt-1 text-lg font-semibold">{formatPrizePool(season.totalPrizePool)}</div>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">Closed</div>
+                <div className="mt-1 text-lg font-semibold">{closedLabel ?? 'Still open'}</div>
+              </div>
+            </div>
+
+            {(season.champions ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No finished contest champions recorded for this season.</p>
             ) : (
-              season.results!.map((result) => (
+              season.champions.map((champion: HistorySeasonChampionDto) => (
                 <div
-                  key={result.id}
+                  key={champion.contestId}
                   className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="flex items-center gap-3">
@@ -76,16 +98,16 @@ function SeasonAccordion({ season }: { season: SeasonSummary }) {
                       <Trophy className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="font-medium text-sm">{result.contestName}</div>
+                      <div className="font-medium text-sm">{champion.contestName}</div>
                       <div className="text-xs text-muted-foreground">
-                        {result.date}
+                        Winning entry: {champion.entryName}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium">{result.winnerName}</div>
+                    <div className="text-sm font-medium">{champion.memberName}</div>
                     <Badge variant="secondary" className="text-xs">
-                      {result.score}
+                      {champion.finalScore} pts
                     </Badge>
                   </div>
                 </div>
@@ -124,7 +146,7 @@ export function Component() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">League History</h1>
       <p className="text-muted-foreground">
-        Past seasons and contest results. Expand a season to see the details.
+        Finished seasons and champion snapshots. Expand a season to review the completed contest archive.
       </p>
 
       {seasons.length === 0 ? (

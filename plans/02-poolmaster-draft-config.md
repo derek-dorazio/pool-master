@@ -563,6 +563,7 @@ const DRAFT_TEMPLATES = {
 | 02-021 | 6 | Manager draft queue (pre-rank participants, drag to reorder) | Done | `draft-service/src/engine/draft-queue.ts` — DraftQueue class with set/get/reorder/removeFromAll; exported singleton; wired into snake engine via QUEUE_THEN_BEST policy |
 | 02-022 | 6 | ~~Live draft mode — WebSocket integration~~ | Deferred | WebSocket/SSE deferred; async polling is v1 approach |
 | 02-023 | 6 | Selection config templates (pre-built per sport per contest type) | Done | `draft-service/src/templates/selection-templates.ts` — 22 templates across 9 sports; GET /templates routes added to drafts module |
+| 02-024 | 1 | Event-backed contestant setup for tiered/budget MVP contests | In Progress | Contest creation now requires a real ingested event, provisions a live `EVENT_FIELD` contestant pool, and normalizes tiered/budget template config into the shared contest request. Pricing/tier services now consume participant ranking, odds, seed, and season-record price signals instead of relying on ranking-only fallbacks. Next step is exposing commissioner/admin import controls for tier counts, tier sizes, and pricing formulas at event-ingestion time |
 
 ---
 

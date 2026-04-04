@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as LeagueDetailPage } from './detail';
 
@@ -37,6 +38,30 @@ const mockMembers = [
   { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'MANAGER' },
 ];
 
+const mockResults = [
+  {
+    id: 'result-1',
+    contestName: 'Masters Pick 6',
+    contestType: 'TIERED',
+    sport: 'GOLF',
+    finalRank: 1,
+    totalScore: 128,
+    prizeLabel: 'Champion',
+    isWinner: true,
+    closedAt: '2026-04-03T18:00:00.000Z',
+  },
+  {
+    id: 'result-2',
+    contestName: 'Masters Pick 6',
+    contestType: 'TIERED',
+    sport: 'GOLF',
+    finalRank: 4,
+    totalScore: 112,
+    isWinner: false,
+    closedAt: '2026-04-03T18:00:00.000Z',
+  },
+];
+
 vi.mock('@tanstack/react-query', async () => {
   const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
   return {
@@ -49,11 +74,8 @@ vi.mock('@tanstack/react-query', async () => {
       if (key === 'league-members') {
         return { data: mockMembers, isLoading: false, isError: false, error: null };
       }
-      if (key === 'league-records') {
-        return { data: [], isLoading: false, isError: false, error: null };
-      }
-      if (key === 'league-seasons') {
-        return { data: [], isLoading: false, isError: false, error: null };
+      if (key === 'league-results') {
+        return { data: mockResults, isLoading: false, isError: false, error: null };
       }
       // Default: league detail
       return {
@@ -114,5 +136,21 @@ describe('LeagueDetailPage', () => {
     const settingsLink = screen.getByRole('link', { name: /Settings/ });
     expect(settingsLink).toBeInTheDocument();
     expect(settingsLink).toHaveAttribute('href', '/leagues/league-1/settings');
+  });
+
+  it('renders finished contests in the history tab', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('tab', { name: 'History' }));
+
+    expect(screen.getByText('Finished Contests')).toBeInTheDocument();
+    expect(screen.getAllByText('Masters Pick 6')).toHaveLength(2);
+    expect(screen.getByText('#1')).toBeInTheDocument();
+    expect(screen.getByText('128 pts')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open full history/ })).toHaveAttribute(
+      'href',
+      '/leagues/league-1/history',
+    );
   });
 });

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 import { SelectionType } from '@poolmaster/shared/domain';
+import type { DraftStateResponse } from '@poolmaster/shared/dto';
 import { DraftStateResponseSchema } from '@poolmaster/shared/dto';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -72,11 +73,14 @@ function formatPickContext(selectionType: string, round: number, pickNumber: num
 }
 
 function getPickEmMatchupLabel(
-  draft: z.infer<typeof DraftStateResponseSchema>,
+  draft: DraftStateResponse,
   round: number,
   pickInRound: number,
 ) {
-  const matchup = draft.pickEmEvents?.find((event) => event.period === round && event.matchupIndex === pickInRound);
+  const matchup = draft.pickEmEvents?.find(
+    (event: NonNullable<DraftStateResponse['pickEmEvents']>[number]) =>
+      event.period === round && event.matchupIndex === pickInRound,
+  );
   if (!matchup) return null;
 
   const fallbackLabel = [matchup.awayParticipantName, matchup.homeParticipantName].filter(Boolean).join(' at ');
@@ -84,11 +88,14 @@ function getPickEmMatchupLabel(
 }
 
 function getBracketMatchupLabel(
-  draft: z.infer<typeof DraftStateResponseSchema>,
+  draft: DraftStateResponse,
   round: number,
   pickInRound: number,
 ) {
-  const matchup = draft.bracketMatchups?.find((item) => item.roundNumber === round && item.matchNumber === pickInRound);
+  const matchup = draft.bracketMatchups?.find(
+    (item: NonNullable<DraftStateResponse['bracketMatchups']>[number]) =>
+      item.roundNumber === round && item.matchNumber === pickInRound,
+  );
   if (!matchup) return null;
 
   const fallbackLabel = [matchup.topTeam?.name, matchup.bottomTeam?.name].filter(Boolean).join(' vs ');
@@ -96,8 +103,8 @@ function getBracketMatchupLabel(
 }
 
 function getPickDetailLabel(
-  draft: z.infer<typeof DraftStateResponseSchema>,
-  pick: z.infer<typeof DraftStateResponseSchema>['picks'][number],
+  draft: DraftStateResponse,
+  pick: DraftStateResponse['picks'][number],
 ) {
   if (draft.selectionType === SelectionType.PICK_EM) {
     return getPickEmMatchupLabel(draft, pick.round, pick.pickInRound);

@@ -26,10 +26,6 @@ vi.mock('@/features/dashboard/recent-activity-feed', () => ({
   RecentActivityFeed: () => <div data-testid="recent-activity-feed" />,
 }));
 
-vi.mock('@/features/dashboard/season-highlights-card', () => ({
-  SeasonHighlightsCard: () => <div data-testid="season-highlights-card" />,
-}));
-
 describe('DashboardPage', () => {
   it('renders welcome message with user name', () => {
     render(<DashboardPage />);

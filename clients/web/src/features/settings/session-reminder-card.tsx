@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { client } from '@/lib/api';
+import { client, getSessionReminder, updateSessionReminder } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import {
   SessionReminderResponseSchema,
@@ -26,7 +26,7 @@ export function SessionReminderCard() {
   const reminderQuery = useQuery({
     queryKey: settingsKeys.sessionReminder(),
     queryFn: async () => {
-      const { data, error } = await client.get({ url: '/api/v1/account/session-reminder' });
+      const { data, error } = await getSessionReminder({ client });
       if (error) throw error;
       return SessionReminderResponseSchema.parse(data);
     },
@@ -41,10 +41,9 @@ export function SessionReminderCard() {
 
   const saveReminder = useMutation({
     mutationFn: async (next: { enabled: boolean; intervalMinutes: number }) => {
-      const { data, error } = await client.put({
-        url: '/api/v1/account/session-reminder',
+      const { data, error } = await updateSessionReminder({
+        client,
         body: SessionReminderUpdateRequestSchema.parse(next),
-        headers: { 'Content-Type': 'application/json' },
       });
       if (error) throw error;
       return SessionReminderResponseSchema.parse(data);

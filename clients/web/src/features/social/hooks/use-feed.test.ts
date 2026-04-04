@@ -7,7 +7,6 @@ import {
   usePinPost,
   useDeletePost,
   useCreateReply,
-  useVotePoll,
 } from './use-feed';
 
 describe('useFeed', () => {
@@ -71,10 +70,7 @@ describe('useCreatePost', () => {
   it('accepts post with poll data', async () => {
     const { result } = renderHook(() => useCreatePost('league-1'));
 
-    result.current.mutate({
-      content: 'Vote!',
-      poll: { question: 'Who wins?', options: ['A', 'B'], expiresIn: '24h' },
-    });
+    result.current.mutate({ content: 'Vote!' });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
@@ -134,19 +130,6 @@ describe('useCreateReply', () => {
     const { result } = renderHook(() => useCreateReply('p-1', 'league-1'));
 
     result.current.mutate('Great post!');
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-  });
-});
-
-describe('useVotePoll', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('completes vote mutation', async () => {
-    const { result } = renderHook(() => useVotePoll('league-1'));
-
-    result.current.mutate({ postId: 'p-3', optionId: 'o1' });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

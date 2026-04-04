@@ -29,14 +29,36 @@ vi.mock('@tanstack/react-query', async () => {
           data: [
             {
               id: 'template-1',
-              name: 'Weekly Pickem',
-              description: 'Pick game winners each week.',
+              name: 'Masters Pick 6',
+              description: 'Pick one golfer from each tier.',
               sport: 'NFL',
               contestType: 'SINGLE_EVENT',
-              selectionType: 'PICK_EM',
-              config: { picksPerPeriod: 5 },
+              selectionType: 'TIERED',
+              config: { tierCount: 6, picksPerTier: 1 },
             },
           ],
+          isLoading: false,
+        };
+      }
+
+      if (queryKey[0] === 'events') {
+        return {
+          data: {
+            events: [
+              {
+                id: 'event-1',
+                sport: 'NFL',
+                name: 'Championship Weekend',
+                venue: 'Main Venue',
+                location: 'Atlanta, GA',
+                status: 'SCHEDULED',
+                startDate: '2026-04-10T15:00:00.000Z',
+                endDate: '2026-04-12T15:00:00.000Z',
+                participantCount: 16,
+                fieldLocked: false,
+              },
+            ],
+          },
           isLoading: false,
         };
       }
@@ -54,14 +76,16 @@ vi.mock('@tanstack/react-query', async () => {
 });
 
 describe('CreateContestPage', () => {
-  it('renders the honest single-event setup instead of the old fake event wizard', () => {
+  it('renders the honest event-backed setup instead of the old fake event wizard', () => {
     render(
       <MemoryRouter>
         <CreateContestPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/This flow creates single-event contests only/i)).toBeInTheDocument();
+    expect(screen.getByText(/draft-once tournament contests only/i)).toBeInTheDocument();
+    expect(screen.getByText('Select Event')).toBeInTheDocument();
+    expect(screen.getByText(/Choose a sport first to load ingested tournament events/i)).toBeInTheDocument();
     expect(screen.getByLabelText('Contest Name')).toBeInTheDocument();
     expect(screen.queryByText('Season Long')).not.toBeInTheDocument();
     expect(screen.queryByText('Create custom event')).not.toBeInTheDocument();

@@ -15,4 +15,5 @@ export * from './config.dto';
 export * from './compliance.dto';
 export * from './templates.dto';
 export * from './history.dto';
+export * from './events.dto';
 export { zodToJsonSchema } from './json-schema';

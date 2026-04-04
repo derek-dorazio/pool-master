@@ -19,6 +19,7 @@ import type {
   PayoutConfig,
   SelectionConfig,
   ScoringRulesConfig,
+  Sport,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
@@ -50,6 +51,7 @@ export interface CreateContestInput {
   createdBy: string;
   seasonId?: string;
   name: string;
+  sport: Sport;
   contestType: ContestType;
   selectionType: SelectionType;
   selectionConfig: Partial<Omit<SelectionConfig, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
@@ -101,6 +103,7 @@ export class ContestService {
       seasonId: input.seasonId || undefined,
       name: input.name,
       status: ContestStatus.DRAFT,
+      sport: input.sport,
       contestType: input.contestType,
       selectionType: input.selectionType,
       scoringEngine: input.scoringEngine,
@@ -165,6 +168,13 @@ export class ContestService {
       throw new ContestOperationError('Contest can only be deleted in DRAFT status');
     }
     await this.contestRepo.delete(contestId);
+  }
+
+  async updateSelectionConfig(
+    selectionConfigId: string,
+    updates: Partial<SelectionConfig>,
+  ): Promise<SelectionConfig> {
+    return this.selectionConfigRepo.update(selectionConfigId, updates);
   }
 
   async listEntries(

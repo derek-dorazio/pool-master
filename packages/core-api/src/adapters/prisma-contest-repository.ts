@@ -34,6 +34,7 @@ export class PrismaContestRepository implements ContestRepository {
         contestType: contest.contestType,
         selectionType: contest.selectionType,
         scoringEngine: contest.scoringEngine,
+        sport: contest.sport,
         isExclusive: contest.isExclusive,
         scoringStopsOnElimination: contest.scoringStopsOnElimination,
         scoringRules: contest.scoringRules as object,
@@ -52,6 +53,7 @@ export class PrismaContestRepository implements ContestRepository {
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.status !== undefined && { status: updates.status }),
+        ...(updates.sport !== undefined && { sport: updates.sport }),
         ...(updates.scoringRules !== undefined && { scoringRules: updates.scoringRules as object }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
@@ -90,6 +92,7 @@ function mapToContest(row: {
   contestType: string;
   selectionType: string;
   scoringEngine: string;
+  sport: string | null;
   isExclusive: boolean;
   scoringStopsOnElimination: boolean;
   scoringRules: unknown;
@@ -109,6 +112,7 @@ function mapToContest(row: {
     contestType: row.contestType as Contest['contestType'],
     selectionType: row.selectionType as Contest['selectionType'],
     scoringEngine: row.scoringEngine as Contest['scoringEngine'],
+    sport: row.sport as Contest['sport'],
     isExclusive: row.isExclusive,
     scoringStopsOnElimination: row.scoringStopsOnElimination,
     scoringRules: (row.scoringRules ?? {}) as Contest['scoringRules'],

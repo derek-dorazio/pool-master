@@ -481,33 +481,6 @@ export const searchHandlers = [
   }),
 ];
 
-export const dashboardHandlers = [
-  http.get('/api/v1/activity', () => {
-    return HttpResponse.json({
-      items: [
-        { id: 'activity-1', type: 'announcement', description: 'League update posted', relativeTime: '5m ago' },
-      ],
-    });
-  }),
-
-  http.get('/api/v1/drafts', () => {
-    return HttpResponse.json({
-      drafts: [
-        { id: 'draft-1', name: 'NFL Draft', leagueName: 'Test League', type: 'Snake', scheduledAt: new Date().toISOString() },
-      ],
-    });
-  }),
-
-  http.get('/api/v1/history/highlights', () => {
-    return HttpResponse.json({
-      recentWin: 'Weekly Picks',
-      personalBest: 124,
-      currentStreak: 3,
-      seasonRecord: { wins: 10, losses: 4 },
-    });
-  }),
-];
-
 // ---------------------------------------------------------------------------
 // Drafts
 // ---------------------------------------------------------------------------
@@ -686,21 +659,32 @@ export const socialHandlers = [
   // Feed endpoints — generated client uses /api/v1/leagues/{leagueId}/feed
   http.get('/api/v1/leagues/:leagueId/feed', () => {
     return HttpResponse.json({
-      items: [
+      posts: [
         {
-          id: 'p-1', type: 'post', authorId: 'u-2', authorName: 'Mike T.', authorInitials: 'MT', authorAvatarUrl: null,
-          content: 'Great game last night!',
-          createdAt: new Date().toISOString(), pinned: false, pinnedBy: null,
-          reactions: [{ emoji: 'thumbsup', count: 3, reacted: false }],
-          replyCount: 4, poll: null,
-        },
-      ],
-      pinned: [
-        {
-          id: 'p-0', type: 'announcement', authorId: 'u-1', authorName: 'Jane D.', authorInitials: 'JD', authorAvatarUrl: null,
+          id: 'p-0',
+          leagueId: 'league-1',
+          type: 'ANNOUNCEMENT',
+          authorId: 'u-1',
+          authorName: 'Jane D.',
           content: 'Draft is this Saturday at 3pm ET.',
-          createdAt: new Date().toISOString(), pinned: true, pinnedBy: 'Jane D.',
-          reactions: [], replyCount: 0, poll: null,
+          isPinned: true,
+          reactions: {},
+          replyCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'p-1',
+          leagueId: 'league-1',
+          type: 'POST',
+          authorId: 'u-2',
+          authorName: 'Mike T.',
+          content: 'Great game last night!',
+          isPinned: false,
+          reactions: { '👍': ['u-2', 'u-3', 'u-4'] },
+          replyCount: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         },
       ],
       nextCursor: null,
@@ -727,19 +711,39 @@ export const socialHandlers = [
     return HttpResponse.json({ success: true });
   }),
 
-  // Replies — GET still uses old /v1/social pattern (not in OpenAPI spec)
-  http.get('/api/v1/social/feed/:postId/replies', () => {
-    return HttpResponse.json([
-      { id: 'r1', authorName: 'John D.', authorInitials: 'JD', content: 'No chance!', createdAt: new Date().toISOString(), reactions: [] },
-    ]);
+  http.get('/api/v1/leagues/:leagueId/feed/:postId', ({ params }) => {
+    return HttpResponse.json({
+      id: String(params.postId),
+      leagueId: String(params.leagueId),
+      type: 'POST',
+      authorId: 'u-2',
+      authorName: 'Mike T.',
+      content: 'Great game last night!',
+      isPinned: false,
+      reactions: { '👍': ['u-2', 'u-3', 'u-4'] },
+      replyCount: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      replies: [
+        {
+          id: 'r1',
+          leagueId: String(params.leagueId),
+          type: 'POST',
+          authorId: 'u-3',
+          authorName: 'John D.',
+          content: 'No chance!',
+          isPinned: false,
+          reactions: {},
+          replyCount: 0,
+          parentId: String(params.postId),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+    });
   }),
 
   http.post('/api/v1/leagues/:leagueId/feed/:postId/replies', () => {
-    return HttpResponse.json({ success: true });
-  }),
-
-  // Vote — still uses old /v1/social pattern (not in OpenAPI spec)
-  http.post('/api/v1/social/feed/:postId/vote', () => {
     return HttpResponse.json({ success: true });
   }),
 
@@ -778,7 +782,6 @@ export const handlers = [
   ...authHandlers,
   ...leagueHandlers,
   ...contestHandlers,
-  ...dashboardHandlers,
   ...billingHandlers,
   ...notificationHandlers,
   ...searchHandlers,

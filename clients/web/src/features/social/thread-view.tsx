@@ -22,7 +22,7 @@ interface ThreadViewProps {
 }
 
 export function ThreadView({ postId, leagueId }: ThreadViewProps) {
-  const { data: replies, isLoading } = useReplies(postId, true);
+  const { data: replies, isLoading } = useReplies(postId, leagueId, true);
   const createReply = useCreateReply(postId, leagueId);
   const [replyText, setReplyText] = useState('');
 

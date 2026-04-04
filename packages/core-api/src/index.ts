@@ -20,6 +20,7 @@ import { invitationsModule } from './modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { registerScoringTemplates } from './modules/contests/service';
 import { templatesModule } from './modules/templates/routes';
+import { eventsModule } from './modules/events/routes';
 import { participantsModule } from './modules/participants/routes';
 import { contestPoolModule } from './modules/participants/pool-routes';
 import { standingsModule } from './modules/standings/routes';
@@ -113,6 +114,7 @@ export function buildApp() {
   app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   app.register(templatesModule, { prefix: '/api/v1/templates' });
+  app.register(eventsModule, { prefix: '/api/v1/events' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
   app.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool', registry });
   app.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });

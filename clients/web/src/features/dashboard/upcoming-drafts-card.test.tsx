@@ -15,14 +15,14 @@ const mockDrafts = [
     id: 'd1',
     name: 'NFL Week 5 Draft',
     leagueName: 'Fantasy Pros',
-    type: 'Snake',
+    type: 'Snake Draft',
     scheduledAt: futureDate,
   },
   {
     id: 'd2',
-    name: 'NBA Auction',
+    name: 'Masters Snake',
     leagueName: 'Hoops Club',
-    type: 'Auction',
+    type: 'Snake Draft',
     scheduledAt: futureDate,
   },
 ];
@@ -43,13 +43,12 @@ describe('UpcomingDraftsCard', () => {
   it('renders draft names', () => {
     renderWithRouter();
     expect(screen.getByText('NFL Week 5 Draft')).toBeInTheDocument();
-    expect(screen.getByText('NBA Auction')).toBeInTheDocument();
+    expect(screen.getByText('Masters Snake')).toBeInTheDocument();
   });
 
   it('renders draft type badges', () => {
     renderWithRouter();
-    expect(screen.getByText('Snake')).toBeInTheDocument();
-    expect(screen.getByText('Auction')).toBeInTheDocument();
+    expect(screen.getAllByText('Snake Draft').length).toBeGreaterThan(0);
   });
 
   it('renders league names', () => {
@@ -81,7 +80,7 @@ describe('UpcomingDraftsCard', () => {
   it('enables Enter Draft Room button when draft is within 5 minutes', () => {
     const soonDate = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // 2 min from now
     vi.mocked(useUpcomingDrafts).mockReturnValue({
-      data: [{ id: 'd3', name: 'Soon Draft', leagueName: 'Quick League', type: 'Snake', scheduledAt: soonDate }],
+      data: [{ id: 'd3', name: 'Soon Draft', leagueName: 'Quick League', type: 'Snake Draft', scheduledAt: soonDate }],
       isLoading: false,
     } as any);
     renderWithRouter();

@@ -159,6 +159,52 @@ export class ComplianceService {
     return request.id;
   }
 
+  async getDeletionStatus(userId: string): Promise<{
+    status: 'none' | 'pending' | 'cancelled' | 'completed';
+    requestId: string | null;
+    requestedAt: string | null;
+    scheduledDeletionAt: string | null;
+    cancelledAt: string | null;
+    completedAt: string | null;
+    reason: string | null;
+  }> {
+    const latest = await this.prisma.deletionRequest.findFirst({
+      where: { userId },
+      orderBy: { requestedAt: 'desc' },
+    });
+
+    if (!latest) {
+      return {
+        status: 'none',
+        requestId: null,
+        requestedAt: null,
+        scheduledDeletionAt: null,
+        cancelledAt: null,
+        completedAt: null,
+        reason: null,
+      };
+    }
+
+    const normalizedStatus = latest.status.toLowerCase();
+    const status = normalizedStatus === 'pending'
+      ? 'pending'
+      : normalizedStatus === 'cancelled'
+        ? 'cancelled'
+        : normalizedStatus === 'completed'
+          ? 'completed'
+          : 'none';
+
+    return {
+      status,
+      requestId: latest.id,
+      requestedAt: latest.requestedAt.toISOString(),
+      scheduledDeletionAt: latest.scheduledDeletionAt?.toISOString() ?? null,
+      cancelledAt: latest.cancelledAt?.toISOString() ?? null,
+      completedAt: latest.completedAt?.toISOString() ?? null,
+      reason: latest.reason ?? null,
+    };
+  }
+
   async cancelDeletion(requestId: string): Promise<void> {
     await this.prisma.deletionRequest.update({
       where: { id: requestId },

@@ -6,6 +6,7 @@
 import type {
   ContestPoolRepository,
   ContestParticipantPoolRepository,
+  ParticipantRepository,
   ParticipantSeasonRecordRepository,
 } from '@poolmaster/shared/db';
 import type {
@@ -25,6 +26,7 @@ export class PricingAndTierService {
     private readonly poolRepo: ContestPoolRepository,
     private readonly poolParticipantRepo: ContestParticipantPoolRepository,
     private readonly seasonRecordRepo: ParticipantSeasonRecordRepository,
+    private readonly participantRepo: ParticipantRepository,
   ) {}
 
   /**
@@ -50,11 +52,14 @@ export class PricingAndTierService {
         pp.participantId,
         season,
       );
+      const participant = await this.participantRepo.findById(pp.participantId);
+      const derived = deriveParticipantSignals(participant?.metadata, seasonRecord);
       inputs.push({
         participantId: pp.participantId,
-        ranking: pp.ranking ?? seasonRecord?.rankings?.[0]?.rank,
+        ranking: pp.ranking ?? derived.ranking,
         formRating: seasonRecord ? Number(seasonRecord.formRating) : 50,
-        // oddsImpliedProb: undefined — odds integration is deferred to Plan 06
+        seed: derived.seed,
+        oddsImpliedProb: derived.oddsImpliedProb,
       });
     }
 
@@ -106,11 +111,24 @@ export class PricingAndTierService {
     const poolParticipants = await this.poolParticipantRepo.findByPool(pool.id);
     if (poolParticipants.length === 0) return { assigned: 0 };
 
-    const tierableParticipants: TierableParticipant[] = poolParticipants.map((pp) => ({
-      participantId: pp.participantId,
-      ranking: pp.ranking,
-      price: pp.cost,
-    }));
+    const tierableParticipants: TierableParticipant[] = [];
+
+    for (const pp of poolParticipants) {
+      const seasonRecord = await this.seasonRecordRepo.findByParticipantAndSeason(
+        pp.participantId,
+        getCurrentSeason(),
+      );
+      const participant = await this.participantRepo.findById(pp.participantId);
+      const derived = deriveParticipantSignals(participant?.metadata, seasonRecord);
+
+      tierableParticipants.push({
+        participantId: pp.participantId,
+        ranking: pp.ranking ?? derived.ranking,
+        price: pp.cost ?? derived.budgetPrice,
+        seed: derived.seed,
+        odds: derived.oddsSortValue,
+      });
+    }
 
     const assignments = assignTiers(tierableParticipants, config);
 
@@ -150,6 +168,86 @@ export class PricingAndTierService {
     if (!pool) throw new PoolNotFoundForPricingError(contestId);
     return pool;
   }
+}
+
+function extractNumericMetadata(
+  metadata: Record<string, unknown> | undefined,
+  keys: string[],
+): number | undefined {
+  if (!metadata) return undefined;
+  for (const key of keys) {
+    const value = metadata[key];
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+interface DerivedParticipantSignals {
+  ranking?: number;
+  seed?: number;
+  budgetPrice?: number;
+  oddsImpliedProb?: number;
+  oddsSortValue?: number;
+}
+
+function deriveParticipantSignals(
+  metadata: Record<string, unknown> | undefined,
+  seasonRecord: {
+    rankings?: Array<{ rank?: number }>;
+    budgetPrice?: number;
+  } | null,
+): DerivedParticipantSignals {
+  const ranking =
+    seasonRecord?.rankings?.[0]?.rank ??
+    extractNumericMetadata(metadata, ['worldRanking', 'ranking', 'rank']);
+  const seed = extractNumericMetadata(metadata, ['seed']);
+  const budgetPrice = seasonRecord?.budgetPrice;
+
+  const impliedProbability = extractImpliedProbability(metadata);
+  const outrightOdds = extractNumericMetadata(metadata, [
+    'morning_line_odds',
+    'morningLineOdds',
+    'odds',
+    'outrightOdds',
+  ]);
+
+  return {
+    ranking,
+    seed,
+    budgetPrice,
+    oddsImpliedProb: impliedProbability,
+    oddsSortValue: outrightOdds ?? (impliedProbability !== undefined ? 1 / impliedProbability : undefined),
+  };
+}
+
+function extractImpliedProbability(
+  metadata: Record<string, unknown> | undefined,
+): number | undefined {
+  const explicit = extractNumericMetadata(metadata, [
+    'impliedProbability',
+    'implied_probability',
+    'winProbability',
+    'win_probability',
+    'outrightImpliedProbability',
+  ]);
+  if (explicit !== undefined) {
+    if (explicit > 0 && explicit <= 1) return explicit;
+    if (explicit > 1 && explicit <= 100) return explicit / 100;
+  }
+
+  const decimalOdds = extractNumericMetadata(metadata, [
+    'morning_line_odds',
+    'morningLineOdds',
+    'odds',
+    'outrightOdds',
+  ]);
+  if (decimalOdds !== undefined && decimalOdds > 0) {
+    return 1 / decimalOdds;
+  }
+
+  return undefined;
 }
 
 /** Returns current season string (e.g. "2025-2026" or "2026"). */

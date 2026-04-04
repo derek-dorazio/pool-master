@@ -51,7 +51,12 @@ export async function contestPoolModule(
     ingestionPersistence,
     opts.registry,
   );
-  const pricingService = new PricingAndTierService(poolRepo, poolParticipantRepo, seasonRecordRepo);
+  const pricingService = new PricingAndTierService(
+    poolRepo,
+    poolParticipantRepo,
+    seasonRecordRepo,
+    participantRepo,
+  );
   const draftSearchService = new DraftSearchService(poolRepo, poolParticipantRepo, participantRepo);
   const handler = createPoolHandlers(poolService);
   const pricing = createPricingHandlers(pricingService);

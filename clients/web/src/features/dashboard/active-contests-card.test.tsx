@@ -12,22 +12,20 @@ const mockContests = [
   {
     id: 'c1',
     name: 'Sunday Showdown',
-    sport: 'football',
+    sport: 'NFL',
     leagueName: 'Premier League',
-    rank: 3,
-    totalEntrants: 12,
-    score: 142,
-    delta: 2,
+    status: 'ACTIVE',
+    entryCount: 12,
+    startsAt: '2026-04-10T18:00:00.000Z',
   },
   {
     id: 'c2',
     name: 'March Madness',
-    sport: 'basketball',
+    sport: 'NCAA_BASKETBALL',
     leagueName: 'Hoops Club',
-    rank: 1,
-    totalEntrants: 8,
-    score: 88,
-    delta: 0,
+    status: 'OPEN',
+    entryCount: 8,
+    startsAt: '2026-04-12T18:00:00.000Z',
   },
 ];
 
@@ -50,12 +48,12 @@ describe('ActiveContestsCard', () => {
     expect(screen.getByText('March Madness')).toBeInTheDocument();
   });
 
-  it('renders rank and score information', () => {
+  it('renders status and entry information', () => {
     renderWithRouter();
-    expect(screen.getByText('3rd of 12')).toBeInTheDocument();
-    expect(screen.getByText('142 pts')).toBeInTheDocument();
-    expect(screen.getByText('1st of 8')).toBeInTheDocument();
-    expect(screen.getByText('88 pts')).toBeInTheDocument();
+    expect(screen.getByText('Active')).toBeInTheDocument();
+    expect(screen.getByText('Open')).toBeInTheDocument();
+    expect(screen.getByText(/12 entries/i)).toBeInTheDocument();
+    expect(screen.getByText(/8 entries/i)).toBeInTheDocument();
   });
 
   it('shows empty state when data is empty array', () => {
@@ -69,11 +67,6 @@ describe('ActiveContestsCard', () => {
     vi.mocked(useActiveContests).mockReturnValue({ data: undefined, isLoading: true } as any);
     renderWithRouter();
     expect(screen.getByText('Loading...')).toBeInTheDocument();
-  });
-
-  it('shows positive delta indicator for contests with delta > 0', () => {
-    renderWithRouter();
-    expect(screen.getByText('+2')).toBeInTheDocument();
   });
 
   it('links each contest to its detail page', () => {

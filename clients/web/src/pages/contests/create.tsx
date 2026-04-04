@@ -13,8 +13,9 @@ import {
   ClipboardList,
   FolderPlus,
 } from 'lucide-react';
-import { Sport, ScoringEngine, type SelectionType } from '@poolmaster/shared/domain';
+import { Sport, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 import {
+  EventListResponseSchema,
   SelectionTemplateListResponseSchema,
   ScoringTemplateListResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -51,9 +52,16 @@ const SPORTS = [
   { id: Sport.HORSE_RACING, name: 'Horse Racing', emoji: '🐎' },
 ];
 
+const ACTIVE_MVP_SELECTION_TYPES = new Set<SelectionType>([
+  SelectionType.SNAKE_DRAFT,
+  SelectionType.TIERED,
+  SelectionType.BUDGET_PICK,
+]);
+
 const wizardSchema = z.object({
   leagueId: z.string().min(1, 'Select a league'),
   sport: z.string().min(1, 'Select a sport'),
+  eventId: z.string().min(1, 'Select an event'),
   name: z.string().min(1, 'Enter a contest name').max(100, 'Contest name is too long'),
   selectionTemplateId: z.string().min(1, 'Select a selection template'),
   scoringTemplateKey: z.string().min(1, 'Select a scoring template'),
@@ -63,6 +71,7 @@ type WizardForm = z.infer<typeof wizardSchema>;
 
 type SelectionTemplateDto = z.infer<typeof SelectionTemplateListResponseSchema>[number];
 type ScoringTemplateDto = z.infer<typeof ScoringTemplateListResponseSchema>['templates'][number];
+type EventDto = z.infer<typeof EventListResponseSchema>['events'][number];
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -155,6 +164,14 @@ function formatScoringEngine(scoringEngine: string) {
   }
 }
 
+function formatEventDate(event: EventDto) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date(event.startDate));
+}
+
 function formatTemplateConfig(config: Record<string, unknown>) {
   const rows: string[] = [];
 
@@ -171,21 +188,69 @@ function formatTemplateConfig(config: Record<string, unknown>) {
   return rows;
 }
 
+function normalizeSelectionConfig(
+  selectionType: SelectionType,
+  config: Record<string, unknown>,
+): Record<string, unknown> {
+  const normalized: Record<string, unknown> = {};
+
+  if (typeof config.isExclusive === 'boolean') normalized.isExclusive = config.isExclusive;
+  if (typeof config.bestBallN === 'number') normalized.bestBallN = config.bestBallN;
+  if (typeof config.rounds === 'number') normalized.rounds = config.rounds;
+  if (typeof config.timePerPickSeconds === 'number') {
+    normalized.timePerPickSeconds = config.timePerPickSeconds;
+  }
+  if (typeof config.draftMode === 'string') normalized.draftMode = config.draftMode;
+  if (typeof config.autoPickPolicy === 'string') normalized.autoPickPolicy = config.autoPickPolicy;
+  if (typeof config.budget === 'number') normalized.budget = config.budget;
+  if (typeof config.rosterSize === 'number') normalized.rosterSize = config.rosterSize;
+  if (typeof config.pricingMethod === 'string') normalized.pricingMethod = config.pricingMethod;
+
+  if (selectionType === SelectionType.TIERED) {
+    const tierCount = typeof config.tierCount === 'number' ? Math.max(config.tierCount, 1) : 6;
+    const picksPerTier = typeof config.picksPerTier === 'number' ? Math.max(config.picksPerTier, 1) : 1;
+    const tierSize = typeof config.tierSize === 'number' ? Math.max(config.tierSize, 1) : undefined;
+
+    normalized.tierAssignmentMethod =
+      typeof config.tierAssignmentMethod === 'string' ? config.tierAssignmentMethod : 'RANKING';
+    normalized.tierConfig = Array.from({ length: tierCount }, (_, index) => ({
+      tierId: `tier-${index + 1}`,
+      tierName: `Tier ${index + 1}`,
+      tierNumber: index + 1,
+      picksFromTier: picksPerTier,
+      participantIds: [],
+      ...(tierSize
+        ? {
+            maxParticipants: tierSize,
+            rankingRange: [index * tierSize + 1, (index + 1) * tierSize] as [number, number],
+          }
+        : {}),
+    }));
+  }
+
+  return normalized;
+}
+
 function Step1Basics({
   form,
   leagues,
+  events,
+  eventsLoading,
 }: {
   form: ReturnType<typeof useForm<WizardForm>>;
   leagues: Array<{ id: string; name: string; role?: string }>;
+  events: EventDto[];
+  eventsLoading: boolean;
 }) {
   const leagueId = form.watch('leagueId');
   const sport = form.watch('sport');
+  const eventId = form.watch('eventId');
 
   return (
     <div className="space-y-8">
       <Card>
         <CardContent className="p-4 text-sm text-muted-foreground">
-          This flow creates single-event contests only. Event catalogs and advanced contest configuration are not wired here yet, so this page only exposes fields backed by the live API.
+          This flow creates draft-once tournament contests only. Choose a real ingested event first, then the contest will provision its live contestant pool from that event.
         </CardContent>
       </Card>
 
@@ -239,6 +304,7 @@ function Step1Basics({
               type="button"
               onClick={() => {
                 form.setValue('sport', s.id, { shouldValidate: true });
+                form.setValue('eventId', '');
                 form.setValue('selectionTemplateId', '');
                 form.setValue('scoringTemplateKey', '');
               }}
@@ -256,6 +322,65 @@ function Step1Basics({
         </div>
         {form.formState.errors.sport && (
           <p className="text-sm text-destructive">{form.formState.errors.sport.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Select Event</h3>
+        {!sport ? (
+          <Card>
+            <CardContent className="p-4 text-sm text-muted-foreground">
+              Choose a sport first to load ingested tournament events.
+            </CardContent>
+          </Card>
+        ) : eventsLoading ? (
+          <p className="text-sm text-muted-foreground">Loading events...</p>
+        ) : events.length === 0 ? (
+          <Card>
+            <CardContent className="p-4 text-sm text-muted-foreground">
+              No ingested events are available for this sport yet. Sync sports data for this tournament before creating the contest.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {events.map((event) => (
+              <button
+                key={event.id}
+                type="button"
+                onClick={() => form.setValue('eventId', event.id, { shouldValidate: true })}
+                className={cn(
+                  'flex w-full items-start gap-3 rounded-lg border-2 p-4 text-left transition-colors hover:border-primary/50',
+                  eventId === event.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-transparent bg-muted/50',
+                )}
+              >
+                <div
+                  className={cn(
+                    'mt-0.5 h-4 w-4 shrink-0 rounded-full border-2',
+                    eventId === event.id
+                      ? 'border-primary bg-primary'
+                      : 'border-muted-foreground/40',
+                  )}
+                />
+                <div className="space-y-1">
+                  <p className="font-medium">{event.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatEventDate(event)}
+                    {event.location ? ` • ${event.location}` : ''}
+                    {event.venue ? ` • ${event.venue}` : ''}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {event.participantCount ? `${event.participantCount} contestants` : 'Contestant count pending'}
+                    {event.fieldLocked ? ' • field locked' : ' • field updateable'}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        {form.formState.errors.eventId && (
+          <p className="text-sm text-destructive">{form.formState.errors.eventId.message}</p>
         )}
       </div>
 
@@ -309,7 +434,7 @@ function Step2SelectionTemplate({
     return (
       <Card>
         <CardContent className="p-4 text-sm text-muted-foreground">
-          No live selection templates are available for this sport yet.
+          No live tiered, budget, or snake templates are available for this sport yet.
         </CardContent>
       </Card>
     );
@@ -434,14 +559,17 @@ function Step4Review({
   form,
   leagues,
   selectionTemplates,
+  events,
 }: {
   form: ReturnType<typeof useForm<WizardForm>>;
   leagues: Array<{ id: string; name: string }>;
   selectionTemplates: SelectionTemplateDto[];
+  events: EventDto[];
 }) {
   const values = form.getValues();
   const sportObj = SPORTS.find((s) => s.id === values.sport);
   const league = leagues.find((item) => item.id === values.leagueId);
+  const event = events.find((item) => item.id === values.eventId);
   const selectionTemplate = selectionTemplates.find((item) => item.id === values.selectionTemplateId);
   const scoringEngine = selectionTemplate
     ? formatScoringEngine(getScoringEngine(values.sport, selectionTemplate.selectionType))
@@ -450,6 +578,7 @@ function Step4Review({
   const items = [
     { label: 'League', value: league?.name ?? '-' },
     { label: 'Sport', value: sportObj ? `${sportObj.emoji} ${sportObj.name}` : '-' },
+    { label: 'Event', value: event?.name ?? '-' },
     { label: 'Contest Type', value: 'Single Event' },
     { label: 'Contest Name', value: values.name || '-' },
     { label: 'Selection Template', value: selectionTemplate?.name ?? '-' },
@@ -483,6 +612,7 @@ export function Component() {
     defaultValues: {
       leagueId: '',
       sport: '',
+      eventId: '',
       name: '',
       selectionTemplateId: '',
       scoringTemplateKey: '',
@@ -500,7 +630,23 @@ export function Component() {
     },
   });
 
-  const { data: selectionTemplates = [], isLoading: selectionTemplatesLoading } = useQuery({
+  const { data: eventsResponse, isLoading: eventsLoading } = useQuery({
+    queryKey: ['events', 'contest-create', sport],
+    queryFn: async () => {
+      const { data, error } = await client.get({
+        url: '/api/v1/events',
+        query: {
+          sport,
+          limit: 25,
+        },
+      });
+      if (error) throw error;
+      return EventListResponseSchema.parse(data);
+    },
+    enabled: !!sport,
+  });
+
+  const { data: selectionTemplatesResponse = [], isLoading: selectionTemplatesLoading } = useQuery({
     queryKey: ['selection-templates', 'contest-create', sport],
     queryFn: async () => {
       const { data, error } = await listSelectionTemplates({
@@ -526,12 +672,16 @@ export function Component() {
   });
 
   const scoringTemplates = (scoringTemplatesResponse?.templates ?? []).filter((template) => template.sport === sport);
+  const events = eventsResponse?.events ?? [];
+  const selectionTemplates = selectionTemplatesResponse.filter((template) =>
+    ACTIVE_MVP_SELECTION_TYPES.has(template.selectionType as SelectionType),
+  );
   const commissionerLeagues = (leagueResponse?.leagues ?? []).filter(
     (league) => league.role === 'owner' || league.role === 'commissioner',
   );
 
   const stepValidation: Record<number, (keyof WizardForm)[]> = {
-    0: ['leagueId', 'sport', 'name'],
+    0: ['leagueId', 'sport', 'eventId', 'name'],
     1: ['selectionTemplateId'],
     2: ['scoringTemplateKey'],
   };
@@ -553,23 +703,30 @@ export function Component() {
     try {
       const values = form.getValues();
       const selectionTemplate = selectionTemplates.find((template) => template.id === values.selectionTemplateId);
+      const event = events.find((item) => item.id === values.eventId);
 
-      if (!selectionTemplate) {
-        throw new Error('Selection template is missing.');
-      }
+      if (!selectionTemplate) throw new Error('Selection template is missing.');
+      if (!event) throw new Error('Event is missing.');
 
       const selectionType = selectionTemplate.selectionType as SelectionType;
+      const selectionConfig = normalizeSelectionConfig(selectionType, selectionTemplate.config);
 
       const { data: result, error } = await createContest({
         client,
         path: { id: values.leagueId },
         body: {
           name: values.name,
+          sport: values.sport,
+          eventId: values.eventId,
           contestType: 'SINGLE_EVENT',
           selectionType,
-          selectionConfig: selectionTemplate.config,
+          selectionConfig,
           scoringEngine: getScoringEngine(values.sport, selectionType),
           scoringTemplateKey: values.scoringTemplateKey,
+          startsAt: event.startDate,
+          endsAt: event.endDate ?? event.startDate,
+          lockAt: event.startDate,
+          isExclusive: Boolean(selectionConfig.isExclusive),
         },
       });
 
@@ -602,7 +759,14 @@ export function Component() {
 
       <Card>
         <CardContent className="p-6">
-          {step === 0 && <Step1Basics form={form} leagues={commissionerLeagues} />}
+          {step === 0 && (
+            <Step1Basics
+              form={form}
+              leagues={commissionerLeagues}
+              events={events}
+              eventsLoading={eventsLoading}
+            />
+          )}
           {step === 1 && (
             <Step2SelectionTemplate
               form={form}
@@ -622,6 +786,7 @@ export function Component() {
               form={form}
               leagues={commissionerLeagues}
               selectionTemplates={selectionTemplates}
+              events={events}
             />
           )}
         </CardContent>

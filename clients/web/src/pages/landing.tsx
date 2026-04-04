@@ -16,8 +16,8 @@ import { useAuthStore } from '@/stores/auth-store';
 const features = [
   {
     icon: Trophy,
-    title: 'Run Any Pool Type',
-    description: 'Snake drafts, pick\'em, brackets, survivor, and more',
+    title: 'Run Tournament Pools',
+    description: 'Tiered, budget, and draft-once tournament contests for teams and individual sports',
   },
   {
     icon: Zap,
@@ -42,7 +42,7 @@ const features = [
   {
     icon: BarChart3,
     title: 'League History',
-    description: 'Track records, rivalries, and season-by-season stats',
+    description: 'Review active contests, finished contests, and season summaries',
   },
 ];
 
@@ -86,8 +86,7 @@ export function Component() {
             <span className="text-primary">Like a Pro</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            The all-in-one platform for sports pools, brackets, and fantasy
-            competitions.
+            Run tournament pools for teams, golf, tennis, and other event-based competitions.
           </p>
           <div className="mt-10">
             <Button asChild size="lg" className="text-base px-8 py-6">

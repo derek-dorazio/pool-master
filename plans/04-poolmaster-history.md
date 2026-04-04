@@ -19,6 +19,11 @@ The current launch target only needs **minimal history**:
 - active contests
 - finished contests
 - basic contest summaries, standings, and roster/result review
+- a simple dashboard activity/feed view sourced from real league feed posts or system announcements
+- avoid non-MVP dashboard aggregates like “season highlights” unless a fresh planning pass reintroduces them with a real backend contract
+- prefer compact finished-contest summaries on league surfaces over records/rivalry/luck analytics in the MVP
+- league detail can show a compact finished-contests summary using existing league results, but richer league history stays on the dedicated history page / future planning pass
+- remove dedicated records/rivalry navigation from the MVP app shell until those analytics are explicitly re-planned and re-approved
 
 Treat the richer parts of this document as future-facing unless re-approved during a fresh planning pass:
 

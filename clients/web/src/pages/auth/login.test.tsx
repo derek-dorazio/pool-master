@@ -25,17 +25,6 @@ vi.mock('@/stores/auth-store', () => ({
     selector({ setUser: vi.fn(), isAuthenticated: false, isLoading: false }),
 }));
 
-vi.mock('@/lib/api-client', () => ({
-  api: { post: vi.fn() },
-  ApiError: class ApiError extends Error {
-    status: number;
-    constructor(msg: string, status: number) {
-      super(msg);
-      this.status = status;
-    }
-  },
-}));
-
 function renderLogin(initialEntry = '/login') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>

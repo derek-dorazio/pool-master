@@ -9,7 +9,6 @@ import {
   useToggleReaction,
   usePinPost,
   useDeletePost,
-  useVotePoll,
 } from './hooks/use-feed';
 
 interface FeedContainerProps {
@@ -23,7 +22,6 @@ export function FeedContainer({ leagueId, isCommissioner }: FeedContainerProps) 
   const toggleReaction = useToggleReaction(leagueId);
   const pinPost = usePinPost(leagueId);
   const deletePost = useDeletePost(leagueId);
-  const votePoll = useVotePoll(leagueId);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,7 +70,6 @@ export function FeedContainer({ leagueId, isCommissioner }: FeedContainerProps) 
           onReaction={(postId, emoji) => toggleReaction.mutate({ postId, emoji })}
           onPin={(postId, pin) => pinPost.mutate({ postId, pin })}
           onDelete={(postId) => deletePost.mutate(postId)}
-          onVotePoll={(postId, optionId) => votePoll.mutate({ postId, optionId })}
         />
       ))}
 
@@ -92,7 +89,6 @@ export function FeedContainer({ leagueId, isCommissioner }: FeedContainerProps) 
           onReaction={(postId, emoji) => toggleReaction.mutate({ postId, emoji })}
           onPin={(postId, pin) => pinPost.mutate({ postId, pin })}
           onDelete={(postId) => deletePost.mutate(postId)}
-          onVotePoll={(postId, optionId) => votePoll.mutate({ postId, optionId })}
         />
       ))}
 

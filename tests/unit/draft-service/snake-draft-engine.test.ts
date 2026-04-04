@@ -59,7 +59,7 @@ describe('SnakeDraftEngine', () => {
         picks: [{
           pickNumber: 1, round: 1, pickInRound: 1,
           entryId: 'entry-a', participantId: 'p1',
-          autoPicked: false, pickedAt: new Date(),
+          autoPicked: false, isSkipped: false, pickedAt: new Date(),
         }],
         currentPickNumber: 2,
       });
@@ -105,7 +105,7 @@ describe('SnakeDraftEngine', () => {
         picks: [{
           pickNumber: 1, round: 1, pickInRound: 1,
           entryId: 'entry-a', participantId: 'p1',
-          autoPicked: false, pickedAt: new Date(),
+          autoPicked: false, isSkipped: false, pickedAt: new Date(),
         }],
       });
 
@@ -151,7 +151,7 @@ describe('SnakeDraftEngine', () => {
         picks: [{
           pickNumber: 1, round: 1, pickInRound: 1,
           entryId: 'entry-a', participantId: 'p1',
-          autoPicked: false, pickedAt: new Date(),
+          autoPicked: false, isSkipped: false, pickedAt: new Date(),
         }],
       });
       const result = engine.resolveAutoPick(state, {
@@ -175,7 +175,7 @@ describe('SnakeDraftEngine', () => {
     it('returns null when no participants available', () => {
       const state = createDraftState({
         picks: [
-          { pickNumber: 1, round: 1, pickInRound: 1, entryId: 'entry-a', participantId: 'p1', autoPicked: false, pickedAt: new Date() },
+          { pickNumber: 1, round: 1, pickInRound: 1, entryId: 'entry-a', participantId: 'p1', autoPicked: false, isSkipped: false, pickedAt: new Date() },
         ],
       });
       const result = engine.resolveAutoPick(state, {
@@ -207,9 +207,9 @@ describe('SnakeDraftEngine', () => {
     it('returns only picks for the specified entry', () => {
       const state = createDraftState({
         picks: [
-          { pickNumber: 1, round: 1, pickInRound: 1, entryId: 'entry-a', participantId: 'p1', autoPicked: false, pickedAt: new Date() },
-          { pickNumber: 2, round: 1, pickInRound: 2, entryId: 'entry-b', participantId: 'p2', autoPicked: false, pickedAt: new Date() },
-          { pickNumber: 3, round: 1, pickInRound: 3, entryId: 'entry-a', participantId: 'p3', autoPicked: false, pickedAt: new Date() },
+          { pickNumber: 1, round: 1, pickInRound: 1, entryId: 'entry-a', participantId: 'p1', autoPicked: false, isSkipped: false, pickedAt: new Date() },
+          { pickNumber: 2, round: 1, pickInRound: 2, entryId: 'entry-b', participantId: 'p2', autoPicked: false, isSkipped: false, pickedAt: new Date() },
+          { pickNumber: 3, round: 1, pickInRound: 3, entryId: 'entry-a', participantId: 'p3', autoPicked: false, isSkipped: false, pickedAt: new Date() },
         ],
       });
       const roster = engine.getEntryRoster(state, 'entry-a');

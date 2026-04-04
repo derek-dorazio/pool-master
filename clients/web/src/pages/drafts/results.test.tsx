@@ -1,11 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import type { DraftStateResponse } from '@poolmaster/shared/dto';
 import { Component as DraftResultsPage } from './results';
 
-let mockDraftState = {
+let mockDraftState: DraftStateResponse = {
   contestId: 'contest-1',
   contestName: 'Masters 2026',
   selectionType: 'SNAKE_DRAFT',
+  isTurnBased: true,
+  rosterSize: 4,
   status: 'COMPLETE',
   currentPickNumber: 9,
   currentRound: 3,
@@ -62,6 +65,8 @@ describe('DraftResultsPage', () => {
       contestId: 'contest-1',
       contestName: 'Masters 2026',
       selectionType: 'SNAKE_DRAFT',
+      isTurnBased: true,
+      rosterSize: 4,
       status: 'COMPLETE',
       currentPickNumber: 9,
       currentRound: 3,
@@ -129,7 +134,7 @@ describe('DraftResultsPage', () => {
           entryName: 'My Team',
           participantId: 'team-1',
           participantName: 'Bills',
-          position: undefined,
+          position: '',
           team: 'BUF',
           autoPicked: false,
           pickedAt: new Date().toISOString(),
@@ -186,7 +191,7 @@ describe('DraftResultsPage', () => {
           entryName: 'My Team',
           participantId: 'team-1',
           participantName: 'Duke',
-          position: undefined,
+          position: '',
           team: 'DUK',
           autoPicked: false,
           pickedAt: new Date().toISOString(),

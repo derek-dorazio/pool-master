@@ -96,6 +96,11 @@ export function SelfExclusionCard() {
             Take a break from Ultimate Pool Manager. During the cool-down period, you won't be able to enter
             contests or participate in drafts.
           </p>
+          {activeExclusionQuery.isError ? (
+            <div className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              We couldn't load your self-exclusion status.
+            </div>
+          ) : null}
           {activeExclusionQuery.data?.exclusion ? (
             <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               <p className="font-medium">
@@ -111,9 +116,18 @@ export function SelfExclusionCard() {
                 started on{' '}
                 {new Date(activeExclusionQuery.data.exclusion.startedAt).toLocaleDateString()}.
               </p>
+              {activeExclusionQuery.data.exclusion.endsAt ? (
+                <p className="mt-1">
+                  Ends on {new Date(activeExclusionQuery.data.exclusion.endsAt).toLocaleDateString()}.
+                </p>
+              ) : null}
             </div>
           ) : null}
-          <Button variant="outline" onClick={() => setDialogOpen(true)}>
+          <Button
+            variant="outline"
+            onClick={() => setDialogOpen(true)}
+            disabled={activeExclusionQuery.isLoading || Boolean(activeExclusionQuery.data?.exclusion)}
+          >
             Take a Break
           </Button>
         </CardContent>

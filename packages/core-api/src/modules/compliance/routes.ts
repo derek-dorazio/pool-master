@@ -18,6 +18,7 @@ const {
   DataExportResponseSchema,
   DataExportStatusResponseSchema,
   AccountDeletionAcceptedResponseSchema,
+  AccountDeletionStatusResponseSchema,
   AccountDeletionCancelledResponseSchema,
   SelfExclusionCreatedResponseSchema,
   SelfExclusionDurationSchema,
@@ -181,6 +182,19 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
         requestId: id,
         message: 'Deletion scheduled in 14 days. You can cancel before then.',
       });
+    },
+  });
+
+  fastify.get('/delete-account', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Get current account deletion request status',
+      operationId: 'getAccountDeletionStatus',
+      response: { 200: zodToJsonSchema(AccountDeletionStatusResponseSchema) },
+    },
+    handler: async (request) => {
+      const userId = request.headers['x-user-id'] as string;
+      return complianceService.getDeletionStatus(userId);
     },
   });
 

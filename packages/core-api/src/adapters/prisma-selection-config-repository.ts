@@ -58,6 +58,15 @@ export class PrismaSelectionConfigRepository implements SelectionConfigRepositor
         ...(updates.rounds !== undefined && { rounds: updates.rounds }),
         ...(updates.timePerPickSeconds !== undefined && { timePerPickSeconds: updates.timePerPickSeconds }),
         ...(updates.autoPickPolicy !== undefined && { autoPickPolicy: updates.autoPickPolicy }),
+        ...(updates.tierConfig !== undefined && { tierConfig: updates.tierConfig as object[] }),
+        ...(updates.tierAssignmentMethod !== undefined && {
+          tierAssignmentMethod: updates.tierAssignmentMethod,
+        }),
+        ...(updates.budget !== undefined && { budget: updates.budget }),
+        ...(updates.pricingMethod !== undefined && { pricingMethod: updates.pricingMethod }),
+        ...(updates.rosterSize !== undefined && { rosterSize: updates.rosterSize }),
+        ...(updates.pickCount !== undefined && { pickCount: updates.pickCount }),
+        ...(updates.bestBallN !== undefined && { bestBallN: updates.bestBallN }),
         ...(updates.isExclusive !== undefined && { isExclusive: updates.isExclusive }),
       },
     });

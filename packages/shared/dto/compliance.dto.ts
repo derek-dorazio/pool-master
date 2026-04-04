@@ -55,6 +55,18 @@ export const AccountDeletionRequestSchema = z.object({
   reason: z.string().optional(),
 });
 
+export const AccountDeletionStatusDtoSchema = z.object({
+  status: z.enum(['none', 'pending', 'cancelled', 'completed']),
+  requestId: z.string().nullable(),
+  requestedAt: DateTimeSchema.nullable(),
+  scheduledDeletionAt: DateTimeSchema.nullable(),
+  cancelledAt: DateTimeSchema.nullable(),
+  completedAt: DateTimeSchema.nullable(),
+  reason: z.string().nullable(),
+});
+
+export const AccountDeletionStatusResponseSchema = AccountDeletionStatusDtoSchema;
+
 export const AccountDeletionCancelledResponseSchema = SuccessSchema.extend({
   message: z.string(),
 });

@@ -68,6 +68,8 @@ export const PayoutConfigRequestSchema = z.object({
 
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100),
+  sport: z.string().min(1),
+  eventId: z.string().optional(),
   seasonId: z.string().optional(),
   contestType: z.enum([ContestType.SINGLE_EVENT]),
   selectionType: z.enum([
@@ -120,6 +122,7 @@ export const ContestSummaryDtoSchema = z.object({
   selectionType: z.string(),
   scoringEngine: z.string(),
   leagueId: z.string(),
+  sport: z.string().nullable().optional(),
   entryCount: z.number().optional(),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),

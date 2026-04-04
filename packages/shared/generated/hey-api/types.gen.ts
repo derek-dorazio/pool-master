@@ -796,6 +796,7 @@ export type ListContestsResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -810,17 +811,75 @@ export type ListContestsResponse = ListContestsResponses[keyof ListContestsRespo
 export type CreateContestData = {
     body: {
         name: string;
-        contestType: string;
-        selectionType: string;
-        scoringEngine: string;
+        sport: string;
+        eventId?: string;
+        seasonId?: string;
+        contestType: 'SINGLE_EVENT';
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+        selectionConfig?: {
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+                rankingRange?: [
+                    unknown,
+                    unknown
+                ];
+                priceRange?: [
+                    unknown,
+                    unknown
+                ];
+                maxParticipants?: number;
+                participantIds: Array<string>;
+            }>;
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            survivorStyle?: string;
+            picksPerPeriod?: number;
+            oneEntityPerSeason?: boolean;
+            strikesBeforeElimination?: number;
+            buybacksAllowed?: boolean;
+            roundValues?: Array<number>;
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+        };
+        scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
         scoringRules?: {
             [key: string]: unknown;
         };
         scoringTemplateKey?: string;
+        payoutConfig?: {
+            entryFee?: number;
+            prizePool?: number;
+            payoutStructure: Array<{
+                rank: number;
+                percentage: number;
+                fixedAmount?: number;
+            }>;
+            intermediatePrizes: Array<{
+                name: string;
+                description?: string;
+                amount?: number;
+                percentage?: number;
+            }>;
+        };
         startsAt?: string;
         endsAt?: string;
         lockAt?: string;
         isExclusive?: boolean;
+        scoringStopsOnElimination?: boolean;
     };
     path: {
         id: string;
@@ -842,6 +901,7 @@ export type CreateContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -852,7 +912,6 @@ export type CreateContestResponses = {
             };
             lockAt?: string;
             isExclusive?: boolean;
-            sport?: string;
         };
         selectionConfig?: {
             [key: string]: unknown;
@@ -904,6 +963,7 @@ export type GetContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -914,7 +974,6 @@ export type GetContestResponses = {
             };
             lockAt?: string;
             isExclusive?: boolean;
-            sport?: string;
         };
         selectionConfig?: {
             [key: string]: unknown;
@@ -929,6 +988,21 @@ export type UpdateContestData = {
         name?: string;
         scoringRules?: {
             [key: string]: unknown;
+        };
+        payoutConfig?: {
+            entryFee?: number;
+            prizePool?: number;
+            payoutStructure: Array<{
+                rank: number;
+                percentage: number;
+                fixedAmount?: number;
+            }>;
+            intermediatePrizes: Array<{
+                name: string;
+                description?: string;
+                amount?: number;
+                percentage?: number;
+            }>;
         };
         startsAt?: string;
         endsAt?: string;
@@ -955,6 +1029,7 @@ export type UpdateContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -965,7 +1040,6 @@ export type UpdateContestResponses = {
             };
             lockAt?: string;
             isExclusive?: boolean;
-            sport?: string;
         };
         selectionConfig?: {
             [key: string]: unknown;
@@ -1281,6 +1355,7 @@ export type ReopenContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -1291,7 +1366,6 @@ export type ReopenContestResponses = {
             };
             lockAt?: string;
             isExclusive?: boolean;
-            sport?: string;
         };
         selectionConfig?: {
             [key: string]: unknown;
@@ -1325,6 +1399,7 @@ export type CloseContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -1335,7 +1410,6 @@ export type CloseContestResponses = {
             };
             lockAt?: string;
             isExclusive?: boolean;
-            sport?: string;
         };
         selectionConfig?: {
             [key: string]: unknown;
@@ -1370,6 +1444,7 @@ export type ExtendContestDeadlineResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -1380,7 +1455,6 @@ export type ExtendContestDeadlineResponses = {
             };
             lockAt?: string;
             isExclusive?: boolean;
-            sport?: string;
         };
         selectionConfig?: {
             [key: string]: unknown;
@@ -1415,6 +1489,7 @@ export type UpdateContestLockTimeResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -1425,7 +1500,6 @@ export type UpdateContestLockTimeResponses = {
             };
             lockAt?: string;
             isExclusive?: boolean;
-            sport?: string;
         };
         selectionConfig?: {
             [key: string]: unknown;
@@ -1711,6 +1785,39 @@ export type UpdateTemplateResponses = {
 };
 
 export type UpdateTemplateResponse = UpdateTemplateResponses[keyof UpdateTemplateResponses];
+
+export type ListEventsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        sport?: string;
+        status?: string;
+        limit?: number;
+    };
+    url: '/api/v1/events/';
+};
+
+export type ListEventsResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        events: Array<{
+            id: string;
+            sport: string;
+            name: string;
+            venue?: string;
+            location?: string;
+            status: string;
+            startDate: string;
+            endDate?: string;
+            participantCount?: number;
+            fieldLocked: boolean;
+        }>;
+    };
+};
+
+export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];
 
 export type ListParticipantsData = {
     body?: never;
@@ -2776,7 +2883,34 @@ export type GetSeasonSummariesResponses = {
      */
     200: {
         seasons: Array<{
-            [key: string]: unknown;
+            id: string;
+            leagueId: string;
+            seasonId?: string;
+            seasonName: string;
+            sport?: string;
+            year?: number;
+            numMembers: number;
+            numContests: number;
+            totalPrizePool: number;
+            champions: Array<{
+                contestId: string;
+                contestName: string;
+                entryId: string;
+                entryName: string;
+                memberId: string;
+                memberName: string;
+                finalScore: number;
+                prizeWon?: number;
+            }>;
+            highlights: {
+                highestScore?: number;
+                lowestScore?: number;
+            };
+            commissionerNote?: string;
+            openedAt?: string;
+            closedAt?: string;
+            createdAt: string;
+            updatedAt: string;
         }>;
     };
 };
@@ -10379,6 +10513,7 @@ export type GetEntryScoreResponses = {
             participantBreakdowns: Array<{
                 participantId: string;
                 participantName?: string;
+                contextLabel?: string;
                 statPoints: number;
                 positionPoints: number;
                 bonusPoints: number;
@@ -10421,6 +10556,7 @@ export type GetParticipantScoreResponses = {
             breakdown: {
                 participantId: string;
                 participantName?: string;
+                contextLabel?: string;
                 statPoints: number;
                 positionPoints: number;
                 bonusPoints: number;

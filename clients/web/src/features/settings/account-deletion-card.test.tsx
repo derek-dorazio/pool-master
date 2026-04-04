@@ -5,6 +5,7 @@ import { AccountDeletionCard } from './account-deletion-card';
 
 const requestAccountDeletion = vi.fn();
 const cancelAccountDeletion = vi.fn();
+const getAccountDeletionStatus = vi.fn();
 
 vi.mock('./hooks/use-profile', () => ({
   useProfile: () => ({
@@ -19,6 +20,7 @@ vi.mock('@/lib/api', () => ({
   client: {},
   requestAccountDeletion: (...args: unknown[]) => requestAccountDeletion(...args),
   cancelAccountDeletion: (...args: unknown[]) => cancelAccountDeletion(...args),
+  getAccountDeletionStatus: (...args: unknown[]) => getAccountDeletionStatus(...args),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({
@@ -38,6 +40,18 @@ function renderCard() {
 
 describe('AccountDeletionCard', () => {
   beforeEach(() => {
+    getAccountDeletionStatus.mockResolvedValue({
+      data: {
+        status: 'none',
+        requestId: null,
+        requestedAt: null,
+        scheduledDeletionAt: null,
+        cancelledAt: null,
+        completedAt: null,
+        reason: null,
+      },
+      error: null,
+    });
     requestAccountDeletion.mockResolvedValue({ data: { requestId: 'del-1', message: 'ok' }, error: null });
     cancelAccountDeletion.mockResolvedValue({ data: { success: true }, error: null });
   });
@@ -46,7 +60,7 @@ describe('AccountDeletionCard', () => {
     const user = userEvent.setup();
     renderCard();
 
-    await user.click(screen.getByRole('button', { name: /delete my account/i }));
+    await user.click(await screen.findByRole('button', { name: /delete my account/i }));
     await user.click(screen.getByRole('button', { name: /continue/i }));
     await user.type(screen.getByPlaceholderText('Test User'), 'Test User');
     await user.click(screen.getByRole('button', { name: /permanently delete/i }));
@@ -56,14 +70,39 @@ describe('AccountDeletionCard', () => {
         body: { reason: 'user_requested' },
       }));
     });
-    expect(screen.getByText(/account scheduled for deletion/i)).toBeInTheDocument();
+    expect(await screen.findByText(/account scheduled for deletion/i)).toBeInTheDocument();
   });
 
   it('allows the pending deletion request to be cancelled', async () => {
     const user = userEvent.setup();
+    getAccountDeletionStatus
+      .mockResolvedValueOnce({
+        data: {
+          status: 'none',
+          requestId: null,
+          requestedAt: null,
+          scheduledDeletionAt: null,
+          cancelledAt: null,
+          completedAt: null,
+          reason: null,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          status: 'pending',
+          requestId: 'del-1',
+          requestedAt: '2026-04-03T12:00:00.000Z',
+          scheduledDeletionAt: '2026-04-17T12:00:00.000Z',
+          cancelledAt: null,
+          completedAt: null,
+          reason: 'user_requested',
+        },
+        error: null,
+      });
     renderCard();
 
-    await user.click(screen.getByRole('button', { name: /delete my account/i }));
+    await user.click(await screen.findByRole('button', { name: /delete my account/i }));
     await user.click(screen.getByRole('button', { name: /continue/i }));
     await user.type(screen.getByPlaceholderText('Test User'), 'Test User');
     await user.click(screen.getByRole('button', { name: /permanently delete/i }));
@@ -74,5 +113,26 @@ describe('AccountDeletionCard', () => {
     await waitFor(() => {
       expect(cancelAccountDeletion).toHaveBeenCalled();
     });
+  });
+
+  it('shows an existing pending deletion request from persisted backend status', async () => {
+    getAccountDeletionStatus.mockResolvedValue({
+      data: {
+        status: 'pending',
+        requestId: 'del-1',
+        requestedAt: '2026-04-03T12:00:00.000Z',
+        scheduledDeletionAt: '2026-04-17T12:00:00.000Z',
+        cancelledAt: null,
+        completedAt: null,
+        reason: 'user_requested',
+      },
+      error: null,
+    });
+
+    renderCard();
+
+    expect(await screen.findByText(/account scheduled for deletion/i)).toBeInTheDocument();
+    expect(screen.getByText(/scheduled deletion date/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel deletion/i })).toBeInTheDocument();
   });
 });

@@ -53,4 +53,27 @@ describe('SelfExclusionCard', () => {
       }));
     });
   });
+
+  it('shows active exclusion state and disables starting a new one', async () => {
+    getActiveExclusion.mockResolvedValue({
+      data: {
+        exclusion: {
+          id: 'excl-1',
+          userId: 'u-1',
+          exclusionType: 'COOL_DOWN',
+          duration: '7D',
+          endsAt: '2026-04-10T00:00:00.000Z',
+          isActive: true,
+          startedAt: '2026-04-03T00:00:00.000Z',
+          reactivatedAt: null,
+        },
+      },
+      error: null,
+    });
+
+    renderCard();
+
+    expect(await screen.findByText(/cool-down is active/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /take a break/i })).toBeDisabled();
+  });
 });

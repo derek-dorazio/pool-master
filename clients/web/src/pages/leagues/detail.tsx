@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -9,20 +8,10 @@ import {
   Plus,
   UserPlus,
   MessageSquare,
-  Flame,
-  Star,
-  Target,
-  TrendingUp,
-  Award,
-  Calendar,
-  ChevronDown,
-  ChevronRight,
-  Send,
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -33,8 +22,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { client, getLeague, listContests, getLeagueRecords, getSeasonSummaries } from '@/lib/api';
+import { client, getLeague, listContests, getLeagueResults } from '@/lib/api';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { FeedContainer } from '@/features/social/feed-container';
 import {
   LeagueMembersResponseSchema,
   type LeagueDetailDto,
@@ -111,46 +101,25 @@ function useLeaveLeague(leagueId: string) {
   });
 }
 
-interface RecordItem {
+interface LeagueResultItem {
   id: string;
-  category: string;
-  holderName: string;
-  value: string;
-  season?: string;
+  contestName?: string;
+  contestType?: string;
+  sport?: string;
+  finalRank: number;
+  totalScore: number;
+  prizeLabel?: string;
+  isWinner: boolean;
+  closedAt?: string;
 }
 
-function useLeagueRecords(leagueId: string) {
+function useLeagueResults(leagueId: string) {
   return useQuery({
-    queryKey: ['league-records', leagueId],
-    queryFn: async (): Promise<RecordItem[]> => {
-      const { data, error } = await getLeagueRecords({ client, path: { id: leagueId } });
+    queryKey: ['league-results', leagueId],
+    queryFn: async (): Promise<LeagueResultItem[]> => {
+      const { data, error } = await getLeagueResults({ client, path: { id: leagueId } });
       if (error) throw error;
-      return (data as any).records ?? [];
-    },
-  });
-}
-
-interface SeasonSummary {
-  id: string;
-  season: string;
-  year: number;
-  contestCount: number;
-  results?: Array<{
-    id: string;
-    contestName: string;
-    winnerName: string;
-    score: string;
-    date: string;
-  }>;
-}
-
-function useLeagueSeasons(leagueId: string) {
-  return useQuery({
-    queryKey: ['league-seasons', leagueId],
-    queryFn: async (): Promise<SeasonSummary[]> => {
-      const { data, error } = await getSeasonSummaries({ client, path: { id: leagueId } });
-      if (error) throw error;
-      return (data as any).seasons ?? [];
+      return ((data as unknown) as { results?: LeagueResultItem[] }).results ?? [];
     },
   });
 }
@@ -165,17 +134,6 @@ const contestStatusStyles: Record<string, string> = {
   ACTIVE: 'bg-blue-100 text-blue-800 border-blue-200',
   COMPLETED: 'bg-gray-100 text-gray-800 border-gray-200',
 };
-
-
-function getRecordIcon(category: string) {
-  const lower = category.toLowerCase();
-  if (lower.includes('streak')) return Flame;
-  if (lower.includes('draft')) return Star;
-  if (lower.includes('accura')) return Target;
-  if (lower.includes('score') || lower.includes('season')) return TrendingUp;
-  if (lower.includes('win')) return Award;
-  return Trophy;
-}
 
 // ---------------------------------------------------------------------------
 // Tab components
@@ -249,7 +207,19 @@ function OverviewTab({ league, leagueId }: { league: LeagueDetailDto; leagueId: 
           <MessageSquare className="h-5 w-5" />
           Recent Activity
         </h3>
-        <p className="text-muted-foreground text-sm">No recent activity to show.</p>
+        <Card>
+          <CardContent className="flex items-center justify-between gap-4 p-4">
+            <div>
+              <p className="text-sm font-medium">League updates now live in the feed</p>
+              <p className="text-sm text-muted-foreground">
+                Commissioner announcements and member posts are available from the shared league feed.
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <Link to={`/leagues/${leagueId}/feed`}>Open Feed</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -419,164 +389,63 @@ function MembersTab({ leagueId }: { leagueId: string }) {
   );
 }
 
-function FeedTab() {
+function FeedTab({ leagueId, isCommissioner }: { leagueId: string; isCommissioner: boolean }) {
   return (
-    <div className="space-y-4">
-      {/* Compose box */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-sm">
-              You
-            </div>
-            <div className="flex flex-1 gap-2">
-              <Input placeholder="Share something with the league..." className="flex-1" />
-              <Button size="sm">
-                <Send className="h-4 w-4 mr-1" />
-                Post
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Empty state — feed API not yet wired */}
-      <p className="text-muted-foreground text-sm text-center py-8">No posts yet. Be the first to share!</p>
-    </div>
-  );
-}
-
-function RecordsTab({ leagueId }: { leagueId: string }) {
-  const { data: records = [], isLoading } = useLeagueRecords(leagueId);
-
-  if (isLoading) {
-    return <p className="text-muted-foreground text-sm py-8 text-center">Loading records...</p>;
-  }
-
-  if (records.length === 0) {
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">League Records</h3>
-        <p className="text-muted-foreground text-sm">No records yet. Play some contests to earn records!</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">League Records</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {records.map((record) => {
-          const Icon = getRecordIcon(record.category);
-          return (
-            <Card key={record.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <CardTitle className="text-base">{record.category}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1">
-                  <div className="text-lg font-bold">{record.value}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Held by <span className="font-medium text-foreground">{record.holderName}</span>
-                  </div>
-                  {record.season && (
-                    <div className="text-xs text-muted-foreground">{record.season}</div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SeasonAccordion({ season }: { season: SeasonSummary }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Card>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between p-4 text-left hover:bg-accent/50 transition-colors rounded-lg"
-      >
-        <div className="flex items-center gap-3">
-          <Calendar className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <div className="font-semibold">{season.season}</div>
-            <div className="text-sm text-muted-foreground">
-              {season.contestCount} contest{season.contestCount !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-        {open ? (
-          <ChevronDown className="h-5 w-5 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-        )}
-      </button>
-      {open && (
-        <CardContent className="pt-0 pb-4">
-          <div className="space-y-3 border-t pt-4">
-            {(season.results ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">No results available for this season.</p>
-            ) : (
-              season.results!.map((result) => (
-                <div
-                  key={result.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                      <Trophy className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">{result.contestName}</div>
-                      <div className="text-xs text-muted-foreground">{result.date}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{result.winnerName}</div>
-                    <Badge variant="secondary" className="text-xs">{result.score}</Badge>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      )}
-    </Card>
+    <FeedContainer leagueId={leagueId} isCommissioner={isCommissioner} />
   );
 }
 
 function HistoryTab({ leagueId }: { leagueId: string }) {
-  const { data: seasons = [], isLoading } = useLeagueSeasons(leagueId);
+  const { data: results = [], isLoading } = useLeagueResults(leagueId);
 
   if (isLoading) {
-    return <p className="text-muted-foreground text-sm py-8 text-center">Loading history...</p>;
+    return <p className="text-muted-foreground text-sm py-8 text-center">Loading finished contests...</p>;
   }
 
-  if (seasons.length === 0) {
+  if (results.length === 0) {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">League History</h3>
-        <p className="text-muted-foreground text-sm">No seasons completed yet.</p>
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="text-lg font-semibold">Finished Contests</h3>
+          <Button variant="outline" asChild>
+            <Link to={`/leagues/${leagueId}/history`}>Open full history</Link>
+          </Button>
+        </div>
+        <p className="text-muted-foreground text-sm">No finished contests yet.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">League History</h3>
+      <div className="flex items-center justify-between gap-4">
+        <h3 className="text-lg font-semibold">Finished Contests</h3>
+        <Button variant="outline" asChild>
+          <Link to={`/leagues/${leagueId}/history`}>Open full history</Link>
+        </Button>
+      </div>
       <div className="space-y-3">
-        {seasons.map((season) => (
-          <SeasonAccordion key={season.id} season={season} />
+        {results.slice(0, 5).map((result) => (
+          <Card key={result.id}>
+            <CardContent className="flex items-center justify-between gap-4 p-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{result.contestName ?? 'Finished contest'}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {result.sport ?? 'Contest'} • {result.contestType ?? 'Result'}
+                  {result.closedAt ? ` • ${new Date(result.closedAt).toLocaleDateString()}` : ''}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium">#{result.finalRank}</p>
+                  <p className="text-xs text-muted-foreground">{result.totalScore} pts</p>
+                </div>
+                <Badge variant={result.isWinner ? 'default' : 'secondary'} className="text-xs">
+                  {result.prizeLabel ?? (result.isWinner ? 'Winner' : 'Finished')}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>
@@ -671,7 +540,6 @@ export function Component() {
           <TabsTrigger value="contests">Contests</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="feed">Feed</TabsTrigger>
-          <TabsTrigger value="records">Records</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
 
@@ -685,10 +553,7 @@ export function Component() {
           <MembersTab leagueId={league.id} />
         </TabsContent>
         <TabsContent value="feed">
-          <FeedTab />
-        </TabsContent>
-        <TabsContent value="records">
-          <RecordsTab leagueId={league.id} />
+          <FeedTab leagueId={league.id} isCommissioner={isCommissioner} />
         </TabsContent>
         <TabsContent value="history">
           <HistoryTab leagueId={league.id} />

@@ -9,7 +9,7 @@
  *   const { data } = await adminListTenants({ client });
  */
 import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api/client';
-import type { ClientOptions } from '@poolmaster/shared/generated/hey-api/types.gen';
+import type { ClientOptions } from '@poolmaster/shared/generated/hey-api';
 
 export const client = createClient(createConfig<ClientOptions>({
   baseUrl: '/',
@@ -24,5 +24,4 @@ client.interceptors.request.use((request: Request) => {
 });
 
 // Re-export all generated SDK functions and types
-export * from '@poolmaster/shared/generated/hey-api/sdk.gen';
-export type * from '@poolmaster/shared/generated/hey-api/types.gen';
+export * from '@poolmaster/shared/generated/hey-api';

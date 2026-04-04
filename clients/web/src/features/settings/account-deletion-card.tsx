@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,16 +7,32 @@ import { useProfile } from './hooks/use-profile';
 import { toast } from '@/hooks/use-toast';
 import {
   AccountDeletionAcceptedResponseSchema,
+  AccountDeletionStatusResponseSchema,
 } from '@poolmaster/shared/dto/compliance.dto';
-import { cancelAccountDeletion, requestAccountDeletion, client } from '@/lib/api';
+import { cancelAccountDeletion, getAccountDeletionStatus, requestAccountDeletion, client } from '@/lib/api';
+import { settingsKeys } from './hooks/query-keys';
 
 type Step = 'idle' | 'consequences' | 'confirm' | 'waiting';
 
 export function AccountDeletionCard() {
+  const queryClient = useQueryClient();
   const { data: profile } = useProfile();
   const [step, setStep] = useState<Step>('idle');
   const [typedName, setTypedName] = useState('');
-  const [requestId, setRequestId] = useState<string | null>(null);
+  const deletionStatusQuery = useQuery({
+    queryKey: settingsKeys.accountDeletion(),
+    queryFn: async () => {
+      const { data, error } = await getAccountDeletionStatus({ client });
+      if (error) throw error;
+      return AccountDeletionStatusResponseSchema.parse(data);
+    },
+  });
+
+  const pendingRequestId = deletionStatusQuery.data?.status === 'pending'
+    ? deletionStatusQuery.data.requestId
+    : null;
+
+  const currentStep: Step = pendingRequestId ? 'waiting' : step;
 
   const requestDeletion = useMutation({
     mutationFn: async () => {
@@ -27,9 +43,9 @@ export function AccountDeletionCard() {
       if (error) throw error;
       return AccountDeletionAcceptedResponseSchema.parse(data);
     },
-    onSuccess: (data) => {
-      setRequestId(data.requestId);
+    onSuccess: async () => {
       setStep('waiting');
+      await queryClient.invalidateQueries({ queryKey: settingsKeys.accountDeletion() });
     },
     onError: () => {
       toast({ title: 'Request failed', description: 'Please try again.' });
@@ -38,15 +54,15 @@ export function AccountDeletionCard() {
 
   const cancelDeletion = useMutation({
     mutationFn: async () => {
-      if (!requestId) throw new Error('No pending deletion request');
-      const { error } = await cancelAccountDeletion({ client, path: { id: requestId } });
+      if (!pendingRequestId) throw new Error('No pending deletion request');
+      const { error } = await cancelAccountDeletion({ client, path: { id: pendingRequestId } });
       if (error) throw error;
     },
-    onSuccess: () => {
-      setRequestId(null);
+    onSuccess: async () => {
       setStep('idle');
       setTypedName('');
       toast({ title: 'Deletion cancelled', description: 'Your account will remain active.' });
+      await queryClient.invalidateQueries({ queryKey: settingsKeys.accountDeletion() });
     },
     onError: () => {
       toast({ title: 'Request failed', description: 'Please try again.' });
@@ -70,13 +86,29 @@ export function AccountDeletionCard() {
           be removed.
         </div>
 
-        {step === 'idle' && (
+        {deletionStatusQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading deletion status...</p>
+        ) : deletionStatusQuery.isError ? (
+          <div className="rounded-md border border-destructive/20 bg-destructive/5 p-4 text-sm">
+            <p>We couldn't load your account deletion status.</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={() => void deletionStatusQuery.refetch()}
+            >
+              Try again
+            </Button>
+          </div>
+        ) : null}
+
+        {currentStep === 'idle' && !deletionStatusQuery.isLoading && !deletionStatusQuery.isError && (
           <Button variant="destructive" onClick={() => setStep('consequences')}>
             Delete My Account
           </Button>
         )}
 
-        {step === 'consequences' && (
+        {currentStep === 'consequences' && (
           <div
             className="space-y-4 rounded-md border p-4"
             role="alertdialog"
@@ -100,7 +132,7 @@ export function AccountDeletionCard() {
           </div>
         )}
 
-        {step === 'confirm' && (
+        {currentStep === 'confirm' && (
           <div className="space-y-4 rounded-md border p-4">
             <p className="text-sm">
               Type your display name to confirm: <strong>{displayName}</strong>
@@ -125,18 +157,24 @@ export function AccountDeletionCard() {
           </div>
         )}
 
-        {step === 'waiting' && (
+        {currentStep === 'waiting' && (
           <div className="rounded-md border border-destructive/20 bg-destructive/5 p-4 text-sm">
             <p className="font-medium">Account scheduled for deletion</p>
             <p className="mt-1 text-muted-foreground">
               Your account will be deactivated immediately and permanently deleted after 14 days.
               You can cancel deletion by signing in within this period.
             </p>
+            {deletionStatusQuery.data?.scheduledDeletionAt ? (
+              <p className="mt-1 text-muted-foreground">
+                Scheduled deletion date:{' '}
+                {new Date(deletionStatusQuery.data.scheduledDeletionAt).toLocaleDateString()}
+              </p>
+            ) : null}
             <div className="mt-3">
               <Button
                 variant="outline"
                 onClick={() => void cancelDeletion.mutateAsync()}
-                disabled={!requestId || cancelDeletion.isPending}
+                disabled={!pendingRequestId || cancelDeletion.isPending}
               >
                 {cancelDeletion.isPending ? 'Cancelling...' : 'Cancel Deletion'}
               </Button>

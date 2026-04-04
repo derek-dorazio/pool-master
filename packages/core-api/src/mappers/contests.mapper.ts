@@ -22,6 +22,7 @@ interface ContestRow {
   contestType: string;
   selectionType: string;
   scoringEngine: string;
+  sport?: string | null;
   isExclusive: boolean;
   scoringStopsOnElimination: boolean;
   scoringRules: unknown;
@@ -56,6 +57,7 @@ export function toContestSummaryDto(
     selectionType: contest.selectionType,
     scoringEngine: contest.scoringEngine,
     leagueId: contest.leagueId,
+    sport: contest.sport ?? null,
     entryCount: opts?.entryCount,
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
@@ -73,6 +75,7 @@ export function toContestDetailDto(
     scoringRules: (contest.scoringRules ?? {}) as Record<string, unknown>,
     lockAt: contest.lockAt?.toISOString() ?? null,
     isExclusive: contest.isExclusive,
+    sport: contest.sport ?? null,
   };
 }
 

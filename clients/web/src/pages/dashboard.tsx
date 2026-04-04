@@ -4,7 +4,6 @@ import { ActiveContestsCard } from '@/features/dashboard/active-contests-card';
 import { UpcomingDraftsCard } from '@/features/dashboard/upcoming-drafts-card';
 import { MyLeaguesSummary } from '@/features/dashboard/my-leagues-summary';
 import { RecentActivityFeed } from '@/features/dashboard/recent-activity-feed';
-import { SeasonHighlightsCard } from '@/features/dashboard/season-highlights-card';
 
 export function Component() {
   const user = useAuthStore((s) => s.user);
@@ -31,8 +30,6 @@ export function Component() {
           <RecentActivityFeed />
         </div>
       </div>
-
-      <SeasonHighlightsCard />
     </div>
   );
 }
