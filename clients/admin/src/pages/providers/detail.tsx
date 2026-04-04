@@ -50,17 +50,17 @@ export function Component() {
   const { data: provider, isLoading, isError, error } = useProviderDetail(providerId ?? '');
   const dialog = useConfirmDialog();
 
-  if (isLoading || !provider) {
+  if (isLoading || (!provider && !isError)) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div data-testid="provider-detail-loading" className="flex items-center justify-center py-20">
         <p className="text-muted-foreground">Loading provider...</p>
       </div>
     );
   }
 
-  if (isError) {
+  if (isError || !provider) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div data-testid="provider-detail-error" className="flex items-center justify-center py-20">
         <p className="text-sm text-red-600">
           Provider detail is unavailable.
           <span className="ml-2 text-muted-foreground">
@@ -102,8 +102,8 @@ export function Component() {
   }
 
   return (
-    <div className="space-y-6">
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+    <div data-testid="provider-detail-page" className="space-y-6">
+      <nav data-testid="provider-detail-breadcrumb" className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link to="/providers" className="hover:text-foreground">Providers</Link>
         <span>/</span>
         <span className="text-foreground">{provider.providerName}</span>
@@ -113,7 +113,7 @@ export function Component() {
         <div className="flex items-center gap-4">
           <Activity className="h-7 w-7" />
           <div>
-            <h1 className="text-2xl font-bold">{provider.providerName}</h1>
+            <h1 data-testid="provider-detail-name" className="text-2xl font-bold">{provider.providerName}</h1>
             <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
               <span>Provider ID: <span className="font-mono font-medium text-foreground">{provider.providerId}</span></span>
               <span>Error Rate: <span className={cn('font-mono font-medium', provider.errorRate > 5 ? 'text-red-600' : 'text-foreground')}>{provider.errorRate.toFixed(1)}%</span></span>
