@@ -58,7 +58,28 @@ Examples that require rule updates:
 
 ---
 
-## 3. Do Not Preserve Bad Patterns
+## 3. Required Local Validation Before Push
+
+Before pushing code that could trigger CI, agents must run the full local quality gate set first unless the user explicitly approves skipping a gate for a narrow reason.
+
+Required local pre-push commands:
+
+1. `npx turbo typecheck --force`
+2. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+3. `npx jest --config tests/jest.config.js --forceExit`
+4. `cd clients/web && npx vitest run`
+5. `cd clients/admin && npx vitest run`
+
+Rules:
+
+- Treat these as pre-push gates, not optional follow-up checks.
+- Do not rely on GitHub CI to discover basic lint, unit, or integration failures that could have been caught locally.
+- Smoke tests and deployed browser E2E remain CI/deployment signals unless explicitly run locally as part of the task.
+- If a gate is blocked by local environment constraints, state that clearly before pushing.
+
+---
+
+## 4. Do Not Preserve Bad Patterns
 
 Do not protect obsolete architecture with inertia.
 
@@ -68,7 +89,7 @@ Do not protect obsolete architecture with inertia.
 
 ---
 
-## 4. Finding Tasks
+## 5. Finding Tasks
 
 | Prefix | Plan File | Area |
 |---|---|---|

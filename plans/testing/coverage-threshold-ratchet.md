@@ -12,6 +12,7 @@ This plan exists to:
 - make coverage regressions fail in GitHub CI
 - preserve the current real baseline first
 - ratchet coverage upward over time instead of trying to jump to an unrealistic target all at once
+- prioritize backend Jest, web Vitest, admin Vitest, and database-backed integration maturity before broadening slow smoke/E2E suites
 
 ## Current Baseline
 

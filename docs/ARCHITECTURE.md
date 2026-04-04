@@ -209,7 +209,6 @@ core-api
 | Service | Purpose | Dev (Docker) | QA/Prod (AWS) |
 |---------|---------|-------------|---------------|
 | **PostgreSQL 16** | Primary database | `localhost:5432` | RDS (private subnet) |
-| **Redis 7 (legacy scaffold)** | Legacy infra only, slated for removal | `localhost:6379` | ElastiCache |
 | **DynamoDB** | Event store (future) | `localhost:8000` (Local) | DynamoDB |
 | **Mailpit** | Email capture | `localhost:8025` | N/A (SES in prod) |
 | **Push Mock** | Push notification capture | `localhost:3099` | N/A (APNs/FCM in prod) |

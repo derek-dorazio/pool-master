@@ -197,7 +197,6 @@ terraform apply -var-file=envs/qa.tfvars
 | **Backend** | ECS Fargate (1 service) | core-api monolith (all modules in one process) |
 | **Webapp + Admin** | S3 + CloudFront CDN | Global edge caching, SPA routing, API proxying via /api/* |
 | **Database** | RDS PostgreSQL 16 | Private subnet, db.t3.micro (QA) |
-| **Cache/Queue** | Legacy ElastiCache Redis scaffold | Present in current Terraform only; planned removal from the live architecture |
 | **Load Balancer** | ALB | Path-based routing to ECS services |
 | **DNS** | Route 53 | `qa.ultimateofficepoolmanager.com`, `qa-admin.ultimateofficepoolmanager.com` |
 | **SSL** | ACM | Auto-validated wildcard cert for CloudFront (us-east-1) + ALB (us-east-2) |

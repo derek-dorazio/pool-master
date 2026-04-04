@@ -126,6 +126,7 @@ Remove tests if they are:
 - lower-signal duplicates of stronger MSW/contract coverage
 
 Do not keep bad tests just because they already exist.
+Before deleting an existing test suite for architecture/strategy reasons, confirm with the user first unless they already explicitly asked for that deletion category in the current thread.
 
 ---
 
@@ -158,6 +159,7 @@ Do not keep bad tests just because they already exist.
 - Browser automation must prefer stable machine selectors (`data-testid`, stable `id`) over human-readable copy.
 - Do not anchor deploy-gate browser tests to marketing headings, button labels, or translated strings unless the explicit purpose of the test is to validate that copy.
 - If a browser flow needs to click or read an element repeatedly, add a stable selector in the product code rather than teaching the test to depend on visible text.
+- Until the codebase is more stable, do not expand smoke or deployed browser E2E breadth aggressively. Prefer increasing defect-finding power in unit, database-backed integration, contract-aligned integration, and app-level Vitest suites first.
 
 ### React Testing Library Selector Rule
 

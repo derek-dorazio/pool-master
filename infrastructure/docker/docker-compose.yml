@@ -20,16 +20,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   core-api:
     build:
       context: ../..
@@ -38,13 +28,10 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
-      REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production
       NODE_ENV: development
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   draft-service:
@@ -55,12 +42,9 @@ services:
       - "3001:3001"
     environment:
       DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
-      REDIS_URL: redis://redis:6379
       NODE_ENV: development
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   scoring-service:
@@ -71,12 +55,9 @@ services:
       - "3002:3002"
     environment:
       DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
-      REDIS_URL: redis://redis:6379
       NODE_ENV: development
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   ingestion-worker:
@@ -87,12 +68,9 @@ services:
       - "3003:3003"
     environment:
       DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
-      REDIS_URL: redis://redis:6379
       NODE_ENV: development
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   notification-service:
@@ -103,12 +81,9 @@ services:
       - "3004:3004"
     environment:
       DATABASE_URL: postgresql://poolmaster:poolmaster@postgres:5432/poolmaster
-      REDIS_URL: redis://redis:6379
       NODE_ENV: development
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   web:

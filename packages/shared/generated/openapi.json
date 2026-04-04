@@ -2204,10 +2204,7 @@
                     "enum": [
                       "SNAKE_DRAFT",
                       "TIERED",
-                      "BUDGET_PICK",
-                      "OPEN_SELECTION",
-                      "PICK_EM",
-                      "BRACKET_PICK_EM"
+                      "BUDGET_PICK"
                     ]
                   },
                   "selectionConfig": {

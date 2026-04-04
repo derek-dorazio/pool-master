@@ -437,15 +437,6 @@ export const InfrastructureMetricsResponseSchema = z.object({
     replicationLagMs: z.number(),
     slowQueriesLast24h: z.number(),
   }),
-  redis: z.object({
-    status: z.enum(['UP', 'DEGRADED', 'DOWN']),
-    memoryUsedGb: z.number(),
-    memoryMaxGb: z.number(),
-    keyCount: z.number(),
-    hitRatePercent: z.number(),
-    connectedClients: z.number(),
-    evictedKeysLast24h: z.number(),
-  }),
   messageBus: z.object({
     status: z.enum(['UP', 'DEGRADED', 'DOWN']),
     queueDepth: z.number(),

@@ -213,20 +213,6 @@ resource "aws_security_group" "database" {
   tags = { Name = "${local.name_prefix}-db-sg" }
 }
 
-resource "aws_security_group" "redis" {
-  name_prefix = "${local.name_prefix}-redis-"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port       = 6379
-    to_port         = 6379
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs_tasks.id]
-  }
-
-  tags = { Name = "${local.name_prefix}-redis-sg" }
-}
-
 # =============================================================================
 # ECR — Container Registries
 # =============================================================================
@@ -311,30 +297,6 @@ resource "aws_db_instance" "postgres" {
   backup_retention_period = var.environment == "prod" ? 7 : 1
 
   tags = { Name = "${local.name_prefix}-postgres" }
-}
-
-# =============================================================================
-# ElastiCache — Redis
-# =============================================================================
-
-resource "aws_elasticache_subnet_group" "main" {
-  name       = "${local.name_prefix}-redis-subnet"
-  subnet_ids = aws_subnet.private[*].id
-}
-
-resource "aws_elasticache_cluster" "redis" {
-  cluster_id           = "${local.name_prefix}-redis"
-  engine               = "redis"
-  engine_version       = "7.0"
-  node_type            = var.redis_node_type
-  num_cache_nodes      = 1
-  parameter_group_name = "default.redis7"
-  port                 = 6379
-
-  subnet_group_name  = aws_elasticache_subnet_group.main.name
-  security_group_ids = [aws_security_group.redis.id]
-
-  tags = { Name = "${local.name_prefix}-redis" }
 }
 
 # =============================================================================
@@ -491,13 +453,11 @@ resource "aws_cloudwatch_log_group" "services" {
 # =============================================================================
 
 locals {
-  db_url    = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.endpoint}/${var.db_name}"
-  redis_url = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379"
+  db_url = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.endpoint}/${var.db_name}"
 
   common_env = [
     { name = "NODE_ENV", value = var.environment },
     { name = "DATABASE_URL", value = local.db_url },
-    { name = "REDIS_URL", value = local.redis_url },
   ]
 }
 

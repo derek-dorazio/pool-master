@@ -39,15 +39,6 @@ export interface InfrastructureMetrics {
     replicationLagMs: number;
     slowQueriesLast24h: number;
   };
-  redis: {
-    status: ServiceStatus;
-    memoryUsedGb: number;
-    memoryMaxGb: number;
-    keyCount: number;
-    hitRatePercent: number;
-    connectedClients: number;
-    evictedKeysLast24h: number;
-  };
   messageBus: {
     status: ServiceStatus;
     queueDepth: number;
@@ -195,11 +186,6 @@ export class HealthService {
             status: postgresStatus === 'DOWN' ? 'DOWN' : 'UP',
             latencyMs: postgresLatencyMs,
           },
-          {
-            name: 'Redis',
-            status: process.env.REDIS_URL ? 'UP' : 'DOWN',
-            latencyMs: 0,
-          },
         ],
       },
     ];
@@ -226,15 +212,6 @@ export class HealthService {
         diskTotalGb: 0,
         replicationLagMs: 0,
         slowQueriesLast24h: 0,
-      },
-      redis: {
-        status: process.env.REDIS_URL ? 'UP' : 'DOWN',
-        memoryUsedGb: 0,
-        memoryMaxGb: 0,
-        keyCount: 0,
-        hitRatePercent: 0,
-        connectedClients: 0,
-        evictedKeysLast24h: 0,
       },
       messageBus: {
         status: 'DOWN',

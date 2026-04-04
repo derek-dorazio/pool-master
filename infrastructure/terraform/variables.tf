@@ -78,14 +78,6 @@ variable "db_password" {
   sensitive   = true
 }
 
-# --- Redis ---
-
-variable "redis_node_type" {
-  description = "ElastiCache Redis node type"
-  type        = string
-  default     = "cache.t3.micro"
-}
-
 # --- ECS ---
 
 variable "ecs_cpu" {

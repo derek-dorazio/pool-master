@@ -52,11 +52,6 @@ output "rds_endpoint" {
   value       = aws_db_instance.postgres.endpoint
 }
 
-output "redis_endpoint" {
-  description = "ElastiCache Redis primary endpoint"
-  value       = aws_elasticache_cluster.redis.cache_nodes[0].address
-}
-
 output "ecr_repository_urls" {
   description = "ECR repository URLs for each service"
   value = {

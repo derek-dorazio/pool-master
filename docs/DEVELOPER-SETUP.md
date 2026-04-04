@@ -61,9 +61,6 @@ This starts:
 ### CLI Access to Infrastructure
 
 ```bash
-# Redis CLI — legacy scaffold only
-docker exec -it docker-redis-1 redis-cli
-
 # PostgreSQL CLI — run SQL queries
 docker exec -it docker-postgres-1 psql -U postgres -d poolmaster
 
@@ -100,8 +97,6 @@ The defaults work out of the box with Docker Compose. Key settings:
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster
-# Legacy scaffold only — not required by the active MVP runtime
-REDIS_URL=redis://localhost:6379
 
 # Email: "smtp" sends to Mailpit (localhost:1025), "ses" sends to LocalStack
 EMAIL_PROVIDER=smtp
@@ -285,7 +280,7 @@ terraform plan -var-file=envs/qa.tfvars
 terraform apply -var-file=envs/qa.tfvars
 ```
 
-This creates: ECS Fargate (1 backend service), RDS PostgreSQL, ElastiCache Redis, ALB, S3 + CloudFront (webapp + admin), ECR repository, CloudWatch alarms.
+This creates: ECS Fargate (1 backend service), RDS PostgreSQL, ALB, S3 + CloudFront (webapp + admin), ECR repository, CloudWatch alarms.
 
 After `terraform apply`, run migrations:
 ```bash

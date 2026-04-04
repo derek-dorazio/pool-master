@@ -58,11 +58,15 @@ const SPORTS = [
   { id: Sport.HORSE_RACING, name: 'Horse Racing', emoji: '🐎' },
 ];
 
-const ACTIVE_MVP_SELECTION_TYPES = new Set<SelectionType>([
+const ACTIVE_MVP_SELECTION_TYPE_VALUES = [
   SelectionType.SNAKE_DRAFT,
   SelectionType.TIERED,
   SelectionType.BUDGET_PICK,
-]);
+ ] as const satisfies readonly SelectionType[];
+
+const ACTIVE_MVP_SELECTION_TYPES = new Set<SelectionType>(ACTIVE_MVP_SELECTION_TYPE_VALUES);
+
+type ActiveMvpSelectionType = (typeof ACTIVE_MVP_SELECTION_TYPE_VALUES)[number];
 
 const wizardSchema = z.object({
   leagueId: z.string().min(1, 'Select a league'),
@@ -79,6 +83,7 @@ type SelectionTemplateDto = z.infer<typeof SelectionTemplateListResponseSchema>[
 type ScoringTemplateDto = z.infer<typeof ScoringTemplateListResponseSchema>['templates'][number];
 type EventDto = z.infer<typeof EventListResponseSchema>['events'][number];
 type TemplateConfigOverrides = Record<string, Record<string, unknown>>;
+type ActiveSelectionTemplateDto = SelectionTemplateDto & { selectionType: ActiveMvpSelectionType };
 
 const TIER_ASSIGNMENT_OPTIONS = [
   { value: 'WORLD_RANKING', label: 'World ranking' },
@@ -93,6 +98,14 @@ const PRICING_METHOD_OPTIONS = [
   { value: 'SEED', label: 'Seed' },
   { value: 'COMMISSIONER', label: 'Manual pricing' },
 ];
+
+function isActiveMvpSelectionType(selectionType: SelectionType): selectionType is ActiveMvpSelectionType {
+  return ACTIVE_MVP_SELECTION_TYPES.has(selectionType);
+}
+
+function isActiveSelectionTemplate(template: SelectionTemplateDto): template is ActiveSelectionTemplateDto {
+  return isActiveMvpSelectionType(template.selectionType as SelectionType);
+}
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -846,9 +859,7 @@ export function Component() {
 
   const scoringTemplates = (scoringTemplatesResponse?.templates ?? []).filter((template) => template.sport === sport);
   const events = eventsResponse?.events ?? [];
-  const selectionTemplates = selectionTemplatesResponse.filter((template) =>
-    ACTIVE_MVP_SELECTION_TYPES.has(template.selectionType as SelectionType),
-  );
+  const selectionTemplates = selectionTemplatesResponse.filter(isActiveSelectionTemplate);
   const commissionerLeagues = (leagueResponse?.leagues ?? []).filter(
     (league) => league.role === 'owner' || league.role === 'commissioner',
   );
@@ -888,7 +899,7 @@ export function Component() {
       if (!selectionTemplate) throw new Error('Selection template is missing.');
       if (!event) throw new Error('Event is missing.');
 
-      const selectionType = selectionTemplate.selectionType as SelectionType;
+      const selectionType = selectionTemplate.selectionType;
       const effectiveTemplateConfig = getEffectiveTemplateConfig(selectionTemplate, templateConfigOverrides);
       const selectionConfig = normalizeSelectionConfig(selectionType, effectiveTemplateConfig);
 

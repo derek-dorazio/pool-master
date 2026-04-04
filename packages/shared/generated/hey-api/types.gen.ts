@@ -815,7 +815,7 @@ export type CreateContestData = {
         eventId?: string;
         seasonId?: string;
         contestType: 'SINGLE_EVENT';
-        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
         selectionConfig?: {
             draftMode?: string;
             rounds?: number;

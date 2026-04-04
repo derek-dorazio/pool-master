@@ -97,13 +97,6 @@ export function useHealthDashboard() {
               metric2Value: String(infraRes.data.postgres.slowQueriesLast24h),
             },
             {
-              name: 'Redis',
-              metric1Label: 'Clients',
-              metric1Value: String(infraRes.data.redis.connectedClients),
-              metric2Label: 'Keys',
-              metric2Value: String(infraRes.data.redis.keyCount),
-            },
-            {
               name: 'Message Bus',
               metric1Label: 'Queue depth',
               metric1Value: String(infraRes.data.messageBus.queueDepth),
