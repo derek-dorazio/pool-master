@@ -12,6 +12,7 @@ This service exists so we can:
 - drive deterministic tier/price derivation scenarios
 - exercise results/standings/scoring flows with repeatable data
 - keep the product code pointed at real provider ports/adapters while swapping only the provider implementation in QA and local test runs
+- hold broad non-production contest feed data for automated and manual QA testing without polluting application seed data
 
 ## Scope
 
@@ -32,6 +33,26 @@ Out of scope:
 - application fallback from real providers to the mock provider
 - general contest UI changes unrelated to ingestion/provider testing
 - replacing real ingestion provider logic in the main app
+
+## Seed Boundary
+
+This service is also the boundary that keeps QA test fixtures out of application seeding.
+
+Seed data for the app should contain only:
+
+- production-required bootstrap records
+- required default configurations
+- necessary operator/admin access records
+
+Seed data for the app should not contain:
+
+- fake QA contests
+- fake contestant pools
+- fake odds or rankings
+- fake result histories
+- broad manual-testing fixtures
+
+Those non-production testing datasets should live in `mock-contest-feed-provider` scenario files and be served through the mock feed API instead of being inserted through `prisma/seed.ts`.
 
 ## Architecture Fit
 
@@ -130,6 +151,17 @@ It must not be deployed to:
 
 The product must not depend on this service being available.
 
+Recommended runtime shape:
+
+- local: run as a lightweight local service from scenario JSON files
+- QA: deploy as a dedicated long-running ECS-backed HTTP service so CI smoke/E2E, ingestion tests, and manual testers can all hit the same deterministic feed catalog
+
+Recommended QA role:
+
+- the service should act as shared non-production feed infrastructure for QA
+- it should replace the need to stuff broad fake contest data into application seed scripts
+- it should be safe to expand with more scenario files over time without changing the core app seed contract
+
 ## Test Ownership
 
 This service should own one dedicated test lane first, with future expansion only after the initial suite is stable.
@@ -141,6 +173,7 @@ Primary test goals:
 - odds/ranking/result mapping
 - tier and price derivation from feed data
 - scoring/standings updates from final results
+- manual QA support through stable, named scenarios that can be referenced in test instructions
 
 Future test owners should update the scenario files rather than inventing ad hoc fixtures inside application tests.
 
@@ -150,6 +183,7 @@ Future test owners should update the scenario files rather than inventing ad hoc
 - Keep JSON scenarios small and deterministic.
 - Do not add production fallback code to support missing scenario data.
 - Do not let the app silently fall back to the mock provider when real providers fail.
+- Do not add broad QA/manual-test fixture data to `prisma/seed.ts`; add or update mock feed scenarios instead.
 - Update this plan when the scenario format, provider contract, or deployment boundary changes.
 - Keep the service strictly non-production-only unless the plan is explicitly re-opened.
 
@@ -159,22 +193,24 @@ Future test owners should update the scenario files rather than inventing ad hoc
 |---|---|---|---|---|
 | MCFP-001 | Naming | Finalize the domain-accurate service name, provider id, and scenario directory naming | Not Started | Use contest/feed terminology so the service is clearly a mock third-party feed source for contests and contestants |
 | MCFP-002 | Architecture | Define the provider port/adapter contract that the mock service must implement | Not Started | Keep it interchangeable with real feed providers without changing app code paths |
-| MCFP-003 | Deployment | Define QA/local-only runtime and make production/staging deployment explicitly unsupported | Not Started | This service is test infrastructure, not a product fallback |
+| MCFP-003 | Deployment | Define QA/local-only runtime and make production/staging deployment explicitly unsupported | Not Started | This service is test infrastructure, not a product fallback; QA should run it as a dedicated HTTP service, not as application seed data |
 | MCFP-004 | OpenAPI | Generate and validate OpenAPI/client output for the mock service | Not Started | The app and test suites should consume generated types/clients, not handwritten request shapes |
 | MCFP-005 | Scenarios | Design the JSON scenario-file format and baseline fixtures | Not Started | Include at least golf, tennis, team-tournament, and one correction/tie edge case |
 | MCFP-006 | Ingestion Tests | Build a dedicated ingestion test suite that exercises the mock provider end to end | Not Started | Use the mock service only for the ingestion contract test lane |
 | MCFP-007 | Tiering / Pricing | Verify odds, rankings, and seed data drive tier and price derivation deterministically | Not Started | The mock feed should make tier and price derivation repeatable for tournament contests |
 | MCFP-008 | Results / Scoring | Verify final results and live updates propagate into standings and scoring flows | Not Started | Cover ties, withdrawals, and corrections in the scenario set |
 | MCFP-009 | Maintenance | Define update rules for adding new scenarios and for changing existing ones | Not Started | Scenario updates should be reviewed as test-contract changes, not hidden product behavior |
+| MCFP-010 | Seed Separation | Remove the need for broad QA fixture data in application seed flows and document the new boundary | Not Started | `prisma/seed.ts` should stay limited to production-required bootstrap records and defaults; QA/manual test fixtures belong in mock feed scenarios |
 
 ## Acceptance Criteria
 
 - The service name clearly communicates that it mocks contest feeds, not product behavior.
 - The service is usable locally and in QA only.
+- QA can use it as shared feed infrastructure for automated and manual testing.
 - The app continues to use the normal provider port/adapter model.
 - The product does not rely on this service for production operation.
 - JSON scenario files are deterministic and easy to extend.
+- Application seed scripts no longer need broad fake QA contest data.
 - At least one ingestion test suite runs fully against the mock service.
 - Tiering, pricing, and results flows can be exercised without external third parties.
 - Future agents have a clear rule set for when and how to add scenarios.
-

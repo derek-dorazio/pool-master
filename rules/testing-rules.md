@@ -136,6 +136,7 @@ Do not keep bad tests just because they already exist.
 - Lives under `tests/api/functional/*.smoke.ts` and related health smoke files.
 - Treat smoke tests as black-box environment validation against deployed services.
 - In CI/CD, smoke runs after the deployment pipeline completes migration and seed successfully; treat that sequencing as part of the contract when debugging failures or updating test strategy.
+- Application seed flows are never a place for test fixtures. No agent, including test-building or QA-focused agents, may add QA data, smoke-test data, E2E data, manual-test data, fake contests, fake contestant pools, fake odds, fake rankings, or fake results to `prisma/seed.ts` or any other application seed path. Keep seed data limited to production-required bootstrap records and default configuration; put non-production contest/odds/results fixture catalogs behind dedicated test infrastructure such as `mock-contest-feed-provider`.
 - Use shared route constants from `@poolmaster/shared/api-routes`.
 - Keep smoke flows aligned with real critical-path behavior.
 - When endpoint contracts change, smoke tests must change with them.
