@@ -3,10 +3,56 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as CreateContestPage } from './create';
 
+const navigateMock = vi.fn();
+const createContestMock = vi.fn();
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-  return { ...actual, useNavigate: () => vi.fn() };
+  return { ...actual, useNavigate: () => navigateMock };
 });
+
+vi.mock('@/lib/api', () => ({
+  client: {},
+  createContest: (...args: unknown[]) => createContestMock(...args),
+  listLeagues: vi.fn(),
+  listScoringTemplates: vi.fn(),
+  listSelectionTemplates: vi.fn(),
+}));
+
+function mockCreateContestResponse() {
+  createContestMock.mockResolvedValue({
+    data: { contest: { id: 'contest-created' } },
+    error: null,
+  });
+}
+
+async function completeCreateFlow(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: /spring league/i }));
+  await user.click(screen.getByRole('button', { name: /nfl/i }));
+  await user.click(screen.getByRole('button', { name: /championship weekend/i }));
+  await user.type(screen.getByLabelText('Contest Name'), 'Championship Contest');
+  await user.click(screen.getByRole('button', { name: /next/i }));
+}
+
+async function selectTieredTemplateAndConfigure(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: /masters pick 6/i }));
+  fireEvent.change(screen.getByLabelText('Tier Count'), { target: { value: '8' } });
+  fireEvent.change(screen.getByLabelText('Tier Size'), { target: { value: '12' } });
+  await user.selectOptions(screen.getByLabelText('Tier Assignment'), 'ODDS');
+  await user.click(screen.getByRole('button', { name: /next/i }));
+  await user.click(screen.getByRole('button', { name: /pickem-default/i }));
+  await user.click(screen.getByRole('button', { name: /next/i }));
+}
+
+async function selectBudgetTemplateAndConfigure(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: /budget pick 6/i }));
+  fireEvent.change(screen.getByLabelText('Budget'), { target: { value: '3500000' } });
+  fireEvent.change(screen.getByLabelText('Roster Size'), { target: { value: '5' } });
+  await user.selectOptions(screen.getByLabelText('Pricing Formula'), 'ODDS');
+  await user.click(screen.getByRole('button', { name: /next/i }));
+  await user.click(screen.getByRole('button', { name: /pickem-default/i }));
+  await user.click(screen.getByRole('button', { name: /next/i }));
+}
 
 vi.mock('@tanstack/react-query', async () => {
   const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
@@ -86,6 +132,12 @@ vi.mock('@tanstack/react-query', async () => {
 });
 
 describe('CreateContestPage', () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+    createContestMock.mockReset();
+    mockCreateContestResponse();
+  });
+
   it('renders the honest event-backed setup instead of the old fake event wizard', () => {
     render(
       <MemoryRouter>
@@ -111,11 +163,7 @@ describe('CreateContestPage', () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByRole('button', { name: /spring league/i }));
-    await user.click(screen.getByRole('button', { name: /nfl/i }));
-    await user.click(screen.getByRole('button', { name: /championship weekend/i }));
-    await user.type(screen.getByLabelText('Contest Name'), 'Championship Pick 6');
-    await user.click(screen.getByRole('button', { name: /next/i }));
+    await completeCreateFlow(user);
 
     expect(screen.getByText(/tier count: 6/i)).toBeInTheDocument();
     expect(screen.getByText(/picks per tier: 1/i)).toBeInTheDocument();
@@ -146,11 +194,7 @@ describe('CreateContestPage', () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByRole('button', { name: /spring league/i }));
-    await user.click(screen.getByRole('button', { name: /nfl/i }));
-    await user.click(screen.getByRole('button', { name: /championship weekend/i }));
-    await user.type(screen.getByLabelText('Contest Name'), 'Championship Budget 6');
-    await user.click(screen.getByRole('button', { name: /next/i }));
+    await completeCreateFlow(user);
 
     await user.click(screen.getByRole('button', { name: /budget pick 6/i }));
     fireEvent.change(screen.getByLabelText('Budget'), { target: { value: '3500000' } });
@@ -164,5 +208,92 @@ describe('CreateContestPage', () => {
     expect(screen.getByText(/budget: \$3,500,000/i)).toBeInTheDocument();
     expect(screen.getByText(/roster size: 5/i)).toBeInTheDocument();
     expect(screen.getByText(/pricing: Odds/i)).toBeInTheDocument();
+  }, 10000);
+
+  it('submits a tiered contest with normalized selection config and navigates to the new contest', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <CreateContestPage />
+      </MemoryRouter>,
+    );
+
+    await completeCreateFlow(user);
+    await selectTieredTemplateAndConfigure(user);
+    await user.click(screen.getByRole('button', { name: /create contest/i }));
+
+    expect(createContestMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1' },
+      body: expect.objectContaining({
+        name: 'Championship Contest',
+        sport: 'NFL',
+        eventId: 'event-1',
+        contestType: 'SINGLE_EVENT',
+        selectionType: 'TIERED',
+        scoringTemplateKey: 'pickem-default',
+        startsAt: '2026-04-10T15:00:00.000Z',
+        endsAt: '2026-04-12T15:00:00.000Z',
+        lockAt: '2026-04-10T15:00:00.000Z',
+        isExclusive: false,
+      }),
+    }));
+    expect(createContestMock.mock.calls[0][0].body.selectionConfig).toMatchObject({
+      tierAssignmentMethod: 'ODDS',
+    });
+    expect(createContestMock.mock.calls[0][0].body.selectionConfig.tierConfig).toHaveLength(8);
+    expect(createContestMock.mock.calls[0][0].body.selectionConfig.tierConfig[7]).toMatchObject({
+      tierId: 'tier-8',
+      tierName: 'Tier 8',
+      tierNumber: 8,
+      picksFromTier: 1,
+      maxParticipants: 12,
+      rankingRange: [85, 96],
+    });
+    expect(createContestMock.mock.calls[0][0].body.selectionConfig.tierConfig[0]).toMatchObject({
+      tierId: 'tier-1',
+      tierName: 'Tier 1',
+      tierNumber: 1,
+      picksFromTier: 1,
+      maxParticipants: 12,
+      rankingRange: [1, 12],
+    });
+    expect(navigateMock).toHaveBeenCalledWith('/contests/contest-created');
+  }, 10000);
+
+  it('submits a budget contest with normalized pricing config and navigates to the new contest', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <CreateContestPage />
+      </MemoryRouter>,
+    );
+
+    await completeCreateFlow(user);
+    await selectBudgetTemplateAndConfigure(user);
+    await user.click(screen.getByRole('button', { name: /create contest/i }));
+
+    expect(createContestMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1' },
+      body: expect.objectContaining({
+        name: 'Championship Contest',
+        sport: 'NFL',
+        eventId: 'event-1',
+        contestType: 'SINGLE_EVENT',
+        selectionType: 'BUDGET_PICK',
+        scoringTemplateKey: 'pickem-default',
+        startsAt: '2026-04-10T15:00:00.000Z',
+        endsAt: '2026-04-12T15:00:00.000Z',
+        lockAt: '2026-04-10T15:00:00.000Z',
+        isExclusive: false,
+      }),
+    }));
+    expect(createContestMock.mock.calls[0][0].body.selectionConfig).toMatchObject({
+      budget: 3500000,
+      rosterSize: 5,
+      pricingMethod: 'ODDS',
+    });
+    expect(navigateMock).toHaveBeenCalledWith('/contests/contest-created');
   }, 10000);
 });
