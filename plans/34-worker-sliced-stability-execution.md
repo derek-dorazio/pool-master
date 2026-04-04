@@ -215,7 +215,7 @@ Improve confidence in the still-supported admin surfaces without broadening admi
 | ID | Slice | Task | Status | Notes |
 |---|---|---|---|---|
 | WSH-001 | Main | Keep shared CI/CD, package/runtime, and policy hardening on the main thread | In Progress | Do not delegate shared-contract work while the repo is still tightening stability gates |
-| WSH-002 | A | Add focused web auth coverage and fix defects revealed there | Not Started | Candidate first worker once the next CI cycle is calm |
+| WSH-002 | A | Add focused web auth coverage and fix defects revealed there | Done | Main thread pilot slice completed on 2026-04-04. Added meaningful auth page coverage for submit success/failure, redirect preservation, wizard progression, and age validation without surfacing deeper shared-architecture issues. |
 | WSH-003 | B | Add league detail/member/settings coverage and fix defects revealed there | Not Started | Good parallel slice with mostly disjoint files |
 | WSH-004 | C | Add contest review surface coverage for active MVP modes | Not Started | Keep deferred modes out of scope |
 | WSH-005 | D | Add draft-room coverage for kept MVP modes | Not Started | Separate from contest create flow to reduce conflict |
