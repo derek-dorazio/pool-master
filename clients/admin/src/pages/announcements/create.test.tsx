@@ -48,6 +48,8 @@ describe('AnnouncementCreatePage', () => {
 
   it('submits the announcement payload through the SDK and returns to the list', async () => {
     const user = userEvent.setup();
+    const startsAtInput = '2026-04-04T18:00';
+    const endsAtInput = '2026-04-04T20:00';
     renderPage();
 
     await user.click(screen.getByRole('radio', { name: 'Both' }));
@@ -60,10 +62,10 @@ describe('AnnouncementCreatePage', () => {
     await user.type(screen.getByLabelText(/link text/i), 'Status page');
     await user.type(screen.getByLabelText(/tenant ids/i), 'tenant-a, tenant-b');
     fireEvent.change(screen.getByLabelText(/starts at/i), {
-      target: { value: '2026-04-04T18:00' },
+      target: { value: startsAtInput },
     });
     fireEvent.change(screen.getByLabelText(/ends at/i), {
-      target: { value: '2026-04-04T20:00' },
+      target: { value: endsAtInput },
     });
 
     await user.click(screen.getByTestId('announcement-publish'));
@@ -81,8 +83,8 @@ describe('AnnouncementCreatePage', () => {
           dismissable: true,
           target: 'SPECIFIC_TENANTS',
           targetTenantIds: ['tenant-a', 'tenant-b'],
-          startsAt: '2026-04-04T22:00:00.000Z',
-          endsAt: '2026-04-05T00:00:00.000Z',
+          startsAt: new Date(startsAtInput).toISOString(),
+          endsAt: new Date(endsAtInput).toISOString(),
         },
       });
       expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['announcements'] });
