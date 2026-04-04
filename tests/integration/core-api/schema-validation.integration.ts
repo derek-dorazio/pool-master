@@ -15,6 +15,7 @@ import {
   createTestUser,
   getPrisma,
   cleanupTestData,
+  getTestTenantId,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { LeagueVisibility, ContestType, SelectionType, ScoringEngine } from '@poolmaster/shared/domain';
@@ -40,7 +41,7 @@ beforeAll(async () => {
   const app = getApp();
 
   // Tenant comes from helpers (test tenant)
-  tenantId = '00000000-0000-0000-0000-999999999999';
+  tenantId = getTestTenantId();
 
   // User
   const testUser = await createTestUser();

@@ -46,6 +46,7 @@ describe('Pool Participant Operations', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Pool Ops Golf Contest',
+        sport: 'GOLF',
         contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
         scoringEngine: 'STROKE_PLAY',
@@ -190,7 +191,9 @@ describe('Pool Participant Operations', () => {
 
   describe('POST /pool/participants/:participantId/available', () => {
     it('marks a participant as available again', async () => {
-      const { 'content-type': _, ...headersNoContentType } = ownerHeaders;
+      const headersNoContentType = Object.fromEntries(
+        Object.entries(ownerHeaders).filter(([key]) => key.toLowerCase() !== 'content-type'),
+      );
       const res = await getApp().inject({
         method: 'POST',
         url: `/api/v1/contests/${contestId}/pool/participants/${participantId}/available`,

@@ -8,6 +8,7 @@ import {
   getApp,
   createTestUser,
   cleanupTestData,
+  getTestTenantId,
 } from '../helpers';
 
 beforeAll(() => setupIntegrationTests());
@@ -16,7 +17,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 
-const TEST_TENANT_ID = '00000000-0000-0000-0000-999999999999';
+const TEST_TENANT_ID = getTestTenantId();
 
 describe('Notification Dispatch & Scheduling', () => {
   let headers: Record<string, string>;
@@ -141,7 +142,9 @@ describe('Notification Dispatch & Scheduling', () => {
       expect(schedRes.statusCode).toBe(200);
 
       // Now cancel it — strip content-type for DELETE
-      const { 'content-type': _, ...headersNoContentType } = headers;
+      const headersNoContentType = Object.fromEntries(
+        Object.entries(headers).filter(([key]) => key.toLowerCase() !== 'content-type'),
+      );
       const res = await getApp().inject({
         method: 'DELETE',
         url: '/api/v1/notifications/schedule/contest/00000000-0000-0000-0000-000000000002',

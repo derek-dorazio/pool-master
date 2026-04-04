@@ -88,6 +88,7 @@ describe('Search & Discovery Integration', () => {
       headers: commissioner.headers,
       payload: {
         name: 'Discovery Contest',
+        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
         scoringEngine: ScoringEngine.STROKE_PLAY,

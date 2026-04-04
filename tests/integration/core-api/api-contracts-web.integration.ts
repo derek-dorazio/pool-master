@@ -65,6 +65,7 @@ describe('Web API Contract Validation', () => {
       headers,
       payload: {
         name: 'Contract Test Contest',
+        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
         scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -89,6 +90,7 @@ describe('Web API Contract Validation', () => {
       headers,
       payload: {
         name: 'Contract Discovery Contest',
+        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
         scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -313,6 +315,7 @@ describe('Web API Contract Validation', () => {
         headers,
         payload: {
           name: 'Contract Contest Shape',
+          sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
           scoringEngine: ScoringEngine.STROKE_PLAY,

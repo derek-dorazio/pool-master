@@ -23,7 +23,7 @@ export function Component() {
       sections={SECTIONS}
     >
       <LegalSection id="overview" title="Overview">
-        <p>Ultimate Pool Manager ("we", "us", "our") operates a fantasy sports pool management platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and mobile applications.</p>
+        <p>Ultimate Pool Manager ("we", "us", "our") operates a tournament pool management platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and related services.</p>
         <p>By using Ultimate Pool Manager, you agree to the collection and use of information in accordance with this policy.</p>
       </LegalSection>
 
@@ -38,7 +38,7 @@ export function Component() {
         <h3 className="text-lg font-medium mt-4 mb-2">Information Collected Automatically</h3>
         <ul className="list-disc pl-6 space-y-1">
           <li><strong>Usage data:</strong> Pages visited, features used, time spent in the app.</li>
-          <li><strong>Device information:</strong> Device type, operating system, browser type, and app version.</li>
+          <li><strong>Device information:</strong> Device type, operating system, browser type, and site version.</li>
           <li><strong>IP address:</strong> Used for security and approximate geographic location.</li>
         </ul>
       </LegalSection>

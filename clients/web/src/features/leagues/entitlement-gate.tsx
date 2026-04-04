@@ -5,8 +5,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { client, getEntitlements } from '@/lib/api';
 
 interface Entitlement {
@@ -60,11 +58,9 @@ export function EntitlementGate({ entitlementKey, children, fallback }: Entitlem
               <> ({entitlement.currentUsage} / {entitlement.limit})</>
             )}
           </p>
-          {entitlement?.upgradePlan && (
-            <Button asChild size="sm">
-              <Link to="/billing/plans">Upgrade Plan</Link>
-            </Button>
-          )}
+          <p className="text-xs text-muted-foreground">
+            Paid plan upgrades are deferred for the MVP launch.
+          </p>
         </div>
       )}
     </>

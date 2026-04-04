@@ -5,7 +5,6 @@ import {
   Trophy,
   Zap,
   Users,
-  Smartphone,
   Settings,
   BarChart3,
 } from 'lucide-react';
@@ -28,11 +27,6 @@ const features = [
     icon: Users,
     title: 'Invite Friends',
     description: 'Share a link and get your league going in minutes',
-  },
-  {
-    icon: Smartphone,
-    title: 'Mobile Ready',
-    description: 'Full experience on any device, anywhere',
   },
   {
     icon: Settings,
@@ -59,8 +53,8 @@ const sports = [
 ];
 
 const stats = [
-  { label: '10,000+ pools created' },
-  { label: '9 sports supported' },
+  { label: 'Tournament-first pools' },
+  { label: 'Team and individual sports' },
   { label: 'Free to start' },
 ];
 

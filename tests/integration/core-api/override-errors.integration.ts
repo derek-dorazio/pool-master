@@ -42,6 +42,7 @@ describe('Override Service Error Paths', () => {
       headers,
       payload: {
         name: 'Override Error Pool',
+        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
         scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -87,8 +88,9 @@ describe('Override Service Error Paths', () => {
   // 3. Resume draft when not paused (no session at all)
   describe('POST /contests/:id/draft/resume', () => {
     it('returns 400 when no draft session exists', async () => {
-      // resume has no body schema, strip content-type
-      const { 'content-type': _, ...noContentHeaders } = headers;
+      const noContentHeaders = Object.fromEntries(
+        Object.entries(headers).filter(([key]) => key.toLowerCase() !== 'content-type'),
+      );
       const res = await getApp().inject({
         method: 'POST',
         url: `/api/v1/contests/${contestId}/draft/resume`,
@@ -137,8 +139,9 @@ describe('Override Service Error Paths', () => {
   // 6. Confirm payouts on a DRAFT contest (not COMPLETED)
   describe('POST /contests/:id/payouts/confirm', () => {
     it('returns 400 when contest is not completed', async () => {
-      // confirmPayouts has no body schema, strip content-type
-      const { 'content-type': _, ...noContentHeaders } = headers;
+      const noContentHeaders = Object.fromEntries(
+        Object.entries(headers).filter(([key]) => key.toLowerCase() !== 'content-type'),
+      );
       const res = await getApp().inject({
         method: 'POST',
         url: `/api/v1/contests/${contestId}/payouts/confirm`,

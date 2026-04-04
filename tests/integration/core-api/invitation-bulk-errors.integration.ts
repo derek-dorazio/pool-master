@@ -25,10 +25,8 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
   let ownerHeaders: Record<string, string>;
   let ownerId: string;
   let memberHeaders: Record<string, string>;
-  let memberId: string;
   let leagueId: string;
   let inviteCode: string;
-  let contestId: string;
 
   beforeAll(async () => {
     // Create owner and member users
@@ -38,7 +36,6 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
 
     const member = await createTestUser({ displayName: 'InvBulk Member' });
     memberHeaders = member.headers;
-    memberId = member.user.id;
 
     // Owner creates a league
     const leagueRes = await getApp().inject({
@@ -75,13 +72,14 @@ describe('Invitation Edge Cases & Bulk Operation Errors', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Source Contest',
+        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
         scoringEngine: ScoringEngine.STROKE_PLAY,
       },
     });
     const contestBody = contestRes.json();
-    contestId = (contestBody.contest ?? contestBody).id;
+    expect((contestBody.contest ?? contestBody).id).toBeDefined();
   });
 
   // -----------------------------------------------------------------------

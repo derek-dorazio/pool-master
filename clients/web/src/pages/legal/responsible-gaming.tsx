@@ -19,7 +19,7 @@ export function Component() {
       sections={SECTIONS}
     >
       <LegalSection id="commitment" title="Our Commitment">
-        <p>Ultimate Pool Manager is committed to providing a safe, fun, and responsible gaming environment. While Ultimate Pool Manager does not handle real-money transactions between users, we recognise that fantasy sports engagement should be balanced and healthy.</p>
+        <p>Ultimate Pool Manager is committed to providing a safe, fun, and responsible gaming environment. While Ultimate Pool Manager does not handle real-money transactions between users, we recognise that tournament pool participation should be balanced and healthy.</p>
         <p>We provide tools to help you manage your activity and take breaks when needed.</p>
       </LegalSection>
 

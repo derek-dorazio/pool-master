@@ -38,6 +38,7 @@ describe('Contest Lifecycle Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Lifecycle Test Contest',
+        sport: 'GOLF',
         contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
         scoringEngine: 'STROKE_PLAY',
@@ -139,7 +140,9 @@ describe('Contest Lifecycle Integration', () => {
 
   describe('POST /api/v1/contests/:contestId/payouts/confirm', () => {
     it('attempts payout confirmation', async () => {
-      const { 'content-type': _, ...h } = ownerHeaders;
+      const h = Object.fromEntries(
+        Object.entries(ownerHeaders).filter(([key]) => key.toLowerCase() !== 'content-type'),
+      );
       const res = await getApp().inject({
         method: 'POST',
         url: `/api/v1/contests/${contestId}/payouts/confirm`,

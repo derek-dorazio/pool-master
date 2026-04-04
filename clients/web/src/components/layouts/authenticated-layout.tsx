@@ -4,7 +4,6 @@ import {
   Trophy,
   Compass,
   Settings,
-  CreditCard,
   Menu,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
@@ -18,7 +17,6 @@ const navItems = [
   { to: '/leagues', label: 'Leagues', icon: Trophy },
   { to: '/discover', label: 'Discover', icon: Compass },
   { to: '/settings', label: 'Settings', icon: Settings },
-  { to: '/billing', label: 'Billing', icon: CreditCard },
 ];
 
 export function AuthenticatedLayout() {

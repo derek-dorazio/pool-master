@@ -45,6 +45,7 @@ describe('History Deep Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'History Golf Pool',
+        sport: 'GOLF',
         contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
         scoringEngine: 'STROKE_PLAY',

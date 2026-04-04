@@ -186,7 +186,7 @@ describe('PrismaContestEntryRepository', () => {
       method: 'POST',
       url: `/api/v1/leagues/${leagueId}/contests`,
       headers: ownerHeaders,
-      payload: { name: 'Entry Test Contest', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY' },
+      payload: { name: 'Entry Test Contest', sport: 'GOLF', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY' },
     });
     entryContestId = cr.json().contest.id;
   });

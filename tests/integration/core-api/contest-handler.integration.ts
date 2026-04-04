@@ -9,7 +9,6 @@ import {
   teardownIntegrationTests,
   getApp,
   createTestUser,
-  getPrisma,
   cleanupTestData,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
@@ -48,6 +47,7 @@ describe('Contest Handler Integration', () => {
       headers,
       payload: {
         name: 'Draft Contest',
+        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
         scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -64,6 +64,7 @@ describe('Contest Handler Integration', () => {
       headers,
       payload: {
         name: 'Lifecycle Contest',
+        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
         scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -189,6 +190,7 @@ describe('Contest Handler Integration', () => {
         headers,
         payload: {
           name: 'Disposable Contest',
+          sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
           scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -198,7 +200,9 @@ describe('Contest Handler Integration', () => {
     });
 
     it('deletes a DRAFT contest and returns 204', async () => {
-      const { 'content-type': _, ...h } = headers;
+      const h = Object.fromEntries(
+        Object.entries(headers).filter(([key]) => key.toLowerCase() !== 'content-type'),
+      );
       const res = await getApp().inject({
         method: 'DELETE',
         url: API_ROUTES.contests.detail(deleteContestId),

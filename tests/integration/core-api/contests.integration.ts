@@ -132,6 +132,7 @@ describe('Contests Integration', () => {
         headers: ownerHeaders,
         payload: {
           name: 'Entry Flow Pool',
+          sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
           scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -238,7 +239,7 @@ describe('Contests Integration', () => {
       const res = await getApp().inject({
         method: 'POST',
         url: `/api/v1/leagues/${leagueId}/contests`,
-        payload: { name: 'No Auth', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY' },
+        payload: { name: 'No Auth', sport: 'GOLF', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY' },
       });
       expect([400, 401]).toContain(res.statusCode);
     });

@@ -37,7 +37,7 @@ export function Component() {
       </LegalSection>
 
       <LegalSection id="platform-use" title="4. Platform Use">
-        <p>Ultimate Pool Manager is a fantasy sports pool management platform. You may create and join leagues, participate in contests, draft participants, and track results. The platform is provided for entertainment and social purposes.</p>
+        <p>Ultimate Pool Manager is a tournament pool management platform. You may create and join leagues, participate in contests, make selections, and track results. The platform is provided for entertainment and social purposes.</p>
       </LegalSection>
 
       <LegalSection id="no-real-money" title="5. No Real-Money Transactions">
