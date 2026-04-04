@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   useNotificationPreferences,
   useSaveNotificationPreferences,
+  type NotificationPreferences,
   type DndSettings,
 } from './hooks/use-notification-preferences';
 
@@ -31,16 +32,30 @@ export function DNDScheduler() {
   const { data: preferences, isLoading } = useNotificationPreferences();
   const savePreferences = useSaveNotificationPreferences();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const latestPreferencesRef = useRef<NotificationPreferences | null>(null);
+  const latestDndRef = useRef<DndSettings | null>(null);
+
+  useEffect(() => {
+    latestPreferencesRef.current = preferences ?? null;
+    latestDndRef.current = preferences?.dnd ?? null;
+  }, [preferences]);
 
   const save = useCallback(
-    (dnd: DndSettings) => {
-      if (!preferences) return;
+    (partial: Partial<DndSettings>) => {
+      const currentPreferences = latestPreferencesRef.current;
+      const currentDnd = latestDndRef.current;
+      if (!currentPreferences || !currentDnd) return;
+      const nextDnd = { ...currentDnd, ...partial };
+      const nextPreferences = { ...currentPreferences, dnd: nextDnd };
+      latestPreferencesRef.current = nextPreferences;
+      latestDndRef.current = nextDnd;
+
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        savePreferences.mutate({ ...preferences, dnd });
+        savePreferences.mutate(nextPreferences);
       }, 1000);
     },
-    [preferences, savePreferences],
+    [savePreferences],
   );
 
   useEffect(() => {
@@ -69,7 +84,7 @@ export function DNDScheduler() {
   const { dnd } = preferences;
 
   function updateDnd(partial: Partial<DndSettings>) {
-    save({ ...dnd, ...partial });
+    save(partial);
   }
 
   return (

@@ -97,4 +97,43 @@ describe('useRecentActivity', () => {
     expect(result.current.data?.[1]?.description).toBe('Mike T.: Masters pricing imported and ready to review.');
     expect(result.current.data?.every((item) => typeof item.relativeTime === 'string')).toBe(true);
   });
+
+  it('keeps only the five newest feed items across leagues', async () => {
+    vi.mocked(listLeagues).mockResolvedValue({
+      data: {
+        leagues: [{ id: 'league-1', name: 'Weekend Warriors' }],
+      },
+      error: null,
+    } as any);
+
+    vi.mocked(getLeagueFeed).mockResolvedValue({
+      data: {
+        posts: Array.from({ length: 6 }, (_, index) => ({
+          id: `post-${index + 1}`,
+          leagueId: 'league-1',
+          authorId: `u-${index + 1}`,
+          type: 'SYSTEM',
+          authorName: 'System',
+          content: `Update ${index + 1}`,
+          isPinned: false,
+          reactions: {},
+          replyCount: 0,
+          createdAt: `2026-04-03T17:${55 - index}:00.000Z`,
+          updatedAt: `2026-04-03T17:${55 - index}:00.000Z`,
+        })),
+      },
+      error: null,
+    } as any);
+
+    const { result } = renderHook(() => useRecentActivity());
+
+    await waitFor(() => expect(result.current.data).toHaveLength(5));
+    expect(result.current.data?.map((item) => item.id)).toEqual([
+      'post-1',
+      'post-2',
+      'post-3',
+      'post-4',
+      'post-5',
+    ]);
+  });
 });

@@ -2,13 +2,23 @@ import { Link } from 'react-router-dom';
 import { Trophy, ChevronRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useActiveContests } from './hooks/use-active-contests';
+import { Sport } from '@poolmaster/shared/domain';
 
 const sportEmoji: Record<string, string> = {
-  football: '\uD83C\uDFC8',
-  soccer: '\u26BD',
-  basketball: '\uD83C\uDFC0',
-  baseball: '\u26BE',
-  hockey: '\uD83C\uDFD2',
+  [Sport.NFL]: '\uD83C\uDFC8',
+  [Sport.SOCCER]: '\u26BD',
+  [Sport.NBA]: '\uD83C\uDFC0',
+  [Sport.MLB]: '\u26BE',
+  [Sport.NHL]: '\uD83C\uDFD2',
+  [Sport.GOLF]: '\u26F3',
+  [Sport.TENNIS]: '\uD83C\uDFBE',
+  [Sport.NASCAR]: '\uD83C\uDFC1',
+  [Sport.F1]: '\uD83C\uDFC1',
+  [Sport.HORSE_RACING]: '\uD83C\uDFC7',
+  [Sport.NCAA_BASKETBALL]: '\uD83C\uDFC0',
+  [Sport.NCAA_FOOTBALL]: '\uD83C\uDFC8',
+  [Sport.NCAA_HOCKEY]: '\uD83C\uDFD2',
+  [Sport.UFC]: '\uD83E\uDD4A',
 };
 
 function formatStatus(status: string) {
@@ -61,6 +71,7 @@ export function ActiveContestsCard() {
           <div className="space-y-3">
             {contests.map((contest) => {
               const sportLabel = contest.sport ?? 'contest';
+              const sportIcon = sportEmoji[contest.sport ?? ''] ?? '\uD83C\uDFC6';
               return (
                 <Link
                   key={contest.id}
@@ -69,7 +80,7 @@ export function ActiveContestsCard() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-xl" role="img" aria-label={sportLabel}>
-                      {sportEmoji[sportLabel] ?? '\uD83C\uDFC6'}
+                      {sportIcon}
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{contest.name}</p>

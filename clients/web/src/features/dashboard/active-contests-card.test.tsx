@@ -56,6 +56,12 @@ describe('ActiveContestsCard', () => {
     expect(screen.getByText(/8 entries/i)).toBeInTheDocument();
   });
 
+  it('renders sport icons using the shared sport enum labels', () => {
+    renderWithRouter();
+    expect(screen.getByLabelText('NFL')).toBeInTheDocument();
+    expect(screen.getByLabelText('NCAA_BASKETBALL')).toBeInTheDocument();
+  });
+
   it('shows empty state when data is empty array', () => {
     vi.mocked(useActiveContests).mockReturnValue({ data: [], isLoading: false } as any);
     renderWithRouter();

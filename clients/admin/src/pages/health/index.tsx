@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   Activity,
   Database,
-  HardDrive,
   MessageSquare,
   Cloud,
   Users,
@@ -45,7 +44,6 @@ export function Component() {
 
   const infraIcons: Record<string, React.ReactNode> = {
     PostgreSQL: <Database className="h-4 w-4" />,
-    Redis: <HardDrive className="h-4 w-4" />,
     'Message Bus': <MessageSquare className="h-4 w-4" />,
     'S3/CDN': <Cloud className="h-4 w-4" />,
   };

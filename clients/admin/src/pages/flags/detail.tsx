@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +63,14 @@ export function Component() {
   const [testTenant, setTestTenant] = useState('');
   const [testResult, setTestResult] = useState<boolean | null>(null);
   const dialog = useConfirmDialog();
+
+  useEffect(() => {
+    if (!flag) return;
+    setEnabled(flag.enabled);
+    setRollout(flag.rolloutPct);
+    setTestResult(null);
+    setTestTenant('');
+  }, [flag]);
 
   if (!flag) return null;
   const flagOverrides = flag.overrides;

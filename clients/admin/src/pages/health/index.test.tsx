@@ -9,7 +9,8 @@ const mockHealthData = {
   ],
   infrastructure: [
     { name: 'PostgreSQL', metric1Label: 'CPU', metric1Value: '35%', metric2Label: 'Connections', metric2Value: '120/500' },
-    { name: 'Redis', metric1Label: 'Memory', metric1Value: '2.1GB/8GB', metric2Label: 'Keys', metric2Value: '450K' },
+    { name: 'Message Bus', metric1Label: 'Queue Depth', metric1Value: '14', metric2Label: 'Dead Letters', metric2Value: '2' },
+    { name: 'S3/CDN', metric1Label: 'Requests', metric1Value: '1.2M', metric2Label: 'Storage', metric2Value: '18GB' },
   ],
   keyMetrics: [
     { label: 'Active Users (24h)', value: '1,245' },
@@ -55,7 +56,8 @@ describe('HealthPage', () => {
     render(<HealthPage />);
 
     expect(screen.getByText('PostgreSQL')).toBeInTheDocument();
-    expect(screen.getByText('Redis')).toBeInTheDocument();
+    expect(screen.getByText('Message Bus')).toBeInTheDocument();
+    expect(screen.getByText('S3/CDN')).toBeInTheDocument();
     expect(screen.getByText('CPU')).toBeInTheDocument();
     expect(screen.getByText('35%')).toBeInTheDocument();
   });

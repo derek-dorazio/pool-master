@@ -26,9 +26,11 @@ const mockFlag = {
   ],
 };
 
+let mockFlagData: typeof mockFlag | undefined = mockFlag;
+
 vi.mock('@/hooks/use-flags-api', () => ({
   useFlagDetail: () => ({
-    data: mockFlag,
+    data: mockFlagData,
     isLoading: false,
   }),
 }));
@@ -42,6 +44,10 @@ function renderPage() {
 }
 
 describe('FlagDetailPage', () => {
+  beforeEach(() => {
+    mockFlagData = mockFlag;
+  });
+
   it('renders the flag key in the header', () => {
     renderPage();
     expect(screen.getByRole('heading', { name: 'enable_live_scoring' })).toBeInTheDocument();
@@ -71,5 +77,27 @@ describe('FlagDetailPage', () => {
     renderPage();
     expect(screen.getByText('Resolution Tester')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter tenant ID or name...')).toBeInTheDocument();
+  });
+
+  it('syncs the loaded flag values after the detail query resolves', () => {
+    mockFlagData = undefined;
+    const { rerender } = render(
+      <MemoryRouter>
+        <FlagDetailPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText('Live Scoring')).not.toBeInTheDocument();
+
+    mockFlagData = mockFlag;
+    rerender(
+      <MemoryRouter>
+        <FlagDetailPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'enable_live_scoring' })).toBeInTheDocument();
+    expect(screen.getAllByRole('switch')[0]).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText('75%')).toBeInTheDocument();
   });
 });
