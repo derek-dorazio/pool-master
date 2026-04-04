@@ -15,7 +15,7 @@ async function fetchDashboardContests(): Promise<DashboardContestItem[]> {
   const { data: leagueData, error: leagueError } = await listLeagues({ client });
   if (leagueError) throw leagueError;
 
-  const leagues = (leagueData as LeagueListResponse).leagues;
+  const leagues = (leagueData as LeagueListResponse | undefined)?.leagues ?? [];
   const contestLists = await Promise.all(
     leagues.map(async (league: LeagueSummaryDto) => {
       const { data, error } = await listContests({
@@ -24,7 +24,7 @@ async function fetchDashboardContests(): Promise<DashboardContestItem[]> {
       });
       if (error) throw error;
 
-      return ((data as ContestListResponse).contests ?? []).map((contest) => ({
+      return (((data as ContestListResponse | undefined)?.contests) ?? []).map((contest) => ({
         ...contest,
         leagueName: league.name,
       }));

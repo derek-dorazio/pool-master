@@ -83,4 +83,13 @@ describe('MyLeaguesSummary', () => {
     render(<MyLeaguesSummary />);
     expect(screen.queryByText('View all')).not.toBeInTheDocument();
   });
+
+  it('does not show "View all" link when there are exactly 6 leagues', () => {
+    const leagues = Array.from({ length: 6 }, (_, i) =>
+      makeLeague({ id: `lg-${i}`, name: `League ${i}` }),
+    );
+    vi.mocked(useMyLeagues).mockReturnValue({ data: leagues, isLoading: false } as any);
+    render(<MyLeaguesSummary />);
+    expect(screen.queryByText('View all')).not.toBeInTheDocument();
+  });
 });

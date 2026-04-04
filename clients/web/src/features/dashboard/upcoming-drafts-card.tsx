@@ -5,10 +5,15 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUpcomingDrafts } from './hooks/use-upcoming-drafts';
 
-function useCountdown(targetDate: string) {
-  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));
+function useCountdown(targetDate: string | null) {
+  const [timeLeft, setTimeLeft] = useState(() => (targetDate ? getTimeLeft(targetDate) : null));
 
   useEffect(() => {
+    if (!targetDate) {
+      setTimeLeft(null);
+      return;
+    }
+
     const interval = setInterval(() => {
       setTimeLeft(getTimeLeft(targetDate));
     }, 1000);
@@ -30,7 +35,8 @@ function getTimeLeft(targetDate: string) {
   return { days, hours, minutes, seconds, totalMs: diff };
 }
 
-function formatCountdown(t: { days: number; hours: number; minutes: number; seconds: number }) {
+function formatCountdown(t: { days: number; hours: number; minutes: number; seconds: number } | null) {
+  if (!t) return 'Schedule pending';
   const parts: string[] = [];
   if (t.days > 0) parts.push(`${t.days}d`);
   if (t.hours > 0) parts.push(`${t.hours}h`);
@@ -73,10 +79,10 @@ export function UpcomingDraftsCard() {
   );
 }
 
-function DraftRow({ draft }: { draft: { id: string; name: string; leagueName: string; type: string; scheduledAt: string } }) {
+function DraftRow({ draft }: { draft: { id: string; name: string; leagueName: string; type: string; scheduledAt: string | null } }) {
   const countdown = useCountdown(draft.scheduledAt);
   const fiveMinutes = 5 * 60 * 1000;
-  const canEnter = countdown.totalMs <= fiveMinutes;
+  const canEnter = countdown ? countdown.totalMs <= fiveMinutes : false;
 
   return (
     <div className="flex items-center justify-between rounded-md p-3 border">

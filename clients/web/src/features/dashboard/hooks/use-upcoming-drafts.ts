@@ -6,7 +6,7 @@ export interface UpcomingDraft {
   name: string;
   leagueName: string;
   type: string;
-  scheduledAt: string;
+  scheduledAt: string | null;
 }
 
 export function useUpcomingDrafts() {
@@ -22,8 +22,13 @@ export function useUpcomingDrafts() {
         name: contest.name,
         leagueName: contest.leagueName,
         type: 'Snake Draft',
-        scheduledAt: contest.startsAt ?? new Date().toISOString(),
+        scheduledAt: contest.startsAt ?? null,
       }))
-      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()),
+      .sort((a, b) => {
+        if (!a.scheduledAt && !b.scheduledAt) return 0;
+        if (!a.scheduledAt) return 1;
+        if (!b.scheduledAt) return -1;
+        return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
+      }),
   };
 }

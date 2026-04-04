@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -112,6 +113,14 @@ export function ActivityLimitCard() {
         ) : activityLimitQuery.isError ? (
           <div className="mt-4 rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm">
             <p>We couldn't load your activity limit settings.</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={() => void activityLimitQuery.refetch()}
+            >
+              Try again
+            </Button>
           </div>
         ) : (
           <div className={enabled ? 'mt-4' : 'mt-4 pointer-events-none opacity-50'}>

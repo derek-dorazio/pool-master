@@ -8,7 +8,7 @@ export function useMyLeagues() {
     queryFn: async (): Promise<LeagueSummaryDto[]> => {
       const { data, error } = await listLeagues({ client });
       if (error) throw error;
-      return (data as unknown as LeagueListResponse).leagues;
+      return (data as LeagueListResponse | undefined)?.leagues ?? [];
     },
   });
 }

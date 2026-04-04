@@ -48,7 +48,7 @@ export function useRecentActivity() {
       const { data: leaguesData, error: leaguesError } = await listLeagues({ client });
       if (leaguesError) throw leaguesError;
 
-      const leagues = (leaguesData as LeagueListResponse).leagues ?? [];
+      const leagues = (leaguesData as LeagueListResponse | undefined)?.leagues ?? [];
       const feedResponses = await Promise.all(
         leagues.map(async (league: LeagueSummaryDto) => {
           const { data, error } = await getLeagueFeed({
@@ -60,7 +60,7 @@ export function useRecentActivity() {
 
           return {
             league,
-            posts: ((data as FeedResponse).posts ?? []).map((post) => ({
+            posts: (((data as FeedResponse | undefined)?.posts) ?? []).map((post) => ({
               ...post,
               leagueName: league.name,
             })),

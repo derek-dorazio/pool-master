@@ -1,5 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Component as TimezonePage } from './timezone';
+
+const setTimezone = vi.fn();
+const setDateFormat = vi.fn();
+const setTimeFormat = vi.fn();
+const setFirstDayOfWeek = vi.fn();
 
 vi.mock('@/stores/preferences-store', () => ({
   usePreferencesStore: () => ({
@@ -7,27 +13,30 @@ vi.mock('@/stores/preferences-store', () => ({
     dateFormat: 'MDY',
     timeFormat: '12H',
     firstDayOfWeek: 'SUNDAY',
-    setTimezone: vi.fn(),
-    setDateFormat: vi.fn(),
-    setTimeFormat: vi.fn(),
-    setFirstDayOfWeek: vi.fn(),
+    setTimezone,
+    setDateFormat,
+    setTimeFormat,
+    setFirstDayOfWeek,
   }),
 }));
 
 vi.mock('@/lib/format-time', () => ({
-  formatTime: () => '7:00 PM',
   getTimezoneAbbr: () => 'EST',
 }));
 
 vi.mock('@/lib/timezones', () => ({
-  TIMEZONES: [],
   getTimezonesByRegion: () => ({
     Americas: [
-      { iana: 'America/New_York', label: 'Eastern Time (New York)' },
-      { iana: 'America/Chicago', label: 'Central Time (Chicago)' },
+      { iana: 'America/New_York', label: 'New York (Eastern)' },
+      { iana: 'America/Chicago', label: 'Chicago (Central)' },
     ],
+    Europe: [{ iana: 'Europe/London', label: 'London (GMT/BST)' }],
   }),
-  searchTimezones: () => [],
+  searchTimezones: (query: string) => (
+    query.toLowerCase().includes('london')
+      ? [{ iana: 'Europe/London', label: 'London (GMT/BST)' }]
+      : []
+  ),
 }));
 
 function renderPage() {
@@ -35,34 +44,39 @@ function renderPage() {
 }
 
 describe('TimezonePage', () => {
-  it('renders timezone picker', () => {
+  beforeEach(() => {
+    setTimezone.mockClear();
+    setDateFormat.mockClear();
+    setTimeFormat.mockClear();
+    setFirstDayOfWeek.mockClear();
+  });
+
+  it('renders the active timezone and preference controls', () => {
     renderPage();
-    expect(screen.getByText('Timezone')).toBeInTheDocument();
+
+    expect(screen.getByText('Timezone & Locale')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search timezones...')).toBeInTheDocument();
-  });
-
-  it('renders date format options', () => {
-    renderPage();
-    expect(screen.getByText('Date Format')).toBeInTheDocument();
-    expect(screen.getByText('MM/DD/YYYY')).toBeInTheDocument();
-    expect(screen.getByText('DD/MM/YYYY')).toBeInTheDocument();
-    expect(screen.getByText('YYYY-MM-DD')).toBeInTheDocument();
-  });
-
-  it('renders time format options', () => {
-    renderPage();
-    expect(screen.getByText('Time Format')).toBeInTheDocument();
-    expect(screen.getByText('12-hour')).toBeInTheDocument();
-    expect(screen.getByText('24-hour')).toBeInTheDocument();
-  });
-
-  it('renders format preview section', () => {
-    renderPage();
-    expect(screen.getByText('Preview')).toBeInTheDocument();
-  });
-
-  it('has "Save" button', () => {
-    renderPage();
+    expect(screen.getByText('Current: America/New_York (EST)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save Preferences' })).toBeInTheDocument();
+  });
+
+  it('filters timezones and saves the selected locale preferences', async () => {
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.type(screen.getByPlaceholderText('Search timezones...'), 'London');
+    await user.click(await screen.findByRole('button', { name: /london \(gmt\/bst\)/i }));
+    await user.click(screen.getByRole('radio', { name: /DD\/MM\/YYYY/i }));
+    await user.click(screen.getByRole('radio', { name: /24-hour/i }));
+    await user.click(screen.getByRole('radio', { name: /Monday/i }));
+    await user.click(screen.getByRole('button', { name: 'Save Preferences' }));
+
+    await waitFor(() => {
+      expect(setTimezone).toHaveBeenCalledWith('Europe/London');
+      expect(setDateFormat).toHaveBeenCalledWith('DMY');
+      expect(setTimeFormat).toHaveBeenCalledWith('24H');
+      expect(setFirstDayOfWeek).toHaveBeenCalledWith('MONDAY');
+    });
   });
 });

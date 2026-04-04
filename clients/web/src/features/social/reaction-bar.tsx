@@ -22,9 +22,11 @@ export function ReactionBar({ reactions, onToggle }: ReactionBarProps) {
           return (
             <button
               key={emoji}
+              type="button"
               onClick={() => onToggle(emoji)}
-              className="rounded-full px-1.5 py-0.5 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent"
+              className="rounded-full px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent group-hover:opacity-100"
               aria-label={`React with ${emoji}`}
+              aria-pressed="false"
             >
               {emoji}
             </button>
@@ -34,6 +36,7 @@ export function ReactionBar({ reactions, onToggle }: ReactionBarProps) {
         return (
           <button
             key={emoji}
+            type="button"
             onClick={() => onToggle(emoji)}
             className={cn(
               'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors',
@@ -42,6 +45,7 @@ export function ReactionBar({ reactions, onToggle }: ReactionBarProps) {
                 : 'bg-muted text-muted-foreground hover:bg-accent',
             )}
             aria-label={`${emoji} ${count}${reacted ? ', you reacted' : ''}`}
+            aria-pressed={reacted}
           >
             {emoji} {count}
           </button>

@@ -27,8 +27,11 @@ export function FeedContainer({ leagueId, isCommissioner }: FeedContainerProps) 
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !hasNextPage) return;
+    if (typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) fetchNextPage(); },
+      (entries) => {
+        if (entries[0].isIntersecting) fetchNextPage();
+      },
       { rootMargin: '200px' },
     );
     observer.observe(el);
@@ -59,7 +62,7 @@ export function FeedContainer({ leagueId, isCommissioner }: FeedContainerProps) 
   const allPosts = data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
-    <div className="space-y-4" role="feed" aria-busy={isFetchingNextPage}>
+    <div className="space-y-4" role="feed" aria-busy={isLoading || isFetchingNextPage} data-testid="league-feed">
       {/* Pinned posts */}
       {pinnedPosts.map((post) => (
         <PostCard

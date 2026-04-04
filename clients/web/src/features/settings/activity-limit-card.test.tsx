@@ -75,4 +75,30 @@ describe('ActivityLimitCard', () => {
       }));
     });
   });
+
+  it('lets the user retry after a failed load', async () => {
+    const user = userEvent.setup();
+    get
+      .mockResolvedValueOnce({
+        data: null,
+        error: new Error('network error'),
+      })
+      .mockResolvedValueOnce({
+        data: {
+          activityLimit: {
+            enabled: false,
+            weeklyContestLimit: 10,
+          },
+        },
+        error: null,
+      });
+
+    renderCard();
+
+    expect(await screen.findByText(/couldn't load your activity limit settings/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(await screen.findByDisplayValue('10')).toBeInTheDocument();
+    expect(get).toHaveBeenCalled();
+  });
 });

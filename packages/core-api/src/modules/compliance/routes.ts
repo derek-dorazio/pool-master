@@ -26,7 +26,12 @@ import {
   SessionReminderUpdateRequestSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
-import { ComplianceService, verifyAge } from './compliance-service';
+import {
+  ComplianceAccessError,
+  ComplianceRequestNotFoundError,
+  ComplianceService,
+  verifyAge,
+} from './compliance-service';
 import {
   mapConsentRecordToDto,
   mapEnforcementActionToDto,
@@ -152,8 +157,19 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       operationId: 'getDataExport',
       response: { 200: zodToJsonSchema(DataExportResponseSchema) },
     },
-    handler: async (request) => {
-      return complianceService.processDataExport(request.params.id);
+    handler: async (request, reply) => {
+      const userId = request.headers['x-user-id'] as string;
+      try {
+        return await complianceService.processDataExport(request.params.id, userId);
+      } catch (error) {
+        if (error instanceof ComplianceRequestNotFoundError) {
+          return reply.status(404).send({ error: 'NOT_FOUND', message: error.message });
+        }
+        if (error instanceof ComplianceAccessError) {
+          return reply.status(403).send({ error: 'FORBIDDEN', message: error.message });
+        }
+        throw error;
+      }
     },
   });
 
@@ -272,8 +288,19 @@ export async function complianceModule(fastify: FastifyInstance): Promise<void> 
       operationId: 'cancelAccountDeletion',
       response: { 200: zodToJsonSchema(AccountDeletionCancelledResponseSchema) },
     },
-    handler: async (request) => {
-      await complianceService.cancelDeletion(request.params.id);
+    handler: async (request, reply) => {
+      const userId = request.headers['x-user-id'] as string;
+      try {
+        await complianceService.cancelDeletion(request.params.id, userId);
+      } catch (error) {
+        if (error instanceof ComplianceRequestNotFoundError) {
+          return reply.status(404).send({ error: 'NOT_FOUND', message: error.message });
+        }
+        if (error instanceof ComplianceAccessError) {
+          return reply.status(403).send({ error: 'FORBIDDEN', message: error.message });
+        }
+        throw error;
+      }
       return { success: true, message: 'Deletion cancelled' };
     },
   });

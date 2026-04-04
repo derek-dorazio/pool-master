@@ -108,11 +108,12 @@ export class ComplianceService {
     };
   }
 
-  async processDataExport(requestId: string): Promise<Record<string, unknown>> {
+  async processDataExport(requestId: string, userId: string): Promise<Record<string, unknown>> {
     const request = await this.prisma.dataExportRequest.findUnique({ where: { id: requestId } });
-    if (!request) throw new Error('Export request not found');
-
-    const userId = request.userId;
+    if (!request) throw new ComplianceRequestNotFoundError('Export request not found');
+    if (request.userId !== userId) {
+      throw new ComplianceAccessError('Cannot access another user\'s data export request');
+    }
 
     // Gather all user data
     const [profile, leagues, contests, picks, notifications, devices, consents] = await Promise.all([
@@ -205,7 +206,13 @@ export class ComplianceService {
     };
   }
 
-  async cancelDeletion(requestId: string): Promise<void> {
+  async cancelDeletion(requestId: string, userId: string): Promise<void> {
+    const request = await this.prisma.deletionRequest.findUnique({ where: { id: requestId } });
+    if (!request) throw new ComplianceRequestNotFoundError('Deletion request not found');
+    if (request.userId !== userId) {
+      throw new ComplianceAccessError('Cannot access another user\'s deletion request');
+    }
+
     await this.prisma.deletionRequest.update({
       where: { id: requestId },
       data: { status: 'CANCELLED', cancelledAt: new Date() },
@@ -337,10 +344,13 @@ export class ComplianceService {
   }
 
   async getActiveExclusion(userId: string): Promise<unknown | null> {
-    return this.prisma.selfExclusion.findFirst({
+    const exclusions = await this.prisma.selfExclusion.findMany({
       where: { userId, isActive: true },
       orderBy: { startedAt: 'desc' },
     });
+    const now = new Date();
+    const activeExclusion = exclusions.find((exclusion) => isCurrentExclusionActive(exclusion, now));
+    return activeExclusion ?? null;
   }
 
   async reactivateUser(exclusionId: string): Promise<void> {
@@ -466,4 +476,38 @@ function extractActivityLimit(value: unknown): { enabled: boolean; weeklyContest
 
 function normalizeRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+export class ComplianceRequestNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ComplianceRequestNotFoundError';
+  }
+}
+
+export class ComplianceAccessError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ComplianceAccessError';
+  }
+}
+
+function isCurrentExclusionActive(
+  exclusion: unknown,
+  now: Date,
+): boolean {
+  if (!exclusion || typeof exclusion !== 'object') {
+    return false;
+  }
+  const record = exclusion as Record<string, unknown>;
+  if (record.exclusionType !== 'COOL_DOWN') {
+    return Boolean(record.isActive);
+  }
+  if (!record.endsAt) {
+    return Boolean(record.isActive);
+  }
+  if (!(record.endsAt instanceof Date)) {
+    return Boolean(record.isActive);
+  }
+  return Boolean(record.isActive) && record.endsAt > now;
 }

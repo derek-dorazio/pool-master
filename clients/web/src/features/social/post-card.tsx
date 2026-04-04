@@ -82,12 +82,21 @@ export function PostCard({
 
               {isCommissioner && (
                 <div className="relative ml-auto">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setShowMenu(!showMenu)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    aria-haspopup="menu"
+                    aria-expanded={showMenu}
+                    onClick={() => setShowMenu(!showMenu)}
+                  >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                   {showMenu && (
                     <div className="absolute right-0 top-full z-10 mt-1 w-36 rounded-md border bg-card py-1 shadow-lg">
                       <button
+                        type="button"
                         className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent"
                         onClick={() => { onPin?.(post.id, !post.pinned); setShowMenu(false); }}
                       >
@@ -95,6 +104,7 @@ export function PostCard({
                         {post.pinned ? 'Unpin' : 'Pin'}
                       </button>
                       <button
+                        type="button"
                         className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-destructive hover:bg-accent"
                         onClick={() => { onDelete?.(post.id); setShowMenu(false); }}
                       >
@@ -117,8 +127,10 @@ export function PostCard({
               <ReactionBar reactions={post.reactions} onToggle={(emoji) => onReaction(post.id, emoji)} />
               {post.replyCount > 0 && (
                 <button
+                  type="button"
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setShowThread(!showThread)}
+                  aria-expanded={showThread}
                 >
                   {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
                 </button>

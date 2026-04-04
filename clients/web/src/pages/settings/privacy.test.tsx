@@ -31,25 +31,18 @@ function renderPage() {
 }
 
 describe('PrivacyPage', () => {
-  it('renders data export card', () => {
+  it('renders the active privacy, gaming, and deletion sections', () => {
     renderPage();
-    expect(screen.getByTestId('data-export-card')).toBeInTheDocument();
-  });
 
-  it('renders account deletion card', () => {
-    renderPage();
-    expect(screen.getByTestId('account-deletion-card')).toBeInTheDocument();
-  });
+    expect(screen.getByRole('heading', { name: 'Privacy & Data', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Responsible Gaming', level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Danger Zone', level: 2 })).toBeInTheDocument();
 
-  it('renders consent manager', () => {
-    renderPage();
     expect(screen.getByTestId('consent-manager')).toBeInTheDocument();
-  });
-
-  it('renders responsible gaming tools', () => {
-    renderPage();
+    expect(screen.getByTestId('data-export-card')).toBeInTheDocument();
     expect(screen.getByTestId('self-exclusion-card')).toBeInTheDocument();
     expect(screen.getByTestId('session-reminder-card')).toBeInTheDocument();
     expect(screen.getByTestId('activity-limit-card')).toBeInTheDocument();
+    expect(screen.getByTestId('account-deletion-card')).toBeInTheDocument();
   });
 });

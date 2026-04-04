@@ -88,4 +88,15 @@ describe('UpcomingDraftsCard', () => {
     expect(link).toBeInTheDocument();
     expect(link.getAttribute('href')).toBe('/drafts/d3');
   });
+
+  it('shows schedule pending when the contest has no start time yet', () => {
+    vi.mocked(useUpcomingDrafts).mockReturnValue({
+      data: [{ id: 'd4', name: 'Pending Draft', leagueName: 'Future League', type: 'Snake Draft', scheduledAt: null }],
+      isLoading: false,
+    } as any);
+    renderWithRouter();
+
+    expect(screen.getByText('Schedule pending')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Enter Draft Room/i })).toBeDisabled();
+  });
 });

@@ -22,7 +22,7 @@ interface ThreadViewProps {
 }
 
 export function ThreadView({ postId, leagueId }: ThreadViewProps) {
-  const { data: replies, isLoading } = useReplies(postId, leagueId, true);
+  const { data: replies, isLoading, isError, refetch } = useReplies(postId, leagueId, true);
   const createReply = useCreateReply(postId, leagueId);
   const [replyText, setReplyText] = useState('');
 
@@ -41,6 +41,19 @@ export function ThreadView({ postId, leagueId }: ThreadViewProps) {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="ml-8 mt-2 space-y-2 border-l-2 pl-4">
+        <p role="alert" className="text-xs text-destructive">
+          Couldn&apos;t load replies.
+        </p>
+        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => refetch()}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="ml-8 mt-2 space-y-2 border-l-2 pl-4">
       {replies?.map((reply) => (
@@ -54,9 +67,7 @@ export function ThreadView({ postId, leagueId }: ThreadViewProps) {
               <span className="text-[10px] text-muted-foreground">{formatRelative(reply.createdAt)}</span>
             </div>
             <p className="text-xs">{reply.content}</p>
-            {reply.reactions.length > 0 && (
-              <ReactionBar reactions={reply.reactions} onToggle={() => {}} />
-            )}
+            {reply.reactions.length > 0 && <ReactionBar reactions={reply.reactions} onToggle={() => {}} />}
           </div>
         </div>
       ))}

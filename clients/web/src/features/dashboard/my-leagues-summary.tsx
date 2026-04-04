@@ -10,7 +10,7 @@ export function MyLeaguesSummary() {
   const { data: leagues, isLoading, isError } = useMyLeagues();
 
   const displayed = Array.isArray(leagues) ? leagues.slice(0, MAX_DISPLAYED) : [];
-  const hasMore = displayed.length >= MAX_DISPLAYED;
+  const hasMore = Array.isArray(leagues) && leagues.length > MAX_DISPLAYED;
 
   return (
     <Card data-testid="my-leagues-card">
