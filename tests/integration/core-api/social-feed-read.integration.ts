@@ -13,6 +13,7 @@ import {
   getApp,
   createTestUser,
   cleanupTestData,
+  withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { LeagueVisibility } from '@poolmaster/shared/domain';
@@ -104,6 +105,35 @@ describe('Social Feed Read Integration', () => {
     expect(replyRes.statusCode).toBe(201);
     expect(replyRes.json().parentId).toBe(firstPostId);
 
+    const pinRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/leagues/${leagueId}/feed/${firstPostId}/pin`,
+      headers: withoutJsonBodyHeaders(ownerHeaders),
+    });
+
+    expect(pinRes.statusCode).toBe(200);
+    expect(pinRes.json()).toEqual({ success: true });
+
+    const pinnedFeedRes = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/leagues/${leagueId}/feed?limit=2`,
+      headers: ownerHeaders,
+    });
+
+    expect(pinnedFeedRes.statusCode).toBe(200);
+    expect(pinnedFeedRes.json().posts).toHaveLength(2);
+    expect(pinnedFeedRes.json().posts[0].id).toBe(firstPostId);
+    expect(pinnedFeedRes.json().posts[0].isPinned).toBe(true);
+
+    const unpinRes = await getApp().inject({
+      method: 'DELETE',
+      url: `/api/v1/leagues/${leagueId}/feed/${firstPostId}/pin`,
+      headers: withoutJsonBodyHeaders(ownerHeaders),
+    });
+
+    expect(unpinRes.statusCode).toBe(200);
+    expect(unpinRes.json()).toEqual({ success: true });
+
     const postRes = await getApp().inject({
       method: 'GET',
       url: `/api/v1/leagues/${leagueId}/feed/${firstPostId}`,
@@ -114,5 +144,6 @@ describe('Social Feed Read Integration', () => {
     expect(postRes.json().id).toBe(firstPostId);
     expect(postRes.json().replies).toHaveLength(1);
     expect(postRes.json().replyCount).toBe(1);
+    expect(postRes.json().isPinned).toBe(false);
   });
 });
