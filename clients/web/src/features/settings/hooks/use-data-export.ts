@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { client, requestDataExport } from '@/lib/api';
+import { client, getDataExportStatus, requestDataExport } from '@/lib/api';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 import { DataExportStatusResponseSchema } from '@poolmaster/shared/dto';
@@ -16,9 +16,7 @@ export function useDataExportStatus() {
   return useQuery({
     queryKey: settingsKeys.dataExport(),
     queryFn: async (): Promise<DataExportStatus> => {
-      const { data, error } = await client.get<unknown>({
-        url: '/api/v1/account/data-export',
-      });
+      const { data, error } = await getDataExportStatus({ client });
       if (error) throw error;
       return DataExportStatusResponseSchema.parse(data) as DataExportStatus;
     },

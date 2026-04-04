@@ -150,7 +150,7 @@ These are the next three candidate slices after the current active set lands:
 | ACE-004 | D | Expand admin audit and announcements coverage | In Progress | Currently in flight on the admin audit/announcements worker lane |
 | ACE-005 | E | Expand backend dashboard/social edge coverage | In Progress | Currently in flight on the backend dashboard/social worker lane |
 | ACE-006 | Queue | League feed/history/recap coverage | In Progress | External worker produced a mixed-scope commit; salvage only the league feed/history/recap files and strengthen commissioner-behavior assertions before marking done |
-| ACE-007 | Queue | Settings compliance/account deletion/data export coverage | In Progress | External worker found a valid generated-SDK cleanup in `useDataExportStatus`, but it landed inside the mixed ACE-006 commit and needs to be separated cleanly |
+| ACE-007 | Queue | Settings compliance/account deletion/data export coverage | Done | Separated the generated-SDK `useDataExportStatus` cleanup from the mixed worker commit; added focused data-export and account-deletion coverage without changing unrelated slice status |
 | ACE-008 | Queue | Admin provider/tenant detail coverage | In Progress | External worker found valid provider/tenant error-state fixes and tests, but the slice also changed admin coverage thresholds; salvage the slice without the threshold ratchet before marking done |
 
 ## Acceptance Criteria
