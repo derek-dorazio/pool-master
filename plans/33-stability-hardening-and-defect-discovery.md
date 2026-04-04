@@ -15,6 +15,8 @@ Drive the next stabilization phase now that CI/CD is green:
 
 The repo is finally in a state where build, test, deploy, smoke, and browser sanity checks all pass. The next highest-value work is not new feature breadth. It is reducing latent defect risk and cleaning out stale patterns that can silently destabilize the codebase later.
 
+Detailed worker-safe execution slices for this phase live in [plans/34-worker-sliced-stability-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/34-worker-sliced-stability-execution.md).
+
 Current focus should be:
 
 - CI/CD hardening follow-through
