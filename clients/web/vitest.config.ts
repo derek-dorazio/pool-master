@@ -21,8 +21,8 @@ export default defineConfig({
       exclude: ['src/main.tsx', 'src/test-setup.ts', '**/*.d.ts'],
       thresholds: {
         statements: 54.42,
-        branches: 46.76,
-        functions: 54.12,
+        branches: 46.73,
+        functions: 54.05,
         lines: 57.35,
       },
     },

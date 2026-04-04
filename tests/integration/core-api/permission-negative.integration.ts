@@ -168,7 +168,7 @@ describe('Permission Negative Integration', () => {
     const memberResolveRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.detail(leagueId) + `/action-items/${actionItemId}/resolve`,
-      headers: memberHeaders,
+      headers: withoutJsonBodyHeaders(memberHeaders),
     });
     expect(memberResolveRes.statusCode).toBe(403);
 

@@ -39,7 +39,7 @@ describe('Compliance Negative Integration', () => {
     const exportRes = await getApp().inject({
       method: 'POST',
       url: '/api/v1/account/data-export',
-      headers: userOneHeaders,
+      headers: withoutJsonBodyHeaders(userOneHeaders),
     });
 
     expect(exportRes.statusCode).toBe(202);
@@ -58,6 +58,7 @@ describe('Compliance Negative Integration', () => {
       method: 'POST',
       url: '/api/v1/account/delete-account',
       headers: userOneHeaders,
+      payload: {},
     });
 
     expect(deletionRes.statusCode).toBe(202);
