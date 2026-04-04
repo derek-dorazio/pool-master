@@ -178,6 +178,10 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
+    outputs:
+      core_api_image: ${{ steps.image-ref.outputs.core_api_image }}
+      qa_core_api_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}
+      qa_migrate_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}
     steps:
       - uses: actions/checkout@v4
 
@@ -211,6 +215,7 @@ jobs:
           echo "exists=true" >> $GITHUB_OUTPUT
 
       - name: Build & push core-api
+        id: build-core-api
         if: steps.ecr-check.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
@@ -222,6 +227,83 @@ jobs:
             ${{ steps.tags.outputs.prefix }}/core-api:${{ steps.tags.outputs.sha_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Capture immutable image reference
+        id: image-ref
+        if: steps.ecr-check.outputs.exists == 'true'
+        run: |
+          CORE_API_IMAGE="${{ steps.tags.outputs.prefix }}/core-api@${{ steps.build-core-api.outputs.digest }}"
+          echo "core_api_image=${CORE_API_IMAGE}" >> $GITHUB_OUTPUT
+          echo "Using immutable core-api image: ${CORE_API_IMAGE}"
+
+      - name: Register QA ECS task definitions
+        id: register-qa-task-defs
+        if: steps.ecr-check.outputs.exists == 'true'
+        run: |
+          CORE_API_IMAGE="${{ steps.image-ref.outputs.core_api_image }}"
+          CLUSTER="poolmaster-qa-cluster"
+          CORE_SERVICE="poolmaster-qa-core-api"
+          MIGRATE_FAMILY="poolmaster-qa-migrate"
+
+          CORE_SERVICE_TASK_DEF=$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$CORE_SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          aws ecs describe-task-definition \
+            --task-definition "$CORE_SERVICE_TASK_DEF" \
+            --query 'taskDefinition' \
+            --output json \
+            | jq --arg IMAGE "$CORE_API_IMAGE" '
+                del(
+                  .taskDefinitionArn,
+                  .revision,
+                  .status,
+                  .requiresAttributes,
+                  .compatibilities,
+                  .registeredAt,
+                  .registeredBy
+                )
+                | .containerDefinitions |= map(
+                    if .name == "core-api" then .image = $IMAGE else . end
+                  )
+              ' > /tmp/qa-core-api-task-def.json
+
+          QA_CORE_API_TASK_DEF=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/qa-core-api-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          aws ecs describe-task-definition \
+            --task-definition "$MIGRATE_FAMILY" \
+            --query 'taskDefinition' \
+            --output json \
+            | jq --arg IMAGE "$CORE_API_IMAGE" '
+                del(
+                  .taskDefinitionArn,
+                  .revision,
+                  .status,
+                  .requiresAttributes,
+                  .compatibilities,
+                  .registeredAt,
+                  .registeredBy
+                )
+                | .containerDefinitions |= map(
+                    if .name == "migrate" then .image = $IMAGE else . end
+                  )
+              ' > /tmp/qa-migrate-task-def.json
+
+          QA_MIGRATE_TASK_DEF=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/qa-migrate-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "qa_core_api_task_definition=${QA_CORE_API_TASK_DEF}" >> $GITHUB_OUTPUT
+          echo "qa_migrate_task_definition=${QA_MIGRATE_TASK_DEF}" >> $GITHUB_OUTPUT
+
+          echo "Registered QA core-api task definition: ${QA_CORE_API_TASK_DEF}"
+          echo "Registered QA migrate task definition: ${QA_MIGRATE_TASK_DEF}"
 
       # --- Web Clients -> S3 + CloudFront ---
 
@@ -269,14 +351,12 @@ jobs:
         if: steps.ecr-check.outputs.exists == 'true'
         run: |
           if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
-            for SERVICE in core-api; do
-              echo "Deploying poolmaster-qa-${SERVICE}..."
-              aws ecs update-service \
-                --cluster poolmaster-qa-cluster \
-                --service poolmaster-qa-${SERVICE} \
-                --force-new-deployment \
-                --no-cli-pager
-            done
+            echo "Deploying poolmaster-qa-core-api with task definition ${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}..."
+            aws ecs update-service \
+              --cluster poolmaster-qa-cluster \
+              --service poolmaster-qa-core-api \
+              --task-definition "${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}" \
+              --no-cli-pager
           else
             echo "QA cluster not found — skipping deploy. Run terraform apply first."
           fi
@@ -295,6 +375,9 @@ jobs:
           echo "| Image | Tags |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| core-api (monolith) | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| core-api (immutable) | \`${{ steps.image-ref.outputs.core_api_image }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA core-api task definition | \`${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA migrate task definition | \`${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Web clients** deployed to S3 + CloudFront" >> $GITHUB_STEP_SUMMARY
 
@@ -318,6 +401,7 @@ jobs:
         run: |
           SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
           SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
+          MIGRATE_TASK_DEFINITION="${{ needs.publish-images.outputs.qa_migrate_task_definition }}"
 
           if [ -z "$SUBNETS" ] || [ -z "$SG" ]; then
             echo "⚠️ QA_PRIVATE_SUBNETS or QA_ECS_SECURITY_GROUP secret not set — skipping migrations"
@@ -325,10 +409,16 @@ jobs:
             exit 0
           fi
 
+          if [ -z "$MIGRATE_TASK_DEFINITION" ] || [ "$MIGRATE_TASK_DEFINITION" = "None" ]; then
+            echo "::warning::No QA migrate task definition was published — skipping migrations"
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           echo "Starting migration task in ECS..."
           TASK_ARN=$(aws ecs run-task \
             --cluster poolmaster-qa-cluster \
-            --task-definition poolmaster-qa-migrate \
+            --task-definition "$MIGRATE_TASK_DEFINITION" \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
             --query 'tasks[0].taskArn' \
@@ -390,11 +480,12 @@ jobs:
         run: |
           SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
           SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
+          MIGRATE_TASK_DEFINITION="${{ needs.publish-images.outputs.qa_migrate_task_definition }}"
 
           echo "Starting QA seed task in ECS..."
           TASK_ARN=$(aws ecs run-task \
             --cluster poolmaster-qa-cluster \
-            --task-definition poolmaster-qa-migrate \
+            --task-definition "$MIGRATE_TASK_DEFINITION" \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
             --overrides '{"containerOverrides":[{"name":"migrate","command":["node","--import","tsx","prisma/seed.ts"]}]}' \
@@ -479,6 +570,7 @@ jobs:
 
           echo "### QA ECS Rollout Target" >> $GITHUB_STEP_SUMMARY
           echo "- Service: \`$SERVICE\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Expected task definition: \`${{ needs.publish-images.outputs.qa_core_api_task_definition }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Reported task definition: \`${TASK_DEFINITION}\`" >> $GITHUB_STEP_SUMMARY
           echo "- PRIMARY deployment task definition: \`${PRIMARY_TASK_SET}\`" >> $GITHUB_STEP_SUMMARY
 
