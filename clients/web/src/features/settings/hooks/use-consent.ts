@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { client, getConsentHistory, recordConsent } from '@/lib/api';
+import type { RecordConsentData } from '@poolmaster/shared/generated/hey-api';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -9,7 +10,7 @@ import {
 
 const CONSENT_VERSION = '1.0';
 
-const consentTypeByPreference: Record<keyof ConsentPreferences, string> = {
+const consentTypeByPreference: Record<keyof ConsentPreferences, RecordConsentData['body']['consentType']> = {
   marketingEmails: 'marketing_email',
   analytics: 'analytics_cookies',
   thirdPartyIntegrations: 'third_party_integrations',
