@@ -30,11 +30,3 @@ client.interceptors.request.use((request: Request) => {
 
 // Re-export all generated SDK functions and types
 export * from '@poolmaster/shared/generated/hey-api';
-
-// Temporary helper until the generated SDK emits the GET helper for this route.
-export function getAccountDeletionStatus(options?: { client?: typeof client }) {
-  return (options?.client ?? client).get({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/delete-account',
-  });
-}

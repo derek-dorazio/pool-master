@@ -86,11 +86,6 @@ export class ContestLookup {
     if (!contest) return undefined;
     return contest.scoringRules as ScoringConfig;
   }
-
-  /** No-op — retained for test compatibility. */
-  clear(): void {
-    // No-op: Prisma-backed lookup has no local state to clear.
-  }
 }
 
 // --- Consumer ---
