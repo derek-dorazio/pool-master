@@ -39,57 +39,113 @@ describe('LeagueSettingsPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders real persisted settings controls', async () => {
+  it('renders the persisted settings shell from the live API response', async () => {
     renderPage();
 
-    await waitFor(() => {
-      expect(screen.getByDisplayValue('Test League')).toBeInTheDocument();
-    });
-
+    await screen.findByDisplayValue('Test League');
     expect(screen.getByLabelText('Invite Policy')).toBeInTheDocument();
     expect(screen.getByLabelText('League Currency')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Save Changes/ })).toBeInTheDocument();
-    expect(
-      screen.getByText(/League name and description are read-only here until the backend supports a real edit route/i),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('league-settings-save-button')).toBeEnabled();
+    expect(screen.getByTestId('league-settings-generate-invite-link')).toBeEnabled();
+    expect(screen.getByTestId('league-settings-transfer-ownership')).toBeDisabled();
   });
 
-  it('generates a real invite link on demand', async () => {
+  it('saves a changed league setting through the generated API client', async () => {
     const user = userEvent.setup();
-    renderPage();
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Generate Invite Link/i })).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole('button', { name: /Generate Invite Link/i }));
-
-    await waitFor(() => {
-      expect(screen.getByDisplayValue(/\/join\/test-code$/)).toBeInTheDocument();
-    });
-  });
-
-  it('shows ownership transfer options for the real member list', async () => {
-    const user = userEvent.setup();
+    let savedBody: Record<string, unknown> | null = null;
 
     server.use(
-      http.get('/api/v1/leagues/:id/members', () => HttpResponse.json({
-        members: [
-          { id: 'm-1', userId: 'u-1', displayName: 'Owner User', role: 'OWNER', joinedAt: new Date().toISOString() },
-          { id: 'm-2', userId: 'u-2', displayName: 'Jordan Lee', role: 'MANAGER', joinedAt: new Date().toISOString() },
-        ],
-      })),
+      http.put('/api/v1/leagues/:id/settings', async ({ request }) => {
+        savedBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({
+          league: {
+            id: 'league-1',
+            name: 'Test League',
+            description: 'A competitive pool league.',
+            visibility: 'PRIVATE',
+            memberCount: 5,
+            activeContestCount: 1,
+            role: 'OWNER',
+            createdAt: new Date().toISOString(),
+            settings: {
+              invitePolicy: 'COMMISSIONER_ONLY',
+              allowMidSeasonJoin: true,
+              requireApproval: false,
+              activityFeedEnabled: true,
+              weeklyRecapEnabled: false,
+              weeklyRecapDay: 'MONDAY',
+              timezone: 'America/New_York',
+              currency: 'USD',
+            },
+            invitePolicy: 'COMMISSIONER_ONLY',
+          },
+        });
+      }),
     );
 
     renderPage();
 
+    await screen.findByDisplayValue('Test League');
+    await user.click(screen.getByRole('switch', { name: 'Allow Mid-Season Join' }));
+    await user.click(screen.getByTestId('league-settings-save-button'));
+
     await waitFor(() => {
-      expect(screen.getByLabelText('New Owner')).toBeInTheDocument();
+      expect(savedBody).toMatchObject({
+        allowMidSeasonJoin: true,
+        invitePolicy: 'COMMISSIONER_ONLY',
+        currency: 'USD',
+      });
+    });
+  });
+
+  it('generates an invite link and transfers ownership to a real member', async () => {
+    const user = userEvent.setup();
+    let transferredTo: string | null = null;
+
+    server.use(
+      http.post('/api/v1/leagues/:id/transfer-ownership', async ({ request }) => {
+        const body = (await request.json()) as { newOwnerId: string };
+        transferredTo = body.newOwnerId;
+        return HttpResponse.json({
+          previousOwner: {
+            id: 'm-1',
+            leagueId: 'league-1',
+            userId: 'u-1',
+            role: 'COMMISSIONER',
+            permissions: [],
+            joinedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          newOwner: {
+            id: 'm-2',
+            leagueId: 'league-1',
+            userId: 'u-2',
+            role: 'OWNER',
+            permissions: [],
+            joinedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        });
+      }),
+    );
+
+    renderPage();
+
+    await screen.findByDisplayValue('Test League');
+    await user.click(screen.getByTestId('league-settings-generate-invite-link'));
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue(/\/join\/test-code$/)).toBeInTheDocument();
     });
 
     await user.selectOptions(screen.getByLabelText('New Owner'), 'u-2');
+    await user.click(screen.getByTestId('league-settings-transfer-ownership'));
+    await user.click(screen.getByRole('button', { name: 'Transfer' }));
 
-    expect(screen.getByRole('option', { name: /Jordan Lee \(MANAGER\)/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Transfer Ownership/i })).toBeEnabled();
+    await waitFor(() => {
+      expect(transferredTo).toBe('u-2');
+    });
   });
 });

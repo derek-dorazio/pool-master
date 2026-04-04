@@ -1,5 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/test/msw/server';
 import { Component as LeagueMembersPage } from './members';
 
 vi.mock('react-router-dom', async () => {
@@ -10,58 +14,23 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const mockMembers = [
-  { id: 'm1', userId: 'u1', displayName: 'Mike Johnson', role: 'OWNER', joinedAt: '2025-08-15T00:00:00Z' },
-  { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'COMMISSIONER', joinedAt: '2025-08-16T00:00:00Z' },
-  { id: 'm3', userId: 'u3', displayName: 'Dan Miller', role: 'MANAGER', joinedAt: '2025-08-20T00:00:00Z' },
-];
-
-const mockLeague = {
-  id: 'league-1',
-  name: 'Test League',
-  memberCount: 3,
-  activeContestCount: 0,
-  visibility: 'PRIVATE',
-  role: 'OWNER',
-};
-
-vi.mock('@tanstack/react-query', async () => {
-  const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
-  return {
-    ...actual,
-    useQuery: (options: { queryKey: string[] }) => {
-      const key = options.queryKey[0];
-      if (key === 'league-members') {
-        return { data: mockMembers, isLoading: false, isError: false, error: null };
-      }
-      if (key === 'league') {
-        return { data: mockLeague, isLoading: false, isError: false, error: null };
-      }
-      if (key === 'league-invite-link') {
-        return { data: 'https://poolmaster.app/join/abc123xyz', isLoading: false, isError: false, error: null };
-      }
-      return { data: undefined, isLoading: false, isError: false, error: null };
-    },
-    useMutation: () => ({
-      mutateAsync: vi.fn(),
-      isPending: false,
-      isSuccess: false,
-    }),
-    useQueryClient: () => ({
-      invalidateQueries: vi.fn(),
-    }),
-  };
-});
-
 vi.mock('@/hooks/use-toast', () => ({
   toast: vi.fn(),
 }));
 
 function renderPage() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+    },
+  });
+
   return render(
-    <MemoryRouter>
-      <LeagueMembersPage />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <LeagueMembersPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -70,23 +39,50 @@ describe('LeagueMembersPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders member list', () => {
+  it('renders the real member list and commissioner invite controls', async () => {
     renderPage();
-    expect(screen.getByText('Mike Johnson')).toBeInTheDocument();
-    expect(screen.getByText('Sarah Kim')).toBeInTheDocument();
-    expect(screen.getByText('Dan Miller')).toBeInTheDocument();
-    expect(screen.getByText('3 members in this league')).toBeInTheDocument();
+
+    await screen.findByRole('heading', { name: 'Members' });
+    expect(screen.getByText('Test User')).toBeInTheDocument();
+    expect(screen.getByText('Jordan Lee')).toBeInTheDocument();
+    expect(screen.getByText('2 members in this league')).toBeInTheDocument();
+    expect(screen.getByTestId('league-members-invite-button')).toBeEnabled();
   });
 
-  it('shows role badge for each member', () => {
+  it('generates a shareable invite link from the live route', async () => {
+    const user = userEvent.setup();
     renderPage();
-    expect(screen.getByText('Owner')).toBeInTheDocument();
-    expect(screen.getByText('Commissioner')).toBeInTheDocument();
-    expect(screen.getByText('Manager')).toBeInTheDocument();
+
+    await screen.findByRole('heading', { name: 'Members' });
+    await user.click(screen.getByTestId('league-members-invite-button'));
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue(/\/join\/test-code$/)).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('league-members-copy-invite-link')).toBeEnabled();
   });
 
-  it('shows invite button', () => {
+  it('lets a commissioner remove a non-owner member', async () => {
+    const user = userEvent.setup();
+    let removedMemberId: string | null = null;
+
+    server.use(
+      http.delete('/api/v1/leagues/:id/members/:uid', ({ params }) => {
+        removedMemberId = params.uid as string;
+        return HttpResponse.json({ success: true });
+      }),
+    );
+
     renderPage();
-    expect(screen.getByRole('button', { name: /Invite Member/ })).toBeInTheDocument();
+
+    await screen.findByRole('heading', { name: 'Members' });
+
+    await user.click(screen.getByTestId('league-member-actions-u-2'));
+    await user.click(screen.getByTestId('league-member-remove-u-2'));
+    await user.click(screen.getByRole('button', { name: 'Remove' }));
+
+    await waitFor(() => {
+      expect(removedMemberId).toBe('u-2');
+    });
   });
 });

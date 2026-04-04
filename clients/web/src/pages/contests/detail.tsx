@@ -108,7 +108,8 @@ function getContestDetailCopy(selectionType: string) {
         entryNameLabel: 'Prediction Name',
         snapshotEntryLabel: 'Prediction',
         snapshotScoreLabel: 'Prediction Score',
-        countLabel: 'predictions',
+        countLabelSingular: 'prediction',
+        countLabelPlural: 'predictions',
       };
     case SelectionType.BRACKET_PICK_EM:
       return {
@@ -120,7 +121,8 @@ function getContestDetailCopy(selectionType: string) {
         entryNameLabel: 'Bracket Name',
         snapshotEntryLabel: 'Bracket',
         snapshotScoreLabel: 'Bracket Score',
-        countLabel: 'brackets',
+        countLabelSingular: 'bracket',
+        countLabelPlural: 'brackets',
       };
     default:
       return {
@@ -132,7 +134,8 @@ function getContestDetailCopy(selectionType: string) {
         entryNameLabel: 'Entry Name',
         snapshotEntryLabel: 'Entry',
         snapshotScoreLabel: 'Score',
-        countLabel: 'entries',
+        countLabelSingular: 'entry',
+        countLabelPlural: 'entries',
       };
   }
 }
@@ -310,6 +313,8 @@ export function Component() {
   const contestTypeLabel = getContestTypeLabel(contest.contestType);
   const scoringEngineLabel = getScoringEngineLabel(contest.scoringEngine);
   const selectionDetailRows = getSelectionConfigDetailRows(contestData.selectionConfig);
+  const totalEntries = summary?.totalEntries ?? contest.entryCount ?? 0;
+  const entryCountLabel = totalEntries === 1 ? copy.countLabelSingular : copy.countLabelPlural;
 
   if (isPreDraftContest && contest) {
     return (
@@ -383,7 +388,7 @@ export function Component() {
             <Link to={`/leagues/${contest.leagueId}`} className="text-primary hover:underline">
               {contest.leagueId}
             </Link>
-            <span className="ml-2">&middot; {summary?.totalEntries ?? contest.entryCount ?? 0} {copy.countLabel}</span>
+            <span className="ml-2">&middot; {totalEntries} {entryCountLabel}</span>
           </p>
         </div>
         <div className="flex gap-2">

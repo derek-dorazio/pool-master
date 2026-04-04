@@ -22,14 +22,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { client, getLeague, listContests, getLeagueResults } from '@/lib/api';
-import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { FeedContainer } from '@/features/social/feed-container';
 import {
-  LeagueMembersResponseSchema,
-  type LeagueDetailDto,
-  type LeagueMemberDto,
-} from '@poolmaster/shared/dto';
+  client,
+  getLeague,
+  getLeagueResults,
+  leaveLeague as leaveLeagueRequest,
+  listContests,
+  listLeagueMembers,
+} from '@/lib/api';
+import { FeedContainer } from '@/features/social/feed-container';
+import { type LeagueDetailDto, type LeagueMemberDto } from '@poolmaster/shared/dto';
 import type { ContestSummaryDto } from '@poolmaster/shared/dto';
 
 function normalizeRole(role: string | undefined): string {
@@ -51,7 +53,10 @@ function useLeagueDetail(leagueId: string) {
     queryFn: async (): Promise<LeagueDetailDto> => {
       const { data, error } = await getLeague({ client, path: { id: leagueId } });
       if (error) throw error;
-      return (data as any).league;
+      if (!data) {
+        throw new Error('League detail response was empty.');
+      }
+      return data.league;
     },
   });
 }
@@ -62,7 +67,10 @@ function useLeagueContests(leagueId: string) {
     queryFn: async (): Promise<ContestSummaryDto[]> => {
       const { data, error } = await listContests({ client, path: { id: leagueId } });
       if (error) throw error;
-      return (data as any).contests;
+      if (!data) {
+        throw new Error('League contests response was empty.');
+      }
+      return data.contests;
     },
   });
 }
@@ -71,11 +79,12 @@ function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const { data, error } = await client.get({
-        url: API_ROUTES.leagues.members(leagueId),
-      });
+      const { data, error } = await listLeagueMembers({ client, path: { id: leagueId } });
       if (error) throw error;
-      return LeagueMembersResponseSchema.parse(data).members;
+      if (!data) {
+        throw new Error('League members response was empty.');
+      }
+      return data.members;
     },
   });
 }
@@ -86,9 +95,7 @@ function useLeaveLeague(leagueId: string) {
 
   return useMutation({
     mutationFn: async () => {
-      const { error } = await client.delete({
-        url: API_ROUTES.leagues.leave(leagueId),
-      });
+      const { error } = await leaveLeagueRequest({ client, path: { id: leagueId } });
       if (error) throw error;
     },
     onSuccess: async () => {
@@ -113,13 +120,30 @@ interface LeagueResultItem {
   closedAt?: string;
 }
 
+function mapLeagueResultItem(item: { [key: string]: unknown }): LeagueResultItem {
+  return {
+    id: String(item.id ?? ''),
+    contestName: typeof item.contestName === 'string' ? item.contestName : undefined,
+    contestType: typeof item.contestType === 'string' ? item.contestType : undefined,
+    sport: typeof item.sport === 'string' ? item.sport : undefined,
+    finalRank: typeof item.finalRank === 'number' ? item.finalRank : Number(item.finalRank ?? 0),
+    totalScore: typeof item.totalScore === 'number' ? item.totalScore : Number(item.totalScore ?? 0),
+    prizeLabel: typeof item.prizeLabel === 'string' ? item.prizeLabel : undefined,
+    isWinner: Boolean(item.isWinner),
+    closedAt: typeof item.closedAt === 'string' ? item.closedAt : undefined,
+  };
+}
+
 function useLeagueResults(leagueId: string) {
   return useQuery({
     queryKey: ['league-results', leagueId],
     queryFn: async (): Promise<LeagueResultItem[]> => {
       const { data, error } = await getLeagueResults({ client, path: { id: leagueId } });
       if (error) throw error;
-      return ((data as unknown) as { results?: LeagueResultItem[] }).results ?? [];
+      if (!data) {
+        throw new Error('League results response was empty.');
+      }
+      return data.results.map(mapLeagueResultItem);
     },
   });
 }
@@ -140,7 +164,7 @@ const contestStatusStyles: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 function OverviewTab({ league, leagueId }: { league: LeagueDetailDto; leagueId: string }) {
-  const { data: contests = [] } = useLeagueContests(leagueId);
+  const { data: contests = [], isLoading } = useLeagueContests(leagueId);
   const isCommissioner = isCommissionerRole(league.role);
 
   return (
@@ -149,13 +173,13 @@ function OverviewTab({ league, leagueId }: { league: LeagueDetailDto; leagueId: 
       {isCommissioner && (
         <div className="flex gap-3">
           <Button size="sm" asChild>
-            <Link to="/contests/create">
+            <Link to="/contests/create" data-testid="league-detail-create-contest">
               <Plus className="h-4 w-4 mr-1" />
               Create Contest
             </Link>
           </Button>
           <Button size="sm" variant="outline" asChild>
-            <Link to={`/leagues/${league.id}/members`}>
+            <Link to={`/leagues/${league.id}/members`} data-testid="league-detail-invite-members">
               <UserPlus className="h-4 w-4 mr-1" />
               Invite Members
             </Link>
@@ -169,7 +193,9 @@ function OverviewTab({ league, leagueId }: { league: LeagueDetailDto; leagueId: 
           <Trophy className="h-5 w-5" />
           Active Contests
         </h3>
-        {contests.length === 0 ? (
+        {isLoading ? (
+          <p className="text-muted-foreground text-sm">Loading contests...</p>
+        ) : contests.length === 0 ? (
           <p className="text-muted-foreground text-sm">No active contests.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -233,7 +259,7 @@ function ContestsTab({ leagueId }: { leagueId: string }) {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">League Contests</h3>
         <Button size="sm" asChild>
-          <Link to="/contests/create">
+          <Link to="/contests/create" data-testid="league-detail-create-contest">
             <Plus className="h-4 w-4 mr-1" />
             Create Contest
           </Link>
@@ -307,7 +333,7 @@ function MembersTab({ leagueId }: { leagueId: string }) {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">{members.length} Members</h3>
         <Button size="sm" variant="outline" asChild>
-          <Link to={`/leagues/${leagueId}/members`}>
+          <Link to={`/leagues/${leagueId}/members`} data-testid="league-detail-invite-members">
             <UserPlus className="h-4 w-4 mr-1" />
             Invite Member
           </Link>
@@ -408,7 +434,9 @@ function HistoryTab({ leagueId }: { leagueId: string }) {
         <div className="flex items-center justify-between gap-4">
           <h3 className="text-lg font-semibold">Finished Contests</h3>
           <Button variant="outline" asChild>
-            <Link to={`/leagues/${leagueId}/history`}>Open full history</Link>
+            <Link to={`/leagues/${leagueId}/history`} data-testid="league-detail-history-link">
+              Open full history
+            </Link>
           </Button>
         </div>
         <p className="text-muted-foreground text-sm">No finished contests yet.</p>
@@ -498,7 +526,7 @@ export function Component() {
         <div>
           {isCommissioner ? (
             <Button variant="outline" asChild>
-              <Link to={`/leagues/${league.id}/settings`}>
+              <Link to={`/leagues/${league.id}/settings`} data-testid="league-detail-settings-link">
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
               </Link>
@@ -506,6 +534,7 @@ export function Component() {
           ) : (
             <Button
               variant="outline"
+              data-testid="league-detail-leave-button"
               onClick={async () => {
                 const confirmed = await leaveDialog.confirm(
                   'Leave League',

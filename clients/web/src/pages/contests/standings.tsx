@@ -85,6 +85,8 @@ function getStandingsCopy(selectionType: string | undefined) {
         subtitle: "Saved predictions ranked by the latest standings rollup",
         entryColumnLabel: 'Prediction',
         totalColumnLabel: 'Prediction Score',
+        singularEntryLabel: 'prediction',
+        pluralEntryLabel: 'predictions',
       };
     case SelectionType.BRACKET_PICK_EM:
       return {
@@ -92,6 +94,8 @@ function getStandingsCopy(selectionType: string | undefined) {
         subtitle: 'Saved bracket predictions ranked by the latest standings rollup',
         entryColumnLabel: 'Bracket',
         totalColumnLabel: 'Bracket Score',
+        singularEntryLabel: 'bracket',
+        pluralEntryLabel: 'brackets',
       };
     default:
       return {
@@ -99,6 +103,8 @@ function getStandingsCopy(selectionType: string | undefined) {
         subtitle: 'Entries ranked by the latest standings rollup',
         entryColumnLabel: 'Entry',
         totalColumnLabel: 'Total',
+        singularEntryLabel: 'entry',
+        pluralEntryLabel: 'entries',
       };
   }
 }
@@ -109,6 +115,7 @@ export function Component() {
   const { data: standingsResponse, isLoading, isError, error } = useStandings(contestId);
   const [sortKey, setSortKey] = useState<SortKey>('rank');
   const [descending, setDescending] = useState(false);
+  const entryCount = standingsResponse?.total ?? 0;
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -133,6 +140,7 @@ export function Component() {
       })
     : [];
   const copy = getStandingsCopy(contest?.contest.selectionType);
+  const entryCountLabel = entryCount === 1 ? copy.singularEntryLabel : copy.pluralEntryLabel;
 
   if (isLoading) {
     return (
@@ -181,7 +189,7 @@ export function Component() {
           {copy.pageTitle}{contest ? ` — ${contest.contest.name}` : ''}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {standingsResponse?.total ?? 0} {copy.entryColumnLabel.toLowerCase()}s. {copy.subtitle}
+          {entryCount} {entryCountLabel}. {copy.subtitle}
         </p>
       </div>
 

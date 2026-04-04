@@ -3,6 +3,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { Component as ContestResultsPage } from './results';
 
 const mockToast = vi.fn();
+let contestSelectionType: 'PICK_EM' | 'BRACKET_PICK_EM' = 'PICK_EM';
+let contestName = "NFL Weekly Pick'em";
 let mockQueryResult = {
   data: {
     standings: [
@@ -54,10 +56,10 @@ vi.mock('@/features/contests/hooks/use-contest', () => ({
     data: {
       contest: {
         id: 'contest-1',
-        name: "NFL Weekly Pick'em",
+        name: contestName,
         status: 'ACTIVE',
         contestType: 'SINGLE_EVENT',
-        selectionType: 'PICK_EM',
+        selectionType: contestSelectionType,
         scoringEngine: 'CUMULATIVE',
         leagueId: 'league-1',
       },
@@ -88,6 +90,8 @@ function renderPage() {
 
 describe('ContestResultsPage', () => {
   beforeEach(() => {
+    contestSelectionType = 'PICK_EM';
+    contestName = "NFL Weekly Pick'em";
     mockQueryResult = {
       data: {
         standings: [
@@ -157,6 +161,22 @@ describe('ContestResultsPage', () => {
     expect(screen.getByText("Pick'em Leader")).toBeInTheDocument();
     expect(screen.getAllByText('Prediction Score').length).toBeGreaterThan(0);
     expect(screen.getByText('Lead Over 2nd Prediction')).toBeInTheDocument();
+  });
+
+  it("renders mode-aware bracket result context", () => {
+    contestSelectionType = 'BRACKET_PICK_EM';
+    contestName = 'March Madness Bracket';
+
+    renderPage();
+
+    expect(screen.getByText('March Madness Bracket')).toBeInTheDocument();
+    expect(screen.getByText("Bracket Pick'em Results")).toBeInTheDocument();
+    expect(screen.getByText(/Bracket Pick'em mode/i)).toBeInTheDocument();
+    expect(screen.getByText('Bracket Standings Snapshot')).toBeInTheDocument();
+    expect(screen.getByText('Bracket')).toBeInTheDocument();
+    expect(screen.getByText('Bracket Leader')).toBeInTheDocument();
+    expect(screen.getAllByText('Bracket Score').length).toBeGreaterThan(0);
+    expect(screen.getByText('Lead Over 2nd Bracket')).toBeInTheDocument();
   });
 
   it('shows the persisted winner even when only one standings entry exists', () => {

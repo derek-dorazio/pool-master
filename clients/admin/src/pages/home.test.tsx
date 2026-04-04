@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as HomePage } from './home';
 
@@ -90,6 +91,17 @@ describe('HomePage', () => {
     expect(screen.getByRole('button', { name: /search tenant/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /view providers/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /view flags/i })).toBeInTheDocument();
+  });
+
+  it('navigates from the quick actions', async () => {
+    const user = userEvent.setup();
+    renderHome();
+
+    await user.click(screen.getByRole('button', { name: /search user/i }));
+    await user.click(screen.getByRole('button', { name: /view providers/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/users');
+    expect(mockNavigate).toHaveBeenCalledWith('/providers');
   });
 
   it('renders loading state when isLoading', () => {

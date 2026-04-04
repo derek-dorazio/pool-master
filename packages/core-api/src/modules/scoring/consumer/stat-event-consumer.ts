@@ -70,11 +70,25 @@ export class ContestLookup {
       include: { entry: true },
     });
 
-    return picks.map((p) => ({
-      entryId: p.entry.id,
-      entryName: p.entry.name,
-      participantIds: [],
-    }));
+    const entriesById = new Map<string, EntryInfo>();
+
+    for (const pick of picks) {
+      const existing = entriesById.get(pick.entry.id);
+      if (existing) {
+        if (!existing.participantIds.includes(pick.participantId)) {
+          existing.participantIds.push(pick.participantId);
+        }
+        continue;
+      }
+
+      entriesById.set(pick.entry.id, {
+        entryId: pick.entry.id,
+        entryName: pick.entry.name,
+        participantIds: [pick.participantId],
+      });
+    }
+
+    return Array.from(entriesById.values());
   }
 
   /** Get the scoring config for a contest. */

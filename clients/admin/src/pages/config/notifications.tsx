@@ -330,7 +330,18 @@ function NotificationTemplatesSection() {
                             if (expandedId) {
                               const template = templates.find((t) => t.id === expandedId);
                               if (template) {
-                                await adminUpdateNotificationTemplate({ client, path: { eventType: template.eventType }, body: editForm });
+                                await adminUpdateNotificationTemplate({
+                                  client,
+                                  path: { eventType: template.eventType },
+                                  body: {
+                                    pushTitle: editForm.pushTitle,
+                                    pushBody: editForm.pushBody,
+                                    emailSubject: editForm.emailSubject,
+                                    emailText: editForm.emailBodyPreview,
+                                    inAppTitle: editForm.inAppTitle,
+                                    inAppBody: editForm.inAppBody,
+                                  },
+                                });
                               }
                             }
                             setExpandedId(null);

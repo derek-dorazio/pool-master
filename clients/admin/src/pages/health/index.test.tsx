@@ -19,14 +19,22 @@ const mockHealthData = {
   lastRefreshed: new Date(),
 };
 
+let mockIsLoading = false;
+let mockData: typeof mockHealthData | undefined = mockHealthData;
+
 vi.mock('@/hooks/use-health-api', () => ({
   useHealthDashboard: () => ({
-    data: mockHealthData,
-    isLoading: false,
+    data: mockData,
+    isLoading: mockIsLoading,
   }),
 }));
 
 describe('HealthPage', () => {
+  beforeEach(() => {
+    mockIsLoading = false;
+    mockData = mockHealthData;
+  });
+
   it('renders service status table', () => {
     render(<HealthPage />);
 
@@ -38,7 +46,6 @@ describe('HealthPage', () => {
   it('shows status indicators with colored dots', () => {
     render(<HealthPage />);
 
-    // Check that status text values are present
     expect(screen.getByText('UP')).toBeInTheDocument();
     expect(screen.getByText('DEGRADED')).toBeInTheDocument();
     expect(screen.getByText('DOWN')).toBeInTheDocument();
@@ -72,5 +79,15 @@ describe('HealthPage', () => {
     render(<HealthPage />);
 
     expect(screen.getByText('8,320 delivered (98.5%)')).toBeInTheDocument();
+  });
+
+  it('renders the loading state while the dashboard is still fetching', () => {
+    mockIsLoading = true;
+    mockData = undefined;
+
+    render(<HealthPage />);
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.queryByText('API Gateway')).not.toBeInTheDocument();
   });
 });

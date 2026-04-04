@@ -10,15 +10,18 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+let contestSelectionType: 'PICK_EM' | 'BRACKET_PICK_EM' = 'PICK_EM';
+let contestName = "NFL Weekly Pick'em";
+
 vi.mock('@/features/contests/hooks/use-contest', () => ({
   useContest: () => ({
     data: {
       contest: {
         id: 'contest-1',
-        name: "NFL Weekly Pick'em",
+        name: contestName,
         status: 'ACTIVE',
         contestType: 'SINGLE_EVENT',
-        selectionType: 'PICK_EM',
+        selectionType: contestSelectionType,
         scoringEngine: 'CUMULATIVE',
         leagueId: 'league-1',
       },
@@ -27,23 +30,25 @@ vi.mock('@/features/contests/hooks/use-contest', () => ({
   }),
 }));
 
+const standings = [
+  {
+    rank: 1,
+    entryId: 'entry-1',
+    entryName: 'Alpha Entry',
+    ownerDisplayName: 'Alice',
+    ownerId: 'user-1',
+    totalScore: 50,
+    previousRank: null,
+    movement: 'same',
+    isEliminated: false,
+    lastUpdatedAt: '2026-04-03T10:00:00Z',
+  },
+];
+
 vi.mock('@/features/contests/hooks/use-standings', () => ({
   useStandings: () => ({
     data: {
-      standings: [
-        {
-          rank: 1,
-          entryId: 'entry-1',
-          entryName: 'Alpha Entry',
-          ownerDisplayName: 'Alice',
-          ownerId: 'user-1',
-          totalScore: 50,
-          previousRank: null,
-          movement: 'same',
-          isEliminated: false,
-          lastUpdatedAt: '2026-04-03T10:00:00Z',
-        },
-      ],
+      standings,
       total: 1,
       page: 1,
       pageSize: 25,
@@ -57,6 +62,9 @@ vi.mock('@/features/contests/hooks/use-standings', () => ({
 
 describe('ContestStandingsPage', () => {
   it("uses mode-aware pick'em standings labels", () => {
+    contestSelectionType = 'PICK_EM';
+    contestName = "NFL Weekly Pick'em";
+
     render(
       <MemoryRouter>
         <ContestStandingsPage />
@@ -64,8 +72,24 @@ describe('ContestStandingsPage', () => {
     );
 
     expect(screen.getByText("Pick'em Standings — NFL Weekly Pick'em")).toBeInTheDocument();
-    expect(screen.getByText(/1 predictions\. saved predictions ranked by the latest standings rollup/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 prediction\. saved predictions ranked by the latest standings rollup/i)).toBeInTheDocument();
     expect(screen.getByText('Prediction')).toBeInTheDocument();
     expect(screen.getByText('Prediction Score')).toBeInTheDocument();
+  });
+
+  it("uses mode-aware bracket standings labels", () => {
+    contestSelectionType = 'BRACKET_PICK_EM';
+    contestName = 'March Madness Bracket';
+
+    render(
+      <MemoryRouter>
+        <ContestStandingsPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Bracket Pick'em Standings — March Madness Bracket")).toBeInTheDocument();
+    expect(screen.getByText(/1 bracket\. saved bracket predictions ranked by the latest standings rollup/i)).toBeInTheDocument();
+    expect(screen.getByText('Bracket')).toBeInTheDocument();
+    expect(screen.getByText('Bracket Score')).toBeInTheDocument();
   });
 });

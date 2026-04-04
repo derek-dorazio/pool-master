@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
@@ -11,7 +11,6 @@ import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { SelectionType } from '@poolmaster/shared/domain';
 import {
   EntryScoreDetailResponseSchema,
-  type StandingsResponse,
 } from '@poolmaster/shared/dto';
 
 function getScoringCopy(selectionType: string | undefined) {
@@ -47,19 +46,21 @@ export function Component() {
   const { contestId } = useParams();
   const { data: contest } = useContest(contestId);
   const { data: standings, isLoading: standingsLoading, isError: standingsError, error: standingsQueryError } =
-    useStandings(contestId) as {
-      data: StandingsResponse | undefined;
-      isLoading: boolean;
-      isError: boolean;
-      error: unknown;
-    };
+    useStandings(contestId);
   const [selectedEntry, setSelectedEntry] = useState('');
+  const previousContestId = useRef<string | undefined>(contestId);
 
   useEffect(() => {
+    if (contestId !== previousContestId.current) {
+      previousContestId.current = contestId;
+      setSelectedEntry('');
+      return;
+    }
+
     if (!selectedEntry && standings?.standings[0]?.entryId) {
       setSelectedEntry(standings.standings[0].entryId);
     }
-  }, [selectedEntry, standings]);
+  }, [contestId, selectedEntry, standings]);
 
   const { data: scoreDetail, isLoading: scoreLoading, isError: scoreError, error: scoreQueryError } = useQuery({
     queryKey: ['contests', contestId, 'entry-score', selectedEntry],

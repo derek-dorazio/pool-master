@@ -216,11 +216,11 @@ Improve confidence in the still-supported admin surfaces without broadening admi
 |---|---|---|---|---|
 | WSH-001 | Main | Keep shared CI/CD, package/runtime, and policy hardening on the main thread | In Progress | Do not delegate shared-contract work while the repo is still tightening stability gates |
 | WSH-002 | A | Add focused web auth coverage and fix defects revealed there | Done | Main thread pilot slice completed on 2026-04-04. Added meaningful auth page coverage for submit success/failure, redirect preservation, wizard progression, and age validation without surfacing deeper shared-architecture issues. |
-| WSH-003 | B | Add league detail/member/settings coverage and fix defects revealed there | Not Started | Good parallel slice with mostly disjoint files |
-| WSH-004 | C | Add contest review surface coverage for active MVP modes | Not Started | Keep deferred modes out of scope |
-| WSH-005 | D | Add draft-room coverage for kept MVP modes | Not Started | Separate from contest create flow to reduce conflict |
-| WSH-006 | E | Add backend contest/scoring edge coverage and targeted DB integration cases | Not Started | Main thread should review any shared-contract changes carefully |
-| WSH-007 | F | Add admin coverage only on still-supported active surfaces | Not Started | Avoid reviving deferred admin depth |
+| WSH-003 | B | Add league detail/member/settings coverage and fix defects revealed there | Done | Added MSW-backed Vitest coverage for league detail, members, and settings; switched those surfaces to generated SDK calls where they had drifted to manual client usage; added stable selectors and honest loading states for the active MVP seams |
+| WSH-004 | C | Add contest review surface coverage for active MVP modes | Done | Worker slice completed on 2026-04-04. Added focused review-surface coverage, fixed the scoring-page selected-entry reset when the contest changes, and tightened singular/plural label handling across active contest review pages. |
+| WSH-005 | D | Add draft-room coverage for kept MVP modes | Done | Main-thread draft-room slice completed on 2026-04-04. Added room action wiring coverage for turn-based picks, participant drawer selection, pick'em picks/confidence, and bracket actions without surfacing deeper shared-architecture issues. |
+| WSH-006 | E | Add backend contest/scoring edge coverage and targeted DB integration cases | Done | Added scoring-consumer dedupe coverage, active-contest filtering coverage, and contest/scoring unit edge tests without touching shared DTO or schema surfaces |
+| WSH-007 | F | Add admin coverage only on still-supported active surfaces | Done | Added focused Vitest coverage for home, health, and config surfaces; fixed the notification template update payload to send `emailText` for the edited email body. |
 | WSH-008 | Main | Re-measure coverage and decide whether ratchet changes are justified after worker slices land | Not Started | Update [coverage-threshold-ratchet.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/coverage-threshold-ratchet.md) only after merged changes are stable |
 
 ## Acceptance Criteria

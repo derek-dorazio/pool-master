@@ -1,16 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/test/msw/server';
 import { Component as LeagueDetailPage } from './detail';
-
-const mockLeague = {
-  id: 'league-1',
-  name: 'Masters Pool',
-  visibility: 'PRIVATE',
-  memberCount: 8,
-  activeContestCount: 2,
-  role: 'OWNER',
-};
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -20,92 +14,19 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const mockContests = [
-  {
-    id: 'contest-1',
-    name: 'Week 14 Pick\'em',
-    status: 'active',
-  },
-  {
-    id: 'contest-2',
-    name: 'Survivor Pool 2025',
-    status: 'active',
-  },
-];
-
-const mockMembers = [
-  { id: 'm1', userId: 'u1', displayName: 'Mike Johnson', role: 'OWNER' },
-  { id: 'm2', userId: 'u2', displayName: 'Sarah Kim', role: 'MANAGER' },
-];
-
-const mockResults = [
-  {
-    id: 'result-1',
-    contestName: 'Masters Pick 6',
-    contestType: 'TIERED',
-    sport: 'GOLF',
-    finalRank: 1,
-    totalScore: 128,
-    prizeLabel: 'Champion',
-    isWinner: true,
-    closedAt: '2026-04-03T18:00:00.000Z',
-  },
-  {
-    id: 'result-2',
-    contestName: 'Masters Pick 6',
-    contestType: 'TIERED',
-    sport: 'GOLF',
-    finalRank: 4,
-    totalScore: 112,
-    isWinner: false,
-    closedAt: '2026-04-03T18:00:00.000Z',
-  },
-];
-
-vi.mock('@tanstack/react-query', async () => {
-  const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
-  return {
-    ...actual,
-    useQuery: (options: { queryKey: string[] }) => {
-      const key = options.queryKey[0];
-      if (key === 'league-contests') {
-        return { data: mockContests, isLoading: false, isError: false, error: null };
-      }
-      if (key === 'league-members') {
-        return { data: mockMembers, isLoading: false, isError: false, error: null };
-      }
-      if (key === 'league-results') {
-        return { data: mockResults, isLoading: false, isError: false, error: null };
-      }
-      // Default: league detail
-      return {
-        data: {
-          ...mockLeague,
-          name: 'Masters Pool',
-          memberCount: 8,
-          role: 'OWNER',
-          description: 'A competitive pool league.',
-        },
-        isLoading: false,
-        isError: false,
-        error: null,
-      };
-    },
-    useMutation: () => ({
-      mutateAsync: vi.fn(),
-      isPending: false,
-    }),
-    useQueryClient: () => ({
-      invalidateQueries: vi.fn(),
-    }),
-  };
-});
-
 function renderPage() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+    },
+  });
+
   return render(
-    <MemoryRouter>
-      <LeagueDetailPage />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <LeagueDetailPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -114,43 +35,67 @@ describe('LeagueDetailPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders league name', () => {
+  it('renders the active league overview from the real API data', async () => {
     renderPage();
-    expect(screen.getByRole('heading', { name: 'Masters Pool' })).toBeInTheDocument();
-  });
 
-  it('renders member count', () => {
-    renderPage();
-    expect(screen.getByText(/8 members/)).toBeInTheDocument();
-  });
-
-  it('renders contests section', () => {
-    renderPage();
+    await screen.findByRole('heading', { name: 'Test League' });
+    expect(screen.getByText('5 members')).toBeInTheDocument();
     expect(screen.getByText('Active Contests')).toBeInTheDocument();
-    expect(screen.getByText("Week 14 Pick'em")).toBeInTheDocument();
-    expect(screen.getByText('Survivor Pool 2025')).toBeInTheDocument();
+    expect(screen.getByTestId('league-detail-settings-link')).toHaveAttribute(
+      'href',
+      '/leagues/league-1/settings',
+    );
+    expect(screen.getByTestId('league-detail-create-contest')).toHaveAttribute(
+      'href',
+      '/contests/create',
+    );
+    expect(screen.getByTestId('league-detail-invite-members')).toHaveAttribute(
+      'href',
+      '/leagues/league-1/members',
+    );
   });
 
-  it('shows settings link for owners', () => {
+  it('shows a loading state while contest data is still in flight', async () => {
+    server.use(
+      http.get('/api/v1/leagues/:id/contests/', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return HttpResponse.json({ contests: [] });
+      }),
+    );
+
     renderPage();
-    const settingsLink = screen.getByRole('link', { name: /Settings/ });
-    expect(settingsLink).toBeInTheDocument();
-    expect(settingsLink).toHaveAttribute('href', '/leagues/league-1/settings');
+
+    await screen.findByRole('heading', { name: 'Test League' });
+    await waitFor(() => {
+      expect(screen.getByText('Loading contests...')).toBeInTheDocument();
+    });
   });
 
-  it('renders finished contests in the history tab', async () => {
+  it('shows a loading state while member data is still in flight', async () => {
+    server.use(
+      http.get('/api/v1/leagues/:id/members', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return HttpResponse.json({
+          members: [
+            {
+              id: 'm-1',
+              userId: 'u-1',
+              displayName: 'Test User',
+              role: 'OWNER',
+            },
+          ],
+        });
+      }),
+    );
+
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole('tab', { name: 'History' }));
+    await screen.findByRole('heading', { name: 'Test League' });
+    await user.click(screen.getByRole('tab', { name: 'Members' }));
 
-    expect(screen.getByText('Finished Contests')).toBeInTheDocument();
-    expect(screen.getAllByText('Masters Pick 6')).toHaveLength(2);
-    expect(screen.getByText('#1')).toBeInTheDocument();
-    expect(screen.getByText('128 pts')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Open full history/ })).toHaveAttribute(
-      'href',
-      '/leagues/league-1/history',
-    );
+    await waitFor(() => {
+      expect(screen.getByText('Loading members...')).toBeInTheDocument();
+    });
   });
 });

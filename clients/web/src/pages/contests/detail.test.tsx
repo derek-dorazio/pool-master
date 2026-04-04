@@ -174,6 +174,26 @@ describe('ContestDetailPage', () => {
     expect(screen.getByText('Team Beta')).toBeInTheDocument();
   });
 
+  it('uses singular contest count labels for a single active entry', () => {
+    contestState = {
+      contest: {
+        ...mockActiveContest.contest,
+        name: "NFL Weekly Pick'em",
+        selectionType: 'PICK_EM',
+      },
+      selectionConfig: null,
+    };
+    mockStandingsSummary = {
+      ...mockSummary,
+      topEntries: [mockSummary.topEntries[0]],
+      totalEntries: 1,
+    };
+
+    renderPage();
+
+    expect(screen.getByText(/1 prediction/i)).toBeInTheDocument();
+  });
+
   it('shows action buttons', () => {
     renderPage();
     expect(screen.getByRole('link', { name: /View Scoring/ })).toBeInTheDocument();
@@ -225,6 +245,25 @@ describe('ContestDetailPage', () => {
     expect(screen.getByText(/12 predictions/i)).toBeInTheDocument();
     expect(screen.getByText('Single Event')).toBeInTheDocument();
     expect(screen.getByText('Stroke Play')).toBeInTheDocument();
+  });
+
+  it("uses mode-aware labels for active bracket pick'em contests", () => {
+    contestState = {
+      contest: {
+        ...mockActiveContest.contest,
+        name: "March Madness Bracket",
+        selectionType: 'BRACKET_PICK_EM',
+      },
+      selectionConfig: null,
+    };
+
+    renderPage();
+
+    expect(screen.getByText("My Bracket Entry")).toBeInTheDocument();
+    expect(screen.getByText("Bracket Standings Snapshot")).toBeInTheDocument();
+    expect(screen.getAllByText('Bracket Score').length).toBeGreaterThan(0);
+    expect(screen.getByText('Bracket')).toBeInTheDocument();
+    expect(screen.getByText(/view full bracket standings/i)).toBeInTheDocument();
   });
 
   it('shows the real contest entry when standings are not available yet', () => {

@@ -28,10 +28,9 @@ import {
   generateInviteLink,
   removeMember,
   sendLeagueInvitations,
+  listLeagueMembers,
 } from '@/lib/api';
-import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
-  LeagueMembersResponseSchema,
   type LeagueMemberDto,
   type LeagueDetailDto,
 } from '@poolmaster/shared/dto';
@@ -49,11 +48,12 @@ function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const { data, error } = await client.get({
-        url: API_ROUTES.leagues.members(leagueId),
-      });
+      const { data, error } = await listLeagueMembers({ client, path: { id: leagueId } });
       if (error) throw error;
-      return LeagueMembersResponseSchema.parse(data).members;
+      if (!data) {
+        throw new Error('League members response was empty.');
+      }
+      return data.members;
     },
   });
 }
@@ -169,6 +169,7 @@ function MemberActions({
         variant="ghost"
         size="icon"
         onClick={() => setOpen(!open)}
+        data-testid={`league-member-actions-${member.userId}`}
       >
         <MoreHorizontal className="h-4 w-4" />
       </Button>
@@ -193,6 +194,7 @@ function MemberActions({
                 }
               }}
               disabled={isRemoving}
+              data-testid={`league-member-remove-${member.userId}`}
             >
               Remove
             </button>
@@ -311,7 +313,7 @@ export function Component() {
           <h1 className="text-3xl font-bold">Members</h1>
           <p className="text-muted-foreground">{members.length} members in this league</p>
         </div>
-        <Button onClick={openInviteDialog} disabled={!isCommissioner}>
+        <Button data-testid="league-members-invite-button" onClick={openInviteDialog} disabled={!isCommissioner}>
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Member
         </Button>
@@ -358,13 +360,19 @@ export function Component() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Input
-                  value={inviteLink}
-                  readOnly
-                  className="bg-muted font-mono text-xs"
-                  placeholder={inviteLinkMutation.isPending ? 'Generating invite link...' : 'Invite link unavailable'}
-                />
-                <Button variant="outline" size="icon" onClick={copyInviteLink} disabled={!inviteLink}>
+              <Input
+                value={inviteLink}
+                readOnly
+                className="bg-muted font-mono text-xs"
+                placeholder={inviteLinkMutation.isPending ? 'Generating invite link...' : 'Invite link unavailable'}
+              />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={copyInviteLink}
+                  disabled={!inviteLink}
+                  data-testid="league-members-copy-invite-link"
+                >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>

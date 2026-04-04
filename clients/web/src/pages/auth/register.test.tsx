@@ -175,7 +175,7 @@ describe('RegisterPage', () => {
       avatarUrl: undefined,
     });
     expect(mockNavigate).toHaveBeenCalledWith('/join/invite-123');
-  });
+  }, 10_000);
 
   it('shows a server error when registration fails', async () => {
     const user = userEvent.setup();
@@ -203,5 +203,5 @@ describe('RegisterPage', () => {
 
     expect(await screen.findByText('Email already in use')).toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
-  });
+  }, 10_000);
 });

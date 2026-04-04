@@ -23,15 +23,11 @@ import {
   client,
   generateInviteLink,
   getLeague,
+  listLeagueMembers,
   transferOwnership,
   updateLeagueSettings,
 } from '@/lib/api';
-import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import {
-  LeagueMembersResponseSchema,
-  type LeagueDetailDto,
-  type LeagueMemberDto,
-} from '@poolmaster/shared/dto';
+import { type LeagueDetailDto, type LeagueMemberDto } from '@poolmaster/shared/dto';
 
 type InvitePolicy = 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
 type WeekDay =
@@ -122,11 +118,12 @@ function useLeagueMembers(leagueId: string) {
   return useQuery({
     queryKey: ['league-members', leagueId],
     queryFn: async (): Promise<LeagueMemberDto[]> => {
-      const { data, error } = await client.get({
-        url: API_ROUTES.leagues.members(leagueId),
-      });
+      const { data, error } = await listLeagueMembers({ client, path: { id: leagueId } });
       if (error) throw error;
-      return LeagueMembersResponseSchema.parse(data).members;
+      if (!data) {
+        throw new Error('League members response was empty.');
+      }
+      return data.members;
     },
   });
 }
@@ -464,9 +461,14 @@ export function Component() {
             </Select>
           </div>
 
-          <Button type="button" onClick={onSave} disabled={!isCommissioner || saveMutation.isPending}>
-            {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
-          </Button>
+      <Button
+        type="button"
+        onClick={onSave}
+        disabled={!isCommissioner || saveMutation.isPending}
+        data-testid="league-settings-save-button"
+      >
+        {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
+      </Button>
         </CardContent>
       </Card>
 
@@ -497,6 +499,7 @@ export function Component() {
             variant="outline"
             onClick={generateNewLink}
             disabled={!isCommissioner || inviteLinkMutation.isPending}
+            data-testid="league-settings-generate-invite-link"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             {inviteLinkMutation.isPending ? 'Generating...' : 'Generate Invite Link'}
@@ -549,6 +552,7 @@ export function Component() {
             size="sm"
             onClick={handleTransfer}
             disabled={!isOwner || !newOwnerId || transferMutation.isPending}
+            data-testid="league-settings-transfer-ownership"
           >
             {transferMutation.isPending ? 'Transferring...' : 'Transfer Ownership'}
           </Button>

@@ -1,5 +1,18 @@
+import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import { Component as NotificationConfigPage } from './notifications';
+
+const { mockUpdateNotificationTemplate } = vi.hoisted(() => ({
+  mockUpdateNotificationTemplate: vi.fn(),
+}));
+
+vi.mock('@/lib/api', () => ({
+  client: {},
+  adminUpdatePushTrigger: vi.fn(),
+  adminUpdateNotificationTemplate: mockUpdateNotificationTemplate,
+  adminUpdateRateLimitConfig: vi.fn(),
+  adminUpdateDigestConfig: vi.fn(),
+}));
 
 vi.mock('@/hooks/use-config-api', () => ({
   usePushTriggers: () => ({
@@ -61,6 +74,10 @@ function renderPage() {
 }
 
 describe('NotificationConfigPage', () => {
+  beforeEach(() => {
+    mockUpdateNotificationTemplate.mockReset();
+  });
+
   it('renders the push triggers section with event types', () => {
     renderPage();
     expect(screen.getByText('Push Triggers')).toBeInTheDocument();
@@ -90,5 +107,33 @@ describe('NotificationConfigPage', () => {
     expect(screen.getByText('Push per hour')).toBeInTheDocument();
     expect(screen.getByText('Email per day')).toBeInTheDocument();
     expect(screen.getByText('SMS per day')).toBeInTheDocument();
+  });
+
+  it('sends the notification template email body through the emailText contract field', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByText('draft.started'));
+
+    const pushTitleInput = screen.getAllByDisplayValue('Draft Started')[0];
+    await user.clear(pushTitleInput);
+    await user.type(pushTitleInput, 'Draft Started Updated');
+
+    const emailBodyInput = screen.getByDisplayValue('Your draft...');
+    await user.clear(emailBodyInput);
+    await user.type(emailBodyInput, 'Updated digest body');
+
+    await user.click(screen.getAllByRole('button', { name: 'Save' })[0]);
+
+    expect(mockUpdateNotificationTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { eventType: 'draft.started' },
+        body: expect.objectContaining({
+          pushTitle: 'Draft Started Updated',
+          emailText: 'Updated digest body',
+          emailSubject: 'Draft Started',
+        }),
+      }),
+    );
   });
 });
