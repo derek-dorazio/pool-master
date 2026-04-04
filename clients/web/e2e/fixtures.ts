@@ -10,46 +10,51 @@
  * 4. React error boundaries are detected
  */
 
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 
 /** Errors collected during a single test. */
-interface PageErrors {
+export interface PageErrors {
   consoleErrors: string[];
   uncaughtErrors: string[];
   serverErrors: string[];
 }
 
+export function createRuntimeErrorTracker(page: Page): PageErrors {
+  const errors: PageErrors = {
+    consoleErrors: [],
+    uncaughtErrors: [],
+    serverErrors: [],
+  };
+
+  // Capture console.error messages
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') {
+      const text = msg.text();
+      // Ignore known noise (favicon, browser extensions, expected 404s on optional API endpoints)
+      if (text.includes('favicon.ico') || text.includes('ERR_BLOCKED_BY_CLIENT')) return;
+      if (text.includes('Failed to load resource') && text.includes('404')) return;
+      errors.consoleErrors.push(text);
+    }
+  });
+
+  // Capture uncaught exceptions (window.onerror / unhandledrejection)
+  page.on('pageerror', (error) => {
+    errors.uncaughtErrors.push(error.message);
+  });
+
+  // Capture HTTP 5xx responses
+  page.on('response', (response) => {
+    if (response.status() >= 500) {
+      errors.serverErrors.push(`${response.status()} ${response.url()}`);
+    }
+  });
+
+  return errors;
+}
+
 export const test = base.extend<{ pageErrors: PageErrors }>({
   pageErrors: async ({ page }, use) => {
-    const errors: PageErrors = {
-      consoleErrors: [],
-      uncaughtErrors: [],
-      serverErrors: [],
-    };
-
-    // Capture console.error messages
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        const text = msg.text();
-        // Ignore known noise (favicon, browser extensions, expected 404s on optional API endpoints)
-        if (text.includes('favicon.ico') || text.includes('ERR_BLOCKED_BY_CLIENT')) return;
-        if (text.includes('Failed to load resource') && text.includes('404')) return;
-        errors.consoleErrors.push(text);
-      }
-    });
-
-    // Capture uncaught exceptions (window.onerror / unhandledrejection)
-    page.on('pageerror', (error) => {
-      errors.uncaughtErrors.push(error.message);
-    });
-
-    // Capture HTTP 5xx responses
-    page.on('response', (response) => {
-      if (response.status() >= 500) {
-        errors.serverErrors.push(`${response.status()} ${response.url()}`);
-      }
-    });
-
+    const errors = createRuntimeErrorTracker(page);
     await use(errors);
   },
 });

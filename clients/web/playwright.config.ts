@@ -1,5 +1,5 @@
 /**
- * Playwright config for E2E smoke tests.
+ * Playwright config for browser E2E smoke tests.
  *
  * Local:  npm run dev:start, then: npx playwright test
  * CI/QA:  PLAYWRIGHT_BASE_URL=https://qa.ultimateofficepoolmanager.com npx playwright test
