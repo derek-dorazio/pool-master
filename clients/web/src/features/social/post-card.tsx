@@ -87,6 +87,7 @@ export function PostCard({
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0"
+                    data-testid="social-post-menu-trigger"
                     aria-haspopup="menu"
                     aria-expanded={showMenu}
                     onClick={() => setShowMenu(!showMenu)}
