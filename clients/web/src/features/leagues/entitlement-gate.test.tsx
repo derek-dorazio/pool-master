@@ -1,10 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { EntitlementGate } from './entitlement-gate';
 
-vi.mock('react-router-dom', () => ({
-  Link: ({ children, to }: any) => <a href={to}>{children}</a>,
-}));
-
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
 }));
@@ -57,7 +53,7 @@ describe('EntitlementGate', () => {
     expect(screen.getByText(/5 \/ 5/)).toBeInTheDocument();
   });
 
-  it('renders upgrade link when upgradePlan is provided', () => {
+  it('renders MVP deferment messaging when upgradePlan is provided', () => {
     vi.mocked(useQuery).mockReturnValue({
       data: { entitled: false, upgradePlan: 'pro' },
       isLoading: false,
@@ -67,9 +63,9 @@ describe('EntitlementGate', () => {
         <p>Gated Content</p>
       </EntitlementGate>,
     );
-    const upgradeLink = screen.getByRole('link', { name: /Upgrade Plan/i });
-    expect(upgradeLink).toBeInTheDocument();
-    expect(upgradeLink.getAttribute('href')).toBe('/billing/plans');
+    expect(
+      screen.getByText('Paid plan upgrades are deferred for the MVP launch.'),
+    ).toBeInTheDocument();
   });
 
   it('renders children while loading (fail-open behavior)', () => {
