@@ -46,6 +46,14 @@ When finishing work:
 - Update plan rows only for the exact slice being worked. Do not mark unrelated queue items `In Progress` or `Done`.
 - Mark a slice `Done` only when the exact scoped work is complete and validated. Partial work stays `In Progress`.
 
+### Plan Closeout And Archiving
+
+- Plans are execution tools, not long-lived policy documents. Durable rules belong in `rules/`, not in active plans.
+- When all remaining tasks in an umbrella plan are done, removed, or intentionally handed off to a newer active plan, close it out instead of leaving it in `plans/` indefinitely.
+- Archive completed or superseded plans under `plans/archive/` and add a short note explaining why they were archived.
+- Update any active plans that still reference the archived plan so they point to it only as historical context, not as active execution guidance.
+- If a plan contained temporary guidance that has either served its purpose or become durable policy, remove it from the active plan during closeout. Only move it into `rules/` if it is genuinely long-lived guidance.
+
 ---
 
 ## 2. Rule and Documentation Maintenance
