@@ -40,7 +40,7 @@ Rebuild backend integration coverage from scratch using small, self-contained CR
    - update settings
 
 3. Member and Invitation CRUD
-   - Status: In Progress
+   - Status: Done
    - invite by email
    - generate invite link
    - accept invite
@@ -48,6 +48,7 @@ Rebuild backend integration coverage from scratch using small, self-contained CR
    - self-leave or remove member
 
 4. Contest Entry CRUD
+   - Status: In Progress
    - create current-user entry
    - list entries
    - fetch current-user entry
