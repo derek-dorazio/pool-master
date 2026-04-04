@@ -11,7 +11,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "dev:start": "./scripts/dev-start.sh",
-    "dev:infra": "docker compose -f infrastructure/docker/docker-compose.dev.yml up -d postgres redis dynamodb mailpit",
+    "dev:infra": "docker compose -f infrastructure/docker/docker-compose.dev.yml up -d postgres dynamodb mailpit",
     "dev:infra:all": "docker compose -f infrastructure/docker/docker-compose.dev.yml up -d",
     "dev:infra:stop": "docker compose -f infrastructure/docker/docker-compose.dev.yml down",
     "db:migrate": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma migrate dev",

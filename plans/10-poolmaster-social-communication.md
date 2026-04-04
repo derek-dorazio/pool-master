@@ -529,7 +529,7 @@ interface WebSocketManager {
 
 ```
 Single server: ws library on Node.js, in-memory channel management
-Multi-server: Redis Pub/Sub for cross-server channel broadcasting
+Multi-server: add a dedicated transport only if the deployment topology requires cross-instance fan-out
 
 Expected load:
   - Average league: 12 members, 2-3 online at any time
@@ -604,7 +604,7 @@ Direct messages:          PostgreSQL
 Reactions:                PostgreSQL (denormalised counts on post, detail in reactions table)
 Media attachments:        S3 + CDN
 Share card images:        S3 + CDN
-Read receipts & presence: Redis (ephemeral, no persistence needed)
+Read receipts & presence: ephemeral store only if multi-instance scale requires it
 ```
 
 ### Archival

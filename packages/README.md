@@ -12,7 +12,7 @@ Modular monolith — all backend modules run in a single Fastify process on port
               │   core-api :3000    │
               ├─────────────────────┤
               │ auth / leagues      │──→ PostgreSQL (Prisma)
-              │ contests / standings│──→ Redis (cache)
+              │ contests / standings│
               │ drafts (engines)    │
               │ scoring (engines)   │──→ In-memory ScoreStore
               │ notifications       │──→ SES / APNs / FCM
@@ -131,7 +131,7 @@ Polls external sports data providers and publishes `stat.updated` events to the 
 | Component | Description |
 |-----------|-------------|
 | **PostgreSQL 16** | Primary database via Prisma ORM (50+ models) |
-| **Redis 7** | Caching, future message bus |
+| **In-process EventBus** | Domain-event fan-out inside the monolith |
 | **DynamoDB** | High-volume event data (future) |
 | **In-process EventBus** | `stat.updated` → scoring → `score.updated` → `standings.updated` |
 

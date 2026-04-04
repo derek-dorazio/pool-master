@@ -25,7 +25,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | Client generation | `@hey-api/openapi-ts` + `@hey-api/client-fetch` | [Service Rules](service-rules.md) |
 | ORM / DB access | Prisma | [Service Rules](service-rules.md) |
 | Runtime | Node.js 20+ LTS | — |
-| Queue / async work | Redis-backed/event-driven modules | — |
+| Queue / async work | In-process event bus and service-local scheduling; add external queueing only when the architecture truly needs it | — |
 | Auth | App-issued JWT access + refresh tokens, with social auth callback support | [Service Rules](service-rules.md) |
 
 ### Frontend — Web/Admin
@@ -65,7 +65,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | Concern | Choice | Rationale |
 |---|---|---|
 | Primary relational DB | PostgreSQL | Prisma-backed primary application database |
-| Cache / messaging | Redis | cache, queue/event support, scheduling support |
+| Cache / messaging | In-process event bus + persistent services where needed | no Redis dependency in the active MVP runtime |
 | Containers | Docker | consistent local and CI environments |
 | IaC | Terraform | reproducible infrastructure |
 | CI/CD | GitHub Actions | build, typecheck, test, deploy |

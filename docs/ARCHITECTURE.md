@@ -54,12 +54,12 @@
 └─────────────────────────────────────────────────────────────────────┘
          │              │              │              │
          ▼              ▼              ▼              ▼
-┌──────────────┐ ┌────────────┐ ┌──────────┐ ┌──────────────┐
-│  PostgreSQL  │ │   Redis    │ │ AWS SES  │ │ External     │
-│  (RDS)       │ │(ElastiCache│ │ APNs/FCM │ │ Sports APIs  │
-│  50+ models  │ │  caching)  │ │          │ │ ESPN, OpenF1 │
-│  via Prisma  │ │            │ │          │ │ PGA Tour     │
-└──────────────┘ └────────────┘ └──────────┘ └──────────────┘
+┌──────────────┐ ┌──────────┐ ┌──────────────┐
+│  PostgreSQL  │ │ AWS SES  │ │ External     │
+│  (RDS)       │ │ APNs/FCM │ │ Sports APIs  │
+│  50+ models  │ │          │ │ ESPN, OpenF1 │
+│  via Prisma  │ │          │ │ PGA Tour     │
+└──────────────┘ └──────────┘ └──────────────┘
 ```
 
 ---
@@ -246,9 +246,9 @@ core-api
 │  │  │  │Gateway │  │    │  │ RDS PostgreSQL   │ │    │ │
 │  │  │  └────────┘  │    │  └──────────────────┘ │    │ │
 │  │  │              │    │                        │    │ │
-│  │  └──────────────┘    │  ┌──────────────────┐ │    │ │
-│  │                       │  │ ElastiCache Redis│ │    │ │
-│  │                       │  └──────────────────┘ │    │ │
+│  │  └──────────────┘    │                        │    │ │
+│  │                       │                        │    │ │
+│  │                       │                        │    │ │
 │  │                       └──────────────────────┘    │ │
 │  └─────────────────────────────────────────────────┘ │
 │                                                       │
@@ -299,8 +299,8 @@ Push to main
 
 | Decision | Rationale |
 |----------|-----------|
-| **Modular monolith** (not microservices) | All modules share one DB, one Redis, one event bus. No network boundaries needed. Single Docker image eliminates workspace resolution issues. |
-| **In-process EventBus** (not Redis Streams) | All publishers and subscribers run in the same process. Redis Streams adds complexity without benefit at current scale. |
+| **Modular monolith** (not microservices) | All modules share one DB and one in-process event bus. No network boundaries needed. Single Docker image eliminates workspace resolution issues. |
+| **In-process EventBus** (not Redis Streams) | All publishers and subscribers run in the same process. External queue infrastructure can be added later only when scale or deployment topology requires it. |
 | **S3 + CloudFront** (not Docker/nginx for frontends) | Static React SPAs don't need a server. CloudFront is cheaper, faster (global CDN), and simpler to deploy. |
 | **Hexagonal architecture** | Repository port interfaces allow swapping Prisma for any adapter. Tests can use in-memory implementations. |
 | **Sport-agnostic scoring** | All scoring is driven by ScoringConfig JSONB, not hard-coded sport logic. Adding a new sport means adding a template, not new code. |

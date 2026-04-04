@@ -5413,15 +5413,6 @@ export type AdminGetInfrastructureMetricsResponses = {
             replicationLagMs: number;
             slowQueriesLast24h: number;
         };
-        redis: {
-            status: 'UP' | 'DEGRADED' | 'DOWN';
-            memoryUsedGb: number;
-            memoryMaxGb: number;
-            keyCount: number;
-            hitRatePercent: number;
-            connectedClients: number;
-            evictedKeysLast24h: number;
-        };
         messageBus: {
             status: 'UP' | 'DEGRADED' | 'DOWN';
             queueDepth: number;

@@ -1,6 +1,8 @@
 # Plan 34: Worker-Sliced Stability Execution
 
-> **Planning Note (2026-04-04):** Re-analyze current CI health, active MVP scope, and the latest enforced coverage baselines before executing any slice below. This plan is an execution split for the first stability wave, not a permanent ownership map. Remaining active execution now continues in [plans/35-active-coverage-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/35-active-coverage-execution.md).
+> Archived on 2026-04-04 after the first stability worker wave fully landed. Use this file only as the historical execution record for that wave.
+
+> **Planning Note (2026-04-04):** This plan was the execution split for the first stability wave. That wave is complete; use this file only as historical context.
 
 ## Purpose
 
@@ -264,7 +266,7 @@ Strengthen confidence in the active admin audit and announcement workflows, incl
 
 | ID | Slice | Task | Status | Notes |
 |---|---|---|---|---|
-| WSH-001 | Main | Keep shared CI/CD, package/runtime, and policy hardening on the main thread | In Progress | Do not delegate shared-contract work while the repo is still tightening stability gates |
+| WSH-001 | Main | Keep shared CI/CD, package/runtime, and policy hardening on the main thread | Done | Shared-contract work remained on the main thread throughout the stability wave. |
 | WSH-002 | A | Add focused web auth coverage and fix defects revealed there | Done | Main thread pilot slice completed on 2026-04-04. Added meaningful auth page coverage for submit success/failure, redirect preservation, wizard progression, and age validation without surfacing deeper shared-architecture issues. |
 | WSH-003 | B | Add league detail/member/settings coverage and fix defects revealed there | Done | Added MSW-backed Vitest coverage for league detail, members, and settings; switched those surfaces to generated SDK calls where they had drifted to manual client usage; added stable selectors and honest loading states for the active MVP seams. A later worker follow-up added commissioner invite-send coverage on the members page and stabilized the related admin/settings tests under the full suite load. |
 | WSH-004 | C | Add contest review surface coverage for active MVP modes | Done | Worker slice completed on 2026-04-04. Added focused review-surface coverage, fixed the scoring-page selected-entry reset when the contest changes, and tightened singular/plural label handling across active contest review pages. |
@@ -272,8 +274,8 @@ Strengthen confidence in the active admin audit and announcement workflows, incl
 | WSH-006 | E | Add backend contest/scoring edge coverage and targeted DB integration cases | Done | Added scoring-consumer dedupe coverage, active-contest filtering coverage, and contest/scoring unit edge tests without touching shared DTO or schema surfaces |
 | WSH-007 | F | Add admin coverage only on still-supported active surfaces | Done | Added focused Vitest coverage for home, health, and config surfaces; fixed the notification template update payload to send `emailText` for the edited email body. |
 | WSH-008 | Main | Re-measure coverage and decide whether ratchet changes are justified after worker slices land | Done | The merged worker wave passed the full local gate on 2026-04-04, exposed no new shared-architecture problems, and justified a second threshold ratchet. After the follow-up CI regression fixes and worker additions, the latest validated local baselines are 24.00 / 14.20 / 21.15 / 24.53 (backend), 57.33 / 48.65 / 56.79 / 60.24 (web), and 26.96 / 21.55 / 20.75 / 28.33 (admin). |
-| WSH-009 | G | Add web settings/profile coverage and fix defects revealed there | In Progress | This remaining execution slice now lives in [plans/35-active-coverage-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/35-active-coverage-execution.md). The first worker commit expanded settings/profile component coverage and remeasured the improved baselines; final integration happens in the active plan. |
-| WSH-010 | H | Add admin audit and announcements coverage on active surfaces | In Progress | This remaining execution slice now lives in [plans/35-active-coverage-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/35-active-coverage-execution.md). Use that plan for ongoing audit/announcement coverage work and any follow-on admin slice decomposition. |
+| WSH-009 | G | Add web settings/profile coverage and fix defects revealed there | Done | Final integration completed in archived Plan 35. This row remains only to show the handoff path between the two execution waves. |
+| WSH-010 | H | Add admin audit and announcements coverage on active surfaces | Done | Final integration completed in archived Plan 35. This row remains only to show the handoff path between the two execution waves. |
 
 ## Acceptance Criteria
 

@@ -14,7 +14,7 @@ npm install
 npm run dev:start
 ```
 
-This starts Docker (Postgres, DynamoDB, Mailpit, and legacy Redis scaffolding), runs migrations, seeds test data, and launches all services.
+This starts Docker (Postgres, DynamoDB, and Mailpit), runs migrations, seeds test data, and launches all services.
 
 | What | URL | Purpose |
 |------|-----|---------|
@@ -23,7 +23,6 @@ This starts Docker (Postgres, DynamoDB, Mailpit, and legacy Redis scaffolding), 
 | **Mailpit** | http://localhost:8025 | View all sent emails |
 | **Push Mock** | http://localhost:3099/push-log | View push notifications |
 | **Prisma Studio** | `npm run db:studio` | Browse/edit database |
-| **Redis (legacy scaffold)** | `localhost:6379` | Still started by local infra today, but not part of the active MVP runtime path |
 | **DynamoDB** | `localhost:8000` | NoSQL event store |
 | **PostgreSQL** | `localhost:5432` | CLI: `docker exec -it docker-postgres-1 psql -U postgres -d poolmaster` |
 
@@ -62,7 +61,7 @@ npm run test:smoke       # Both
               └─────────────────────┘
 ```
 
-Fastify + TypeScript modular monolith. All modules run in a single process on port 3000, communicating via in-process domain events. PostgreSQL is the active system of record; Redis remains in infrastructure scaffolding only and is scheduled for removal from the live architecture. Hexagonal architecture with repository port/adapter pattern.
+Fastify + TypeScript modular monolith. All modules run in a single process on port 3000, communicating via in-process domain events. PostgreSQL is the active system of record. Hexagonal architecture with repository port/adapter pattern.
 
 | Module | Responsibility |
 |--------|----------------|
@@ -121,7 +120,7 @@ Fastify + TypeScript modular monolith. All modules run in a single process on po
 | Language | TypeScript 5.5 (strict) |
 | ORM | Prisma 6 |
 | Database | PostgreSQL 16 |
-| Cache/Queue | Legacy Redis scaffold (planned removal) |
+| Cache/Queue | In-process event bus + service-local scheduling |
 | Monorepo | Turborepo + npm workspaces |
 | Testing | Jest 29 + ts-jest |
 | Containers | Docker (multi-stage builds) |
@@ -164,7 +163,7 @@ poolmaster/
 - [Architecture Overview](docs/ARCHITECTURE.md) — Components, dependencies, data flow
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
 - [Scoring & Configuration Guide](docs/scoring-and-configuration-guide.md) — End-user scoring configuration
-- [AWS Deployment Plan](plans/16-aws-deployment.md) — Full deployment plan with action items and status
+- [AWS Deployment Plan](plans/archive/2026-04-completed-wave/16-aws-deployment.md) — Historical deployment plan with action items and status
 
 ### Code READMEs
 - [Backend Services](packages/README.md) — Monolith modules, shared package, API routes, engines
@@ -211,7 +210,7 @@ terraform apply -var-file=envs/qa.tfvars
 | **Staging** | Manual workflow_dispatch | ECS Fargate | S3 + CloudFront |
 | **Prod** | Manual workflow_dispatch | ECS Fargate | S3 + CloudFront |
 
-See [AWS Deployment Plan](plans/16-aws-deployment.md) for full details and [Architecture Simplification](plans/architecture/architecture-simplification.md) for the CloudFront migration rationale.
+See [AWS Deployment Plan](plans/archive/2026-04-completed-wave/16-aws-deployment.md) for historical details and [Architecture Simplification](plans/architecture/architecture-simplification.md) for the CloudFront migration rationale.
 
 ---
 

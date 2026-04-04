@@ -1,8 +1,8 @@
 /**
  * RateLimiter — prevents notification storms with per-user, per-channel limits.
  *
- * Uses in-memory sliding window counters. For production at scale,
- * swap to Redis-backed counters.
+ * Uses in-memory sliding window counters. If deployment scale later requires
+ * shared cross-instance rate limiting, replace this with a real shared store.
  */
 
 import { NotificationChannel } from '@poolmaster/shared/domain';

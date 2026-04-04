@@ -33,7 +33,7 @@ This installs all dependencies across the monorepo workspaces (`packages/*` and 
 
 ## 2. Start Local Infrastructure
 
-All local services (database, dev utilities, and a few legacy infrastructure scaffolds) run via Docker Compose:
+All local services (database and dev utilities) run via Docker Compose:
 
 ```bash
 docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
@@ -44,7 +44,6 @@ This starts:
 | Service | Port(s) | Purpose |
 |---|---|---|
 | **PostgreSQL 16** | `5432` | Primary database (`poolmaster` / `postgres` / `postgres`) |
-| **Redis 7 (legacy scaffold)** | `6379` | Still started by Docker Compose today, but not required by the active MVP runtime |
 | **DynamoDB Local** | `8000` | NoSQL for high-volume event data |
 | **Mailpit** | `8025` (UI), `1025` (SMTP) | Email viewer — all outbound email. Browse at http://localhost:8025 |
 | **LocalStack** | `4566` | AWS mock (SES, SNS, SQS) — no credentials needed |
@@ -125,7 +124,7 @@ npm run dev:start
 
 This will:
 1. Create `.env` from `.env.example` (if not present)
-2. Start Docker containers (PostgreSQL, DynamoDB, Mailpit, plus legacy Redis scaffolding)
+2. Start Docker containers (PostgreSQL, DynamoDB, Mailpit)
 3. Run Prisma migrations
 4. Seed the database (users, leagues, sports, plan tiers)
 5. Launch all backend services + webapp via Turborepo
@@ -145,7 +144,7 @@ If you prefer to run steps separately:
 ### Database Commands
 
 ```bash
-npm run dev:infra          # Start Postgres + legacy Redis + DynamoDB
+npm run dev:infra          # Start Postgres + DynamoDB + Mailpit
 npm run dev:infra:all      # Start all containers (+ Mailpit, LocalStack, Push Mock)
 npm run dev:infra:stop     # Stop all containers
 
@@ -287,7 +286,7 @@ After `terraform apply`, run migrations:
 DATABASE_URL=$(terraform output -raw database_url) npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 ```
 
-See [AWS Deployment Plan](../plans/16-aws-deployment.md) for the full step-by-step guide.
+See [AWS Deployment Plan](../plans/archive/2026-04-completed-wave/16-aws-deployment.md) for the historical step-by-step guide.
 
 ---
 
@@ -310,7 +309,7 @@ poolmaster/
 ├── infrastructure/
 │   ├── docker/             # Dockerfile, docker-compose.dev.yml
 │   ├── k8s/                # Kubernetes manifests (future)
-│   └── terraform/          # AWS infrastructure (ECS Fargate, RDS, Redis, ALB)
+│   └── terraform/          # AWS infrastructure (ECS Fargate, RDS, ALB, frontend delivery)
 ├── plans/                  # Feature plan documents with task tables
 ├── rules/                  # Architecture and coding rules
 ├── package.json            # Monorepo root (npm workspaces)
@@ -329,7 +328,7 @@ poolmaster/
 | Language | TypeScript 5.5 (strict mode) |
 | ORM | Prisma 6 (PostgreSQL) |
 | Database | PostgreSQL 16 |
-| Cache/Queue | Legacy Redis scaffold (planned removal) |
+| Cache/Queue | In-process event bus + service-local scheduling |
 | Monorepo | Turborepo + npm workspaces |
 | Testing | Jest 29 + ts-jest |
 | Validation | JSON Schema (Fastify built-in) + Zod |

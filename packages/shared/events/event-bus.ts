@@ -1,8 +1,8 @@
 /**
  * EventBus — in-process pub/sub for domain events.
  *
- * v1 implementation: synchronous in-memory dispatch.
- * Will be replaced with Redis Streams or SQS in production.
+ * Current implementation: synchronous in-memory dispatch.
+ * Keep this unless a real deployment topology requires external fan-out.
  */
 
 export type EventHandler<T = unknown> = (event: T) => Promise<void>;

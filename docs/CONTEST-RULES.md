@@ -576,6 +576,6 @@ All survivor contests share these configurable options:
 
 - Scoring templates: `packages/core-api/src/modules/scoring/templates/`
 - Selection templates: `packages/core-api/src/modules/drafts/templates/selection-templates.ts`
-- Contest structures specification: `plans/02a-poolmaster-contest-structures.md`
+- Contest structures specification: `plans/archive/2026-04-completed-wave/02a-poolmaster-contest-structures.md`
 - Scoring config schemas: `packages/shared/domain/scoring-config.ts`
 - Domain enums: `packages/shared/domain/enums.ts`

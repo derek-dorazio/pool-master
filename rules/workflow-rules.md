@@ -112,21 +112,18 @@ Do not protect obsolete architecture with inertia.
 
 ## 5. Finding Tasks
 
+Use the table below for active plan ranges still expected to receive execution updates. Completed plan ranges may live in `plans/archive/` as historical reference only.
+
 | Prefix | Plan File | Area |
 |---|---|---|
-| 01-xxx | `plans/01-poolmaster-architecture.md` | Core architecture, foundation, infrastructure |
-| 02-xxx | `plans/02-poolmaster-draft-config.md` | Draft/selection mechanics |
-| 03-xxx | `plans/03-poolmaster-scoring-rules.md` | Scoring engines and templates |
-| 04-xxx | `plans/04-poolmaster-history.md` | Contest and league history |
-| 05-xxx | `plans/05-poolmaster-sports-data-integration.md` | Sports data providers |
-| 06-xxx | `plans/06-poolmaster-participant-data.md` | Participant management |
 | 07-xxx | `plans/07-poolmaster-billing-subscription.md` | Billing and subscriptions |
-| 08-xxx | `plans/08-poolmaster-commissioner-tooling.md` | Commissioner tools |
-| 09-xxx | `plans/09-poolmaster-notifications-alerts.md` | Notifications |
 | 10-xxx | `plans/10-poolmaster-social-communication.md` | Social features |
-| 11-xxx | `plans/11-poolmaster-admin-dashboard.md` | Admin dashboard |
 | 12-xxx | `plans/12-poolmaster-mobile-client.md` | Mobile clients |
 | 13-xxx | `plans/13-poolmaster-search-discovery.md` | Search and discovery |
-| 14-xxx | `plans/14-poolmaster-localisation-i18n.md` | Localisation |
 | 15-xxx | `plans/15-poolmaster-responsible-gaming.md` | Compliance and legal |
+| 28-xxx | `plans/28-backend-service-hardening.md` | Backend service hardening |
+| 29-xxx | `plans/29-webapp-and-admin-hardening.md` | Webapp/admin hardening |
+| 30-xxx | `plans/30-platform-and-deploy-hardening.md` | Platform and deploy hardening |
+| 31-xxx | `plans/31-mock-contest-feed-provider.md` | Mock contest feed provider |
+| 32-xxx | `plans/32-stack-upgrade-modernization.md` | Stack modernization |
 | ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites |

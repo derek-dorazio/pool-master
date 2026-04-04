@@ -191,11 +191,11 @@ interface DraftSearchResult {
 
 ```
 Draft room search must be < 100ms. Strategies:
-  1. Pre-load the entire contest pool into Redis on draft start
+  1. Pre-load the entire contest pool into a service-local in-memory index on draft start
      (typical pool: 100-200 participants — fits easily in memory)
-  2. Search against Redis in-memory set for instant filtering
+  2. Search against that in-memory index for instant filtering
   3. Only fall back to PostgreSQL/Elasticsearch if pool > 500
-  4. Cache drafted status in Redis (updated on each pick)
+  4. Cache drafted status in the same in-memory draft-session state (updated on each pick)
 ```
 
 ---

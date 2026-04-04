@@ -14958,47 +14958,6 @@
                       ],
                       "additionalProperties": false
                     },
-                    "redis": {
-                      "type": "object",
-                      "properties": {
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "UP",
-                            "DEGRADED",
-                            "DOWN"
-                          ]
-                        },
-                        "memoryUsedGb": {
-                          "type": "number"
-                        },
-                        "memoryMaxGb": {
-                          "type": "number"
-                        },
-                        "keyCount": {
-                          "type": "number"
-                        },
-                        "hitRatePercent": {
-                          "type": "number"
-                        },
-                        "connectedClients": {
-                          "type": "number"
-                        },
-                        "evictedKeysLast24h": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "status",
-                        "memoryUsedGb",
-                        "memoryMaxGb",
-                        "keyCount",
-                        "hitRatePercent",
-                        "connectedClients",
-                        "evictedKeysLast24h"
-                      ],
-                      "additionalProperties": false
-                    },
                     "messageBus": {
                       "type": "object",
                       "properties": {
@@ -15072,7 +15031,6 @@
                   },
                   "required": [
                     "postgres",
-                    "redis",
                     "messageBus",
                     "s3Cdn",
                     "checkedAt"

@@ -2,8 +2,8 @@
  * ScheduledRunner — fires scheduled notifications when their time arrives.
  *
  * Polls the scheduled_notifications table periodically and dispatches
- * events that are due. Uses simple polling rather than BullMQ for now
- * (BullMQ can be swapped in when Redis-based job queues are needed).
+ * events that are due. Uses simple polling rather than an external queue
+ * until deployment scale requires one.
  */
 
 import type { PrismaClient } from '@prisma/client';

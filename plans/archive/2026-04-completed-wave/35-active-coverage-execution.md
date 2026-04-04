@@ -1,6 +1,8 @@
 # Plan 35: Active Coverage Execution
 
-> **Planning Note (2026-04-04):** This plan takes over the remaining execution work from [plans/34-worker-sliced-stability-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/34-worker-sliced-stability-execution.md) now that the first worker wave has landed. Keep this plan focused on active MVP coverage growth, defects revealed by that work, and justified DB-backed integration additions.
+> Archived on 2026-04-04 after the active fast-suite coverage wave completed. Use this file only as historical context and execution detail.
+
+> **Planning Note (2026-04-04):** This plan captured the remaining execution work after the first worker wave. That execution wave is complete; use this file only as historical context.
 
 ## Purpose
 
@@ -16,7 +18,7 @@ This plan exists to:
 ## Relationship To Other Plans
 
 - [plans/archive/33-stability-hardening-and-defect-discovery.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/33-stability-hardening-and-defect-discovery.md) is historical context for the completed stabilization wave.
-- [plans/34-worker-sliced-stability-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/34-worker-sliced-stability-execution.md) is now the historical record of the first worker wave.
+- [plans/archive/2026-04-completed-wave/34-worker-sliced-stability-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-completed-wave/34-worker-sliced-stability-execution.md) is the historical record of the first worker wave.
 - [plans/testing/coverage-threshold-ratchet.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/coverage-threshold-ratchet.md) remains the source of truth for threshold numbers and ratchet policy.
 
 ## Slice Selection Rules
