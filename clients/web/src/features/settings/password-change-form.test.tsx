@@ -1,12 +1,26 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PasswordChangeForm } from './password-change-form';
 
+const { mockUpdatePassword } = vi.hoisted(() => ({
+  mockUpdatePassword: vi.fn(),
+}));
+
 vi.mock('./hooks/use-profile', () => ({
-  useUpdatePassword: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useUpdatePassword: () => ({
+    mutate: mockUpdatePassword,
+    isPending: false,
+  }),
 }));
 
 describe('PasswordChangeForm', () => {
+  beforeEach(() => {
+    mockUpdatePassword.mockReset();
+    mockUpdatePassword.mockImplementation((_body, options) => {
+      options?.onSuccess?.();
+    });
+  });
+
   it('shows "Change Password" button initially (form collapsed)', () => {
     render(<PasswordChangeForm />);
     expect(screen.getByRole('button', { name: 'Change Password' })).toBeInTheDocument();
@@ -22,6 +36,29 @@ describe('PasswordChangeForm', () => {
     expect(screen.getByLabelText('Current Password')).toBeInTheDocument();
     expect(screen.getByLabelText('New Password')).toBeInTheDocument();
     expect(screen.getByLabelText('Confirm New Password')).toBeInTheDocument();
+  });
+
+  it('submits the current and new password then collapses the form on success', async () => {
+    const user = userEvent.setup();
+    render(<PasswordChangeForm />);
+
+    await user.click(screen.getByRole('button', { name: 'Change Password' }));
+    await user.type(screen.getByLabelText('Current Password'), 'oldpassword');
+    await user.type(screen.getByLabelText('New Password'), 'NewPass123!');
+    await user.type(screen.getByLabelText('Confirm New Password'), 'NewPass123!');
+    await user.click(screen.getByRole('button', { name: 'Update Password' }));
+
+    await waitFor(() => {
+      expect(mockUpdatePassword).toHaveBeenCalledWith(
+        {
+          currentPassword: 'oldpassword',
+          newPassword: 'NewPass123!',
+        },
+        expect.any(Object),
+      );
+    });
+    expect(screen.queryByLabelText('Current Password')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change Password' })).toBeInTheDocument();
   });
 
   it('shows validation error when passwords do not match', async () => {

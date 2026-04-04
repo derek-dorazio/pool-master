@@ -192,6 +192,77 @@ Improve confidence in the still-supported admin surfaces without broadening admi
 - deferred admin feature families
 - backend route contracts without main-thread approval
 
+### Slice G: Web Settings and Profile Coverage
+
+**Goal**
+
+Strengthen the active settings/profile/account-management surfaces that remain part of the MVP, especially profile edits, password changes, and linked-account flows.
+
+**Primary Files**
+
+- [clients/web/src/pages/settings/profile.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/pages/settings/profile.tsx)
+- [clients/web/src/features/settings/profile-form.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/features/settings/profile-form.tsx)
+- [clients/web/src/features/settings/password-change-form.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/features/settings/password-change-form.tsx)
+- [clients/web/src/features/settings/linked-accounts.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/features/settings/linked-accounts.tsx)
+
+**Allowed Work**
+
+- add or improve Vitest coverage
+- fix real settings/profile/account-management defects revealed by those tests
+
+**Do Not Touch**
+
+- contest review pages
+- draft room pages
+- shared DTO exports
+- generated SDK files
+
+### Slice H: Admin Audit and Announcements Coverage
+
+**Goal**
+
+Strengthen confidence in the active admin audit and announcement workflows, including list, expand, activate/deactivate, and create behavior.
+
+**Primary Files**
+
+- [clients/admin/src/pages/audit/index.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/audit/index.tsx)
+- [clients/admin/src/pages/announcements/index.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/announcements/index.tsx)
+- [clients/admin/src/pages/announcements/create.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/announcements/create.tsx)
+
+**Allowed Work**
+
+- add or improve admin Vitest coverage
+- add stable selectors where the admin UI needs them
+- fix real UI/API contract issues revealed by tests
+
+**Do Not Touch**
+
+- deferred admin feature families
+- backend route contracts without main-thread approval
+
+### Slice H: Admin Audit and Announcements Coverage
+
+**Goal**
+
+Strengthen confidence in the active admin audit and announcement workflows, including list, expand, activate/deactivate, and create behavior.
+
+**Primary Files**
+
+- [clients/admin/src/pages/audit/index.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/audit/index.tsx)
+- [clients/admin/src/pages/announcements/index.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/announcements/index.tsx)
+- [clients/admin/src/pages/announcements/create.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/announcements/create.tsx)
+
+**Allowed Work**
+
+- add or improve admin Vitest coverage
+- add stable selectors where the admin UI needs them
+- fix real UI/API contract issues revealed by tests
+
+**Do Not Touch**
+
+- deferred admin feature families
+- backend route contracts without main-thread approval
+
 ## Suggested Execution Order
 
 1. Main thread: continue shared hardening, coverage policy, and stale-architecture cleanup.
@@ -201,7 +272,9 @@ Improve confidence in the still-supported admin surfaces without broadening admi
 5. Worker D: draft room coverage.
 6. Worker E: backend contest/scoring edge coverage.
 7. Worker F: admin active-surface coverage.
-8. Main thread: integrate, remeasure baselines, and decide whether any threshold ratchet is justified.
+8. Worker G: web settings/profile coverage.
+9. Worker H: admin audit and announcements coverage.
+10. Main thread: integrate, remeasure baselines, and decide whether any threshold ratchet is justified.
 
 ## Merge Strategy
 
@@ -222,6 +295,9 @@ Improve confidence in the still-supported admin surfaces without broadening admi
 | WSH-006 | E | Add backend contest/scoring edge coverage and targeted DB integration cases | Done | Added scoring-consumer dedupe coverage, active-contest filtering coverage, and contest/scoring unit edge tests without touching shared DTO or schema surfaces |
 | WSH-007 | F | Add admin coverage only on still-supported active surfaces | Done | Added focused Vitest coverage for home, health, and config surfaces; fixed the notification template update payload to send `emailText` for the edited email body. |
 | WSH-008 | Main | Re-measure coverage and decide whether ratchet changes are justified after worker slices land | Done | The merged worker wave passed the full local gate on 2026-04-04, exposed no new shared-architecture problems, and justified a second threshold ratchet. After the follow-up CI regression fixes and worker additions, the latest validated local baselines are 24.00 / 14.20 / 21.15 / 24.53 (backend), 57.33 / 48.65 / 56.79 / 60.24 (web), and 26.96 / 21.55 / 20.75 / 28.33 (admin). |
+| WSH-009 | G | Add web settings/profile coverage and fix defects revealed there | In Progress | Focuses on active MVP account-management behavior: profile edits, password changes, and linked accounts. This slice now has dedicated component coverage and is being validated against the full local gate before merge. |
+| WSH-010 | H | Add admin audit and announcements coverage on active surfaces | In Progress | Focuses on audit log expansion/pagination and announcement list/create/toggle flows with stable selectors for testability. |
+| WSH-010 | H | Add admin audit and announcements coverage on active surfaces | In Progress | Focuses on audit log expansion/pagination and announcement list/create/toggle flows with stable selectors for testability. |
 
 ## Acceptance Criteria
 
