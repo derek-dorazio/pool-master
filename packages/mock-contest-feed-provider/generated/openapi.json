@@ -1,0 +1,1551 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mock Contest Feed Provider",
+    "description": "QA/local-only contest feed simulator for odds, rankings, and results.",
+    "version": "0.1.0"
+  },
+  "components": {
+    "schemas": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "mockContestFeedHealth",
+        "summary": "Check service health",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "status",
+                    "service",
+                    "scenarioCount",
+                    "eventCount"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "scenarioCount": {
+                      "type": "number"
+                    },
+                    "eventCount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/scenarios": {
+      "get": {
+        "operationId": "listMockContestFeedScenarios",
+        "summary": "List contest feed scenarios",
+        "tags": [
+          "Scenarios"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "scenarios"
+                  ],
+                  "properties": {
+                    "scenarios": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "scenarioId",
+                          "sport",
+                          "provider",
+                          "eventCount"
+                        ],
+                        "properties": {
+                          "scenarioId": {
+                            "type": "string"
+                          },
+                          "sport": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "TENNIS",
+                              "NCAA_BASKETBALL",
+                              "TEAM_TOURNAMENT"
+                            ]
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "mock-contest-feed"
+                            ]
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "eventCount": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/scenarios/{scenarioId}": {
+      "get": {
+        "operationId": "getMockContestFeedScenario",
+        "summary": "Get a contest feed scenario",
+        "tags": [
+          "Scenarios"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "scenarioId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "scenario"
+                  ],
+                  "properties": {
+                    "scenario": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "scenarioId",
+                        "sport",
+                        "provider",
+                        "events"
+                      ],
+                      "properties": {
+                        "scenarioId": {
+                          "type": "string"
+                        },
+                        "sport": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF",
+                            "TENNIS",
+                            "NCAA_BASKETBALL",
+                            "TEAM_TOURNAMENT"
+                          ]
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "mock-contest-feed"
+                          ]
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "eventId",
+                              "name",
+                              "startsAt",
+                              "contestants",
+                              "odds",
+                              "rankings",
+                              "results"
+                            ],
+                            "properties": {
+                              "eventId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "startsAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "endsAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "venue": {
+                                "type": "string"
+                              },
+                              "contestants": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "contestantId",
+                                    "name"
+                                  ],
+                                  "properties": {
+                                    "contestantId": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "teamName": {
+                                      "type": "string"
+                                    },
+                                    "seed": {
+                                      "type": "number"
+                                    },
+                                    "odds": {
+                                      "type": "number"
+                                    },
+                                    "ranking": {
+                                      "type": "number"
+                                    },
+                                    "score": {
+                                      "type": "number"
+                                    },
+                                    "result": {
+                                      "type": "string",
+                                      "enum": [
+                                        "win",
+                                        "loss",
+                                        "tie",
+                                        "cut",
+                                        "withdrawn",
+                                        "pending"
+                                      ]
+                                    },
+                                    "note": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              "odds": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "asOf",
+                                  "contestants"
+                                ],
+                                "properties": {
+                                  "asOf": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "note": {
+                                    "type": "string"
+                                  },
+                                  "contestants": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "required": [
+                                        "contestantId",
+                                        "name"
+                                      ],
+                                      "properties": {
+                                        "contestantId": {
+                                          "type": "string"
+                                        },
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "teamName": {
+                                          "type": "string"
+                                        },
+                                        "seed": {
+                                          "type": "number"
+                                        },
+                                        "odds": {
+                                          "type": "number"
+                                        },
+                                        "ranking": {
+                                          "type": "number"
+                                        },
+                                        "score": {
+                                          "type": "number"
+                                        },
+                                        "result": {
+                                          "type": "string",
+                                          "enum": [
+                                            "win",
+                                            "loss",
+                                            "tie",
+                                            "cut",
+                                            "withdrawn",
+                                            "pending"
+                                          ]
+                                        },
+                                        "note": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "rankings": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "asOf",
+                                  "contestants"
+                                ],
+                                "properties": {
+                                  "asOf": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "note": {
+                                    "type": "string"
+                                  },
+                                  "contestants": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "required": [
+                                        "contestantId",
+                                        "name"
+                                      ],
+                                      "properties": {
+                                        "contestantId": {
+                                          "type": "string"
+                                        },
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "teamName": {
+                                          "type": "string"
+                                        },
+                                        "seed": {
+                                          "type": "number"
+                                        },
+                                        "odds": {
+                                          "type": "number"
+                                        },
+                                        "ranking": {
+                                          "type": "number"
+                                        },
+                                        "score": {
+                                          "type": "number"
+                                        },
+                                        "result": {
+                                          "type": "string",
+                                          "enum": [
+                                            "win",
+                                            "loss",
+                                            "tie",
+                                            "cut",
+                                            "withdrawn",
+                                            "pending"
+                                          ]
+                                        },
+                                        "note": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "results": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "asOf",
+                                  "contestants"
+                                ],
+                                "properties": {
+                                  "asOf": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "note": {
+                                    "type": "string"
+                                  },
+                                  "contestants": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "required": [
+                                        "contestantId",
+                                        "name"
+                                      ],
+                                      "properties": {
+                                        "contestantId": {
+                                          "type": "string"
+                                        },
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "teamName": {
+                                          "type": "string"
+                                        },
+                                        "seed": {
+                                          "type": "number"
+                                        },
+                                        "odds": {
+                                          "type": "number"
+                                        },
+                                        "ranking": {
+                                          "type": "number"
+                                        },
+                                        "score": {
+                                          "type": "number"
+                                        },
+                                        "result": {
+                                          "type": "string",
+                                          "enum": [
+                                            "win",
+                                            "loss",
+                                            "tie",
+                                            "cut",
+                                            "withdrawn",
+                                            "pending"
+                                          ]
+                                        },
+                                        "note": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "updates": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "updateId",
+                                    "asOf",
+                                    "feedKind",
+                                    "contestants"
+                                  ],
+                                  "properties": {
+                                    "updateId": {
+                                      "type": "string"
+                                    },
+                                    "asOf": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "feedKind": {
+                                      "type": "string",
+                                      "enum": [
+                                        "odds",
+                                        "rankings",
+                                        "results"
+                                      ]
+                                    },
+                                    "note": {
+                                      "type": "string"
+                                    },
+                                    "contestants": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "required": [
+                                          "contestantId",
+                                          "name"
+                                        ],
+                                        "properties": {
+                                          "contestantId": {
+                                            "type": "string"
+                                          },
+                                          "name": {
+                                            "type": "string"
+                                          },
+                                          "teamName": {
+                                            "type": "string"
+                                          },
+                                          "seed": {
+                                            "type": "number"
+                                          },
+                                          "odds": {
+                                            "type": "number"
+                                          },
+                                          "ranking": {
+                                            "type": "number"
+                                          },
+                                          "score": {
+                                            "type": "number"
+                                          },
+                                          "result": {
+                                            "type": "string",
+                                            "enum": [
+                                              "win",
+                                              "loss",
+                                              "tie",
+                                              "cut",
+                                              "withdrawn",
+                                              "pending"
+                                            ]
+                                          },
+                                          "note": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/scenarios/{scenarioId}/events": {
+      "get": {
+        "operationId": "listMockContestFeedScenarioEvents",
+        "summary": "List events for a scenario",
+        "tags": [
+          "Scenarios"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "scenarioId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "scenarioId",
+                    "events"
+                  ],
+                  "properties": {
+                    "scenarioId": {
+                      "type": "string"
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "eventId",
+                          "name",
+                          "startsAt",
+                          "contestantCount"
+                        ],
+                        "properties": {
+                          "eventId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "startsAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "endsAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "venue": {
+                            "type": "string"
+                          },
+                          "contestantCount": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/scenarios/{scenarioId}/events/{eventId}": {
+      "get": {
+        "operationId": "getMockContestFeedScenarioEvent",
+        "summary": "Get an event and its feed snapshots",
+        "tags": [
+          "Scenarios"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "scenarioId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "event"
+                  ],
+                  "properties": {
+                    "event": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "eventId",
+                        "name",
+                        "startsAt",
+                        "contestants",
+                        "odds",
+                        "rankings",
+                        "results"
+                      ],
+                      "properties": {
+                        "eventId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "startsAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "endsAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "venue": {
+                          "type": "string"
+                        },
+                        "contestants": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "contestantId",
+                              "name"
+                            ],
+                            "properties": {
+                              "contestantId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "teamName": {
+                                "type": "string"
+                              },
+                              "seed": {
+                                "type": "number"
+                              },
+                              "odds": {
+                                "type": "number"
+                              },
+                              "ranking": {
+                                "type": "number"
+                              },
+                              "score": {
+                                "type": "number"
+                              },
+                              "result": {
+                                "type": "string",
+                                "enum": [
+                                  "win",
+                                  "loss",
+                                  "tie",
+                                  "cut",
+                                  "withdrawn",
+                                  "pending"
+                                ]
+                              },
+                              "note": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "odds": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "asOf",
+                            "contestants"
+                          ],
+                          "properties": {
+                            "asOf": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "note": {
+                              "type": "string"
+                            },
+                            "contestants": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "contestantId",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "contestantId": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "teamName": {
+                                    "type": "string"
+                                  },
+                                  "seed": {
+                                    "type": "number"
+                                  },
+                                  "odds": {
+                                    "type": "number"
+                                  },
+                                  "ranking": {
+                                    "type": "number"
+                                  },
+                                  "score": {
+                                    "type": "number"
+                                  },
+                                  "result": {
+                                    "type": "string",
+                                    "enum": [
+                                      "win",
+                                      "loss",
+                                      "tie",
+                                      "cut",
+                                      "withdrawn",
+                                      "pending"
+                                    ]
+                                  },
+                                  "note": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "rankings": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "asOf",
+                            "contestants"
+                          ],
+                          "properties": {
+                            "asOf": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "note": {
+                              "type": "string"
+                            },
+                            "contestants": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "contestantId",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "contestantId": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "teamName": {
+                                    "type": "string"
+                                  },
+                                  "seed": {
+                                    "type": "number"
+                                  },
+                                  "odds": {
+                                    "type": "number"
+                                  },
+                                  "ranking": {
+                                    "type": "number"
+                                  },
+                                  "score": {
+                                    "type": "number"
+                                  },
+                                  "result": {
+                                    "type": "string",
+                                    "enum": [
+                                      "win",
+                                      "loss",
+                                      "tie",
+                                      "cut",
+                                      "withdrawn",
+                                      "pending"
+                                    ]
+                                  },
+                                  "note": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "results": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "asOf",
+                            "contestants"
+                          ],
+                          "properties": {
+                            "asOf": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "note": {
+                              "type": "string"
+                            },
+                            "contestants": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "contestantId",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "contestantId": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "teamName": {
+                                    "type": "string"
+                                  },
+                                  "seed": {
+                                    "type": "number"
+                                  },
+                                  "odds": {
+                                    "type": "number"
+                                  },
+                                  "ranking": {
+                                    "type": "number"
+                                  },
+                                  "score": {
+                                    "type": "number"
+                                  },
+                                  "result": {
+                                    "type": "string",
+                                    "enum": [
+                                      "win",
+                                      "loss",
+                                      "tie",
+                                      "cut",
+                                      "withdrawn",
+                                      "pending"
+                                    ]
+                                  },
+                                  "note": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "updates": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "updateId",
+                              "asOf",
+                              "feedKind",
+                              "contestants"
+                            ],
+                            "properties": {
+                              "updateId": {
+                                "type": "string"
+                              },
+                              "asOf": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "feedKind": {
+                                "type": "string",
+                                "enum": [
+                                  "odds",
+                                  "rankings",
+                                  "results"
+                                ]
+                              },
+                              "note": {
+                                "type": "string"
+                              },
+                              "contestants": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "contestantId",
+                                    "name"
+                                  ],
+                                  "properties": {
+                                    "contestantId": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "teamName": {
+                                      "type": "string"
+                                    },
+                                    "seed": {
+                                      "type": "number"
+                                    },
+                                    "odds": {
+                                      "type": "number"
+                                    },
+                                    "ranking": {
+                                      "type": "number"
+                                    },
+                                    "score": {
+                                      "type": "number"
+                                    },
+                                    "result": {
+                                      "type": "string",
+                                      "enum": [
+                                        "win",
+                                        "loss",
+                                        "tie",
+                                        "cut",
+                                        "withdrawn",
+                                        "pending"
+                                      ]
+                                    },
+                                    "note": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/scenarios/{scenarioId}/events/{eventId}/odds": {
+      "get": {
+        "operationId": "getMockContestFeedOddsSnapshot",
+        "summary": "Get odds feed snapshot for an event",
+        "tags": [
+          "Feeds"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "scenarioId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "scenarioId",
+                    "eventId",
+                    "eventName",
+                    "feedKind",
+                    "asOf",
+                    "contestants"
+                  ],
+                  "properties": {
+                    "scenarioId": {
+                      "type": "string"
+                    },
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "eventName": {
+                      "type": "string"
+                    },
+                    "feedKind": {
+                      "type": "string",
+                      "enum": [
+                        "odds",
+                        "rankings",
+                        "results"
+                      ]
+                    },
+                    "asOf": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "contestants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "contestantId",
+                          "name"
+                        ],
+                        "properties": {
+                          "contestantId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "teamName": {
+                            "type": "string"
+                          },
+                          "seed": {
+                            "type": "number"
+                          },
+                          "odds": {
+                            "type": "number"
+                          },
+                          "ranking": {
+                            "type": "number"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "result": {
+                            "type": "string",
+                            "enum": [
+                              "win",
+                              "loss",
+                              "tie",
+                              "cut",
+                              "withdrawn",
+                              "pending"
+                            ]
+                          },
+                          "note": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/scenarios/{scenarioId}/events/{eventId}/rankings": {
+      "get": {
+        "operationId": "getMockContestFeedRankingsSnapshot",
+        "summary": "Get rankings feed snapshot for an event",
+        "tags": [
+          "Feeds"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "scenarioId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "scenarioId",
+                    "eventId",
+                    "eventName",
+                    "feedKind",
+                    "asOf",
+                    "contestants"
+                  ],
+                  "properties": {
+                    "scenarioId": {
+                      "type": "string"
+                    },
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "eventName": {
+                      "type": "string"
+                    },
+                    "feedKind": {
+                      "type": "string",
+                      "enum": [
+                        "odds",
+                        "rankings",
+                        "results"
+                      ]
+                    },
+                    "asOf": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "contestants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "contestantId",
+                          "name"
+                        ],
+                        "properties": {
+                          "contestantId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "teamName": {
+                            "type": "string"
+                          },
+                          "seed": {
+                            "type": "number"
+                          },
+                          "odds": {
+                            "type": "number"
+                          },
+                          "ranking": {
+                            "type": "number"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "result": {
+                            "type": "string",
+                            "enum": [
+                              "win",
+                              "loss",
+                              "tie",
+                              "cut",
+                              "withdrawn",
+                              "pending"
+                            ]
+                          },
+                          "note": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/scenarios/{scenarioId}/events/{eventId}/results": {
+      "get": {
+        "operationId": "getMockContestFeedResultsSnapshot",
+        "summary": "Get results feed snapshot for an event",
+        "tags": [
+          "Feeds"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "scenarioId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "scenarioId",
+                    "eventId",
+                    "eventName",
+                    "feedKind",
+                    "asOf",
+                    "contestants"
+                  ],
+                  "properties": {
+                    "scenarioId": {
+                      "type": "string"
+                    },
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "eventName": {
+                      "type": "string"
+                    },
+                    "feedKind": {
+                      "type": "string",
+                      "enum": [
+                        "odds",
+                        "rankings",
+                        "results"
+                      ]
+                    },
+                    "asOf": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "contestants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "contestantId",
+                          "name"
+                        ],
+                        "properties": {
+                          "contestantId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "teamName": {
+                            "type": "string"
+                          },
+                          "seed": {
+                            "type": "number"
+                          },
+                          "odds": {
+                            "type": "number"
+                          },
+                          "ranking": {
+                            "type": "number"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "result": {
+                            "type": "string",
+                            "enum": [
+                              "win",
+                              "loss",
+                              "tie",
+                              "cut",
+                              "withdrawn",
+                              "pending"
+                            ]
+                          },
+                          "note": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/scenarios/{scenarioId}/events/{eventId}/updates": {
+      "get": {
+        "operationId": "getMockContestFeedEventUpdates",
+        "summary": "Get live or correction updates for an event",
+        "tags": [
+          "Feeds"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "scenarioId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "scenarioId",
+                    "eventId",
+                    "eventName",
+                    "updates"
+                  ],
+                  "properties": {
+                    "scenarioId": {
+                      "type": "string"
+                    },
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "eventName": {
+                      "type": "string"
+                    },
+                    "updates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "updateId",
+                          "asOf",
+                          "feedKind",
+                          "contestants"
+                        ],
+                        "properties": {
+                          "updateId": {
+                            "type": "string"
+                          },
+                          "asOf": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "feedKind": {
+                            "type": "string",
+                            "enum": [
+                              "odds",
+                              "rankings",
+                              "results"
+                            ]
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "contestants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [
+                                "contestantId",
+                                "name"
+                              ],
+                              "properties": {
+                                "contestantId": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "teamName": {
+                                  "type": "string"
+                                },
+                                "seed": {
+                                  "type": "number"
+                                },
+                                "odds": {
+                                  "type": "number"
+                                },
+                                "ranking": {
+                                  "type": "number"
+                                },
+                                "score": {
+                                  "type": "number"
+                                },
+                                "result": {
+                                  "type": "string",
+                                  "enum": [
+                                    "win",
+                                    "loss",
+                                    "tie",
+                                    "cut",
+                                    "withdrawn",
+                                    "pending"
+                                  ]
+                                },
+                                "note": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health checks"
+    },
+    {
+      "name": "Scenarios",
+      "description": "Scenario catalog and event listings"
+    },
+    {
+      "name": "Feeds",
+      "description": "Odds, rankings, results, and update snapshots"
+    }
+  ]
+}

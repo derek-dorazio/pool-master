@@ -191,16 +191,16 @@ Future test owners should update the scenario files rather than inventing ad hoc
 
 | ID | Area | Task | Status | Notes |
 |---|---|---|---|---|
-| MCFP-001 | Naming | Finalize the domain-accurate service name, provider id, and scenario directory naming | Not Started | Use contest/feed terminology so the service is clearly a mock third-party feed source for contests and contestants |
-| MCFP-002 | Architecture | Define the provider port/adapter contract that the mock service must implement | Not Started | Keep it interchangeable with real feed providers without changing app code paths |
-| MCFP-003 | Deployment | Define QA/local-only runtime and make production/staging deployment explicitly unsupported | Not Started | This service is test infrastructure, not a product fallback; QA should run it as a dedicated HTTP service, not as application seed data |
-| MCFP-004 | OpenAPI | Generate and validate OpenAPI/client output for the mock service | Not Started | The app and test suites should consume generated types/clients, not handwritten request shapes |
-| MCFP-005 | Scenarios | Design the JSON scenario-file format and baseline fixtures | Not Started | Include at least golf, tennis, team-tournament, and one correction/tie edge case |
+| MCFP-001 | Naming | Finalize the domain-accurate service name, provider id, and scenario directory naming | Done | `mock-contest-feed-provider`, `mock-contest-feed`, and `contest-feed-scenarios` are now implemented in the standalone package |
+| MCFP-002 | Architecture | Define the provider port/adapter contract that the mock service must implement | Done | Standalone Fastify routes now expose the feed contract surface locally without touching the core app wiring |
+| MCFP-003 | Deployment | Define QA/local-only runtime and make production/staging deployment explicitly unsupported | In Progress | The package is explicitly local/QA-only by design, but QA ECS deployment wiring is still deferred to later infrastructure work; no prod/staging integration exists yet |
+| MCFP-004 | OpenAPI | Generate and validate OpenAPI/client output for the mock service | Done | Package-local OpenAPI export and generated client output now exist under `packages/mock-contest-feed-provider/generated/` |
+| MCFP-005 | Scenarios | Design the JSON scenario-file format and baseline fixtures | Done | Baseline golf, tennis, NCAA team, and tie/correction scenarios now live under `contest-feed-scenarios/` |
 | MCFP-006 | Ingestion Tests | Build a dedicated ingestion test suite that exercises the mock provider end to end | Not Started | Use the mock service only for the ingestion contract test lane |
 | MCFP-007 | Tiering / Pricing | Verify odds, rankings, and seed data drive tier and price derivation deterministically | Not Started | The mock feed should make tier and price derivation repeatable for tournament contests |
 | MCFP-008 | Results / Scoring | Verify final results and live updates propagate into standings and scoring flows | Not Started | Cover ties, withdrawals, and corrections in the scenario set |
-| MCFP-009 | Maintenance | Define update rules for adding new scenarios and for changing existing ones | Not Started | Scenario updates should be reviewed as test-contract changes, not hidden product behavior |
-| MCFP-010 | Seed Separation | Remove the need for broad QA fixture data in application seed flows and document the new boundary | Not Started | `prisma/seed.ts` should stay limited to production-required bootstrap records and defaults; QA/manual test fixtures belong in mock feed scenarios |
+| MCFP-009 | Maintenance | Define update rules for adding new scenarios and for changing existing ones | Done | Scenario updates are now explicitly treated as test-contract changes, not app seed data |
+| MCFP-010 | Seed Separation | Remove the need for broad QA fixture data in application seed flows and document the new boundary | Done | The seed boundary is now documented in `rules/testing-rules.md` and in this plan; QA/manual test fixtures belong in mock feed scenarios |
 
 ## Acceptance Criteria
 

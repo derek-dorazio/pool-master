@@ -1,0 +1,59 @@
+{
+  "scenarioId": "golf-major-2026",
+  "sport": "GOLF",
+  "provider": "mock-contest-feed",
+  "description": "Single-event golf major with favorite, mid-pack, and longshot contestants.",
+  "events": [
+    {
+      "eventId": "golf-masters-2026",
+      "name": "Mock Major Championship",
+      "startsAt": "2026-04-10T15:00:00.000Z",
+      "venue": "Mock National Golf Club",
+      "contestants": [
+        { "contestantId": "golfer-01", "name": "Avery Hart", "seed": 1, "teamName": "USA" },
+        { "contestantId": "golfer-02", "name": "Brooke Vale", "seed": 2, "teamName": "USA" },
+        { "contestantId": "golfer-03", "name": "Cam Reed", "seed": 3, "teamName": "CAN" },
+        { "contestantId": "golfer-04", "name": "Dylan Cross", "seed": 4, "teamName": "AUS" }
+      ],
+      "odds": {
+        "asOf": "2026-04-01T12:00:00.000Z",
+        "contestants": [
+          { "contestantId": "golfer-01", "odds": 7.5 },
+          { "contestantId": "golfer-02", "odds": 11.0 },
+          { "contestantId": "golfer-03", "odds": 18.0 },
+          { "contestantId": "golfer-04", "odds": 25.0 }
+        ]
+      },
+      "rankings": {
+        "asOf": "2026-04-01T12:00:00.000Z",
+        "contestants": [
+          { "contestantId": "golfer-01", "ranking": 1 },
+          { "contestantId": "golfer-02", "ranking": 2 },
+          { "contestantId": "golfer-03", "ranking": 3 },
+          { "contestantId": "golfer-04", "ranking": 4 }
+        ]
+      },
+      "results": {
+        "asOf": "2026-04-14T18:00:00.000Z",
+        "contestants": [
+          { "contestantId": "golfer-01", "score": -12, "result": "win" },
+          { "contestantId": "golfer-02", "score": -9, "result": "loss" },
+          { "contestantId": "golfer-03", "score": -7, "result": "loss" },
+          { "contestantId": "golfer-04", "score": -4, "result": "loss" }
+        ]
+      },
+      "updates": [
+        {
+          "updateId": "golf-major-2026-live-1",
+          "asOf": "2026-04-12T18:30:00.000Z",
+          "feedKind": "results",
+          "note": "Round three complete with leaderboard shakeup.",
+          "contestants": [
+            { "contestantId": "golfer-01", "score": -10 },
+            { "contestantId": "golfer-02", "score": -8 }
+          ]
+        }
+      ]
+    }
+  ]
+}

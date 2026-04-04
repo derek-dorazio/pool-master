@@ -135,6 +135,13 @@ Polls external sports data providers and publishes `stat.updated` events to the 
 | **DynamoDB** | High-volume event data (future) |
 | **In-process EventBus** | `stat.updated` → scoring → `score.updated` → `standings.updated` |
 
+## Standalone Support Packages
+
+| Package | Purpose |
+|---------|---------|
+| `push-mock-server` | Local APNs/FCM capture service for push integration testing |
+| `mock-contest-feed-provider` | Local/QA-only contest feed simulator for odds, rankings, and results scenarios |
+
 ---
 
 ## Development
