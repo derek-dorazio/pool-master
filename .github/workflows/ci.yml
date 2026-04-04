@@ -17,8 +17,8 @@ jobs:
   lint-typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -50,8 +50,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -70,18 +70,56 @@ jobs:
       - name: Backend coverage summary
         if: always()
         run: |
-          echo "### Backend Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat coverage/coverage-summary.json 2>/dev/null | node -e "
-            const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync('/dev/stdin','utf8'));
-            const t = data.total;
-            console.log('Lines:      ' + t.lines.pct + '%');
-            console.log('Branches:   ' + t.branches.pct + '%');
-            console.log('Functions:  ' + t.functions.pct + '%');
-            console.log('Statements: ' + t.statements.pct + '%');
-          " 2>/dev/null || echo "Coverage data not available"
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'coverage/coverage-summary.json';
+          const summary = process.env.GITHUB_STEP_SUMMARY;
+
+          if (!fs.existsSync(path)) {
+            console.log('Backend coverage data not available');
+            fs.appendFileSync(summary, '### Backend Test Coverage\n\nCoverage data not available\n');
+            process.exit(0);
+          }
+
+          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const t = data.total;
+          const lines = [
+            `Statements: ${t.statements.pct}%`,
+            `Branches: ${t.branches.pct}%`,
+            `Functions: ${t.functions.pct}%`,
+            `Lines: ${t.lines.pct}%`,
+          ];
+
+          console.log('Backend coverage totals');
+          for (const line of lines) console.log(line);
+
+          fs.appendFileSync(
+            summary,
+            [
+              '### Backend Test Coverage',
+              '',
+              '| Metric | Coverage |',
+              '|---|---:|',
+              `| Statements | ${t.statements.pct}% |`,
+              `| Branches | ${t.branches.pct}% |`,
+              `| Functions | ${t.functions.pct}% |`,
+              `| Lines | ${t.lines.pct}% |`,
+              '',
+            ].join('\n'),
+          );
+          NODE
+
+      - name: Upload backend coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: |
+            coverage/coverage-summary.json
+            coverage/lcov.info
+            coverage/clover.xml
+            coverage/coverage-final.json
+          if-no-files-found: warn
 
   # =========================================================================
   # Webapp Unit Tests + Coverage (Vitest)
@@ -90,8 +128,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -104,18 +142,56 @@ jobs:
       - name: Webapp coverage summary
         if: always()
         run: |
-          echo "### Webapp Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat clients/web/coverage/coverage-summary.json 2>/dev/null | node -e "
-            const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync('/dev/stdin','utf8'));
-            const t = data.total;
-            console.log('Lines:      ' + t.lines.pct + '%');
-            console.log('Branches:   ' + t.branches.pct + '%');
-            console.log('Functions:  ' + t.functions.pct + '%');
-            console.log('Statements: ' + t.statements.pct + '%');
-          " 2>/dev/null || echo "Coverage data not available"
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'clients/web/coverage/coverage-summary.json';
+          const summary = process.env.GITHUB_STEP_SUMMARY;
+
+          if (!fs.existsSync(path)) {
+            console.log('Webapp coverage data not available');
+            fs.appendFileSync(summary, '### Webapp Test Coverage\n\nCoverage data not available\n');
+            process.exit(0);
+          }
+
+          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const t = data.total;
+          const lines = [
+            `Statements: ${t.statements.pct}%`,
+            `Branches: ${t.branches.pct}%`,
+            `Functions: ${t.functions.pct}%`,
+            `Lines: ${t.lines.pct}%`,
+          ];
+
+          console.log('Webapp coverage totals');
+          for (const line of lines) console.log(line);
+
+          fs.appendFileSync(
+            summary,
+            [
+              '### Webapp Test Coverage',
+              '',
+              '| Metric | Coverage |',
+              '|---|---:|',
+              `| Statements | ${t.statements.pct}% |`,
+              `| Branches | ${t.branches.pct}% |`,
+              `| Functions | ${t.functions.pct}% |`,
+              `| Lines | ${t.lines.pct}% |`,
+              '',
+            ].join('\n'),
+          );
+          NODE
+
+      - name: Upload webapp coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-coverage
+          path: |
+            clients/web/coverage/coverage-summary.json
+            clients/web/coverage/lcov.info
+            clients/web/coverage/clover.xml
+            clients/web/coverage/coverage-final.json
+          if-no-files-found: warn
 
   # =========================================================================
   # Admin Unit Tests + Coverage (Vitest)
@@ -124,8 +200,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -138,25 +214,63 @@ jobs:
       - name: Admin coverage summary
         if: always()
         run: |
-          echo "### Admin Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat clients/admin/coverage/coverage-summary.json 2>/dev/null | node -e "
-            const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync('/dev/stdin','utf8'));
-            const t = data.total;
-            console.log('Lines:      ' + t.lines.pct + '%');
-            console.log('Branches:   ' + t.branches.pct + '%');
-            console.log('Functions:  ' + t.functions.pct + '%');
-            console.log('Statements: ' + t.statements.pct + '%');
-          " 2>/dev/null || echo "Coverage data not available"
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'clients/admin/coverage/coverage-summary.json';
+          const summary = process.env.GITHUB_STEP_SUMMARY;
+
+          if (!fs.existsSync(path)) {
+            console.log('Admin coverage data not available');
+            fs.appendFileSync(summary, '### Admin Test Coverage\n\nCoverage data not available\n');
+            process.exit(0);
+          }
+
+          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const t = data.total;
+          const lines = [
+            `Statements: ${t.statements.pct}%`,
+            `Branches: ${t.branches.pct}%`,
+            `Functions: ${t.functions.pct}%`,
+            `Lines: ${t.lines.pct}%`,
+          ];
+
+          console.log('Admin coverage totals');
+          for (const line of lines) console.log(line);
+
+          fs.appendFileSync(
+            summary,
+            [
+              '### Admin Test Coverage',
+              '',
+              '| Metric | Coverage |',
+              '|---|---:|',
+              `| Statements | ${t.statements.pct}% |`,
+              `| Branches | ${t.branches.pct}% |`,
+              `| Functions | ${t.functions.pct}% |`,
+              `| Lines | ${t.lines.pct}% |`,
+              '',
+            ].join('\n'),
+          );
+          NODE
+
+      - name: Upload admin coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-coverage
+          path: |
+            clients/admin/coverage/coverage-summary.json
+            clients/admin/coverage/lcov.info
+            clients/admin/coverage/clover.xml
+            clients/admin/coverage/coverage-final.json
+          if-no-files-found: warn
 
   build:
     runs-on: ubuntu-latest
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -174,10 +288,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -188,7 +302,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Generate image tags
         id: tags
@@ -210,7 +324,7 @@ jobs:
       - name: Build & push core-api
         id: build-core-api
         if: steps.ecr-check.outputs.exists == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: infrastructure/docker/Dockerfile.core-api
@@ -403,7 +517,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -775,8 +889,8 @@ jobs:
     needs: migrate-qa
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -802,8 +916,8 @@ jobs:
     needs: smoke-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'

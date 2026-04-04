@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { client } from '@/lib/api';
+import { client, getConsentHistory, recordConsent } from '@/lib/api';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -43,9 +43,7 @@ export function useConsent() {
   return useQuery({
     queryKey: settingsKeys.consent(),
     queryFn: async (): Promise<ConsentPreferences> => {
-      const { data, error } = await client.get<unknown>({
-        url: '/api/v1/account/consent',
-      });
+      const { data, error } = await getConsentHistory({ client });
       if (error) throw error;
       const parsed = ConsentHistoryResponseSchema.parse(data);
       return deriveConsentPreferences(parsed.consents as Array<{ consentType: string; granted: boolean }>);
@@ -60,14 +58,13 @@ export function useUpdateConsent() {
     mutationFn: async (consent: Partial<ConsentPreferences>) => {
       const updates = Object.entries(consent) as Array<[keyof ConsentPreferences, boolean]>;
       for (const [key, granted] of updates) {
-        const { error } = await client.post({
-          url: '/api/v1/account/consent',
+        const { error } = await recordConsent({
+          client,
           body: {
             consentType: consentTypeByPreference[key],
             granted,
             version: CONSENT_VERSION,
           },
-          headers: { 'Content-Type': 'application/json' },
         });
         if (error) throw error;
       }

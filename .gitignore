@@ -42,6 +42,8 @@ clients/mobile/.expo/
 *.tfstate
 *.tfstate.backup
 .terraform/
+.terraform.lock.hcl
+!infrastructure/terraform/.terraform.lock.hcl
 *.tfvars
 !terraform.tfvars.example
 

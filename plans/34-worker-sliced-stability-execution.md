@@ -1,6 +1,6 @@
 # Plan 34: Worker-Sliced Stability Execution
 
-> **Planning Note (2026-04-04):** Re-analyze current CI health, active MVP scope, and the latest enforced coverage baselines before executing any slice below. This plan is an execution split for the current stability phase, not a permanent ownership map.
+> **Planning Note (2026-04-04):** Re-analyze current CI health, active MVP scope, and the latest enforced coverage baselines before executing any slice below. This plan is an execution split for the first stability wave, not a permanent ownership map. Remaining active execution now continues in [plans/35-active-coverage-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/35-active-coverage-execution.md).
 
 ## Purpose
 
@@ -240,29 +240,6 @@ Strengthen confidence in the active admin audit and announcement workflows, incl
 - deferred admin feature families
 - backend route contracts without main-thread approval
 
-### Slice H: Admin Audit and Announcements Coverage
-
-**Goal**
-
-Strengthen confidence in the active admin audit and announcement workflows, including list, expand, activate/deactivate, and create behavior.
-
-**Primary Files**
-
-- [clients/admin/src/pages/audit/index.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/audit/index.tsx)
-- [clients/admin/src/pages/announcements/index.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/announcements/index.tsx)
-- [clients/admin/src/pages/announcements/create.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/announcements/create.tsx)
-
-**Allowed Work**
-
-- add or improve admin Vitest coverage
-- add stable selectors where the admin UI needs them
-- fix real UI/API contract issues revealed by tests
-
-**Do Not Touch**
-
-- deferred admin feature families
-- backend route contracts without main-thread approval
-
 ## Suggested Execution Order
 
 1. Main thread: continue shared hardening, coverage policy, and stale-architecture cleanup.
@@ -295,9 +272,8 @@ Strengthen confidence in the active admin audit and announcement workflows, incl
 | WSH-006 | E | Add backend contest/scoring edge coverage and targeted DB integration cases | Done | Added scoring-consumer dedupe coverage, active-contest filtering coverage, and contest/scoring unit edge tests without touching shared DTO or schema surfaces |
 | WSH-007 | F | Add admin coverage only on still-supported active surfaces | Done | Added focused Vitest coverage for home, health, and config surfaces; fixed the notification template update payload to send `emailText` for the edited email body. |
 | WSH-008 | Main | Re-measure coverage and decide whether ratchet changes are justified after worker slices land | Done | The merged worker wave passed the full local gate on 2026-04-04, exposed no new shared-architecture problems, and justified a second threshold ratchet. After the follow-up CI regression fixes and worker additions, the latest validated local baselines are 24.00 / 14.20 / 21.15 / 24.53 (backend), 57.33 / 48.65 / 56.79 / 60.24 (web), and 26.96 / 21.55 / 20.75 / 28.33 (admin). |
-| WSH-009 | G | Add web settings/profile coverage and fix defects revealed there | In Progress | Focuses on active MVP account-management behavior: profile edits, password changes, and linked accounts. This slice now has dedicated component coverage and is being validated against the full local gate before merge. |
-| WSH-010 | H | Add admin audit and announcements coverage on active surfaces | In Progress | Focuses on audit log expansion/pagination and announcement list/create/toggle flows with stable selectors for testability. |
-| WSH-010 | H | Add admin audit and announcements coverage on active surfaces | In Progress | Focuses on audit log expansion/pagination and announcement list/create/toggle flows with stable selectors for testability. |
+| WSH-009 | G | Add web settings/profile coverage and fix defects revealed there | In Progress | This remaining execution slice now lives in [plans/35-active-coverage-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/35-active-coverage-execution.md). The first worker commit expanded settings/profile component coverage and remeasured the improved baselines; final integration happens in the active plan. |
+| WSH-010 | H | Add admin audit and announcements coverage on active surfaces | In Progress | This remaining execution slice now lives in [plans/35-active-coverage-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/35-active-coverage-execution.md). Use that plan for ongoing audit/announcement coverage work and any follow-on admin slice decomposition. |
 
 ## Acceptance Criteria
 
