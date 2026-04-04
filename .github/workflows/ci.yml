@@ -450,17 +450,136 @@ jobs:
           echo "Seed task timed out after 10 minutes"
           exit 1
 
-      - name: Wait for ECS service to stabilize
+      - name: Capture QA service rollout target
+        id: qa-service-target
         run: |
-          if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
-            aws ecs wait services-stable \
-              --cluster poolmaster-qa-cluster \
-              --services poolmaster-qa-core-api
-          else
-            echo "QA cluster not found — skipping service stabilization wait."
+          CLUSTER="poolmaster-qa-cluster"
+          SERVICE="poolmaster-qa-core-api"
+
+          if ! aws ecs describe-clusters --clusters "$CLUSTER" --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            echo "cluster_active=false" >> $GITHUB_OUTPUT
+            echo "QA cluster not found — skipping rollout target capture."
+            exit 0
           fi
 
+          echo "cluster_active=true" >> $GITHUB_OUTPUT
+          TASK_DEFINITION=$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text 2>/dev/null || echo "")
+
+          PRIMARY_TASK_SET=$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --query 'services[0].deployments[?status==`PRIMARY`][0].taskDefinition' \
+            --output text 2>/dev/null || echo "")
+
+          echo "task_definition=${TASK_DEFINITION}" >> $GITHUB_OUTPUT
+          echo "primary_task_definition=${PRIMARY_TASK_SET}" >> $GITHUB_OUTPUT
+
+          echo "### QA ECS Rollout Target" >> $GITHUB_STEP_SUMMARY
+          echo "- Service: \`$SERVICE\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Reported task definition: \`${TASK_DEFINITION}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- PRIMARY deployment task definition: \`${PRIMARY_TASK_SET}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Wait for ECS service to stabilize
+        id: ecs-stabilize
+        run: |
+          CLUSTER="poolmaster-qa-cluster"
+          SERVICE="poolmaster-qa-core-api"
+
+          if ! aws ecs describe-clusters --clusters "$CLUSTER" --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            echo "QA cluster not found — skipping service stabilization wait."
+            echo "stable=skipped" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          set +e
+          aws ecs wait services-stable \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE"
+          EXIT_CODE=$?
+          set -e
+
+          if [ "$EXIT_CODE" = "0" ]; then
+            echo "stable=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "stable=false" >> $GITHUB_OUTPUT
+          echo "exit_code=${EXIT_CODE}" >> $GITHUB_OUTPUT
+          exit 0
+
+      - name: Dump ECS stabilization diagnostics
+        if: steps.ecs-stabilize.outputs.stable == 'false'
+        run: |
+          CLUSTER="poolmaster-qa-cluster"
+          SERVICE="poolmaster-qa-core-api"
+
+          echo "--- ECS Service Description ---"
+          aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --output json
+
+          TASK_DEFINITION="${{ steps.qa-service-target.outputs.task_definition }}"
+          if [ -n "$TASK_DEFINITION" ] && [ "$TASK_DEFINITION" != "None" ]; then
+            echo "--- ECS Task Definition ---"
+            aws ecs describe-task-definition \
+              --task-definition "$TASK_DEFINITION" \
+              --query 'taskDefinition.{taskDefinitionArn:taskDefinitionArn,containerDefinitions:containerDefinitions[*].{name:name,image:image,healthCheck:healthCheck}}' \
+              --output json
+          fi
+
+          echo "--- Running Tasks ---"
+          RUNNING_TASKS=$(aws ecs list-tasks \
+            --cluster "$CLUSTER" \
+            --service-name "$SERVICE" \
+            --desired-status RUNNING \
+            --query 'taskArns' \
+            --output text)
+          if [ -n "$RUNNING_TASKS" ] && [ "$RUNNING_TASKS" != "None" ]; then
+            aws ecs describe-tasks \
+              --cluster "$CLUSTER" \
+              --tasks $RUNNING_TASKS \
+              --query 'tasks[*].{taskArn:taskArn,lastStatus:lastStatus,desiredStatus:desiredStatus,healthStatus:healthStatus,stopCode:stopCode,stoppedReason:stoppedReason,containers:containers[*].{name:name,lastStatus:lastStatus,healthStatus:healthStatus,exitCode:exitCode,reason:reason,image:image}}' \
+              --output json
+          else
+            echo "(no running tasks)"
+          fi
+
+          echo "--- Recently Stopped Tasks ---"
+          STOPPED_TASKS=$(aws ecs list-tasks \
+            --cluster "$CLUSTER" \
+            --service-name "$SERVICE" \
+            --desired-status STOPPED \
+            --query 'taskArns[:10]' \
+            --output text)
+          if [ -n "$STOPPED_TASKS" ] && [ "$STOPPED_TASKS" != "None" ]; then
+            aws ecs describe-tasks \
+              --cluster "$CLUSTER" \
+              --tasks $STOPPED_TASKS \
+              --query 'tasks[*].{taskArn:taskArn,lastStatus:lastStatus,desiredStatus:desiredStatus,healthStatus:healthStatus,stopCode:stopCode,stoppedReason:stoppedReason,containers:containers[*].{name:name,lastStatus:lastStatus,healthStatus:healthStatus,exitCode:exitCode,reason:reason,image:image}}' \
+              --output json
+          else
+            echo "(no stopped tasks)"
+          fi
+
+          echo "### ECS Stabilization Failure" >> $GITHUB_STEP_SUMMARY
+          echo "- Service: \`$SERVICE\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Waiter exit code: \`${{ steps.ecs-stabilize.outputs.exit_code }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Reported task definition: \`${{ steps.qa-service-target.outputs.task_definition }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- PRIMARY task definition: \`${{ steps.qa-service-target.outputs.primary_task_definition }}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail on ECS stabilization error
+        if: steps.ecs-stabilize.outputs.stable == 'false'
+        run: |
+          echo "QA ECS service failed to stabilize after deployment."
+          exit 1
+
       - name: Warm-up delay after ECS stabilization
+        if: steps.ecs-stabilize.outputs.stable == 'true'
         run: sleep 20
 
   # =========================================================================
