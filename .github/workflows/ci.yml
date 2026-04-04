@@ -305,8 +305,9 @@ jobs:
           npm ci
           npx prisma generate --schema=packages/core-api/prisma/schema.prisma
           WEB_RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
-          APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" cd clients/web && npx vite build
-          grep -q "/${WEB_RELEASE_PREFIX}/" clients/web/dist/index.html
+          cd clients/web
+          APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" npx vite build
+          grep -q "/${WEB_RELEASE_PREFIX}/" dist/index.html
 
       - name: Deploy webapp to S3 + invalidate CloudFront
         id: deploy-webapp
@@ -332,8 +333,9 @@ jobs:
       - name: Build admin app
         run: |
           ADMIN_RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
-          APP_ASSET_BASE="/${ADMIN_RELEASE_PREFIX}/" cd clients/admin && npx vite build
-          grep -q "/${ADMIN_RELEASE_PREFIX}/" clients/admin/dist/index.html
+          cd clients/admin
+          APP_ASSET_BASE="/${ADMIN_RELEASE_PREFIX}/" npx vite build
+          grep -q "/${ADMIN_RELEASE_PREFIX}/" dist/index.html
 
       - name: Deploy admin to S3 + invalidate CloudFront
         id: deploy-admin
