@@ -63,6 +63,7 @@ Rebuild backend integration coverage from scratch using small, self-contained CR
    - verify read-after-write state
 
 6. Standings and Results Read Flow
+   - Status: Done
    - create minimal persisted scoring/standing records
    - verify results/standings endpoints return expected DTO shape
 
@@ -82,3 +83,4 @@ Keep shared test helpers and route-contract changes on the main thread.
 - Each new integration suite is self-contained and independently runnable.
 - New suites pass against real local Postgres when run outside the sandbox as needed.
 - New suites use current DTOs, route behavior, and shared domain enums.
+- Initial rebuild batches for contests, leagues, invitations/members, contest entries, draft flow, and standings/results are complete.
