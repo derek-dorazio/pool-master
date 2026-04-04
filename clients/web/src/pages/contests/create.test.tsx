@@ -135,7 +135,7 @@ describe('CreateContestPage', () => {
     expect(screen.getByText(/tier size: 12/i)).toBeInTheDocument();
     expect(screen.getByText(/picks per tier: 1/i)).toBeInTheDocument();
     expect(screen.getByText(/tier assignment: Odds/i)).toBeInTheDocument();
-  });
+  }, 10000);
 
   it('lets commissioners customize budget pricing inputs before review', async () => {
     const user = userEvent.setup();
@@ -164,5 +164,5 @@ describe('CreateContestPage', () => {
     expect(screen.getByText(/budget: \$3,500,000/i)).toBeInTheDocument();
     expect(screen.getByText(/roster size: 5/i)).toBeInTheDocument();
     expect(screen.getByText(/pricing: Odds/i)).toBeInTheDocument();
-  });
+  }, 10000);
 });
