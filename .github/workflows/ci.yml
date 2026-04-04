@@ -267,7 +267,6 @@ jobs:
 
       - name: Deploy QA services
         if: steps.ecr-check.outputs.exists == 'true'
-        continue-on-error: true
         run: |
           if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
             for SERVICE in core-api; do
@@ -276,7 +275,7 @@ jobs:
                 --cluster poolmaster-qa-cluster \
                 --service poolmaster-qa-${SERVICE} \
                 --force-new-deployment \
-                --no-cli-pager || echo "  Service not found (skipping)"
+                --no-cli-pager
             done
           else
             echo "QA cluster not found — skipping deploy. Run terraform apply first."
@@ -523,12 +522,19 @@ jobs:
             --services "$SERVICE" \
             --output json
 
+          echo "--- Recent ECS Service Events ---"
+          aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --query 'services[0].events[:10].[createdAt,message]' \
+            --output table
+
           TASK_DEFINITION="${{ steps.qa-service-target.outputs.task_definition }}"
           if [ -n "$TASK_DEFINITION" ] && [ "$TASK_DEFINITION" != "None" ]; then
             echo "--- ECS Task Definition ---"
             aws ecs describe-task-definition \
               --task-definition "$TASK_DEFINITION" \
-              --query 'taskDefinition.{taskDefinitionArn:taskDefinitionArn,containerDefinitions:containerDefinitions[*].{name:name,image:image,healthCheck:healthCheck}}' \
+              --query 'taskDefinition.{taskDefinitionArn:taskDefinitionArn,containerDefinitions:containerDefinitions[*].{name:name,image:image,healthCheck:healthCheck,logConfiguration:logConfiguration}}' \
               --output json
           fi
 
@@ -562,6 +568,27 @@ jobs:
               --tasks $STOPPED_TASKS \
               --query 'tasks[*].{taskArn:taskArn,lastStatus:lastStatus,desiredStatus:desiredStatus,healthStatus:healthStatus,stopCode:stopCode,stoppedReason:stoppedReason,containers:containers[*].{name:name,lastStatus:lastStatus,healthStatus:healthStatus,exitCode:exitCode,reason:reason,image:image}}' \
               --output json
+
+            TASK_ID=$(echo "$STOPPED_TASKS" | awk '{print $1}' | awk -F'/' '{print $NF}')
+            if [ -n "$TASK_ID" ] && [ "$TASK_ID" != "None" ] && [ -n "$TASK_DEFINITION" ] && [ "$TASK_DEFINITION" != "None" ]; then
+              LOG_GROUP=$(aws ecs describe-task-definition \
+                --task-definition "$TASK_DEFINITION" \
+                --query 'taskDefinition.containerDefinitions[?name==`core-api`][0].logConfiguration.options."awslogs-group"' \
+                --output text 2>/dev/null || echo "")
+              LOG_PREFIX=$(aws ecs describe-task-definition \
+                --task-definition "$TASK_DEFINITION" \
+                --query 'taskDefinition.containerDefinitions[?name==`core-api`][0].logConfiguration.options."awslogs-stream-prefix"' \
+                --output text 2>/dev/null || echo "")
+
+              if [ -n "$LOG_GROUP" ] && [ "$LOG_GROUP" != "None" ] && [ -n "$LOG_PREFIX" ] && [ "$LOG_PREFIX" != "None" ]; then
+                echo "--- Latest Stopped Task Logs (${TASK_ID}) ---"
+                aws logs get-log-events \
+                  --log-group-name "$LOG_GROUP" \
+                  --log-stream-name "${LOG_PREFIX}/core-api/${TASK_ID}" \
+                  --query 'events[].message' \
+                  --output text 2>/dev/null || echo "(no task logs available)"
+              fi
+            fi
           else
             echo "(no stopped tasks)"
           fi
@@ -571,6 +598,7 @@ jobs:
           echo "- Waiter exit code: \`${{ steps.ecs-stabilize.outputs.exit_code }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Reported task definition: \`${{ steps.qa-service-target.outputs.task_definition }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- PRIMARY task definition: \`${{ steps.qa-service-target.outputs.primary_task_definition }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Recent ECS service events and latest stopped-task logs were dumped to the job output." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail on ECS stabilization error
         if: steps.ecs-stabilize.outputs.stable == 'false'
