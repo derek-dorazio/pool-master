@@ -4,6 +4,7 @@ import { DraftStatus } from '@poolmaster/shared/domain';
 import { Volume2, VolumeX, Maximize, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getSelectionConfigSummary } from '@/features/contests/selection-config-summary';
 import type { DraftState } from './hooks/use-draft';
 
 const statusColors: Record<string, string> = {
@@ -13,8 +14,24 @@ const statusColors: Record<string, string> = {
   [DraftStatus.COMPLETE]: 'bg-blue-100 text-blue-800',
 };
 
+function formatDraftStatus(status: string) {
+  switch (status) {
+    case DraftStatus.PENDING:
+      return 'Pending';
+    case DraftStatus.LIVE:
+      return 'Live';
+    case DraftStatus.PAUSED:
+      return 'Paused';
+    case DraftStatus.COMPLETE:
+      return 'Complete';
+    default:
+      return status;
+  }
+}
+
 export function DraftHeader({ draft }: { draft: DraftState }) {
   const [soundOn, setSoundOn] = useState(false);
+  const setupSummary = getSelectionConfigSummary(draft.selectionConfig).slice(0, 3).join(' • ');
   const progressLabel = draft.isTurnBased
     ? `Round ${draft.currentRound}, Pick ${draft.currentPickNumber} of ${draft.totalPicks}`
     : `Selections ${draft.myEntryId ? draft.picks.filter((pick) => pick.entryId === draft.myEntryId).length : 0} of ${draft.rosterSize}`;
@@ -23,9 +40,14 @@ export function DraftHeader({ draft }: { draft: DraftState }) {
     <div className="flex items-center justify-between border-b bg-background px-4 h-14 shrink-0">
       <div className="flex items-center gap-3">
         <Link to="/dashboard" className="text-lg font-bold text-primary">PM</Link>
-        <span className="text-sm font-medium">{draft.contestName}</span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{draft.contestName}</p>
+          {setupSummary ? (
+            <p className="truncate text-xs text-muted-foreground">{setupSummary}</p>
+          ) : null}
+        </div>
         <Badge variant="outline" className={statusColors[draft.status]}>
-          {draft.status}
+          {formatDraftStatus(draft.status)}
         </Badge>
       </div>
 

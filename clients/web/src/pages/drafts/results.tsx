@@ -7,7 +7,26 @@ import type { DraftStateResponse } from '@poolmaster/shared/dto';
 import { DraftStateResponseSchema } from '@poolmaster/shared/dto';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  formatSelectionTypeLabel,
+  getSelectionConfigDetailRows,
+} from '@/features/contests/selection-config-summary';
 import { client, getDraftState } from '@/lib/api';
+
+function formatDraftStatus(status: string) {
+  switch (status) {
+    case 'PENDING':
+      return 'Pending';
+    case 'LIVE':
+      return 'Live';
+    case 'PAUSED':
+      return 'Paused';
+    case 'COMPLETE':
+      return 'Complete';
+    default:
+      return status;
+  }
+}
 
 function getResultsCopy(selectionType: string) {
   switch (selectionType) {
@@ -22,6 +41,7 @@ function getResultsCopy(selectionType: string) {
         roundLabel: 'Rd',
         participantLabel: 'Participant',
         typeLabel: 'Type',
+        contextLabel: 'Pick Context',
       };
     case SelectionType.PICK_EM:
       return {
@@ -34,6 +54,7 @@ function getResultsCopy(selectionType: string) {
         roundLabel: 'Period',
         participantLabel: 'Selection',
         typeLabel: 'Confidence',
+        contextLabel: 'Matchup',
       };
     case SelectionType.BRACKET_PICK_EM:
       return {
@@ -46,6 +67,33 @@ function getResultsCopy(selectionType: string) {
         roundLabel: 'Round',
         participantLabel: 'Predicted Winner',
         typeLabel: 'Type',
+        contextLabel: 'Matchup',
+      };
+    case SelectionType.TIERED:
+      return {
+        titleSuffix: 'Tiered Results',
+        itemLabel: 'selections',
+        listTitle: 'All Tiered Selections',
+        rosterTitle: 'Entry Tier Cards',
+        stateTitle: 'Current Tiered State',
+        inProgress: 'This tiered room is still in progress. Results reflect the current saved tier selections.',
+        roundLabel: 'Tier Slot',
+        participantLabel: 'Contestant',
+        typeLabel: 'Tier',
+        contextLabel: 'Selection Context',
+      };
+    case SelectionType.BUDGET_PICK:
+      return {
+        titleSuffix: 'Budget Results',
+        itemLabel: 'selections',
+        listTitle: 'All Budget Selections',
+        rosterTitle: 'Entry Budget Cards',
+        stateTitle: 'Current Budget State',
+        inProgress: 'This budget room is still in progress. Results reflect the current saved selections and spend.',
+        roundLabel: 'Slot',
+        participantLabel: 'Contestant',
+        typeLabel: 'Price',
+        contextLabel: 'Selection Context',
       };
     default:
       return {
@@ -58,6 +106,7 @@ function getResultsCopy(selectionType: string) {
         roundLabel: 'Round',
         participantLabel: 'Selection',
         typeLabel: 'Type',
+        contextLabel: 'Selection Context',
       };
   }
 }
@@ -117,6 +166,24 @@ function getPickDetailLabel(
   return null;
 }
 
+function getTypeBadgeLabel(draft: DraftStateResponse, pick: DraftStateResponse['picks'][number]) {
+  if (pick.isSkipped) return 'Skipped';
+
+  if (draft.selectionType === SelectionType.PICK_EM) {
+    return `Matchup ${pick.pickInRound}`;
+  }
+
+  if (draft.selectionType === SelectionType.TIERED) {
+    return pick.tierName ?? 'Tier';
+  }
+
+  if (draft.selectionType === SelectionType.BUDGET_PICK) {
+    return typeof pick.price === 'number' ? `$${pick.price.toLocaleString()}` : 'Budget';
+  }
+
+  return pick.autoPicked ? 'Auto' : 'Manual';
+}
+
 export function Component() {
   const { draftId } = useParams<{ draftId: string }>();
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
@@ -139,6 +206,7 @@ export function Component() {
   }
 
   const copy = getResultsCopy(draft.selectionType);
+  const selectionDetailRows = getSelectionConfigDetailRows(draft.selectionConfig);
 
   const picksByEntry = new Map<string, typeof draft.picks>();
   for (const pick of draft.picks) {
@@ -153,6 +221,9 @@ export function Component() {
         <h1 className="text-2xl font-bold">{draft.contestName} - {copy.titleSuffix}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {draft.totalPicks} {copy.itemLabel} across {draft.entries.length} entries
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {formatSelectionTypeLabel(draft.selectionType)}
         </p>
       </div>
 
@@ -177,7 +248,7 @@ export function Component() {
                   <th className="text-left px-3 py-2 font-medium">{copy.roundLabel}</th>
                   <th className="text-left px-3 py-2 font-medium">Entry</th>
                   <th className="text-left px-3 py-2 font-medium">{copy.participantLabel}</th>
-                  <th className="text-left px-3 py-2 font-medium">Pos</th>
+                  <th className="text-left px-3 py-2 font-medium">{copy.contextLabel}</th>
                   <th className="text-left px-3 py-2 font-medium">Team</th>
                   <th className="text-left px-3 py-2 font-medium">{copy.typeLabel}</th>
                 </tr></thead>
@@ -193,18 +264,18 @@ export function Component() {
                           <div className="text-xs text-muted-foreground">{getPickDetailLabel(draft, pick)}</div>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2">{pick.position ? <Badge variant="outline" className="text-xs">{pick.position}</Badge> : '-'}</td>
+                      <td className="px-3 py-2">
+                        {draft.selectionType === SelectionType.TIERED ? (
+                          pick.tierName ?? formatPickContext(draft.selectionType, pick.round, pick.pickNumber, pick.pickInRound)
+                        ) : pick.position ? (
+                          <Badge variant="outline" className="text-xs">{pick.position}</Badge>
+                        ) : (
+                          formatPickContext(draft.selectionType, pick.round, pick.pickNumber, pick.pickInRound)
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-muted-foreground">{pick.team ?? '-'}</td>
                       <td className="px-3 py-2">
-                        {pick.isSkipped ? (
-                          <Badge variant="outline" className="text-xs">Skipped</Badge>
-                        ) : draft.selectionType === SelectionType.PICK_EM ? (
-                          <Badge variant="outline" className="text-xs">Matchup {pick.pickInRound}</Badge>
-                        ) : pick.autoPicked ? (
-                          <Badge variant="outline" className="text-xs">Auto</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">Manual</Badge>
-                        )}
+                        <Badge variant="outline" className="text-xs">{getTypeBadgeLabel(draft, pick)}</Badge>
                       </td>
                     </tr>
                   ))}
@@ -239,7 +310,9 @@ export function Component() {
                     ) : (
                       entryPicks.map((pick) => (
                         <div key={`${pick.entryId}-${pick.pickNumber}`} className="flex items-center gap-3 text-sm py-1">
-                          {pick.position ? (
+                          {draft.selectionType === SelectionType.TIERED ? (
+                            <Badge variant="outline" className="text-[10px] justify-center">{pick.tierName ?? 'Tier'}</Badge>
+                          ) : pick.position ? (
                             <Badge variant="outline" className="text-[10px] w-10 justify-center">{pick.position}</Badge>
                           ) : (
                             <Badge variant="outline" className="text-[10px] w-10 justify-center">-</Badge>
@@ -250,7 +323,13 @@ export function Component() {
                               <div className="text-xs text-muted-foreground">{getPickDetailLabel(draft, pick)}</div>
                             ) : null}
                           </div>
-                          <span className="text-muted-foreground">{pick.isSkipped ? 'Commissioner skip' : pick.team ?? '-'}</span>
+                          <span className="text-muted-foreground">
+                            {pick.isSkipped
+                              ? 'Commissioner skip'
+                              : draft.selectionType === SelectionType.BUDGET_PICK && typeof pick.price === 'number'
+                                ? `$${pick.price.toLocaleString()}`
+                                : pick.team ?? '-'}
+                          </span>
                           <span className="text-xs text-muted-foreground ml-auto">
                             {formatPickContext(draft.selectionType, pick.round, pick.pickNumber, pick.pickInRound)}
                           </span>
@@ -268,10 +347,17 @@ export function Component() {
       <Card>
         <CardHeader><CardTitle className="text-lg">{copy.stateTitle}</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span>{draft.status}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Selection Type</span><span>{formatSelectionTypeLabel(draft.selectionType)}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span>{formatDraftStatus(draft.status)}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Current {copy.participantLabel}</span><span>{draft.currentPickNumber}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">{copy.roundLabel}</span><span>{draft.currentRound}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">On the Clock</span><span>{draft.currentEntryName ?? 'None'}</span></div>
+          {selectionDetailRows.map((row) => (
+            <div key={row.label} className="flex justify-between">
+              <span className="text-muted-foreground">{row.label}</span>
+              <span>{row.value}</span>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

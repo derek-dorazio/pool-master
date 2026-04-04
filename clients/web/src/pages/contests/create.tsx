@@ -24,6 +24,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  formatPricingMethodLabel,
+  formatSelectionTypeLabel,
+  formatTierAssignmentMethodLabel,
+  getSelectionConfigSummary,
+} from '@/features/contests/selection-config-summary';
 import { toast } from '@/hooks/use-toast';
 import {
   client,
@@ -124,25 +130,6 @@ function getScoringEngine(sport: string, selectionType: string) {
   }
 }
 
-function formatSelectionType(selectionType: string) {
-  switch (selectionType) {
-    case 'SNAKE_DRAFT':
-      return 'Snake Draft';
-    case 'TIERED':
-      return 'Tiered';
-    case 'BUDGET_PICK':
-      return 'Budget Pick';
-    case 'OPEN_SELECTION':
-      return 'Open Selection';
-    case 'PICK_EM':
-      return "Pick'em";
-    case 'BRACKET_PICK_EM':
-      return "Bracket Pick'em";
-    default:
-      return selectionType;
-  }
-}
-
 function formatScoringEngine(scoringEngine: string) {
   switch (scoringEngine) {
     case ScoringEngine.ADVANCEMENT:
@@ -181,6 +168,15 @@ function formatTemplateConfig(config: Record<string, unknown>) {
   if (typeof config.budget === 'number') rows.push(`Budget: $${config.budget.toLocaleString()}`);
   if (typeof config.rosterSize === 'number') rows.push(`Roster size: ${config.rosterSize}`);
   if (typeof config.pickCount === 'number') rows.push(`Pick count: ${config.pickCount}`);
+  if (typeof config.pricingMethod === 'string') {
+    rows.push(`Pricing: ${formatPricingMethodLabel(config.pricingMethod)}`);
+  }
+  if (typeof config.tierAssignmentMethod === 'string') {
+    rows.push(`Tiers: ${formatTierAssignmentMethodLabel(config.tierAssignmentMethod)}`);
+  }
+  if (typeof config.tierCount === 'number') rows.push(`Tier count: ${config.tierCount}`);
+  if (typeof config.tierSize === 'number') rows.push(`Tier size: ${config.tierSize}`);
+  if (typeof config.picksPerTier === 'number') rows.push(`Picks per tier: ${config.picksPerTier}`);
   if (typeof config.bestBallN === 'number') rows.push(`Best ${config.bestBallN} scores count`);
   if (typeof config.picksPerPeriod === 'number') rows.push(`Picks per period: ${config.picksPerPeriod}`);
   if (typeof config.strikesBeforeElimination === 'number') rows.push(`Strikes before elimination: ${config.strikesBeforeElimination}`);
@@ -467,7 +463,7 @@ function Step2SelectionTemplate({
             <div className="space-y-1">
               <p className="font-medium">{template.name}</p>
               <p className="text-sm text-muted-foreground">{template.description}</p>
-              <p className="text-xs text-muted-foreground">Selection type: {formatSelectionType(template.selectionType)}</p>
+              <p className="text-xs text-muted-foreground">Selection type: {formatSelectionTypeLabel(template.selectionType)}</p>
               {formatTemplateConfig(template.config).length > 0 && (
                 <p className="text-xs text-muted-foreground">{formatTemplateConfig(template.config).join(' • ')}</p>
               )}
@@ -574,6 +570,7 @@ function Step4Review({
   const scoringEngine = selectionTemplate
     ? formatScoringEngine(getScoringEngine(values.sport, selectionTemplate.selectionType))
     : '-';
+  const selectionRules = selectionTemplate ? getSelectionConfigSummary(selectionTemplate.config) : [];
 
   const items = [
     { label: 'League', value: league?.name ?? '-' },
@@ -582,7 +579,8 @@ function Step4Review({
     { label: 'Contest Type', value: 'Single Event' },
     { label: 'Contest Name', value: values.name || '-' },
     { label: 'Selection Template', value: selectionTemplate?.name ?? '-' },
-    { label: 'Selection Type', value: selectionTemplate ? formatSelectionType(selectionTemplate.selectionType) : '-' },
+    { label: 'Selection Type', value: selectionTemplate ? formatSelectionTypeLabel(selectionTemplate.selectionType) : '-' },
+    { label: 'Contestant Setup', value: selectionRules.length > 0 ? selectionRules.join(' • ') : '-' },
     { label: 'Scoring Template', value: values.scoringTemplateKey || '-' },
     { label: 'Scoring Engine', value: scoringEngine },
   ];

@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { getSelectionConfigDetailRows } from '@/features/contests/selection-config-summary';
 import { client, getMyStandingsEntry, getStandingsSummary } from '@/lib/api';
 import { useContest } from '@/features/contests/hooks/use-contest';
 import { PreDraftView } from '@/features/contests/pre-draft-view';
@@ -308,6 +309,7 @@ export function Component() {
   const selectionTypeLabel = getSelectionTypeLabel(contest.selectionType);
   const contestTypeLabel = getContestTypeLabel(contest.contestType);
   const scoringEngineLabel = getScoringEngineLabel(contest.scoringEngine);
+  const selectionDetailRows = getSelectionConfigDetailRows(contestData.selectionConfig);
 
   if (isPreDraftContest && contest) {
     return (
@@ -546,6 +548,7 @@ export function Component() {
                 { label: 'Starts', value: contest.startsAt ? new Date(contest.startsAt).toLocaleString() : 'Not scheduled' },
                 { label: 'Ends', value: contest.endsAt ? new Date(contest.endsAt).toLocaleString() : 'Not scheduled' },
                 { label: 'Locks', value: contest.lockAt ? new Date(contest.lockAt).toLocaleString() : 'No lock time' },
+                ...selectionDetailRows,
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between gap-4">
                   <span className="text-sm text-muted-foreground">{item.label}</span>

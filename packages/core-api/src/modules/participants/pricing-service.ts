@@ -43,25 +43,14 @@ export class PricingAndTierService {
     const poolParticipants = await this.poolParticipantRepo.findByPool(pool.id);
     if (poolParticipants.length === 0) return { updated: 0 };
 
-    // Fetch season records for all participants to get ranking + form
-    const season = getCurrentSeason();
-    const inputs: ParticipantPricingInput[] = [];
-
-    for (const pp of poolParticipants) {
-      const seasonRecord = await this.seasonRecordRepo.findByParticipantAndSeason(
-        pp.participantId,
-        season,
-      );
-      const participant = await this.participantRepo.findById(pp.participantId);
-      const derived = deriveParticipantSignals(participant?.metadata, seasonRecord);
-      inputs.push({
-        participantId: pp.participantId,
-        ranking: pp.ranking ?? derived.ranking,
-        formRating: seasonRecord ? Number(seasonRecord.formRating) : 50,
-        seed: derived.seed,
-        oddsImpliedProb: derived.oddsImpliedProb,
-      });
-    }
+    const signals = await this.buildParticipantSignals(poolParticipants);
+    const inputs: ParticipantPricingInput[] = signals.map((signal) => ({
+      participantId: signal.participantId,
+      ranking: signal.effectiveRanking,
+      formRating: signal.formRating,
+      seed: signal.seed,
+      oddsImpliedProb: signal.oddsImpliedProb,
+    }));
 
     const prices = calculatePrices(inputs, config);
 
@@ -112,21 +101,16 @@ export class PricingAndTierService {
     if (poolParticipants.length === 0) return { assigned: 0 };
 
     const tierableParticipants: TierableParticipant[] = [];
+    const signals = await this.buildParticipantSignals(poolParticipants);
 
-    for (const pp of poolParticipants) {
-      const seasonRecord = await this.seasonRecordRepo.findByParticipantAndSeason(
-        pp.participantId,
-        getCurrentSeason(),
-      );
-      const participant = await this.participantRepo.findById(pp.participantId);
-      const derived = deriveParticipantSignals(participant?.metadata, seasonRecord);
-
+    for (const signal of signals) {
+      const pp = poolParticipants.find((entry) => entry.participantId === signal.participantId);
       tierableParticipants.push({
-        participantId: pp.participantId,
-        ranking: pp.ranking ?? derived.ranking,
-        price: pp.cost ?? derived.budgetPrice,
-        seed: derived.seed,
-        odds: derived.oddsSortValue,
+        participantId: signal.participantId,
+        ranking: signal.effectiveRanking,
+        price: pp?.cost ?? signal.budgetPrice,
+        seed: signal.seed,
+        odds: signal.oddsSortValue,
       });
     }
 
@@ -168,6 +152,43 @@ export class PricingAndTierService {
     if (!pool) throw new PoolNotFoundForPricingError(contestId);
     return pool;
   }
+
+  private async buildParticipantSignals(
+    poolParticipants: Array<{ participantId: string; ranking?: number }>,
+  ): Promise<ResolvedParticipantSignals[]> {
+    const season = getCurrentSeason();
+    const signals: ResolvedParticipantSignals[] = [];
+
+    for (const pp of poolParticipants) {
+      const seasonRecord = await this.seasonRecordRepo.findByParticipantAndSeason(
+        pp.participantId,
+        season,
+      );
+      const participant = await this.participantRepo.findById(pp.participantId);
+      const derived = deriveParticipantSignals(participant?.metadata, seasonRecord);
+      signals.push({
+        participantId: pp.participantId,
+        ranking: pp.ranking ?? derived.ranking,
+        formRating: seasonRecord ? Number(seasonRecord.formRating) : 50,
+        seed: derived.seed,
+        budgetPrice: derived.budgetPrice,
+        oddsImpliedProb: derived.oddsImpliedProb,
+        oddsSortValue: derived.oddsSortValue,
+      });
+    }
+
+    const effectiveRankings = buildEffectiveRankings(signals);
+    return signals.map((signal) => ({
+      ...signal,
+      effectiveRanking: effectiveRankings.get(signal.participantId),
+    }));
+  }
+}
+
+interface ResolvedParticipantSignals extends DerivedParticipantSignals {
+  participantId: string;
+  formRating: number;
+  effectiveRanking?: number;
 }
 
 function extractNumericMetadata(
@@ -220,6 +241,54 @@ function deriveParticipantSignals(
     oddsImpliedProb: impliedProbability,
     oddsSortValue: outrightOdds ?? (impliedProbability !== undefined ? 1 / impliedProbability : undefined),
   };
+}
+
+function buildEffectiveRankings(
+  signals: ResolvedParticipantSignals[],
+): Map<string, number> {
+  const rankings = new Map<string, number>();
+  const ranked = signals
+    .filter((signal) => signal.ranking !== undefined && signal.ranking > 0)
+    .sort((a, b) => {
+      if (a.ranking !== b.ranking) {
+        return (a.ranking ?? Number.MAX_SAFE_INTEGER) - (b.ranking ?? Number.MAX_SAFE_INTEGER);
+      }
+      return a.participantId.localeCompare(b.participantId);
+    });
+
+  for (const signal of ranked) {
+    rankings.set(signal.participantId, signal.ranking!);
+  }
+
+  let nextRank = ranked.reduce((max, signal) => Math.max(max, signal.ranking ?? 0), 0) + 1;
+  const unranked = signals
+    .filter((signal) => !rankings.has(signal.participantId))
+    .sort((a, b) => {
+      if (a.oddsImpliedProb !== undefined || b.oddsImpliedProb !== undefined) {
+        if (a.oddsImpliedProb === undefined) return 1;
+        if (b.oddsImpliedProb === undefined) return -1;
+        if (a.oddsImpliedProb !== b.oddsImpliedProb) {
+          return b.oddsImpliedProb - a.oddsImpliedProb;
+        }
+      }
+
+      if (a.seed !== undefined || b.seed !== undefined) {
+        if (a.seed === undefined) return 1;
+        if (b.seed === undefined) return -1;
+        if (a.seed !== b.seed) {
+          return a.seed - b.seed;
+        }
+      }
+
+      return a.participantId.localeCompare(b.participantId);
+    });
+
+  for (const signal of unranked) {
+    rankings.set(signal.participantId, nextRank);
+    nextRank += 1;
+  }
+
+  return rankings;
 }
 
 function extractImpliedProbability(

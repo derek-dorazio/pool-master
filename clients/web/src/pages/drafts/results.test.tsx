@@ -221,4 +221,103 @@ describe('DraftResultsPage', () => {
     expect(screen.getByText('Entry Brackets')).toBeInTheDocument();
     expect(screen.getAllByText('East Regional 1').length).toBeGreaterThan(0);
   });
+
+  it('shows budget setup and spend context for budget contests', () => {
+    mockDraftState = {
+      ...mockDraftState,
+      contestName: 'Masters Salary Pool',
+      selectionType: 'BUDGET_PICK',
+      isTurnBased: false,
+      rosterSize: 6,
+      currentPickNumber: 4,
+      currentRound: 4,
+      selectionConfig: {
+        isExclusive: false,
+        budget: 50000,
+        pricingMethod: 'ODDS',
+        rosterSize: 6,
+      },
+      picks: [
+        {
+          pickNumber: 1,
+          round: 1,
+          pickInRound: 1,
+          entryId: 'entry-1',
+          entryName: 'My Team',
+          participantId: 'p1',
+          participantName: 'S. Scheffler',
+          position: '',
+          team: 'USA',
+          price: 18000,
+          autoPicked: false,
+          pickedAt: new Date().toISOString(),
+        },
+      ],
+    };
+
+    render(
+      <MemoryRouter>
+        <DraftResultsPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Masters Salary Pool - Budget Results')).toBeInTheDocument();
+    expect(screen.getByText('All Budget Selections')).toBeInTheDocument();
+    expect(screen.getByText('Entry Budget Cards')).toBeInTheDocument();
+    expect(screen.getByText('Current Budget State')).toBeInTheDocument();
+    expect(screen.getAllByText('Odds').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('$18,000').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Budget Pick').length).toBeGreaterThan(0);
+  });
+
+  it('shows tier setup and tier labels for tiered contests', () => {
+    mockDraftState = {
+      ...mockDraftState,
+      contestName: 'Masters Tier Pool',
+      selectionType: 'TIERED',
+      isTurnBased: false,
+      rosterSize: 6,
+      currentPickNumber: 2,
+      currentRound: 2,
+      selectionConfig: {
+        isExclusive: false,
+        rosterSize: 6,
+        tierConfig: Array.from({ length: 6 }, (_, index) => ({
+          tierId: `tier-${index + 1}`,
+          tierName: `Tier ${index + 1}`,
+          tierNumber: index + 1,
+          picksFromTier: 1,
+        })),
+      },
+      picks: [
+        {
+          pickNumber: 1,
+          round: 1,
+          pickInRound: 1,
+          entryId: 'entry-1',
+          entryName: 'My Team',
+          participantId: 'p1',
+          participantName: 'S. Scheffler',
+          position: '',
+          team: 'USA',
+          tierName: 'Tier 1',
+          autoPicked: false,
+          pickedAt: new Date().toISOString(),
+        },
+      ],
+    };
+
+    render(
+      <MemoryRouter>
+        <DraftResultsPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Masters Tier Pool - Tiered Results')).toBeInTheDocument();
+    expect(screen.getByText('All Tiered Selections')).toBeInTheDocument();
+    expect(screen.getByText('Entry Tier Cards')).toBeInTheDocument();
+    expect(screen.getByText('Current Tiered State')).toBeInTheDocument();
+    expect(screen.getAllByText('Tier 1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Tier Count').length).toBeGreaterThan(0);
+  });
 });

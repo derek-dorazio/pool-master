@@ -10,7 +10,6 @@ import {
   ContestStatus,
   ScoringEngine,
   SelectionType,
-  type SelectionType as SelectionTypeValue,
   type ScoringEngine as ScoringEngineValue,
 } from '@poolmaster/shared/domain';
 import type { ContestDetailDto } from '@poolmaster/shared/dto';
@@ -18,6 +17,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  formatSelectionTypeLabel,
+  getSelectionConfigDetailRows,
+} from '@/features/contests/selection-config-summary';
 
 interface ContestEntrySummary {
   id: string;
@@ -74,19 +77,6 @@ function useCountdown(target: string | undefined) {
   }, [target]);
 
   return timeLeft;
-}
-
-function formatSelectionType(selectionType: string) {
-  const labels: Record<SelectionTypeValue, string> = {
-    [SelectionType.SNAKE_DRAFT]: 'Snake Draft',
-    [SelectionType.TIERED]: 'Tiered Pick',
-    [SelectionType.BUDGET_PICK]: 'Budget Pick',
-    [SelectionType.OPEN_SELECTION]: 'Open Selection',
-    [SelectionType.PICK_EM]: "Pick'em",
-    [SelectionType.BRACKET_PICK_EM]: "Bracket Pick'em",
-  };
-
-  return labels[selectionType as SelectionTypeValue] ?? selectionType;
 }
 
 function getRoomReadyLabel(selectionType: string) {
@@ -147,49 +137,6 @@ function formatStatus(status: string) {
   return status;
 }
 
-function getSelectionDetailRows(selectionConfig: Record<string, unknown> | null | undefined) {
-  if (!selectionConfig) return [];
-
-  const rows: Array<{ label: string; value: string }> = [];
-
-  const draftMode = typeof selectionConfig.draftMode === 'string' ? selectionConfig.draftMode : null;
-  if (draftMode) {
-    rows.push({ label: 'Draft Mode', value: draftMode });
-  }
-
-  const rounds = typeof selectionConfig.rounds === 'number' ? selectionConfig.rounds : null;
-  if (rounds) {
-    rows.push({ label: 'Rounds', value: `${rounds}` });
-  }
-
-  const budget = typeof selectionConfig.budget === 'number' ? selectionConfig.budget : null;
-  if (budget) {
-    rows.push({ label: 'Budget', value: `$${budget.toLocaleString()}` });
-  }
-
-  const rosterSize = typeof selectionConfig.rosterSize === 'number' ? selectionConfig.rosterSize : null;
-  if (rosterSize) {
-    rows.push({ label: 'Roster Size', value: `${rosterSize}` });
-  }
-
-  const pickCount = typeof selectionConfig.pickCount === 'number' ? selectionConfig.pickCount : null;
-  if (pickCount) {
-    rows.push({ label: 'Pick Count', value: `${pickCount}` });
-  }
-
-  const bestBallN = typeof selectionConfig.bestBallN === 'number' ? selectionConfig.bestBallN : null;
-  if (bestBallN) {
-    rows.push({ label: 'Best Ball', value: `Best ${bestBallN} count` });
-  }
-
-  const survivorStyle = typeof selectionConfig.survivorStyle === 'string' ? selectionConfig.survivorStyle : null;
-  if (survivorStyle) {
-    rows.push({ label: 'Survivor Style', value: survivorStyle });
-  }
-
-  return rows;
-}
-
 export function PreDraftView({
   contest,
   selectionConfig = null,
@@ -207,7 +154,7 @@ export function PreDraftView({
   const spotsLeft = maxEntries !== null ? maxEntries - currentEntries : null;
   const entries = entryMeta?.entries ?? [];
   const isJoined = joinMeta?.isJoined ?? false;
-  const selectionDetailRows = getSelectionDetailRows(selectionConfig);
+  const selectionDetailRows = getSelectionConfigDetailRows(selectionConfig);
   const showJoinCta = !isJoined && !!onJoin;
   const copy = getPreDraftCopy(contest.selectionType);
 
@@ -230,7 +177,7 @@ export function PreDraftView({
         <h1 className="text-2xl font-bold">{contest.name}</h1>
         <div className="flex items-center gap-3 mt-2">
           {contest.sport && <Badge variant="outline">{contest.sport}</Badge>}
-          <Badge variant="outline">{formatSelectionType(contest.selectionType)}</Badge>
+          <Badge variant="outline">{formatSelectionTypeLabel(contest.selectionType)}</Badge>
           <Badge className="bg-blue-100 text-blue-800">{formatStatus(contest.status)}</Badge>
         </div>
       </div>
@@ -330,7 +277,7 @@ export function PreDraftView({
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span>{contest.contestType}</span></div>
               <Separator />
-              <div className="flex justify-between"><span className="text-muted-foreground">Selection</span><span>{formatSelectionType(contest.selectionType)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Selection</span><span>{formatSelectionTypeLabel(contest.selectionType)}</span></div>
               <Separator />
               <div className="flex justify-between"><span className="text-muted-foreground">Scoring</span><span>{formatScoringEngine(contest.scoringEngine)}</span></div>
               {selectionDetailRows.map((row) => (

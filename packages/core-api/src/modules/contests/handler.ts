@@ -497,10 +497,14 @@ function mapTierAssignmentMode(assignmentMethod?: string): TierConfig['assignmen
   switch (assignmentMethod) {
     case 'SEED':
       return 'AUTO_SEED';
+    case 'COMMISSIONER':
+      return 'MANUAL';
+    case 'WORLD_RANKING':
+      return 'AUTO_RANKING';
+    case 'ODDS':
+      return 'AUTO_ODDS';
     case 'PRICE':
       return 'AUTO_PRICE';
-    case 'ODDS':
-      return 'AUTO_RANKING';
     case 'RANKING':
     default:
       return 'AUTO_RANKING';
@@ -530,6 +534,8 @@ function resolvePricingWeights(pricingMethod: string): Pick<
       return { rankingWeight: 0.15, formWeight: 0.1, oddsWeight: 0.75, seedWeight: 0 };
     case 'SEED':
       return { rankingWeight: 0, formWeight: 0, oddsWeight: 0, seedWeight: 1 };
+    case 'SEASON_STATS':
+      return { rankingWeight: 0.2, formWeight: 0.8, oddsWeight: 0, seedWeight: 0 };
     case 'COMMISSIONER':
       return { rankingWeight: 0.7, formWeight: 0.3, oddsWeight: 0, seedWeight: 0 };
     case 'WORLD_RANKING':

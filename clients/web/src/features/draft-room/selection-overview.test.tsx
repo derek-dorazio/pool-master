@@ -63,10 +63,12 @@ describe('SelectionOverview', () => {
     render(<SelectionOverview draft={baseDraft} />);
 
     expect(screen.getByText('Budget Summary')).toBeInTheDocument();
-    expect(screen.getByText('$50,000')).toBeInTheDocument();
-    expect(screen.getByText('$18,000')).toBeInTheDocument();
-    expect(screen.getByText('$32,000')).toBeInTheDocument();
-    expect(screen.getByText('ODDS')).toBeInTheDocument();
+    expect(screen.getAllByText('$50,000').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('$18,000').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('$32,000').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Odds').length).toBeGreaterThan(0);
     expect(screen.getByText('$22,000 spent')).toBeInTheDocument();
+    expect(screen.getByText('Contestant Setup')).toBeInTheDocument();
+    expect(screen.getByText('Budget Pick')).toBeInTheDocument();
   });
 });

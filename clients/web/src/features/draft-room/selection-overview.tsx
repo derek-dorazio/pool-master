@@ -1,4 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  formatSelectionTypeLabel,
+  getSelectionConfigDetailRows,
+} from '@/features/contests/selection-config-summary';
 import type { DraftState } from './hooks/use-draft';
 
 export function SelectionOverview({ draft }: { draft: DraftState }) {
@@ -6,6 +10,7 @@ export function SelectionOverview({ draft }: { draft: DraftState }) {
   const totalBudget = isBudgetPick && typeof draft.selectionConfig?.budget === 'number'
     ? draft.selectionConfig.budget
     : null;
+  const selectionDetailRows = getSelectionConfigDetailRows(draft.selectionConfig);
 
   const progressRows = draft.entries.map((entry) => {
     const entryPicks = draft.picks.filter((pick) => pick.entryId === entry.id);
@@ -47,9 +52,25 @@ export function SelectionOverview({ draft }: { draft: DraftState }) {
             {draft.selectionConfig?.pricingMethod ? (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Pricing</span>
-                <span>{draft.selectionConfig.pricingMethod}</span>
+                <span>{selectionDetailRows.find((row) => row.label === 'Pricing')?.value ?? draft.selectionConfig.pricingMethod}</span>
               </div>
             ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {selectionDetailRows.length > 0 ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Contestant Setup</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {selectionDetailRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between">
+                <span className="text-muted-foreground">{row.label}</span>
+                <span>{row.value}</span>
+              </div>
+            ))}
           </CardContent>
         </Card>
       ) : null}
@@ -86,7 +107,7 @@ export function SelectionOverview({ draft }: { draft: DraftState }) {
         <CardContent className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Selection Type</span>
-            <span>{draft.selectionType}</span>
+            <span>{formatSelectionTypeLabel(draft.selectionType)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Entries</span>

@@ -120,6 +120,123 @@ describe('PricingAndTierService', () => {
     expect(result.assigned).toBe(3);
     expect(poolParticipantRepo.update).toHaveBeenCalledWith('pp-2', { tier: 'tier-1' });
   });
+
+  it('assigns tiers from odds metadata when odds mode is selected', async () => {
+    const pool = makePool();
+    const poolParticipants = [
+      makePoolParticipant('pp-1', 'p1'),
+      makePoolParticipant('pp-2', 'p2'),
+      makePoolParticipant('pp-3', 'p3'),
+    ];
+
+    const poolRepo = {
+      findByContest: jest.fn().mockResolvedValue(pool),
+    };
+    const poolParticipantRepo = {
+      findByPool: jest.fn().mockResolvedValue(poolParticipants),
+      update: jest.fn().mockImplementation(async (id, updates) => ({ id, ...updates })),
+    };
+    const seasonRecordRepo = {
+      findByParticipantAndSeason: jest
+        .fn()
+        .mockResolvedValueOnce(makeSeasonRecord('p1'))
+        .mockResolvedValueOnce(makeSeasonRecord('p2'))
+        .mockResolvedValueOnce(makeSeasonRecord('p3')),
+    };
+    const participantRepo = {
+      findById: jest
+        .fn()
+        .mockResolvedValueOnce(makeParticipant('p1', { odds: 3 }))
+        .mockResolvedValueOnce(makeParticipant('p2', { odds: 6 }))
+        .mockResolvedValueOnce(makeParticipant('p3', { odds: 12 })),
+    };
+
+    const service = new PricingAndTierService(
+      poolRepo as any,
+      poolParticipantRepo as any,
+      seasonRecordRepo as any,
+      participantRepo as any,
+    );
+
+    const result = await service.assignAndApplyTiers('contest-1', {
+      contestId: 'contest-1',
+      sport: 'GOLF',
+      assignmentMode: 'AUTO_ODDS',
+      tiers: [
+        {
+          tierId: 'tier-1',
+          tierName: 'Tier 1',
+          tierNumber: 1,
+          picksFromTier: 1,
+          participantIds: [],
+          maxParticipants: 1,
+        },
+        {
+          tierId: 'tier-2',
+          tierName: 'Tier 2',
+          tierNumber: 2,
+          picksFromTier: 2,
+          participantIds: [],
+          maxParticipants: 2,
+        },
+      ],
+    });
+
+    expect(result.assigned).toBe(3);
+    expect(poolParticipantRepo.update).toHaveBeenCalledWith('pp-1', { tier: 'tier-1' });
+  });
+
+  it('falls back to odds-based ordering when rankings are missing for pricing', async () => {
+    const pool = makePool();
+    const poolParticipants = [
+      makePoolParticipant('pp-1', 'p1'),
+      makePoolParticipant('pp-2', 'p2'),
+    ];
+
+    const poolRepo = {
+      findByContest: jest.fn().mockResolvedValue(pool),
+    };
+    const poolParticipantRepo = {
+      findByPool: jest.fn().mockResolvedValue(poolParticipants),
+      update: jest.fn().mockImplementation(async (id, updates) => ({ id, ...updates })),
+    };
+    const seasonRecordRepo = {
+      findByParticipantAndSeason: jest
+        .fn()
+        .mockResolvedValueOnce(makeSeasonRecord('p1', { formRating: 50 }))
+        .mockResolvedValueOnce(makeSeasonRecord('p2', { formRating: 50 })),
+    };
+    const participantRepo = {
+      findById: jest
+        .fn()
+        .mockResolvedValueOnce(makeParticipant('p1', { odds: 4 }))
+        .mockResolvedValueOnce(makeParticipant('p2', { odds: 10 })),
+    };
+
+    const service = new PricingAndTierService(
+      poolRepo as any,
+      poolParticipantRepo as any,
+      seasonRecordRepo as any,
+      participantRepo as any,
+    );
+
+    await service.calculateAndApplyPrices('contest-1', {
+      contestId: 'contest-1',
+      sport: 'GOLF',
+      totalBudget: 5000000,
+      minPrice: 500000,
+      maxPrice: 1200000,
+      priceIncrement: 1000,
+      rankingWeight: 0.75,
+      formWeight: 0,
+      oddsWeight: 0.25,
+      seedWeight: 0,
+      manualOverrides: [],
+    });
+
+    const prices = poolParticipantRepo.update.mock.calls.map(([, updates]) => updates.cost);
+    expect(prices[0]).toBeGreaterThan(prices[1]);
+  });
 });
 
 function makePool() {

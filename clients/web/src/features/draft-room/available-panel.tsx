@@ -15,8 +15,6 @@ interface AvailablePanelProps {
   selectionType?: string;
 }
 
-const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
-
 export function AvailablePanel({
   draftId,
   draftedParticipantIds,
@@ -37,6 +35,11 @@ export function AvailablePanel({
     position: position || undefined,
     sort,
   });
+  const positionOptions = Array.from(new Set((participants ?? [])
+    .map((participant) => participant.position?.trim())
+    .filter((value): value is string => Boolean(value))))
+    .sort((a, b) => a.localeCompare(b));
+  const showPositionFilters = positionOptions.length > 0;
 
   return (
     <div className="flex flex-col h-full border-r">
@@ -44,7 +47,7 @@ export function AvailablePanel({
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search players..."
+            placeholder="Search contestants..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="pl-9 pr-8 h-9"
@@ -66,25 +69,27 @@ export function AvailablePanel({
 
         {showFilters && (
           <div className="space-y-2">
-            <div className="flex flex-wrap gap-1">
-              <Badge
-                variant={position === '' ? 'default' : 'outline'}
-                className="cursor-pointer text-xs"
-                onClick={() => setPosition('')}
-              >
-                All
-              </Badge>
-              {POSITIONS.map((pos) => (
+            {showPositionFilters ? (
+              <div className="flex flex-wrap gap-1">
                 <Badge
-                  key={pos}
-                  variant={position === pos ? 'default' : 'outline'}
+                  variant={position === '' ? 'default' : 'outline'}
                   className="cursor-pointer text-xs"
-                  onClick={() => setPosition(pos === position ? '' : pos)}
+                  onClick={() => setPosition('')}
                 >
-                  {pos}
+                  All
                 </Badge>
-              ))}
-            </div>
+                {positionOptions.map((pos) => (
+                  <Badge
+                    key={pos}
+                    variant={position === pos ? 'default' : 'outline'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setPosition(pos === position ? '' : pos)}
+                  >
+                    {pos}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
@@ -92,14 +97,14 @@ export function AvailablePanel({
             >
               <option value="ranking">Sort: Ranking</option>
               <option value="name">Sort: Name</option>
-              <option value="form">Sort: Form Rating</option>
+              <option value="form">Sort: Form</option>
               {isBudgetPick ? <option value="price">Sort: Price</option> : null}
             </select>
           </div>
         )}
 
         <p className="text-xs text-muted-foreground">
-          {participants?.length ?? 0} available
+          {participants?.length ?? 0} available contestants
         </p>
       </div>
 
@@ -119,10 +124,11 @@ export function AvailablePanel({
                 onDraft={() => onDraft(p.id)}
                 onSelect={() => onSelect(p)}
                 canDraft={isMyPick && !isDrafting}
-                showPrice={isBudgetPick}
-              />
-            ))}
-          </div>
+              showPrice={isBudgetPick}
+              showTier={selectionType === 'TIERED'}
+            />
+          ))}
+        </div>
         )}
       </div>
     </div>
@@ -135,12 +141,14 @@ function ParticipantRow({
   onSelect,
   canDraft,
   showPrice,
+  showTier,
 }: {
   participant: AvailableParticipant;
   onDraft: () => void;
   onSelect: () => void;
   canDraft: boolean;
   showPrice: boolean;
+  showTier: boolean;
 }) {
   const isInjured = participant.injuryStatus !== 'HEALTHY';
 
@@ -160,6 +168,9 @@ function ParticipantRow({
           {participant.position && (
             <Badge variant="outline" className="text-[10px] px-1 py-0">{participant.position}</Badge>
           )}
+          {showTier && participant.tier ? (
+            <Badge variant="outline" className="text-[10px] px-1 py-0">{participant.tier}</Badge>
+          ) : null}
           <span>{participant.team}</span>
           {showPrice && typeof participant.price === 'number'
             ? <span>${participant.price.toLocaleString()}</span>

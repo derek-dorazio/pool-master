@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as CreateContestPage } from './create';
 
@@ -90,5 +91,33 @@ describe('CreateContestPage', () => {
     expect(screen.queryByText('Season Long')).not.toBeInTheDocument();
     expect(screen.queryByText('Create custom event')).not.toBeInTheDocument();
     expect(screen.queryByText('Participant pool customization')).not.toBeInTheDocument();
+  });
+
+  it('shows tier and budget setup details in template and review steps', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <CreateContestPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /spring league/i }));
+    await user.click(screen.getByRole('button', { name: /nfl/i }));
+    await user.click(screen.getByRole('button', { name: /championship weekend/i }));
+    await user.type(screen.getByLabelText('Contest Name'), 'Championship Pick 6');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(screen.getByText(/tier count: 6/i)).toBeInTheDocument();
+    expect(screen.getByText(/picks per tier: 1/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /masters pick 6/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.click(screen.getByRole('button', { name: /pickem-default/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(screen.getByText('Contestant Setup')).toBeInTheDocument();
+    expect(screen.getByText(/tier count: 6/i)).toBeInTheDocument();
+    expect(screen.getByText(/picks per tier: 1/i)).toBeInTheDocument();
   });
 });

@@ -237,4 +237,26 @@ describe('ContestDetailPage', () => {
     expect(screen.getByText("Derek's Entry")).toBeInTheDocument();
     expect(screen.getByText(/standings have not been generated/i)).toBeInTheDocument();
   });
+
+  it('shows contestant setup details from the real selection config', () => {
+    contestState = {
+      contest: {
+        ...mockActiveContest.contest,
+        selectionType: 'TIERED',
+      },
+      selectionConfig: {
+        rosterSize: 6,
+        tierAssignmentMethod: 'ODDS',
+        tierCount: 6,
+        picksPerTier: 1,
+      },
+    };
+
+    renderPage();
+
+    expect(screen.getByText('Tier Assignment')).toBeInTheDocument();
+    expect(screen.getByText('Odds')).toBeInTheDocument();
+    expect(screen.getByText('Tier Count')).toBeInTheDocument();
+    expect(screen.getByText('Picks Per Tier')).toBeInTheDocument();
+  });
 });

@@ -37,12 +37,12 @@ describe('DraftHeader', () => {
 
   it('shows status badge with correct text', () => {
     renderHeader(makeDraft({ status: 'LIVE' }));
-    expect(screen.getByText('LIVE')).toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
   });
 
   it('shows PAUSED status badge', () => {
     renderHeader(makeDraft({ status: 'PAUSED' }));
-    expect(screen.getByText('PAUSED')).toBeInTheDocument();
+    expect(screen.getByText('Paused')).toBeInTheDocument();
   });
 
   it('shows "Your Pick!" when isMyPick is true', () => {
@@ -75,5 +75,21 @@ describe('DraftHeader', () => {
     renderHeader(makeDraft());
 
     expect(screen.getByText('Leave')).toBeInTheDocument();
+  });
+
+  it('shows contestant setup summary for budget and tiered contests', () => {
+    renderHeader(makeDraft({
+      selectionType: 'BUDGET_PICK',
+      isTurnBased: false,
+      selectionConfig: {
+        isExclusive: false,
+        rosterSize: 6,
+        budget: 50000,
+        pricingMethod: 'ODDS',
+      },
+    }));
+
+    expect(screen.getByText(/Budget: \$50,000/)).toBeInTheDocument();
+    expect(screen.getByText(/Pricing: Odds/)).toBeInTheDocument();
   });
 });

@@ -24,7 +24,13 @@ describe('PreDraftView', () => {
           contest={contest}
           league={{ id: 'league-1', name: 'Spring League' }}
           eventName="The Masters 2026"
-          selectionConfig={{ budget: 50000, rosterSize: 6, bestBallN: 4 }}
+          selectionConfig={{
+            budget: 50000,
+            rosterSize: 6,
+            bestBallN: 4,
+            pricingMethod: 'ODDS',
+            tierCount: 6,
+          }}
           entryMeta={{
             currentEntries: 12,
             maxEntries: 20,
@@ -43,6 +49,9 @@ describe('PreDraftView', () => {
     expect(screen.getByText('Spring League')).toBeInTheDocument();
     expect(screen.getByText('The Masters 2026')).toBeInTheDocument();
     expect(screen.getByText('$50,000')).toBeInTheDocument();
+    expect(screen.getByText('Pricing')).toBeInTheDocument();
+    expect(screen.getByText('Odds')).toBeInTheDocument();
+    expect(screen.getByText('Tier Count')).toBeInTheDocument();
     expect(screen.getByText('Best 4 count')).toBeInTheDocument();
     expect(screen.getByText('8 spots left')).toBeInTheDocument();
     expect(screen.getByText('Enter Contest')).toBeInTheDocument();
