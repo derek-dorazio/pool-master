@@ -72,6 +72,18 @@ Out of scope:
 5. Test harness and coverage/tooling polish
 6. Major framework jumps only after the lower layers are stable
 
+## Immediate Execution Queue
+
+When CI/deploy stabilization work no longer blocks upgrades, execute this plan in the following narrow slices:
+
+1. GitHub Actions runtime upgrade first, because Node 20 deprecation is already producing warnings in CI.
+2. Root engine and local developer guidance update second, so CI and local expectations stop drifting.
+3. Core toolchain upgrade in a single coordinated pass across root, shared, backend, web, and admin.
+4. Generated-client/OpenAPI and Prisma compatibility pass after the shared toolchain is stable.
+5. Web/admin runner upgrades only after backend and generated artifacts are confirmed stable.
+
+Do not combine steps 1-5 into one large dependency refresh.
+
 ## Phases
 
 ### Phase 1: Node And CI Runtime

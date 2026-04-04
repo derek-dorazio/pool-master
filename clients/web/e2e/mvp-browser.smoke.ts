@@ -21,7 +21,7 @@ test.describe('Browser CI sanity checks', () => {
     await expect(page).toHaveURL(/\/register$/);
     await expect(page.getByTestId('auth-register-title')).toBeVisible();
     await expect(page.locator('#email')).toBeVisible();
-    await expect(page.getByTestId('auth-register-submit')).toBeVisible();
+    await expect(page.getByTestId('auth-register-next')).toBeVisible();
 
     await assertNoErrorBoundary(page);
     await assertNoErrors(pageErrors);

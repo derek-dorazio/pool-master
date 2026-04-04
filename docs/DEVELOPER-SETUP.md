@@ -33,7 +33,7 @@ This installs all dependencies across the monorepo workspaces (`packages/*` and 
 
 ## 2. Start Local Infrastructure
 
-All local services (databases, caches, mock providers) run via Docker Compose:
+All local services (database, dev utilities, and a few legacy infrastructure scaffolds) run via Docker Compose:
 
 ```bash
 docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
@@ -44,7 +44,7 @@ This starts:
 | Service | Port(s) | Purpose |
 |---|---|---|
 | **PostgreSQL 16** | `5432` | Primary database (`poolmaster` / `postgres` / `postgres`) |
-| **Redis 7** | `6379` | Cache, message bus, BullMQ |
+| **Redis 7 (legacy scaffold)** | `6379` | Still started by Docker Compose today, but not required by the active MVP runtime |
 | **DynamoDB Local** | `8000` | NoSQL for high-volume event data |
 | **Mailpit** | `8025` (UI), `1025` (SMTP) | Email viewer — all outbound email. Browse at http://localhost:8025 |
 | **LocalStack** | `4566` | AWS mock (SES, SNS, SQS) — no credentials needed |
@@ -61,7 +61,7 @@ This starts:
 ### CLI Access to Infrastructure
 
 ```bash
-# Redis CLI — inspect keys, pub/sub, cache
+# Redis CLI — legacy scaffold only
 docker exec -it docker-redis-1 redis-cli
 
 # PostgreSQL CLI — run SQL queries
@@ -100,6 +100,7 @@ The defaults work out of the box with Docker Compose. Key settings:
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster
+# Legacy scaffold only — not required by the active MVP runtime
 REDIS_URL=redis://localhost:6379
 
 # Email: "smtp" sends to Mailpit (localhost:1025), "ses" sends to LocalStack
@@ -129,7 +130,7 @@ npm run dev:start
 
 This will:
 1. Create `.env` from `.env.example` (if not present)
-2. Start Docker containers (PostgreSQL, Redis, DynamoDB, Mailpit)
+2. Start Docker containers (PostgreSQL, DynamoDB, Mailpit, plus legacy Redis scaffolding)
 3. Run Prisma migrations
 4. Seed the database (users, leagues, sports, plan tiers)
 5. Launch all backend services + webapp via Turborepo
@@ -149,7 +150,7 @@ If you prefer to run steps separately:
 ### Database Commands
 
 ```bash
-npm run dev:infra          # Start Postgres + Redis + DynamoDB
+npm run dev:infra          # Start Postgres + legacy Redis + DynamoDB
 npm run dev:infra:all      # Start all containers (+ Mailpit, LocalStack, Push Mock)
 npm run dev:infra:stop     # Stop all containers
 
@@ -333,7 +334,7 @@ poolmaster/
 | Language | TypeScript 5.5 (strict mode) |
 | ORM | Prisma 6 (PostgreSQL) |
 | Database | PostgreSQL 16 |
-| Cache/Queue | Redis 7 (ioredis) |
+| Cache/Queue | Legacy Redis scaffold (planned removal) |
 | Monorepo | Turborepo + npm workspaces |
 | Testing | Jest 29 + ts-jest |
 | Validation | JSON Schema (Fastify built-in) + Zod |

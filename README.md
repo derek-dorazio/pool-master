@@ -14,7 +14,7 @@ npm install
 npm run dev:start
 ```
 
-This starts Docker (Postgres, Redis, DynamoDB, Mailpit), runs migrations, seeds test data, and launches all services.
+This starts Docker (Postgres, DynamoDB, Mailpit, and legacy Redis scaffolding), runs migrations, seeds test data, and launches all services.
 
 | What | URL | Purpose |
 |------|-----|---------|
@@ -23,7 +23,7 @@ This starts Docker (Postgres, Redis, DynamoDB, Mailpit), runs migrations, seeds 
 | **Mailpit** | http://localhost:8025 | View all sent emails |
 | **Push Mock** | http://localhost:3099/push-log | View push notifications |
 | **Prisma Studio** | `npm run db:studio` | Browse/edit database |
-| **Redis** | `localhost:6379` | CLI: `docker exec -it docker-redis-1 redis-cli` |
+| **Redis (legacy scaffold)** | `localhost:6379` | Still started by local infra today, but not part of the active MVP runtime path |
 | **DynamoDB** | `localhost:8000` | NoSQL event store |
 | **PostgreSQL** | `localhost:5432` | CLI: `docker exec -it docker-postgres-1 psql -U postgres -d poolmaster` |
 
@@ -62,7 +62,7 @@ npm run test:smoke       # Both
               └─────────────────────┘
 ```
 
-Fastify + TypeScript modular monolith. All modules run in a single process on port 3000, communicating via in-process domain events. PostgreSQL for relational data, Redis for caching. Hexagonal architecture with repository port/adapter pattern.
+Fastify + TypeScript modular monolith. All modules run in a single process on port 3000, communicating via in-process domain events. PostgreSQL is the active system of record; Redis remains in infrastructure scaffolding only and is scheduled for removal from the live architecture. Hexagonal architecture with repository port/adapter pattern.
 
 | Module | Responsibility |
 |--------|----------------|
@@ -121,7 +121,7 @@ Fastify + TypeScript modular monolith. All modules run in a single process on po
 | Language | TypeScript 5.5 (strict) |
 | ORM | Prisma 6 |
 | Database | PostgreSQL 16 |
-| Cache/Queue | Redis 7 |
+| Cache/Queue | Legacy Redis scaffold (planned removal) |
 | Monorepo | Turborepo + npm workspaces |
 | Testing | Jest 29 + ts-jest |
 | Containers | Docker (multi-stage builds) |
@@ -197,7 +197,7 @@ terraform apply -var-file=envs/qa.tfvars
 | **Backend** | ECS Fargate (1 service) | core-api monolith (all modules in one process) |
 | **Webapp + Admin** | S3 + CloudFront CDN | Global edge caching, SPA routing, API proxying via /api/* |
 | **Database** | RDS PostgreSQL 16 | Private subnet, db.t3.micro (QA) |
-| **Cache/Queue** | ElastiCache Redis 7 | cache.t3.micro |
+| **Cache/Queue** | Legacy ElastiCache Redis scaffold | Present in current Terraform only; planned removal from the live architecture |
 | **Load Balancer** | ALB | Path-based routing to ECS services |
 | **DNS** | Route 53 | `qa.ultimateofficepoolmanager.com`, `qa-admin.ultimateofficepoolmanager.com` |
 | **SSL** | ACM | Auto-validated wildcard cert for CloudFront (us-east-1) + ALB (us-east-2) |

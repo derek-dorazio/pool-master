@@ -608,6 +608,7 @@ export function Component() {
                 {step < TOTAL_STEPS ? (
                   <Button
                     type="button"
+                    data-testid="auth-register-next"
                     className="flex-1"
                     onClick={handleNext}
                   >

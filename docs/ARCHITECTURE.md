@@ -115,8 +115,6 @@ Cross-cutting types and interfaces shared between backend and tests.
 
 ```
 Browser → CloudFront → ALB → ECS (Fastify) → Prisma → PostgreSQL
-                                    │
-                                    └──→ Redis (cache hit → skip DB)
 ```
 
 ### 2. Sports Data Ingestion Flow
@@ -197,7 +195,6 @@ Contest moves to ACTIVE (scoring begins)
 core-api
 ├── fastify (HTTP server)
 ├── @prisma/client (PostgreSQL ORM)
-├── ioredis (Redis client)
 ├── jsonwebtoken (JWT auth)
 ├── bcryptjs (password hashing)
 ├── @aws-sdk/client-ses (email)
@@ -212,7 +209,7 @@ core-api
 | Service | Purpose | Dev (Docker) | QA/Prod (AWS) |
 |---------|---------|-------------|---------------|
 | **PostgreSQL 16** | Primary database | `localhost:5432` | RDS (private subnet) |
-| **Redis 7** | Caching, future pub/sub | `localhost:6379` | ElastiCache |
+| **Redis 7 (legacy scaffold)** | Legacy infra only, slated for removal | `localhost:6379` | ElastiCache |
 | **DynamoDB** | Event store (future) | `localhost:8000` (Local) | DynamoDB |
 | **Mailpit** | Email capture | `localhost:8025` | N/A (SES in prod) |
 | **Push Mock** | Push notification capture | `localhost:3099` | N/A (APNs/FCM in prod) |

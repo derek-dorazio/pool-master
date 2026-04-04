@@ -71,6 +71,14 @@ Example ratchet style:
 - web: raise branches and lines in small increments
 - admin: raise from the current low baseline as core admin surfaces gain tests
 
+## First Implementation Order
+
+1. Clean backend coverage collection and confirm the baseline numbers still match real suite output.
+2. Add local thresholds to backend, web, and admin configs at the measured baseline.
+3. Make CI fail on the same thresholds and expose the coverage artifacts/log summaries clearly.
+4. Update the repo rules so the threshold gate is treated like lint/typecheck, not as optional reporting.
+5. Only after one full stable cycle, ratchet one suite at a time.
+
 ## Action Plan
 
 | ID | Area | Task | Status | Notes |
@@ -82,6 +90,7 @@ Example ratchet style:
 | CTR-005 | CI Visibility | Upload coverage artifacts and print actual totals to logs in CI | Not Started | Make coverage easier to retrieve from GitHub UI and CLI |
 | CTR-006 | Policy | Update rules/docs so local and CI coverage thresholds are treated as required quality gates | Not Started | Keep AGENTS/rules/docs aligned once the thresholds are live |
 | CTR-007 | Ratchet | Define the first threshold increase after the baseline gate is stable | Not Started | Do not raise until the initial enforced baseline is proven stable |
+| CTR-008 | Rollout | Dry-run the threshold configuration locally before enabling branch-protection expectations in GitHub | Not Started | Avoid turning on a permanent gate until the baseline values are confirmed after collector cleanup |
 
 ## Acceptance Criteria
 
