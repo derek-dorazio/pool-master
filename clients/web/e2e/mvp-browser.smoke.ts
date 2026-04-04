@@ -14,10 +14,10 @@ test.describe('Browser CI sanity checks', () => {
   test('landing page loads and links to registration', async ({ page, pageErrors }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: /Ultimate Pool Manager/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Sign up/i })).toBeVisible();
+    await expect(page.getByTestId('hero-heading')).toBeVisible();
+    await expect(page.getByTestId('hero-cta')).toBeVisible();
 
-    await page.getByRole('link', { name: /Sign up/i }).first().click();
+    await page.getByTestId('hero-cta').click();
     await expect(page).toHaveURL(/\/register$/);
     await expect(page.getByRole('heading', { name: /^Create Account$/ })).toBeVisible();
     await expect(page.locator('#email')).toBeVisible();
