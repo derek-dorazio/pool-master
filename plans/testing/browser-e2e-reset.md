@@ -4,86 +4,72 @@
 
 ## Purpose
 
-Rebuild browser E2E coverage so it proves the narrowed MVP user journey instead of only checking that public pages render.
+Keep the deployed browser lane small and reliable for CI while planning a later rebuild of higher-value MVP browser journeys.
 
-## Why The Old Browser Layer Needs Reset
+## Current Decision
 
-The existing Playwright suites are low-signal because they:
+The earlier MVP browser journeys were valuable in theory, but they are still too flaky for the deployed CI lane right now. Until the broader QA environment and test data strategy are more stable, the browser suite should only verify that:
 
-- focus heavily on public landing/legal page rendering
-- do not prove the core product path end to end
-- inject auth state directly instead of favoring the real product setup path
-- leave major MVP seams untested: league creation, invite acceptance, contest creation, entry, selection room, and review surfaces
-- include shallow route checks and dashboard navigation checks that are better covered by smoke or component tests
+- the deployed frontend loads
+- public auth entry points render
+- basic navigation works
+- runtime errors, uncaught exceptions, and visible error boundaries are still treated as failures
 
-Current files that should be replaced rather than preserved:
+Richer browser coverage is deferred to a later rebuild.
 
-- `clients/web/e2e/smoke.smoke.ts`
-- `clients/web/e2e/user-journey.smoke.ts`
-
-Replacement target:
+Current browser file:
 
 - `clients/web/e2e/mvp-browser.smoke.ts`
+  - intentionally minimal CI sanity checks only
 
-## Browser E2E Principles
+## Browser E2E Principles For The Current CI Lane
 
-- Focus on one or two high-value flows, not broad page inventory.
-- Prefer real browser actions over injected app state when practical.
-- Use setup helpers only to reduce duplication, not to bypass the product.
+- Keep the suite minimal and stable.
+- Avoid deep multi-user or multi-step product flows in the deploy gate.
+- Prefer pages that do not require seeded fixture data or brittle async setup.
 - Keep selectors resilient and user-oriented.
 - Fail on console errors, uncaught exceptions, server 5xxs, and visible error boundaries.
 
-## MVP Browser Scope
+## Current Browser Scope
 
-1. Contest setup path
-   - register or login through the real browser UI
-   - create league
-   - create a live MVP contest from ingested event data
-   - land on the contest detail page after submit
-
-2. Invite/member path
-   - commissioner creates league
-   - commissioner generates invite link
-   - second user accepts invite through the browser
-   - member appears in league member UI
+1. Landing page loads
+2. Registration page loads
+3. Login page loads
 
 ## Explicitly Out Of Scope
 
-- broad legal/public page inventory as primary E2E coverage
+- deep product journeys in the deploy gate
+- multi-user invite/member flows
+- live contest creation flows
+- selection room flows
+- standings/results review flows
 - deferred billing flows
 - bracket/deferred contest families
 - season-long or weekly reset contest families
 - admin depth
 
-## Rebuild Order
+## Current Implementation Status
 
 1. Browser fixtures reset
    - Status: Completed
    - keep runtime-error capture
-   - export tracker helpers for secondary browser contexts
 
-2. Contest setup browser flow
-   - Status: In Progress
-   - real auth
-   - create league
-   - create contest from live events/templates
-   - land on contest detail
+2. Minimal deploy-gate browser smoke
+   - Status: Completed
+   - landing page render
+   - registration page render
+   - login page render
 
-3. Invite/member browser flow
-   - Status: In Progress
-   - commissioner invite
-   - member accept
-   - member list reflects joined user
+3. High-value browser rebuild
+   - Status: Deferred
+   - move to a future dedicated plan once QA/browser data dependencies are more stable
 
-## Suggested Worker Lanes
+## Follow-Up Plan
 
-- Browser fixtures and auth setup cleanup
-- Contest setup browser flow rewrite
-- Invite/member browser flow rewrite
+- See `plans/testing/browser-e2e-high-value.md` for the deferred richer suite.
 
 ## Acceptance Criteria
 
-- Legacy browser smoke suites are deleted or replaced.
-- New E2E suites prove the narrowed MVP product flow, not just page rendering.
-- Browser suites fail on real runtime defects.
-- The suite is small enough to run reliably post-deploy.
+- The deploy-gate browser suite is small enough to run reliably post-deploy.
+- Browser checks still fail on real runtime defects.
+- Richer product journeys are tracked separately rather than kept as flaky CI gates.
