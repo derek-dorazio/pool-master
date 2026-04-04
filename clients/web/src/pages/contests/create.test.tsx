@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as CreateContestPage } from './create';
@@ -35,7 +35,16 @@ vi.mock('@tanstack/react-query', async () => {
               sport: 'NFL',
               contestType: 'SINGLE_EVENT',
               selectionType: 'TIERED',
-              config: { tierCount: 6, picksPerTier: 1 },
+              config: { tierCount: 6, tierSize: 10, picksPerTier: 1, tierAssignmentMethod: 'WORLD_RANKING' },
+            },
+            {
+              id: 'template-2',
+              name: 'Budget Pick 6',
+              description: 'Build a roster under a salary cap.',
+              sport: 'NFL',
+              contestType: 'SINGLE_EVENT',
+              selectionType: 'BUDGET_PICK',
+              config: { budget: 5000000, rosterSize: 6, pricingMethod: 'WORLD_RANKING' },
             },
           ],
           isLoading: false,
@@ -93,7 +102,7 @@ describe('CreateContestPage', () => {
     expect(screen.queryByText('Participant pool customization')).not.toBeInTheDocument();
   });
 
-  it('shows tier and budget setup details in template and review steps', async () => {
+  it('lets commissioners customize tier setup before review', async () => {
     const user = userEvent.setup();
 
     render(
@@ -110,14 +119,50 @@ describe('CreateContestPage', () => {
 
     expect(screen.getByText(/tier count: 6/i)).toBeInTheDocument();
     expect(screen.getByText(/picks per tier: 1/i)).toBeInTheDocument();
-
     await user.click(screen.getByRole('button', { name: /masters pick 6/i }));
+    expect(screen.getByLabelText('Tier Count')).toHaveValue(6);
+    expect(screen.getByLabelText('Tier Size')).toHaveValue(10);
+
+    fireEvent.change(screen.getByLabelText('Tier Count'), { target: { value: '8' } });
+    fireEvent.change(screen.getByLabelText('Tier Size'), { target: { value: '12' } });
+    await user.selectOptions(screen.getByLabelText('Tier Assignment'), 'ODDS');
     await user.click(screen.getByRole('button', { name: /next/i }));
     await user.click(screen.getByRole('button', { name: /pickem-default/i }));
     await user.click(screen.getByRole('button', { name: /next/i }));
 
     expect(screen.getByText('Contestant Setup')).toBeInTheDocument();
-    expect(screen.getByText(/tier count: 6/i)).toBeInTheDocument();
+    expect(screen.getByText(/tier count: 8/i)).toBeInTheDocument();
+    expect(screen.getByText(/tier size: 12/i)).toBeInTheDocument();
     expect(screen.getByText(/picks per tier: 1/i)).toBeInTheDocument();
+    expect(screen.getByText(/tier assignment: Odds/i)).toBeInTheDocument();
+  });
+
+  it('lets commissioners customize budget pricing inputs before review', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <CreateContestPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /spring league/i }));
+    await user.click(screen.getByRole('button', { name: /nfl/i }));
+    await user.click(screen.getByRole('button', { name: /championship weekend/i }));
+    await user.type(screen.getByLabelText('Contest Name'), 'Championship Budget 6');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    await user.click(screen.getByRole('button', { name: /budget pick 6/i }));
+    fireEvent.change(screen.getByLabelText('Budget'), { target: { value: '3500000' } });
+    fireEvent.change(screen.getByLabelText('Roster Size'), { target: { value: '5' } });
+    await user.selectOptions(screen.getByLabelText('Pricing Formula'), 'ODDS');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.click(screen.getByRole('button', { name: /pickem-default/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(screen.getByText('Contestant Setup')).toBeInTheDocument();
+    expect(screen.getByText(/budget: \$3,500,000/i)).toBeInTheDocument();
+    expect(screen.getByText(/roster size: 5/i)).toBeInTheDocument();
+    expect(screen.getByText(/pricing: Odds/i)).toBeInTheDocument();
   });
 });

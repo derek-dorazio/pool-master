@@ -78,6 +78,21 @@ type WizardForm = z.infer<typeof wizardSchema>;
 type SelectionTemplateDto = z.infer<typeof SelectionTemplateListResponseSchema>[number];
 type ScoringTemplateDto = z.infer<typeof ScoringTemplateListResponseSchema>['templates'][number];
 type EventDto = z.infer<typeof EventListResponseSchema>['events'][number];
+type TemplateConfigOverrides = Record<string, Record<string, unknown>>;
+
+const TIER_ASSIGNMENT_OPTIONS = [
+  { value: 'WORLD_RANKING', label: 'World ranking' },
+  { value: 'ODDS', label: 'Odds' },
+  { value: 'SEED', label: 'Seed' },
+  { value: 'COMMISSIONER', label: 'Manual assignment' },
+];
+
+const PRICING_METHOD_OPTIONS = [
+  { value: 'WORLD_RANKING', label: 'World ranking' },
+  { value: 'ODDS', label: 'Odds' },
+  { value: 'SEED', label: 'Seed' },
+  { value: 'COMMISSIONER', label: 'Manual pricing' },
+];
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -225,6 +240,19 @@ function normalizeSelectionConfig(
   }
 
   return normalized;
+}
+
+function getEffectiveTemplateConfig(
+  template: SelectionTemplateDto | undefined,
+  overrides: TemplateConfigOverrides,
+): Record<string, unknown> {
+  if (!template) return {};
+  return overrides[template.id] ?? template.config;
+}
+
+function parsePositiveInteger(value: string, fallback: number) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function Step1Basics({
@@ -405,12 +433,18 @@ function Step2SelectionTemplate({
   form,
   templates,
   isLoading,
+  templateConfigOverrides,
+  onTemplateConfigChange,
 }: {
   form: ReturnType<typeof useForm<WizardForm>>;
   templates: SelectionTemplateDto[];
   isLoading: boolean;
+  templateConfigOverrides: TemplateConfigOverrides;
+  onTemplateConfigChange: (templateId: string, config: Record<string, unknown>) => void;
 }) {
   const selectedId = form.watch('selectionTemplateId');
+  const selectedTemplate = templates.find((template) => template.id === selectedId);
+  const selectedTemplateConfig = getEffectiveTemplateConfig(selectedTemplate, templateConfigOverrides);
 
   if (!form.watch('sport')) {
     return (
@@ -473,6 +507,143 @@ function Step2SelectionTemplate({
       </div>
       {form.formState.errors.selectionTemplateId && (
         <p className="text-sm text-destructive">{form.formState.errors.selectionTemplateId.message}</p>
+      )}
+      {selectedTemplate && (
+        <Card>
+          <CardContent className="space-y-4 p-4">
+            <div>
+              <h4 className="font-medium">Contestant Setup Controls</h4>
+              <p className="text-sm text-muted-foreground">
+                Adjust the imported field before contestants are priced and assigned for this contest.
+              </p>
+            </div>
+
+            {selectedTemplate.selectionType === SelectionType.TIERED && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="tier-count">Tier Count</Label>
+                  <Input
+                    id="tier-count"
+                    type="number"
+                    min={1}
+                    value={String(selectedTemplateConfig.tierCount ?? 6)}
+                    onChange={(event) =>
+                      onTemplateConfigChange(selectedTemplate.id, {
+                        ...selectedTemplateConfig,
+                        tierCount: parsePositiveInteger(event.target.value, 6),
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tier-size">Tier Size</Label>
+                  <Input
+                    id="tier-size"
+                    type="number"
+                    min={1}
+                    value={String(selectedTemplateConfig.tierSize ?? 10)}
+                    onChange={(event) =>
+                      onTemplateConfigChange(selectedTemplate.id, {
+                        ...selectedTemplateConfig,
+                        tierSize: parsePositiveInteger(event.target.value, 10),
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="picks-per-tier">Picks Per Tier</Label>
+                  <Input
+                    id="picks-per-tier"
+                    type="number"
+                    min={1}
+                    value={String(selectedTemplateConfig.picksPerTier ?? 1)}
+                    onChange={(event) =>
+                      onTemplateConfigChange(selectedTemplate.id, {
+                        ...selectedTemplateConfig,
+                        picksPerTier: parsePositiveInteger(event.target.value, 1),
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tier-assignment-method">Tier Assignment</Label>
+                  <select
+                    id="tier-assignment-method"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={String(selectedTemplateConfig.tierAssignmentMethod ?? 'WORLD_RANKING')}
+                    onChange={(event) =>
+                      onTemplateConfigChange(selectedTemplate.id, {
+                        ...selectedTemplateConfig,
+                        tierAssignmentMethod: event.target.value,
+                      })
+                    }
+                  >
+                    {TIER_ASSIGNMENT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {selectedTemplate.selectionType === SelectionType.BUDGET_PICK && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="budget-total">Budget</Label>
+                  <Input
+                    id="budget-total"
+                    type="number"
+                    min={1}
+                    value={String(selectedTemplateConfig.budget ?? 5000000)}
+                    onChange={(event) =>
+                      onTemplateConfigChange(selectedTemplate.id, {
+                        ...selectedTemplateConfig,
+                        budget: parsePositiveInteger(event.target.value, 5000000),
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="roster-size">Roster Size</Label>
+                  <Input
+                    id="roster-size"
+                    type="number"
+                    min={1}
+                    value={String(selectedTemplateConfig.rosterSize ?? 6)}
+                    onChange={(event) =>
+                      onTemplateConfigChange(selectedTemplate.id, {
+                        ...selectedTemplateConfig,
+                        rosterSize: parsePositiveInteger(event.target.value, 6),
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="pricing-method">Pricing Formula</Label>
+                  <select
+                    id="pricing-method"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={String(selectedTemplateConfig.pricingMethod ?? 'WORLD_RANKING')}
+                    onChange={(event) =>
+                      onTemplateConfigChange(selectedTemplate.id, {
+                        ...selectedTemplateConfig,
+                        pricingMethod: event.target.value,
+                      })
+                    }
+                  >
+                    {PRICING_METHOD_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -556,21 +727,24 @@ function Step4Review({
   leagues,
   selectionTemplates,
   events,
+  templateConfigOverrides,
 }: {
   form: ReturnType<typeof useForm<WizardForm>>;
   leagues: Array<{ id: string; name: string }>;
   selectionTemplates: SelectionTemplateDto[];
   events: EventDto[];
+  templateConfigOverrides: TemplateConfigOverrides;
 }) {
   const values = form.getValues();
   const sportObj = SPORTS.find((s) => s.id === values.sport);
   const league = leagues.find((item) => item.id === values.leagueId);
   const event = events.find((item) => item.id === values.eventId);
   const selectionTemplate = selectionTemplates.find((item) => item.id === values.selectionTemplateId);
+  const effectiveSelectionConfig = getEffectiveTemplateConfig(selectionTemplate, templateConfigOverrides);
   const scoringEngine = selectionTemplate
     ? formatScoringEngine(getScoringEngine(values.sport, selectionTemplate.selectionType))
     : '-';
-  const selectionRules = selectionTemplate ? getSelectionConfigSummary(selectionTemplate.config) : [];
+  const selectionRules = selectionTemplate ? getSelectionConfigSummary(effectiveSelectionConfig) : [];
 
   const items = [
     { label: 'League', value: league?.name ?? '-' },
@@ -605,6 +779,7 @@ function Step4Review({
 export function Component() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [templateConfigOverrides, setTemplateConfigOverrides] = useState<TemplateConfigOverrides>({});
   const form = useForm<WizardForm>({
     resolver: zodResolver(wizardSchema),
     defaultValues: {
@@ -697,6 +872,13 @@ export function Component() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
+  function handleTemplateConfigChange(templateId: string, config: Record<string, unknown>) {
+    setTemplateConfigOverrides((current) => ({
+      ...current,
+      [templateId]: config,
+    }));
+  }
+
   async function handleCreate() {
     try {
       const values = form.getValues();
@@ -707,7 +889,8 @@ export function Component() {
       if (!event) throw new Error('Event is missing.');
 
       const selectionType = selectionTemplate.selectionType as SelectionType;
-      const selectionConfig = normalizeSelectionConfig(selectionType, selectionTemplate.config);
+      const effectiveTemplateConfig = getEffectiveTemplateConfig(selectionTemplate, templateConfigOverrides);
+      const selectionConfig = normalizeSelectionConfig(selectionType, effectiveTemplateConfig);
 
       const { data: result, error } = await createContest({
         client,
@@ -770,6 +953,8 @@ export function Component() {
               form={form}
               templates={selectionTemplates}
               isLoading={selectionTemplatesLoading}
+              templateConfigOverrides={templateConfigOverrides}
+              onTemplateConfigChange={handleTemplateConfigChange}
             />
           )}
           {step === 2 && (
@@ -785,6 +970,7 @@ export function Component() {
               leagues={commissionerLeagues}
               selectionTemplates={selectionTemplates}
               events={events}
+              templateConfigOverrides={templateConfigOverrides}
             />
           )}
         </CardContent>
