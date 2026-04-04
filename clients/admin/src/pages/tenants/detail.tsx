@@ -47,27 +47,14 @@ function formatRelativeTime(iso: string): string {
 
 export function Component() {
   const { id } = useParams<{ id: string }>();
-  const { data: tenant, isLoading, isError, error } = useTenantDetail(id);
+  const { data: tenant, isLoading } = useTenantDetail(id);
   const [actionsOpen, setActionsOpen] = useState(false);
   const dialog = useConfirmDialog();
 
-  if (isLoading || (!tenant && !isError)) {
+  if (isLoading || !tenant) {
     return (
-      <div data-testid="tenant-detail-loading" className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-20">
         <p className="text-muted-foreground">Loading tenant...</p>
-      </div>
-    );
-  }
-
-  if (isError || !tenant) {
-    return (
-      <div data-testid="tenant-detail-error" className="flex items-center justify-center py-20">
-        <p className="text-sm text-red-600">
-          Tenant detail is unavailable.
-          <span className="ml-2 text-muted-foreground">
-            {error instanceof Error ? error.message : 'Check the tenant ID and try again.'}
-          </span>
-        </p>
       </div>
     );
   }
@@ -109,10 +96,10 @@ export function Component() {
   }
 
   return (
-    <div data-testid="tenant-detail-page" className="space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <h1 data-testid="tenant-detail-name" className="text-2xl font-bold">{tenant.name}</h1>
+          <h1 className="text-2xl font-bold">{tenant.name}</h1>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className={planColors[tenant.plan]}>{tenant.plan}</Badge>
             <Badge variant="outline" className={statusColors[tenant.statusLabel]}>{tenant.statusLabel}</Badge>
@@ -120,7 +107,7 @@ export function Component() {
           </div>
         </div>
         <div className="relative">
-          <Button data-testid="tenant-detail-actions" variant="outline" onClick={() => setActionsOpen(!actionsOpen)}>
+          <Button variant="outline" onClick={() => setActionsOpen(!actionsOpen)}>
             Actions
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
