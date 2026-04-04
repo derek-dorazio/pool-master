@@ -522,6 +522,13 @@ jobs:
             --services "$SERVICE" \
             --output json
 
+          echo "--- ECS Deployments ---"
+          aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --query 'services[0].deployments[*].{status:status,rolloutState:rolloutState,rolloutStateReason:rolloutStateReason,taskDefinition:taskDefinition,desiredCount:desiredCount,pendingCount:pendingCount,runningCount:runningCount,failedTasks:failedTasks,createdAt:createdAt,updatedAt:updatedAt}' \
+            --output table
+
           echo "--- Recent ECS Service Events ---"
           aws ecs describe-services \
             --cluster "$CLUSTER" \
@@ -549,7 +556,7 @@ jobs:
             aws ecs describe-tasks \
               --cluster "$CLUSTER" \
               --tasks $RUNNING_TASKS \
-              --query 'tasks[*].{taskArn:taskArn,lastStatus:lastStatus,desiredStatus:desiredStatus,healthStatus:healthStatus,stopCode:stopCode,stoppedReason:stoppedReason,containers:containers[*].{name:name,lastStatus:lastStatus,healthStatus:healthStatus,exitCode:exitCode,reason:reason,image:image}}' \
+              --query 'tasks[*].{taskArn:taskArn,taskDefinitionArn:taskDefinitionArn,lastStatus:lastStatus,desiredStatus:desiredStatus,healthStatus:healthStatus,launchType:launchType,startedAt:startedAt,stopCode:stopCode,stoppedReason:stoppedReason,containers:containers[*].{name:name,lastStatus:lastStatus,healthStatus:healthStatus,exitCode:exitCode,reason:reason,image:image,networkBindings:networkBindings,networkInterfaces:networkInterfaces}}' \
               --output json
           else
             echo "(no running tasks)"
@@ -566,7 +573,7 @@ jobs:
             aws ecs describe-tasks \
               --cluster "$CLUSTER" \
               --tasks $STOPPED_TASKS \
-              --query 'tasks[*].{taskArn:taskArn,lastStatus:lastStatus,desiredStatus:desiredStatus,healthStatus:healthStatus,stopCode:stopCode,stoppedReason:stoppedReason,containers:containers[*].{name:name,lastStatus:lastStatus,healthStatus:healthStatus,exitCode:exitCode,reason:reason,image:image}}' \
+              --query 'tasks[*].{taskArn:taskArn,taskDefinitionArn:taskDefinitionArn,lastStatus:lastStatus,desiredStatus:desiredStatus,healthStatus:healthStatus,launchType:launchType,startedAt:startedAt,stoppedAt:stoppedAt,stopCode:stopCode,stoppedReason:stoppedReason,containers:containers[*].{name:name,lastStatus:lastStatus,healthStatus:healthStatus,exitCode:exitCode,reason:reason,image:image,networkBindings:networkBindings,networkInterfaces:networkInterfaces}}' \
               --output json
 
             TASK_ID=$(echo "$STOPPED_TASKS" | awk '{print $1}' | awk -F'/' '{print $NF}')
@@ -581,6 +588,15 @@ jobs:
                 --output text 2>/dev/null || echo "")
 
               if [ -n "$LOG_GROUP" ] && [ "$LOG_GROUP" != "None" ] && [ -n "$LOG_PREFIX" ] && [ "$LOG_PREFIX" != "None" ]; then
+                echo "--- Recent CloudWatch Log Streams (${LOG_GROUP}) ---"
+                aws logs describe-log-streams \
+                  --log-group-name "$LOG_GROUP" \
+                  --order-by LastEventTime \
+                  --descending \
+                  --max-items 10 \
+                  --query 'logStreams[*].{logStreamName:logStreamName,lastEventTimestamp:lastEventTimestamp,lastIngestionTime:lastIngestionTime}' \
+                  --output table 2>/dev/null || echo "(no recent log streams available)"
+
                 echo "--- Latest Stopped Task Logs (${TASK_ID}) ---"
                 LOG_STREAM=$(aws logs describe-log-streams \
                   --log-group-name "$LOG_GROUP" \
@@ -604,6 +620,19 @@ jobs:
             fi
           else
             echo "(no stopped tasks)"
+          fi
+
+          TARGET_GROUP_ARN=$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --query 'services[0].loadBalancers[0].targetGroupArn' \
+            --output text 2>/dev/null || echo "")
+          if [ -n "$TARGET_GROUP_ARN" ] && [ "$TARGET_GROUP_ARN" != "None" ]; then
+            echo "--- ALB Target Health ---"
+            aws elbv2 describe-target-health \
+              --target-group-arn "$TARGET_GROUP_ARN" \
+              --query 'TargetHealthDescriptions[*].{targetId:Target.Id,targetPort:Target.Port,state:TargetHealth.State,reason:TargetHealth.Reason,description:TargetHealth.Description}' \
+              --output table 2>/dev/null || echo "(no target health data available)"
           fi
 
           echo "### ECS Stabilization Failure" >> $GITHUB_STEP_SUMMARY
