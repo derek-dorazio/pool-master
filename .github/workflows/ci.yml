@@ -194,8 +194,10 @@ jobs:
         id: tags
         run: |
           SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          FULL_SHA="${{ github.sha }}"
           PREFIX="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/poolmaster-qa"
           echo "sha_tag=${SHA}" >> $GITHUB_OUTPUT
+          echo "full_sha=${FULL_SHA}" >> $GITHUB_OUTPUT
           echo "prefix=${PREFIX}" >> $GITHUB_OUTPUT
 
       - name: Check ECR repos exist
@@ -302,40 +304,56 @@ jobs:
         run: |
           npm ci
           npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-          cd clients/web && npx vite build
+          WEB_RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
+          APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" cd clients/web && npx vite build
+          grep -q "/${WEB_RELEASE_PREFIX}/" clients/web/dist/index.html
 
       - name: Deploy webapp to S3 + invalidate CloudFront
-        continue-on-error: true
+        id: deploy-webapp
         run: |
           BUCKET="poolmaster-qa-webapp"
+          RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
           CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='poolmaster-qa webapp'].Id" --output text 2>/dev/null)
           if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
-            aws s3 sync clients/web/dist/ "s3://${BUCKET}" --delete
+            aws s3 sync clients/web/dist/ "s3://${BUCKET}/${RELEASE_PREFIX}/" --delete
+            aws s3 cp clients/web/dist/index.html "s3://${BUCKET}/index.html" --cache-control "no-store, no-cache, max-age=0, must-revalidate" --content-type "text/html"
+            aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
+            aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
             if [ -n "$CF_ID" ]; then
               aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
             fi
-            echo "Webapp deployed to S3 + CloudFront invalidated"
+            echo "release_prefix=${RELEASE_PREFIX}" >> $GITHUB_OUTPUT
+            echo "Webapp deployed to S3 release ${RELEASE_PREFIX} and root index updated"
           else
-            echo "S3 bucket ${BUCKET} not found — run terraform apply first"
+            echo "::error::S3 bucket ${BUCKET} not found — run terraform apply first"
+            exit 1
           fi
 
       - name: Build admin app
-        continue-on-error: true
-        run: cd clients/admin && npx vite build
+        run: |
+          ADMIN_RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
+          APP_ASSET_BASE="/${ADMIN_RELEASE_PREFIX}/" cd clients/admin && npx vite build
+          grep -q "/${ADMIN_RELEASE_PREFIX}/" clients/admin/dist/index.html
 
       - name: Deploy admin to S3 + invalidate CloudFront
-        continue-on-error: true
+        id: deploy-admin
         run: |
           BUCKET="poolmaster-qa-admin"
+          RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
           CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='poolmaster-qa admin'].Id" --output text 2>/dev/null)
           if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
-            aws s3 sync clients/admin/dist/ "s3://${BUCKET}" --delete
+            aws s3 sync clients/admin/dist/ "s3://${BUCKET}/${RELEASE_PREFIX}/" --delete
+            aws s3 cp clients/admin/dist/index.html "s3://${BUCKET}/index.html" --cache-control "no-store, no-cache, max-age=0, must-revalidate" --content-type "text/html"
+            aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
+            aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
             if [ -n "$CF_ID" ]; then
               aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
             fi
-            echo "Admin deployed to S3 + CloudFront invalidated"
+            echo "release_prefix=${RELEASE_PREFIX}" >> $GITHUB_OUTPUT
+            echo "Admin deployed to S3 release ${RELEASE_PREFIX} and root index updated"
           else
-            echo "S3 bucket ${BUCKET} not found — run terraform apply first"
+            echo "::error::S3 bucket ${BUCKET} not found — run terraform apply first"
+            exit 1
           fi
 
       - name: Deploy QA services
@@ -369,8 +387,10 @@ jobs:
           echo "| core-api (immutable) | \`${{ steps.image-ref.outputs.core_api_image }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| QA core-api task definition | \`${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| QA migrate task definition | \`${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA webapp release prefix | \`${{ steps.deploy-webapp.outputs.release_prefix }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA admin release prefix | \`${{ steps.deploy-admin.outputs.release_prefix }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Web clients** deployed to S3 + CloudFront" >> $GITHUB_STEP_SUMMARY
+          echo "**Web clients** deployed to immutable S3 release prefixes with root index promotion" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
   # QA Database Migrations — apply schema changes before smoke tests
