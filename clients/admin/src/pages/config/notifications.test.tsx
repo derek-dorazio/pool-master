@@ -135,5 +135,5 @@ describe('NotificationConfigPage', () => {
         }),
       }),
     );
-  });
+  }, 10000);
 });

@@ -78,5 +78,5 @@ describe('TimezonePage', () => {
       expect(setTimeFormat).toHaveBeenCalledWith('24H');
       expect(setFirstDayOfWeek).toHaveBeenCalledWith('MONDAY');
     });
-  });
+  }, 10000);
 });

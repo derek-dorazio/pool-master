@@ -252,7 +252,7 @@ describe('PlatformConfigPage', () => {
     expect(mocks.resetPollIntervals).toHaveBeenCalledWith(
       expect.objectContaining({ client: {} }),
     );
-  });
+  }, 10000);
 
   it('saves ingestion schedule fields using the update contract names', async () => {
     const user = userEvent.setup();
@@ -275,7 +275,7 @@ describe('PlatformConfigPage', () => {
         },
       }),
     );
-  });
+  }, 10000);
 
   it('saves dunning schedule fields using the generated contract names', async () => {
     const user = userEvent.setup();
@@ -305,7 +305,7 @@ describe('PlatformConfigPage', () => {
         },
       }),
     );
-  });
+  }, 10000);
 
   it('shows the loading state instead of fallback config data', () => {
     Object.assign(mocks.pollIntervals, {

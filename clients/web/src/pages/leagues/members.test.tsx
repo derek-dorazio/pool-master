@@ -62,6 +62,47 @@ describe('LeagueMembersPage', () => {
     expect(screen.getByTestId('league-members-copy-invite-link')).toBeEnabled();
   });
 
+  it('sends an email invite and clears the compose state for the commissioner', async () => {
+    const user = userEvent.setup();
+    let invitedEmail: string | null = null;
+
+    server.use(
+      http.post('/api/v1/leagues/:id/invitations', async ({ request }) => {
+        const body = (await request.json()) as { emails: string[] };
+        invitedEmail = body.emails[0] ?? null;
+        return HttpResponse.json({
+          sent: [
+            {
+              id: 'invite-1',
+              inviteType: 'EMAIL',
+              inviteCode: 'test-code',
+              email: body.emails[0],
+              status: 'PENDING',
+            },
+          ],
+          skippedMembers: [],
+          skippedDuplicates: [],
+        }, { status: 201 });
+      }),
+    );
+
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Members' });
+    await user.click(screen.getByTestId('league-members-invite-button'));
+
+    await user.type(screen.getByPlaceholderText('email@example.com'), 'invitee@example.com');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => {
+      expect(invitedEmail).toBe('invitee@example.com');
+    });
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText('email@example.com')).not.toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument();
+  });
+
   it('lets a commissioner remove a non-owner member', async () => {
     const user = userEvent.setup();
     let removedMemberId: string | null = null;
