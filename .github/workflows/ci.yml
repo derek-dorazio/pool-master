@@ -178,10 +178,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
-    outputs:
-      core_api_image: ${{ steps.image-ref.outputs.core_api_image }}
-      qa_core_api_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}
-      qa_migrate_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}
     steps:
       - uses: actions/checkout@v4
 
@@ -401,7 +397,10 @@ jobs:
         run: |
           SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
           SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
-          MIGRATE_TASK_DEFINITION="${{ needs.publish-images.outputs.qa_migrate_task_definition }}"
+          MIGRATE_TASK_DEFINITION=$(aws ecs describe-task-definition \
+            --task-definition poolmaster-qa-migrate \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text 2>/dev/null || echo "")
 
           if [ -z "$SUBNETS" ] || [ -z "$SG" ]; then
             echo "⚠️ QA_PRIVATE_SUBNETS or QA_ECS_SECURITY_GROUP secret not set — skipping migrations"
@@ -480,7 +479,10 @@ jobs:
         run: |
           SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
           SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
-          MIGRATE_TASK_DEFINITION="${{ needs.publish-images.outputs.qa_migrate_task_definition }}"
+          MIGRATE_TASK_DEFINITION=$(aws ecs describe-task-definition \
+            --task-definition poolmaster-qa-migrate \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text 2>/dev/null || echo "")
 
           echo "Starting QA seed task in ECS..."
           TASK_ARN=$(aws ecs run-task \
@@ -545,6 +547,10 @@ jobs:
         run: |
           CLUSTER="poolmaster-qa-cluster"
           SERVICE="poolmaster-qa-core-api"
+          EXPECTED_TASK_DEFINITION=$(aws ecs describe-task-definition \
+            --task-definition poolmaster-qa-core-api \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text 2>/dev/null || echo "")
 
           if ! aws ecs describe-clusters --clusters "$CLUSTER" --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
             echo "cluster_active=false" >> $GITHUB_OUTPUT
@@ -570,7 +576,7 @@ jobs:
 
           echo "### QA ECS Rollout Target" >> $GITHUB_STEP_SUMMARY
           echo "- Service: \`$SERVICE\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Expected task definition: \`${{ needs.publish-images.outputs.qa_core_api_task_definition }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Expected task definition: \`${EXPECTED_TASK_DEFINITION}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Reported task definition: \`${TASK_DEFINITION}\`" >> $GITHUB_STEP_SUMMARY
           echo "- PRIMARY deployment task definition: \`${PRIMARY_TASK_SET}\`" >> $GITHUB_STEP_SUMMARY
 
