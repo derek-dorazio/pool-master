@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { client, requestDataExport } from '@/lib/api';
 import { settingsKeys } from './query-keys';
 import { toast } from '@/hooks/use-toast';
-import { DataExportStatusResponseSchema } from '@poolmaster/shared/dto/compliance.dto';
+import { DataExportStatusResponseSchema } from '@poolmaster/shared/dto';
 
 export interface DataExportStatus {
   status: 'none' | 'pending' | 'ready';

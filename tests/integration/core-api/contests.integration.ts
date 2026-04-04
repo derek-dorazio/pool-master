@@ -43,6 +43,7 @@ describe('Contests Integration', () => {
         headers: ownerHeaders,
         payload: {
           name: 'Test Golf Pool',
+          sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
           scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -64,6 +65,7 @@ describe('Contests Integration', () => {
         headers: ownerHeaders,
         payload: {
           name: 'Template-backed Golf Pool',
+          sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
           scoringEngine: ScoringEngine.STROKE_PLAY,

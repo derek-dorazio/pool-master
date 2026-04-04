@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import {
   AccountDeletionAcceptedResponseSchema,
   AccountDeletionStatusResponseSchema,
-} from '@poolmaster/shared/dto/compliance.dto';
+} from '@poolmaster/shared/dto';
 import { cancelAccountDeletion, getAccountDeletionStatus, requestAccountDeletion, client } from '@/lib/api';
 import { settingsKeys } from './hooks/query-keys';
 

@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import {
   SessionReminderResponseSchema,
   SessionReminderUpdateRequestSchema,
-} from '@poolmaster/shared/dto/compliance.dto';
+} from '@poolmaster/shared/dto';
 import { Skeleton } from '@/components/ui/skeleton';
 import { settingsKeys } from './hooks/query-keys';
 

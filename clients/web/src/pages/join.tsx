@@ -5,7 +5,7 @@ import { CheckCircle2, Loader2, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { client } from '@/lib/api';
-import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto/leagues.dto';
+import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto';
 import { useAuthStore } from '@/stores/auth-store';
 
 function useAcceptInvitation(inviteCode: string) {

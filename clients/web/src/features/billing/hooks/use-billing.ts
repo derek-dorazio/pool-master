@@ -8,7 +8,7 @@ import {
   type InvoiceDto,
   type PlanDto,
   type SubscriptionDto,
-} from '@poolmaster/shared/dto/billing.dto';
+} from '@poolmaster/shared/dto';
 import { client, getCurrentPlan, getSubscription, getUsage, listInvoices, listPlans } from '@/lib/api';
 
 export type PlanTier = 'free' | 'starter' | 'pro' | 'league-plus';

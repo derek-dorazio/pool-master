@@ -64,6 +64,7 @@ beforeAll(async () => {
     headers: owner.headers,
     payload: {
       name: 'Adapter Test Contest',
+      sport: 'GOLF',
       contestType: 'SINGLE_EVENT',
       selectionType: 'SNAKE_DRAFT',
       scoringEngine: 'STROKE_PLAY',

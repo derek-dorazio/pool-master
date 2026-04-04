@@ -39,6 +39,7 @@ describe('Bulk Operations + Audit Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Source Contest',
+        sport: 'GOLF',
         contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
         scoringEngine: 'STROKE_PLAY',

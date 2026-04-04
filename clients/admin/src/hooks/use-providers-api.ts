@@ -12,7 +12,7 @@ import {
   type ProviderDetailResponse,
   type ProviderIngestionDashboardResponse,
   type ProviderSummaryDto,
-} from '@poolmaster/shared/dto/admin.dto';
+} from '@poolmaster/shared/dto';
 
 export type ProviderStatus = ProviderSummaryDto['status'];
 

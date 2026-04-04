@@ -49,6 +49,7 @@ describe('Draft Sessions & Contest Entries Integration', () => {
       headers,
       payload: {
         name: 'Draft Test Contest',
+        sport: 'GOLF',
         contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
         scoringEngine: 'STROKE_PLAY',
@@ -217,7 +218,6 @@ describe('Draft Sessions & Contest Entries Integration', () => {
   describe('Auth enforcement on draft start', () => {
     it('rejects draft start without authentication', async () => {
       const freshContestId = randomUUID();
-      const { 'content-type': _, ...headersNoContentType } = headers;
 
       const res = await getApp().inject({
         method: 'POST',

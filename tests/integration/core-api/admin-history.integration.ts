@@ -108,7 +108,7 @@ describe('History Module Integration', () => {
       method: 'POST',
       url: `/api/v1/leagues/${leagueId}/contests`,
       headers,
-      payload: { name: 'History Contest', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY' },
+      payload: { name: 'History Contest', sport: 'GOLF', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY' },
     });
     contestId = cr.json().contest.id;
   });

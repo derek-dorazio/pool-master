@@ -41,6 +41,7 @@ describe('Contest Pool Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Pool Golf Contest',
+        sport: 'GOLF',
         contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
         scoringEngine: 'STROKE_PLAY',
@@ -108,7 +109,9 @@ describe('Contest Pool Integration', () => {
 
   describe('POST /api/v1/contests/:contestId/pool/lock', () => {
     it('locks the pool (strip content-type for empty body)', async () => {
-      const { 'content-type': _, ...headersNoContentType } = ownerHeaders;
+      const headersNoContentType = Object.fromEntries(
+        Object.entries(ownerHeaders).filter(([key]) => key.toLowerCase() !== 'content-type'),
+      );
       const res = await getApp().inject({
         method: 'POST',
         url: `/api/v1/contests/${contestId}/pool/lock`,

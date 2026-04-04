@@ -39,6 +39,7 @@ describe('Standings Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Standings Golf Pool',
+        sport: 'GOLF',
         contestType: 'SINGLE_EVENT',
         selectionType: 'SNAKE_DRAFT',
         scoringEngine: 'STROKE_PLAY',

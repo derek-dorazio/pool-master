@@ -5,7 +5,7 @@ import {
   AdminContestListResponseSchema,
   type ContestAdminDetailResponse,
   type ContestListItemDto,
-} from '@poolmaster/shared/dto/admin.dto';
+} from '@poolmaster/shared/dto';
 
 export type Contest = ContestListItemDto;
 export type ContestFilters = {

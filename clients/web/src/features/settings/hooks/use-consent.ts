@@ -5,7 +5,7 @@ import { toast } from '@/hooks/use-toast';
 import {
   ConsentHistoryResponseSchema,
   ConsentPreferencesDtoSchema,
-} from '@poolmaster/shared/dto/compliance.dto';
+} from '@poolmaster/shared/dto';
 
 const CONSENT_VERSION = '1.0';
 

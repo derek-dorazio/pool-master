@@ -4,12 +4,12 @@ import type {
   DiscoverableLeagueDto,
   DiscoverContestsResponse,
   DiscoverLeaguesResponse,
-} from '@poolmaster/shared/dto/search.dto';
+} from '@poolmaster/shared/dto';
 import {
   DiscoverContestsResponseSchema,
   DiscoverLeaguesResponseSchema,
-} from '@poolmaster/shared/dto/search.dto';
-import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto/leagues.dto';
+  LeagueMembershipResponseSchema,
+} from '@poolmaster/shared/dto';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { client } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
