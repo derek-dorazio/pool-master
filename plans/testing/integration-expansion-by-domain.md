@@ -113,9 +113,9 @@ Keep these on the main thread:
    - active vs finished contest read surfaces
 
 4. Supported contest validation edges
-   - Status: Pending
+   - Status: Done
    - invalid create payloads for kept MVP modes
-   - unsupported deferred mode requests remain clearly rejected or hidden
+   - unsupported deferred mode requests remain clearly rejected at the API contract boundary
 
 ## Acceptance Criteria
 

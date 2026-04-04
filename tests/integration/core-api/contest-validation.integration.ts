@@ -1,0 +1,118 @@
+import {
+  setupIntegrationTests,
+  teardownIntegrationTests,
+  getApp,
+  createTestUser,
+  cleanupTestData,
+} from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import {
+  ContestType,
+  LeagueVisibility,
+  ScoringEngine,
+  SelectionType,
+} from '@poolmaster/shared/domain';
+
+beforeAll(() => setupIntegrationTests());
+afterAll(async () => {
+  await cleanupTestData();
+  await teardownIntegrationTests();
+});
+
+describe('Contest Validation Integration', () => {
+  let ownerHeaders: Record<string, string>;
+  let leagueId: string;
+
+  beforeAll(async () => {
+    const owner = await createTestUser({ displayName: 'Contest Validation Owner' });
+    ownerHeaders = owner.headers;
+
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: ownerHeaders,
+      payload: {
+        name: 'Contest Validation League',
+        visibility: LeagueVisibility.PRIVATE,
+      },
+    });
+
+    expect(leagueRes.statusCode).toBe(201);
+    leagueId = leagueRes.json().league.id;
+  });
+
+  it('rejects tiered contest creation when tier configuration is missing and does not persist a contest', async () => {
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Broken Tiered Contest',
+        sport: 'GOLF',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.TIERED,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+        selectionConfig: {
+          tierAssignmentMethod: 'ODDS',
+          rounds: 6,
+        },
+      },
+    });
+
+    expect(createRes.statusCode).toBe(400);
+    expect(createRes.json()).toEqual(
+      expect.objectContaining({
+        error: 'BAD_REQUEST',
+        message: 'Tiered contests require tier configuration',
+      }),
+    );
+
+    const listRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+    });
+
+    expect(listRes.statusCode).toBe(200);
+    expect(listRes.json().contests).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ name: 'Broken Tiered Contest' }),
+      ]),
+    );
+  });
+
+  it.each([
+    SelectionType.OPEN_SELECTION,
+    SelectionType.PICK_EM,
+    SelectionType.BRACKET_PICK_EM,
+  ])('rejects deferred contest mode %s at the create contract boundary', async (selectionType) => {
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: `Deferred ${selectionType}`,
+        sport: 'GOLF',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+      },
+    });
+
+    expect(createRes.statusCode).toBe(400);
+    expect(JSON.stringify(createRes.json())).toContain('selectionType');
+
+    const listRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+    });
+
+    expect(listRes.statusCode).toBe(200);
+    expect(listRes.json().contests).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ name: `Deferred ${selectionType}` }),
+      ]),
+    );
+  });
+});

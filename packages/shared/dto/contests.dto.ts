@@ -76,9 +76,6 @@ export const CreateContestRequestSchema = z.object({
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
     SelectionType.BUDGET_PICK,
-    SelectionType.OPEN_SELECTION,
-    SelectionType.PICK_EM,
-    SelectionType.BRACKET_PICK_EM,
   ]),
   selectionConfig: SelectionConfigRequestSchema.optional(),
   scoringEngine: z.enum([

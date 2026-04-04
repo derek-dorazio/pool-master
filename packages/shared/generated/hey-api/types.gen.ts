@@ -3912,6 +3912,30 @@ export type GetDataExportResponses = {
 
 export type GetDataExportResponse = GetDataExportResponses[keyof GetDataExportResponses];
 
+export type GetAccountDeletionStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/delete-account';
+};
+
+export type GetAccountDeletionStatusResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        status: 'none' | 'pending' | 'cancelled' | 'completed';
+        requestId: string;
+        requestedAt: string;
+        scheduledDeletionAt: string;
+        cancelledAt: string;
+        completedAt: string;
+        reason: string;
+    };
+};
+
+export type GetAccountDeletionStatusResponse = GetAccountDeletionStatusResponses[keyof GetAccountDeletionStatusResponses];
+
 export type RequestAccountDeletionData = {
     body: {
         reason?: string;

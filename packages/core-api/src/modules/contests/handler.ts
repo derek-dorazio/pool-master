@@ -103,9 +103,6 @@ const CreateContestBodySchema = zod.object({
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
     SelectionType.BUDGET_PICK,
-    SelectionType.OPEN_SELECTION,
-    SelectionType.PICK_EM,
-    SelectionType.BRACKET_PICK_EM,
   ]),
   selectionConfig: SelectionConfigBodySchema.optional(),
   scoringEngine: zod.enum([
@@ -170,6 +167,7 @@ export function createContestHandlers(
     }
     const body = CreateContestBodySchema.parse(request.body);
     try {
+      validateCreateContestBody(body);
       const result = await contestService.createContest({
         leagueId: request.params.id,
         tenantId,
@@ -440,12 +438,20 @@ export function createContestHandlers(
   }
 }
 
+function validateCreateContestBody(body: z.infer<typeof CreateContestBodySchema>): void {
+  if (body.selectionType === SelectionType.TIERED) {
+    const tiers = body.selectionConfig?.tierConfig;
+    if (!tiers || tiers.length === 0) {
+      throw new ContestOperationError('Tiered contests require tier configuration');
+    }
+  }
+}
+
 function shouldProvisionEventPool(selectionType: string): boolean {
   return new Set<string>([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
     SelectionType.BUDGET_PICK,
-    SelectionType.OPEN_SELECTION,
   ]).has(selectionType);
 }
 
