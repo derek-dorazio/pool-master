@@ -122,7 +122,7 @@ describe('MVP Contest Lifecycle Smoke', () => {
       method: 'DELETE',
       headers: bodylessAuthHeaders(ownerToken),
     });
-    await expectStatus(deleteRes, 200, 'delete contest');
+    await expectStatus(deleteRes, 204, 'delete contest');
 
     const afterDeleteRes = await smokeFetch(`${BASE_URL}${API_ROUTES.contests.detail(contestId)}`, {
       headers: bodylessAuthHeaders(ownerToken),
