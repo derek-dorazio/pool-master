@@ -1,0 +1,229 @@
+/**
+ * CRUD-style integration coverage for the tiered draft-room flow.
+ *
+ * This suite is intentionally self-contained:
+ * - creates its own owner user
+ * - creates its own league, contest, and contest entry
+ * - seeds a tiny contest pool through Prisma using real models
+ * - reads the draft room state
+ * - submits a selection through the real draft route
+ * - verifies read-after-write room state
+ */
+import {
+  setupIntegrationTests,
+  teardownIntegrationTests,
+  getApp,
+  getPrisma,
+  createTestUser,
+  cleanupTestData,
+} from '../helpers';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import {
+  ContestStatus,
+  ContestType,
+  LeagueVisibility,
+  ScoringEngine,
+  SelectionType,
+} from '@poolmaster/shared/domain';
+import { randomUUID } from 'node:crypto';
+
+beforeAll(() => setupIntegrationTests());
+afterAll(async () => {
+  await cleanupTestData();
+  await teardownIntegrationTests();
+});
+
+describe('Draft Session Flow Integration', () => {
+  const createdParticipantIds: string[] = [];
+  let createdSportId: string | null = null;
+  let ownerHeaders: Record<string, string>;
+  let leagueId: string;
+  let contestId: string;
+  let entryId: string;
+  let participantId: string;
+
+  beforeAll(async () => {
+    const owner = await createTestUser({ displayName: 'Draft Flow Owner' });
+    ownerHeaders = owner.headers;
+
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: ownerHeaders,
+      payload: {
+        name: 'Draft Flow League',
+        visibility: LeagueVisibility.PRIVATE,
+      },
+    });
+
+    expect(leagueRes.statusCode).toBe(201);
+    leagueId = leagueRes.json().league.id;
+
+    const contestRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Draft Flow Contest',
+        sport: 'GOLF',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.TIERED,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+        selectionConfig: {
+          rounds: 1,
+          tierAssignmentMethod: 'AUTO_ODDS',
+          tierConfig: [
+            {
+              tierId: 'tier-1',
+              tierName: 'Tier 1',
+              tierNumber: 1,
+              picksFromTier: 1,
+              participantIds: [],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(contestRes.statusCode).toBe(201);
+    const contest = contestRes.json().contest ?? contestRes.json();
+    contestId = contest.id;
+    expect(contest.status).toBe(ContestStatus.DRAFT);
+
+    const bodylessHeaders = Object.fromEntries(
+      Object.entries(ownerHeaders).filter(([key]) => key.toLowerCase() !== 'content-type'),
+    );
+    const entryRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.contests.myEntry(contestId),
+      headers: bodylessHeaders,
+    });
+
+    expect([200, 201]).toContain(entryRes.statusCode);
+    entryId = entryRes.json().entry.id;
+
+    const prisma = getPrisma();
+    const sport = await prisma.sport.create({
+      data: {
+        name: `INTEGRATION_GOLF_${randomUUID().slice(0, 8)}`,
+        participantType: 'INDIVIDUAL',
+        statSchema: {},
+      },
+    });
+    createdSportId = sport.id;
+
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `Integration Contestant ${randomUUID().slice(0, 8)}`,
+        participantType: 'INDIVIDUAL',
+        externalIds: {},
+        metadata: {},
+        position: 'GOLFER',
+        teamAffiliation: null,
+      },
+    });
+    createdParticipantIds.push(participant.id);
+    participantId = participant.id;
+
+    await prisma.selectionConfig.update({
+      where: { contestId },
+      data: {
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [participantId],
+          },
+        ],
+      },
+    });
+
+    const pool = await prisma.contestPool.create({
+      data: {
+        contestId,
+        sport: 'GOLF',
+        poolType: 'EVENT_FIELD',
+        config: {},
+      },
+    });
+
+    await prisma.contestParticipantPool.create({
+      data: {
+        poolId: pool.id,
+        contestId,
+        participantId,
+        cost: 1200,
+        tier: 'tier-1',
+        tierAssignmentMethod: 'AUTO_ODDS',
+        ranking: 1,
+        isAvailable: true,
+      },
+    });
+  });
+
+  afterAll(async () => {
+    const prisma = getPrisma();
+    if (createdParticipantIds.length > 0) {
+      await prisma.participant.deleteMany({
+        where: {
+          id: { in: createdParticipantIds },
+        },
+      }).catch(() => {});
+    }
+    if (createdSportId) {
+      await prisma.sport.delete({
+        where: { id: createdSportId },
+      }).catch(() => {});
+    }
+  });
+
+  it('reads room state, submits a pick, and returns updated tiered room state', async () => {
+    const roomRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.drafts.state(contestId),
+      headers: ownerHeaders,
+    });
+
+    expect(roomRes.statusCode).toBe(200);
+    expect(roomRes.json().contestId).toBe(contestId);
+    expect(roomRes.json().selectionType).toBe(SelectionType.TIERED);
+    expect(roomRes.json().myEntryId).toBe(entryId);
+    expect(roomRes.json().availableParticipantIds).toContain(participantId);
+    expect(roomRes.json().picks).toEqual([]);
+
+    const submitRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.drafts.pick(contestId),
+      headers: ownerHeaders,
+      payload: {
+        entryId,
+        participantId,
+      },
+    });
+
+    expect(submitRes.statusCode).toBe(200);
+    expect(submitRes.json().contestId).toBe(contestId);
+    expect(submitRes.json().selectionType).toBe(SelectionType.TIERED);
+    expect(submitRes.json().picks).toHaveLength(1);
+    expect(submitRes.json().picks[0].entryId).toBe(entryId);
+    expect(submitRes.json().picks[0].participantId).toBe(participantId);
+    expect(submitRes.json().picks[0].tierId).toBe('tier-1');
+    expect(submitRes.json().picks[0].tierName).toBe('Tier 1');
+    expect(submitRes.json().isComplete).toBe(true);
+
+    const afterPickRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.drafts.state(contestId),
+      headers: ownerHeaders,
+    });
+
+    expect(afterPickRes.statusCode).toBe(200);
+    expect(afterPickRes.json().picks).toHaveLength(1);
+    expect(afterPickRes.json().picks[0].participantId).toBe(participantId);
+    expect(afterPickRes.json().isComplete).toBe(true);
+    expect(afterPickRes.json().availableParticipantIds).toContain(participantId);
+  });
+});

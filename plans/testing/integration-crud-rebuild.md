@@ -48,13 +48,14 @@ Rebuild backend integration coverage from scratch using small, self-contained CR
    - self-leave or remove member
 
 4. Contest Entry CRUD
-   - Status: In Progress
+   - Status: Done
    - create current-user entry
    - list entries
    - fetch current-user entry
    - delete current-user entry
 
 5. Draft Session Flow
+   - Status: Done
    - create contest with supported MVP selection type
    - create entry/entries
    - read room state
