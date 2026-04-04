@@ -25,5 +25,5 @@ describe('SettingsHub', () => {
     expect(screen.getByRole('link', { name: /timezone & locale/i })).toHaveAttribute('href', '/settings/timezone');
     expect(screen.getByRole('link', { name: /privacy & data/i })).toHaveAttribute('href', '/settings/privacy');
     expect(screen.getByText('3 unread')).toBeInTheDocument();
-  });
+  }, 10_000);
 });

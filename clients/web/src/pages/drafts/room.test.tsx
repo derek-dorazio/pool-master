@@ -387,6 +387,25 @@ describe('DraftRoomPage', () => {
     expect(screen.getByRole('button', { name: 'Draft R. McIlroy' })).toBeInTheDocument();
   });
 
+  it('closes the participant drawer after confirming a real-entry pick', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'select-participant' }));
+    await user.click(screen.getByRole('button', { name: 'Draft R. McIlroy' }));
+
+    expect(screen.getByText('Confirm Pick')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    expect(mockMutate).toHaveBeenCalledWith({
+      entryId: 'entry-1',
+      participantId: 'p2',
+    });
+    expect(screen.queryByText('Confirm Pick')).not.toBeInTheDocument();
+    expect(screen.queryByText('R. McIlroy')).not.toBeInTheDocument();
+  });
+
   it('submits pickem picks and confidence weights through the room handlers', async () => {
     const user = userEvent.setup();
     mockDraftReturn = {
