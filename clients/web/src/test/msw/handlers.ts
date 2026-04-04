@@ -198,51 +198,6 @@ export const leagueHandlers = [
 ];
 
 // ---------------------------------------------------------------------------
-// History
-// ---------------------------------------------------------------------------
-
-export const historyHandlers = [
-  http.get('/api/v1/leagues/:id/history/seasons', () => {
-    return HttpResponse.json({
-      seasons: [
-        {
-          id: 'season-2026',
-          leagueId: 'league-1',
-          seasonId: 'season-2026',
-          seasonName: '2026 Season',
-          sport: 'GOLF',
-          year: 2026,
-          numMembers: 12,
-          numContests: 3,
-          totalPrizePool: 600,
-          champions: [
-            {
-              contestId: 'contest-1',
-              contestName: 'Masters Pick 6',
-              entryId: 'entry-1',
-              entryName: 'Fairway Finders',
-              memberId: 'member-1',
-              memberName: 'Jordan Lee',
-              finalScore: 412,
-              prizeWon: 300,
-            },
-          ],
-          highlights: {
-            highestScore: 412,
-            lowestScore: 291,
-          },
-          commissionerNote: null,
-          openedAt: '2026-03-20T00:00:00.000Z',
-          closedAt: '2026-04-15T00:00:00.000Z',
-          createdAt: '2026-03-20T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-        },
-      ],
-    });
-  }),
-];
-
-// ---------------------------------------------------------------------------
 // Contests
 // ---------------------------------------------------------------------------
 
@@ -826,7 +781,6 @@ export const socialHandlers = [
 export const handlers = [
   ...authHandlers,
   ...leagueHandlers,
-  ...historyHandlers,
   ...contestHandlers,
   ...billingHandlers,
   ...notificationHandlers,

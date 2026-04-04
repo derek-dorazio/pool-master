@@ -126,7 +126,7 @@ export function Component() {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center" data-testid="league-history-error">
+      <div className="flex flex-col items-center justify-center py-16 text-center">
         <AlertCircle className="h-12 w-12 text-destructive mb-4" />
         <h2 className="text-xl font-semibold mb-2">Failed to load history</h2>
         <p className="text-muted-foreground">Something went wrong. Please try again later.</p>
@@ -136,21 +136,21 @@ export function Component() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16" data-testid="league-history-loading">
+      <div className="flex items-center justify-center py-16">
         <p className="text-muted-foreground">Loading history...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6" data-testid="league-history-page">
+    <div className="space-y-6">
       <h1 className="text-3xl font-bold">League History</h1>
       <p className="text-muted-foreground">
         Finished seasons and champion snapshots. Expand a season to review the completed contest archive.
       </p>
 
       {seasons.length === 0 ? (
-        <p className="text-muted-foreground text-sm" data-testid="league-history-empty">No seasons completed yet.</p>
+        <p className="text-muted-foreground text-sm">No seasons completed yet.</p>
       ) : (
         <div className="space-y-3">
           {seasons.map((season) => (

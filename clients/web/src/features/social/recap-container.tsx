@@ -20,7 +20,7 @@ export function RecapContainer() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6" data-testid="league-recap-loading">
+      <div className="space-y-6">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-48 w-full" />
         <Skeleton className="h-32 w-full" />
@@ -31,7 +31,7 @@ export function RecapContainer() {
 
   if (isError || !recap) {
     return (
-      <div className="space-y-6" data-testid="league-recap-error">
+      <div className="space-y-6">
         <h1 className="text-3xl font-bold">Weekly Recap</h1>
         <div className="py-12 text-center">
           <p className="text-sm text-muted-foreground">Couldn't load recap</p>
@@ -42,7 +42,7 @@ export function RecapContainer() {
   }
 
   return (
-    <div className="space-y-6" data-testid="league-recap-page">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Weekly Recap</h1>
         <div className="flex items-center gap-2">

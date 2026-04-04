@@ -35,9 +35,9 @@ export function Component() {
 
   if (!leagueId) {
     return (
-      <div className="space-y-4" data-testid="league-feed-page">
+      <div className="space-y-4">
         <h1 className="text-3xl font-bold">League Activity Feed</h1>
-        <p role="alert" className="text-sm text-destructive" data-testid="league-feed-not-found">
+        <p role="alert" className="text-sm text-destructive">
           League not found.
         </p>
       </div>
@@ -46,18 +46,18 @@ export function Component() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4" data-testid="league-feed-page">
+      <div className="space-y-4">
         <h1 className="text-3xl font-bold">League Activity Feed</h1>
-        <p className="text-sm text-muted-foreground" data-testid="league-feed-loading">Loading league details...</p>
+        <p className="text-sm text-muted-foreground">Loading league details...</p>
       </div>
     );
   }
 
   if (isError || !league) {
     return (
-      <div className="space-y-4" data-testid="league-feed-page">
+      <div className="space-y-4">
         <h1 className="text-3xl font-bold">League Activity Feed</h1>
-        <p role="alert" className="text-sm text-destructive" data-testid="league-feed-error">
+        <p role="alert" className="text-sm text-destructive">
           Failed to load league details.
         </p>
       </div>
@@ -65,7 +65,7 @@ export function Component() {
   }
 
   return (
-    <div className="space-y-6" data-testid="league-feed-page">
+    <div className="space-y-6">
       <h1 className="text-3xl font-bold">League Activity Feed</h1>
       <FeedContainer leagueId={resolvedLeagueId} isCommissioner={isCommissionerRole(league.role)} />
     </div>

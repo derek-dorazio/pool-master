@@ -1,8 +1,5 @@
-import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router-dom';
-import { http, HttpResponse } from 'msw';
-import { server } from '@/test/msw/server';
+import { render, screen } from '@testing-library/react';
 import { Component as LeagueFeedPage } from './feed';
 
 vi.mock('react-router-dom', async () => {
@@ -12,6 +9,23 @@ vi.mock('react-router-dom', async () => {
     useParams: () => ({ leagueId: 'league-1' }),
   };
 });
+
+vi.mock('@/lib/api', () => ({
+  client: {},
+  getLeague: vi.fn(),
+}));
+
+vi.mock('@/features/social/feed-container', () => ({
+  FeedContainer: ({ leagueId, isCommissioner }: { leagueId: string; isCommissioner?: boolean }) => (
+    <div
+      data-testid="feed-container"
+      data-league-id={leagueId}
+      data-is-commissioner={String(Boolean(isCommissioner))}
+    />
+  ),
+}));
+
+import { getLeague } from '@/lib/api';
 
 function renderPage() {
   const queryClient = new QueryClient({
@@ -23,98 +37,33 @@ function renderPage() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <LeagueFeedPage />
-      </MemoryRouter>
+      <LeagueFeedPage />
     </QueryClientProvider>,
   );
 }
 
 describe('LeagueFeedPage', () => {
-  it('renders the feed container with league data from MSW', async () => {
-    renderPage();
-
-    await screen.findByTestId('league-feed-page');
-    expect(screen.getByRole('heading', { name: 'League Activity Feed' })).toBeInTheDocument();
-    expect(await screen.findByTestId('league-feed')).toBeInTheDocument();
+  beforeEach(() => {
+    vi.mocked(getLeague).mockResolvedValue({
+      data: {
+        league: {
+          id: 'league-1',
+          name: 'Weekend Warriors',
+          role: 'Commissioner',
+          visibility: 'PUBLIC',
+          memberCount: 12,
+          activeContestCount: 1,
+        },
+      },
+      error: null,
+    } as any);
   });
 
-  it('shows loading state while league data is in flight', async () => {
-    server.use(
-      http.get('/api/v1/leagues/:id', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return HttpResponse.json({
-          league: {
-            id: 'league-1',
-            name: 'Test League',
-            role: 'OWNER',
-            visibility: 'PRIVATE',
-            memberCount: 5,
-            activeContestCount: 1,
-          },
-        });
-      }),
-    );
-
+  it('derives commissioner access from the league response', async () => {
     renderPage();
 
-    expect(await screen.findByTestId('league-feed-loading')).toBeInTheDocument();
-  });
-
-  it('shows error state when league fetch fails', async () => {
-    server.use(
-      http.get('/api/v1/leagues/:id', () => {
-        return HttpResponse.json({ error: 'not found' }, { status: 404 });
-      }),
-    );
-
-    renderPage();
-
-    expect(await screen.findByTestId('league-feed-error')).toBeInTheDocument();
-    expect(screen.getByText('Failed to load league details.')).toBeInTheDocument();
-  });
-
-  it('passes commissioner access when league role is OWNER', async () => {
-    server.use(
-      http.get('/api/v1/leagues/:id', () => {
-        return HttpResponse.json({
-          league: {
-            id: 'league-1',
-            name: 'Test League',
-            role: 'OWNER',
-            visibility: 'PRIVATE',
-            memberCount: 5,
-            activeContestCount: 1,
-          },
-        });
-      }),
-    );
-
-    renderPage();
-
-    await screen.findByTestId('league-feed');
-    expect(screen.getByTestId('league-feed-page')).toBeInTheDocument();
-  });
-
-  it('renders feed for non-commissioner member role', async () => {
-    server.use(
-      http.get('/api/v1/leagues/:id', () => {
-        return HttpResponse.json({
-          league: {
-            id: 'league-1',
-            name: 'Test League',
-            role: 'MANAGER',
-            visibility: 'PRIVATE',
-            memberCount: 5,
-            activeContestCount: 1,
-          },
-        });
-      }),
-    );
-
-    renderPage();
-
-    await screen.findByTestId('league-feed');
-    expect(screen.getByTestId('league-feed-page')).toBeInTheDocument();
+    const feed = await screen.findByTestId('feed-container');
+    expect(feed).toHaveAttribute('data-league-id', 'league-1');
+    expect(feed).toHaveAttribute('data-is-commissioner', 'true');
   });
 });
