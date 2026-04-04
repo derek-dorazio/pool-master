@@ -30,6 +30,14 @@ This plan exists to:
   - multi-record CRUD/read-after-write flows
 - Do not add slow smoke or browser E2E coverage from this plan.
 
+## Worker Constraints
+
+- Keep one plan slice per commit unless the main thread explicitly approves bundling.
+- Do not change coverage thresholds from a worker slice.
+- Do not mark unrelated slice rows `In Progress` or `Done`.
+- If a slice uncovers adjacent work, report it separately instead of bundling it into the same commit.
+- Tests must prove the claimed behavior, especially for role, permission, and ownership scenarios.
+
 ## Current Active Slices
 
 ### Slice A: Contest Entry, Results, Standings, and Scoring Review
@@ -141,9 +149,9 @@ These are the next three candidate slices after the current active set lands:
 | ACE-003 | C | Expand web settings/profile/account-management coverage | In Progress | First worker commit landed locally as `79fddf7`; integrate after the current worker batch is reconciled |
 | ACE-004 | D | Expand admin audit and announcements coverage | In Progress | Currently in flight on the admin audit/announcements worker lane |
 | ACE-005 | E | Expand backend dashboard/social edge coverage | In Progress | Currently in flight on the backend dashboard/social worker lane |
-| ACE-006 | Queue | League feed/history/recap coverage | Done | Rewrote feed/history tests from banned `vi.mock` to MSW; added recap test suite; added history MSW handler; added stable `data-testid` selectors to feed, history, and recap-container |
-| ACE-007 | Queue | Settings compliance/account deletion/data export coverage | Done | Fixed `useDataExportStatus` to use generated SDK (`getDataExportStatus`); added `data-export-card.test.tsx` (idle, request, pending, ready, rate-limited); expanded `account-deletion-card.test.tsx` (error state, cancel step navigation, confirm disabled guard, cancel deletion path param); updated `use-data-export.test.ts` to validate generated SDK usage |
-| ACE-008 | Queue | Admin provider/tenant detail coverage | Done | Fixed unreachable error state in both provider and tenant detail pages; added `data-testid` stable selectors; created `providers/detail.test.tsx` (21 tests), `providers/index.test.tsx` (8 tests), `tenants/detail.test.tsx` (16 tests); ratcheted admin coverage thresholds from 26/20/20/28 to 34/32/29/36 |
+| ACE-006 | Queue | League feed/history/recap coverage | In Progress | External worker produced a mixed-scope commit; salvage only the league feed/history/recap files and strengthen commissioner-behavior assertions before marking done |
+| ACE-007 | Queue | Settings compliance/account deletion/data export coverage | In Progress | External worker found a valid generated-SDK cleanup in `useDataExportStatus`, but it landed inside the mixed ACE-006 commit and needs to be separated cleanly |
+| ACE-008 | Queue | Admin provider/tenant detail coverage | In Progress | External worker found valid provider/tenant error-state fixes and tests, but the slice also changed admin coverage thresholds; salvage the slice without the threshold ratchet before marking done |
 
 ## Acceptance Criteria
 

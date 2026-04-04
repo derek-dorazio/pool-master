@@ -116,6 +116,7 @@ Why:
 - mocking the generated API layer so completely that request construction never runs
 - tests that only assert copied path strings
 - preserving old tests that validate retired manual-client behavior
+- broad MSW rewrites that silently expand into unrelated feature slices without explicit approval
 
 ### Allowed Cleanup
 
@@ -127,6 +128,13 @@ Remove tests if they are:
 
 Do not keep bad tests just because they already exist.
 Before deleting an existing test suite for architecture/strategy reasons, confirm with the user first unless they already explicitly asked for that deletion category in the current thread.
+
+### Test Proof Rules
+
+- Tests must prove the behavior they claim to cover, not just that the page renders.
+- If a test claims role, permission, or ownership behavior, it must assert an observable difference between the relevant states.
+- When replacing manual API mocks with MSW, keep the slice scoped to the intended feature area unless the user explicitly approves broader cleanup.
+- Add DB-backed integration only when the real backend boundary materially increases confidence over a unit or MSW-backed UI test.
 
 ---
 

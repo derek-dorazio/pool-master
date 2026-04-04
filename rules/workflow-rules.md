@@ -37,6 +37,15 @@ When finishing work:
 2. Add notes with the relevant files and decisions.
 3. Update every affected plan, not just the first one you looked at.
 
+### Slice Execution Rules
+
+- Keep one execution slice per commit unless the user explicitly approves bundling multiple slices together.
+- Report every changed file in the final handoff for a slice. Do not summarize a broader file set as if it were narrower.
+- If slice work exposes adjacent-slice files or tasks, stop and report that spillover instead of bundling it into the same commit.
+- Coverage threshold changes are main-thread coordination work. Worker slices must not raise or lower thresholds on their own.
+- Update plan rows only for the exact slice being worked. Do not mark unrelated queue items `In Progress` or `Done`.
+- Mark a slice `Done` only when the exact scoped work is complete and validated. Partial work stays `In Progress`.
+
 ---
 
 ## 2. Rule and Documentation Maintenance
