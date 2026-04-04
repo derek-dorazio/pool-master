@@ -17,11 +17,11 @@ This plan exists to:
 
 This plan is the worker-execution companion to:
 
-- [plans/33-stability-hardening-and-defect-discovery.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/33-stability-hardening-and-defect-discovery.md)
+- [plans/archive/33-stability-hardening-and-defect-discovery.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/33-stability-hardening-and-defect-discovery.md)
 - [plans/testing/coverage-threshold-ratchet.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/coverage-threshold-ratchet.md)
 - [plans/30-platform-and-deploy-hardening.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/30-platform-and-deploy-hardening.md)
 
-Use Plan 33 for the high-level stabilization goals and this plan for concrete worker delegation.
+Use archived Plan 33 only for historical context and this plan for the concrete delegated execution record from that wave.
 
 ## Parallelization Rules
 

@@ -15,7 +15,7 @@ This plan exists to:
 
 ## Relationship To Other Plans
 
-- [plans/33-stability-hardening-and-defect-discovery.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/33-stability-hardening-and-defect-discovery.md) remains the high-level stabilization umbrella.
+- [plans/archive/33-stability-hardening-and-defect-discovery.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/33-stability-hardening-and-defect-discovery.md) is historical context for the completed stabilization wave.
 - [plans/34-worker-sliced-stability-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/34-worker-sliced-stability-execution.md) is now the historical record of the first worker wave.
 - [plans/testing/coverage-threshold-ratchet.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/coverage-threshold-ratchet.md) remains the source of truth for threshold numbers and ratchet policy.
 
