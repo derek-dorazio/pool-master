@@ -31,26 +31,30 @@ async function completeRegistration(
   page: Page,
   details: { email: string; displayName: string },
 ) {
+  await expect(page.getByText(/^Step 1 of 5$/)).toBeVisible();
   await expect(page.locator('#email')).toBeVisible();
   await page.locator('#email').fill(details.email);
   await page.locator('#password').fill(PASSWORD);
   await page.locator('#confirmPassword').fill(PASSWORD);
   await page.getByRole('button', { name: /^Next$/ }).click();
 
+  await expect(page.getByText(/^Step 2 of 5$/)).toBeVisible();
   await expect(page.locator('#displayName')).toBeVisible();
   await page.locator('#displayName').fill(details.displayName);
   await page.getByRole('button', { name: /^Next$/ }).click();
 
+  await expect(page.getByText(/^Step 3 of 5$/)).toBeVisible();
   await page.locator('#dobMonth').selectOption(DOB.month);
   await page.locator('#dobDay').selectOption(DOB.day);
   await page.locator('#dobYear').selectOption(DOB.year);
   await page.getByRole('button', { name: /^Next$/ }).click();
 
-  const checkboxes = page.getByRole('checkbox');
-  await checkboxes.nth(0).click();
-  await checkboxes.nth(1).click();
+  await expect(page.getByText(/^Step 4 of 5$/)).toBeVisible();
+  await page.locator('#agreeTerms').click();
+  await page.locator('#agreePrivacy').click();
   await page.getByRole('button', { name: /^Next$/ }).click();
 
+  await expect(page.getByText(/^Step 5 of 5$/)).toBeVisible();
   await expect(page.getByRole('button', { name: /^Create Account$/ })).toBeVisible();
   await page.getByRole('button', { name: /^Create Account$/ }).click();
 }
