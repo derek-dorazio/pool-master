@@ -143,7 +143,7 @@ These are the next three candidate slices after the current active set lands:
 | ACE-005 | E | Expand backend dashboard/social edge coverage | In Progress | Currently in flight on the backend dashboard/social worker lane |
 | ACE-006 | Queue | League feed/history/recap coverage | Done | Rewrote feed/history tests from banned `vi.mock` to MSW; added recap test suite; added history MSW handler; added stable `data-testid` selectors to feed, history, and recap-container |
 | ACE-007 | Queue | Settings compliance/account deletion/data export coverage | Done | Fixed `useDataExportStatus` to use generated SDK (`getDataExportStatus`); added `data-export-card.test.tsx` (idle, request, pending, ready, rate-limited); expanded `account-deletion-card.test.tsx` (error state, cancel step navigation, confirm disabled guard, cancel deletion path param); updated `use-data-export.test.ts` to validate generated SDK usage |
-| ACE-008 | Queue | Admin provider/tenant detail coverage | In Progress | Provider detail + tenant detail Vitest coverage with stable selectors |
+| ACE-008 | Queue | Admin provider/tenant detail coverage | Done | Fixed unreachable error state in both provider and tenant detail pages; added `data-testid` stable selectors; created `providers/detail.test.tsx` (21 tests), `providers/index.test.tsx` (8 tests), `tenants/detail.test.tsx` (16 tests); ratcheted admin coverage thresholds from 26/20/20/28 to 34/32/29/36 |
 
 ## Acceptance Criteria
 
