@@ -48,7 +48,9 @@ import { ScheduledRunner } from '../../packages/core-api/src/modules/notificatio
 import { WeeklyDigestService } from '../../packages/core-api/src/modules/notifications/core/weekly-digest';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
-const TEST_TENANT_ID = '00000000-0000-0000-0000-999999999999';
+const TEST_TENANT_ID = randomUUID();
+const TEST_TENANT_SLUG = `integration-test-${TEST_TENANT_ID.slice(0, 8)}`;
+const TEST_TENANT_NAME = `Integration Test Tenant ${TEST_TENANT_ID.slice(0, 8)}`;
 
 let app: FastifyInstance;
 let prisma: PrismaClient;
@@ -121,8 +123,8 @@ async function ensureTestTenant(): Promise<void> {
     where: { id: TEST_TENANT_ID },
     create: {
       id: TEST_TENANT_ID,
-      name: 'Integration Test Tenant',
-      slug: 'integration-test',
+      name: TEST_TENANT_NAME,
+      slug: TEST_TENANT_SLUG,
     },
     update: {},
   });

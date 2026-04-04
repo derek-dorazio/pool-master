@@ -79,11 +79,13 @@ describe('Contest pool EVENT_FIELD resolution', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Bracket Event Contest',
+        sport: 'NCAA_BASKETBALL',
         contestType: 'SINGLE_EVENT',
         selectionType: 'BRACKET_PICK_EM',
         scoringEngine: 'BRACKET',
       },
     });
+    expect(contestRes.statusCode).toBe(201);
     const contestId = (contestRes.json().contest ?? contestRes.json()).id;
 
     await getApp().inject({
@@ -100,9 +102,12 @@ describe('Contest pool EVENT_FIELD resolution', () => {
     const resolveRes = await getApp().inject({
       method: 'POST',
       url: `/api/v1/contests/${contestId}/pool/resolve`,
-      headers: ownerHeaders,
+      headers: { authorization: ownerHeaders.authorization },
     });
 
+    if (resolveRes.statusCode !== 200) {
+      console.log('Bracket resolve failure', resolveRes.statusCode, resolveRes.body);
+    }
     expect(resolveRes.statusCode).toBe(200);
     expect(resolveRes.json()).toHaveProperty('participantCount', 4);
 
@@ -161,11 +166,13 @@ describe('Contest pool EVENT_FIELD resolution', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Pickem Event Contest',
+        sport: 'NFL',
         contestType: 'SINGLE_EVENT',
         selectionType: 'PICK_EM',
         scoringEngine: 'CUMULATIVE',
       },
     });
+    expect(contestRes.statusCode).toBe(201);
     const contestId = (contestRes.json().contest ?? contestRes.json()).id;
 
     await getApp().inject({
@@ -182,9 +189,12 @@ describe('Contest pool EVENT_FIELD resolution', () => {
     const resolveRes = await getApp().inject({
       method: 'POST',
       url: `/api/v1/contests/${contestId}/pool/resolve`,
-      headers: ownerHeaders,
+      headers: { authorization: ownerHeaders.authorization },
     });
 
+    if (resolveRes.statusCode !== 200) {
+      console.log('Pickem resolve failure', resolveRes.statusCode, resolveRes.body);
+    }
     expect(resolveRes.statusCode).toBe(200);
     expect(resolveRes.json()).toHaveProperty('participantCount', 2);
 
