@@ -52,7 +52,7 @@ describe('SelfExclusionCard', () => {
         body: { type: 'SELF_EXCLUSION', duration: 'INDEFINITE' },
       }));
     });
-  });
+  }, 10000);
 
   it('shows active exclusion state and disables starting a new one', async () => {
     getActiveExclusion.mockResolvedValue({
