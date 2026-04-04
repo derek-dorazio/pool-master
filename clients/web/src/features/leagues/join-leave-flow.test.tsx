@@ -1,99 +1,167 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
+import { http, HttpResponse } from 'msw';
+import { InvitePolicy } from '@poolmaster/shared/domain';
+import { server } from '@/test/msw/server';
 import { JoinLeagueButton, LeaveLeagueButton } from './join-leave-flow';
 
-const {
-  mockMutate,
-  mockQueryClient,
-  mockPost,
-  mockDelete,
-} = vi.hoisted(() => ({
-  mockMutate: vi.fn(),
-  mockQueryClient: { invalidateQueries: vi.fn() },
-  mockPost: vi.fn().mockResolvedValue({ data: {}, error: undefined }),
-  mockDelete: vi.fn().mockResolvedValue({ data: {}, error: undefined }),
-}));
+function renderWithClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false },
+    },
+  });
 
-vi.mock('@tanstack/react-query', () => ({
-  useMutation: vi.fn(({ mutationFn }: any) => ({
-    mutate: mockMutate.mockImplementation(() => mutationFn()),
-    isPending: false,
-  })),
-  useQueryClient: () => mockQueryClient,
-}));
-
-vi.mock('@/lib/api', () => ({
-  client: {
-    post: mockPost,
-    delete: mockDelete,
-  },
-}));
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>,
+  );
+}
 
 describe('JoinLeagueButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPost.mockResolvedValue({ data: {}, error: undefined });
-    mockDelete.mockResolvedValue({ data: {}, error: undefined });
   });
 
-  it('shows "Join League" for OPEN policy when membership is none', () => {
-    render(<JoinLeagueButton leagueId="lg-1" joinPolicy="OPEN" membershipState="none" />);
+  it('shows the direct join action only for open leagues', () => {
+    renderWithClient(
+      <JoinLeagueButton leagueId="lg-1" joinPolicy={InvitePolicy.OPEN} membershipState="none" />,
+    );
+
     expect(screen.getByRole('button', { name: /Join League/i })).toBeEnabled();
   });
 
-  it('shows disabled "Request Unsupported" for APPROVAL policy until a real backend flow exists', () => {
-    render(<JoinLeagueButton leagueId="lg-1" joinPolicy="APPROVAL" membershipState="none" />);
-    expect(screen.getByRole('button', { name: /Request Unsupported/i })).toBeDisabled();
+  it('disables non-open join policies with honest guidance', () => {
+    renderWithClient(
+      <JoinLeagueButton
+        leagueId="lg-1"
+        joinPolicy={InvitePolicy.COMMISSIONER_ONLY}
+        membershipState="none"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /Commissioner Only/i })).toBeDisabled();
+    expect(screen.getByText(/Only the commissioner can add members/i)).toBeInTheDocument();
   });
 
-  it('shows disabled "Joined" button when already a member', () => {
-    render(<JoinLeagueButton leagueId="lg-1" joinPolicy="OPEN" membershipState="member" />);
-    expect(screen.getByRole('button', { name: /Joined/i })).toBeDisabled();
-  });
-
-  it('shows disabled "Request Pending" button when pending', () => {
-    render(<JoinLeagueButton leagueId="lg-1" joinPolicy="APPROVAL" membershipState="pending" />);
-    expect(screen.getByRole('button', { name: /Request Pending/i })).toBeDisabled();
-  });
-
-  it('calls mutate when join button is clicked', async () => {
+  it('joins through the real discovery route and surfaces failures inline', async () => {
     const user = userEvent.setup();
-    render(<JoinLeagueButton leagueId="lg-1" joinPolicy="OPEN" membershipState="none" />);
-    await user.click(screen.getByRole('button', { name: /Join League/i }));
-    expect(mockMutate).toHaveBeenCalled();
-    expect(mockPost).toHaveBeenCalledWith({ url: '/api/v1/search/discover/leagues/lg-1/join' });
+    let joinCalls = 0;
+
+    server.use(
+      http.post('/api/v1/search/discover/leagues/:leagueId/join', async ({ params }) => {
+        joinCalls += 1;
+        if (joinCalls === 1) {
+          return HttpResponse.json(
+            {
+              error: 'join_not_allowed',
+              message: `League ${String(params.leagueId)} is temporarily unavailable.`,
+            },
+            { status: 409 },
+          );
+        }
+
+        return HttpResponse.json(
+          {
+            membership: {
+              id: 'membership-1',
+              leagueId: String(params.leagueId),
+              userId: 'user-1',
+              role: 'MANAGER',
+              permissions: [],
+              joinedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          },
+          { status: 201 },
+        );
+      }),
+    );
+
+    renderWithClient(
+      <JoinLeagueButton leagueId="lg-1" joinPolicy={InvitePolicy.OPEN} membershipState="none" />,
+    );
+
+    await user.click(screen.getByTestId('league-join-button'));
+
+    await screen.findByTestId('league-join-error');
+    expect(screen.getByTestId('league-join-error')).toHaveTextContent('temporarily unavailable');
+    expect(joinCalls).toBe(1);
+
+    await user.click(screen.getByTestId('league-join-button'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('league-join-error')).not.toBeInTheDocument();
+    });
+    expect(joinCalls).toBe(2);
   });
 });
 
 describe('LeaveLeagueButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPost.mockResolvedValue({ data: {}, error: undefined });
-    mockDelete.mockResolvedValue({ data: {}, error: undefined });
   });
 
   it('shows confirmation dialog when Leave League is clicked', async () => {
     const user = userEvent.setup();
-    render(<LeaveLeagueButton leagueId="lg-1" leagueName="Weekend Warriors" />);
+
+    renderWithClient(<LeaveLeagueButton leagueId="lg-1" leagueName="Weekend Warriors" />);
+
     await user.click(screen.getByRole('button', { name: /Leave League/i }));
+
     expect(screen.getByText(/Are you sure you want to leave/)).toBeInTheDocument();
     expect(screen.getByText('Weekend Warriors')).toBeInTheDocument();
   });
 
-  it('dismisses confirmation when Cancel is clicked', async () => {
+  it('leaves through the real API route and closes the dialog', async () => {
     const user = userEvent.setup();
-    render(<LeaveLeagueButton leagueId="lg-1" leagueName="Weekend Warriors" />);
+    let leftLeagueId: string | null = null;
+
+    server.use(
+      http.delete('/api/v1/leagues/:id/members/me', ({ params }) => {
+        leftLeagueId = String(params.id);
+        return HttpResponse.json({ success: true });
+      }),
+    );
+
+    renderWithClient(<LeaveLeagueButton leagueId="lg-1" leagueName="Weekend Warriors" />);
+
     await user.click(screen.getByRole('button', { name: /Leave League/i }));
-    await user.click(screen.getByRole('button', { name: /Cancel/i }));
-    expect(screen.queryByText(/Are you sure/)).not.toBeInTheDocument();
+    await user.click(screen.getByTestId('league-leave-confirm'));
+
+    await waitFor(() => {
+      expect(leftLeagueId).toBe('lg-1');
+    });
+    expect(screen.queryByText(/Are you sure you want to leave/)).not.toBeInTheDocument();
   });
 
-  it('calls the real leave endpoint when leave is confirmed', async () => {
+  it('keeps the dialog open when leaving fails', async () => {
     const user = userEvent.setup();
-    render(<LeaveLeagueButton leagueId="lg-1" leagueName="Weekend Warriors" />);
+
+    server.use(
+      http.delete('/api/v1/leagues/:id/members/me', () =>
+        HttpResponse.json(
+          {
+            error: 'leave_failed',
+            message: 'You cannot leave this league yet.',
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    renderWithClient(<LeaveLeagueButton leagueId="lg-1" leagueName="Weekend Warriors" />);
+
     await user.click(screen.getByRole('button', { name: /Leave League/i }));
-    await user.click(screen.getAllByRole('button', { name: /^Leave League$/i })[1]);
-    expect(mockMutate).toHaveBeenCalled();
-    expect(mockDelete).toHaveBeenCalledWith({ url: '/api/v1/leagues/lg-1/members/me' });
+    await user.click(screen.getByTestId('league-leave-confirm'));
+
+    await screen.findByTestId('league-leave-error');
+    expect(screen.getByTestId('league-leave-error')).toHaveTextContent('cannot leave this league yet');
+    expect(screen.getByText(/Are you sure you want to leave/)).toBeInTheDocument();
   });
 });

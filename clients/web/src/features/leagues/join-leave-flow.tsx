@@ -1,27 +1,51 @@
-/**
- * Join/Leave league flow with approval-based request handling.
- * Covers: open join, approval request, pending state, leave with confirmation.
- */
-
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { InvitePolicy } from '@poolmaster/shared/domain';
 import { UserPlus, LogOut, Clock, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { client } from '@/lib/api';
-import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { client, joinDiscoverableLeague, leaveLeague } from '@/lib/api';
 
 type MembershipState = 'none' | 'pending' | 'member';
 
 interface JoinLeagueButtonProps {
   leagueId: string;
-  joinPolicy: string;
+  joinPolicy: InvitePolicy;
   membershipState: MembershipState;
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return error.message;
+  }
+  return 'Something went wrong. Please try again.';
+}
+
+function getJoinPolicyLabel(joinPolicy: InvitePolicy): string {
+  switch (joinPolicy) {
+    case InvitePolicy.OPEN:
+      return 'Join League';
+    case InvitePolicy.LINK_INVITE:
+      return 'Invite Link Required';
+    case InvitePolicy.COMMISSIONER_ONLY:
+      return 'Commissioner Only';
+  }
+}
+
+function getJoinPolicyHelpText(joinPolicy: InvitePolicy): string {
+  switch (joinPolicy) {
+    case InvitePolicy.OPEN:
+      return '';
+    case InvitePolicy.LINK_INVITE:
+      return 'This league uses invite links for membership.';
+    case InvitePolicy.COMMISSIONER_ONLY:
+      return 'Only the commissioner can add members to this league.';
+  }
 }
 
 export function JoinLeagueButton({ leagueId, joinPolicy, membershipState }: JoinLeagueButtonProps) {
   const queryClient = useQueryClient();
   const canJoinDirectly = joinPolicy === InvitePolicy.OPEN;
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   const join = useMutation({
     mutationFn: async () => {
@@ -29,15 +53,28 @@ export function JoinLeagueButton({ leagueId, joinPolicy, membershipState }: Join
         throw new Error('Join requests are not supported by the current backend flow.');
       }
 
-      const result = await client.post({
-        url: API_ROUTES.search.joinDiscoverableLeague(leagueId),
+      const { data, error } = await joinDiscoverableLeague({
+        client,
+        path: { leagueId },
       });
-      if (result.error) throw result.error;
-      return result.data;
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data?.membership?.leagueId) {
+        throw new Error('Missing membership response from join league.');
+      }
+
+      return data.membership;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leagues'] });
       queryClient.invalidateQueries({ queryKey: ['discover'] });
+      setJoinError(null);
+    },
+    onError: (error) => {
+      setJoinError(getErrorMessage(error));
     },
   });
 
@@ -58,16 +95,39 @@ export function JoinLeagueButton({ leagueId, joinPolicy, membershipState }: Join
   }
 
   return (
-    <Button size="sm" onClick={() => join.mutate()} disabled={join.isPending || !canJoinDirectly}>
-      {join.isPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <>
-          <UserPlus className="h-4 w-4 mr-1" />
-          {canJoinDirectly ? 'Join League' : 'Request Unsupported'}
-        </>
+    <div className="space-y-2">
+      <Button
+        size="sm"
+        onClick={() => {
+          setJoinError(null);
+          join.mutate();
+        }}
+        disabled={join.isPending || !canJoinDirectly}
+        data-testid="league-join-button"
+      >
+        {join.isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="ml-2">Joining...</span>
+          </>
+        ) : (
+          <>
+            <UserPlus className="h-4 w-4 mr-1" />
+            {canJoinDirectly ? 'Join League' : getJoinPolicyLabel(joinPolicy)}
+          </>
+        )}
+      </Button>
+
+      {!canJoinDirectly && (
+        <p className="text-xs text-muted-foreground">{getJoinPolicyHelpText(joinPolicy)}</p>
       )}
-    </Button>
+
+      {joinError && (
+        <p className="text-xs text-destructive" data-testid="league-join-error">
+          {joinError}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -79,19 +139,30 @@ interface LeaveLeagueButtonProps {
 
 export function LeaveLeagueButton({ leagueId, leagueName, onLeft }: LeaveLeagueButtonProps) {
   const [confirming, setConfirming] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const leave = useMutation({
     mutationFn: async () => {
-      const result = await client.delete({
-        url: API_ROUTES.leagues.leave(leagueId),
+      const { data, error } = await leaveLeague({
+        client,
+        path: { id: leagueId },
       });
-      if (result.error) throw result.error;
-      return result.data;
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data?.success) {
+        throw new Error('Leave league did not return a success response.');
+      }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leagues'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setLeaveError(null);
       onLeft?.();
     },
   });
@@ -109,9 +180,35 @@ export function LeaveLeagueButton({ leagueId, leagueName, onLeft }: LeaveLeagueB
             <p className="text-sm text-muted-foreground">
               Are you sure you want to leave <strong>{leagueName}</strong>? You'll lose access to all contests and history in this league.
             </p>
+            {leaveError && (
+              <p className="text-sm text-destructive" data-testid="league-leave-error">
+                {leaveError}
+              </p>
+            )}
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setConfirming(false)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => { leave.mutate(); setConfirming(false); }} disabled={leave.isPending}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setConfirming(false);
+                  setLeaveError(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  setLeaveError(null);
+                  try {
+                    await leave.mutateAsync();
+                    setConfirming(false);
+                  } catch (error) {
+                    setLeaveError(getErrorMessage(error));
+                  }
+                }}
+                disabled={leave.isPending}
+                data-testid="league-leave-confirm"
+              >
                 {leave.isPending ? 'Leaving...' : 'Leave League'}
               </Button>
             </div>

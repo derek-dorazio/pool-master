@@ -35,8 +35,8 @@ const configSections: ConfigCard[] = [
     to: '/config/platform',
     icon: <Server className="h-6 w-6" />,
     title: 'Platform',
-    description: 'Poll intervals, ingestion schedules, dunning schedule',
-    items: ['Poll intervals', 'Ingestion schedules', 'Dunning configuration'],
+    description: 'Poll intervals, ingestion schedules, dunning, and retention defaults',
+    items: ['Poll intervals', 'Ingestion schedules', 'Dunning configuration', 'Retention defaults'],
   },
 ];
 

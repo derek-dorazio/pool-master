@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { InvitePolicy } from '@poolmaster/shared/domain';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,13 +24,59 @@ import { client, createLeague } from '@/lib/api';
 const formSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(60, 'Name must be 60 characters or less'),
   description: z.string().max(500, 'Description must be 500 characters or less').optional().or(z.literal('')),
-  invitePolicy: z.enum(['open', 'invite-only', 'approval']),
+  invitePolicy: z.enum([InvitePolicy.OPEN, InvitePolicy.LINK_INVITE, InvitePolicy.COMMISSIONER_ONLY]),
   visibility: z.enum(['public', 'private']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 const steps = ['Basics', 'Access', 'Review'];
+
+const invitePolicyOptions = [
+  {
+    value: InvitePolicy.OPEN,
+    label: 'Open',
+    desc: 'Anyone can join directly from discovery.',
+  },
+  {
+    value: InvitePolicy.LINK_INVITE,
+    label: 'Invite Link',
+    desc: 'Members need an invite link or code to join.',
+  },
+  {
+    value: InvitePolicy.COMMISSIONER_ONLY,
+    label: 'Commissioner Only',
+    desc: 'Only the commissioner can add members.',
+  },
+] as const;
+
+const visibilityOptions = [
+  {
+    value: 'public' as const,
+    label: 'Public',
+    desc: 'League appears in search and discovery pages.',
+  },
+  {
+    value: 'private' as const,
+    label: 'Private',
+    desc: 'Hidden from search. Only accessible via direct link.',
+  },
+] as const;
+
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return error.message;
+  }
+  return 'Failed to create league. Please try again.';
+}
+
+function getInvitePolicyLabel(policy: FormValues['invitePolicy']): string {
+  return invitePolicyOptions.find((option) => option.value === policy)?.label ?? policy;
+}
+
+function getVisibilityLabel(visibility: FormValues['visibility']): string {
+  return visibilityOptions.find((option) => option.value === visibility)?.label ?? visibility;
+}
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
@@ -84,7 +132,7 @@ export function Component() {
     defaultValues: {
       name: '',
       description: '',
-      invitePolicy: 'invite-only',
+      invitePolicy: InvitePolicy.LINK_INVITE,
       visibility: 'private',
     },
     mode: 'onChange',
@@ -92,6 +140,42 @@ export function Component() {
 
   const { register, control, watch, trigger, formState: { errors } } = form;
   const values = watch();
+  const createLeagueMutation = useMutation({
+    mutationFn: async () => {
+      const submittedName = values.name;
+      const { data, error } = await createLeague({
+        client,
+        body: {
+          name: submittedName,
+          description: values.description,
+          visibility: values.visibility === 'public' ? 'PUBLIC' : 'PRIVATE',
+          settings: {
+            invitePolicy: values.invitePolicy,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data?.league?.id) {
+        throw new Error('Missing league id in create league response.');
+      }
+
+      return {
+        leagueId: data.league.id,
+        leagueName: submittedName,
+      };
+    },
+    onSuccess: ({ leagueId, leagueName }) => {
+      toast({ title: 'League created!', description: `${leagueName} is ready to go.` });
+      navigate(`/leagues/${leagueId}`);
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: getErrorMessage(error) });
+    },
+  });
 
   async function handleNext() {
     let valid = true;
@@ -109,29 +193,8 @@ export function Component() {
     }
   }
 
-  async function handleCreate() {
-    try {
-      const { data, error } = await createLeague({
-        client,
-        body: {
-          name: values.name,
-          description: values.description,
-          visibility: values.visibility === 'public' ? 'PUBLIC' : 'PRIVATE',
-          settings: {
-            invitePolicy: values.invitePolicy,
-          },
-        },
-      });
-      if (error) throw error;
-      toast({ title: 'League created!', description: `${values.name} is ready to go.` });
-      navigate(`/leagues/${data?.league.id}`);
-    } catch {
-      toast({ title: 'Error', description: 'Failed to create league. Please try again.' });
-    }
-  }
-
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6" data-testid="league-create-page">
       <h1 className="text-3xl font-bold text-center">Create League</h1>
 
       <StepIndicator currentStep={currentStep} />
@@ -190,11 +253,7 @@ export function Component() {
                 control={control}
                 render={({ field }) => (
                   <div className="space-y-2">
-                    {[
-                      { value: 'open' as const, label: 'Open', desc: 'Anyone can join without approval.' },
-                      { value: 'invite-only' as const, label: 'Invite Only', desc: 'Members need an invite link or code to join.' },
-                      { value: 'approval' as const, label: 'Approval Required', desc: 'Join requests must be approved by a commissioner.' },
-                    ].map((option) => (
+                    {invitePolicyOptions.map((option) => (
                       <label
                         key={option.value}
                         className={cn(
@@ -228,10 +287,7 @@ export function Component() {
                 control={control}
                 render={({ field }) => (
                   <div className="space-y-2">
-                    {[
-                      { value: 'public' as const, label: 'Public', desc: 'League appears in search and discovery pages.' },
-                      { value: 'private' as const, label: 'Private', desc: 'Hidden from search. Only accessible via direct link.' },
-                    ].map((option) => (
+                    {visibilityOptions.map((option) => (
                       <label
                         key={option.value}
                         className={cn(
@@ -293,7 +349,7 @@ export function Component() {
               <div className="flex items-center justify-between p-3">
                 <div>
                   <div className="text-xs text-muted-foreground">Invite Policy</div>
-                  <div className="font-medium capitalize">{values.invitePolicy.replace('-', ' ')}</div>
+                  <div className="font-medium">{getInvitePolicyLabel(values.invitePolicy)}</div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)}>
                   Edit
@@ -302,7 +358,7 @@ export function Component() {
               <div className="flex items-center justify-between p-3">
                 <div>
                   <div className="text-xs text-muted-foreground">Visibility</div>
-                  <div className="font-medium capitalize">{values.visibility}</div>
+                  <div className="font-medium">{getVisibilityLabel(values.visibility)}</div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)}>
                   Edit
@@ -321,7 +377,7 @@ export function Component() {
 
       {/* Navigation buttons */}
       <div className="flex justify-between">
-        <Button
+          <Button
           variant="outline"
           onClick={handleBack}
           disabled={currentStep === 0}
@@ -335,11 +391,21 @@ export function Component() {
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         ) : (
-          <Button onClick={handleCreate}>
-            Create League
+          <Button
+            onClick={() => createLeagueMutation.mutate()}
+            disabled={createLeagueMutation.isPending}
+            data-testid="league-create-submit"
+          >
+            {createLeagueMutation.isPending ? 'Creating League...' : 'Create League'}
           </Button>
         )}
       </div>
+
+      {createLeagueMutation.isError && (
+        <p className="text-sm text-destructive text-center" data-testid="league-create-error">
+          {getErrorMessage(createLeagueMutation.error)}
+        </p>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import type { Config } from 'jest';
 const config: Config = {
   testEnvironment: 'node',
   rootDir: '.',
-  testMatch: ['**/*.test.ts'],
+  testMatch: ['unit/**/*.test.ts'],
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tests/tsconfig.json' }],
   },
@@ -25,10 +25,10 @@ const config: Config = {
   ],
   coverageThreshold: {
     global: {
-      statements: 23.42,
-      branches: 13.91,
-      functions: 20.3,
-      lines: 23.93,
+      statements: 24,
+      branches: 14.2,
+      functions: 21.15,
+      lines: 24.53,
     },
   },
 };

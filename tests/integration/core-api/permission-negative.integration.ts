@@ -11,6 +11,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   getApp,
+  getPrisma,
   createTestUser,
   cleanupTestData,
   withoutJsonBodyHeaders,
@@ -38,6 +39,7 @@ describe('Permission Negative Integration', () => {
   let ownerUserId: string;
   let leagueId: string;
   let contestId: string;
+  let actionItemId: string;
 
   beforeAll(async () => {
     const owner = await createTestUser({ displayName: 'Permission Owner' });
@@ -112,6 +114,20 @@ describe('Permission Negative Integration', () => {
 
     expect(contestRes.statusCode).toBe(201);
     contestId = contestRes.json().contest.id;
+
+    const prisma = getPrisma();
+    const actionItem = await prisma.commissionerActionItem.create({
+      data: {
+        leagueId,
+        contestId,
+        type: 'JOIN_REQUEST',
+        priority: 'MEDIUM',
+        title: 'Review join request',
+        description: 'A pending member request needs review.',
+        actionUrl: `/leagues/${leagueId}`,
+      },
+    });
+    actionItemId = actionItem.id;
   });
 
   it('rejects non-commissioners on league management routes and non-members on contest entry routes', async () => {
@@ -141,6 +157,27 @@ describe('Permission Negative Integration', () => {
       headers: withoutJsonBodyHeaders(memberHeaders),
     });
     expect(removeOwnerRes.statusCode).toBe(403);
+
+    const memberDashboardRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.detail(leagueId) + '/dashboard',
+      headers: memberHeaders,
+    });
+    expect(memberDashboardRes.statusCode).toBe(403);
+
+    const memberResolveRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.detail(leagueId) + `/action-items/${actionItemId}/resolve`,
+      headers: memberHeaders,
+    });
+    expect(memberResolveRes.statusCode).toBe(403);
+
+    const outsiderMembersRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.members(leagueId),
+      headers: outsiderHeaders,
+    });
+    expect(outsiderMembersRes.statusCode).toBe(403);
 
     const outsiderEnterRes = await getApp().inject({
       method: 'POST',

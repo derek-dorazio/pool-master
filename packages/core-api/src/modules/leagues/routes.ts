@@ -34,6 +34,7 @@ import { MemberDirectoryService } from './member-directory-service';
 import { DashboardService } from './dashboard-service';
 import { AuditService } from './audit-service';
 import { BulkService } from './bulk-service';
+import { requireCommissionerOrOwner, requireLeagueMembership } from './permissions';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
@@ -215,6 +216,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       operationId: 'listLeagueMembers',
       response: { 200: zodToJsonSchema(LeagueMembersResponseSchema) },
     },
+    preHandler: requireLeagueMembership(membershipRepo),
     handler: member.listMembers,
   });
 
@@ -288,6 +290,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       operationId: 'getLeagueDashboard',
       response: { 200: passthroughResponseSchema },
     },
+    preHandler: requireCommissionerOrOwner(membershipRepo),
     handler: dashboard.getDashboard,
   });
 
@@ -298,6 +301,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       operationId: 'resolveActionItem',
       response: { 200: passthroughResponseSchema },
     },
+    preHandler: requireCommissionerOrOwner(membershipRepo),
     handler: dashboard.resolveActionItem,
   });
 
@@ -310,6 +314,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       operationId: 'getLeagueAuditLog',
       response: { 200: passthroughResponseSchema },
     },
+    preHandler: requireCommissionerOrOwner(membershipRepo),
     handler: audit.getLeagueAuditLog,
   });
 
@@ -320,6 +325,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       operationId: 'getMemberAuditLog',
       response: { 200: zodToJsonSchema(LeagueAuditEntriesResponseSchema) },
     },
+    preHandler: requireLeagueMembership(membershipRepo),
     handler: audit.getMemberAuditLog,
   });
 

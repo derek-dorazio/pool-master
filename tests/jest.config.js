@@ -2,10 +2,7 @@
 module.exports = {
   testEnvironment: 'node',
   rootDir: '..',
-  testMatch: [
-    '<rootDir>/tests/**/*.test.ts',
-    '<rootDir>/tests/integration/core-api/social.integration.ts',
-  ],
+  testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tests/tsconfig.json' }],
   },
@@ -27,10 +24,10 @@ module.exports = {
   ],
   coverageThreshold: {
     global: {
-      statements: 23.64,
-      branches: 13.98,
-      functions: 20.63,
-      lines: 24.16,
+      statements: 24,
+      branches: 14.2,
+      functions: 21.15,
+      lines: 24.53,
     },
   },
 };

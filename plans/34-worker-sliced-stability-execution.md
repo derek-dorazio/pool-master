@@ -221,7 +221,7 @@ Improve confidence in the still-supported admin surfaces without broadening admi
 | WSH-005 | D | Add draft-room coverage for kept MVP modes | Done | Main-thread draft-room slice completed on 2026-04-04. Added room action wiring coverage for turn-based picks, participant drawer selection, pick'em picks/confidence, and bracket actions without surfacing deeper shared-architecture issues. |
 | WSH-006 | E | Add backend contest/scoring edge coverage and targeted DB integration cases | Done | Added scoring-consumer dedupe coverage, active-contest filtering coverage, and contest/scoring unit edge tests without touching shared DTO or schema surfaces |
 | WSH-007 | F | Add admin coverage only on still-supported active surfaces | Done | Added focused Vitest coverage for home, health, and config surfaces; fixed the notification template update payload to send `emailText` for the edited email body. |
-| WSH-008 | Main | Re-measure coverage and decide whether ratchet changes are justified after worker slices land | Not Started | Update [coverage-threshold-ratchet.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/coverage-threshold-ratchet.md) only after merged changes are stable |
+| WSH-008 | Main | Re-measure coverage and decide whether ratchet changes are justified after worker slices land | Done | The merged worker wave passed the full local gate on 2026-04-04, exposed no new shared-architecture problems, and justified a second threshold ratchet to 24.00 / 14.20 / 21.15 / 24.53 (backend), 54.42 / 46.76 / 54.12 / 57.35 (web), and 26.54 / 20.73 / 20.62 / 28.00 (admin). |
 
 ## Acceptance Criteria
 

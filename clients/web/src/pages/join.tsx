@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { client } from '@/lib/api';
+import { acceptInvitation, client } from '@/lib/api';
 import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -13,8 +13,8 @@ function useAcceptInvitation(inviteCode: string) {
 
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await client.post({
-        url: '/api/v1/invitations/accept',
+      const { data, error } = await acceptInvitation({
+        client,
         body: { inviteCode },
       });
       if (error) throw error;
@@ -37,14 +37,16 @@ export function Component() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const acceptInvitation = useAcceptInvitation(inviteCode);
+  const attemptedInviteCodeRef = useRef<string | null>(null);
   const redirectTo = `/join/${encodeURIComponent(inviteCode)}`;
 
   useEffect(() => {
-    if (!inviteCode || !isAuthenticated || acceptInvitation.isPending || acceptInvitation.isSuccess) {
+    if (!inviteCode || !isAuthenticated || attemptedInviteCodeRef.current === inviteCode || acceptInvitation.isPending || acceptInvitation.isSuccess) {
       return;
     }
 
-    void acceptInvitation.mutateAsync();
+    attemptedInviteCodeRef.current = inviteCode;
+    acceptInvitation.mutate();
   }, [acceptInvitation, inviteCode, isAuthenticated]);
 
   if (!inviteCode) {
@@ -96,7 +98,7 @@ export function Component() {
         </CardHeader>
         <CardContent className="space-y-4">
           {acceptInvitation.isPending && (
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground" data-testid="join-invitation-loading">
               <Loader2 className="h-4 w-4 animate-spin" />
               Accepting invitation...
             </div>
@@ -109,8 +111,10 @@ export function Component() {
           )}
           {acceptInvitation.isError && (
             <div className="space-y-3">
-              <p className="text-sm text-destructive">{getErrorMessage(acceptInvitation.error)}</p>
-              <Button variant="outline" onClick={() => void acceptInvitation.mutateAsync()}>
+              <p className="text-sm text-destructive" data-testid="join-invitation-error">
+                {getErrorMessage(acceptInvitation.error)}
+              </p>
+              <Button variant="outline" onClick={() => acceptInvitation.mutate()} data-testid="join-invitation-retry">
                 Try Again
               </Button>
             </div>
