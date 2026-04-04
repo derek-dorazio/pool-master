@@ -43,13 +43,7 @@ import { DigestConfigService } from './digest-config-service';
 import { registerPlatformConfigRoutes } from './platform-config-routes';
 import { configRoutes } from './config-routes';
 import { auditRoutes } from './audit-routes';
-
-const commonDtoModule = require('../../../../shared/dto/common.dto.ts') as typeof import('../../../../shared/dto/common.dto');
-const adminDtoModule = require('../../../../shared/dto/admin.dto.ts') as typeof import('../../../../shared/dto/admin.dto');
-const jsonSchemaModule = require('../../../../shared/dto/json-schema.ts') as typeof import('../../../../shared/dto/json-schema');
-
-const { SuccessSchema } = commonDtoModule;
-const {
+import {
   TenantListResponseSchema,
   TenantDetailResponseSchema,
   UserListResponseSchema,
@@ -83,8 +77,9 @@ const {
   AlertRuleDtoSchema,
   AdminAnnouncementDtoSchema,
   AdminAnnouncementListResponseSchema,
-} = adminDtoModule;
-const { zodToJsonSchema } = jsonSchemaModule;
+  SuccessSchema,
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
 // Admin auth preHandler (placeholder — will be replaced with real SSO check)

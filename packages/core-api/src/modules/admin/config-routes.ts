@@ -10,8 +10,14 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
-const draftsDtoModule = require('../../../../shared/dto/drafts.dto.ts') as typeof import('../../../../shared/dto/drafts.dto');
+import {
+  AdminScoringTemplateListResponseSchema,
+  AdminScoringTemplateResponseSchema,
+  SelectionTemplateListResponseSchema,
+  SelectionTemplateResponseSchema,
+  SuccessSchema,
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
 import { TemplateConfigService } from './template-config-service';
 import { createTemplateConfigHandlers } from './template-config-handler';
 import { NotificationConfigService } from './notification-config-service';
@@ -20,16 +26,6 @@ import { PushTriggerConfigService } from './push-trigger-config-service';
 import { createPushTriggerConfigHandlers } from './push-trigger-config-handler';
 import { RateLimitConfigService } from './rate-limit-config-service';
 import { createRateLimitConfigHandlers } from './rate-limit-config-handler';
-
-const {
-  SelectionTemplateListResponseSchema,
-  SelectionTemplateResponseSchema,
-} = draftsDtoModule;
-const adminDtoModule = require('../../../../shared/dto/admin.dto.ts') as typeof import('../../../../shared/dto/admin.dto');
-const {
-  AdminScoringTemplateListResponseSchema,
-  AdminScoringTemplateResponseSchema,
-} = adminDtoModule;
 
 export async function configRoutes(fastify: FastifyInstance): Promise<void> {
   // --- Services ---

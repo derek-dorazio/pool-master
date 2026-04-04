@@ -6,10 +6,10 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import {
-  zodToJsonSchema,
-} from '@poolmaster/shared/dto';
-const complianceDtoModule = require('../../../../shared/dto/compliance.dto.ts') as typeof import('../../../../shared/dto/compliance.dto');
-const {
+  AccountDeletionAcceptedResponseSchema,
+  AccountDeletionCancelledResponseSchema,
+  AccountDeletionStatusResponseSchema,
+  ActiveExclusionResponseSchema,
   ActivityLimitResponseSchema,
   ActivityLimitUpdateRequestSchema,
   AgeVerificationResponseSchema,
@@ -17,18 +17,15 @@ const {
   DataExportAcceptedResponseSchema,
   DataExportResponseSchema,
   DataExportStatusResponseSchema,
-  AccountDeletionAcceptedResponseSchema,
-  AccountDeletionStatusResponseSchema,
-  AccountDeletionCancelledResponseSchema,
-  SelfExclusionCreatedResponseSchema,
-  SelfExclusionDurationSchema,
-  ActiveExclusionResponseSchema,
-  SessionReminderResponseSchema,
-  SessionReminderUpdateRequestSchema,
   EnforcementCreatedResponseSchema,
   EnforcementHistoryResponseSchema,
   RetentionCleanupResponseSchema,
-} = complianceDtoModule;
+  SelfExclusionCreatedResponseSchema,
+  SelfExclusionDurationSchema,
+  SessionReminderResponseSchema,
+  SessionReminderUpdateRequestSchema,
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
 import { ComplianceService, verifyAge } from './compliance-service';
 import {
   mapConsentRecordToDto,

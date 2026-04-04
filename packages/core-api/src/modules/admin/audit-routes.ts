@@ -3,15 +3,13 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import {
+  AuditEntryResponseSchema,
+  AuditListResponseSchema,
+  SuccessSchema,
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
 import { listAuditLog, getAuditEntry, exportAuditLog } from './audit-handler';
-
-const commonDtoModule = require('../../../../shared/dto/common.dto.ts') as typeof import('../../../../shared/dto/common.dto');
-const adminDtoModule = require('../../../../shared/dto/admin.dto.ts') as typeof import('../../../../shared/dto/admin.dto');
-const jsonSchemaModule = require('../../../../shared/dto/json-schema.ts') as typeof import('../../../../shared/dto/json-schema');
-
-const { SuccessSchema } = commonDtoModule;
-const { AuditListResponseSchema, AuditEntryResponseSchema } = adminDtoModule;
-const { zodToJsonSchema } = jsonSchemaModule;
 
 export async function auditRoutes(app: FastifyInstance): Promise<void> {
   const querySchema = {
