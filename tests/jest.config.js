@@ -19,5 +19,18 @@ module.exports = {
     'packages/shared/**/*.ts',
     '!**/*.d.ts',
     '!**/node_modules/**',
+    '!packages/shared/dist/**',
+    '!packages/shared/generated/**',
+    '!packages/shared/openapi-ts.config.ts',
+    '!packages/shared/package.json',
+    '!packages/shared/tsconfig.json',
   ],
+  coverageThreshold: {
+    global: {
+      statements: 25.45,
+      branches: 15.68,
+      functions: 22.93,
+      lines: 25.81,
+    },
+  },
 };

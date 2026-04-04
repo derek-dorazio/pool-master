@@ -69,11 +69,15 @@ Required local pre-push commands:
 3. `npx jest --config tests/jest.config.js --forceExit`
 4. `cd clients/web && npx vitest run`
 5. `cd clients/admin && npx vitest run`
+6. `npx jest --config tests/jest.config.js --coverage --forceExit`
+7. `cd clients/web && npm run test:coverage`
+8. `cd clients/admin && npm run test:coverage`
 
 Rules:
 
 - Treat these as pre-push gates, not optional follow-up checks.
 - Do not rely on GitHub CI to discover basic lint, unit, or integration failures that could have been caught locally.
+- Treat coverage threshold enforcement as part of the required local gate once thresholds are configured; do not defer coverage regressions to GitHub CI.
 - Smoke tests and deployed browser E2E remain CI/deployment signals unless explicitly run locally as part of the task.
 - If a gate is blocked by local environment constraints, state that clearly before pushing.
 

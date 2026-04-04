@@ -20,8 +20,8 @@ These are the current measured totals and should be used as the initial threshol
 
 | Suite | Statements | Branches | Functions | Lines |
 |---|---:|---:|---:|---:|
-| Backend Jest | 21.85% | 13.09% | 17.50% | 24.01% |
-| Web Vitest | 47.60% | 40.64% | 47.19% | 50.10% |
+| Backend Jest | 25.45% | 15.68% | 22.93% | 25.81% |
+| Web Vitest | 47.62% | 40.64% | 47.23% | 50.13% |
 | Admin Vitest | 21.34% | 15.29% | 16.18% | 22.78% |
 
 ## Scope
@@ -84,12 +84,12 @@ Example ratchet style:
 
 | ID | Area | Task | Status | Notes |
 |---|---|---|---|---|
-| CTR-001 | Backend | Clean Jest coverage collection so generated/config files do not break or distort backend coverage | Not Started | Exclude generated and tool-config files intentionally rather than letting coverage fail noisily |
-| CTR-002 | Thresholds | Add backend coverage thresholds to [tests/jest.config.js](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/jest.config.js) using the current baseline | Not Started | Statements 21.85, branches 13.09, functions 17.50, lines 24.01 |
-| CTR-003 | Thresholds | Add web coverage thresholds to [clients/web/vitest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/vitest.config.ts) using the current baseline | Not Started | Statements 47.60, branches 40.64, functions 47.19, lines 50.10 |
-| CTR-004 | Thresholds | Add admin coverage thresholds to [clients/admin/vitest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/vitest.config.ts) using the current baseline | Not Started | Statements 21.34, branches 15.29, functions 16.18, lines 22.78 |
+| CTR-001 | Backend | Clean Jest coverage collection so generated/config files do not break or distort backend coverage | Done | [tests/jest.config.js](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/jest.config.js) and [tests/jest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/jest.config.ts) now exclude `packages/shared/generated/**`, `packages/shared/dist/**`, and `packages/shared/openapi-ts.config.ts`, which raised the real backend baseline to 25.45 / 15.68 / 22.93 / 25.81. |
+| CTR-002 | Thresholds | Add backend coverage thresholds to [tests/jest.config.js](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/jest.config.js) using the current baseline | In Progress | Thresholds now match the cleaned baseline: statements 25.45, branches 15.68, functions 22.93, lines 25.81. Validate in the normal local and CI loops before marking done. |
+| CTR-003 | Thresholds | Add web coverage thresholds to [clients/web/vitest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/vitest.config.ts) using the current baseline | In Progress | Thresholds now match the current web baseline: statements 47.62, branches 40.64, functions 47.23, lines 50.13. |
+| CTR-004 | Thresholds | Add admin coverage thresholds to [clients/admin/vitest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/vitest.config.ts) using the current baseline | In Progress | Thresholds now match the current admin baseline: statements 21.34, branches 15.29, functions 16.18, lines 22.78. |
 | CTR-005 | CI Visibility | Upload coverage artifacts and print actual totals to logs in CI | Not Started | Make coverage easier to retrieve from GitHub UI and CLI |
-| CTR-006 | Policy | Update rules/docs so local and CI coverage thresholds are treated as required quality gates | Not Started | Keep AGENTS/rules/docs aligned once the thresholds are live |
+| CTR-006 | Policy | Update rules/docs so local and CI coverage thresholds are treated as required quality gates | In Progress | [rules/workflow-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/workflow-rules.md) now requires local coverage runs before push. Remaining work is to keep CI expectations aligned once this threshold batch is proven stable. |
 | CTR-007 | Ratchet | Define the first threshold increase after the baseline gate is stable | Not Started | Do not raise until the initial enforced baseline is proven stable |
 | CTR-008 | Rollout | Dry-run the threshold configuration locally before enabling branch-protection expectations in GitHub | Not Started | Avoid turning on a permanent gate until the baseline values are confirmed after collector cleanup |
 
