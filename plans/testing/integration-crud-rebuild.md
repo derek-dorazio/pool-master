@@ -33,13 +33,14 @@ Rebuild backend integration coverage from scratch using small, self-contained CR
    - verify deletion
 
 2. League CRUD
-   - Status: In Progress
+   - Status: Done
    - create league
    - list owned leagues
    - fetch league detail
    - update settings
 
 3. Member and Invitation CRUD
+   - Status: In Progress
    - invite by email
    - generate invite link
    - accept invite
