@@ -1,5 +1,6 @@
 import type { ContestDetailView } from '@/features/contests/hooks/use-contest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as ContestDetailPage } from './detail';
 
@@ -63,7 +64,7 @@ const mockMyEntry = {
   contestId: 'contest-1',
 };
 
-const mockContestEntries = {
+const baseContestEntries = {
   contestId: 'contest-1',
   total: 2,
   isJoined: true,
@@ -85,9 +86,10 @@ const mockContestEntries = {
   ],
 };
 
+let contestEntries = { ...baseContestEntries };
 const mockMyContestEntry = {
   contestId: 'contest-1',
-  entry: mockContestEntries.entries[0],
+  entry: baseContestEntries.entries[0],
 };
 
 let contestState: ContestDetailView = mockActiveContest;
@@ -110,7 +112,7 @@ vi.mock('@/stores/auth-store', () => ({
 }));
 
 const invalidateQueries = vi.fn();
-const mutateAsync = vi.fn();
+const mutationCalls = vi.fn();
 
 vi.mock('@/hooks/use-toast', () => ({
   toast: vi.fn(),
@@ -121,7 +123,13 @@ vi.mock('@tanstack/react-query', async () => {
   return {
     ...actual,
     useQueryClient: () => ({ invalidateQueries }),
-    useMutation: () => ({ mutateAsync, isPending: false }),
+    useMutation: (options: { onSuccess?: () => Promise<void> | void }) => ({
+      mutateAsync: vi.fn(async () => {
+        mutationCalls();
+        await options.onSuccess?.();
+      }),
+      isPending: false,
+    }),
     useQuery: (options: { queryKey: string[] }) => {
       const key = options.queryKey[2];
       if (key === 'standings-summary') {
@@ -131,7 +139,7 @@ vi.mock('@tanstack/react-query', async () => {
         return { data: mockStandingsEntry, isLoading: false, isError: false };
       }
       if (key === 'entries') {
-        return { data: mockContestEntries, isLoading: false, isError: false };
+        return { data: contestEntries, isLoading: false, isError: false };
       }
       if (key === 'my-entry') {
         return { data: mockJoinedContestEntry, isLoading: false, isError: false };
@@ -155,6 +163,9 @@ describe('ContestDetailPage', () => {
     mockStandingsSummary = mockSummary;
     mockStandingsEntry = mockMyEntry;
     mockJoinedContestEntry = mockMyContestEntry;
+    contestEntries = { ...baseContestEntries };
+    mutationCalls.mockClear();
+    invalidateQueries.mockClear();
   });
 
   it('renders contest name', () => {
@@ -208,6 +219,42 @@ describe('ContestDetailPage', () => {
     expect(screen.getByRole('link', { name: /Open Draft Room/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Leave Contest/ })).toBeInTheDocument();
     expect(screen.getByText(/Signed in as/i)).toBeInTheDocument();
+  });
+
+  it('invites the user into a draft contest and refreshes contest queries after joining', async () => {
+    const user = userEvent.setup();
+    contestState = mockDraftContest;
+    contestEntries = { ...baseContestEntries, isJoined: false };
+    mockJoinedContestEntry = undefined;
+
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: /Enter Contest/ }));
+
+    await waitFor(() => {
+      expect(mutationCalls).toHaveBeenCalled();
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contests', 'contest-1', 'entries'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contests', 'contest-1', 'my-entry'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contests', 'contest-1'] });
+  });
+
+  it('removes the user from a joined draft contest and refreshes contest queries after leaving', async () => {
+    const user = userEvent.setup();
+    contestState = mockDraftContest;
+    contestEntries = { ...baseContestEntries, isJoined: true };
+    mockJoinedContestEntry = mockMyContestEntry;
+
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: /Leave Contest/ }));
+
+    await waitFor(() => {
+      expect(mutationCalls).toHaveBeenCalled();
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contests', 'contest-1', 'entries'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contests', 'contest-1', 'my-entry'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contests', 'contest-1'] });
   });
 
   it('uses mode-aware room labels for non-snake contests', () => {

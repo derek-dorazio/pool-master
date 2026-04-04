@@ -73,7 +73,7 @@ export class DashboardService {
 function buildRecentActivity(
   members: { userId: string; joinedAt: Date }[],
 ): MemberActivityEvent[] {
-  return members
+  return [...members]
     .sort((a, b) => b.joinedAt.getTime() - a.joinedAt.getTime())
     .slice(0, 10)
     .map((m) => ({

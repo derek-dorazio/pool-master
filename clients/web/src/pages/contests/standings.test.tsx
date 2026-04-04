@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Component as ContestStandingsPage } from './standings';
 
@@ -10,7 +10,7 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-let contestSelectionType: 'PICK_EM' | 'BRACKET_PICK_EM' = 'PICK_EM';
+let contestSelectionType = 'PICK_EM';
 let contestName = "NFL Weekly Pick'em";
 
 vi.mock('@/features/contests/hooks/use-contest', () => ({
@@ -30,11 +30,11 @@ vi.mock('@/features/contests/hooks/use-contest', () => ({
   }),
 }));
 
-const standings = [
+const baseStandings = [
   {
     rank: 1,
     entryId: 'entry-1',
-    entryName: 'Alpha Entry',
+    entryName: 'Charlie Entry',
     ownerDisplayName: 'Alice',
     ownerId: 'user-1',
     totalScore: 50,
@@ -43,7 +43,32 @@ const standings = [
     isEliminated: false,
     lastUpdatedAt: '2026-04-03T10:00:00Z',
   },
+  {
+    rank: 2,
+    entryId: 'entry-2',
+    entryName: 'Alpha Entry',
+    ownerDisplayName: 'Bob',
+    ownerId: 'user-2',
+    totalScore: 60,
+    previousRank: null,
+    movement: 'same',
+    isEliminated: false,
+    lastUpdatedAt: '2026-04-03T10:00:00Z',
+  },
+  {
+    rank: 3,
+    entryId: 'entry-3',
+    entryName: 'Bravo Entry',
+    ownerDisplayName: 'Cara',
+    ownerId: 'user-3',
+    totalScore: 70,
+    previousRank: null,
+    movement: 'same',
+    isEliminated: false,
+    lastUpdatedAt: '2026-04-03T10:00:00Z',
+  },
 ];
+let standings = [...baseStandings];
 
 vi.mock('@/features/contests/hooks/use-standings', () => ({
   useStandings: () => ({
@@ -61,10 +86,13 @@ vi.mock('@/features/contests/hooks/use-standings', () => ({
 }));
 
 describe('ContestStandingsPage', () => {
-  it("uses mode-aware pick'em standings labels", () => {
+  beforeEach(() => {
     contestSelectionType = 'PICK_EM';
     contestName = "NFL Weekly Pick'em";
+    standings = [...baseStandings];
+  });
 
+  it("uses mode-aware pick'em standings labels", () => {
     render(
       <MemoryRouter>
         <ContestStandingsPage />
@@ -91,5 +119,33 @@ describe('ContestStandingsPage', () => {
     expect(screen.getByText(/1 bracket\. saved bracket predictions ranked by the latest standings rollup/i)).toBeInTheDocument();
     expect(screen.getByText('Bracket')).toBeInTheDocument();
     expect(screen.getByText('Bracket Score')).toBeInTheDocument();
+  });
+
+  it('sorts standings rows by entry name and total score when the headers are clicked', () => {
+    contestSelectionType = 'SNAKE_DRAFT';
+    contestName = 'Masters Pool';
+
+    render(
+      <MemoryRouter>
+        <ContestStandingsPage />
+      </MemoryRouter>,
+    );
+
+    const getRenderedEntries = () =>
+      screen
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => row.querySelector('td:nth-child(3)')?.textContent?.trim());
+
+    expect(getRenderedEntries()).toEqual(['Charlie Entry', 'Alpha Entry', 'Bravo Entry']);
+
+    fireEvent.click(screen.getByRole('columnheader', { name: /Entry/ }));
+    expect(getRenderedEntries()).toEqual(['Charlie Entry', 'Bravo Entry', 'Alpha Entry']);
+
+    fireEvent.click(screen.getByRole('columnheader', { name: /Entry/ }));
+    expect(getRenderedEntries()).toEqual(['Alpha Entry', 'Bravo Entry', 'Charlie Entry']);
+
+    fireEvent.click(screen.getByRole('columnheader', { name: 'Total' }));
+    expect(getRenderedEntries()).toEqual(['Bravo Entry', 'Alpha Entry', 'Charlie Entry']);
   });
 });

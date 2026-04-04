@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { Component as ContestResultsPage } from './results';
 
 const mockToast = vi.fn();
-let contestSelectionType: 'PICK_EM' | 'BRACKET_PICK_EM' = 'PICK_EM';
+let contestSelectionType = 'PICK_EM';
 let contestName = "NFL Weekly Pick'em";
 let mockQueryResult = {
   data: {
@@ -177,6 +177,22 @@ describe('ContestResultsPage', () => {
     expect(screen.getByText('Bracket Leader')).toBeInTheDocument();
     expect(screen.getAllByText('Bracket Score').length).toBeGreaterThan(0);
     expect(screen.getByText('Lead Over 2nd Bracket')).toBeInTheDocument();
+  });
+
+  it('renders the generic contest results labels for non pick-em contests', () => {
+    contestSelectionType = 'SNAKE_DRAFT';
+    contestName = 'Masters Pool';
+
+    renderPage();
+
+    expect(screen.getByText('Masters Pool')).toBeInTheDocument();
+    expect(screen.getByText('Contest Results')).toBeInTheDocument();
+    expect(screen.getByText(/Based on the latest persisted standings/i)).toBeInTheDocument();
+    expect(screen.getByText('Standings Snapshot')).toBeInTheDocument();
+    expect(screen.getByText('Entry')).toBeInTheDocument();
+    expect(screen.getByText('Leader')).toBeInTheDocument();
+    expect(screen.getAllByText('Total Score').length).toBeGreaterThan(0);
+    expect(screen.getByText('Lead Over 2nd')).toBeInTheDocument();
   });
 
   it('shows the persisted winner even when only one standings entry exists', () => {

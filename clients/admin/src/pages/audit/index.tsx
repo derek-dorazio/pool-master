@@ -158,8 +158,12 @@ export function Component() {
                       return (
                         <tr key={entry.id} className="group">
                           <td colSpan={7} className="p-0">
-                            <div
-                              className="flex cursor-pointer items-center border-b py-2.5 hover:bg-muted/50"
+                            <button
+                              type="button"
+                              className="flex w-full cursor-pointer items-center border-b py-2.5 text-left hover:bg-muted/50"
+                              aria-expanded={isExpanded}
+                              aria-controls={`audit-entry-${entry.id}`}
+                              data-testid={`audit-entry-toggle-${entry.id}`}
                               onClick={() => setExpandedRow(isExpanded ? null : entry.id)}
                             >
                               <div className="w-8 flex-shrink-0 px-2">
@@ -187,9 +191,12 @@ export function Component() {
                                 {entry.resourceId}
                               </div>
                               <div className="min-w-0 flex-1 truncate">{entry.description}</div>
-                            </div>
+                            </button>
                             {isExpanded && (
-                              <div className="border-b bg-muted/30 px-10 py-4 space-y-3">
+                              <div
+                                id={`audit-entry-${entry.id}`}
+                                className="border-b bg-muted/30 px-10 py-4 space-y-3"
+                              >
                                 <div>
                                   <p className="text-xs font-medium text-muted-foreground mb-1">Full Description</p>
                                   <p className="text-sm">{entry.description}</p>
@@ -245,6 +252,7 @@ export function Component() {
                     variant="outline"
                     size="sm"
                     disabled={data.page <= 1}
+                    data-testid="audit-pagination-previous"
                     onClick={() => updateFilter('page', data.page - 1)}
                   >
                     Previous
@@ -253,6 +261,7 @@ export function Component() {
                     variant="outline"
                     size="sm"
                     disabled={data.page >= data.totalPages}
+                    data-testid="audit-pagination-next"
                     onClick={() => updateFilter('page', data.page + 1)}
                   >
                     Next

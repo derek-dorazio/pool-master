@@ -85,6 +85,46 @@ describe('league permissions', () => {
     });
   });
 
+  it('rejects requests without a user identity on requireLeagueMembership', async () => {
+    const repo = createMockMembershipRepo();
+    const hook = requireLeagueMembership(repo);
+    const reply = createReply();
+    await hook.call(
+      {} as never,
+      {
+        headers: {},
+        params: { id: 'league-1' },
+      } as never,
+      reply as never,
+      jest.fn(),
+    );
+    expect(reply.statusCode).toBe(401);
+    expect(reply.payload).toEqual({
+      error: 'UNAUTHORIZED',
+      message: 'Missing user identity',
+    });
+  });
+
+  it('rejects requests without a league id on requireCommissionerOrOwner', async () => {
+    const repo = createMockMembershipRepo();
+    const hook = requireCommissionerOrOwner(repo);
+    const reply = createReply();
+    await hook.call(
+      {} as never,
+      {
+        headers: { 'x-user-id': 'user-1' },
+        params: {},
+      } as never,
+      reply as never,
+      jest.fn(),
+    );
+    expect(reply.statusCode).toBe(400);
+    expect(reply.payload).toEqual({
+      error: 'BAD_REQUEST',
+      message: 'Missing league id',
+    });
+  });
+
   it('allows owners and commissioners through requireCommissionerOrOwner', async () => {
     const membership = buildMembership({
       role: LeagueRole.COMMISSIONER,

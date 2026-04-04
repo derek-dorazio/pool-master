@@ -329,5 +329,36 @@ describe('InvitationService', () => {
         InvitationInvalidError,
       );
     });
+
+    it('marks a single-use invitation as accepted after it is consumed', async () => {
+      const invitation = buildInvitation({
+        leagueId: 'league-1',
+        status: InvitationStatus.PENDING,
+        expiresAt: new Date('2099-01-01'),
+        maxUses: 1,
+        currentUses: 0,
+      });
+      const invitationRepo = createMockInvitationRepo({
+        findByCode: jest.fn().mockResolvedValue(invitation),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+        findByLeague: jest.fn().mockResolvedValue([]),
+      });
+      const service = new InvitationService(
+        invitationRepo,
+        membershipRepo,
+        createMockLeagueRepo(),
+      );
+
+      await service.acceptInvitation('code', 'user-1');
+
+      expect(invitationRepo.update).toHaveBeenCalledWith(invitation.id, {
+        currentUses: 1,
+        acceptedAt: expect.any(Date),
+        acceptedBy: 'user-1',
+        status: InvitationStatus.ACCEPTED,
+      });
+    });
   });
 });

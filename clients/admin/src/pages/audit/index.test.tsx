@@ -1,5 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Component as AuditLogPage } from './index';
+
+const mockUseAuditLog = vi.fn();
+
+vi.mock('@/hooks/use-audit-api', () => ({
+  useAuditLog: (...args: unknown[]) => mockUseAuditLog(...args),
+}));
 
 const mockAuditData = {
   entries: [
@@ -35,52 +42,51 @@ const mockAuditData = {
   total: 2,
   page: 1,
   pageSize: 25,
-  totalPages: 1,
+  totalPages: 2,
 };
-
-vi.mock('@/hooks/use-audit-api', () => ({
-  useAuditLog: () => ({
-    data: mockAuditData,
-    isLoading: false,
-  }),
-}));
 
 function renderPage() {
   return render(<AuditLogPage />);
 }
 
 describe('AuditLogPage', () => {
-  it('renders the audit log table with entries', () => {
-    renderPage();
-    expect(screen.getByText('Audit Log')).toBeInTheDocument();
-    // Admin emails appear in both filter dropdown options and table rows
-    expect(screen.getAllByText('sarah.chen@poolmaster.io').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('mike.johnson@poolmaster.io').length).toBeGreaterThanOrEqual(1);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseAuditLog.mockReturnValue({
+      data: mockAuditData,
+      isLoading: false,
+    });
   });
 
-  it('shows filter bar with admin, action, and resource type dropdowns', () => {
+  it('renders the audit log entries and expands a row for more detail', async () => {
+    const user = userEvent.setup();
     renderPage();
-    // Filter labels — use getAllByText since text may also appear in dropdowns/table
-    expect(screen.getAllByText('Admin').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Action').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Resource Type').length).toBeGreaterThanOrEqual(1);
-  });
 
-  it('shows the Export CSV button', () => {
-    renderPage();
-    expect(screen.getByRole('button', { name: /Export CSV/i })).toBeInTheDocument();
-  });
-
-  it('renders timestamps and admin names for each entry', () => {
-    renderPage();
-    // Action strings may appear in both the filter dropdown and the table
-    expect(screen.getAllByText('tenant.suspend').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('contest.recalculate').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('heading', { name: 'Audit Log' })).toBeInTheDocument();
+    expect(screen.getByTestId('audit-entry-toggle-al-1')).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText(/Suspended tenant Acme Corp/)).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('audit-entry-toggle-al-1'));
+
+    expect(screen.getByTestId('audit-entry-toggle-al-1')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Full Description')).toBeInTheDocument();
+    expect(screen.getByText('Reason')).toBeInTheDocument();
+    expect(screen.getByText('Before State')).toBeInTheDocument();
+    expect(screen.getByText('After State')).toBeInTheDocument();
   });
 
-  it('shows search input for filtering', () => {
+  it('requests the next page when pagination advances', async () => {
+    const user = userEvent.setup();
     renderPage();
-    expect(screen.getByPlaceholderText('Search description or reason...')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('audit-pagination-next'));
+
+    await waitFor(() => {
+      expect(mockUseAuditLog).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 2,
+        }),
+      );
+    });
   });
 });

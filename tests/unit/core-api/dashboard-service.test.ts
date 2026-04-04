@@ -134,6 +134,63 @@ describe('DashboardService', () => {
       expect(dashboard!.recentMemberActivity.length).toBeGreaterThan(0);
     });
 
+    it('sorts recent member activity without mutating repository results', async () => {
+      const members = [
+        buildMembership({ userId: 'user-older', joinedAt: new Date('2026-01-02') }),
+        buildMembership({ userId: 'user-middle', joinedAt: new Date('2026-01-05') }),
+        buildMembership({ userId: 'user-newer', joinedAt: new Date('2026-01-09') }),
+      ];
+
+      const service = new DashboardService(
+        createMockLeagueRepo(),
+        createMockMembershipRepo({
+          findByLeague: jest.fn().mockResolvedValue(members),
+        }),
+        createMockContestRepo(),
+        createMockInvitationRepo(),
+        createMockActionItemRepo(),
+      );
+
+      const dashboard = await service.getDashboard('league-1', 'tenant-1');
+
+      expect(dashboard!.recentMemberActivity.map((activity) => activity.userId)).toEqual([
+        'user-newer',
+        'user-middle',
+        'user-older',
+      ]);
+      expect(members.map((member) => member.userId)).toEqual([
+        'user-older',
+        'user-middle',
+        'user-newer',
+      ]);
+    });
+
+    it('limits upcoming events to the most recent twenty and keeps them in chronological order', async () => {
+      const contests = Array.from({ length: 21 }, (_, index) =>
+        buildContest({
+          id: `contest-${index + 1}`,
+          name: `Contest ${index + 1}`,
+          startsAt: new Date(Date.now() + (index + 1) * 24 * 60 * 60_000),
+        }),
+      );
+
+      const service = new DashboardService(
+        createMockLeagueRepo(),
+        createMockMembershipRepo(),
+        createMockContestRepo({
+          findByLeague: jest.fn().mockResolvedValue(contests),
+        }),
+        createMockInvitationRepo(),
+        createMockActionItemRepo(),
+      );
+
+      const dashboard = await service.getDashboard('league-1', 'tenant-1');
+
+      expect(dashboard!.upcomingEvents).toHaveLength(20);
+      expect(dashboard!.upcomingEvents[0].title).toBe('Contest 1 starts');
+      expect(dashboard!.upcomingEvents[19].title).toBe('Contest 20 starts');
+    });
+
     it('returns upcoming events from future contest dates', async () => {
       const service = new DashboardService(
         createMockLeagueRepo(),

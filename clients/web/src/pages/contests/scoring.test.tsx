@@ -3,6 +3,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { Component as ContestScoringPage } from './scoring';
 
 let contestId = 'contest-1';
+let contestSelectionType = 'PICK_EM';
+let contestName = 'NFL Weekly Pickem';
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -17,10 +19,10 @@ vi.mock('@/features/contests/hooks/use-contest', () => ({
     data: {
       contest: {
         id: contestId,
-        name: contestId === 'contest-1' ? 'NFL Weekly Pickem' : 'March Madness Bracket',
+        name: contestName,
         status: 'ACTIVE',
         contestType: 'SINGLE_EVENT',
-        selectionType: contestId === 'contest-1' ? 'PICK_EM' : 'BRACKET_PICK_EM',
+        selectionType: contestSelectionType,
         scoringEngine: 'CUMULATIVE',
         leagueId: 'league-1',
       },
@@ -120,8 +122,16 @@ vi.mock('@tanstack/react-query', async () => {
 });
 
 describe('ContestScoringPage', () => {
+  beforeEach(() => {
+    contestId = 'contest-1';
+    contestSelectionType = 'PICK_EM';
+    contestName = 'NFL Weekly Pickem';
+  });
+
   it("uses mode-aware pick'em scoring labels", () => {
     contestId = 'contest-1';
+    contestSelectionType = 'PICK_EM';
+    contestName = 'NFL Weekly Pickem';
 
     render(
       <MemoryRouter>
@@ -140,6 +150,8 @@ describe('ContestScoringPage', () => {
 
   it('resets the selected entry when navigating to another contest', () => {
     contestId = 'contest-1';
+    contestSelectionType = 'PICK_EM';
+    contestName = 'NFL Weekly Pickem';
 
     const { rerender } = render(
       <MemoryRouter>
@@ -150,6 +162,7 @@ describe('ContestScoringPage', () => {
     expect(screen.getByDisplayValue('Alpha Entry (Alice)')).toBeInTheDocument();
 
     contestId = 'contest-2';
+    contestSelectionType = 'BRACKET_PICK_EM';
     rerender(
       <MemoryRouter>
         <ContestScoringPage />
@@ -159,5 +172,24 @@ describe('ContestScoringPage', () => {
     expect(screen.getByText('Bracket Score Breakdown')).toBeInTheDocument();
     expect(screen.getByLabelText('Select Bracket Entry')).toHaveValue('entry-2');
     expect(screen.getByDisplayValue('Beta Bracket (Bob)')).toBeInTheDocument();
+  });
+
+  it('renders generic scoring labels for non pick-em contests', () => {
+    contestId = 'contest-3';
+    contestSelectionType = 'SNAKE_DRAFT';
+    contestName = 'Masters Pool';
+
+    render(
+      <MemoryRouter>
+        <ContestScoringPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Masters Pool')).toBeInTheDocument();
+    expect(screen.getByText('Score Breakdown')).toBeInTheDocument();
+    expect(screen.getByText(/timeline of persisted scores for this contest/i)).toBeInTheDocument();
+    expect(screen.getByText('Entry Timeline')).toBeInTheDocument();
+    expect(screen.getByText('Participant Contributions')).toBeInTheDocument();
+    expect(screen.getByLabelText('Select Entry')).toBeInTheDocument();
   });
 });

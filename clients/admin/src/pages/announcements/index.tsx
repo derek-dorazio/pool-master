@@ -72,7 +72,7 @@ export function Component() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Global Announcements</h1>
         <Button asChild>
-          <Link to="/announcements/create">
+          <Link to="/announcements/create" data-testid="announcements-create-link">
             <Plus className="mr-2 h-4 w-4" />
             Create Announcement
           </Link>
@@ -130,6 +130,8 @@ export function Component() {
                         <Button
                           variant="outline"
                           size="sm"
+                          data-testid={`announcement-toggle-${ann.id}`}
+                          aria-label={`${ann.status === 'Active' ? 'Deactivate' : 'Activate'} announcement ${ann.title}`}
                           onClick={() => toggleStatus(ann)}
                         >
                           {ann.status === 'Active' ? 'Deactivate' : 'Activate'}

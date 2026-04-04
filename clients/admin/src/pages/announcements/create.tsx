@@ -121,10 +121,11 @@ export function Component() {
 
             {/* Title */}
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label htmlFor="announcement-title" className="mb-1 block text-sm font-medium">
                 Title <span className="text-red-500">*</span>
               </label>
               <Input
+                id="announcement-title"
                 value={form.title}
                 onChange={(e) => update('title', e.target.value)}
                 placeholder="Announcement title..."
@@ -133,10 +134,11 @@ export function Component() {
 
             {/* Body */}
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label htmlFor="announcement-body" className="mb-1 block text-sm font-medium">
                 Body <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="announcement-body"
                 className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 value={form.body}
                 onChange={(e) => update('body', e.target.value)}
@@ -147,16 +149,18 @@ export function Component() {
             {/* Link */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">Link URL</label>
+                <label htmlFor="announcement-link-url" className="mb-1 block text-sm font-medium">Link URL</label>
                 <Input
+                  id="announcement-link-url"
                   value={form.linkUrl}
                   onChange={(e) => update('linkUrl', e.target.value)}
                   placeholder="https://..."
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Link Text</label>
+                <label htmlFor="announcement-link-text" className="mb-1 block text-sm font-medium">Link Text</label>
                 <Input
+                  id="announcement-link-text"
                   value={form.linkText}
                   onChange={(e) => update('linkText', e.target.value)}
                   placeholder="Learn more"
@@ -215,28 +219,35 @@ export function Component() {
                 ))}
               </div>
               {form.target === 'Specific Tenants' && (
-                <Input
-                  className="mt-2"
-                  value={form.tenantIds}
-                  onChange={(e) => update('tenantIds', e.target.value)}
-                  placeholder="Comma-separated tenant IDs..."
-                />
+                <div className="mt-2">
+                  <label htmlFor="announcement-tenant-ids" className="mb-1 block text-sm font-medium">
+                    Tenant IDs
+                  </label>
+                  <Input
+                    id="announcement-tenant-ids"
+                    value={form.tenantIds}
+                    onChange={(e) => update('tenantIds', e.target.value)}
+                    placeholder="Comma-separated tenant IDs..."
+                  />
+                </div>
               )}
             </div>
 
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">Starts At</label>
+                <label htmlFor="announcement-starts-at" className="mb-1 block text-sm font-medium">Starts At</label>
                 <Input
+                  id="announcement-starts-at"
                   type="datetime-local"
                   value={form.startsAt}
                   onChange={(e) => update('startsAt', e.target.value)}
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Ends At</label>
+                <label htmlFor="announcement-ends-at" className="mb-1 block text-sm font-medium">Ends At</label>
                 <Input
+                  id="announcement-ends-at"
                   type="datetime-local"
                   value={form.endsAt}
                   onChange={(e) => update('endsAt', e.target.value)}
@@ -247,6 +258,7 @@ export function Component() {
             <Button
               className="w-full"
               disabled={!form.title || !form.body}
+              data-testid="announcement-publish"
               onClick={handlePublish}
             >
               Publish

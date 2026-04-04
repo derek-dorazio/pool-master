@@ -50,6 +50,75 @@ describe('SocialCommunicationService', () => {
     expect(refreshed?.unreadCount).toBe(0);
   });
 
+  it('sorts conversations by latest message and preserves unread counts', () => {
+    const service = new SocialCommunicationService();
+
+    service.seedConversation('user-1', {
+      id: 'conv-old',
+      participantName: 'Older Opponent',
+      participantInitials: 'OO',
+      participantAvatarUrl: null,
+      messages: [
+        {
+          id: 'old-1',
+          senderId: 'u-3',
+          senderName: 'Older Opponent',
+          content: 'Earlier note',
+          isOwn: false,
+          delivered: true,
+          read: false,
+          createdAt: new Date('2026-04-03T08:00:00Z'),
+        },
+      ],
+    });
+    service.seedConversation('user-1', {
+      id: 'conv-new',
+      participantName: 'Newer Opponent',
+      participantInitials: 'NO',
+      participantAvatarUrl: null,
+      messages: [
+        {
+          id: 'new-1',
+          senderId: 'u-4',
+          senderName: 'Newer Opponent',
+          content: 'Fresh note',
+          isOwn: false,
+          delivered: true,
+          read: false,
+          createdAt: new Date('2026-04-03T10:00:00Z'),
+        },
+        {
+          id: 'new-2',
+          senderId: 'user-1',
+          senderName: 'You',
+          content: 'Got it',
+          isOwn: true,
+          delivered: true,
+          read: true,
+          createdAt: new Date('2026-04-03T10:30:00Z'),
+        },
+      ],
+    });
+
+    const conversations = service.listConversations('user-1');
+
+    expect(conversations.map((conversation) => conversation.id)).toEqual(['conv-new', 'conv-old']);
+    expect(conversations.find((conversation) => conversation.id === 'conv-old')?.unreadCount).toBe(1);
+    expect(conversations.find((conversation) => conversation.id === 'conv-new')?.unreadCount).toBe(1);
+  });
+
+  it('rejects blank direct message content and missing conversations', () => {
+    const service = new SocialCommunicationService();
+
+    expect(() => service.sendDirectMessage('user-1', 'missing-conv', '   ')).toThrow('Message content is required');
+    expect(() => service.getConversationMessages('user-1', 'missing-conv')).toThrow(
+      'Conversation missing-conv not found',
+    );
+    expect(() => service.markConversationRead('user-1', 'missing-conv')).toThrow(
+      'Conversation missing-conv not found',
+    );
+  });
+
   it('serves contest chat, share cards, and recaps', () => {
     const service = new SocialCommunicationService();
 
