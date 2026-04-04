@@ -135,6 +135,7 @@ Do not keep bad tests just because they already exist.
 
 - Lives under `tests/api/functional/*.smoke.ts` and related health smoke files.
 - Treat smoke tests as black-box environment validation against deployed services.
+- In CI/CD, smoke runs after the deployment pipeline completes migration and seed successfully; treat that sequencing as part of the contract when debugging failures or updating test strategy.
 - Use shared route constants from `@poolmaster/shared/api-routes`.
 - Keep smoke flows aligned with real critical-path behavior.
 - When endpoint contracts change, smoke tests must change with them.
@@ -147,6 +148,7 @@ Do not keep bad tests just because they already exist.
 
 - Lives under `clients/web/e2e/`.
 - Uses Playwright against a running local app or deployed environment.
+- In CI/CD, browser E2E runs only after migrate -> seed -> smoke succeed; keep the suite scoped to a few durable MVP flows so it remains a true post-deploy confidence layer rather than a broad regression matrix.
 - Focus on high-value user journeys and runtime error detection.
 - Remove or update browser tests when they reference retired UI paths or dead buttons.
 - Browser smoke/E2E should prove the narrowed MVP path, not just public-page rendering.

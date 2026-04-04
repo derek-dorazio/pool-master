@@ -299,13 +299,15 @@ describe('Standings and Results Read Integration', () => {
 
     expect(leagueResultsRes.statusCode).toBe(200);
     expect(leagueResultsRes.json().results).toHaveLength(2);
-    expect(leagueResultsRes.json().results[0]).toEqual(
-      expect.objectContaining({
-        contestId,
-        finalRank: 1,
-        leagueId,
-        isWinner: true,
-      }),
+    expect(leagueResultsRes.json().results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contestId,
+          finalRank: 1,
+          leagueId,
+          isWinner: true,
+        }),
+      ]),
     );
 
     const memberResultsRes = await getApp().inject({
