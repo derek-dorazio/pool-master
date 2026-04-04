@@ -105,3 +105,7 @@ The deleted smoke suites were low-signal because they:
 - Replacement smoke suites create their own live data through deployed routes.
 - Smoke coverage stays aligned to the narrowed MVP only.
 - Smoke failures point to real deployment breakage rather than seed-data drift.
+
+## Follow-Up
+
+- See [smoke-and-e2e-strategic-expansion.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/smoke-and-e2e-strategic-expansion.md) for the later route/service expansion plan and staged promotion strategy.

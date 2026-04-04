@@ -67,3 +67,7 @@ The previous MVP browser journey suite was removed from the deploy gate because 
 - The suite does not depend on ambient seed fixtures
 - The suite is deterministic enough to run repeatedly without frequent manual repair
 - Only stable journeys are promoted into required CI
+
+## Follow-Up
+
+- See [smoke-and-e2e-strategic-expansion.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/smoke-and-e2e-strategic-expansion.md) for the combined smoke-plus-E2E execution roadmap, including parallelizable journey slices.
