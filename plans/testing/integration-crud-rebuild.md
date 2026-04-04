@@ -23,6 +23,7 @@ Rebuild backend integration coverage from scratch using small, self-contained CR
 ## Batch Order
 
 1. Contest CRUD
+   - Status: Done
    - create league
    - create contest
    - list contest
@@ -32,6 +33,7 @@ Rebuild backend integration coverage from scratch using small, self-contained CR
    - verify deletion
 
 2. League CRUD
+   - Status: In Progress
    - create league
    - list owned leagues
    - fetch league detail
