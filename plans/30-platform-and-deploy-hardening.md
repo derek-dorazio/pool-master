@@ -99,6 +99,18 @@ Reduce platform drift and operational ambiguity:
 - Terraform working-state artifacts are no longer tracked in the repo, and remote-state expectations are documented.
 - QA and production deployment assumptions around migrations, seeding, scaling, and resilience are explicit and reviewable.
 
+## Current Failure Signal
+
+- CI run `23969314887` proved a real rollout-stabilization gap:
+  - `lint-typecheck`, `build`, `test-webapp`, `test`, `test-admin`, and `publish-images` all passed
+  - `migrate-qa` successfully ran the ECS migration task and the QA seed task
+  - the run then failed in `Wait for ECS service to stabilize`
+  - exact failing command: `aws ecs wait services-stable --cluster poolmaster-qa-cluster --services poolmaster-qa-core-api`
+  - exact failure: `Waiter ServicesStable failed: Max attempts exceeded`
+  - downstream `smoke-test` and `e2e-test` never started because they correctly depend on `migrate-qa`
+
+This means the current blocker is not schema migration drift. It is lack of visibility and deterministic verification around ECS service rollout health after deployment.
+
 ## Action Plan
 
 | ID | Area | Task | Status | Notes |
@@ -107,9 +119,21 @@ Reduce platform drift and operational ambiguity:
 | PDH-002 | Deploy Strategy | Stop deploying ECS from `:latest` tags referenced in [ci.yml](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/.github/workflows/ci.yml) and [main.tf](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/infrastructure/terraform/main.tf) | Not Started | Use image digest or explicit SHA-pinned task definitions so smoke tests target the exact build that passed CI |
 | PDH-003 | Deploy Strategy | Move away from “force new deployment against latest image” and register new ECS task definitions per release | Not Started | This improves rollback, auditability, and deploy determinism |
 | PDH-004 | QA Jobs | Promote migrate and seed into first-class deploy primitives | Not Started | Consider dedicated ECS task definitions/log groups for `migrate` and `seed` instead of overloading one task definition long term |
-| PDH-005 | Verification | Add explicit post-deploy verification before smoke | Not Started | Verify service revision/digest, ALB health, and static asset version before running smoke tests |
+| PDH-005 | Verification | Add explicit post-deploy verification before smoke | In Progress | Current CI already proved a real rollout-stabilization failure mode: run `23969314887` completed build/test/publish, migration, and seed successfully, then failed waiting for `aws ecs wait services-stable` on `poolmaster-qa-core-api` after 10 minutes. Add service-event/log capture, desired-task health checks, task-definition/image-digest verification, and a CI summary of unhealthy tasks or recent ECS service events so rollout failures are diagnosable before smoke/E2E |
 | PDH-006 | Terraform Hygiene | Remove local Terraform artifacts from version control, especially [infrastructure/terraform/.terraform/terraform.tfstate](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/infrastructure/terraform/.terraform/terraform.tfstate) | Not Started | Add/update `.gitignore` and ensure only remote state/backends are used |
 | PDH-007 | Terraform Structure | Split monolithic Terraform concerns where helpful and document environment promotion flow | Not Started | Networking, compute, app delivery, and observability can likely be factored more cleanly over time |
 | PDH-008 | AWS Runtime | Review autoscaling, desired counts, one-AZ assumptions, and operational resilience for QA/prod ECS services | Not Started | Current service setup is minimal and may be fine for QA, but should be explicitly evaluated for prod risk |
 | PDH-009 | Node Actions | Upgrade GitHub Actions that still rely on Node 20 | Not Started | CI is already warning about upcoming deprecation; this should be cleaned up before it becomes a forced break |
 | PDH-010 | Test Infra | Replace the legacy DB-backed integration suite with small self-contained CRUD-style integration batches | Done | On 2026-04-03 the old `tests/integration/core-api` suites were removed and replaced with new self-contained CRUD/read-flow suites for contests, leagues, invitations/members, contest entries, draft session flow, and standings/results reads. See [integration-crud-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/integration-crud-rebuild.md) for the completed baseline and [integration-expansion-by-domain.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/integration-expansion-by-domain.md) for the next worker-split expansion phase. |
+
+## Immediate Follow-Up For PDH-005
+
+1. Capture recent ECS service events in CI when `services-stable` fails.
+2. Capture task ARNs, last status, desired status, stop reasons, and health-check failures for the replacement tasks.
+3. Print the active task definition revision and deployed image digest before and after rollout.
+4. Fail with a compact deployment summary that tells us whether the issue is:
+   - task crash loop
+   - failing ALB/container health checks
+   - capacity/placement issue
+   - image/task-definition drift
+5. Only run smoke/E2E after that verification step succeeds.
