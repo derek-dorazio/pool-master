@@ -162,6 +162,7 @@ poolmaster/
 ### Guides
 - [Architecture Overview](docs/ARCHITECTURE.md) — Components, dependencies, data flow
 - [Authentication & Authorization](docs/AUTHENTICATION-AUTHORIZATION.md) — Current web/admin auth flows, token handling, and authorization enforcement
+- [Standard Auth Model](docs/STANDARD-AUTH-MODEL.md) — Recommended conventional local-auth + Google OIDC + cookie-session target for PoolMaster
 - [Database Schema](docs/DATABASE-SCHEMA.md) — ERDs and a practical data dictionary for PostgreSQL tables and app ownership
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
 - [Scoring & Configuration Guide](docs/scoring-and-configuration-guide.md) — End-user scoring configuration

@@ -10,6 +10,8 @@ Unify PoolMaster authentication and authorization so the web app and admin app u
 
 This plan turns the findings in [docs/AUTHENTICATION-AUTHORIZATION.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/AUTHENTICATION-AUTHORIZATION.md) into an execution roadmap.
 
+It should also be read alongside [docs/STANDARD-AUTH-MODEL.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/STANDARD-AUTH-MODEL.md), which captures the recommended conventional consumer-site approach for PoolMaster.
+
 ## Why This Plan Exists
 
 PoolMaster currently has an uneven trust model:
@@ -221,7 +223,7 @@ Define the canonical runtime model:
 
 Replace placeholder admin gating with the real auth pipeline:
 
-- real bearer-token validation
+- real cookie/session validation
 - real admin identity lookup
 - real admin permission enforcement
 
@@ -253,9 +255,12 @@ Prove the migration through:
 Deliverables:
 
 - principal model decision
-- JWT claim decision
+- session/claim decision
 - session read decision
 - migration bridge policy
+- standard login-method decision:
+  - username or email + password
+  - Google OIDC
 
 Exit criteria:
 
@@ -411,7 +416,7 @@ Build on the existing deployed checks:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 36-001 | 0 | Finalize the unified principal decision, cookie/session contract, CSRF strategy, and session-read strategy in the auth doc and this plan | Not Started | Resolve `principalType`, `isAdmin`, optional `adminRole`, cookie domain, `SameSite`, and whether admin uses the shared login endpoint initially |
+| 36-001 | 0 | Finalize the unified principal decision, cookie/session contract, CSRF strategy, login methods, and session-read strategy in the auth doc and this plan | In Progress | Standard-model review completed in `docs/STANDARD-AUTH-MODEL.md`; still need final implementation decisions on principal linkage, cookie scope, and Google/local flow details |
 | 36-002 | 0 | Document the canonical backend request-auth context and admin-context model that all routes/plugins should use | Not Started | Make this the single source of truth for future implementation |
 | 36-003 | 1 | Replace browser-managed refresh/access-token expectations with backend-issued `HttpOnly` session cookies in the auth module | Not Started | Keep the backend responsible for login, refresh, logout, and revocation |
 | 36-004 | 1 | Normalize `/api/v1/auth/me` and any adjacent identity reads so verified cookie-backed auth context is reused instead of duplicating token parsing | Not Started | Reduce duplicate token-reading paths before deeper migration |
