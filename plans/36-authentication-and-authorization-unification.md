@@ -59,6 +59,7 @@ Important note:
 
 - the current auth/session model is still shaped around `tenantId` as part of user identity and request context
 - if Plan 37 is accepted, auth implementation should target the league-top-level model rather than deepening the tenant-owned-user design
+- if Plan 37's league-membership and squad model is accepted, authentication should resolve the user identity only; league membership, commissioner capability, squad co-management, and contest-entry rights should all be derived from database relationships at request time
 - current references to tenant context in this plan are transitional/current-state notes, not target-state requirements
 
 ### Web app
@@ -145,6 +146,7 @@ Authorization remains layered and runtime-backed:
   - authenticated principal
   - league context where required
   - DB-backed league membership and commissioner permission checks
+  - squad co-management checks where contest-entry or drafting actions operate on a squad
 - admin routes:
   - authenticated principal
   - admin identity resolution
@@ -476,6 +478,7 @@ Build on the existing deployed checks:
 - Live admin routes no longer require `x-admin-user-id` or `x-admin-user-email` as a trust boundary.
 - Admin route authorization is enforced through real admin context and permissions.
 - Member-facing route authorization remains tenant-aware, DB-backed, and league-scoped.
+- Squad-facing contest-entry and drafting authorization remains DB-backed and squad-scoped on top of league membership.
 - `/api/v1/auth/me` and related identity/session reads align with the shared auth context model.
 - QA smoke and deployed browser checks prove both apps can authenticate and reach protected routes after the migration.
 
@@ -514,6 +517,7 @@ Plan 37 is now the upstream domain/data-model plan for:
 
 - global user identity
 - league-top-level commercial boundary
+- league membership vs squad co-management boundaries
 - tenant removal/simplification
 - event/season ownership
 - admin linkage to core account identity

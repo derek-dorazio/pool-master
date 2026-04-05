@@ -48,6 +48,23 @@ One user can:
 - have different roles in different leagues
 - use one login across all leagues they belong to
 
+### League membership and squads
+
+League membership and contest-entry identity should be split:
+
+- `LeagueMembership` answers "is this user part of this league?"
+- `Squad` answers "what persistent contest-playing unit exists inside this league?"
+- `SquadMembership` answers "which users co-manage this squad?"
+- `ContestEntry` answers "which squad entered this contest?"
+
+This supports:
+
+- one user in many leagues
+- many users co-managing one squad
+- one league containing many squads
+- one squad persisting across many contests
+- one squad entering a contest once by default, or multiple times if contest rules allow it
+
 ### Subscription model
 
 Subscriptions should be simple time-bound plans:
@@ -83,6 +100,10 @@ Contests should reference the global event they are built around.
   - top-level customer/workspace boundary
 - `LeagueMembership`
   - the primary membership and per-league role/permission model
+- `Squad`
+  - the persistent contest-playing unit within a league
+- `SquadMembership`
+  - the co-manager relationship between users and squads
 - admin capability
   - linked to the same global user identity
 
@@ -110,6 +131,9 @@ These replace tenant-bound commercial constructs.
 - `Contest`
   - belongs to a `League`
   - references a `SportEvent` when imported or event-backed
+- `ContestEntry`
+  - belongs to a `Contest`
+  - references a `Squad`, not a direct user membership
 - contest pools, matchups, picks, and scoring references should point to the global event boundary through real relations, not loose UUID conventions
 
 ## Current Model Problems To Fix
@@ -135,6 +159,19 @@ Problem:
 
 - the product experience treats league as the primary container
 - tenant is mostly a hidden abstraction except in admin/billing
+
+### Problem B2: Contest entries are tied to league membership instead of a squad
+
+Today:
+
+- `ContestEntry.leagueMembershipId`
+
+Problem:
+
+- the contest-playing unit is a person-membership row rather than a durable squad identity
+- co-managers are not supported cleanly
+- creative squad naming/iconography is not first-class
+- contest participation cannot cleanly persist independently of an individual user's direct membership row
 
 ### Problem C: Tenant-bound billing
 
@@ -190,6 +227,51 @@ Recommended decision:
 
 - `User` is global
 - `LeagueMembership` is the only normal product-membership relationship
+
+### Decision B2: League membership lifecycle
+
+Recommended decision:
+
+- keep one durable `LeagueMembership` row per `(leagueId, userId)`
+- never hard-delete memberships
+- reactivation should reuse the existing row
+- model lifecycle with:
+  - `status`: `ACTIVE` / `INACTIVE`
+  - `statusReason`: values such as `INVITED`, `PENDING`, `LEFT`, `REMOVED`
+- league roles are simplified to:
+  - `COMMISSIONER`
+  - `MEMBER`
+- a league must always have at least one active commissioner
+
+### Decision B3: Invitation model
+
+Recommended decision:
+
+- leagues are invite-only in the first pass
+- no open join flow
+- no approval workflow
+- invitations create or reactivate memberships as `MEMBER`
+- invitations do not carry custom permissions
+- commissioners can later promote a member to `COMMISSIONER`
+- invitations are single-use
+- generic invite codes are supported
+- optional invited-email binding is supported
+- if an invited email is present, acceptance should require an account with that same email
+- invitation acceptance can include account creation if the invitee is not yet registered
+
+### Decision B4: Squad model
+
+Recommended decision:
+
+- `Squad` belongs to one `League`
+- `SquadMembership` links users to squads as co-managers
+- squad membership requires active league membership
+- squads are the primary contest-entry concept
+- squads can have creative names and icons
+- squads can have multiple active managers
+- if the last active squad manager becomes inactive, the squad becomes inactive
+- no separate squad role model is needed in the first pass if all co-managers act equally
+- a user may belong to multiple squads in the same league unless later business rules constrain it
 
 ### Decision C: Admin identity boundary
 
@@ -267,6 +349,16 @@ Recommended decision:
 - no contest-level exclusions in the first-pass model
 - exclusions can be added later as a separate enhancement if needed
 
+### Decision I2: Contest entry behavior
+
+Recommended decision:
+
+- `ContestEntry` references `Squad`
+- every contest entry belongs to exactly one squad
+- contests default to one entry per squad
+- certain contest configurations may allow multiple entries per squad later
+- this should be modeled as a contest rule such as `maxEntriesPerSquad`, not as a squad rule
+
 ### Decision J: SportEvent shape
 
 Recommended decision:
@@ -306,6 +398,14 @@ Recommended decision:
 - `League`
   - remove `tenantId`
   - add plan/subscription linkage
+- `LeagueMembership`
+  - simplify role model to `COMMISSIONER` / `MEMBER`
+  - add lifecycle state instead of relying on deletion
+- `LeagueInvitation`
+  - simplify to invite-only, single-use semantics
+- `ContestEntry`
+  - stop pointing at `LeagueMembership`
+  - point at `Squad`
 - `AdminUser`
   - link to `User`, or merge into a linked capability/grant model
 - `Participant`
@@ -318,6 +418,8 @@ Recommended decision:
 
 ### Models to add
 
+- `Squad`
+- `SquadMembership`
 - `SportEventParticipant`
 - `SportEventParticipantSourceData`
 - `SportEventParticipantValuation`
@@ -332,6 +434,7 @@ Recommended decision:
 
 - global user model
 - league ownership/membership model
+- squad and contest-entry model
 - removal of tenant ownership
 
 ### Workstream 2: Billing migration to league
@@ -365,8 +468,11 @@ Recommended decision:
 |---|---|---|---|---|
 | 37-001 | 1 | Finalize the top-level product boundary decision: leagues replace tenants as the primary customer/workspace boundary | In Progress | User direction in this thread points strongly to league-as-top-level |
 | 37-002 | 1 | Remove `Tenant` entirely from the target domain model and identify all schema, service, DTO, and admin surfaces that must be migrated off it | In Progress | Locked by product direction in this thread |
-| 37-003 | 1 | Design the global `User` model with no `tenantId`, and confirm that all normal product access flows through `LeagueMembership` | In Progress | Locked direction: one user across many leagues with per-league roles |
+| 37-003 | 1 | Design the global `User` model with no `tenantId`, and confirm that all normal product access flows through `LeagueMembership` and `SquadMembership` | In Progress | Locked direction: one user across many leagues, with league membership separate from squad co-management |
 | 37-004 | 1 | Design the unified user/admin identity model so platform-admin capability links to the same global user identity | Not Started | Pending further review discussion |
+| 37-004A | 1 | Redesign `LeagueMembership` around durable active/inactive lifecycle state with only `COMMISSIONER` and `MEMBER` roles | In Progress | Locked: never delete, reactivate on rejoin, retain history, always keep at least one active commissioner |
+| 37-004B | 1 | Redesign `LeagueInvitation` as invite-only, single-use onboarding with generic codes and optional invited-email matching | In Progress | Locked: no open join, no approval workflow, accepted invites create/reactivate `MEMBER` memberships |
+| 37-004C | 1 | Add `Squad` and `SquadMembership` so contest-playing identity is separate from league membership and supports co-managers | In Progress | Locked: squads belong to leagues, co-managers act equally, inactive squad when no active managers remain |
 | 37-005 | 2 | Redesign billing/subscription models from tenant-bound to league-bound | In Progress | Includes subscription, usage, entitlements, and plan overrides |
 | 37-006 | 2 | Define the subscription lifecycle: monthly/annual periods, expiry, downgrade to free tier, and enforcement behavior | In Progress | Locked: monthly/annual, expires by date, falls back to free tier |
 | 37-007 | 2 | Rework plan limits so they apply per league: members, contests/year, contest types, draft styles, and premium capabilities | In Progress | Locked packaging direction from this thread |
@@ -376,10 +482,25 @@ Recommended decision:
 | 37-011 | 3 | Add `SportEventParticipantSourceData` and `SportEventParticipantValuation` to separate imported/provider data from PoolMaster-derived valuation data | In Progress | Locked valuation fields: `contestPrice`, `contestTier`, `orderIndex` |
 | 37-012 | 3 | Redesign contest/event references so contests, pools, matchups, and picks use strong relations to global events and the full official event field | In Progress | Locked first pass: contests use the full event field with no exclusion layer |
 | 37-013 | 3 | Reshape `Participant` into the universal competitor abstraction for both players and teams | In Progress | Locked: `participantType`, required `displayName`, optional player/team-specific fields |
+| 37-013A | 3 | Redesign `ContestEntry` to reference `Squad` instead of direct league membership and support per-contest entry-count rules | In Progress | Locked: one entry per squad by default, higher limits allowed by contest configuration later |
 | 37-014 | 4 | Identify all admin/support/billing surfaces that assume tenants and redesign them around leagues or platform-wide views | Not Started | Includes tenant pages, exports, support, feature overrides, and billing screens |
 | 37-015 | 5 | Produce the database migration strategy for removing `tenantId` from users/leagues and migrating tenant billing data to leagues | Not Started | Needs careful backfill and rollout sequencing |
 | 37-016 | 5 | Update DTOs, OpenAPI, generated clients, rules, docs, and tests to match the new league-top-level model | Not Started | Keep contracts and docs truthful throughout |
 | 37-017 | 5 | Define the dependency boundary between Plan 37 and Plan 36 and sequence implementation accordingly | In Progress | Plan 36 auth implementation should build on the final boundary model, not the old tenant model |
+
+## Remaining Questions For Next Review
+
+These decisions are still open and should be refined before implementation starts:
+
+1. How should unified admin capability attach to the global `User` model after `AdminUser` is removed or linked?
+2. Should `League.invitePolicy` remain as a first-class field with only `INVITE_ONLY` for now, or be removed entirely and made implicit?
+3. Should `LeagueInvitation` lifecycle use a dedicated enum such as `PENDING` / `ACCEPTED` / `EXPIRED` / `REVOKED`, or also adopt the shared `ACTIVE` / `INACTIVE` plus reason pattern?
+4. Should generic invite links always require league creation + account creation/login in one combined flow, or should the app separate "claim invite" from "finish registration"?
+5. Should a user be allowed to belong to multiple squads in the same league with no restrictions, or should future contest types or billing tiers cap this?
+6. Should leagues place an explicit cap on active squads as part of billing-tier enforcement?
+7. Should squad membership ever support a future primary-contact concept, or should all co-managers remain permanently equivalent unless a stronger use case appears?
+8. Which contest-entry data should be snapshotted at entry time so historical results remain stable if squad membership later changes?
+9. How should admin/support exports and dashboards represent inactive league memberships and inactive squads once soft-deletion becomes the norm?
 
 ## Relationship To Plan 36
 

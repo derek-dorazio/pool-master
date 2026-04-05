@@ -127,4 +127,5 @@ Use the table below for active plan ranges still expected to receive execution u
 | 31-xxx | `plans/31-mock-contest-feed-provider.md` | Mock contest feed provider |
 | 32-xxx | `plans/32-stack-upgrade-modernization.md` | Stack modernization |
 | 36-xxx | `plans/36-authentication-and-authorization-unification.md` | Authentication and authorization unification |
+| 37-xxx | `plans/37-league-top-level-domain-and-data-simplification.md` | League-first domain and data simplification |
 | ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites |
