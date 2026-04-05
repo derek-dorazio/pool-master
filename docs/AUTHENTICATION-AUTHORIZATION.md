@@ -1,0 +1,676 @@
+# Authentication And Authorization
+
+This document describes how authentication and authorization currently work in PoolMaster for:
+
+- the member-facing web app
+- the admin app
+- the backend API enforcement layers behind both
+
+This is intentionally a **current-state** document. It describes what the code does today, including rough edges and partially implemented admin behavior.
+
+## Terms
+
+- **Authentication**: proving who the caller is
+- **Authorization**: deciding what an authenticated caller is allowed to do
+- **Access token**: JWT used on authenticated API requests
+- **Refresh token**: opaque token stored in Postgres and exchanged for a new access token
+- **Tenant**: the logical workspace boundary used by the member-facing app
+
+## High-Level Summary
+
+### Web app
+
+- Uses email/password login via `POST /api/v1/auth/login`
+- Receives an app-issued JWT access token plus refresh token
+- Stores the access token in `localStorage`
+- Sends the access token as `Authorization: Bearer ...`
+- Backend validates the JWT with the shared auth guard
+- Tenant context is derived primarily from the JWT `tenantId` claim
+- Route-level authorization is based on:
+  - authenticated user identity
+  - league membership
+  - commissioner permissions for league-scoped privileged actions
+
+### Admin app
+
+- Currently also logs in through the same `POST /api/v1/auth/login` endpoint
+- Stores a JWT in `localStorage` under `admin_access_token`
+- Also stores an in-memory Zustand `adminUser`
+- Sends:
+  - `Authorization: Bearer ...`
+  - `x-admin-user-id`
+  - `x-admin-user-email`
+- Current backend admin routes do **not** use the dedicated admin JWT plugin at runtime
+- Current backend admin routes use a placeholder `adminAuth` pre-handler that only checks for `x-admin-user-id`
+- There is a defined admin role/permission model in code, but it is **not currently the live runtime gate**
+
+## Backend Authentication Components
+
+### 1. Public auth routes
+
+Defined in [packages/core-api/src/modules/auth/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/routes.ts):
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/callback`
+- `GET /api/v1/auth/me`
+
+These routes are exempt from the global JWT guard.
+
+### 2. Shared JWT auth guard
+
+Defined in [packages/core-api/src/plugins/auth-guard.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/auth-guard.ts).
+
+It:
+
+- skips public routes:
+  - `/health`
+  - `/api/v1/auth/*`
+- requires `Authorization: Bearer <token>` on protected routes
+- verifies the JWT
+- attaches `request.authUser = { userId, email, tenantId }`
+- also writes `x-user-id` into the request headers for backward compatibility with older handlers
+
+### 3. Tenant context plugin
+
+Defined in [packages/core-api/src/core/tenant-context.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/tenant-context.ts).
+
+It resolves tenant identity in this order:
+
+1. `request.authUser.tenantId`
+2. `x-tenant-id` header
+
+If neither exists for a protected route, the request is rejected with `401`.
+
+## Web App Authentication
+
+### Login flow
+
+The web login page lives at [clients/web/src/pages/auth/login.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/pages/auth/login.tsx).
+
+It:
+
+- collects email/password
+- calls `loginUser({ client, body })`
+- stores `access_token` in `localStorage`
+- stores the user in the Zustand auth store
+- navigates to `/dashboard` or the requested redirect target
+
+The web API client is configured in [clients/web/src/lib/api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/lib/api.ts).
+
+It automatically attaches:
+
+- `Authorization: Bearer <access_token>`
+
+The web auth store is in [clients/web/src/stores/auth-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/stores/auth-store.ts).
+
+It hydrates from:
+
+- `access_token`
+- `auth_user`
+
+### Web authentication sequence
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Web as Web App
+    participant API as Core API
+    participant Auth as AuthService
+    participant DB as PostgreSQL
+
+    User->>Web: Enter email + password
+    Web->>API: POST /api/v1/auth/login
+    API->>Auth: login(email, password)
+    Auth->>DB: find user by email
+    Auth->>Auth: bcrypt.compare(password, passwordHash)
+    Auth->>DB: create refresh token row
+    Auth-->>API: user + token pair
+    API-->>Web: 200 AuthResponse
+    Web->>Web: store access_token in localStorage
+    Web->>Web: store user in auth store
+    Web->>API: Protected request with Authorization header
+    API->>API: auth-guard verifies JWT
+    API->>API: tenant-context derives tenantId
+    API-->>Web: protected resource
+```
+
+## Web App Authorization
+
+### Identity-level authorization
+
+For most protected member-facing routes, the first gate is simply:
+
+- valid JWT
+- valid tenant context
+
+### League-scoped authorization
+
+For league and contest operations, PoolMaster adds league membership and commissioner permission checks.
+
+Core permission logic:
+
+- [packages/core-api/src/core/permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/permissions.ts)
+- [packages/core-api/src/core/require-permission.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/require-permission.ts)
+- [packages/core-api/src/modules/leagues/permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/leagues/permissions.ts)
+
+Important rules:
+
+- `OWNER` has implicit access to all commissioner permissions
+- `COMMISSIONER` has only the permissions explicitly stored on the membership
+- `MANAGER` and `VIEWER` do not get commissioner permissions
+
+Examples enforced today:
+
+- invite members
+- remove members
+- change member roles
+- edit league settings
+- create contests
+
+### Web authorization sequence for a league-scoped action
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Web as Web App
+    participant API as Core API
+    participant Guard as auth-guard
+    participant Tenant as tenant-context
+    participant Perm as requirePermission()
+    participant Repo as LeagueMembershipRepository
+    participant Route as League/Contest Handler
+
+    User->>Web: Click privileged action (example: create contest)
+    Web->>API: POST protected league route with Bearer token
+    API->>Guard: Verify JWT
+    Guard-->>API: authUser + x-user-id
+    API->>Tenant: Resolve tenantId
+    API->>Perm: Check commissioner permission
+    Perm->>Repo: find membership by leagueId + userId
+    Repo-->>Perm: membership
+    Perm->>Perm: hasPermission(membership, CONTEST_CREATE)
+    alt Allowed
+        Perm-->>Route: continue
+        Route-->>Web: success
+    else Forbidden
+        Perm-->>Web: 403 FORBIDDEN
+    end
+```
+
+### Practical web authorization behavior
+
+- authenticated but not a member of a league:
+  - generally gets `403`
+- authenticated member without commissioner privileges:
+  - can read member-level pages
+  - cannot perform privileged commissioner actions
+- owner:
+  - bypasses commissioner-permission granularity and has full commissioner power in that league
+
+Negative-path coverage exists in:
+
+- [tests/integration/core-api/permission-negative.integration.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/integration/core-api/permission-negative.integration.ts)
+
+## Token Lifecycle
+
+### Access token
+
+Issued by [packages/core-api/src/modules/auth/auth-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/auth-service.ts).
+
+Current behavior:
+
+- JWT
+- includes:
+  - `sub`
+  - `email`
+  - `tenantId`
+  - `iat`
+  - `exp`
+- default expiry: 15 minutes
+
+### Refresh token
+
+Current behavior:
+
+- opaque UUID, not a JWT
+- persisted in Postgres `refreshToken`
+- default expiry: 7 days
+- rotated on refresh
+- revoked on logout by setting `revokedAt`
+
+### Refresh sequence
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client as Web/Admin Client
+    participant API as Core API
+    participant Auth as AuthService
+    participant DB as PostgreSQL
+
+    Client->>API: POST /api/v1/auth/refresh with refreshToken
+    API->>Auth: refresh(refreshToken)
+    Auth->>DB: find refresh token row + user
+    Auth->>DB: reject if missing, expired, or revoked
+    Auth->>DB: revoke old refresh token
+    Auth->>DB: create new refresh token row
+    Auth-->>API: new token pair
+    API-->>Client: new access token + refresh token
+```
+
+## Admin App Authentication
+
+### Current implemented behavior
+
+The admin login page lives at [clients/admin/src/pages/login.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/login.tsx).
+
+Current behavior:
+
+- email/password login calls the same generated `loginUser()` operation as the member-facing web app
+- the returned JWT is stored as `admin_access_token`
+- an `AdminUser` object is put into the admin Zustand store
+- the admin app then navigates to `/`
+
+The admin store is in [clients/admin/src/stores/admin-auth-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/stores/admin-auth-store.ts).
+
+The admin API client is in [clients/admin/src/lib/api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/lib/api.ts).
+
+It currently sends:
+
+- `Authorization: Bearer <admin_access_token>`
+- `x-admin-user-id`
+- `x-admin-user-email`
+
+### Important current-state caveat
+
+The admin login does **not** use a distinct admin auth endpoint today.
+
+Instead:
+
+- it uses the regular member login endpoint
+- it treats the returned user as an admin user in the UI
+- and it supplements the request with admin identity headers
+
+This works today only because the live backend admin routes still use a placeholder header-based gate.
+
+## Admin App Authorization
+
+### Intended backend design
+
+There is a dedicated admin auth plugin at [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts).
+
+That plugin is designed to:
+
+- validate a bearer token
+- load the real `adminUser` from Postgres
+- attach `request.adminContext`
+- enable permission checks via [packages/core-api/src/core/admin-permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/admin-permissions.ts)
+
+The admin permission model already exists and includes:
+
+- roles:
+  - `SUPER_ADMIN`
+  - `OPERATIONS`
+  - `SUPPORT`
+  - `DATA_OPS`
+  - `VIEWER`
+- permissions like:
+  - `tenant.view`
+  - `contest.override`
+  - `sportsdata.configure`
+  - `platform.health`
+  - `audit.view`
+
+### Actual runtime admin authorization today
+
+The live admin module in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts) does **not** currently use the dedicated admin JWT plugin.
+
+Instead it uses this placeholder pre-handler:
+
+- checks only that `x-admin-user-id` exists
+- returns `401` if the header is missing
+- does not validate role
+- does not validate admin permissions
+- does not attach `request.adminContext`
+
+So current runtime admin authorization is effectively:
+
+- "if the request contains admin identity headers, allow the route to continue"
+
+After that, individual handlers/services may record `adminUserId` and `adminUserEmail` for audit purposes, but the strong role/permission model is not yet the enforcement layer.
+
+### Admin current-state authentication/authorization sequence
+
+```mermaid
+sequenceDiagram
+    actor Admin
+    participant UI as Admin App
+    participant API as Core API
+    participant Auth as AuthService
+    participant AdminRoutes as Admin Module Placeholder Gate
+
+    Admin->>UI: Enter email + password
+    UI->>API: POST /api/v1/auth/login
+    API->>Auth: login(email, password)
+    Auth-->>UI: JWT access token + user payload
+    UI->>UI: store admin_access_token
+    UI->>UI: store AdminUser in Zustand
+    UI->>API: GET /api/v1/admin/... with Bearer token + x-admin-user-id + x-admin-user-email
+    API->>AdminRoutes: placeholder adminAuth(request)
+    alt x-admin-user-id present
+        AdminRoutes-->>API: allow
+        API-->>UI: admin response
+    else missing
+        AdminRoutes-->>UI: 401 UNAUTHORIZED
+    end
+```
+
+### Intended admin target sequence
+
+This is the direction implied by the existing code, but it is **not fully live yet**:
+
+```mermaid
+sequenceDiagram
+    actor Admin
+    participant UI as Admin App
+    participant API as Core API
+    participant Plugin as admin-auth plugin
+    participant DB as PostgreSQL
+    participant Perm as requireAdminPermission()
+
+    Admin->>UI: Use admin auth flow
+    UI->>API: GET /api/v1/admin/... with Bearer token
+    API->>Plugin: validate token
+    Plugin->>DB: load adminUser by id
+    Plugin-->>API: request.adminContext
+    API->>Perm: check required admin permission
+    alt permission granted
+        Perm-->>API: continue
+        API-->>UI: admin response
+    else forbidden
+        Perm-->>UI: 403 FORBIDDEN
+    end
+```
+
+## Current Web vs Admin Differences
+
+| Concern | Web app | Admin app |
+|---|---|---|
+| Login endpoint | `POST /api/v1/auth/login` | currently also `POST /api/v1/auth/login` |
+| Access token storage | `access_token` | `admin_access_token` |
+| User store | Zustand `useAuthStore` | Zustand `useAdminAuthStore` |
+| Auth header | `Authorization` | `Authorization` |
+| Extra identity headers | none | `x-admin-user-id`, `x-admin-user-email` |
+| Backend auth gate | real JWT auth guard | placeholder header gate |
+| Tenant enforcement | yes | not central in admin flow |
+| Runtime role/permission enforcement | yes for many league-scoped actions | role model exists, but not the current runtime gate |
+
+## Security And Correctness Observations
+
+### Stronger areas today
+
+- member-facing authentication is coherent and end-to-end
+- JWT access tokens are enforced on protected member routes
+- tenant context is derived centrally
+- league-scoped authorization has concrete permission helpers and negative integration coverage
+- refresh tokens are persisted and rotated
+
+### Weak or transitional areas today
+
+- admin login is not a separate hardened admin auth flow
+- admin routes are not yet enforced through the dedicated admin JWT plugin
+- admin role/permission checks exist in code, but are not currently the primary runtime authorization layer
+- admin UI currently relies on sending extra identity headers from the browser
+- SSO is still placeholder UI/backlog behavior, not the actual live auth mechanism
+- `/api/v1/auth/me` manually re-verifies the token inside the handler rather than reusing the shared auth context directly
+
+## Recommended Changes
+
+### Recommended direction: one authentication model, two application surfaces
+
+Yes, the architecture would be cleaner if PoolMaster used **one authentication model** for both the web app and admin app:
+
+- one login/authentication flow
+- one JWT validation model on the backend
+- one way to identify the caller
+- one way to derive authorization from claims plus database-backed policy
+
+The web and admin apps can still remain separate frontends and separate route spaces, but they do not need separate authentication mechanics.
+
+### Why a unified JWT-based model is better
+
+Right now:
+
+- web uses a real JWT auth guard
+- admin uses a browser-supplied identity-header workaround
+- admin role/permission logic exists, but it is not the live runtime gate
+
+That creates avoidable complexity:
+
+- two mental models for auth
+- higher risk of drift between frontend and backend
+- weaker trust boundaries for admin requests
+- more code paths to test
+
+A unified model would reduce this to:
+
+1. login once
+2. receive JWT + refresh token
+3. frontend stores the token
+4. every protected request uses `Authorization: Bearer ...`
+5. backend validates the JWT
+6. backend resolves the caller’s permissions/roles
+7. route-level authorization decides whether the request is allowed
+
+### Recommended target design
+
+#### Authentication
+
+Use a single auth flow for both web and admin users:
+
+- `POST /api/v1/auth/login`
+- or a future SSO/OIDC login flow
+
+The JWT should identify:
+
+- subject/user id
+- email
+- tenant id when applicable
+- whether the principal has admin capabilities
+- optionally the admin role and/or permission version
+
+Example conceptual claims:
+
+```json
+{
+  "sub": "user-or-admin-id",
+  "email": "derek.dorazio@gmail.com",
+  "tenantId": "tenant-123",
+  "principalType": "user",
+  "adminRole": "SUPER_ADMIN",
+  "isAdmin": true,
+  "iat": 1710000000,
+  "exp": 1710000900
+}
+```
+
+Not every user needs every claim, but the model should be consistent.
+
+#### Authorization
+
+Authentication and authorization should stay separate:
+
+- JWT proves identity
+- authorization decides what that identity can do
+
+For member-facing routes:
+
+- continue using league membership + commissioner permission checks
+
+For admin routes:
+
+- replace the placeholder header check with the existing `admin-auth` plugin
+- attach a real `request.adminContext`
+- use `requireAdminPermission()` where appropriate
+
+### Should authorization information live in the JWT?
+
+Partially, yes, but with care.
+
+Best practice here is:
+
+- include **stable coarse-grained identity claims** in the JWT
+  - `sub`
+  - `email`
+  - `tenantId`
+  - `isAdmin`
+  - maybe `adminRole`
+- do **not** rely exclusively on a long, browser-held JWT as the only source of fine-grained authorization truth
+
+Why:
+
+- admin permissions can change
+- league membership permissions can change
+- role removals need to take effect quickly
+
+So the practical recommendation is:
+
+- JWT carries enough information to classify the caller
+- backend still loads current authorization state for sensitive scopes
+
+That means:
+
+- web routes can keep using DB-backed league membership lookups
+- admin routes can load the current admin user and check current permissions
+
+### Recommended redirect behavior
+
+Yes, redirect based on role/capability after login, but do it as a frontend routing decision backed by truthful identity data.
+
+A good model is:
+
+- if the authenticated user is a normal member user:
+  - send them to the web app dashboard
+- if the authenticated user has admin capability:
+  - allow entry to the admin app
+- if a user can access both:
+  - either choose a default landing area or provide an app switcher
+
+Important detail:
+
+- redirecting based on role is a UX decision
+- it should not be the security boundary
+- the backend authorization checks must still stand on their own
+
+### Concrete recommended changes for PoolMaster
+
+#### 1. Remove browser-supplied admin identity headers as the trust boundary
+
+Eliminate the current reliance on:
+
+- `x-admin-user-id`
+- `x-admin-user-email`
+
+These are acceptable as a temporary bridge, but they should not remain the primary admin auth mechanism.
+
+#### 2. Wire the live admin module to the existing admin auth plugin
+
+Use [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) as the real runtime admin gate instead of the placeholder function in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts).
+
+#### 3. Decide on one principal model
+
+PoolMaster should explicitly choose one of these:
+
+- **Option A**: one shared principal model where a regular user may also have an admin record/capability
+- **Option B**: separate admin principals, but still authenticated through the same JWT/session mechanism
+
+Either can work. What matters most is:
+
+- one token validation path
+- one backend trust model
+
+#### 4. Add admin identity claims intentionally
+
+If admin access is part of the same authentication universe, add claims such as:
+
+- `isAdmin`
+- `adminRole`
+- possibly `principalType`
+
+But continue loading current admin permissions from the database for sensitive routes.
+
+#### 5. Simplify `/api/v1/auth/me`
+
+Once the shared auth guard is the universal protected-route entry point, `GET /api/v1/auth/me` should prefer the already-verified request auth context instead of manually re-parsing the bearer token inside the handler.
+
+### Recommended target sequence
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant App as Web App or Admin App
+    participant API as Core API
+    participant Guard as Unified JWT Auth Guard
+    participant DB as PostgreSQL
+    participant Route as Route Permission Check
+
+    User->>App: Login
+    App->>API: POST /api/v1/auth/login
+    API-->>App: JWT + refresh token + identity payload
+    App->>App: Store token and route user to the right app surface
+    App->>API: Protected request with Bearer token
+    API->>Guard: Verify JWT and attach principal context
+    Guard->>DB: Load current authorization state when needed
+    API->>Route: Check member or admin permissions
+    Route-->>App: Allow or reject
+```
+
+### Bottom-line recommendation
+
+Yes, I recommend moving to:
+
+- one authentication flow
+- one JWT validation path
+- one backend trust model
+- separate authorization rules for member and admin capabilities
+
+That would be a meaningful improvement over the current split, especially because the current admin implementation is already halfway there architecturally but not yet wired through as the true runtime boundary.
+
+## Recommended Review Questions
+
+If you are reviewing this architecture, the most important questions are:
+
+1. Should admin authentication move to a truly separate admin login/session path?
+2. Or should PoolMaster instead converge on a single JWT-based authentication model for both web and admin?
+3. Should the live admin module switch from header-based gating to the existing `admin-auth` plugin plus `requireAdminPermission()`?
+4. Should the admin app stop synthesizing admin identity headers in the browser once the backend admin plugin is fully live?
+5. Should `GET /api/v1/auth/me` rely on the already-populated `request.authUser` instead of re-verifying the token manually?
+
+## Relevant Code References
+
+### Backend
+
+- [packages/core-api/src/index.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/index.ts)
+- [packages/core-api/src/plugins/auth-guard.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/auth-guard.ts)
+- [packages/core-api/src/core/tenant-context.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/tenant-context.ts)
+- [packages/core-api/src/modules/auth/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/routes.ts)
+- [packages/core-api/src/modules/auth/handler.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/handler.ts)
+- [packages/core-api/src/modules/auth/auth-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/auth-service.ts)
+- [packages/core-api/src/core/permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/permissions.ts)
+- [packages/core-api/src/core/require-permission.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/require-permission.ts)
+- [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts)
+- [packages/core-api/src/core/admin-permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/admin-permissions.ts)
+- [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts)
+
+### Frontend
+
+- [clients/web/src/lib/api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/lib/api.ts)
+- [clients/web/src/stores/auth-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/stores/auth-store.ts)
+- [clients/web/src/pages/auth/login.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/pages/auth/login.tsx)
+- [clients/admin/src/lib/api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/lib/api.ts)
+- [clients/admin/src/stores/admin-auth-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/stores/admin-auth-store.ts)
+- [clients/admin/src/pages/login.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/login.tsx)

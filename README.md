@@ -161,6 +161,7 @@ poolmaster/
 
 ### Guides
 - [Architecture Overview](docs/ARCHITECTURE.md) — Components, dependencies, data flow
+- [Authentication & Authorization](docs/AUTHENTICATION-AUTHORIZATION.md) — Current web/admin auth flows, token handling, and authorization enforcement
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
 - [Scoring & Configuration Guide](docs/scoring-and-configuration-guide.md) — End-user scoring configuration
 - [AWS Deployment Plan](plans/archive/2026-04-completed-wave/16-aws-deployment.md) — Historical deployment plan with action items and status

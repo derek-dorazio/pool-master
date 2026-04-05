@@ -126,4 +126,5 @@ Use the table below for active plan ranges still expected to receive execution u
 | 30-xxx | `plans/30-platform-and-deploy-hardening.md` | Platform and deploy hardening |
 | 31-xxx | `plans/31-mock-contest-feed-provider.md` | Mock contest feed provider |
 | 32-xxx | `plans/32-stack-upgrade-modernization.md` | Stack modernization |
+| 36-xxx | `plans/36-authentication-and-authorization-unification.md` | Authentication and authorization unification |
 | ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites |
