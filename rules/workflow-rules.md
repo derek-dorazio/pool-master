@@ -128,4 +128,5 @@ Use the table below for active plan ranges still expected to receive execution u
 | 32-xxx | `plans/32-stack-upgrade-modernization.md` | Stack modernization |
 | 36-xxx | `plans/36-authentication-and-authorization-unification.md` | Authentication and authorization unification |
 | 37-xxx | `plans/37-league-top-level-domain-and-data-simplification.md` | League-first domain and data simplification |
+| 38-xxx | `plans/38-contest-entry-and-squad-alignment-review.md` | Contest, entry, and squad alignment review |
 | ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites |
