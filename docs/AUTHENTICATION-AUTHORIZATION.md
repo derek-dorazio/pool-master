@@ -435,19 +435,20 @@ sequenceDiagram
 Yes, the architecture would be cleaner if PoolMaster used **one authentication model** for both the web app and admin app:
 
 - one login/authentication flow
-- one JWT validation model on the backend
+- one backend-owned cookie/session model
 - one way to identify the caller
-- one way to derive authorization from claims plus database-backed policy
+- one way to derive authorization from coarse identity plus database-backed policy
 
 The web and admin apps can still remain separate frontends and separate route spaces, but they do not need separate authentication mechanics.
 
-### Why a unified JWT-based model is better
+### Why a unified cookie/session model is better
 
 Right now:
 
 - web uses a real JWT auth guard
 - admin uses a browser-supplied identity-header workaround
 - admin role/permission logic exists, but it is not the live runtime gate
+- both browser apps still keep auth credentials in `localStorage`
 
 That creates avoidable complexity:
 
@@ -455,14 +456,15 @@ That creates avoidable complexity:
 - higher risk of drift between frontend and backend
 - weaker trust boundaries for admin requests
 - more code paths to test
+- browser-readable auth credentials
 
 A unified model would reduce this to:
 
 1. login once
-2. receive JWT + refresh token
-3. frontend stores the token
-4. every protected request uses `Authorization: Bearer ...`
-5. backend validates the JWT
+2. backend issues `HttpOnly` auth/session cookies
+3. frontend reads authenticated identity from the backend, not from token storage
+4. every protected request carries cookies automatically
+5. backend validates the session/JWT
 6. backend resolves the caller’s permissions/roles
 7. route-level authorization decides whether the request is allowed
 
@@ -475,7 +477,15 @@ Use a single auth flow for both web and admin users:
 - `POST /api/v1/auth/login`
 - or a future SSO/OIDC login flow
 
-The JWT should identify:
+The backend should own session issuance and renewal through `HttpOnly` cookies:
+
+- short-lived auth/session cookie
+- refresh cookie with explicit revocation lifecycle
+- `Secure` outside local development
+- explicit `SameSite` and cookie-domain configuration
+- no browser-readable access-token persistence
+
+The authenticated session identity should identify:
 
 - subject/user id
 - email
@@ -483,7 +493,7 @@ The JWT should identify:
 - whether the principal has admin capabilities
 - optionally the admin role and/or permission version
 
-Example conceptual claims:
+Example conceptual coarse claims/session fields:
 
 ```json
 {
@@ -498,13 +508,13 @@ Example conceptual claims:
 }
 ```
 
-Not every user needs every claim, but the model should be consistent.
+Not every user needs every field, but the model should be consistent. The browser should not need to decode or store these values directly.
 
 #### Authorization
 
 Authentication and authorization should stay separate:
 
-- JWT proves identity
+- verified cookie-backed session proves identity
 - authorization decides what that identity can do
 
 For member-facing routes:
@@ -517,19 +527,19 @@ For admin routes:
 - attach a real `request.adminContext`
 - use `requireAdminPermission()` where appropriate
 
-### Should authorization information live in the JWT?
+### Should authorization information live in the session token?
 
 Partially, yes, but with care.
 
 Best practice here is:
 
-- include **stable coarse-grained identity claims** in the JWT
+- include **stable coarse-grained identity claims** in the cookie-backed session token
   - `sub`
   - `email`
   - `tenantId`
   - `isAdmin`
   - maybe `adminRole`
-- do **not** rely exclusively on a long, browser-held JWT as the only source of fine-grained authorization truth
+- do **not** rely exclusively on a long-lived browser session token as the only source of fine-grained authorization truth
 
 Why:
 
@@ -539,7 +549,7 @@ Why:
 
 So the practical recommendation is:
 
-- JWT carries enough information to classify the caller
+- the session token carries enough information to classify the caller
 - backend still loads current authorization state for sensitive scopes
 
 That means:
@@ -577,11 +587,21 @@ Eliminate the current reliance on:
 
 These are acceptable as a temporary bridge, but they should not remain the primary admin auth mechanism.
 
-#### 2. Wire the live admin module to the existing admin auth plugin
+#### 2. Stop storing access tokens in `localStorage`
+
+Replace browser-managed token persistence with backend-owned `HttpOnly` cookies for both web and admin.
+
+That means:
+
+- the browser no longer reads/stores access tokens directly
+- frontend app shells hydrate from truthful backend-authenticated identity reads
+- refresh, revocation, and logout stay backend-owned
+
+#### 3. Wire the live admin module to the existing admin auth plugin
 
 Use [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) as the real runtime admin gate instead of the placeholder function in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts).
 
-#### 3. Decide on one principal model
+#### 4. Decide on one principal model
 
 PoolMaster should explicitly choose one of these:
 
@@ -593,7 +613,7 @@ Either can work. What matters most is:
 - one token validation path
 - one backend trust model
 
-#### 4. Add admin identity claims intentionally
+#### 5. Add admin identity claims intentionally
 
 If admin access is part of the same authentication universe, add claims such as:
 
@@ -603,9 +623,9 @@ If admin access is part of the same authentication universe, add claims such as:
 
 But continue loading current admin permissions from the database for sensitive routes.
 
-#### 5. Simplify `/api/v1/auth/me`
+#### 6. Simplify `/api/v1/auth/me`
 
-Once the shared auth guard is the universal protected-route entry point, `GET /api/v1/auth/me` should prefer the already-verified request auth context instead of manually re-parsing the bearer token inside the handler.
+Once the shared auth/session guard is the universal protected-route entry point, `GET /api/v1/auth/me` should prefer the already-verified request auth context instead of manually re-parsing a bearer token inside the handler.
 
 ### Recommended target sequence
 
@@ -614,17 +634,17 @@ sequenceDiagram
     actor User
     participant App as Web App or Admin App
     participant API as Core API
-    participant Guard as Unified JWT Auth Guard
+    participant Session as Unified Cookie/Session Auth Layer
     participant DB as PostgreSQL
     participant Route as Route Permission Check
 
     User->>App: Login
     App->>API: POST /api/v1/auth/login
-    API-->>App: JWT + refresh token + identity payload
-    App->>App: Store token and route user to the right app surface
-    App->>API: Protected request with Bearer token
-    API->>Guard: Verify JWT and attach principal context
-    Guard->>DB: Load current authorization state when needed
+    API-->>App: Set-Cookie + identity payload
+    App->>App: Route user to the right app surface
+    App->>API: Protected request with cookies
+    API->>Session: Verify session and attach principal context
+    Session->>DB: Load current authorization state when needed
     API->>Route: Check member or admin permissions
     Route-->>App: Allow or reject
 ```
@@ -634,9 +654,15 @@ sequenceDiagram
 Yes, I recommend moving to:
 
 - one authentication flow
-- one JWT validation path
+- one backend-owned cookie/session validation path
 - one backend trust model
 - separate authorization rules for member and admin capabilities
+
+And specifically:
+
+- stop storing access tokens in `localStorage`
+- issue `HttpOnly`, `Secure` auth cookies from the backend
+- let the backend own refresh, logout, and revocation more completely
 
 That would be a meaningful improvement over the current split, especially because the current admin implementation is already halfway there architecturally but not yet wired through as the true runtime boundary.
 
@@ -645,10 +671,10 @@ That would be a meaningful improvement over the current split, especially becaus
 If you are reviewing this architecture, the most important questions are:
 
 1. Should admin authentication move to a truly separate admin login/session path?
-2. Or should PoolMaster instead converge on a single JWT-based authentication model for both web and admin?
+2. Or should PoolMaster instead converge on a single cookie/session-based authentication model for both web and admin?
 3. Should the live admin module switch from header-based gating to the existing `admin-auth` plugin plus `requireAdminPermission()`?
 4. Should the admin app stop synthesizing admin identity headers in the browser once the backend admin plugin is fully live?
-5. Should `GET /api/v1/auth/me` rely on the already-populated `request.authUser` instead of re-verifying the token manually?
+5. Should `GET /api/v1/auth/me` rely on the already-populated `request.authUser` instead of re-verifying the session token manually?
 
 ## Relevant Code References
 
