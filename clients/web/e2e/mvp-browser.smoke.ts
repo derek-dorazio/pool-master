@@ -41,4 +41,16 @@ test.describe('Browser CI sanity checks', () => {
     await assertNoErrorBoundary(page);
     await assertNoErrors(pageErrors);
   });
+
+  test('seeded commissioner can open the league detail route', async ({ page, pageErrors }) => {
+    await loginAsSeededCommissioner(page);
+    await page.goto(`/leagues/${SEEDED_LEAGUE_ID}`);
+
+    await expect(page.getByTestId('league-detail-create-contest')).toBeVisible();
+    await expect(page.getByTestId('league-detail-invite-members')).toBeVisible();
+    await expect(page.getByTestId('league-detail-history-link')).toBeVisible();
+
+    await assertNoErrorBoundary(page);
+    await assertNoErrors(pageErrors);
+  });
 });
