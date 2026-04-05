@@ -35,80 +35,140 @@ Surface ownership is a practical classification, not a security boundary.
 ### Identity, League, Contest, And Draft Core
 
 ```mermaid
-erDiagram
-    Tenant ||--o{ User : has
-    Tenant ||--o{ League : owns
-    Tenant ||--o{ Season : scopes
-    User ||--o{ RefreshToken : has
-    User ||--o{ LeagueMembership : joins
-    League ||--o{ LeagueMembership : contains
-    League ||--o{ LeagueInvitation : issues
-    League ||--o{ Contest : owns
-    League ||--o{ ContestTemplate : saves
-    Season ||--o{ Contest : groups
-    Contest ||--|| SelectionConfig : configures
-    Contest ||--|| ContestPool : resolves
-    Contest ||--o{ ContestEntry : contains
-    Contest ||--o{ ContestStanding : ranks
-    Contest ||--o{ ContestResult : closes
-    Contest ||--o{ ContestPick : records
-    Contest ||--o{ RosterPick : records
-    Contest ||--|| DraftSession : drives
-    ContestPool ||--o{ ContestParticipantPool : includes
-    ContestEntry ||--o{ RosterPick : makes
-    ContestEntry ||--o{ ContestPick : makes
-    ContestEntry ||--|| BracketPrediction : submits
-    DraftSession ||--o{ DraftPick : makes
-    Participant ||--o{ ContestParticipantPool : eligible_for
-    Participant ||--o{ ContestPick : selected_in
-    Participant ||--o{ RosterPick : selected_in
-    Participant ||--o{ DraftPick : drafted_as
-    Sport ||--o{ Season : has
-    Sport ||--o{ Participant : has
+classDiagram
+    class Tenant
+    class User
+    class RefreshToken
+    class League
+    class LeagueMembership
+    class LeagueInvitation
+    class ContestTemplate
+    class Sport
+    class Season
+    class Participant
+    class Contest
+    class SelectionConfig
+    class ContestPool
+    class ContestParticipantPool
+    class ContestEntry
+    class RosterPick
+    class ContestPick
+    class BracketPrediction
+    class DraftSession
+    class DraftPick
+    class ContestStanding
+    class ContestResult
+
+    Tenant "1" --> "*" User : has
+    Tenant "1" --> "*" League : owns
+    Tenant "1" --> "*" Season : scopes
+    User "1" --> "*" RefreshToken : has
+    User "1" --> "*" LeagueMembership : joins
+    League "1" --> "*" LeagueMembership : contains
+    League "1" --> "*" LeagueInvitation : issues
+    League "1" --> "*" Contest : owns
+    League "1" --> "*" ContestTemplate : saves
+    Sport "1" --> "*" Season : has
+    Sport "1" --> "*" Participant : has
+    Season "1" --> "*" Contest : groups
+    Contest "1" --> "1" SelectionConfig : configures
+    Contest "1" --> "1" ContestPool : resolves
+    Contest "1" --> "*" ContestEntry : contains
+    Contest "1" --> "*" ContestStanding : ranks
+    Contest "1" --> "*" ContestResult : closes
+    Contest "1" --> "*" ContestPick : records
+    Contest "1" --> "*" RosterPick : records
+    Contest "1" --> "1" DraftSession : drives
+    ContestPool "1" --> "*" ContestParticipantPool : includes
+    ContestEntry "1" --> "*" RosterPick : makes
+    ContestEntry "1" --> "*" ContestPick : makes
+    ContestEntry "1" --> "1" BracketPrediction : submits
+    DraftSession "1" --> "*" DraftPick : makes
+    Participant "1" --> "*" ContestParticipantPool : eligible_for
+    Participant "1" --> "*" ContestPick : selected_in
+    Participant "1" --> "*" RosterPick : selected_in
+    Participant "1" --> "*" DraftPick : drafted_as
 ```
 
 ### History, Notifications, Compliance, And Discovery
 
 ```mermaid
-erDiagram
-    League ||--o{ CommissionerAuditLog : tracks
-    League ||--o{ CommissionerActionItem : tracks
-    League ||--o{ LeagueRecord : aggregates
-    League ||--o{ RivalryRecord : aggregates
-    League ||--o{ LeagueSeasonSummary : aggregates
-    League ||--o{ Trophy : awards
-    League ||--o{ SeasonNote : annotates
-    Contest ||--o{ TeamRosterHistory : snapshots
-    Contest ||--o{ PayoutHistory : pays
-    Contest ||--o{ ScoringCheckpoint : checkpoints
-    User ||--o{ Notification : receives
-    User ||--|| NotificationPreference : configures
-    User ||--o{ DeviceRegistration : registers
-    User ||--|| UserLocalePreference : prefers
-    User ||--o{ ConsentRecord : grants
-    User ||--o{ DataExportRequest : requests
-    User ||--o{ DeletionRequest : requests
-    User ||--o{ SelfExclusion : activates
-    User ||--o{ AccountEnforcement : receives
+classDiagram
+    class League
+    class CommissionerAuditLog
+    class CommissionerActionItem
+    class LeagueRecord
+    class RivalryRecord
+    class LeagueSeasonSummary
+    class Trophy
+    class SeasonNote
+    class Contest
+    class TeamRosterHistory
+    class PayoutHistory
+    class ScoringCheckpoint
+    class User
+    class Notification
+    class NotificationPreference
+    class DeviceRegistration
+    class UserLocalePreference
+    class ConsentRecord
+    class DataExportRequest
+    class DeletionRequest
+    class SelfExclusion
+    class AccountEnforcement
+
+    League "1" --> "*" CommissionerAuditLog : tracks
+    League "1" --> "*" CommissionerActionItem : tracks
+    League "1" --> "*" LeagueRecord : aggregates
+    League "1" --> "*" RivalryRecord : aggregates
+    League "1" --> "*" LeagueSeasonSummary : aggregates
+    League "1" --> "*" Trophy : awards
+    League "1" --> "*" SeasonNote : annotates
+    Contest "1" --> "*" TeamRosterHistory : snapshots
+    Contest "1" --> "*" PayoutHistory : pays
+    Contest "1" --> "*" ScoringCheckpoint : checkpoints
+    User "1" --> "*" Notification : receives
+    User "1" --> "1" NotificationPreference : configures
+    User "1" --> "*" DeviceRegistration : registers
+    User "1" --> "1" UserLocalePreference : prefers
+    User "1" --> "*" ConsentRecord : grants
+    User "1" --> "*" DataExportRequest : requests
+    User "1" --> "*" DeletionRequest : requests
+    User "1" --> "*" SelfExclusion : activates
+    User "1" --> "*" AccountEnforcement : receives
 ```
 
 ### Admin, Platform, Billing, And Operations
 
 ```mermaid
-erDiagram
-    AdminUser ||--o{ AdminAuditEntry : records
-    AdminUser ||--o{ GlobalAnnouncement : creates
-    AdminUser ||--o{ ImpersonationSession : starts
-    AdminUser ||--o{ MigrationRun : starts
-    AdminUser ||--o{ FeatureFlag : updates
-    AdminUser ||--o{ FeatureFlagOverride : creates
-    Tenant ||--o{ FeatureFlagOverride : overrides
-    Tenant ||--o{ ImpersonationSession : impersonates
-    Tenant ||--o{ TenantUsage : tracks
-    Tenant ||--o{ EntitlementOverride : overrides
-    Tenant ||--o{ TenantSubscription : subscribes
-    FeatureFlag ||--o{ FeatureFlagOverride : scopes
-    Participant ||--o{ ParticipantProviderMapping : maps
+classDiagram
+    class AdminUser
+    class AdminAuditEntry
+    class GlobalAnnouncement
+    class ImpersonationSession
+    class MigrationRun
+    class FeatureFlag
+    class FeatureFlagOverride
+    class Tenant
+    class TenantUsage
+    class EntitlementOverride
+    class TenantSubscription
+    class Participant
+    class ParticipantProviderMapping
+
+    AdminUser "1" --> "*" AdminAuditEntry : records
+    AdminUser "1" --> "*" GlobalAnnouncement : creates
+    AdminUser "1" --> "*" ImpersonationSession : starts
+    AdminUser "1" --> "*" MigrationRun : starts
+    AdminUser "1" --> "*" FeatureFlag : updates
+    AdminUser "1" --> "*" FeatureFlagOverride : creates
+    Tenant "1" --> "*" FeatureFlagOverride : overrides
+    Tenant "1" --> "*" ImpersonationSession : impersonates
+    Tenant "1" --> "*" TenantUsage : tracks
+    Tenant "1" --> "*" EntitlementOverride : overrides
+    Tenant "1" --> "*" TenantSubscription : subscribes
+    FeatureFlag "1" --> "*" FeatureFlagOverride : scopes
+    Participant "1" --> "*" ParticipantProviderMapping : maps
 ```
 
 ## Data Dictionary
