@@ -248,6 +248,7 @@ Recommended decision:
 Recommended decision:
 
 - leagues are invite-only in the first pass
+- there is no `invitePolicy` field in the first-pass model
 - no open join flow
 - no approval workflow
 - invitations create or reactivate memberships as `MEMBER`
@@ -257,7 +258,7 @@ Recommended decision:
 - generic invite codes are supported
 - optional invited-email binding is supported
 - if an invited email is present, acceptance should require an account with that same email
-- invitation acceptance can include account creation if the invitee is not yet registered
+- invitation acceptance should use a single combined invite + account-creation/login flow when the invitee is not yet registered
 
 ### Decision B4: Squad model
 
@@ -269,9 +270,10 @@ Recommended decision:
 - squads are the primary contest-entry concept
 - squads can have creative names and icons
 - squads can have multiple active managers
+- a user may belong to only one squad per league
 - if the last active squad manager becomes inactive, the squad becomes inactive
 - no separate squad role model is needed in the first pass if all co-managers act equally
-- a user may belong to multiple squads in the same league unless later business rules constrain it
+- the data model should accept many squads per league, but operational limits should come from commissioner settings and billing-tier enforcement rather than schema constraints
 
 ### Decision C: Admin identity boundary
 
@@ -358,6 +360,7 @@ Recommended decision:
 - contests default to one entry per squad
 - certain contest configurations may allow multiple entries per squad later
 - this should be modeled as a contest rule such as `maxEntriesPerSquad`, not as a squad rule
+- contest history should show current squad/co-manager state in the first pass rather than introducing entry-time snapshot fields immediately
 
 ### Decision J: SportEvent shape
 
@@ -471,8 +474,8 @@ Recommended decision:
 | 37-003 | 1 | Design the global `User` model with no `tenantId`, and confirm that all normal product access flows through `LeagueMembership` and `SquadMembership` | In Progress | Locked direction: one user across many leagues, with league membership separate from squad co-management |
 | 37-004 | 1 | Design the unified user/admin identity model so platform-admin capability links to the same global user identity | Not Started | Pending further review discussion |
 | 37-004A | 1 | Redesign `LeagueMembership` around durable active/inactive lifecycle state with only `COMMISSIONER` and `MEMBER` roles | In Progress | Locked: never delete, reactivate on rejoin, retain history, always keep at least one active commissioner |
-| 37-004B | 1 | Redesign `LeagueInvitation` as invite-only, single-use onboarding with generic codes and optional invited-email matching | In Progress | Locked: no open join, no approval workflow, accepted invites create/reactivate `MEMBER` memberships |
-| 37-004C | 1 | Add `Squad` and `SquadMembership` so contest-playing identity is separate from league membership and supports co-managers | In Progress | Locked: squads belong to leagues, co-managers act equally, inactive squad when no active managers remain |
+| 37-004B | 1 | Redesign `LeagueInvitation` as invite-only, single-use onboarding with generic codes and optional invited-email matching | In Progress | Locked: no open join, no approval workflow, no `invitePolicy`, accepted invites create/reactivate `MEMBER` memberships through a single invite + signup/login flow |
+| 37-004C | 1 | Add `Squad` and `SquadMembership` so contest-playing identity is separate from league membership and supports co-managers | In Progress | Locked: squads belong to leagues, co-managers act equally, one squad per user per league, inactive squad when no active managers remain |
 | 37-005 | 2 | Redesign billing/subscription models from tenant-bound to league-bound | In Progress | Includes subscription, usage, entitlements, and plan overrides |
 | 37-006 | 2 | Define the subscription lifecycle: monthly/annual periods, expiry, downgrade to free tier, and enforcement behavior | In Progress | Locked: monthly/annual, expires by date, falls back to free tier |
 | 37-007 | 2 | Rework plan limits so they apply per league: members, contests/year, contest types, draft styles, and premium capabilities | In Progress | Locked packaging direction from this thread |
@@ -493,14 +496,10 @@ Recommended decision:
 These decisions are still open and should be refined before implementation starts:
 
 1. How should unified admin capability attach to the global `User` model after `AdminUser` is removed or linked?
-2. Should `League.invitePolicy` remain as a first-class field with only `INVITE_ONLY` for now, or be removed entirely and made implicit?
-3. Should `LeagueInvitation` lifecycle use a dedicated enum such as `PENDING` / `ACCEPTED` / `EXPIRED` / `REVOKED`, or also adopt the shared `ACTIVE` / `INACTIVE` plus reason pattern?
-4. Should generic invite links always require league creation + account creation/login in one combined flow, or should the app separate "claim invite" from "finish registration"?
-5. Should a user be allowed to belong to multiple squads in the same league with no restrictions, or should future contest types or billing tiers cap this?
-6. Should leagues place an explicit cap on active squads as part of billing-tier enforcement?
-7. Should squad membership ever support a future primary-contact concept, or should all co-managers remain permanently equivalent unless a stronger use case appears?
-8. Which contest-entry data should be snapshotted at entry time so historical results remain stable if squad membership later changes?
-9. How should admin/support exports and dashboards represent inactive league memberships and inactive squads once soft-deletion becomes the norm?
+2. Should `LeagueInvitation` lifecycle use a dedicated enum such as `PENDING` / `ACCEPTED` / `EXPIRED` / `REVOKED`, or also adopt the shared `ACTIVE` / `INACTIVE` plus reason pattern?
+3. Should leagues place an explicit cap on active squads as part of billing-tier enforcement, and if so where should the commissioner-configurable cap live?
+4. Should squad membership ever support a future primary-contact concept, or should all co-managers remain permanently equivalent unless a stronger use case appears?
+5. How should admin/support exports and dashboards represent inactive league memberships and inactive squads once soft-deletion becomes the norm?
 
 ## Relationship To Plan 36
 
