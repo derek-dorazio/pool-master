@@ -73,6 +73,7 @@ describe('League CRUD Integration', () => {
     const detailLeague = detailRes.json().league;
     expect(detailLeague.id).toBe(leagueId);
     expect(detailLeague.name).toBe('League CRUD League');
+    expect(detailLeague.role).toBe('OWNER');
 
     const updateRes = await getApp().inject({
       method: 'PUT',

@@ -36,6 +36,7 @@ test.describe('Browser CI sanity checks', () => {
 
     await expect(page.getByTestId('league-members-page')).toBeVisible();
     await expect(page.getByTestId('league-members-invite-button')).toBeVisible();
+    await page.getByTestId('league-members-invite-button').click();
     await expect(page.getByTestId('league-members-copy-invite-link')).toBeVisible();
 
     await assertNoErrorBoundary(page);

@@ -69,14 +69,20 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     reply: FastifyReply,
   ): Promise<void> {
     const { tenantId } = extractTenantContext(request);
+    const userId = (request.authUser?.userId
+      ?? request.headers['x-user-id']) as string | undefined;
     const result = await leagueService.getLeagueWithMembers(request.params.id, tenantId);
     if (!result) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'League not found' });
     }
+    const membership = userId
+      ? result.members.find((member) => member.userId === userId)
+      : undefined;
     return reply.send({
       league: toLeagueDetailDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
+        role: membership?.role,
       }),
     });
   }
