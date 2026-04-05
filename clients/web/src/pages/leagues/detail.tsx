@@ -449,7 +449,7 @@ function HistoryTab({ leagueId }: { leagueId: string }) {
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-lg font-semibold">Finished Contests</h3>
         <Button variant="outline" asChild>
-          <Link to={`/leagues/${leagueId}/history`}>Open full history</Link>
+          <Link to={`/leagues/${leagueId}/history`} data-testid="league-detail-history-link">Open full history</Link>
         </Button>
       </div>
       <div className="space-y-3">

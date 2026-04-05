@@ -49,6 +49,7 @@ test.describe('Browser CI sanity checks', () => {
 
     await expect(page.getByTestId('league-detail-create-contest')).toBeVisible();
     await expect(page.getByTestId('league-detail-invite-members')).toBeVisible();
+    await page.getByRole('tab', { name: 'History' }).click();
     await expect(page.getByTestId('league-detail-history-link')).toBeVisible();
 
     await assertNoErrorBoundary(page);
