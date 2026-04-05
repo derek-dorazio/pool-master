@@ -11,6 +11,7 @@ db_password          = "CHANGE_ME_qa_password"
 # ECS
 ecs_cpu    = 256
 ecs_memory = 512
+core_api_bootstrap_image_tag = "bootstrap"
 
 # Domain → qa-ultimateofficepoolmanager.com
 domain_name         = "ultimateofficepoolmanager.com"

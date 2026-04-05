@@ -24,7 +24,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-      - run: npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0 || true
+      - run: npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0
       - run: npx turbo typecheck
 
   # =========================================================================
@@ -111,7 +111,7 @@ jobs:
 
       - name: Upload backend coverage artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: backend-coverage
           path: |
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload webapp coverage artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: webapp-coverage
           path: |
@@ -255,7 +255,7 @@ jobs:
 
       - name: Upload admin coverage artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: admin-coverage
           path: |
@@ -330,7 +330,6 @@ jobs:
           file: infrastructure/docker/Dockerfile.core-api
           push: true
           tags: |
-            ${{ steps.tags.outputs.prefix }}/core-api:latest
             ${{ steps.tags.outputs.prefix }}/core-api:${{ steps.tags.outputs.sha_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -499,8 +498,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Image | Tags |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| core-api (monolith) | \`latest\`, \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| core-api (immutable) | \`${{ steps.image-ref.outputs.core_api_image }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| core-api tag | \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| core-api immutable image | \`${{ steps.image-ref.outputs.core_api_image }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| QA core-api task definition | \`${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| QA migrate task definition | \`${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| QA webapp release prefix | \`${{ steps.deploy-webapp.outputs.release_prefix }}\` |" >> $GITHUB_STEP_SUMMARY
@@ -933,7 +932,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: playwright-report
           path: |

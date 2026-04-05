@@ -290,7 +290,7 @@ Push to main
          ├── Vite build → S3 sync (webapp)
          ├── Vite build → S3 sync (admin)
          ├── CloudFront invalidation
-         └── ECS force-new-deployment
+         └── ECS task-definition rollout
 ```
 
 ---

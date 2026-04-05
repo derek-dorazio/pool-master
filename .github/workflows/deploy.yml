@@ -11,9 +11,8 @@ on:
           - staging
           - prod
       image_tag:
-        description: 'Image tag to deploy (default: latest)'
-        required: false
-        default: 'latest'
+        description: 'Immutable QA image tag to promote (for example a commit SHA tag)'
+        required: true
 
 env:
   AWS_REGION: us-east-2
@@ -35,7 +34,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Promote images from QA to target environment
+      - name: Promote core-api image from QA to target environment
         env:
           ENV: ${{ github.event.inputs.environment }}
           TAG: ${{ github.event.inputs.image_tag }}
@@ -43,33 +42,110 @@ jobs:
         run: |
           QA_PREFIX="${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/poolmaster-qa"
           TARGET_PREFIX="${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/poolmaster-${ENV}"
+          SOURCE_IMAGE="${QA_PREFIX}/core-api:${TAG}"
+          TARGET_IMAGE="${TARGET_PREFIX}/core-api:${TAG}"
 
-          for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web admin; do
-            echo "Promoting ${SERVICE}:${TAG} from QA to ${ENV}..."
-            docker pull "${QA_PREFIX}/${SERVICE}:${TAG}"
-            docker tag "${QA_PREFIX}/${SERVICE}:${TAG}" "${TARGET_PREFIX}/${SERVICE}:${TAG}"
-            docker tag "${QA_PREFIX}/${SERVICE}:${TAG}" "${TARGET_PREFIX}/${SERVICE}:latest"
-            docker push "${TARGET_PREFIX}/${SERVICE}:${TAG}"
-            docker push "${TARGET_PREFIX}/${SERVICE}:latest"
-          done
+          echo "Promoting ${SOURCE_IMAGE} to ${TARGET_IMAGE}..."
+          docker pull "${SOURCE_IMAGE}"
+          docker tag "${SOURCE_IMAGE}" "${TARGET_IMAGE}"
+          docker push "${TARGET_IMAGE}"
 
-      - name: Deploy to ECS
+      - name: Register target ECS task definitions
+        id: register-task-defs
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          TAG: ${{ github.event.inputs.image_tag }}
+          ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          TARGET_PREFIX="${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/poolmaster-${ENV}"
+          TARGET_IMAGE="${TARGET_PREFIX}/core-api:${TAG}"
+          CLUSTER="poolmaster-${ENV}-cluster"
+          CORE_SERVICE="poolmaster-${ENV}-core-api"
+          MIGRATE_FAMILY="poolmaster-${ENV}-migrate"
+
+          CORE_SERVICE_TASK_DEF=$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$CORE_SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          aws ecs describe-task-definition \
+            --task-definition "$CORE_SERVICE_TASK_DEF" \
+            --query 'taskDefinition' \
+            --output json \
+            | jq --arg IMAGE "$TARGET_IMAGE" '
+                del(
+                  .taskDefinitionArn,
+                  .revision,
+                  .status,
+                  .requiresAttributes,
+                  .compatibilities,
+                  .registeredAt,
+                  .registeredBy
+                )
+                | .containerDefinitions |= map(
+                    if .name == "core-api" then .image = $IMAGE else . end
+                  )
+              ' > /tmp/deploy-core-api-task-def.json
+
+          TARGET_CORE_API_TASK_DEF=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/deploy-core-api-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          aws ecs describe-task-definition \
+            --task-definition "$MIGRATE_FAMILY" \
+            --query 'taskDefinition' \
+            --output json \
+            | jq --arg IMAGE "$TARGET_IMAGE" '
+                del(
+                  .taskDefinitionArn,
+                  .revision,
+                  .status,
+                  .requiresAttributes,
+                  .compatibilities,
+                  .registeredAt,
+                  .registeredBy
+                )
+                | .containerDefinitions |= map(
+                    if .name == "migrate" then .image = $IMAGE else . end
+                  )
+              ' > /tmp/deploy-migrate-task-def.json
+
+          TARGET_MIGRATE_TASK_DEF=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/deploy-migrate-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "target_image=${TARGET_IMAGE}" >> $GITHUB_OUTPUT
+          echo "core_api_task_definition=${TARGET_CORE_API_TASK_DEF}" >> $GITHUB_OUTPUT
+          echo "migrate_task_definition=${TARGET_MIGRATE_TASK_DEF}" >> $GITHUB_OUTPUT
+
+      - name: Deploy core-api to ECS
         env:
           ENV: ${{ github.event.inputs.environment }}
         run: |
           CLUSTER="poolmaster-${ENV}-cluster"
-          for SERVICE in core-api draft-service scoring-service ingestion-worker notification-service web; do
-            echo "Deploying poolmaster-${ENV}-${SERVICE}..."
-            aws ecs update-service \
-              --cluster "${CLUSTER}" \
-              --service "poolmaster-${ENV}-${SERVICE}" \
-              --force-new-deployment \
-              --no-cli-pager
-          done
+          SERVICE="poolmaster-${ENV}-core-api"
+
+          aws ecs update-service \
+            --cluster "${CLUSTER}" \
+            --service "${SERVICE}" \
+            --task-definition "${{ steps.register-task-defs.outputs.core_api_task_definition }}" \
+            --no-cli-pager
+
+          aws ecs wait services-stable \
+            --cluster "${CLUSTER}" \
+            --services "${SERVICE}"
 
       - name: Summary
         run: |
           echo "### Deployed to ${{ github.event.inputs.environment }} 🚀" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Image tag: \`${{ github.event.inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Image URI: \`${{ steps.register-task-defs.outputs.target_image }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Core API task definition: \`${{ steps.register-task-defs.outputs.core_api_task_definition }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Migrate task definition: \`${{ steps.register-task-defs.outputs.migrate_task_definition }}\`" >> $GITHUB_STEP_SUMMARY
           echo "Triggered by: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Frontend release promotion remains a separate workflow from this ECS deploy." >> $GITHUB_STEP_SUMMARY

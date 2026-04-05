@@ -189,6 +189,8 @@ terraform plan -var-file=envs/qa.tfvars
 terraform apply -var-file=envs/qa.tfvars
 ```
 
+See [Terraform Workflow](infrastructure/terraform/README.md) for the remote-state-only workflow and local `.terraform/` hygiene rules.
+
 ### Infrastructure
 
 | Component | Technology | Notes |

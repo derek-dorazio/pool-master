@@ -11,6 +11,7 @@ db_password          = "CHANGE_ME_strong_prod_password"
 # ECS (more resources for prod)
 ecs_cpu    = 512
 ecs_memory = 1024
+core_api_bootstrap_image_tag = "bootstrap"
 
 # Domain → ultimateofficepoolmanager.com (no prefix for prod)
 domain_name         = "ultimateofficepoolmanager.com"

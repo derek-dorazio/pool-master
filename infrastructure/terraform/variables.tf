@@ -92,6 +92,12 @@ variable "ecs_memory" {
   default     = 512
 }
 
+variable "core_api_bootstrap_image_tag" {
+  description = "Immutable bootstrap image tag for the initial core-api and migrate task definitions. CI/CD registers later revisions from released images."
+  type        = string
+  default     = "bootstrap"
+}
+
 # --- Networking ---
 
 variable "vpc_cidr" {

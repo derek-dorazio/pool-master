@@ -220,7 +220,7 @@ resource "aws_security_group" "database" {
 resource "aws_ecr_repository" "services" {
   for_each             = toset(local.services)
   name                 = "${local.name_prefix}/${each.key}"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
   force_delete         = var.environment != "prod"
 
   image_scanning_configuration {
@@ -253,7 +253,6 @@ resource "aws_ecr_lifecycle_policy" "cleanup" {
         description  = "Keep last 10 tagged images"
         selection = {
           tagStatus   = "tagged"
-          tagPrefixList = ["v"]
           countType   = "imageCountMoreThan"
           countNumber = 10
         }
@@ -478,7 +477,7 @@ resource "aws_ecs_task_definition" "core_api" {
 
   container_definitions = jsonencode([{
     name         = "core-api"
-    image        = "${aws_ecr_repository.services["core-api"].repository_url}:latest"
+    image        = "${aws_ecr_repository.services["core-api"].repository_url}:${var.core_api_bootstrap_image_tag}"
     essential    = true
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
     environment = concat(local.common_env, [
@@ -520,7 +519,7 @@ resource "aws_ecs_task_definition" "migrate" {
 
   container_definitions = jsonencode([{
     name      = "migrate"
-    image     = "${aws_ecr_repository.services["core-api"].repository_url}:latest"
+    image     = "${aws_ecr_repository.services["core-api"].repository_url}:${var.core_api_bootstrap_image_tag}"
     essential = true
     command   = ["npx", "prisma", "migrate", "deploy", "--schema", "prisma/schema.prisma"]
     environment = [
