@@ -12,6 +12,8 @@ This plan turns the findings in [docs/AUTHENTICATION-AUTHORIZATION.md](/Users/DD
 
 It should also be read alongside [docs/STANDARD-AUTH-MODEL.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/STANDARD-AUTH-MODEL.md), which captures the recommended conventional consumer-site approach for PoolMaster.
 
+It is now also explicitly dependent on [Plan 37](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/37-league-top-level-domain-and-data-simplification.md) for the final domain boundary decisions around leagues, users, billing, and event modeling.
+
 ## Why This Plan Exists
 
 PoolMaster currently has an uneven trust model:
@@ -27,17 +29,20 @@ That creates avoidable risk:
 - weaker admin trust boundaries
 - duplicated token/identity handling
 - an unclear line between authentication and authorization
+- a trust model that is still shaped around the current tenant-owned user boundary
 
 ## Goals
 
 1. Use one backend-owned cookie/session authentication model for both web and admin.
-2. Eliminate `localStorage` access-token storage from both browser apps.
-3. Make signed session cookies and backend session validation the single runtime browser trust boundary for both apps.
-4. Keep authorization separate from authentication.
-5. Remove browser-supplied admin identity headers as a required trust mechanism.
-6. Keep member-facing league authorization DB-backed and league-scoped.
-7. Move admin enforcement onto real admin context and permissions.
-8. Preserve or improve smoke/E2E confidence during rollout.
+2. Support standard local login with `username or email + password`.
+3. Support Google login through OpenID Connect.
+4. Eliminate `localStorage` access-token storage from both browser apps.
+5. Make signed session cookies and backend session validation the single runtime browser trust boundary for both apps.
+6. Keep authorization separate from authentication.
+7. Remove browser-supplied admin identity headers as a required trust mechanism.
+8. Keep member-facing league authorization DB-backed and league-scoped.
+9. Move admin enforcement onto real admin context and permissions.
+10. Preserve or improve smoke/E2E confidence during rollout.
 
 ## Non-Goals
 
@@ -49,6 +54,12 @@ That creates avoidable risk:
 - Do not preserve browser-readable auth tokens in `localStorage`, session storage, or other JavaScript-managed persistence.
 
 ## Current-State Summary
+
+Important note:
+
+- the current auth/session model is still shaped around `tenantId` as part of user identity and request context
+- if Plan 37 is accepted, auth implementation should target the league-top-level model rather than deepening the tenant-owned-user design
+- current references to tenant context in this plan are transitional/current-state notes, not target-state requirements
 
 ### Web app
 
@@ -85,6 +96,8 @@ That creates avoidable risk:
 Use one backend-owned session model for both apps:
 
 - one login contract
+- local login with `username or email + password`
+- Google OIDC login
 - one session-cookie issuance path
 - one refresh/renewal lifecycle owned by the backend
 - one browser trust boundary: secure `HttpOnly` cookies
@@ -101,12 +114,28 @@ Recommended claim/session identity fields:
 
 - `sub`
 - `email`
-- `tenantId` when applicable
+- scope/context identifiers only if truly required by the final league-top-level design
 - `principalType`
 - `isAdmin`
 - optionally a coarse `adminRole`
 
 The browser should not need to read these values from a token. It should get its session/user shell state from a truthful backend-authenticated identity read such as `/api/v1/auth/me`.
+
+### Identity model
+
+Use one core account identity for each person:
+
+- one account record
+- optional local credential
+- optional external identities
+- optional admin capability
+
+Recommended direction:
+
+- evolve `User` into the shared account identity
+- add an `ExternalIdentity` model for Google and future providers
+- evolve refresh-token-only semantics into a first-class session model
+- link admin capability to the core account identity rather than treating it as a separate browser-auth identity
 
 ### Authorization
 
@@ -114,7 +143,7 @@ Authorization remains layered and runtime-backed:
 
 - member routes:
   - authenticated principal
-  - tenant context
+  - league context where required
   - DB-backed league membership and commissioner permission checks
 - admin routes:
   - authenticated principal
@@ -161,7 +190,8 @@ Choose one:
 Recommended decision:
 
 - one authentication contract and token model regardless of storage model
-- allow separate internal admin records if operationally useful
+- prefer one core account identity with linked admin capability
+- allow separate internal admin records only if they are linked to the core account cleanly
 - avoid separate browser trust models
 
 ### Decision B: Session and claim shape
@@ -198,7 +228,24 @@ Recommended decision:
 - keep one session model first
 - split login endpoints later only if UX or compliance needs require it
 
-### Decision E: Session read contract
+### Decision E: Login identifiers and provider support
+
+Choose and lock:
+
+- whether username is required or optional at account creation
+- whether local login accepts:
+  - username only
+  - email only
+  - username or email
+- how Google account linking/merge rules work
+
+Recommended decision:
+
+- local login accepts username or verified email
+- Google login is supported through OIDC
+- external identities link into the same core account system
+
+### Decision F: Session read contract
 
 Recommended decision:
 
@@ -215,9 +262,20 @@ Define the canonical runtime model:
 
 - cookie/session contract
 - coarse claim contract
+- local + Google login contract
 - backend request auth context
 - backend admin context
 - frontend session/identity read behavior
+
+### Workstream 1A: Account and identity model normalization
+
+Define the standard account model:
+
+- username/email login rules
+- local credential model
+- external identity model
+- account-to-admin capability linkage
+- session model semantics
 
 ### Workstream 2: Backend admin enforcement
 
@@ -256,6 +314,9 @@ Deliverables:
 
 - principal model decision
 - session/claim decision
+- login-identifier decision
+- Google OIDC decision
+- external identity decision
 - session read decision
 - migration bridge policy
 - standard login-method decision:
@@ -271,6 +332,9 @@ Exit criteria:
 
 Implementation focus:
 
+- define the standard account and identity model
+- normalize username/email credential lookup rules
+- define external identity linking rules
 - make shared auth context explicit and reusable
 - normalize cookie/session validation and renewal
 - reduce duplicate token parsing
@@ -279,6 +343,7 @@ Implementation focus:
 
 Exit criteria:
 
+- account and provider model are explicit
 - request auth context is canonical
 - no new code path needs to parse JWT ad hoc
 - no frontend code path needs to read auth credentials from browser storage
@@ -405,6 +470,8 @@ Build on the existing deployed checks:
 ## Acceptance Criteria
 
 - Browser-to-backend authentication uses one backend-owned cookie/session trust model for both web and admin.
+- Local login supports username or email plus password.
+- Google login is supported through the same core account/session model.
 - Neither web nor admin stores access tokens in `localStorage`.
 - Live admin routes no longer require `x-admin-user-id` or `x-admin-user-email` as a trust boundary.
 - Admin route authorization is enforced through real admin context and permissions.
@@ -416,21 +483,42 @@ Build on the existing deployed checks:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 36-001 | 0 | Finalize the unified principal decision, cookie/session contract, CSRF strategy, login methods, and session-read strategy in the auth doc and this plan | In Progress | Standard-model review completed in `docs/STANDARD-AUTH-MODEL.md`; still need final implementation decisions on principal linkage, cookie scope, and Google/local flow details |
+| 36-001 | 0 | Finalize the unified principal decision, cookie/session contract, CSRF strategy, login methods, and session-read strategy in the auth doc and this plan | In Progress | Standard-model review completed in `docs/STANDARD-AUTH-MODEL.md`; final implementation decisions must align with Plan 37's league-top-level model |
 | 36-002 | 0 | Document the canonical backend request-auth context and admin-context model that all routes/plugins should use | Not Started | Make this the single source of truth for future implementation |
-| 36-003 | 1 | Replace browser-managed refresh/access-token expectations with backend-issued `HttpOnly` session cookies in the auth module | Not Started | Keep the backend responsible for login, refresh, logout, and revocation |
-| 36-004 | 1 | Normalize `/api/v1/auth/me` and any adjacent identity reads so verified cookie-backed auth context is reused instead of duplicating token parsing | Not Started | Reduce duplicate token-reading paths before deeper migration |
-| 36-005 | 1 | Define the final admin session-read contract the admin app will trust for authenticated identity hydration | Not Started | Could be `/auth/me`, a scoped admin identity endpoint, or a reshaped shared session payload |
-| 36-006 | 2 | Replace the placeholder admin pre-handler in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts) with the real plugin path rooted in [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) | Not Started | This is the core runtime trust-boundary change |
-| 36-007 | 2 | Attach and consume `request.adminContext` consistently on live admin routes and services | Not Started | Replace ad hoc assumptions with one runtime context model |
-| 36-008 | 2 | Apply `requireAdminPermission()` or equivalent permission checks to real admin routes, prioritizing write and high-risk routes first | Not Started | Start with tenant mutation, provider mutation, announcements, migrations, and support actions |
-| 36-009 | 2 | Decide whether a short compatibility bridge is needed and, if so, bound it with explicit removal criteria and telemetry/logging | Not Started | The default should be no bridge unless QA migration forces one |
-| 36-010 | 3 | Remove the admin browser’s reliance on `x-admin-user-id` and `x-admin-user-email` as required request headers | Not Started | Cookie-backed session should become the only browser trust boundary |
-| 36-011 | 3 | Remove web and admin `localStorage` access-token persistence and switch both apps to backend-owned session reads plus cookie-authenticated requests | Not Started | Browsers should no longer manage auth credentials directly |
-| 36-012 | 3 | Rework frontend session hydration so app shell identity comes from truthful backend-authenticated state instead of token hydration | Not Started | Eliminate synthetic local-only identity assumptions |
-| 36-013 | 3 | Define post-login redirect and app-switch behavior for principals with admin capability | Not Started | UX decision only; not a security boundary |
-| 36-014 | 4 | Remove temporary bridge behavior, dead header-based trust logic, obsolete token-storage helpers, and cookie migration compatibility code | Not Started | No long-lived hybrid model should remain |
-| 36-015 | 4 | Update OpenAPI, generated clients, docs, and rules to match the final auth/session model | Not Started | Keep generated contracts and docs truthful |
-| 36-016 | 5 | Add or adjust integration coverage for shared auth, admin auth, session-cookie flows, CSRF protections, and permission negative paths | Not Started | Include `401` vs `403` behavior and inactive-admin cases |
-| 36-017 | 5 | Promote smoke and deployed browser checks that prove both apps authenticate and reach protected routes through the final model | Not Started | Build on the existing web/admin Playwright lane rather than replacing it |
-| 36-018 | 5 | Run the QA rollout, confirm both apps work end to end, and then close the plan with final documentation updates | Not Started | Plan should not be archived until the compatibility bridge is gone and QA verification is complete |
+| 36-003 | 0 | Finalize the core account model changes needed for standard auth: username support, verification/status fields, and normalization rules | Blocked | Blocked on Plan 37 decisions about global `User` and removal of `tenantId` from user identity |
+| 36-004 | 0 | Finalize the external identity strategy for Google OIDC and future providers | Blocked | Blocked on the final core account identity shape from Plan 37 |
+| 36-005 | 0 | Finalize the session model direction and decide whether to evolve `RefreshToken` into a first-class `AuthSession` concept or introduce a new table | Blocked | Session model should target the post-Plan-37 account/domain boundary |
+| 36-006 | 1 | Implement username-or-email local login lookup and normalization rules in the auth module | Not Started | Keep the login UX standard without breaking existing email-first accounts |
+| 36-007 | 1 | Add Google OIDC support using the standard authorization-code + PKCE flow and link it into the same core account/session model | Not Started | Do not create a separate browser auth model for Google users |
+| 36-008 | 1 | Replace browser-managed refresh/access-token expectations with backend-issued `HttpOnly` session cookies in the auth module | Not Started | Keep the backend responsible for login, refresh, logout, and revocation |
+| 36-009 | 1 | Normalize `/api/v1/auth/me` and any adjacent identity reads so verified cookie-backed auth context is reused instead of duplicating token parsing | Not Started | Reduce duplicate token-reading paths before deeper migration |
+| 36-010 | 1 | Define the final admin session-read contract the admin app will trust for authenticated identity hydration | Not Started | Could be `/auth/me`, a scoped admin identity endpoint, or a reshaped shared session payload |
+| 36-011 | 1 | Link admin capability to the core account model cleanly and decide how `AdminUser` relates to `User` going forward | Blocked | Blocked on Plan 37's identity simplification decisions |
+| 36-012 | 2 | Replace the placeholder admin pre-handler in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts) with the real plugin path rooted in [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) | Not Started | This is the core runtime trust-boundary change |
+| 36-013 | 2 | Attach and consume `request.adminContext` consistently on live admin routes and services | Not Started | Replace ad hoc assumptions with one runtime context model |
+| 36-014 | 2 | Apply `requireAdminPermission()` or equivalent permission checks to real admin routes, prioritizing write and high-risk routes first | Not Started | Start with tenant mutation, provider mutation, announcements, migrations, and support actions |
+| 36-015 | 2 | Decide whether a short compatibility bridge is needed and, if so, bound it with explicit removal criteria and telemetry/logging | Not Started | The default should be no bridge unless QA migration forces one |
+| 36-016 | 3 | Remove the admin browser’s reliance on `x-admin-user-id` and `x-admin-user-email` as required request headers | Not Started | Cookie-backed session should become the only browser trust boundary |
+| 36-017 | 3 | Remove web and admin `localStorage` access-token persistence and switch both apps to backend-owned session reads plus cookie-authenticated requests | Not Started | Browsers should no longer manage auth credentials directly |
+| 36-018 | 3 | Rework frontend session hydration so app shell identity comes from truthful backend-authenticated state instead of token hydration | Not Started | Eliminate synthetic local-only identity assumptions |
+| 36-019 | 3 | Define post-login redirect and app-switch behavior for principals with admin capability | Not Started | UX decision only; not a security boundary |
+| 36-020 | 4 | Remove temporary bridge behavior, dead header-based trust logic, obsolete token-storage helpers, and cookie migration compatibility code | Not Started | No long-lived hybrid model should remain |
+| 36-021 | 4 | Update OpenAPI, generated clients, docs, and rules to match the final auth/session model | Not Started | Keep generated contracts and docs truthful |
+| 36-022 | 5 | Add or adjust integration coverage for shared auth, admin auth, username/email login, Google OIDC callback handling, session-cookie flows, CSRF protections, and permission negative paths | Not Started | Include `401` vs `403` behavior and inactive-admin cases |
+| 36-023 | 5 | Promote smoke and deployed browser checks that prove both apps authenticate and reach protected routes through the final model | Not Started | Build on the existing web/admin Playwright lane rather than replacing it |
+| 36-024 | 5 | Run the QA rollout, confirm both apps work end to end, and then close the plan with final documentation updates | Not Started | Plan should not be archived until the compatibility bridge is gone and QA verification is complete |
+
+## Dependency Note
+
+Plan 37 is now the upstream domain/data-model plan for:
+
+- global user identity
+- league-top-level commercial boundary
+- tenant removal/simplification
+- event/season ownership
+- admin linkage to core account identity
+
+Plan 36 should proceed in two stages:
+
+1. design/decision work that can happen now
+2. implementation work after the Plan 37 boundary decisions are locked
