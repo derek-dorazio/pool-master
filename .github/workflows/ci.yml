@@ -923,12 +923,17 @@ jobs:
       - run: npm ci
 
       - name: Install Playwright browsers
-        run: cd clients/web && npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
-      - name: Run E2E tests against QA
+      - name: Run web E2E tests against QA
         env:
           PLAYWRIGHT_BASE_URL: https://qa.ultimateofficepoolmanager.com
         run: cd clients/web && npx playwright test
+
+      - name: Run admin E2E tests against QA
+        env:
+          PLAYWRIGHT_BASE_URL: https://qa-admin.ultimateofficepoolmanager.com
+        run: cd clients/admin && npx playwright test
 
       - name: Upload Playwright report
         if: always()
@@ -938,11 +943,13 @@ jobs:
           path: |
             clients/web/playwright-report/
             clients/web/test-results/
+            clients/admin/playwright-report/
+            clients/admin/test-results/
           retention-days: 7
 
       - name: E2E summary
         if: always()
         run: |
           echo "### E2E Tests (Playwright)" >> $GITHUB_STEP_SUMMARY
-          echo "Target: \`https://qa.ultimateofficepoolmanager.com\`" >> $GITHUB_STEP_SUMMARY
+          echo "Targets: \`https://qa.ultimateofficepoolmanager.com\`, \`https://qa-admin.ultimateofficepoolmanager.com\`" >> $GITHUB_STEP_SUMMARY
           echo "Report: download \`playwright-report\` artifact" >> $GITHUB_STEP_SUMMARY

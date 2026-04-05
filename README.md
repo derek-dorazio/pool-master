@@ -36,7 +36,7 @@ npm run test:unit
 
 # Smoke tests (requires npm run dev:start first)
 npm run test:smoke:api   # API smoke tests
-npm run test:smoke:e2e   # E2E browser tests — Playwright
+npm run test:smoke:e2e   # E2E browser tests — Playwright for web + admin
 npm run test:smoke       # Both
 ```
 

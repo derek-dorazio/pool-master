@@ -207,7 +207,7 @@ npm run dev:start
 
 # Then in another terminal:
 npm run test:smoke:api   # API smoke tests — hits health endpoint + key routes
-npm run test:smoke:e2e   # E2E browser tests — Playwright against the webapp
+npm run test:smoke:e2e   # E2E browser tests — Playwright against web + admin
 npm run test:smoke       # Run both suites
 ```
 
@@ -216,7 +216,7 @@ npm run test:smoke       # Run both suites
 - Leagues, participants, search, discovery, age verification
 - Scoring templates, notification preferences
 
-**E2E smoke tests** (`clients/web/e2e/`) check:
+**E2E smoke tests** (`clients/web/e2e/`, `clients/admin/e2e/`) check:
 - Landing page loads with CTA
 - Legal pages render (privacy, terms, cookies, responsible gaming)
 - Auth pages load with forms

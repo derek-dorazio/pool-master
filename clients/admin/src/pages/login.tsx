@@ -68,11 +68,11 @@ export function Component() {
           <div className="flex justify-center mb-2">
             <Logo size={48} />
           </div>
-          <CardTitle className="text-2xl">Ultimate Pool Manager Admin</CardTitle>
+          <CardTitle data-testid="admin-login-title" className="text-2xl">Ultimate Pool Manager Admin</CardTitle>
           <CardDescription>Sign in to access the admin dashboard</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Button className="w-full" size="lg" onClick={handleSso}>
+          <Button data-testid="admin-login-sso" className="w-full" size="lg" onClick={handleSso}>
             <KeyRound className="mr-2 h-4 w-4" />
             Sign in with SSO
           </Button>
@@ -94,6 +94,7 @@ export function Component() {
               <Input
                 id="email"
                 type="email"
+                data-testid="admin-login-email"
                 placeholder="admin@poolmaster.io"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -106,6 +107,7 @@ export function Component() {
               <Input
                 id="password"
                 type="password"
+                data-testid="admin-login-password"
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -116,7 +118,13 @@ export function Component() {
               <p className="text-sm text-destructive">{error}</p>
             )}
 
-            <Button type="submit" variant="secondary" className="w-full" disabled={submitting}>
+            <Button
+              type="submit"
+              variant="secondary"
+              className="w-full"
+              disabled={submitting}
+              data-testid="admin-login-submit"
+            >
               <LogIn className="mr-2 h-4 w-4" />
               {submitting ? 'Signing in...' : 'Sign In'}
             </Button>

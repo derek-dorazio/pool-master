@@ -33,10 +33,10 @@ export function Component() {
   const healthyCount = providers.filter((p) => p.status === 'HEALTHY').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-providers-page">
       <div className="flex items-center gap-3">
         <Activity className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Sports Data Providers</h1>
+        <h1 data-testid="admin-providers-title" className="text-2xl font-bold">Sports Data Providers</h1>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -58,7 +58,7 @@ export function Component() {
       <Card>
         <CardContent className="p-0">
           {isError ? (
-            <div className="px-4 py-8 text-sm text-red-600">
+            <div data-testid="admin-providers-error" className="px-4 py-8 text-sm text-red-600">
               Provider status is unavailable.
               <span className="ml-2 text-muted-foreground">
                 {error instanceof Error ? error.message : 'Check the provider adapters or health logs.'}
@@ -83,6 +83,7 @@ export function Component() {
                   return (
                     <tr
                       key={p.providerId}
+                      data-testid={`admin-provider-row-${p.providerId}`}
                       className="border-b cursor-pointer hover:bg-muted/30 transition-colors"
                       onClick={() => navigate(`/providers/${p.providerId}`)}
                     >

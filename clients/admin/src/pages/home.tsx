@@ -58,7 +58,7 @@ export function Component() {
   const { metrics, services, alerts, audit } = data;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-home-page">
       <h1 className="text-2xl font-bold">Platform Overview</h1>
 
       {/* Metrics row */}

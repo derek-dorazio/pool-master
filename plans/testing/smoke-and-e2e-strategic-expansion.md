@@ -294,13 +294,13 @@ Recommended parallel groups:
 | STX-001 | Inventory | Build QA service/endpoint smoke inventory and classify each check into required smoke, expanded smoke, or E2E only | Not Started | Include web, admin, core API, and any additional deployed QA service actually in use |
 | STX-002 | Smoke | Extend required smoke to include one truthful contest entry/selection-room read and one standings/results read | Not Started | Promote only when deterministic |
 | STX-003 | Smoke | Build expanded non-blocking smoke route matrix for auth, league, invite, contest, entry, standings, and admin/web reachability | Not Started | Organize by capability, not by arbitrary files |
-| STX-004 | E2E | Implement commissioner league setup journey | Not Started | Independent spec with self-owned commissioner account |
+| STX-004 | E2E | Implement commissioner league setup journey | In Progress | First pass now covers seeded commissioner login plus league member management reachability against QA |
 | STX-005 | E2E | Implement invite and member join journey | Not Started | Use two self-owned users and a real invite link |
 | STX-006 | E2E | Implement contest creation and review journey | Not Started | Use supported MVP contest types only |
 | STX-007 | E2E | Implement contest entry and draft-start journey | Not Started | Use deterministic setup data and one supported selection path |
 | STX-008 | E2E | Implement league activity/history/recap read journey | Not Started | Keep this read-focused and stable |
-| STX-009 | E2E | Implement admin provider/tenant browser diagnostics journey | Not Started | Separate lane from member-facing flows |
-| STX-010 | CI | Add non-blocking CI lane(s) for expanded smoke and high-value browser flows with artifacts/traces | Not Started | Do not make required immediately |
+| STX-009 | E2E | Implement admin provider/tenant browser diagnostics journey | In Progress | First pass now covers seeded admin login plus provider list reachability against QA |
+| STX-010 | CI | Add non-blocking CI lane(s) for expanded smoke and high-value browser flows with artifacts/traces | In Progress | First pass now runs web and admin Playwright diagnostics in the deployed lane with artifacts |
 | STX-011 | Promotion | Promote only the proven stable subset into required CI | Not Started | Base promotion on repeated green runs and low flake rate |
 
 ## Acceptance Criteria
