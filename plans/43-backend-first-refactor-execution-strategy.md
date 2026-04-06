@@ -48,6 +48,12 @@ Recommended delivery model:
 - defer app rebuild work until the backend/API/export layer is stable enough to
   consume
 
+Current execution lane bootstrap:
+
+- dedicated branch: `codex-backend-refactor-lane`
+- branch-specific CI rules should keep backend checks required while skipping
+  web/admin test jobs and combined coverage summary on that branch
+
 ## Testing Strategy During Refactor
 
 During the backend-first refactor lane, the required confidence signals should
