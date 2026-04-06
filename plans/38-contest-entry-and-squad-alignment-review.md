@@ -76,6 +76,43 @@ Plan 37 now points toward:
 
 That creates several important mismatches in the current contest model.
 
+## Decisions Locked In This Review
+
+The following direction is now considered settled for the first pass:
+
+- `Contest` references exactly one `SportEvent` through a strong `sportEventId`
+- first pass contest model is explicitly single-event only
+- `Contest.seasonId` should be removed
+- `Contest.sport` should not be denormalized if it can be derived from `SportEvent`
+- `Contest.isImported` and `Contest.importedBy` should be removed
+- `ContestEntry` should move from `leagueMembershipId` to `squadId`
+- `ContestEntry` should include required `entryNumber`
+- multiple entries per squad are supported by the model
+- `ContestEntry` should support lifecycle state with `ACTIVE` / `INACTIVE`
+- entry deletion/leaving should be soft-delete/inactivation, not hard delete
+- `ContestConfiguration` should be a separate object/table from `Contest`
+- `ContestConfiguration` should include:
+  - `locksAt`
+  - `minimumEntries`
+  - selection/scoring/payout/draft rules
+- `minimumEntries` is entry-based, not squad-based, and defaults to `2`
+- `Contest` should not move to live state until minimum active entries are met
+- `SportEvent` owns real-world timing and status
+- `Contest` should have persisted lifecycle state including at least:
+  - `NOT_STARTED`
+  - `LOCKED`
+  - `IN_PROGRESS`
+  - `COMPLETED`
+- `LOCKED` is a real contest status between `locksAt` and event start
+- `RosterPick`, `ContestPick`, `DraftPick`, and `BracketPrediction` remain entry-owned
+- `ContestPool` and `ContestParticipantPool` should be removed in the first pass
+- the full official event field comes from `SportEventParticipant`
+- default PoolMaster values come from `SportEventParticipantValuation`
+- event-specific live/final result detail remains in `SportEventParticipantSourceData` for now
+- contest history and results should reference `squadId`, not `leagueMembershipId`
+- no extra contest-summary persistence concept is needed; summary views remain DTO/read-model concerns
+- no snapshot model is required in the first pass for squad/co-manager display state
+
 ## Key Mismatches Identified
 
 ### 1. Contest entry is member-owned instead of squad-owned
@@ -201,78 +238,62 @@ Why this matters:
 
 ### A. Contest identity and event relationship
 
-1. Should every contest in the first-pass model require a `SportEvent`, or can some contests remain eventless/manual?
-2. Should `Contest` own `sportEventId` directly instead of relying on `ContestPool.eventId`?
-3. Should `Contest.seasonId` be removed entirely once `SportEvent.seasonYear` is in place?
-4. Should `Contest.sport` remain denormalized on the contest, or should it always derive from `SportEvent.sport` when an event is attached?
-5. If a contest is event-backed, should matchups and picks reference `SportEvent` or `SportEventParticipant` more explicitly instead of carrying loose optional UUIDs?
+1. If a contest is event-backed, should matchups and picks reference `SportEvent` or `SportEventParticipant` more explicitly instead of carrying loose optional UUIDs?
 
 ### B. Contest configuration model
 
-6. Do we want to keep one broad `SelectionConfig` table for all contest modes, or split configuration by supported mode family?
-7. Since the current create contract only supports a subset of modes, should the persistence model also narrow to that subset for now?
-8. Should `contestType` remain on the model if the product is effectively standardizing on one main contest type for the foreseeable future?
-9. What exactly should `isExclusive` mean after squads replace direct member entries:
+2. Do we want to keep one broad `SelectionConfig` table for all contest modes, or replace it with a cleaner `ContestConfiguration` model tailored to the supported modes?
+3. Since the current create contract only supports a subset of modes, should the persistence model also narrow to that subset for now?
+4. Should `contestType` remain on the model if the product is effectively standardizing on one main contest type for the foreseeable future?
+5. What exactly should `isExclusive` mean after squads replace direct member entries:
    - exclusive picks across all entries in the contest
    - exclusive picks only within a squad
    - something else?
-10. Should entry-fee and payout settings remain contest-local only, or do we anticipate reusable league-level payout templates as a first-class model?
+6. Should entry-fee and payout settings remain contest-local only, or do we anticipate reusable league-level payout templates as a first-class model?
 
 ### C. Entry and squad alignment
 
-11. Should `ContestEntry` reference `squadId` directly and drop `leagueMembershipId` entirely?
-12. Should `ContestEntry` keep a human-editable `name`, or should the entry display name simply come from the squad name in the first pass?
-13. If squads are the primary entry concept, should a squad always exist before entering a contest, or should contest-entry flow be able to create the squad inline?
-14. When an invite is accepted, should squad creation/joining ever happen in the same flow, or should invites remain league-only in the first pass?
-15. If a squad becomes inactive after entering a contest, should existing contest entries remain active history records with the inactive squad attached?
-16. Should a contest ever allow multiple squads with the same co-managers, or should league rules discourage that even if the schema allows it?
+7. Should `ContestEntry.name` remain a human-editable field, with default naming based on squad name plus entry number?
+8. When an invite is accepted, should squad creation/joining ever happen in the same flow, or should invites remain league-only in the first pass?
+9. If a squad becomes inactive after entering a contest, should existing contest entries remain active history records with the inactive squad attached?
+10. Should a contest ever allow multiple squads with the same co-managers, or should league rules discourage that even if the schema allows it?
 
 ### D. One-entry-per-squad vs multiple entries
 
-17. Should `Contest` get an explicit rule like `maxEntriesPerSquad` with default `1`?
-18. If `maxEntriesPerSquad > 1`, should those entries be separately named by the commissioner/co-managers, or automatically numbered?
-19. If a squad has multiple entries in the same contest, should picks/drafts be fully independent per entry? The current model suggests yes.
-20. Should some contest types permanently disallow multiple entries regardless of league or contest settings?
+11. Should `ContestConfiguration` get an explicit rule like `maxEntriesPerSquad`, and should its default remain `1`?
+12. If `maxEntriesPerSquad > 1`, should those entries be separately named by the commissioner/co-managers, or automatically numbered?
+13. Should some contest types permanently disallow multiple entries regardless of league or contest settings?
 
 ### E. Pool, pricing, and valuation alignment
 
-21. Should `ContestParticipantPool` survive only as a contest-local availability/override table once `SportEventParticipant` and valuations exist?
-22. Should contest pricing and tiers default from `SportEventParticipantValuation` and only write contest-local overrides when needed?
-23. Do we want contest-local overrides for:
-   - `contestPrice`
-   - `contestTier`
-   - participant availability
-   - entry limits
-24. If the first pass uses the full official event field with no exclusions, should `ContestPool` become simpler or even optional for some modes?
-25. Should availability/injury/withdrawal state remain global at the `SportEventParticipant` level, with contest-local override only for special cases?
-26. Does budget/tier derivation need valuation versioning so a contest can say which valuation set it used?
+14. Should contest pricing and tiers always default from `SportEventParticipantValuation`, with no contest-level participant overrides in the first pass?
+15. Does budget/tier derivation need valuation versioning later, even though first pass assumes valuations are immutable once established?
 
 ### F. Drafting and pick ownership
 
-27. Once entries are squad-owned, should any active squad co-manager be able to draft and submit picks?
-28. Do we need to record which specific user made each draft pick or contest pick for audit/history?
-29. Should draft-room turn ownership remain entry-based, or does the new squad model imply a separate squad-turn concept? My read is entry-based is still fine.
-30. If co-managers can both act, do we need optimistic locking or stronger “last writer wins” rules around live draft actions and lineup changes?
+16. Once entries are squad-owned, should any active squad co-manager be able to draft and submit picks?
+17. Do we need to record which specific user made each draft pick or contest pick for audit/history?
+18. If co-managers can both act, do we need optimistic locking or stronger “last writer wins” rules around live draft actions and lineup changes?
 
 ### G. History, standings, and payouts
 
-31. Should `ContestStanding` and `ContestResult` become squad-centric in their denormalized history fields?
-32. Should `PayoutHistory` key off `squadId` instead of `leagueMembershipId` once squads are the contest entrants?
-33. Should all-time history and analytics primarily be:
+19. Should `ContestStanding` and `ContestResult` become squad-centric in their denormalized history fields, or avoid denormalization in the first pass and reference `squadId` only?
+20. Should `PayoutHistory` key off `squadId` instead of `leagueMembershipId` once squads are the contest entrants?
+21. Should all-time history and analytics primarily be:
    - squad-centric
    - member-centric
    - both
-34. If both, which one is the primary user-facing story in the product?
-35. Should current member-merge/history services be redesigned around users, league memberships, squads, or some combination?
+22. If both, which one is the primary user-facing story in the product?
+23. Should current member-merge/history services be redesigned around users, league memberships, squads, or some combination?
 
 ### H. Terminology and cleanup
 
-36. Should `TeamRosterHistory` be renamed to `SquadRosterHistory` when the new model lands?
-37. Should “owner” language in entry DTOs and standings DTOs be replaced with squad-oriented language such as:
+24. Should `TeamRosterHistory` be renamed to `SquadRosterHistory` when the new model lands?
+25. Should “owner” language in entry DTOs and standings DTOs be replaced with squad-oriented language such as:
    - `squadId`
    - `squadName`
    - `managerDisplayNames`
-38. Should contest DTOs continue exposing member identity at all once squads are the primary entry unit?
+26. Should contest DTOs continue exposing member identity at all once squads are the primary entry unit?
 
 ## Recommended Direction So Far
 
@@ -283,7 +304,7 @@ Based on the current model review and the decisions already locked in Plan 37, t
 - `ContestEntry` should move from `leagueMembershipId` to `squadId`
 - entry display should become squad-centric rather than owner-centric
 - multiple entries should be modeled as a contest rule, not a membership or squad exception
-- global event-field and valuation models should absorb more of what `ContestParticipantPool` currently owns
+- global event-field and valuation models should absorb the responsibilities currently held by `ContestPool` and `ContestParticipantPool`
 - history, payout, and analytics models need a deliberate pass because they are heavily member-centric today
 
 ## Suggested Next Review Sequence
