@@ -385,6 +385,18 @@ Recommended decision:
   - optional `playerLastName`
   - optional `teamName`
 
+### Decision L: Audit field convention
+
+Recommended decision:
+
+- standard audit timestamps remain universal on domain entities:
+  - `createdAt`
+  - `updatedAt`
+- actor audit references should be an explicit convention for human-authored mutable records, not a universal base requirement:
+  - `createdByUserId?`
+  - `updatedByUserId?`
+- system-generated, import-generated, and derived rows may omit actor references where no meaningful human author exists
+
 ## Proposed Schema Direction
 
 ### Models to remove or phase out

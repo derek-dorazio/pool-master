@@ -33,6 +33,7 @@ This is a review-and-decision plan, not an implementation plan yet.
   - all hang off `ContestEntry`
 - `ContestStanding`, `ContestResult`, `TeamRosterHistory`, `PayoutHistory`
   - mostly entry-centric but denormalized around `leagueMembershipId`
+- prize-related behavior is currently embedded in payout configuration rather than a dedicated prize-award model
 
 ### Current service behavior
 
@@ -90,11 +91,16 @@ The following direction is now considered settled for the first pass:
 - multiple entries per squad are supported by the model
 - `ContestEntry` should support lifecycle state with `ACTIVE` / `INACTIVE`
 - entry deletion/leaving should be soft-delete/inactivation, not hard delete
+- `ContestEntry` should carry canonical live and final entry state for the first pass:
+  - `totalScore`
+  - `standingsPosition`
+  - `isEliminated`
 - `ContestConfiguration` should be a separate object/table from `Contest`
 - `ContestConfiguration` should include:
   - `locksAt`
   - `minimumEntries`
   - selection/scoring/payout/draft rules
+- `ContestConfiguration` should also include contest prize definitions through a dedicated configuration concept such as `ContestPrize`
 - `minimumEntries` is entry-based, not squad-based, and defaults to `2`
 - `Contest` should not move to live state until minimum active entries are met
 - `SportEvent` owns real-world timing and status
@@ -104,12 +110,53 @@ The following direction is now considered settled for the first pass:
   - `IN_PROGRESS`
   - `COMPLETED`
 - `LOCKED` is a real contest status between `locksAt` and event start
-- `RosterPick`, `ContestPick`, `DraftPick`, and `BracketPrediction` remain entry-owned
+- `RosterPick` remains the canonical entry-owned selection record for the first pass
+- `BracketPrediction` remains only as a minimal entry-owned placeholder while full bracket design is deferred
 - `ContestPool` and `ContestParticipantPool` should be removed in the first pass
+- `ContestStanding` should be removed in the first pass
+- `ContestResult` should be removed in the first pass
+- `PayoutHistory` should be removed in the first pass
+- `TeamRosterHistory` should be removed in the first pass
+- `ContestPick` should be removed in the first pass because season-long / periodic pick contests are out of scope
 - the full official event field comes from `SportEventParticipant`
 - default PoolMaster values come from `SportEventParticipantValuation`
 - event-specific live/final result detail remains in `SportEventParticipantSourceData` for now
-- contest history and results should reference `squadId`, not `leagueMembershipId`
+- draft and selection availability should come directly from `SportEventParticipant` plus `SportEventParticipantValuation`
+- `RosterPick` should remain the only roster persistence for tiered, budget, and open-selection modes
+- `RosterPick` should be the canonical selected-participant record for a `ContestEntry`
+- `RosterPick` should reference `sportEventParticipantId`
+- `RosterPick` should be unique on `(entryId, sportEventParticipantId)`
+- `RosterPick` should not carry `selectionSource`, lifecycle state, or a dedicated selection timestamp beyond standard audit timestamps
+- `RosterPick` changes before lock should hard-delete and replace rows rather than soft-delete them
+- `DraftPick` should be replaced conceptually by `DraftPickHistory`
+- `DraftPickHistory` should exist only for snake-draft replay/history and should reference the resulting `RosterPick`
+- `DraftPickHistory` should include:
+  - `draftSessionId`
+  - `rosterPickId`
+  - `entryId`
+  - `pickNumber`
+  - `round`
+  - `pickInRound`
+  - `autoPicked`
+- `DraftPickHistory` should rely on standard audit timestamps rather than a dedicated `pickedAt`
+- `DraftPickHistory` should not duplicate `sportEventParticipantId`
+- `BracketPrediction` should associate only to `ContestEntry`
+- `BracketPrediction` should remove the direct `Contest` association as redundant
+- `BracketPrediction` should keep its JSON payload opaque for now
+- bracket-specific prediction structure, winner identity shape, and full bracket workflow are explicitly deferred to a later dedicated design pass
+- `DraftSession` should remain a persisted entity for turn-based drafts, especially snake drafts
+- `DraftSession` should store runtime state only, not duplicated configuration
+- live and slow snake drafts are both supported
+- draft mode/style and timing rules belong on `ContestConfiguration`
+- `DraftSession` should replace `pickDeadline` with `currentTurnStartedAt`
+- exclusive contests should prevent the same `SportEventParticipant` from being selected by more than one entry in the contest
+- non-exclusive contests should allow the same `SportEventParticipant` on many entries
+- if a selected `SportEventParticipant` later becomes inactive or withdrawn, the pick remains valid and scoring rules handle the consequence
+- no separate actor/audit field is required on draft or selection persistence in the first pass
+- no special persistence-level concurrency model is required for co-manager draft actions in the first pass
+- commissioner add/drop after a snake draft should be a simple `RosterPick` create/delete operation
+- contest outcome and history should reference `squadId`, not `leagueMembershipId`
+- prize wins should be represented by an entry-owned award relationship such as `ContestEntryPrize`
 - no extra contest-summary persistence concept is needed; summary views remain DTO/read-model concerns
 - no snapshot model is required in the first pass for squad/co-manager display state
 
@@ -150,7 +197,7 @@ Today:
 - contest create accepts `eventId`
 - `Contest` itself does not own `eventId`
 - `ContestPool` owns `eventId`
-- `ContestMatchup` and `ContestPick` also carry optional `eventId`
+- `ContestMatchup` and legacy pick objects also carry optional `eventId`
 
 Why this conflicts:
 
@@ -249,46 +296,49 @@ Why this matters:
    - exclusive picks across all entries in the contest
    - exclusive picks only within a squad
    - something else?
-6. Should entry-fee and payout settings remain contest-local only, or do we anticipate reusable league-level payout templates as a first-class model?
+6. Should prize definitions be modeled explicitly inside `ContestConfiguration`, such as top 3 prizes or last-place prize rules, instead of treating payout behavior as a generic opaque config blob?
+7. Should entry-fee and payout settings remain contest-local only, or do we anticipate reusable league-level prize templates as a first-class model?
 
 ### C. Entry and squad alignment
 
-7. Should `ContestEntry.name` remain a human-editable field, with default naming based on squad name plus entry number?
-8. When an invite is accepted, should squad creation/joining ever happen in the same flow, or should invites remain league-only in the first pass?
-9. If a squad becomes inactive after entering a contest, should existing contest entries remain active history records with the inactive squad attached?
-10. Should a contest ever allow multiple squads with the same co-managers, or should league rules discourage that even if the schema allows it?
+8. Should `ContestEntry.name` remain a human-editable field, with default naming based on squad name plus entry number?
+9. When an invite is accepted, should squad creation/joining ever happen in the same flow, or should invites remain league-only in the first pass?
+10. If a squad becomes inactive after entering a contest, should existing contest entries remain active history records with the inactive squad attached?
+11. Should a contest ever allow multiple squads with the same co-managers, or should league rules discourage that even if the schema allows it?
 
 ### D. One-entry-per-squad vs multiple entries
 
-11. Should `ContestConfiguration` get an explicit rule like `maxEntriesPerSquad`, and should its default remain `1`?
-12. If `maxEntriesPerSquad > 1`, should those entries be separately named by the commissioner/co-managers, or automatically numbered?
-13. Should some contest types permanently disallow multiple entries regardless of league or contest settings?
+12. Should `ContestConfiguration` get an explicit rule like `maxEntriesPerSquad`, and should its default remain `1`?
+13. If `maxEntriesPerSquad > 1`, should those entries be separately named by the commissioner/co-managers, or automatically numbered?
+14. Should some contest types permanently disallow multiple entries regardless of league or contest settings?
 
 ### E. Pool, pricing, and valuation alignment
 
-14. Should contest pricing and tiers always default from `SportEventParticipantValuation`, with no contest-level participant overrides in the first pass?
-15. Does budget/tier derivation need valuation versioning later, even though first pass assumes valuations are immutable once established?
+15. Should contest pricing and tiers always default from `SportEventParticipantValuation`, with no contest-level participant overrides in the first pass?
+16. Does budget/tier derivation need valuation versioning later, even though first pass assumes valuations are immutable once established?
 
 ### F. Drafting and pick ownership
 
-16. Once entries are squad-owned, should any active squad co-manager be able to draft and submit picks?
-17. Do we need to record which specific user made each draft pick or contest pick for audit/history?
-18. If co-managers can both act, do we need optimistic locking or stronger “last writer wins” rules around live draft actions and lineup changes?
+17. When bracket design is revisited later, should the JSON payload remain opaque or be normalized into explicit bracket prediction items?
 
-### G. History, standings, and payouts
+### G. Prizes, standings, and history
 
-19. Should `ContestStanding` and `ContestResult` become squad-centric in their denormalized history fields, or avoid denormalization in the first pass and reference `squadId` only?
-20. Should `PayoutHistory` key off `squadId` instead of `leagueMembershipId` once squads are the contest entrants?
-21. Should all-time history and analytics primarily be:
+19. Should `ContestEntry` be the only canonical live/final result record in the first pass, with no separate `ContestStanding` or `ContestResult` tables?
+20. Should `ContestEntryPrize` support multiple prize awards per entry in the first pass?
+21. Is the minimal first-pass `ContestEntryPrize` shape enough as:
+   - `entryId`
+   - `prizeName`
+   - `winningAmount`
+or do we already need more structure like rank criteria or prize type?
+22. Should all-time history and analytics primarily be:
    - squad-centric
    - member-centric
    - both
-22. If both, which one is the primary user-facing story in the product?
-23. Should current member-merge/history services be redesigned around users, league memberships, squads, or some combination?
+23. If both, which one is the primary user-facing story in the product?
+24. Should current member-merge/history services be redesigned around users, league memberships, squads, or some combination?
 
 ### H. Terminology and cleanup
 
-24. Should `TeamRosterHistory` be renamed to `SquadRosterHistory` when the new model lands?
 25. Should “owner” language in entry DTOs and standings DTOs be replaced with squad-oriented language such as:
    - `squadId`
    - `squadName`
@@ -303,9 +353,15 @@ Based on the current model review and the decisions already locked in Plan 37, t
 - `Contest.seasonId` should be retired
 - `ContestEntry` should move from `leagueMembershipId` to `squadId`
 - entry display should become squad-centric rather than owner-centric
+- `ContestEntry` should likely become the single canonical live/final entry record in the first pass
 - multiple entries should be modeled as a contest rule, not a membership or squad exception
 - global event-field and valuation models should absorb the responsibilities currently held by `ContestPool` and `ContestParticipantPool`
-- history, payout, and analytics models need a deliberate pass because they are heavily member-centric today
+- `RosterPick` should become the single canonical non-bracket selection record
+- `DraftPickHistory` should exist only for snake-draft replay/history and should reference `RosterPick`
+- draft and roster availability should come from the event field plus global valuation, not contest-local pool tables
+- `BracketPrediction` should be preserved only as a minimal shell until brackets are designed as a focused feature set later
+- prize rules belong in contest configuration, and entry prize awards should attach directly to entries
+- history and analytics models need a deliberate pass because they are heavily member-centric today
 
 ## Suggested Next Review Sequence
 

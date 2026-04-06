@@ -47,7 +47,7 @@ Examples:
 - selection type
 - scoring engine
 - scoring rules
-- payout rules
+- prize rules
 - lock timing
 - minimum active entries
 - max entries per squad
@@ -118,6 +118,30 @@ Flow:
 2. System proposes a default configuration.
 3. Commissioner accepts or edits it.
 4. Contest is created with those defaults.
+
+### CT-003A: Commissioner configures contest prizes
+
+Actor:
+- League Commissioner
+
+Goal:
+- define what outcomes win prizes in the contest
+
+Examples:
+- winner take all
+- top 3 prizes
+- last-place prize
+- special named prizes
+
+Flow:
+1. Commissioner opens contest configuration.
+2. Commissioner adds one or more contest prize definitions.
+3. Backend stores prize rules in contest configuration.
+4. When the contest is complete, winning entries receive one or more prize awards.
+
+Notes:
+- first-pass prize definitions can stay simple
+- first-pass prize awards can be shallow entry-owned records
 
 ## Entry And Squad Cases
 
@@ -199,10 +223,14 @@ Flow:
 1. Co-manager opens draft room.
 2. Draft turn is associated with a specific `ContestEntry`.
 3. Co-manager makes a pick.
-4. Pick is stored against the entry.
+4. System creates the canonical `RosterPick` for the entry.
+5. System records snake-draft replay history separately.
 
 Notes:
 - draft ownership should remain entry-based, not squad-global
+- the pick should reference the selected `SportEventParticipant`
+- `RosterPick` is the source of truth for scoring and results
+- draft history should not compete with `RosterPick` as a second selection record
 
 ### CT-009: Co-managers make picks for different entries
 
@@ -217,6 +245,45 @@ Flow:
 2. Each entry has its own picks or roster.
 3. Co-managers switch between entries.
 4. System keeps picks, scores, and standings separate per entry.
+
+### CT-009A: Draft and selection availability comes from the event field
+
+Actor:
+- System and Squad Co-Manager
+
+Goal:
+- ensure entry selections come from the official event field and shared valuation data
+
+Flow:
+1. Contest references one `SportEvent`.
+2. Draft room loads available `SportEventParticipant` records for that event.
+3. UI decorates them with PoolMaster valuation data such as price/tier/order.
+4. Entry selections store the chosen `SportEventParticipant`.
+
+Notes:
+- no contest-local participant pool is needed in the first pass
+- `RosterPick` remains the roster persistence for selection modes that build a roster
+- `RosterPick` is the canonical selection record used for scoring and results
+- live and slow snake drafts should both be supported through contest configuration plus runtime `DraftSession` state
+- exclusive contests should prevent duplicate `SportEventParticipant` selections across entries in the same contest
+- non-exclusive contests should allow shared selections freely
+
+### CT-009B: Bracket support is deferred behind a minimal placeholder model
+
+Actor:
+- Product and Engineering
+
+Goal:
+- avoid over-designing bracket contests before a dedicated bracket feature pass
+
+Flow:
+1. Core contest model keeps only a minimal `BracketPrediction` shell owned by `ContestEntry`.
+2. The shell keeps an opaque JSON payload and optional tie-breaker data.
+3. Full bracket structure, winner identity shape, and user flows are deferred to a later focused design effort.
+
+Notes:
+- `BracketPrediction` should not directly associate to `Contest`
+- the current purpose is structural alignment only, not full bracket-feature completeness
 
 ### CT-010: System records who performed an action
 
@@ -233,6 +300,22 @@ Potential future flow:
 
 Notes:
 - this is likely important later, even if not modeled immediately
+- first-pass draft and selection persistence does not need to record the acting user
+
+### CT-010A: Draft room behavior is documented separately
+
+Actor:
+- Product and Engineering
+
+Goal:
+- keep UI/runtime draft-room behavior separate from persistence decisions
+
+Flow:
+1. Core contest model establishes entry ownership and selection identity.
+2. Draft-room-specific behavior such as timer refresh, auto-pick, and co-manager overlap is captured in a dedicated companion document.
+
+Notes:
+- see [Plan 40 Companion: Draft Room And Selection User Cases](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/40-draft-room-and-selection-user-cases.md)
 
 ## Standings, Results, And Payout Cases
 
@@ -262,8 +345,27 @@ Goal:
 
 Flow:
 1. Contest closes.
-2. Backend computes results per `ContestEntry`.
-3. Result and payout records reference the entry and the squad.
+2. `ContestEntry` itself remains the canonical final result record in the first pass.
+3. Any prize awards reference the winning entry directly.
+
+### CT-012A: Entry wins one or more prizes
+
+Actor:
+- System and League Members
+
+Goal:
+- attach prize awards directly to the winning entry
+
+Flow:
+1. Contest finishes.
+2. Backend evaluates configured contest prize rules.
+3. Backend creates one or more `ContestEntryPrize` awards for qualifying entries.
+4. Result screens show the prizes attached to each entry.
+
+Notes:
+- first-pass award shape can stay minimal:
+  - `prizeName`
+  - `winningAmount`
 
 ### CT-013: Historical displays show current squad identity in first pass
 
@@ -341,3 +443,4 @@ These remain useful for later refinement:
 2. Should some contest types always force one entry per squad even if the model supports more?
 3. Should contest history eventually snapshot squad display identity or valuation context?
 4. How much audit detail should be retained about which co-manager made each action?
+5. When bracket design resumes, should bracket predictions remain JSON or move to normalized child rows?
