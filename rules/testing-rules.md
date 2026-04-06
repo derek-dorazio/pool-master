@@ -76,6 +76,24 @@ Notes:
 - DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
 - In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
 
+Backend-first refactor branch exception:
+
+- On the dedicated branch `codex-backend-refactor-lane`, use a backend-first
+  validation set while the backend contract is intentionally unstable.
+- Required on that branch:
+  - backend/shared typecheck
+  - backend/shared lint
+  - backend unit tests
+  - DB integration tests
+  - `npm run api:refresh` and `npm run api:validate` when API schemas change
+- Not required on that branch:
+  - web Vitest
+  - admin Vitest
+  - frontend coverage gates
+  - smoke tests
+  - browser E2E
+- This exception does not apply to `main`.
+
 ---
 
 ## 4. Contract Testing Rules

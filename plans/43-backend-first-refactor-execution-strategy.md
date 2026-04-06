@@ -255,7 +255,7 @@ The following should not block backend-first implementation:
 |---|---|---|---|---|
 | 43-001 | 1 | Create dedicated backend-first execution strategy | Done | This plan |
 | 43-002 | 1 | Run the domain/model review plans to completion before implementation starts | Pending | Plan 36, 37, 38, 42 should be stable enough to build against |
-| 43-003 | 2 | Create a backend-refactor CI lane focused on service-side validation only | Pending | Do not require web/admin/smoke/E2E during backend-first phase |
+| 43-003 | 2 | Create a backend-refactor CI lane focused on service-side validation only | Done | Added branch-specific rule exceptions and CI gating for `codex-backend-refactor-lane`; web/admin/coverage-summary are skipped there while backend checks remain required |
 | 43-004 | 2 | Adopt schema reset / fresh baseline migration strategy for the refactor target model | Pending | Dev and QA can be rebuilt from scratch |
 | 43-005 | 2 | Remove broad application seed data and reduce seed contract to root admin + essential bootstrap config only | Pending | Keep `derek.dorazio@gmail.com` root admin |
 | 43-006 | 2 | Move all non-production contest/event fixture needs behind mock-provider and test-owned data creation | Pending | Align with Plan 31 |

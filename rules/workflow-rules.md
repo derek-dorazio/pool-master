@@ -98,6 +98,22 @@ Rules:
 - Smoke tests and deployed browser E2E remain CI/deployment signals unless explicitly run locally as part of the task.
 - If a gate is blocked by local environment constraints, state that clearly before pushing.
 
+Backend-first refactor lane exception:
+
+- On the dedicated backend-first refactor branch `codex-backend-refactor-lane`,
+  the required local gates are intentionally narrowed to backend/service-side
+  validation while the API contract is being redesigned.
+- Required gates on that branch are:
+  1. backend/shared typecheck
+  2. backend/shared lint
+  3. backend unit tests
+  4. DB-backed integration tests
+  5. OpenAPI export/validation when API shapes change
+- Web/admin test, coverage, smoke, and browser E2E suites are not required
+  pre-push gates on that branch.
+- This exception is branch-specific only. `main` and ordinary feature branches
+  still use the full default validation set.
+
 ---
 
 ## 4. Do Not Preserve Bad Patterns
