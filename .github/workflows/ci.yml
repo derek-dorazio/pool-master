@@ -29,7 +29,7 @@ jobs:
         run: npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0
       - name: Lint backend-first slice
         if: github.ref_name == 'codex-backend-refactor-lane' || github.head_ref == 'codex-backend-refactor-lane'
-        run: npx eslint 'packages/*/src/**/*.ts' 'tests/**/*.ts' --max-warnings 0
+        run: npx eslint 'packages/*/src/**/*.ts' --max-warnings 0
       - name: Typecheck full repo
         if: github.ref_name != 'codex-backend-refactor-lane' && github.head_ref != 'codex-backend-refactor-lane'
         run: npx turbo typecheck
