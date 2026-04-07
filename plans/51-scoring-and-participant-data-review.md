@@ -11,15 +11,17 @@ focuses on:
 
 - event-scoped participant data
 - contest scoring inputs
-- concrete scoring function families
+- participant scoring rules
+- entry aggregation rules
 - participant data shapes
 - scoring update flow
 
 This plan intentionally follows the simpler scoring direction:
 
 - one shared scoring interface
-- a small number of explicit scoring functions
-- family-specific configuration
+- a small number of explicit participant scoring rules
+- contest-owned scoring-rule definitions
+- contest-owned entry aggregation rules
 - focused unit tests
 
 It does **not** propose a fully declarative "new config automatically creates a
@@ -30,9 +32,12 @@ new scoring system" architecture.
 The following is the active recommendation for first pass:
 
 - use a common scoring interface
-- implement explicit scoring functions for major scoring families
+- implement explicit participant scoring rules
+- allow one contest to compose multiple participant scoring rules
+- use a separate entry aggregation rule to compute `ContestEntry.totalScore`
 - keep participant data loosely shaped overall, but strongly type critical normalized fields
-- allow family-specific scoring config shapes
+- allow scoring-rule-specific config shapes
+- allow aggregation-rule-specific config shapes
 - score from current event participant state, not only incremental stat deltas
 - trigger rescoring from import completion / participant refresh events
 - write canonical score state back to `ContestEntry`
@@ -73,8 +78,8 @@ carried through as part of the same refactor.
 - make `DraftPickHistory` reference `RosterPick`
 - `BracketPrediction.contestId` should be removed
 - `BracketPrediction` should relate only to `ContestEntry`
-- `ContestEntryPrize` should exist as an entry-owned prize record
-- `ContestPrize` should live in `ContestConfiguration`
+- `ContestPrizeDefinition` should exist as the contest-owned prize-definition record
+- `ContestEntryPrizeAward` should exist as the entry-owned awarded-prize record
 
 ## Current Model Problems
 
@@ -84,7 +89,7 @@ The current implementation still has several structural issues:
 - scoring depends on `ContestParticipantPool`, which the target model removes
 - `StatEvent` delta processing is treated as the primary scoring input
 - `ScoreStore` and `ContestStanding` duplicate state that should live on `ContestEntry`
-- the shared scoring config is trying to cover many contest families through one mostly stat-rule-oriented abstraction
+- the shared scoring config is trying to cover many contest types through one mostly stat-rule-oriented abstraction
 - the codebase still lacks:
   - `SportEventParticipant`
   - `SportEventParticipantSourceData`
@@ -115,12 +120,10 @@ Recommended fields:
 - `id`
 - `sportEventId`
 - `participantId`
-- `status`
-- `position?`
-- `isCut?`
-- `isEliminated?`
-- `advanced?`
-- `metadata`
+- minimal first-class fields only until implementation proves more commonality
+- likely:
+  - `status`
+  - `metadata`
 - timestamps
 
 This is the record that `RosterPick` should reference.
@@ -176,18 +179,13 @@ Owns scoring and selection configuration.
 For scoring, recommended fields:
 
 - `selectionType`
-- `scoringFamily`
-- `scoringConfig`
+- relation to `ParticipantContestScoringRule`
+- relation to `ContestEntryAggregationRule`
 - `minimumEntries`
 - `locksAt`
 
-Possible `scoringFamily` values:
-
-- `ADVANCEMENT`
-- `STAT_ACCUMULATION`
-- `STROKE`
-- `POSITION`
-- `PREDICTION`
+Prize setup should also live under contest configuration through
+`ContestPrizeDefinition` rows.
 
 ### ContestEntry
 
@@ -199,6 +197,89 @@ Recommended scoring fields:
 - `standingsPosition`
 - `isEliminated`
 - `status`
+
+### ParticipantContestScoringRule
+
+Contest-specific configured participant scoring rule.
+
+Recommended fields:
+
+- `id`
+- `contestConfigurationId`
+- `participantScoringDefinitionId`
+- `sortOrder`
+- `config`
+- `active`
+
+Notes:
+
+- `participantScoringDefinitionId` should be a stable enum/id that maps to a code-owned `ParticipantScoringDefinitionRegistry`
+- `config` should be JSON
+- one contest can compose multiple scoring rules
+- each rule evaluates participant-level data and produces participant score events
+
+### ContestEntryAggregationRule
+
+Contest-specific configured entry aggregation rule.
+
+Recommended fields:
+
+- `id`
+- `contestConfigurationId`
+- `aggregationDefinitionId`
+- `config`
+- `active`
+
+Notes:
+
+- `aggregationDefinitionId` should be a stable enum/id that maps to a code-owned `EntryAggregationFunctionRegistry`
+- the aggregation rule determines how participant totals roll up into `ContestEntry.totalScore`
+- first pass likely supports exactly one active aggregation rule per contest
+
+### ContestPrizeDefinition
+
+Contest-specific configured prize definition.
+
+Recommended fields:
+
+- `id`
+- `contestConfigurationId`
+- `prizeDefinitionId`
+- `displayName`
+- `sortOrder`
+- `ruleConfig`
+- payout basics such as:
+  - `payoutType`
+  - `amount?`
+  - `percentage?`
+- `active`
+
+Notes:
+
+- `prizeDefinitionId` points to a code-owned `PrizeDefinitionRegistry`
+- the registry should expose stable ids, names, descriptions, supported contest types, and function bindings
+- `ruleConfig` remains flexible JSON for prize-specific parameters
+
+### ContestEntryPrizeAward
+
+Awarded prize record tied to an entry.
+
+Recommended fields:
+
+- `id`
+- `entryId`
+- `contestPrizeDefinitionId`
+- `awardedAt`
+- resolved display/output fields such as:
+  - `displayName`
+  - `amount?`
+  - `percentage?`
+
+Notes:
+
+- awards should point to the contest-configured prize definition row, not directly to the registry id
+- one entry may win multiple awards
+- awards may happen before contest completion when the prize rule supports it
 
 ### RosterPick
 
@@ -220,7 +301,8 @@ Scoring should resolve:
 
 ### Core wrapper
 
-Use a shared scoring interface that dispatches to an explicit scoring function.
+Use a shared scoring interface that applies configured participant scoring rules
+and then applies an entry aggregation rule.
 
 Example sketch:
 
@@ -232,6 +314,8 @@ interface ScoreContestEntryContext {
   rosterPicks: RosterPick[];
   participants: SportEventParticipant[];
   sourceData: SportEventParticipantSourceData[];
+  scoringRules: ParticipantContestScoringRule[];
+  aggregationRule: ContestEntryAggregationRule;
 }
 
 interface ScoreContestEntryResult {
@@ -241,25 +325,53 @@ interface ScoreContestEntryResult {
   participantBreakdowns: ParticipantScoreBreakdown[];
 }
 
-type ScoreContestEntryFn = (
+type ScoreParticipantRuleFn = (
   context: ScoreContestEntryContext,
-) => ScoreContestEntryResult;
+  scoringRule: ParticipantContestScoringRule,
+) => ContestEntryParticipantScoreEvent[];
+
+type AggregateEntryScoreFn = (
+  context: ScoreContestEntryContext,
+  aggregationRule: ContestEntryAggregationRule,
+  participantScores: ContestEntryParticipantScore[],
+) => number;
 
 function scoreContestEntry(context: ScoreContestEntryContext): ScoreContestEntryResult {
-  switch (context.configuration.scoringFamily) {
-    case 'STROKE':
-      return scoreStrokeEntry(context);
-    case 'POSITION':
-      return scorePositionEntry(context);
-    case 'ADVANCEMENT':
-      return scoreAdvancementEntry(context);
-    case 'STAT_ACCUMULATION':
-      return scoreStatAccumulationEntry(context);
-    case 'PREDICTION':
-      return scorePredictionEntry(context);
-    default:
-      throw new Error(`Unsupported scoring family`);
-  }
+  const scoreEvents = context.scoringRules
+    .filter((definition) => definition.active)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .flatMap((definition) => {
+      switch (definition.participantScoringDefinitionId) {
+        case 'GOLF_RELATIVE_TO_PAR_TOTAL':
+          return scoreGolfRelativeToParEntry(context, definition);
+        case 'TEAM_WIN_POINTS':
+          return scoreTeamWinPointsEntry(context, definition);
+        case 'ROUND_MULTIPLIER':
+          return scoreRoundMultiplierEntry(context, definition);
+        case 'SEED_DIFFERENTIAL_BONUS':
+          return scoreSeedDifferentialBonusEntry(context, definition);
+        case 'FINISH_POSITION_POINTS':
+          return scoreFinishPositionEntry(context, definition);
+        case 'PLAYER_STAT_POINTS':
+          return scorePlayerStatPointsEntry(context, definition);
+        case 'PREDICTION':
+          return scorePredictionEntry(context, definition);
+        default:
+          throw new Error(`Unsupported scoring rule`);
+      }
+    });
+
+  const participantScores = rebuildContestEntryParticipantScores(scoreEvents);
+  const totalScore = aggregateContestEntryScore(
+    context,
+    context.aggregationRule,
+    participantScores,
+  );
+
+  return {
+    totalScore,
+    participantBreakdowns: toParticipantBreakdowns(participantScores, scoreEvents),
+  };
 }
 ```
 
@@ -270,28 +382,365 @@ Pros:
 - easy to understand
 - easy to unit test
 - honest about heterogeneous sports
-- adding a new sport or contest family is straightforward
+- adding a new scoring rule or aggregation rule is straightforward
 - avoids building and maintaining a complex declarative rules language
 
 Cons:
 
 - less generic than a fully declarative engine
-- some logic duplication across scoring families
-- requires code changes to add new families
+- some logic duplication across scoring functions
+- requires code changes to add new scoring rules or aggregation rules
 
 This tradeoff is acceptable because:
 
-- new sports and contest families are not expected frequently
+- new sports and contest types are not expected frequently
 - simple, explicit, tested functions are easier to maintain
 
-## Proposed Scoring Function Catalog
+## TypeScript Reference Sketches
 
-### 1. `scoreStrokeEntry`
+This section is intentionally more concrete so an implementation agent can
+start building the scoring module without having to reinterpret the design.
+
+### Registry types
+
+```ts
+type ParticipantScoringDefinitionId =
+  | 'GOLF_RELATIVE_TO_PAR_TOTAL'
+  | 'TEAM_WIN_POINTS'
+  | 'ROUND_MULTIPLIER'
+  | 'SEED_DIFFERENTIAL_BONUS'
+  | 'FINISH_POSITION_POINTS'
+  | 'PLAYER_STAT_POINTS'
+  | 'PREDICTION';
+
+type AggregationDefinitionId =
+  | 'SUM_ALL_ENTRIES'
+  | 'SUM_TOP_N_ENTRIES';
+
+interface ParticipantScoringDefinitionRegistryItem {
+  id: ParticipantScoringDefinitionId;
+  name: string;
+  description: string;
+  supportedContestTypes: string[];
+  scoreParticipant: ScoreParticipantRuleFn;
+}
+
+interface EntryAggregationRegistryItem {
+  id: AggregationDefinitionId;
+  name: string;
+  description: string;
+  aggregateEntry: AggregateEntryScoreFn;
+}
+```
+
+### Persisted rule records
+
+```ts
+interface ParticipantContestScoringRule {
+  id: string;
+  contestConfigurationId: string;
+  participantScoringDefinitionId: ParticipantScoringDefinitionId;
+  sortOrder: number;
+  config: Record<string, unknown>;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ContestEntryAggregationRule {
+  id: string;
+  contestConfigurationId: string;
+  aggregationDefinitionId: AggregationDefinitionId;
+  config: Record<string, unknown>;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Participant score persistence
+
+```ts
+interface ContestEntryParticipantScore {
+  id: string;
+  entryId: string;
+  rosterPickId: string;
+  pointsEarned: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ContestEntryParticipantScoreEvent {
+  id: string;
+  contestEntryParticipantScoreId: string;
+  participantContestScoringRuleId: string;
+  points: number;
+  detailsJson: Record<string, unknown>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Participant result helpers
+
+```ts
+function findParticipantResult(
+  context: ScoreContestEntryContext,
+  rosterPickId: string,
+): SportEventParticipantSourceData | undefined {
+  const rosterPick = context.rosterPicks.find((pick) => pick.id === rosterPickId);
+  if (!rosterPick) return undefined;
+
+  return context.sourceData.find(
+    (item) => item.sportEventParticipantId === rosterPick.sportEventParticipantId,
+  );
+}
+
+function getNormalizedData<T>(
+  sourceData: SportEventParticipantSourceData | undefined,
+): T | undefined {
+  return sourceData?.normalizedData as T | undefined;
+}
+```
+
+### Launch participant scoring rule implementations
+
+#### `GOLF_RELATIVE_TO_PAR_TOTAL`
+
+```ts
+interface GolfRelativeToParRuleConfig {
+  missedCutPenaltyPerRound?: number;
+}
+
+function scoreGolfRelativeToParEntry(
+  context: ScoreContestEntryContext,
+  scoringRule: ParticipantContestScoringRule,
+): ContestEntryParticipantScoreEvent[] {
+  const config = scoringRule.config as GolfRelativeToParRuleConfig;
+
+  return context.rosterPicks.flatMap((pick) => {
+    const source = findParticipantResult(context, pick.id);
+    const data = getNormalizedData<GolfParticipantResult>(source);
+    if (!data) return [];
+
+    const penalty =
+      !data.madeCut && config.missedCutPenaltyPerRound
+        ? config.missedCutPenaltyPerRound
+        : 0;
+
+    const scoreToPar = data.scoreToPar ?? 0;
+    const totalPoints = scoreToPar + penalty;
+
+    return [
+      {
+        id: crypto.randomUUID(),
+        contestEntryParticipantScoreId: '',
+        participantContestScoringRuleId: scoringRule.id,
+        points: totalPoints,
+        detailsJson: {
+          rosterPickId: pick.id,
+          scoreToPar,
+          madeCut: data.madeCut ?? null,
+          penaltyApplied: penalty,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+  });
+}
+```
+
+#### `TEAM_WIN_POINTS`
+
+```ts
+interface TeamWinPointsRuleConfig {
+  pointsPerWin: number;
+}
+
+function scoreTeamWinPointsEntry(
+  context: ScoreContestEntryContext,
+  scoringRule: ParticipantContestScoringRule,
+): ContestEntryParticipantScoreEvent[] {
+  const config = scoringRule.config as TeamWinPointsRuleConfig;
+
+  return context.rosterPicks.flatMap((pick) => {
+    const source = findParticipantResult(context, pick.id);
+    const data = getNormalizedData<TeamContestParticipantResult>(source);
+    if (!data?.wins) return [];
+
+    return [
+      {
+        id: crypto.randomUUID(),
+        contestEntryParticipantScoreId: '',
+        participantContestScoringRuleId: scoringRule.id,
+        points: data.wins * config.pointsPerWin,
+        detailsJson: {
+          rosterPickId: pick.id,
+          wins: data.wins,
+          pointsPerWin: config.pointsPerWin,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+  });
+}
+```
+
+#### `ROUND_MULTIPLIER`
+
+```ts
+interface RoundMultiplierRuleConfig {
+  basePointsPerWin: number;
+  roundMultipliers: Record<string, number>;
+}
+
+function scoreRoundMultiplierEntry(
+  context: ScoreContestEntryContext,
+  scoringRule: ParticipantContestScoringRule,
+): ContestEntryParticipantScoreEvent[] {
+  const config = scoringRule.config as RoundMultiplierRuleConfig;
+
+  return context.rosterPicks.flatMap((pick) => {
+    const source = findParticipantResult(context, pick.id);
+    const data = getNormalizedData<TeamContestParticipantResult>(source);
+    if (!data?.wins || !data.roundReached) return [];
+
+    const multiplier = config.roundMultipliers[data.roundReached] ?? 1;
+
+    return [
+      {
+        id: crypto.randomUUID(),
+        contestEntryParticipantScoreId: '',
+        participantContestScoringRuleId: scoringRule.id,
+        points: data.wins * config.basePointsPerWin * multiplier,
+        detailsJson: {
+          rosterPickId: pick.id,
+          wins: data.wins,
+          roundReached: data.roundReached,
+          basePointsPerWin: config.basePointsPerWin,
+          multiplier,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+  });
+}
+```
+
+#### `SEED_DIFFERENTIAL_BONUS`
+
+```ts
+interface SeedDifferentialBonusRuleConfig {
+  underdogOnly?: boolean;
+}
+
+function scoreSeedDifferentialBonusEntry(
+  context: ScoreContestEntryContext,
+  scoringRule: ParticipantContestScoringRule,
+): ContestEntryParticipantScoreEvent[] {
+  const config = scoringRule.config as SeedDifferentialBonusRuleConfig;
+
+  return context.rosterPicks.flatMap((pick) => {
+    const source = findParticipantResult(context, pick.id);
+    const data = getNormalizedData<TeamContestParticipantResult>(source);
+    if (!data?.wins || data.seed == null || data.opponentSeed == null) return [];
+
+    const seedDifference = data.seed - data.opponentSeed;
+    if (config.underdogOnly && seedDifference <= 0) return [];
+
+    return [
+      {
+        id: crypto.randomUUID(),
+        contestEntryParticipantScoreId: '',
+        participantContestScoringRuleId: scoringRule.id,
+        points: Math.max(seedDifference, 0),
+        detailsJson: {
+          rosterPickId: pick.id,
+          wins: data.wins,
+          seed: data.seed,
+          opponentSeed: data.opponentSeed,
+          seedDifference,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+  });
+}
+```
+
+### Entry aggregation implementations
+
+#### `SUM_ALL_ENTRIES`
+
+```ts
+function aggregateSumAllEntries(
+  participantScores: ContestEntryParticipantScore[],
+): number {
+  return participantScores.reduce((sum, score) => sum + score.pointsEarned, 0);
+}
+```
+
+#### `SUM_TOP_N_ENTRIES`
+
+```ts
+interface SumTopNEntriesConfig {
+  topN: number;
+  lowerIsBetter?: boolean;
+}
+
+function aggregateSumTopNEntries(
+  participantScores: ContestEntryParticipantScore[],
+  config: SumTopNEntriesConfig,
+): number {
+  const sorted = [...participantScores].sort((a, b) =>
+    config.lowerIsBetter ? a.pointsEarned - b.pointsEarned : b.pointsEarned - a.pointsEarned,
+  );
+
+  return sorted
+    .slice(0, config.topN)
+    .reduce((sum, score) => sum + score.pointsEarned, 0);
+}
+```
+
+### Rebuild pattern
+
+```ts
+function rebuildContestEntryParticipantScores(
+  entryId: string,
+  rosterPicks: RosterPick[],
+  scoreEvents: ContestEntryParticipantScoreEvent[],
+): ContestEntryParticipantScore[] {
+  return rosterPicks.map((pick) => {
+    const pointsEarned = scoreEvents
+      .filter((event) => {
+        const rosterPickId = event.detailsJson.rosterPickId;
+        return rosterPickId === pick.id;
+      })
+      .reduce((sum, event) => sum + event.points, 0);
+
+    return {
+      id: crypto.randomUUID(),
+      entryId,
+      rosterPickId: pick.id,
+      pointsEarned,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  });
+}
+```
+
+## Proposed Participant Scoring Rule Catalog
+
+### 1. `scoreGolfRelativeToParEntry`
 
 Use for:
 
-- golf stroke pools
-- any lower-is-better total event
+- golf relative-to-par contests in phase 1
 
 Reads:
 
@@ -301,10 +750,10 @@ Reads:
 - `withdrew`
 - `position`
 
-Config shape:
+Rule config shape:
 
 ```ts
-interface StrokeScoringConfig {
+interface GolfRelativeToParFunctionConfig {
   countingMethod: 'ALL' | 'BEST_N';
   bestN?: number;
   missedCutPolicy: 'USE_SCORE' | 'PENALTY_SCORE' | 'EXCLUDE';
@@ -316,7 +765,7 @@ interface StrokeScoringConfig {
 Participant data shape example:
 
 ```ts
-interface StrokeParticipantData {
+interface GolfRelativeToParParticipantData {
   scoreToPar?: number;
   strokes?: number;
   madeCut?: boolean;
@@ -326,7 +775,93 @@ interface StrokeParticipantData {
 }
 ```
 
-### 2. `scorePositionEntry`
+### 2. `scoreTeamWinPointsEntry`
+
+Use for:
+
+- team wins earning a fixed number of points
+
+Reads:
+
+- `wins`
+
+Rule config shape:
+
+```ts
+interface TeamWinPointsFunctionConfig {
+  pointsPerWin: number;
+}
+```
+
+Participant data shape example:
+
+```ts
+interface TeamWinPointsParticipantData {
+  wins?: number;
+}
+```
+
+### 3. `scoreRoundMultiplierEntry`
+
+Use for:
+
+- team wins where later rounds are worth more
+
+Reads:
+
+- `wins`
+- `roundReached`
+
+Rule config shape:
+
+```ts
+interface RoundMultiplierFunctionConfig {
+  basePointsPerWin: number;
+  roundMultipliers: Record<string, number>;
+}
+```
+
+Participant data shape example:
+
+```ts
+interface RoundMultiplierParticipantData {
+  wins?: number;
+  roundReached?: string;
+}
+```
+
+### 4. `scoreSeedDifferentialBonusEntry`
+
+Use for:
+
+- team wins with a seed-differential upset bonus
+
+Reads:
+
+- `wins`
+- `seed`
+- `opponentSeed`
+
+Rule config shape:
+
+```ts
+interface SeedDifferentialBonusFunctionConfig {
+  bonusPerSeedDifference: number;
+  underdogOnly?: boolean;
+}
+```
+
+Participant data shape example:
+
+```ts
+interface SeedDifferentialBonusParticipantData {
+  wins?: number;
+  seed?: number;
+  opponentSeed?: number;
+}
+```
+
+### 5. `scoreFinishPositionEntry`
 
 Use for:
 
@@ -340,10 +875,10 @@ Reads:
 - `dnf`
 - optionally supporting stats like `lapsLed`, `fastestLap`
 
-Config shape:
+Rule config shape:
 
 ```ts
-interface PositionScoringConfig {
+interface FinishPositionFunctionConfig {
   positionPoints: Record<number, number>;
   dnfPolicy?: 'ZERO' | 'LAST_PLACE' | 'PENALTY';
   bonuses?: {
@@ -366,46 +901,7 @@ interface PositionParticipantData {
 }
 ```
 
-### 3. `scoreAdvancementEntry`
-
-Use for:
-
-- team playoff pools
-- tennis tournament advancement pools
-- outcome/wins-based contests
-
-Reads:
-
-- `wins`
-- `losses`
-- `seriesWins`
-- `roundReached`
-- `advanced`
-
-Config shape:
-
-```ts
-interface AdvancementScoringConfig {
-  pointsPerWin?: number;
-  roundValues?: number[];
-  roundReachedPoints?: Record<string, number>;
-  lossesPenalty?: number;
-}
-```
-
-Participant data shape example:
-
-```ts
-interface AdvancementParticipantData {
-  wins?: number;
-  losses?: number;
-  seriesWins?: number;
-  roundReached?: string;
-  advanced?: boolean;
-}
-```
-
-### 4. `scoreStatAccumulationEntry`
+### 6. `scorePlayerStatPointsEntry`
 
 Use for:
 
@@ -418,10 +914,10 @@ Reads:
 
 - normalized stat totals
 
-Config shape:
+Rule config shape:
 
 ```ts
-interface StatAccumulationConfig {
+interface PlayerStatPointsFunctionConfig {
   statWeights: Record<string, number>;
   bonusRules?: Array<{
     stat: string;
@@ -444,7 +940,7 @@ interface StatAccumulationParticipantData {
 }
 ```
 
-### 5. `scorePredictionEntry`
+### 7. `scorePredictionEntry`
 
 Use for:
 
@@ -475,19 +971,15 @@ Participant data shape example:
 
 ## Candidate Normalized Participant Data Shapes
 
-This section proposes a small set of family-level data shapes that scoring
+This section proposes a small set of participant data shapes that scoring
 functions can consume after reading `normalizedData` from
 `SportEventParticipantSourceData`.
 
-### Common shell
+### Minimal common shell
 
 ```ts
 interface CommonParticipantResult {
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'WITHDRAWN' | 'ELIMINATED';
-  position?: number;
-  advanced?: boolean;
-  isCut?: boolean;
-  isEliminated?: boolean;
 }
 ```
 
@@ -502,14 +994,16 @@ interface GolfParticipantResult extends CommonParticipantResult {
 }
 ```
 
-### Advancement / Team or Tournament
+### Team win / round / seed bonus
 
 ```ts
-interface AdvancementParticipantResult extends CommonParticipantResult {
+interface TeamContestParticipantResult extends CommonParticipantResult {
   wins?: number;
   losses?: number;
   seriesWins?: number;
   roundReached?: string;
+  seed?: number;
+  opponentSeed?: number;
 }
 ```
 
@@ -531,20 +1025,80 @@ interface StatParticipantResult extends CommonParticipantResult {
 }
 ```
 
+## Entry Aggregation Rules
+
+Entry aggregation rules compute `ContestEntry.totalScore` from
+`ContestEntryParticipantScore`.
+
+### Initial EntryAggregationFunctionRegistry
+
+- `SUM_ALL_ENTRIES`
+- `SUM_TOP_N_ENTRIES`
+
+### `SUM_ALL_ENTRIES`
+
+Use for:
+
+- contests where every selected participant contributes to the entry total
+
+Example sketch:
+
+```ts
+function aggregateSumAllEntries(
+  participantScores: ContestEntryParticipantScore[],
+): number {
+  return participantScores.reduce((sum, score) => sum + score.pointsEarned, 0);
+}
+```
+
+### `SUM_TOP_N_ENTRIES`
+
+Use for:
+
+- golf contests like pick 6, use best 4
+
+Example sketch:
+
+```ts
+function aggregateSumTopNEntries(
+  participantScores: ContestEntryParticipantScore[],
+  config: { topN: number; lowerIsBetter?: boolean },
+): number {
+  const sorted = [...participantScores].sort((a, b) =>
+    config.lowerIsBetter ? a.pointsEarned - b.pointsEarned : b.pointsEarned - a.pointsEarned,
+  );
+
+  return sorted.slice(0, config.topN).reduce((sum, score) => sum + score.pointsEarned, 0);
+}
+```
+
 ## Launch Support Recommendation
 
-Recommended first-pass scoring families:
+Recommended first-pass participant scoring rules:
 
-- `STROKE`
-- `POSITION`
-- `ADVANCEMENT`
-- `STAT_ACCUMULATION`
+- `GOLF_RELATIVE_TO_PAR_TOTAL`
+- `TEAM_WIN_POINTS`
+- `ROUND_MULTIPLIER`
+- `SEED_DIFFERENTIAL_BONUS`
+
+These rules are defined concretely in the TypeScript reference sketches above
+and are the only participant scoring rules needed to prove the architecture in
+this plan.
 
 Deferred:
 
 - `PREDICTION`
 - full bracket scoring
 - survivor / pick'em-specific scoring
+- most player-stat fantasy scoring
+- `FINISH_POSITION_POINTS` unless a launch contest needs it
+
+Recommended first-pass entry aggregation rules:
+
+- `SUM_ALL_ENTRIES`
+- `SUM_TOP_N_ENTRIES`
+
+Only these two aggregation rules are in scope for Plan 51.
 
 ## Event And Scoring Flow
 
@@ -562,75 +1116,88 @@ Deferred:
    - `SportEventParticipant`
    - `SportEventParticipantSourceData`
    - `ContestConfiguration`
+   - `ParticipantContestScoringRule`
+   - `ContestEntryAggregationRule`
 6. Subscriber updates:
+   - `ContestEntryParticipantScore`
+   - `ContestEntryParticipantScoreEvent`
    - `ContestEntry.totalScore`
    - `ContestEntry.standingsPosition`
    - `ContestEntry.isEliminated`
-7. Prize logic may award `ContestEntryPrize` if relevant
+7. Prize logic may award `ContestEntryPrizeAward` if relevant
 
 ## Recommendations Outside Scoring Logic
 
 - add `SportEventParticipant`
 - add `SportEventParticipantSourceData`
 - keep heterogeneous normalized JSON on source data
-- keep a small strongly typed common participant result shell
+- keep first-class participant result fields to a minimum until implementation proves more commonality
 - remove contest-local participant pool assumptions from scoring
 - remove `ScoreStore` as source of truth
+- persist participant-level score totals and score events
 - write canonical score state directly to `ContestEntry`
 - use current participant state for corrections and rescoring
 
-## Review Questions
+## Locked Decisions
 
-### Data model
+The following is now settled for Plan 51:
 
-1. Should `SportEventParticipant` include a small normalized common shell with:
-   - `status`
-   - `position`
-   - `advanced`
-   - `isCut`
-   - `isEliminated`
-   while sport-specific detail lives in `SportEventParticipantSourceData.normalizedData`?
+- `SportEventParticipant` should keep first-class fields to a minimum
+- `SportEventParticipantSourceData` should store both:
+  - `rawPayload`
+  - `normalizedData`
+- `RosterPick` references `sportEventParticipantId`
+- `ContestConfiguration` owns:
+  - `ParticipantContestScoringRule[]`
+  - one active `ContestEntryAggregationRule`
+- `ParticipantContestScoringRule` is the contest-owned configured participant scoring rule
+- `ParticipantScoringDefinitionRegistry` is code-owned
+- `ContestEntryAggregationRule` is the correct aggregation object name
+- `EntryAggregationFunctionRegistry` is code-owned
+- first pass supports exactly one active `ContestEntryAggregationRule` per contest
+- participant scoring writes:
+  - `ContestEntryParticipantScore`
+  - `ContestEntryParticipantScoreEvent`
+- `ContestEntryParticipantScoreEvent` stores delta points, not cumulative points
+- participant score events reference `participantContestScoringRuleId`
+- `ContestEntry.totalScore` remains persisted
+- `ContestEntry.standingsPosition` remains persisted
+- launch participant scoring rules are:
+  - `GOLF_RELATIVE_TO_PAR_TOTAL`
+  - `TEAM_WIN_POINTS`
+  - `ROUND_MULTIPLIER`
+  - `SEED_DIFFERENTIAL_BONUS`
+- launch aggregation rules are:
+  - `SUM_ALL_ENTRIES`
+  - `SUM_TOP_N_ENTRIES`
+- `PREDICTION` remains deferred
+- golf phase 1 is relative-to-par only and explicitly excludes fantasy/per-hole scoring
+- team playoff normalized data is sufficient for first pass with:
+  - `wins`
+  - `losses`
+  - `seriesWins`
+  - `roundReached`
+  - `advanced`
+- prize rule types remain code-owned through `PrizeDefinitionRegistry`
+- `ContestPrizeDefinition` stores `prizeDefinitionId`
+- `ContestEntryPrizeAward` points to `contestPrizeDefinitionId`
+- `ContestPrizeDefinition.ruleConfig` stays JSON
+- payout basics on `ContestPrizeDefinition` use explicit fields
+- awards snapshot resolved display fields
+- one entry can win multiple awards
+- one prize definition can award multiple entries
+- awards can be granted before contest completion
+- awards must be recalculable/revocable after corrections
+- contest-level total prize pool is optional
 
-2. Should `SportEventParticipantSourceData` store both:
-   - `rawPayload`
-   - `normalizedData`
-   for every provider update?
+## Remaining Open Considerations
 
-3. Should `RosterPick` always reference `sportEventParticipantId`, never raw `participantId`?
+These are intentionally left open for implementation planning rather than being
+blocked in the domain-model review:
 
-### Scoring architecture
-
-4. Should scoring always recompute a full affected entry from current participant state, rather than applying score deltas?
-
-5. Should `ContestConfiguration` use:
-   - `scoringFamily`
-   - family-specific `scoringConfig`
-   rather than one universal all-purpose scoring schema?
-
-6. Is the proposed family split correct:
-   - `STROKE`
-   - `POSITION`
-   - `ADVANCEMENT`
-   - `STAT_ACCUMULATION`
-   - `PREDICTION`
-   or do you want a different grouping?
-
-### Launch scope
-
-7. Which scoring families do you want at launch?
-
-8. Should `PREDICTION` scoring remain fully deferred until bracket / pick'em gets a dedicated design pass?
-
-9. For golf launch, do you want to support only:
-   - stroke / score-to-par / cut / position data
-   and explicitly defer per-hole fantasy scoring?
-
-10. For team playoff contests, is this enough canonical normalized data for launch:
-    - wins
-    - losses
-    - seriesWins
-    - roundReached
-    - advanced
+- whether scoring recompute should be full rebuild or incremental per provider update
+- which participant result fields, if any, deserve promotion out of `normalizedData` after real provider payload review
+- whether additional participant scoring rules should be promoted from the deferred catalog in Plan 52
 
 ## Task Outline
 
@@ -638,16 +1205,17 @@ Deferred:
 |---|---|---|---|---|
 | 51-001 | 1 | Capture non-negotiable contest/scoring alignment changes | Done | Assumed throughout this plan |
 | 51-002 | 1 | Replace declarative-first scoring direction with shared interface + explicit scoring functions | Done | Option B selected |
-| 51-003 | 1 | Define target event-participant and source-data model for scoring inputs | Pending | `SportEventParticipant` and `SportEventParticipantSourceData` |
-| 51-004 | 1 | Confirm family-level scoring-function catalog and launch scope | Pending | Stroke, position, advancement, stat accumulation |
-| 51-005 | 2 | Redesign `ContestConfiguration` scoring shape around family-specific config | Pending | Replace universal scoring assumption |
-| 51-006 | 2 | Remove score-store / standings-table assumptions from target model | Pending | Canonical state lives on `ContestEntry` |
-| 51-007 | 3 | Defer bracket / pick'em scoring to a later focused design pass unless promoted | Pending | Not part of first-pass launch by default |
+| 51-003 | 1 | Define target event-participant and source-data model for scoring inputs | Done | Minimal first-class participant shell and dual JSON payloads locked |
+| 51-004 | 1 | Confirm participant scoring rule catalog and launch scope | Done | Four launch rules locked |
+| 51-005 | 2 | Redesign `ContestConfiguration` scoring shape around contest-owned scoring rules and entry aggregation rules | Done | Participant rules plus one active aggregation rule locked |
+| 51-006 | 2 | Replace score-store assumptions with participant score totals, score events, and entry aggregation | Done | `ContestEntryParticipantScore` and event ledger locked |
+| 51-007 | 3 | Defer bracket / pick'em scoring to a later focused design pass unless promoted | Done | Deferred |
 
 ## Acceptance Criteria
 
 - scoring direction is based on a shared interface plus explicit scoring functions
 - participant selection references event-scoped participants
 - heterogeneous event data is handled through `SportEventParticipantSourceData`
-- launch scoring families are identified
-- deferred scoring families are explicitly called out
+- launch participant scoring rules are identified
+- launch entry aggregation rules are identified
+- deferred scoring rules are explicitly called out

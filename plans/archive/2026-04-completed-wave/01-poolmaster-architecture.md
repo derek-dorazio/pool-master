@@ -17,14 +17,14 @@
 | 04 | [Contest History](04-poolmaster-history.md) | Contest history, league history, records, rivalries, analytics |
 | 05 | [Participant Data](05-poolmaster-participant-data.md) | Participant profiles, pricing, tiers, pools, deduplication, search |
 | 06 | [Sports Data Integration](06-poolmaster-sports-data-integration.md) | Provider adapters, ingestion pipelines, polling, outage handling |
-| 07 | [Billing & Subscriptions](07-poolmaster-billing-subscription.md) | Plan tiers, entitlements, Stripe, trials, dunning, revenue analytics |
+| 07 | [Billing & Subscriptions](../2026-04-superseded-by-domain-simplification/07-poolmaster-billing-subscription.md) | Historical tenant-first billing plan; superseded by simplification |
 | 08 | [Commissioner Tooling](08-poolmaster-commissioner-tooling.md) | League/contest wizards, overrides, dashboard, templates, audit trail |
 | 09 | [Notifications & Alerts](09-poolmaster-notifications-alerts.md) | Event taxonomy, channels, preferences, templates, scheduling |
-| 10 | [Social & Communication](10-poolmaster-social-communication.md) | Activity feed, commissioner/system messaging, and deferred richer social layers |
+| 10 | [Social & Communication](../2026-04-superseded-by-domain-simplification/10-poolmaster-social-communication.md) | Historical richer social plan; superseded by notification-feed simplification |
 | 11 | [Admin Dashboard](11-poolmaster-admin-dashboard.md) | Tenant/user management, feature flags, platform health, support tools |
 | 13 | [Search & Discovery](13-poolmaster-search-discovery.md) | Draft search, pool setup filtering, public league discovery |
 | 14 | [Localisation & i18n](14-poolmaster-localisation-i18n.md) | Timezone handling, multi-currency, number formatting, translation |
-| 15 | [Responsible Gaming](15-poolmaster-responsible-gaming.md) | Age verification, geographic restrictions, GDPR/CCPA, data retention |
+| 15 | [Responsible Gaming](../2026-04-superseded-by-domain-simplification/15-poolmaster-responsible-gaming.md) | Historical compliance plan; not active first-pass guidance |
 
 ### Client Plans
 

@@ -78,9 +78,11 @@ classDiagram
     class SquadMembership
     class Contest
     class ContestConfiguration
+    class ParticipantContestScoringRule
+    class ContestEntryAggregationRule
+    class ContestPrizeDefinition
     class ContestEntry
-    class ContestPrize
-    class ContestEntryPrize
+    class ContestEntryPrizeAward
 
     User "1" --> "*" RefreshToken : has
     User "1" --> "*" LeagueMembership : joins
@@ -92,9 +94,11 @@ classDiagram
     League "1" --> "*" Contest : owns
     Squad "1" --> "*" SquadMembership : contains
     Contest "1" --> "1" ContestConfiguration : configures
+    ContestConfiguration "1" --> "*" ParticipantContestScoringRule : scores_with
+    ContestConfiguration "1" --> "1" ContestEntryAggregationRule : aggregates_with
+    ContestConfiguration "1" --> "*" ContestPrizeDefinition : defines
     Contest "1" --> "*" ContestEntry : contains
-    ContestConfiguration "1" --> "*" ContestPrize : defines
-    ContestEntry "1" --> "*" ContestEntryPrize : wins
+    ContestEntry "1" --> "*" ContestEntryPrizeAward : wins
     Squad "1" --> "*" ContestEntry : enters
 ```
 
@@ -112,6 +116,10 @@ classDiagram
     class Contest
     class ContestEntry
     class RosterPick
+    class ParticipantContestScoringRule
+    class ContestEntryAggregationRule
+    class ContestEntryParticipantScore
+    class ContestEntryParticipantScoreEvent
     class DraftSession
     class DraftPickHistory
     class BracketPrediction
@@ -126,6 +134,11 @@ classDiagram
     Contest "1" --> "1" SportEvent : references
     ContestEntry "1" --> "*" RosterPick : owns
     RosterPick "*" --> "1" SportEventParticipant : selects
+    ContestEntry "1" --> "*" ContestEntryParticipantScore : accumulates
+    ContestEntryParticipantScore "1" --> "*" ContestEntryParticipantScoreEvent : records
+    RosterPick "1" --> "1" ContestEntryParticipantScore : scores
+    ParticipantContestScoringRule "1" --> "*" ContestEntryParticipantScoreEvent : contributes
+    ContestEntryAggregationRule "1" --> "*" ContestEntry : totals
     Contest "1" --> "1" DraftSession : runs
     DraftSession "1" --> "*" DraftPickHistory : records
     DraftPickHistory "*" --> "1" RosterPick : resulted_in
@@ -196,7 +209,7 @@ Notes:
 | `participants` | Global participant identity within a sport | `sport_id`, `name`, `participant_type`, profile fields, metadata | `Both` |
 | `participant_provider_mappings` | Provider-to-participant identity mapping | `participant_id`, `provider_id`, `external_id`, `confidence` | `Site Admin` |
 | `sport_events` | Real-world imported event/tournament identity and lifecycle | `sport`, `provider_id`, `external_id`, `name`, `start_date_time`, `end_date_time`, `status` | `Both` |
-| `sport_event_participants` | Event-scoped participant membership and normalized shell state | `sport_event_id`, `participant_id`, `status`, `position?`, `is_cut?`, `is_eliminated?`, `advanced?`, `metadata` | `Internal` |
+| `sport_event_participants` | Event-scoped participant membership with minimal first-class state | `sport_event_id`, `participant_id`, `status`, `metadata` | `Internal` |
 | `sport_event_participant_source_data` | Provider payloads and normalized result data for one event participant | `sport_event_participant_id`, `provider_id`, `external_id`, `raw_payload`, `normalized_data`, `received_at` | `Internal` |
 | `sport_event_participant_valuations` | Event-specific PoolMaster valuation for selection contests | `sport_event_participant_id`, `price?`, `tier?`, `order_index?`, `valuation_source` | `Commissioner` |
 
@@ -204,20 +217,23 @@ Notes:
 
 - `SportEventParticipant` is the selection/scoring identity
 - heterogeneous sport-specific result data belongs in `normalized_data`
-- first pass should keep a small normalized shell on `sport_event_participants`
+- first pass should keep first-class participant result fields to a minimum
 
 ## Contest And Contest Configuration
 
 | Table | Purpose | Key Columns | Primary Surface |
 |---|---|---|---|
 | `contests` | Core contest identity and lifecycle | `league_id`, `sport_event_id`, `name`, `status` | `Both` |
-| `contest_configurations` | Commissioner-managed rules and timing | `contest_id`, `selection_type`, `scoring_family`, `scoring_config`, `locks_at`, `minimum_entries` | `Commissioner` |
-| `contest_prizes` | Prize definitions configured for a contest | `contest_configuration_id`, `prize_name`, `placement_rule`, `display_amount` | `Commissioner` |
+| `contest_configurations` | Commissioner-managed rules and timing | `contest_id`, `selection_type`, `locks_at`, `minimum_entries` | `Commissioner` |
+| `participant_contest_scoring_rules` | Contest-specific configured participant scoring rules | `contest_configuration_id`, `participant_scoring_definition_id`, `sort_order`, `config`, `active` | `Commissioner` |
+| `contest_entry_aggregation_rules` | Contest-specific configured entry aggregation rules | `contest_configuration_id`, `aggregation_definition_id`, `config`, `active` | `Commissioner` |
+| `contest_prize_definitions` | Contest-specific configured prize definitions | `contest_configuration_id`, `prize_definition_id`, `display_name`, `sort_order`, `rule_config`, payout fields | `Commissioner` |
 
 Recommended `contest_configurations` concerns:
 
 - selection mode and draft rules
-- scoring family and scoring config
+- contest-owned scoring rules
+- exactly one active contest-owned entry aggregation rule in first pass
 - minimum entry count
 - lock timing
 - prize definitions
@@ -237,12 +253,17 @@ Explicitly not needed in first pass:
 | `draft_sessions` | Runtime state for turn-based drafts, especially snake drafts | `contest_id`, `status`, `current_pick_number`, `current_entry_id`, `current_turn_started_at`, `started_at` | `Web` |
 | `draft_pick_history` | Snake-draft replay/history records | `draft_session_id`, `roster_pick_id`, `entry_id`, `pick_number`, `round`, `pick_in_round`, `auto_picked` | `Web` |
 | `bracket_predictions` | Minimal placeholder for deferred bracket support | `entry_id`, `predictions`, `tiebreaker_value?` | `Web` |
-| `contest_entry_prizes` | Prize awards attached to an entry | `entry_id`, `prize_name`, `winning_amount`, `awarded_at` | `Web` |
+| `contest_entry_participant_scores` | Current accumulated score contribution for one selected participant on one entry | `entry_id`, `roster_pick_id`, `points_earned` | `Web` |
+| `contest_entry_participant_score_events` | Individual scoring contributions produced by participant contest scoring rules | `contest_entry_participant_score_id`, `participant_contest_scoring_rule_id`, `points`, `details_json` | `Web` |
+| `contest_entry_prize_awards` | Prize awards attached to an entry | `entry_id`, `contest_prize_definition_id`, resolved display and payout fields, `awarded_at` | `Web` |
 
 Notes:
 
 - `RosterPick` is the canonical selection record
 - `DraftPickHistory` exists only for snake-draft replay/history
+- participant scoring rules produce `contest_entry_participant_score_events`
+- participant score totals roll up through an entry aggregation rule into `ContestEntry.totalScore`
+- first pass supports exactly one active `contest_entry_aggregation_rules` row per contest
 - `ContestEntry` holds canonical score/rank/elimination state
 - multiple entries per squad are supported through `entry_number`
 
@@ -251,7 +272,9 @@ Notes:
 | Table | Purpose | Key Columns | Primary Surface |
 |---|---|---|---|
 | `contest_entries` | Live and final score source of truth | `total_score`, `standings_position`, `is_eliminated`, `status` | `Both` |
-| `contest_entry_prizes` | Prize outcomes for completed or mid-contest awards | `entry_id`, `prize_name`, `winning_amount` | `Both` |
+| `contest_entry_participant_scores` | Participant-level current score totals for entry breakdowns and aggregation | `entry_id`, `roster_pick_id`, `points_earned` | `Both` |
+| `contest_entry_participant_score_events` | Rule-level score event ledger for participant scoring explanation and recompute | `contest_entry_participant_score_id`, `participant_contest_scoring_rule_id`, `points`, `details_json` | `Both` |
+| `contest_entry_prize_awards` | Prize outcomes for completed or mid-contest awards | `entry_id`, `contest_prize_definition_id`, `display_name`, `amount?`, `percentage?` | `Both` |
 | `roster_picks` | Historical locked roster composition | `entry_id`, `sport_event_participant_id` | `Both` |
 | `sport_event_participant_source_data` | Real-world participant results backing score explanations | `normalized_data`, `raw_payload` | `Internal` |
 
@@ -339,13 +362,17 @@ current simplification wave:
 - `sport_event_participant_valuations`
 - `contests`
 - `contest_configurations`
-- `contest_prizes`
+- `participant_contest_scoring_rules`
+- `contest_entry_aggregation_rules`
+- `contest_prize_definitions`
 - `contest_entries`
 - `roster_picks`
 - `draft_sessions`
 - `draft_pick_history`
 - `bracket_predictions`
-- `contest_entry_prizes`
+- `contest_entry_participant_scores`
+- `contest_entry_participant_score_events`
+- `contest_entry_prize_awards`
 - `notifications`
 - `notification_receipts`
 - `ingestion_jobs`
@@ -362,5 +389,5 @@ That review will confirm:
 
 - the exact `SportEventParticipant` shell fields
 - the exact `SportEventParticipantSourceData` payload expectations
-- the scoring-function family split
-- the launch scoring families
+- the final provider import/update behavior for participant scoring rebuilds
+- any later scoring-rule expansions beyond the launch rule set

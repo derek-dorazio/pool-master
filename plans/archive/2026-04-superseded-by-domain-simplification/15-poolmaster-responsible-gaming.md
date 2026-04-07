@@ -1,5 +1,10 @@
 # PoolMaster — Responsible Gaming & Legal Compliance Plan
 
+> **Archived (2026-04-06):** This plan is superseded for first-pass
+> implementation. The current product direction explicitly avoids platform
+> money movement, active billing, and broader compliance complexity. Treat this
+> file as historical context only unless a later replanning pass revives it.
+
 > **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
 
 > **Rules:** All technology and infrastructure choices follow [Architecture Rules](../rules/architecture-rules.md). Testing standards follow [Testing Rules](../rules/testing-rules.md).

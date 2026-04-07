@@ -1,5 +1,10 @@
 # PoolMaster — Social & Communication Layer Plan
 
+> **Archived (2026-04-06):** This plan is superseded by the simplified
+> notification-feed direction and should not be used for implementation. Use
+> [Plan 47 Companion: Notification Feed User Cases](../../47-notification-feed-user-cases.md)
+> and [Plan 48: Social And Notification Simplification](../../48-social-and-notification-simplification.md).
+
 > **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
 
 > **Rules:** All technology and infrastructure choices follow [Architecture Rules](../rules/architecture-rules.md). Testing standards follow [Testing Rules](../rules/testing-rules.md).

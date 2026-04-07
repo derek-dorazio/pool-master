@@ -132,11 +132,7 @@ Use the table below for active plan ranges still expected to receive execution u
 
 | Prefix | Plan File | Area |
 |---|---|---|
-| 07-xxx | `plans/07-poolmaster-billing-subscription.md` | Billing and subscriptions |
-| 10-xxx | `plans/10-poolmaster-social-communication.md` | Social features |
-| 12-xxx | `plans/12-poolmaster-mobile-client.md` | Mobile clients |
 | 13-xxx | `plans/13-poolmaster-search-discovery.md` | Search and discovery |
-| 15-xxx | `plans/15-poolmaster-responsible-gaming.md` | Compliance and legal |
 | 28-xxx | `plans/28-backend-service-hardening.md` | Backend service hardening |
 | 29-xxx | `plans/29-webapp-and-admin-hardening.md` | Webapp/admin hardening |
 | 30-xxx | `plans/30-platform-and-deploy-hardening.md` | Platform and deploy hardening |
@@ -146,3 +142,10 @@ Use the table below for active plan ranges still expected to receive execution u
 | 37-xxx | `plans/37-league-top-level-domain-and-data-simplification.md` | League-first domain and data simplification |
 | 38-xxx | `plans/38-contest-entry-and-squad-alignment-review.md` | Contest, entry, and squad alignment review |
 | ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites |
+
+Archived/deferred and not active execution guidance:
+
+- `07` billing/subscriptions
+- `10` social communication
+- `12` mobile client
+- `15` responsible gaming / legal compliance

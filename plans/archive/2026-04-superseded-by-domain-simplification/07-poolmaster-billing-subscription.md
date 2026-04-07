@@ -1,8 +1,13 @@
 # PoolMaster — Platform Billing & Subscription Management Plan
 
+> **Archived (2026-04-06):** This plan is superseded by the league-first
+> simplification work and should not be used for implementation. Billing is
+> fully deferred in the current direction. See
+> [Plan 49: Billing And Tier Simplification](../../49-billing-and-tier-simplification.md).
+
 > **Planning Note (2026-04-03):** Re-analyze current product scope, supported contest types, and recent contract/model changes before starting new work from this plan. Treat every task list here as a living draft, not a frozen implementation order.
 
-> **Planning Note (2026-04-06):** This plan reflects an older tenant-first subscription and Stripe-oriented direction. For the current simplification direction, use [Plan 49: Billing And Tier Simplification](./49-billing-and-tier-simplification.md) as the active guidance.
+> **Planning Note (2026-04-06):** This plan reflects an older tenant-first subscription and Stripe-oriented direction. For the current simplification direction, use [Plan 49: Billing And Tier Simplification](../../49-billing-and-tier-simplification.md) as the active guidance.
 
 > **Rules:** All technology and infrastructure choices follow [Architecture Rules](../rules/architecture-rules.md). Testing standards follow [Testing Rules](../rules/testing-rules.md).
 

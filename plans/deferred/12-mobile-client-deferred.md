@@ -4,6 +4,10 @@
 
 > These tasks are explicitly deferred and should NOT be implemented until the web platform and backend contracts are much more mature, reviewable, and stable end to end. The entire mobile client plan was moved here to prevent accidental implementation. The original plan file was at `plans/12-poolmaster-mobile-client.md`.
 
+> **Active Direction Note (2026-04-06):** Mobile remains deferred and should not
+> be treated as an active execution plan by agents during the current
+> backend-first refactor.
+
 ## Deferred Tasks
 
 | ID | Phase | Task | Original Status | Reason |
