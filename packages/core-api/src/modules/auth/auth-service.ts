@@ -94,7 +94,6 @@ export class AuthService {
       data: {
         name: `${displayName}'s Workspace`,
         slug: `user-${uuidv4().slice(0, 8)}`,
-        planTier: 'free',
         settings: {},
       },
     });

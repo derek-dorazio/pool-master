@@ -45,7 +45,6 @@ export interface DomainEntity {
 export interface Tenant extends DomainEntity {
   name: string;
   slug: string;
-  planTier: string;
   settings: Record<string, unknown>;
   defaultLocale: string;
   defaultTimezone: string;

@@ -1,15 +1,5 @@
 export * from './enums';
 export {
-  PlanEntitlementsSchema,
-} from './entitlements';
-export type {
-  EntitlementKey,
-  EntitlementResult,
-  PlanEntitlements,
-  UsageResource,
-  UsageResult,
-} from './entitlements';
-export {
   BonusRuleSchema,
   BonusTriggerSchema,
   BracketRoundRuleSchema,

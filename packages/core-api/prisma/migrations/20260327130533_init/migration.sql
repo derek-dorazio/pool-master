@@ -3,7 +3,6 @@ CREATE TABLE "tenants" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
-    "plan_tier" TEXT NOT NULL DEFAULT 'free',
     "settings" JSONB NOT NULL DEFAULT '{}',
     "default_locale" VARCHAR(10) NOT NULL DEFAULT 'en-US',
     "default_timezone" VARCHAR(50) NOT NULL DEFAULT 'America/New_York',
@@ -771,84 +770,13 @@ CREATE TABLE "consent_records" (
     "consent_type" VARCHAR(50) NOT NULL,
     "granted" BOOLEAN NOT NULL,
     "version" VARCHAR(20) NOT NULL,
+    "minimum_age_threshold" INTEGER,
+    "age_affirmed" BOOLEAN,
     "ip_address" VARCHAR(45),
     "user_agent" TEXT,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "consent_records_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "data_export_requests" (
-    "id" UUID NOT NULL,
-    "user_id" UUID NOT NULL,
-    "status" VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    "requested_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "completed_at" TIMESTAMPTZ,
-    "download_url" TEXT,
-    "download_expires_at" TIMESTAMPTZ,
-    "error" TEXT,
-
-    CONSTRAINT "data_export_requests_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "deletion_requests" (
-    "id" UUID NOT NULL,
-    "user_id" UUID NOT NULL,
-    "reason" TEXT,
-    "status" VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    "requested_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "scheduled_deletion_at" TIMESTAMPTZ,
-    "completed_at" TIMESTAMPTZ,
-    "cancelled_at" TIMESTAMPTZ,
-
-    CONSTRAINT "deletion_requests_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "self_exclusions" (
-    "id" UUID NOT NULL,
-    "user_id" UUID NOT NULL,
-    "exclusion_type" VARCHAR(20) NOT NULL,
-    "duration" VARCHAR(20) NOT NULL,
-    "started_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "ends_at" TIMESTAMPTZ,
-    "reactivated_at" TIMESTAMPTZ,
-    "is_active" BOOLEAN NOT NULL DEFAULT true,
-
-    CONSTRAINT "self_exclusions_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "account_enforcement" (
-    "id" UUID NOT NULL,
-    "user_id" UUID NOT NULL,
-    "level" VARCHAR(30) NOT NULL,
-    "reason" TEXT NOT NULL,
-    "trigger" VARCHAR(50) NOT NULL,
-    "enforced_by" UUID,
-    "starts_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "ends_at" TIMESTAMPTZ,
-    "appeal_status" VARCHAR(20),
-    "notes" TEXT,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "account_enforcement_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "retention_job_runs" (
-    "id" UUID NOT NULL,
-    "job_name" VARCHAR(100) NOT NULL,
-    "records_processed" INTEGER NOT NULL DEFAULT 0,
-    "records_deleted" INTEGER NOT NULL DEFAULT 0,
-    "started_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "completed_at" TIMESTAMPTZ,
-    "status" VARCHAR(20) NOT NULL DEFAULT 'RUNNING',
-    "error" TEXT,
-
-    CONSTRAINT "retention_job_runs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -964,25 +892,6 @@ CREATE TABLE "migration_runs" (
     "started_by" UUID NOT NULL,
 
     CONSTRAINT "migration_runs_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "plan_tiers" (
-    "id" UUID NOT NULL,
-    "name" VARCHAR(50) NOT NULL,
-    "slug" VARCHAR(50) NOT NULL,
-    "display_order" INTEGER NOT NULL DEFAULT 0,
-    "monthly_price_cents" INTEGER NOT NULL DEFAULT 0,
-    "annual_price_cents" INTEGER NOT NULL DEFAULT 0,
-    "trial_days" INTEGER NOT NULL DEFAULT 0,
-    "stripe_monthly_price_id" VARCHAR(255),
-    "stripe_annual_price_id" VARCHAR(255),
-    "entitlements" JSONB NOT NULL DEFAULT '{}',
-    "is_public" BOOLEAN NOT NULL DEFAULT true,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "plan_tiers_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -1193,17 +1102,6 @@ CREATE INDEX "notification_delivery_log_user_id_created_at_idx" ON "notification
 CREATE INDEX "consent_records_user_id_consent_type_idx" ON "consent_records"("user_id", "consent_type");
 
 -- CreateIndex
-CREATE INDEX "data_export_requests_user_id_status_idx" ON "data_export_requests"("user_id", "status");
-
--- CreateIndex
-CREATE INDEX "deletion_requests_user_id_status_idx" ON "deletion_requests"("user_id", "status");
-
--- CreateIndex
-CREATE INDEX "self_exclusions_user_id_is_active_idx" ON "self_exclusions"("user_id", "is_active");
-
--- CreateIndex
-CREATE INDEX "account_enforcement_user_id_created_at_idx" ON "account_enforcement"("user_id", "created_at" DESC);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "admin_users_email_key" ON "admin_users"("email");
 
@@ -1227,9 +1125,6 @@ CREATE INDEX "global_announcements_is_active_starts_at_ends_at_idx" ON "global_a
 
 -- CreateIndex
 CREATE INDEX "migration_runs_status_idx" ON "migration_runs"("status");
-
--- CreateIndex
-CREATE UNIQUE INDEX "plan_tiers_slug_key" ON "plan_tiers"("slug");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

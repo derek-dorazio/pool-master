@@ -487,7 +487,7 @@ export class ContestService {
     const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
     if (!contest) throw new ContestNotFoundError(contestId);
 
-    // TODO: Trigger payout recalculation via billing/payout engine
+    // TODO: Trigger payout recalculation via the prize-award engine
     await logAdminAction({
       adminUserId,
       adminUserEmail,

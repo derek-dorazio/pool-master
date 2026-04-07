@@ -31,7 +31,6 @@ model Tenant {
   id              String   @id @default(uuid()) @db.Uuid
   name            String
   slug            String   @unique
-  planTier        String   @default("free") @map("plan_tier")
   settings        Json     @default("{}")
   defaultLocale   String   @default("en-US") @map("default_locale") @db.VarChar(10)
   defaultTimezone String   @default("America/New_York") @map("default_timezone") @db.VarChar(50)
@@ -45,9 +44,6 @@ model Tenant {
 
   featureFlagOverrides  FeatureFlagOverride[]
   impersonationSessions ImpersonationSession[]
-  usage                 TenantUsage[]
-  entitlementOverrides  EntitlementOverride[]
-  subscriptions         TenantSubscription[]
 
   @@map("tenants")
 }
@@ -850,19 +846,6 @@ model SeasonNote {
   @@map("season_notes")
 }
 
-model RetentionConfig {
-  id                       String @id @default(uuid()) @db.Uuid
-  leagueId                 String @unique @map("league_id") @db.Uuid
-  contestResultRetention   Int    @default(-1) @map("contest_result_retention")
-  rosterHistoryRetention   Int    @default(-1) @map("roster_history_retention")
-  activityLogRetention     Int    @default(365) @map("activity_log_retention")
-  payoutRecordRetention    Int    @default(-1) @map("payout_record_retention")
-  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@map("retention_configs")
-}
-
 // =============================================================================
 // Sports Data Integration (Plan 06)
 // =============================================================================
@@ -1060,94 +1043,20 @@ model UserLocalePreference {
   @@map("user_locale_preferences")
 }
 
-// =============================================================================
-// Compliance & Responsible Gaming (Plan 15 — Option A: no real money)
-// =============================================================================
-
 model ConsentRecord {
   id          String   @id @default(uuid()) @db.Uuid
   userId      String   @map("user_id") @db.Uuid
   consentType String   @map("consent_type") @db.VarChar(50)
   granted     Boolean
   version     String   @db.VarChar(20)
+  minimumAgeThreshold Int?   @map("minimum_age_threshold")
+  ageAffirmed Boolean?  @map("age_affirmed")
   ipAddress   String?  @map("ip_address") @db.VarChar(45)
   userAgent   String?  @map("user_agent")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([userId, consentType])
   @@map("consent_records")
-}
-
-model DataExportRequest {
-  id                 String    @id @default(uuid()) @db.Uuid
-  userId             String    @map("user_id") @db.Uuid
-  status             String    @default("PENDING") @db.VarChar(20)
-  requestedAt        DateTime  @default(now()) @map("requested_at") @db.Timestamptz
-  completedAt        DateTime? @map("completed_at") @db.Timestamptz
-  downloadUrl        String?   @map("download_url")
-  downloadExpiresAt  DateTime? @map("download_expires_at") @db.Timestamptz
-  error              String?
-
-  @@index([userId, status])
-  @@map("data_export_requests")
-}
-
-model DeletionRequest {
-  id                   String    @id @default(uuid()) @db.Uuid
-  userId               String    @map("user_id") @db.Uuid
-  reason               String?
-  status               String    @default("PENDING") @db.VarChar(20)
-  requestedAt          DateTime  @default(now()) @map("requested_at") @db.Timestamptz
-  scheduledDeletionAt  DateTime? @map("scheduled_deletion_at") @db.Timestamptz
-  completedAt          DateTime? @map("completed_at") @db.Timestamptz
-  cancelledAt          DateTime? @map("cancelled_at") @db.Timestamptz
-
-  @@index([userId, status])
-  @@map("deletion_requests")
-}
-
-model SelfExclusion {
-  id             String    @id @default(uuid()) @db.Uuid
-  userId         String    @map("user_id") @db.Uuid
-  exclusionType  String    @map("exclusion_type") @db.VarChar(20)
-  duration       String    @db.VarChar(20)
-  startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz
-  endsAt         DateTime? @map("ends_at") @db.Timestamptz
-  reactivatedAt  DateTime? @map("reactivated_at") @db.Timestamptz
-  isActive       Boolean   @default(true) @map("is_active")
-
-  @@index([userId, isActive])
-  @@map("self_exclusions")
-}
-
-model AccountEnforcement {
-  id           String    @id @default(uuid()) @db.Uuid
-  userId       String    @map("user_id") @db.Uuid
-  level        String    @db.VarChar(30)
-  reason       String
-  trigger      String    @db.VarChar(50)
-  enforcedBy   String?   @map("enforced_by") @db.Uuid
-  startsAt     DateTime  @default(now()) @map("starts_at") @db.Timestamptz
-  endsAt       DateTime? @map("ends_at") @db.Timestamptz
-  appealStatus String?   @map("appeal_status") @db.VarChar(20)
-  notes        String?
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("account_enforcement")
-}
-
-model RetentionJobRun {
-  id               String    @id @default(uuid()) @db.Uuid
-  jobName          String    @map("job_name") @db.VarChar(100)
-  recordsProcessed Int       @default(0) @map("records_processed")
-  recordsDeleted   Int       @default(0) @map("records_deleted")
-  startedAt        DateTime  @default(now()) @map("started_at") @db.Timestamptz
-  completedAt      DateTime? @map("completed_at") @db.Timestamptz
-  status           String    @default("RUNNING") @db.VarChar(20)
-  error            String?
-
-  @@map("retention_job_runs")
 }
 
 // =============================================================================
@@ -1311,65 +1220,4 @@ model PlanTier {
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("plan_tiers")
-}
-
-// =============================================================================
-// Billing — Usage, Overrides, Subscriptions
-// =============================================================================
-
-model TenantUsage {
-  id           String   @id @default(uuid()) @db.Uuid
-  tenantId     String   @map("tenant_id") @db.Uuid
-  resource     String   @db.VarChar(50)
-  currentCount Int      @default(0) @map("current_count")
-  countedAt    DateTime @default(now()) @map("counted_at") @db.Timestamptz
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  @@unique([tenantId, resource])
-  @@index([tenantId])
-  @@map("tenant_usage")
-}
-
-model EntitlementOverride {
-  id             String    @id @default(uuid()) @db.Uuid
-  tenantId       String    @map("tenant_id") @db.Uuid
-  entitlementKey String    @map("entitlement_key") @db.VarChar(100)
-  overrideValue  Json      @map("override_value")
-  reason         String?   @db.VarChar(500)
-  setBy          String?   @map("set_by") @db.Uuid
-  expiresAt      DateTime? @map("expires_at") @db.Timestamptz
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  @@unique([tenantId, entitlementKey])
-  @@map("entitlement_overrides")
-}
-
-model TenantSubscription {
-  id                     String    @id @default(uuid()) @db.Uuid
-  tenantId               String    @unique @map("tenant_id") @db.Uuid
-  stripeCustomerId       String    @map("stripe_customer_id") @db.VarChar(255)
-  stripeSubscriptionId   String?   @map("stripe_subscription_id") @db.VarChar(255)
-  planTierSlug           String    @map("plan_tier_slug") @db.VarChar(50)
-  billingCycle           String    @default("MONTHLY") @map("billing_cycle") @db.VarChar(20)
-  status                 String    @default("TRIALING") @db.VarChar(50)
-  trialStart             DateTime? @map("trial_start") @db.Timestamptz
-  trialEnd               DateTime? @map("trial_end") @db.Timestamptz
-  currentPeriodStart     DateTime? @map("current_period_start") @db.Timestamptz
-  currentPeriodEnd       DateTime? @map("current_period_end") @db.Timestamptz
-  cancelledAt            DateTime? @map("cancelled_at") @db.Timestamptz
-  cancelAtPeriodEnd      Boolean   @default(false) @map("cancel_at_period_end")
-  pendingPlanChangeSlug  String?   @map("pending_plan_change_slug") @db.VarChar(50)
-  paymentMethodLast4     String?   @map("payment_method_last4") @db.VarChar(4)
-  paymentMethodBrand     String?   @map("payment_method_brand") @db.VarChar(50)
-  currency               String    @default("usd") @db.VarChar(3)
-  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  @@index([status])
-  @@map("tenant_subscriptions")
 }

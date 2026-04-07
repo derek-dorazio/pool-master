@@ -276,18 +276,6 @@ export const WeekDay = {
 } as const;
 export type WeekDay = (typeof WeekDay)[keyof typeof WeekDay];
 
-// --- Subscription / Billing ---
-
-export const SubscriptionStatus = {
-  ACTIVE: 'ACTIVE',
-  TRIALING: 'TRIALING',
-  CONVERTED: 'CONVERTED',
-  EXPIRED: 'EXPIRED',
-  PAST_DUE: 'PAST_DUE',
-  CANCELLED: 'CANCELLED',
-} as const;
-export type SubscriptionStatus = (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
-
 // --- Notification Delivery ---
 
 export const DeliveryStatus = {

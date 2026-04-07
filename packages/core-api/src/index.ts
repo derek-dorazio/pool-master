@@ -24,11 +24,9 @@ import { participantsModule } from './modules/participants/routes';
 import { contestPoolModule } from './modules/participants/pool-routes';
 import { standingsModule } from './modules/standings/routes';
 import { historyModule } from './modules/history/routes';
-import { complianceModule } from './modules/compliance/routes';
+import { accountConsentModule } from './modules/account-consent/routes';
 import { adminModule } from './modules/admin/routes';
 import { configModule } from './modules/config/routes';
-import { billingModule } from './modules/billing/routes';
-import { webhookModule } from './modules/billing/webhook-handler';
 
 // Draft module
 import { draftsModule } from './modules/drafts/routes';
@@ -116,11 +114,9 @@ export function buildApp() {
   app.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool', registry });
   app.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
   app.register(historyModule, { prefix: '/api/v1' });
-  app.register(complianceModule, { prefix: '/api/v1/account' });
+  app.register(accountConsentModule, { prefix: '/api/v1/account' });
   app.register(adminModule, { prefix: '/api/v1/admin' });
   app.register(configModule, { prefix: '/api/v1/config' });
-  app.register(billingModule, { prefix: '/api/v1/billing' });
-  app.register(webhookModule, { prefix: '/api/v1' });
 
   // =========================================================================
   // Social module (from social/communication layer)

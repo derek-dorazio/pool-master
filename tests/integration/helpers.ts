@@ -28,13 +28,12 @@ import { invitationsModule } from '../../packages/core-api/src/modules/invitatio
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { standingsModule } from '../../packages/core-api/src/modules/standings/routes';
-import { complianceModule } from '../../packages/core-api/src/modules/compliance/routes';
+import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
 import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
 import { contestPoolModule } from '../../packages/core-api/src/modules/participants/pool-routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
-import { billingModule } from '../../packages/core-api/src/modules/billing/routes';
 import { socialModule } from '../../packages/core-api/src/modules/social/routes';
 import { registerScoringTemplates } from '../../packages/core-api/src/modules/contests/service';
 import { SCORING_TEMPLATES } from '../../packages/core-api/src/modules/scoring/templates/registry';
@@ -89,13 +88,12 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
   testApp.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
-  testApp.register(complianceModule, { prefix: '/api/v1/account' });
+  testApp.register(accountConsentModule, { prefix: '/api/v1/account' });
   testApp.register(configModule, { prefix: '/api/v1/config' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
   testApp.register(historyModule, { prefix: '/api/v1' });
-  testApp.register(billingModule, { prefix: '/api/v1/billing' });
   testApp.register(socialModule, { prefix: '/api/v1' });
 
   // Notification module (for notification persistence tests)
@@ -235,7 +233,7 @@ export async function cleanupTestData(): Promise<void> {
   // Tables that reference leagues
   const leagueChildTables = [
     'season_notes', 'league_season_summaries', 'league_records', 'rivalry_records',
-    'trophies', 'team_roster_history', 'retention_configs', 'retention_job_runs',
+    'trophies', 'team_roster_history',
     'discoverable_leagues',
   ];
 

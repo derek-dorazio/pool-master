@@ -30,15 +30,12 @@ import { createMigrationHandlers } from './migration-handler';
 import { SupportService } from './support-service';
 import { createSupportHandlers } from './support-handler';
 import { createQuickActionsHandlers } from './quick-actions-handler';
-import { EntitlementService } from '../billing/entitlement-service';
-import { UsageService } from '../billing/usage-service';
 import { ExportService } from './export-service';
 import { createExportHandlers } from './export-handler';
 import { PollConfigService } from './poll-config-service';
 import { IngestionConfigService } from './ingestion-config-service';
 import { DunningConfigService } from './dunning-config-service';
 import { ChannelConfigService } from './channel-config-service';
-import { RetentionConfigService } from './retention-config-service';
 import { DigestConfigService } from './digest-config-service';
 import { registerPlatformConfigRoutes } from './platform-config-routes';
 import { configRoutes } from './config-routes';
@@ -62,7 +59,6 @@ import {
   SupportActivityListResponseSchema,
   QuickResetPasswordResponseSchema,
   QuickProviderCheckResponseSchema,
-  QuickEntitlementsResponseSchema,
   QuickNotificationsResponseSchema,
   QuickReIngestScoresResponseSchema,
   MigrationListResponseSchema,
@@ -122,15 +118,12 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const impersonationService = new ImpersonationService(prisma);
   const announcementService = new AnnouncementService(prisma);
   const migrationService = new MigrationService(prisma);
-  const usageService = new UsageService(prisma);
-  const entitlementService = new EntitlementService(prisma, usageService);
   const supportService = new SupportService(prisma);
   const exportService = new ExportService(prisma);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
   const dunningConfigService = new DunningConfigService();
   const channelConfigService = new ChannelConfigService();
-  const retentionConfigService = new RetentionConfigService();
   const digestConfigService = new DigestConfigService();
 
   // --- Handlers ---
@@ -149,7 +142,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     userService,
     providerService,
     contestService,
-    entitlementService,
   });
   const tenantExport = createExportHandlers(exportService);
 
@@ -165,7 +157,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
         type: 'object',
         properties: {
           search: { type: 'string' },
-          planTier: { type: 'string' },
           status: { type: 'string', enum: ['active', 'suspended', 'trial'] },
           sortBy: { type: 'string', enum: ['name', 'created', 'members', 'lastActive'] },
           sortDir: { type: 'string', enum: ['asc', 'desc'] },
@@ -185,24 +176,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       response: { 200: zodToJsonSchema(TenantDetailResponseSchema) },
     },
     handler: tenant.getTenantDetail,
-  });
-
-  fastify.put('/tenants/:tenantId/plan', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Change tenant plan tier',
-      operationId: 'adminChangeTenantPlan',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['planTier', 'reason'],
-        properties: {
-          planTier: { type: 'string', minLength: 1 },
-          reason: { type: 'string', minLength: 1, maxLength: 1000 },
-        },
-      },
-    },
-    handler: tenant.changePlan,
   });
 
   fastify.post('/tenants/:tenantId/suspend', {
@@ -1155,23 +1128,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: quickActions.checkProvider,
   });
 
-  fastify.post('/support/quick-actions/check-entitlements', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Quick action: check tenant entitlements',
-      operationId: 'adminQuickCheckEntitlements',
-      response: { 200: zodToJsonSchema(QuickEntitlementsResponseSchema) },
-      body: {
-        type: 'object',
-        required: ['tenantId'],
-        properties: {
-          tenantId: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: quickActions.checkEntitlements,
-  });
-
   fastify.post('/support/quick-actions/check-notifications', {
     schema: {
       tags: ['Admin'],
@@ -1250,7 +1206,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     ingestionConfig: ingestionConfigService,
     dunningConfig: dunningConfigService,
     channelConfig: channelConfigService,
-    retentionConfig: retentionConfigService,
     digestConfig: digestConfigService,
   });
 

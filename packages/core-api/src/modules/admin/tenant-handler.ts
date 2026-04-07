@@ -33,7 +33,6 @@ export function createTenantHandlers(tenantService: TenantService) {
   return {
     listTenants,
     getTenantDetail,
-    changePlan,
     suspendTenant,
     unsuspendTenant,
     applyCredit,
@@ -47,7 +46,6 @@ export function createTenantHandlers(tenantService: TenantService) {
     request: FastifyRequest<{
       Querystring: {
         search?: string;
-        planTier?: string;
         status?: 'active' | 'suspended' | 'trial';
         sortBy?: 'name' | 'created' | 'members' | 'lastActive';
         sortDir?: 'asc' | 'desc';
@@ -60,7 +58,6 @@ export function createTenantHandlers(tenantService: TenantService) {
     const query = request.query;
     const result = await tenantService.listTenants({
       search: query.search,
-      planTier: query.planTier,
       status: query.status,
       sortBy: query.sortBy,
       sortDir: query.sortDir,
@@ -74,7 +71,6 @@ export function createTenantHandlers(tenantService: TenantService) {
         id: item.id,
         name: item.name,
         slug: item.slug,
-        planTier: item.planTier,
         memberCount: item.memberCount,
         contestCount: item.contestCount,
         leagueCount: item.leagueCount,
@@ -114,30 +110,6 @@ export function createTenantHandlers(tenantService: TenantService) {
           createdAt: member.createdAt.toISOString(),
         })),
       });
-    } catch (err) {
-      if (err instanceof TenantNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
-      }
-      throw err;
-    }
-  }
-
-  // --- Change plan ---
-
-  async function changePlan(
-    request: FastifyRequest<{
-      Params: { tenantId: string };
-      Body: { planTier: string; reason: string };
-    }>,
-    reply: FastifyReply,
-  ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
-    const { tenantId } = request.params;
-    const { planTier, reason } = request.body;
-
-    try {
-      await tenantService.changePlan(tenantId, planTier, reason, adminUserId, adminUserEmail);
-      return reply.status(204).send();
     } catch (err) {
       if (err instanceof TenantNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });

@@ -25,7 +25,6 @@ export const TenantDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
-  plan: z.string(),
   members: z.number(),
   leagues: z.number(),
   contests: z.number(),
@@ -36,11 +35,6 @@ export const TenantDtoSchema = z.object({
 export type TenantDto = z.infer<typeof TenantDtoSchema>;
 
 export const TenantDetailDtoSchema = TenantDtoSchema.extend({
-  usage: z.object({
-    leagues: z.object({ current: z.number(), limit: z.number() }),
-    contests: z.object({ current: z.number(), limit: z.number() }),
-    members: z.object({ current: z.number(), limit: z.number() }),
-  }),
   recentSignups: z.array(z.object({
     email: z.string(),
     date: z.string().datetime(),
@@ -204,7 +198,6 @@ export const TenantListItemDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
-  planTier: z.string(),
   memberCount: z.number(),
   contestCount: z.number(),
   leagueCount: z.number(),
@@ -230,7 +223,6 @@ export const TenantDetailResponseSchema = z.object({
     id: z.string(),
     name: z.string(),
     slug: z.string(),
-    planTier: z.string(),
     settings: z.record(z.unknown()),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
@@ -737,23 +729,6 @@ export const SupportActivityListResponseSchema = z.object({
 });
 export type SupportActivityListResponse = z.infer<typeof SupportActivityListResponseSchema>;
 
-export const EntitlementResultDtoSchema = z.object({
-  entitled: z.boolean(),
-  reason: z.string().optional(),
-  currentUsage: z.number().optional(),
-  limit: z.number().optional(),
-  upgradePlan: z.string().optional(),
-});
-export type EntitlementResultDto = z.infer<typeof EntitlementResultDtoSchema>;
-
-export const UsageResultDtoSchema = z.object({
-  resource: z.enum(['LEAGUES', 'MEMBERS', 'CONTESTS']),
-  current: z.number(),
-  limit: z.number(),
-  percentage: z.number(),
-});
-export type UsageResultDto = z.infer<typeof UsageResultDtoSchema>;
-
 export const QuickResetPasswordResponseSchema = z.object({
   action: z.literal('reset-password'),
   userId: z.string(),
@@ -771,21 +746,6 @@ export const QuickProviderCheckResponseSchema = z.object({
   checkedAt: z.string().datetime(),
 });
 export type QuickProviderCheckResponse = z.infer<typeof QuickProviderCheckResponseSchema>;
-
-export const QuickEntitlementsResponseSchema = z.object({
-  action: z.literal('check-entitlements'),
-  tenantId: z.string(),
-  planTier: z.string(),
-  entitlements: z.record(EntitlementResultDtoSchema),
-  usage: z.object({
-    leagues: UsageResultDtoSchema,
-    members: UsageResultDtoSchema,
-    contests: UsageResultDtoSchema,
-  }),
-  withinLimits: z.boolean(),
-  checkedAt: z.string().datetime(),
-});
-export type QuickEntitlementsResponse = z.infer<typeof QuickEntitlementsResponseSchema>;
 
 export const QuickNotificationDeviceDtoSchema = z.object({
   platform: z.string(),

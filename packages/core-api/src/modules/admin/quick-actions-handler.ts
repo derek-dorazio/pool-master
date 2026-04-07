@@ -13,7 +13,6 @@ import type { ProviderService } from './provider-service';
 import { ProviderNotFoundError } from './provider-service';
 import type { UserService } from './user-service';
 import { UserNotFoundError } from './user-service';
-import type { EntitlementService } from '../billing/entitlement-service';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -34,30 +33,11 @@ function extractAdminContext(request: FastifyRequest): AdminContext {
 // Types
 // ---------------------------------------------------------------------------
 
-const ENTITLEMENT_KEYS = [
-  'league.create',
-  'league.member.add',
-  'contest.create',
-  'sport.access',
-  'draft.type',
-  'draft.mode',
-  'leaderboard.realtime',
-  'scoring.custom',
-  'history.access',
-  'analytics.access',
-  'branding.custom',
-  'prizes.intermediate',
-  'api.access',
-] as const;
-
-type EntitlementKey = typeof ENTITLEMENT_KEYS[number];
-
 export interface QuickActionsDeps {
   prisma: PrismaClient;
   userService: UserService;
   providerService: ProviderService;
   contestService: ContestService;
-  entitlementService: EntitlementService;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,7 +48,6 @@ export function createQuickActionsHandlers(deps: QuickActionsDeps) {
   return {
     resetPassword,
     checkProvider,
-    checkEntitlements,
     checkNotifications,
     reIngestScores,
   };
@@ -131,46 +110,6 @@ export function createQuickActionsHandlers(deps: QuickActionsDeps) {
       }
       throw err;
     }
-  }
-
-  // --- Check entitlements ---
-
-  async function checkEntitlements(
-    request: FastifyRequest<{ Body: { tenantId: string } }>,
-    reply: FastifyReply,
-  ) {
-    const { tenantId } = request.body;
-    const tenant = await deps.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { planTier: true },
-    });
-    if (!tenant) {
-      return reply.status(404).send({ error: 'NOT_FOUND', message: `Tenant not found: ${tenantId}` });
-    }
-
-    const results = await deps.entitlementService.checkMultiple(tenantId, [...ENTITLEMENT_KEYS] as unknown as EntitlementKey[]);
-    const entitlements: Record<string, unknown> = {};
-    let withinLimits = true;
-    for (const [key, result] of results) {
-      entitlements[key] = result;
-      withinLimits = withinLimits && result.entitled;
-    }
-
-    const [leagues, members, contests] = await Promise.all([
-      deps.entitlementService.getUsage(tenantId, 'LEAGUES'),
-      deps.entitlementService.getUsage(tenantId, 'MEMBERS'),
-      deps.entitlementService.getUsage(tenantId, 'CONTESTS'),
-    ]);
-
-    return reply.send({
-      action: 'check-entitlements',
-      tenantId,
-      planTier: tenant.planTier,
-      entitlements,
-      usage: { leagues, members, contests },
-      withinLimits,
-      checkedAt: new Date().toISOString(),
-    });
   }
 
   // --- Check notifications ---

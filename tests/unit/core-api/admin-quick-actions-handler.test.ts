@@ -24,10 +24,6 @@ describe('quick actions handler', () => {
       contestService: {
         recalculateStandings: jest.fn(),
       },
-      entitlementService: {
-        checkMultiple: jest.fn(),
-        getUsage: jest.fn(),
-      },
     } as any;
     const handlers = createQuickActionsHandlers(deps);
     const reply = createReply();
@@ -72,10 +68,6 @@ describe('quick actions handler', () => {
       contestService: {
         recalculateStandings: jest.fn(),
       },
-      entitlementService: {
-        checkMultiple: jest.fn(),
-        getUsage: jest.fn(),
-      },
     } as any;
     const handlers = createQuickActionsHandlers(deps);
     const reply = createReply();
@@ -92,66 +84,6 @@ describe('quick actions handler', () => {
       provider: expect.objectContaining({
         providerName: 'ESPN',
         activeEventCount: 4,
-      }),
-    }));
-  });
-
-  it('checks entitlements from the live billing service', async () => {
-    const entitlementMap = new Map([
-      ['league.create', { entitled: true }],
-      ['league.member.add', { entitled: true }],
-      ['contest.create', { entitled: false, reason: 'Limit reached' }],
-      ['sport.access', { entitled: true }],
-      ['draft.type', { entitled: true }],
-      ['draft.mode', { entitled: true }],
-      ['leaderboard.realtime', { entitled: true }],
-      ['scoring.custom', { entitled: true }],
-      ['history.access', { entitled: true }],
-      ['analytics.access', { entitled: true }],
-      ['branding.custom', { entitled: true }],
-      ['prizes.intermediate', { entitled: true }],
-      ['api.access', { entitled: true }],
-    ]);
-
-    const deps = {
-      prisma: {
-        tenant: { findUnique: jest.fn().mockResolvedValue({ planTier: 'pro' }) },
-      },
-      userService: {
-        resetUserPassword: jest.fn(),
-      },
-      providerService: {
-        getProviderDetail: jest.fn(),
-      },
-      contestService: {
-        recalculateStandings: jest.fn(),
-      },
-      entitlementService: {
-        checkMultiple: jest.fn().mockResolvedValue(entitlementMap),
-        getUsage: jest.fn().mockImplementation(async (tenantId: string, resource: string) => ({
-          resource,
-          current: resource === 'CONTESTS' ? 20 : 3,
-          limit: resource === 'CONTESTS' ? 10 : 25,
-          percentage: resource === 'CONTESTS' ? 200 : 12,
-          tenantId,
-        })),
-      },
-    } as any;
-    const handlers = createQuickActionsHandlers(deps);
-    const reply = createReply();
-
-    await handlers.checkEntitlements(
-      { body: { tenantId: 'tenant-1' } } as any,
-      reply,
-    );
-
-    expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'check-entitlements',
-      tenantId: 'tenant-1',
-      planTier: 'pro',
-      withinLimits: false,
-      usage: expect.objectContaining({
-        contests: expect.objectContaining({ current: 20, limit: 10 }),
       }),
     }));
   });
@@ -174,10 +106,6 @@ describe('quick actions handler', () => {
           rankChanges: [{ entryId: 'entry-1', oldRank: 2, newRank: 1 }],
           recalculatedAt: new Date('2026-04-03T11:45:00Z'),
         }),
-      },
-      entitlementService: {
-        checkMultiple: jest.fn(),
-        getUsage: jest.fn(),
       },
     } as any;
     const handlers = createQuickActionsHandlers(deps);
@@ -214,10 +142,6 @@ describe('quick actions handler', () => {
       },
       contestService: {
         recalculateStandings: jest.fn(),
-      },
-      entitlementService: {
-        checkMultiple: jest.fn(),
-        getUsage: jest.fn(),
       },
     } as any;
     const handlers = createQuickActionsHandlers(deps);

@@ -1,8 +1,8 @@
 /**
  * TenantService — business logic for admin tenant management operations.
  *
- * Provides tenant listing, detail views, plan changes, suspension, credits,
- * trial extensions, and deletion. All write operations are audit-logged.
+ * Provides tenant listing, detail views, suspension, credits, trial
+ * extensions, and deletion. All write operations are audit-logged.
  *
  * Persisted via Prisma to the tenants table.
  */
@@ -16,7 +16,6 @@ import { logAdminAction } from './admin-audit-service';
 
 export interface TenantListQuery {
   search?: string;
-  planTier?: string;
   status?: 'active' | 'suspended' | 'trial';
   sortBy?: 'name' | 'created' | 'members' | 'lastActive';
   sortDir?: 'asc' | 'desc';
@@ -28,7 +27,6 @@ export interface TenantListItem {
   id: string;
   name: string;
   slug: string;
-  planTier: string;
   memberCount: number;
   contestCount: number;
   leagueCount: number;
@@ -42,7 +40,6 @@ export interface TenantDetailView {
     id: string;
     name: string;
     slug: string;
-    planTier: string;
     settings: Record<string, unknown>;
     createdAt: Date;
     updatedAt: Date;
@@ -89,16 +86,9 @@ export class TenantDeleteConfirmationError extends Error {
  * from the settings JSON (which may contain { suspended: true } or
  * { trialEndsAt: "..." }).
  */
-function deriveTenantStatus(
-  settings: Record<string, unknown>,
-  planTier: string,
-): 'active' | 'suspended' | 'trial' {
+function deriveTenantStatus(settings: Record<string, unknown>): 'active' | 'suspended' | 'trial' {
   if (settings.suspended === true) return 'suspended';
-  if (
-    planTier.toLowerCase() === 'free' &&
-    settings.trialEndsAt &&
-    new Date(settings.trialEndsAt as string) > new Date()
-  ) {
+  if (settings.trialEndsAt && new Date(settings.trialEndsAt as string) > new Date()) {
     return 'trial';
   }
   return 'active';
@@ -129,10 +119,6 @@ export class TenantService {
         { slug: { contains: query.search, mode: 'insensitive' } },
       ];
     }
-    if (query.planTier) {
-      where.planTier = query.planTier;
-    }
-
     // Determine sort order
     const sortDir = query.sortDir ?? 'desc';
     let orderBy: Record<string, string> = { createdAt: sortDir };
@@ -168,11 +154,10 @@ export class TenantService {
         id: row.id,
         name: row.name,
         slug: row.slug,
-        planTier: row.planTier,
         memberCount: row._count.users,
         contestCount,
         leagueCount: row._count.leagues,
-        status: query.status ?? deriveTenantStatus(settings, row.planTier),
+        status: query.status ?? deriveTenantStatus(settings),
         lastActiveAt: (settings.lastActiveAt as string)
           ? new Date(settings.lastActiveAt as string)
           : undefined,
@@ -238,7 +223,6 @@ export class TenantService {
         id: tenant.id,
         name: tenant.name,
         slug: tenant.slug,
-        planTier: tenant.planTier,
         settings,
         createdAt: tenant.createdAt,
         updatedAt: tenant.updatedAt,
@@ -247,45 +231,12 @@ export class TenantService {
       leagueCount: tenant._count.leagues,
       contestCount,
       activeContestCount,
-      status: deriveTenantStatus(settings, tenant.planTier),
+      status: deriveTenantStatus(settings),
       lastActiveAt: (settings.lastActiveAt as string)
         ? new Date(settings.lastActiveAt as string)
         : undefined,
       recentMembers,
     };
-  }
-
-  /**
-   * Changes the plan tier for a tenant.
-   */
-  async changePlan(
-    tenantId: string,
-    planTier: string,
-    reason: string,
-    adminUserId: string,
-    adminUserEmail: string,
-  ): Promise<void> {
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
-    if (!tenant) throw new TenantNotFoundError(tenantId);
-
-    const beforePlan = tenant.planTier;
-
-    await this.prisma.tenant.update({
-      where: { id: tenantId },
-      data: { planTier },
-    });
-
-    await logAdminAction({
-      adminUserId,
-      adminUserEmail,
-      action: 'tenant.change_plan',
-      resourceType: 'TENANT',
-      resourceId: tenantId,
-      description: `Changed tenant plan from ${beforePlan} to ${planTier}`,
-      beforeState: { planTier: beforePlan },
-      afterState: { planTier },
-      reason,
-    });
   }
 
   /**
