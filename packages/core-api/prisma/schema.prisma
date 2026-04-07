@@ -328,6 +328,7 @@ model Contest {
   id                        String    @id @default(uuid()) @db.Uuid
   leagueId                  String    @map("league_id") @db.Uuid
   seasonId                  String?   @map("season_id") @db.Uuid
+  sportEventId              String?   @map("sport_event_id") @db.Uuid
   name                      String
   status                    String    @default("DRAFT")
   contestType               String    @map("contest_type")
@@ -350,6 +351,8 @@ model Contest {
 
   league          League                  @relation(fields: [leagueId], references: [id])
   season          Season?                 @relation(fields: [seasonId], references: [id])
+  sportEvent      SportEvent?             @relation(fields: [sportEventId], references: [id])
+  configuration   ContestConfiguration?
   selectionConfig SelectionConfig?
   contestPool     ContestPool?
   pool            ContestParticipantPool[]
@@ -361,8 +364,81 @@ model Contest {
   results         ContestResult[]
 
   @@index([leagueId])
+  @@index([sportEventId])
   @@index([status])
   @@map("contests")
+}
+
+model ContestConfiguration {
+  id                   String    @id @default(uuid()) @db.Uuid
+  contestId            String    @unique @map("contest_id") @db.Uuid
+  selectionType        String    @map("selection_type") @db.VarChar(50)
+  locksAt              DateTime? @map("locks_at") @db.Timestamptz
+  minimumEntries       Int?      @map("minimum_entries")
+  maxEntriesPerSquad   Int?      @map("max_entries_per_squad")
+  rosterSize           Int?      @map("roster_size")
+  totalPrizePoolAmount Float?    @map("total_prize_pool_amount")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  contest               Contest                        @relation(fields: [contestId], references: [id])
+  participantScoringRules ParticipantContestScoringRule[]
+  entryAggregationRule  ContestEntryAggregationRule?
+  prizeDefinitions      ContestPrizeDefinition[]
+
+  @@map("contest_configurations")
+}
+
+model ParticipantContestScoringRule {
+  id                             String   @id @default(uuid()) @db.Uuid
+  contestConfigurationId         String   @map("contest_configuration_id") @db.Uuid
+  participantScoringDefinitionId String   @map("participant_scoring_definition_id") @db.VarChar(100)
+  sortOrder                      Int      @map("sort_order")
+  config                         Json     @default("{}")
+  active                         Boolean  @default(true)
+  createdAt                      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contestConfiguration ContestConfiguration @relation(fields: [contestConfigurationId], references: [id])
+
+  @@unique([contestConfigurationId, sortOrder])
+  @@index([contestConfigurationId])
+  @@map("participant_contest_scoring_rules")
+}
+
+model ContestEntryAggregationRule {
+  id                      String   @id @default(uuid()) @db.Uuid
+  contestConfigurationId  String   @unique @map("contest_configuration_id") @db.Uuid
+  aggregationDefinitionId String   @map("aggregation_definition_id") @db.VarChar(100)
+  config                  Json     @default("{}")
+  active                  Boolean  @default(true)
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contestConfiguration ContestConfiguration @relation(fields: [contestConfigurationId], references: [id])
+
+  @@map("contest_entry_aggregation_rules")
+}
+
+model ContestPrizeDefinition {
+  id                   String   @id @default(uuid()) @db.Uuid
+  contestConfigurationId String @map("contest_configuration_id") @db.Uuid
+  prizeDefinitionId    String   @map("prize_definition_id") @db.VarChar(100)
+  displayName          String   @map("display_name") @db.VarChar(100)
+  sortOrder            Int      @map("sort_order")
+  ruleConfig           Json     @default("{}") @map("rule_config")
+  payoutType           String?  @map("payout_type") @db.VarChar(50)
+  amount               Float?
+  percentage           Float?
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contestConfiguration ContestConfiguration @relation(fields: [contestConfigurationId], references: [id])
+
+  @@unique([contestConfigurationId, sortOrder])
+  @@index([contestConfigurationId])
+  @@map("contest_prize_definitions")
 }
 
 // =============================================================================
@@ -866,6 +942,8 @@ model SportEvent {
   metadata        Json      @default("{}")
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  contests Contest[]
 
   @@unique([providerId, externalId])
   @@index([sport, status])

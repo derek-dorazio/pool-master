@@ -184,6 +184,6 @@ Every slice should satisfy the backend-refactor rules:
 | 59-005 | 2 | Implement Slice D: Identity, League, Membership, and Squad rebuild | Not Started | |
 | 59-006 | 3 | Implement Slice E: Contest core rebuild | Not Started | |
 | 59-007 | 3 | Implement Slice F: Event participant and source-data rebuild | Not Started | |
-| 59-008 | 4 | Implement Slice G: Scoring, aggregation, and prize rebuild | In Progress | Main thread started `contest-scoring` module with participant scoring registry, aggregation registry, orchestration, and launch-rule unit tests |
-| 59-009 | 4 | Implement Slice H: Commissioner contest-management APIs | Not Started | |
+| 59-008 | 4 | Implement Slice G: Scoring, aggregation, and prize rebuild | In Progress | Main thread added `contest-scoring` registries, orchestration, launch-rule unit tests, and persisted contest configuration / prize-definition tables to support the new scoring architecture |
+| 59-009 | 4 | Implement Slice H: Commissioner contest-management APIs | In Progress | Added dedicated league-scoped contest-management create/get/update APIs with real Prisma repositories, route schemas, and DB-backed integration coverage |
 | 59-010 | 2 | Implement Slice I: Remove out-of-scope site admin features | Done | Feature flag, global announcement, support investigation, and quick-action backend surfaces removed; platform health, provider operations, migrations, config, and audit preserved |

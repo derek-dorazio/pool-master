@@ -13,3 +13,10 @@ export { PrismaContestMatchupRepository } from './prisma-contest-matchup-reposit
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
 export { PrismaContestStandingRepository } from './prisma-contest-standing-repository';
 export { PrismaDraftSessionRepository } from './prisma-draft-session-repository';
+export {
+  PrismaContestConfigurationRepository,
+  PrismaContestCoreRepository,
+  PrismaContestEntryAggregationRuleRepository,
+  PrismaContestPrizeDefinitionRepository,
+  PrismaParticipantContestScoringRuleRepository,
+} from './prisma-contest-management-repositories';

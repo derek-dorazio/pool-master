@@ -18,6 +18,7 @@ export const API_PREFIXES = {
   LEAGUES: '/api/v1/leagues',
   INVITATIONS: '/api/v1/invitations',
   CONTESTS_BY_LEAGUE: '/api/v1/leagues/:id/contests',
+  CONTEST_MANAGEMENT: '/api/v1/leagues/:id/contest-management/contests',
   CONTESTS: '/api/v1/contests',
   PARTICIPANTS: '/api/v1/participants',
   CONTEST_POOL: '/api/v1/contests/:contestId/pool',
@@ -67,6 +68,8 @@ export const API_ROUTES = {
     inviteLink: (id: string) => `/api/v1/leagues/${id}/invite-link`,
     settings: (id: string) => `/api/v1/leagues/${id}/settings`,
     contests: (id: string) => `/api/v1/leagues/${id}/contests`,
+    contestManagement: (id: string) =>
+      `/api/v1/leagues/${id}/contest-management/contests`,
   },
 
   // Invitations
@@ -82,6 +85,13 @@ export const API_ROUTES = {
     myEntry: (id: string) => `/api/v1/contests/${id}/entries/me`,
     standings: (id: string) => `/api/v1/contests/${id}/standings`,
     pool: (id: string) => `/api/v1/contests/${id}/pool`,
+  },
+
+  contestManagement: {
+    detail: (leagueId: string, contestId: string) =>
+      `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}`,
+    configuration: (leagueId: string, contestId: string) =>
+      `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
   },
 
   scoring: {

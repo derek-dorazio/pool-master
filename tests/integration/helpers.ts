@@ -26,6 +26,7 @@ import { authModule } from '../../packages/core-api/src/modules/auth/routes';
 import { leaguesModule } from '../../packages/core-api/src/modules/leagues/routes';
 import { invitationsModule } from '../../packages/core-api/src/modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
+import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { standingsModule } from '../../packages/core-api/src/modules/standings/routes';
 import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
@@ -81,6 +82,9 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues' });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations' });
   testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
+  testApp.register(contestManagementModule, {
+    prefix: '/api/v1/leagues/:id/contest-management/contests',
+  });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
   testApp.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
@@ -224,6 +228,7 @@ export async function cleanupTestData(): Promise<void> {
     'contest_entries', 'contest_standings', 'contest_results', 'scoring_checkpoints',
     'draft_sessions', 'draft_picks', 'selection_configs', 'bracket_predictions',
     'contest_participant_pool', 'contest_pools', 'contest_matchups', 'roster_picks', 'contest_picks', 'payout_history',
+    'participant_contest_scoring_rules', 'contest_entry_aggregation_rules', 'contest_prize_definitions', 'contest_configurations',
     'commissioner_audit_log', 'commissioner_action_items', 'discoverable_contests',
   ];
   // Tables that reference leagues

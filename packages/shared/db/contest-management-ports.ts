@@ -1,4 +1,5 @@
 import type {
+  ContestCoreSummary,
   ContestConfiguration,
   ContestEntryAggregationRule,
   ContestEntryParticipantScore,
@@ -10,6 +11,19 @@ import type {
   SportEventParticipantSourceData,
   SportEventParticipantValuation,
 } from '../domain';
+
+export interface ContestCoreRepository {
+  findById(id: string): Promise<ContestCoreSummary | null>;
+  findByLeague(leagueId: string): Promise<ContestCoreSummary[]>;
+  create(
+    contest: Omit<ContestCoreSummary, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<ContestCoreSummary>;
+  update(
+    id: string,
+    updates: Partial<ContestCoreSummary>,
+  ): Promise<ContestCoreSummary>;
+  delete(id: string): Promise<void>;
+}
 
 export interface SportEventParticipantRepository {
   findById(id: string): Promise<SportEventParticipant | null>;

@@ -2490,6 +2490,1145 @@
         }
       }
     },
+    "/api/v1/leagues/{id}/contest-management/contests/": {
+      "post": {
+        "operationId": "createManagedContest",
+        "summary": "Create a commissioner-managed contest with configuration",
+        "tags": [
+          "Contest Management"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "sportEventId",
+                  "contestType",
+                  "configuration"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "sportEventId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "contestType": {
+                    "type": "string",
+                    "enum": [
+                      "SINGLE_EVENT"
+                    ]
+                  },
+                  "configuration": {
+                    "type": "object",
+                    "required": [
+                      "selectionType",
+                      "participantScoringRules",
+                      "entryAggregationRule",
+                      "prizeDefinitions"
+                    ],
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "SNAKE_DRAFT",
+                          "TIERED",
+                          "BUDGET_PICK",
+                          "OPEN_SELECTION"
+                        ]
+                      },
+                      "locksAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "minimumEntries": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "rosterSize": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "totalPrizePoolAmount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "nullable": true
+                      },
+                      "participantScoringRules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "participantScoringDefinitionId",
+                            "sortOrder",
+                            "config",
+                            "active"
+                          ],
+                          "properties": {
+                            "participantScoringDefinitionId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "sortOrder": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "config": {
+                              "type": "object",
+                              "additionalProperties": true,
+                              "default": {}
+                            },
+                            "active": {
+                              "type": "boolean",
+                              "default": true
+                            }
+                          }
+                        }
+                      },
+                      "entryAggregationRule": {
+                        "type": "object",
+                        "required": [
+                          "aggregationDefinitionId",
+                          "config",
+                          "active"
+                        ],
+                        "properties": {
+                          "aggregationDefinitionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "config": {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "default": {}
+                          },
+                          "active": {
+                            "type": "boolean",
+                            "default": true
+                          }
+                        }
+                      },
+                      "prizeDefinitions": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "prizeDefinitionId",
+                            "displayName",
+                            "sortOrder",
+                            "ruleConfig",
+                            "active"
+                          ],
+                          "properties": {
+                            "prizeDefinitionId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "displayName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "sortOrder": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "ruleConfig": {
+                              "type": "object",
+                              "additionalProperties": true,
+                              "default": {}
+                            },
+                            "payoutType": {
+                              "type": "string",
+                              "enum": [
+                                "FIXED_AMOUNT",
+                                "PERCENTAGE"
+                              ]
+                            },
+                            "amount": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "percentage": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 100
+                            },
+                            "active": {
+                              "type": "boolean",
+                              "default": true
+                            }
+                          }
+                        },
+                        "default": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contest": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "leagueId": {
+                          "type": "string"
+                        },
+                        "sportEventId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
+                        },
+                        "configuration": {
+                          "type": "object",
+                          "properties": {
+                            "selectionType": {
+                              "type": "string",
+                              "enum": [
+                                "SNAKE_DRAFT",
+                                "TIERED",
+                                "BUDGET_PICK",
+                                "OPEN_SELECTION"
+                              ]
+                            },
+                            "locksAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            },
+                            "minimumEntries": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "maxEntriesPerSquad": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "rosterSize": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "totalPrizePoolAmount": {
+                              "type": "number",
+                              "minimum": 0,
+                              "nullable": true
+                            },
+                            "participantScoringRules": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "participantScoringDefinitionId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GOLF_RELATIVE_TO_PAR_TOTAL",
+                                      "TEAM_WIN_POINTS",
+                                      "ROUND_MULTIPLIER",
+                                      "SEED_DIFFERENTIAL_BONUS",
+                                      "PREDICTION"
+                                    ]
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "config": {
+                                    "type": "object",
+                                    "additionalProperties": {},
+                                    "default": {}
+                                  },
+                                  "active": {
+                                    "type": "boolean",
+                                    "default": true
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "participantScoringDefinitionId",
+                                  "sortOrder",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "entryAggregationRule": {
+                              "type": "object",
+                              "properties": {
+                                "aggregationDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SUM_ALL_ENTRIES",
+                                    "SUM_TOP_N_ENTRIES"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "additionalProperties": {},
+                                  "default": {}
+                                },
+                                "active": {
+                                  "type": "boolean",
+                                  "default": true
+                                },
+                                "id": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "aggregationDefinitionId",
+                                "id"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "prizeDefinitions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "prizeDefinitionId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "displayName": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "ruleConfig": {
+                                    "type": "object",
+                                    "additionalProperties": {},
+                                    "default": {}
+                                  },
+                                  "payoutType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "FIXED_AMOUNT",
+                                      "PERCENTAGE"
+                                    ]
+                                  },
+                                  "amount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "percentage": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "active": {
+                                    "type": "boolean",
+                                    "default": true
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "prizeDefinitionId",
+                                  "displayName",
+                                  "sortOrder",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "contestId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "selectionType",
+                            "participantScoringRules",
+                            "entryAggregationRule",
+                            "prizeDefinitions",
+                            "id",
+                            "contestId"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "sportEventId",
+                        "name",
+                        "status",
+                        "configuration",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "contest"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}": {
+      "get": {
+        "operationId": "getManagedContest",
+        "summary": "Get commissioner contest-management detail",
+        "tags": [
+          "Contest Management"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contest": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "leagueId": {
+                          "type": "string"
+                        },
+                        "sportEventId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
+                        },
+                        "configuration": {
+                          "type": "object",
+                          "properties": {
+                            "selectionType": {
+                              "type": "string",
+                              "enum": [
+                                "SNAKE_DRAFT",
+                                "TIERED",
+                                "BUDGET_PICK",
+                                "OPEN_SELECTION"
+                              ]
+                            },
+                            "locksAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            },
+                            "minimumEntries": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "maxEntriesPerSquad": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "rosterSize": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "totalPrizePoolAmount": {
+                              "type": "number",
+                              "minimum": 0,
+                              "nullable": true
+                            },
+                            "participantScoringRules": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "participantScoringDefinitionId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GOLF_RELATIVE_TO_PAR_TOTAL",
+                                      "TEAM_WIN_POINTS",
+                                      "ROUND_MULTIPLIER",
+                                      "SEED_DIFFERENTIAL_BONUS",
+                                      "PREDICTION"
+                                    ]
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "config": {
+                                    "type": "object",
+                                    "additionalProperties": {},
+                                    "default": {}
+                                  },
+                                  "active": {
+                                    "type": "boolean",
+                                    "default": true
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "participantScoringDefinitionId",
+                                  "sortOrder",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "entryAggregationRule": {
+                              "type": "object",
+                              "properties": {
+                                "aggregationDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SUM_ALL_ENTRIES",
+                                    "SUM_TOP_N_ENTRIES"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "additionalProperties": {},
+                                  "default": {}
+                                },
+                                "active": {
+                                  "type": "boolean",
+                                  "default": true
+                                },
+                                "id": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "aggregationDefinitionId",
+                                "id"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "prizeDefinitions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "prizeDefinitionId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "displayName": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "ruleConfig": {
+                                    "type": "object",
+                                    "additionalProperties": {},
+                                    "default": {}
+                                  },
+                                  "payoutType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "FIXED_AMOUNT",
+                                      "PERCENTAGE"
+                                    ]
+                                  },
+                                  "amount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "percentage": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "active": {
+                                    "type": "boolean",
+                                    "default": true
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "prizeDefinitionId",
+                                  "displayName",
+                                  "sortOrder",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "contestId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "selectionType",
+                            "participantScoringRules",
+                            "entryAggregationRule",
+                            "prizeDefinitions",
+                            "id",
+                            "contestId"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "sportEventId",
+                        "name",
+                        "status",
+                        "configuration",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "contest"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration": {
+      "put": {
+        "operationId": "updateManagedContestConfiguration",
+        "summary": "Update commissioner contest configuration",
+        "tags": [
+          "Contest Management"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "selectionType",
+                  "participantScoringRules",
+                  "entryAggregationRule",
+                  "prizeDefinitions"
+                ],
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "SNAKE_DRAFT",
+                      "TIERED",
+                      "BUDGET_PICK",
+                      "OPEN_SELECTION"
+                    ]
+                  },
+                  "locksAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "minimumEntries": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "rosterSize": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "totalPrizePoolAmount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "participantScoringRules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "participantScoringDefinitionId",
+                        "sortOrder",
+                        "config",
+                        "active"
+                      ],
+                      "properties": {
+                        "participantScoringDefinitionId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "sortOrder": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "config": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "default": {}
+                        },
+                        "active": {
+                          "type": "boolean",
+                          "default": true
+                        }
+                      }
+                    }
+                  },
+                  "entryAggregationRule": {
+                    "type": "object",
+                    "required": [
+                      "aggregationDefinitionId",
+                      "config",
+                      "active"
+                    ],
+                    "properties": {
+                      "aggregationDefinitionId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "config": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "default": {}
+                      },
+                      "active": {
+                        "type": "boolean",
+                        "default": true
+                      }
+                    }
+                  },
+                  "prizeDefinitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "prizeDefinitionId",
+                        "displayName",
+                        "sortOrder",
+                        "ruleConfig",
+                        "active"
+                      ],
+                      "properties": {
+                        "prizeDefinitionId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "displayName": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "sortOrder": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "ruleConfig": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "default": {}
+                        },
+                        "payoutType": {
+                          "type": "string",
+                          "enum": [
+                            "FIXED_AMOUNT",
+                            "PERCENTAGE"
+                          ]
+                        },
+                        "amount": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "percentage": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "active": {
+                          "type": "boolean",
+                          "default": true
+                        }
+                      }
+                    },
+                    "default": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contest": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "leagueId": {
+                          "type": "string"
+                        },
+                        "sportEventId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
+                        },
+                        "configuration": {
+                          "type": "object",
+                          "properties": {
+                            "selectionType": {
+                              "type": "string",
+                              "enum": [
+                                "SNAKE_DRAFT",
+                                "TIERED",
+                                "BUDGET_PICK",
+                                "OPEN_SELECTION"
+                              ]
+                            },
+                            "locksAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            },
+                            "minimumEntries": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "maxEntriesPerSquad": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "rosterSize": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "totalPrizePoolAmount": {
+                              "type": "number",
+                              "minimum": 0,
+                              "nullable": true
+                            },
+                            "participantScoringRules": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "participantScoringDefinitionId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GOLF_RELATIVE_TO_PAR_TOTAL",
+                                      "TEAM_WIN_POINTS",
+                                      "ROUND_MULTIPLIER",
+                                      "SEED_DIFFERENTIAL_BONUS",
+                                      "PREDICTION"
+                                    ]
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "config": {
+                                    "type": "object",
+                                    "additionalProperties": {},
+                                    "default": {}
+                                  },
+                                  "active": {
+                                    "type": "boolean",
+                                    "default": true
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "participantScoringDefinitionId",
+                                  "sortOrder",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "entryAggregationRule": {
+                              "type": "object",
+                              "properties": {
+                                "aggregationDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SUM_ALL_ENTRIES",
+                                    "SUM_TOP_N_ENTRIES"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "additionalProperties": {},
+                                  "default": {}
+                                },
+                                "active": {
+                                  "type": "boolean",
+                                  "default": true
+                                },
+                                "id": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "aggregationDefinitionId",
+                                "id"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "prizeDefinitions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "prizeDefinitionId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "displayName": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "ruleConfig": {
+                                    "type": "object",
+                                    "additionalProperties": {},
+                                    "default": {}
+                                  },
+                                  "payoutType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "FIXED_AMOUNT",
+                                      "PERCENTAGE"
+                                    ]
+                                  },
+                                  "amount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "percentage": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "active": {
+                                    "type": "boolean",
+                                    "default": true
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "prizeDefinitionId",
+                                  "displayName",
+                                  "sortOrder",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "contestId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "selectionType",
+                            "participantScoringRules",
+                            "entryAggregationRule",
+                            "prizeDefinitions",
+                            "id",
+                            "contestId"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "sportEventId",
+                        "name",
+                        "status",
+                        "configuration",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "contest"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/contests/{contestId}": {
       "get": {
         "operationId": "getContest",

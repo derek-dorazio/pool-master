@@ -1,4 +1,5 @@
 export type {
+  ContestCoreRepository,
   ContestConfigurationRepository,
   ContestEntryAggregationRuleRepository,
   ContestEntryParticipantScoreEventRepository,
