@@ -213,8 +213,8 @@ npm run test:smoke       # Run both suites
 
 **API smoke tests** (`tests/api/`) check:
 - Health endpoint
-- Leagues, participants, search, discovery, age verification
-- Scoring templates, notification preferences
+- Leagues, participants, and other currently active MVP flows
+- notification preferences and other currently active account/config paths
 
 **E2E smoke tests** (`clients/web/e2e/`, `clients/admin/e2e/`) check:
 - Landing page loads with CTA

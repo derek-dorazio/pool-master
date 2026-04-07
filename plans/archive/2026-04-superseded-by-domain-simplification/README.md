@@ -13,6 +13,8 @@ Use them only for:
 
 Active replacement guidance lives in the newer simplification plans such as:
 
+- `plans/38-contest-entry-and-squad-alignment-review-user-cases.md`
+- `plans/41-contest-history-user-cases.md`
 - `plans/37-league-top-level-domain-and-data-simplification.md`
 - `plans/38-contest-entry-and-squad-alignment-review.md`
 - `plans/42-history-simplification.md`
@@ -21,3 +23,4 @@ Active replacement guidance lives in the newer simplification plans such as:
 - `plans/48-social-and-notification-simplification.md`
 - `plans/49-billing-and-tier-simplification.md`
 - `plans/51-scoring-and-participant-data-review.md`
+- `plans/53-commissioner-tools-contest-management-use-cases.md`

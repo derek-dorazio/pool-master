@@ -169,6 +169,7 @@ Use the table below for active plan ranges still expected to receive execution u
 
 Archived/deferred and not active execution guidance:
 
+- `13` search and discovery
 - `07` billing/subscriptions
 - `10` social communication
 - `12` mobile client

@@ -57,6 +57,23 @@ First-pass contest history should come from:
 
 ## User Cases
 
+### H-000: Member opens the history view of completed contests
+
+Actor:
+- League Member
+
+Goal:
+- browse the list of completed contests for the current league
+
+Flow:
+1. Member opens contest history.
+2. System loads completed contests for the league.
+3. UI shows a list of finished contests that can be opened for detail.
+
+Notes:
+- this is the second major contest-browsing view alongside the active contests view
+- it is not a public discovery feature
+
 ### H-001: Member reviews completed contest standings
 
 Actor:

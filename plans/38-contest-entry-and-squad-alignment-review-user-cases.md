@@ -53,8 +53,8 @@ Examples:
 - max entries per squad
 
 Flow:
-1. Commissioner selects a contest template or starts from defaults.
-2. Commissioner reviews suggested configuration for the sport/contest style.
+1. Commissioner starts from defaults for the sport/contest style.
+2. Commissioner reviews suggested configuration.
 3. Commissioner adjusts rules as needed.
 4. Backend stores the contest configuration.
 
@@ -145,6 +145,43 @@ Notes:
 
 ## Entry And Squad Cases
 
+### CT-003B: Member sees the list of active contests
+
+Actor:
+- League Member
+
+Goal:
+- browse the active contests in the current league and decide where to enter
+
+Flow:
+1. Member opens the active contests view for the current league.
+2. System lists active contests.
+3. Each contest row indicates whether the member's squad already has entries in that contest.
+4. Member chooses a contest to view or enter.
+
+Notes:
+- this is normal league contest browsing, not public discovery
+
+### CT-003C: Member creates an entry from the active contests view
+
+Actor:
+- League Member or Squad Co-Manager
+
+Goal:
+- create an entry directly from the contest list or contest detail
+
+Flow:
+1. Member opens an active contest.
+2. System checks the member's squad context and contest entry limits.
+3. Member creates a new entry if allowed.
+4. Backend creates `ContestEntry` and routes the member into entry setup.
+
+Notes:
+- entry creation should respect:
+  - `maxEntriesPerSquad`
+  - contest lock rules
+  - any roster-size requirements from `ContestConfiguration`
+
 ### CT-004: Squad enters a contest
 
 Actor:
@@ -208,6 +245,41 @@ Flow:
 2. Co-manager edits roster/picks/draft choices for an entry.
 3. Backend checks squad co-management rights.
 4. Changes apply to the entry, regardless of which co-manager initiated them.
+
+### CT-007A: Member sees contest entries for an active contest
+
+Actor:
+- League Member
+
+Goal:
+- view the contest entries for a contest they are participating in or following
+
+Flow:
+1. Member opens a contest entry list.
+2. System loads entries for the contest.
+3. UI highlights the member's own entries and may place them first for convenience.
+4. UI shows the rest of the contest entries beneath them.
+
+Notes:
+- this is a contest-viewing use case, not a discovery use case
+
+### CT-007B: Member cannot view other entries' roster details before lock
+
+Actor:
+- League Member
+
+Goal:
+- prevent early disclosure of other entries' selections before the contest locks
+
+Flow:
+1. Member opens a contest before the contest is `LOCKED`.
+2. System allows the member to see the entry list.
+3. System hides other members' roster details until the contest becomes `LOCKED`.
+4. Once the contest is `LOCKED`, roster details become viewable according to contest rules.
+
+Notes:
+- the member's own entries remain fully viewable to that member
+- the key rule is that other users' entry details are hidden until lock
 
 ## Draft And Pick Cases
 
