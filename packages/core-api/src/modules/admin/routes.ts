@@ -19,17 +19,10 @@ import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
 import { createProviderHandlers } from './provider-handler';
-import { FlagService } from './flag-service';
-import { createFlagHandlers } from './flag-handler';
 import { ImpersonationService } from './impersonation-service';
 import { createImpersonationHandlers } from './impersonation-handler';
-import { AnnouncementService } from './announcement-service';
-import { createAnnouncementHandlers } from './announcement-handler';
 import { MigrationService } from './migration-service';
 import { createMigrationHandlers } from './migration-handler';
-import { SupportService } from './support-service';
-import { createSupportHandlers } from './support-handler';
-import { createQuickActionsHandlers } from './quick-actions-handler';
 import { ExportService } from './export-service';
 import { createExportHandlers } from './export-handler';
 import { PollConfigService } from './poll-config-service';
@@ -53,14 +46,6 @@ import {
   AdminContestListResponseSchema,
   ContestAdminDetailResponseSchema,
   ContestRecalculationResultDtoSchema,
-  SupportInvestigationResponseSchema,
-  SupportErrorListResponseSchema,
-  SupportNotificationFailureListResponseSchema,
-  SupportActivityListResponseSchema,
-  QuickResetPasswordResponseSchema,
-  QuickProviderCheckResponseSchema,
-  QuickNotificationsResponseSchema,
-  QuickReIngestScoresResponseSchema,
   MigrationListResponseSchema,
   MigrationRunResponseSchema,
   StartMigrationRunRequestSchema,
@@ -71,8 +56,6 @@ import {
   ErrorLogDetailResponseSchema,
   AlertRulesResponseSchema,
   AlertRuleDtoSchema,
-  AdminAnnouncementDtoSchema,
-  AdminAnnouncementListResponseSchema,
   SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
@@ -114,11 +97,8 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const contestService = new ContestService(prisma);
   const healthService = new HealthService(prisma);
   const providerService = new ProviderService(prisma);
-  const flagService = new FlagService(prisma);
   const impersonationService = new ImpersonationService(prisma);
-  const announcementService = new AnnouncementService(prisma);
   const migrationService = new MigrationService(prisma);
-  const supportService = new SupportService(prisma);
   const exportService = new ExportService(prisma);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
@@ -132,17 +112,8 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const contest = createContestHandlers(contestService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService);
-  const flag = createFlagHandlers(flagService);
   const impersonation = createImpersonationHandlers(impersonationService);
-  const announcement = createAnnouncementHandlers(announcementService);
   const migration = createMigrationHandlers(migrationService);
-  const support = createSupportHandlers(supportService);
-  const quickActions = createQuickActionsHandlers({
-    prisma,
-    userService,
-    providerService,
-    contestService,
-  });
   const tenantExport = createExportHandlers(exportService);
 
   // --- Tenant Management Routes ---
@@ -606,122 +577,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: provider.reIngestEvent,
   });
 
-  // --- Feature Flag Routes ---
-  // Permission: flags.view, flags.edit
-
-  fastify.get('/flags', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List all feature flags',
-      operationId: 'adminListFlags',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: flag.listFlags,
-  });
-
-  fastify.post('/flags', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Create a new feature flag',
-      operationId: 'adminCreateFlag',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['key', 'name', 'description', 'flagType', 'enabledGlobally', 'owner'],
-        properties: {
-          key: { type: 'string', minLength: 1, pattern: '^[a-z][a-z0-9_]*$' },
-          name: { type: 'string', minLength: 1 },
-          description: { type: 'string', minLength: 1 },
-          flagType: { type: 'string', enum: ['BOOLEAN', 'PERCENTAGE', 'TENANT_LIST'] },
-          enabledGlobally: { type: 'boolean' },
-          rolloutPercentage: { type: 'integer', minimum: 0, maximum: 100 },
-          owner: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: flag.createFlag,
-  });
-
-  fastify.get('/flags/:flagKey', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get feature flag detail',
-      operationId: 'adminGetFlagDetail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: flag.getFlagDetail,
-  });
-
-  fastify.put('/flags/:flagKey', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Update a feature flag',
-      operationId: 'adminUpdateFlag',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', minLength: 1 },
-          description: { type: 'string', minLength: 1 },
-          enabledGlobally: { type: 'boolean' },
-          rolloutPercentage: { type: 'integer', minimum: 0, maximum: 100 },
-          owner: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: flag.updateFlag,
-  });
-
-  fastify.delete('/flags/:flagKey', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Delete a feature flag',
-      operationId: 'adminDeleteFlag',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: flag.deleteFlag,
-  });
-
-  fastify.post('/flags/:flagKey/overrides', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Add a tenant override for a feature flag',
-      operationId: 'adminAddFlagOverride',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['tenantId', 'tenantName', 'enabled', 'reason'],
-        properties: {
-          tenantId: { type: 'string', minLength: 1 },
-          tenantName: { type: 'string', minLength: 1 },
-          enabled: { type: 'boolean' },
-          reason: { type: 'string', minLength: 1, maxLength: 500 },
-        },
-      },
-    },
-    handler: flag.addOverride,
-  });
-
-  fastify.delete('/flags/:flagKey/overrides/:tenantId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Remove a tenant override for a feature flag',
-      operationId: 'adminRemoveFlagOverride',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: flag.removeOverride,
-  });
-
-  fastify.get('/flags/:flagKey/resolve/:tenantId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Resolve feature flag value for a tenant',
-      operationId: 'adminResolveFlag',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: flag.resolveFlag,
-  });
-
   // --- Health / Platform Monitoring Routes ---
   // Permission: platform.health
 
@@ -887,121 +742,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: impersonation.getActiveSession,
   });
 
-  // --- Announcement Routes ---
-  // Permission: platform.announcements
-
-  fastify.get('/announcements/active', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get active announcements',
-      operationId: 'adminGetActiveAnnouncements',
-      response: { 200: zodToJsonSchema(AdminAnnouncementListResponseSchema) },
-    },
-    handler: announcement.getActiveAnnouncements,
-  });
-
-  fastify.get('/announcements', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List all announcements',
-      operationId: 'adminListAnnouncements',
-      response: { 200: zodToJsonSchema(AdminAnnouncementListResponseSchema) },
-    },
-    handler: announcement.listAnnouncements,
-  });
-
-  fastify.post('/announcements', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Create a new announcement',
-      operationId: 'adminCreateAnnouncement',
-      response: { 201: zodToJsonSchema(AdminAnnouncementDtoSchema) },
-      body: {
-        type: 'object',
-        required: ['type', 'title', 'body', 'severity'],
-        properties: {
-          type: { type: 'string', enum: ['BANNER', 'NOTIFICATION', 'BOTH'] },
-          title: { type: 'string', minLength: 1, maxLength: 255 },
-          body: { type: 'string', minLength: 1 },
-          linkUrl: { type: 'string' },
-          linkText: { type: 'string' },
-          severity: { type: 'string', enum: ['INFO', 'WARNING', 'CRITICAL'] },
-          dismissable: { type: 'boolean' },
-          target: { type: 'string', enum: ['ALL_USERS', 'ALL_TENANTS', 'SPECIFIC_TENANTS'] },
-          targetTenantIds: { type: 'array', items: { type: 'string' } },
-          startsAt: { type: 'string', format: 'date-time' },
-          endsAt: { type: 'string', format: 'date-time' },
-        },
-      },
-    },
-    handler: announcement.createAnnouncement,
-  });
-
-  fastify.get('/announcements/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get announcement by ID',
-      operationId: 'adminGetAnnouncement',
-      response: { 200: zodToJsonSchema(AdminAnnouncementDtoSchema) },
-    },
-    handler: announcement.getAnnouncement,
-  });
-
-  fastify.put('/announcements/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Update an announcement',
-      operationId: 'adminUpdateAnnouncement',
-      response: { 200: zodToJsonSchema(AdminAnnouncementDtoSchema) },
-      body: {
-        type: 'object',
-        properties: {
-          title: { type: 'string', minLength: 1, maxLength: 255 },
-          body: { type: 'string', minLength: 1 },
-          linkUrl: { type: 'string' },
-          linkText: { type: 'string' },
-          severity: { type: 'string', enum: ['INFO', 'WARNING', 'CRITICAL'] },
-          dismissable: { type: 'boolean' },
-          target: { type: 'string', enum: ['ALL_USERS', 'ALL_TENANTS', 'SPECIFIC_TENANTS'] },
-          targetTenantIds: { type: 'array', items: { type: 'string' } },
-          startsAt: { type: 'string', format: 'date-time' },
-          endsAt: { type: 'string', format: 'date-time' },
-        },
-      },
-    },
-    handler: announcement.updateAnnouncement,
-  });
-
-  fastify.delete('/announcements/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Delete an announcement',
-      operationId: 'adminDeleteAnnouncement',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: announcement.deleteAnnouncement,
-  });
-
-  fastify.post('/announcements/:id/activate', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Activate an announcement',
-      operationId: 'adminActivateAnnouncement',
-      response: { 200: zodToJsonSchema(AdminAnnouncementDtoSchema) },
-    },
-    handler: announcement.activateAnnouncement,
-  });
-
-  fastify.post('/announcements/:id/deactivate', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Deactivate an announcement',
-      operationId: 'adminDeactivateAnnouncement',
-      response: { 200: zodToJsonSchema(AdminAnnouncementDtoSchema) },
-    },
-    handler: announcement.deactivateAnnouncement,
-  });
-
   // --- Migration Routes ---
   // Permission: platform.migrations
 
@@ -1044,123 +784,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       response: { 200: zodToJsonSchema(MigrationRunResponseSchema) },
     },
     handler: migration.cancelRun,
-  });
-
-  // --- Support Investigation Routes ---
-  // Permission: tenant.view (support staff need at minimum view access)
-
-  fastify.get('/support/tenant/:tenantId/investigation', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get support investigation overview for a tenant',
-      operationId: 'adminGetInvestigation',
-      response: { 200: zodToJsonSchema(SupportInvestigationResponseSchema) },
-    },
-    handler: support.getInvestigation,
-  });
-
-  fastify.get('/support/tenant/:tenantId/errors', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get recent errors for a tenant',
-      operationId: 'adminGetTenantErrors',
-      response: { 200: zodToJsonSchema(SupportErrorListResponseSchema) },
-    },
-    handler: support.getErrors,
-  });
-
-  fastify.get('/support/tenant/:tenantId/notifications', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get recent notifications for a tenant',
-      operationId: 'adminGetTenantNotifications',
-      response: { 200: zodToJsonSchema(SupportNotificationFailureListResponseSchema) },
-    },
-    handler: support.getNotifications,
-  });
-
-  fastify.get('/support/tenant/:tenantId/requests', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get recent support activity for a tenant',
-      operationId: 'adminGetTenantRequests',
-      response: { 200: zodToJsonSchema(SupportActivityListResponseSchema) },
-    },
-    handler: support.getRequests,
-  });
-
-  // --- Quick Action Routes ---
-  // Permission: varies by action (user.edit, sportsdata.re_ingest, etc.)
-
-  fastify.post('/support/quick-actions/reset-password', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Quick action: reset user password',
-      operationId: 'adminQuickResetPassword',
-      response: { 200: zodToJsonSchema(QuickResetPasswordResponseSchema) },
-      body: {
-        type: 'object',
-        required: ['userId', 'email'],
-        properties: {
-          userId: { type: 'string', minLength: 1 },
-          email: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: quickActions.resetPassword,
-  });
-
-  fastify.post('/support/quick-actions/check-provider', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Quick action: check sports data provider',
-      operationId: 'adminQuickCheckProvider',
-      response: { 200: zodToJsonSchema(QuickProviderCheckResponseSchema) },
-      body: {
-        type: 'object',
-        required: ['providerId', 'sport'],
-        properties: {
-          providerId: { type: 'string', minLength: 1 },
-          sport: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: quickActions.checkProvider,
-  });
-
-  fastify.post('/support/quick-actions/check-notifications', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Quick action: check user notifications',
-      operationId: 'adminQuickCheckNotifications',
-      response: { 200: zodToJsonSchema(QuickNotificationsResponseSchema) },
-      body: {
-        type: 'object',
-        required: ['userId'],
-        properties: {
-          userId: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: quickActions.checkNotifications,
-  });
-
-  fastify.post('/support/quick-actions/re-ingest-scores', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Quick action: re-ingest scoring data',
-      operationId: 'adminQuickReIngestScores',
-      response: { 200: zodToJsonSchema(QuickReIngestScoresResponseSchema) },
-      body: {
-        type: 'object',
-        required: ['contestId', 'eventId'],
-        properties: {
-          contestId: { type: 'string', minLength: 1 },
-          eventId: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: quickActions.reIngestScores,
   });
 
   // --- Tenant Data Export Routes ---

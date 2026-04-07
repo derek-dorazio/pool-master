@@ -42,7 +42,6 @@ model Tenant {
   leagues League[]
   seasons Season[]
 
-  featureFlagOverrides  FeatureFlagOverride[]
   impersonationSessions ImpersonationSession[]
 
   @@map("tenants")
@@ -1078,9 +1077,6 @@ model AdminUser {
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   auditEntries          AdminAuditEntry[]
-  featureFlagsUpdated   FeatureFlag[]         @relation("FlagUpdater")
-  flagOverridesCreated  FeatureFlagOverride[] @relation("OverrideCreator")
-  announcementsCreated  GlobalAnnouncement[]
   impersonationSessions ImpersonationSession[]
   migrationRuns         MigrationRun[]
 
@@ -1108,65 +1104,6 @@ model AdminAuditEntry {
   @@index([resourceType, resourceId])
   @@index([adminUserId, createdAt(sort: Desc)])
   @@map("admin_audit_log")
-}
-
-model FeatureFlag {
-  id                String    @id @default(uuid()) @db.Uuid
-  key               String    @unique @db.VarChar(100)
-  name              String    @db.VarChar(255)
-  description       String?
-  flagType          String    @default("BOOLEAN") @map("flag_type") @db.VarChar(20)
-  enabledGlobally   Boolean   @default(false) @map("enabled_globally")
-  rolloutPercentage Int?      @map("rollout_percentage")
-  owner             String?   @db.VarChar(255)
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-  updatedById       String?   @map("updated_by") @db.Uuid
-
-  updatedBy AdminUser?            @relation("FlagUpdater", fields: [updatedById], references: [id])
-  overrides FeatureFlagOverride[]
-
-  @@map("feature_flags")
-}
-
-model FeatureFlagOverride {
-  id          String   @id @default(uuid()) @db.Uuid
-  flagId      String   @map("flag_id") @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
-  enabled     Boolean
-  reason      String?  @db.VarChar(500)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  createdById String?  @map("created_by") @db.Uuid
-
-  flag      FeatureFlag @relation(fields: [flagId], references: [id])
-  tenant    Tenant      @relation(fields: [tenantId], references: [id])
-  createdBy AdminUser?  @relation("OverrideCreator", fields: [createdById], references: [id])
-
-  @@unique([flagId, tenantId])
-  @@map("feature_flag_overrides")
-}
-
-model GlobalAnnouncement {
-  id              String    @id @default(uuid()) @db.Uuid
-  type            String    @default("BANNER") @db.VarChar(20)
-  title           String    @db.VarChar(255)
-  body            String
-  linkUrl         String?   @map("link_url")
-  linkText        String?   @map("link_text") @db.VarChar(255)
-  severity        String    @default("INFO") @db.VarChar(20)
-  dismissable     Boolean   @default(true)
-  target          String    @default("ALL_USERS") @db.VarChar(50)
-  targetTenantIds String[]  @default([]) @map("target_tenant_ids") @db.Uuid
-  startsAt        DateTime  @map("starts_at") @db.Timestamptz
-  endsAt          DateTime? @map("ends_at") @db.Timestamptz
-  isActive        Boolean   @default(true) @map("is_active")
-  createdById     String    @map("created_by") @db.Uuid
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  createdBy AdminUser @relation(fields: [createdById], references: [id])
-
-  @@index([isActive, startsAt, endsAt])
-  @@map("global_announcements")
 }
 
 model ImpersonationSession {

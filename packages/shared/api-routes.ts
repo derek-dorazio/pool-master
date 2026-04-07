@@ -113,8 +113,6 @@ export const API_ROUTES = {
   admin: {
     users: '/api/v1/admin/users',
     tenants: '/api/v1/admin/tenants',
-    flags: '/api/v1/admin/flags',
-    announcements: '/api/v1/admin/announcements',
     health: '/api/v1/admin/health',
     audit: '/api/v1/admin/audit',
   },

@@ -129,6 +129,20 @@ Primary plans:
 - [Plan 45](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/45-league-first-administration-migration.md)
 - [Plan 53](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/53-commissioner-tools-contest-management-use-cases.md)
 
+### Slice I: Remove Out-Of-Scope Site Admin Features
+
+Scope:
+
+- remove feature flags admin surfaces
+- remove platform announcement admin surfaces
+- remove support investigation and quick-actions admin surfaces
+- keep migrations, health, provider operations, platform config, and audit
+
+Primary plans:
+
+- [Plan 45](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/45-league-first-administration-migration.md)
+- [Plan 46](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/46-site-administration-user-cases.md)
+
 ## Worker Guidance
 
 Each worker slice should own a disjoint write set whenever possible.
@@ -172,3 +186,4 @@ Every slice should satisfy the backend-refactor rules:
 | 59-007 | 3 | Implement Slice F: Event participant and source-data rebuild | Not Started | |
 | 59-008 | 4 | Implement Slice G: Scoring, aggregation, and prize rebuild | In Progress | Main thread started `contest-scoring` module with participant scoring registry, aggregation registry, orchestration, and launch-rule unit tests |
 | 59-009 | 4 | Implement Slice H: Commissioner contest-management APIs | Not Started | |
+| 59-010 | 2 | Implement Slice I: Remove out-of-scope site admin features | Done | Feature flag, global announcement, support investigation, and quick-action backend surfaces removed; platform health, provider operations, migrations, config, and audit preserved |

@@ -26,7 +26,7 @@ const SKIP_ROUTES = new Set([
  *
  * Examples:
  *   POST /api/v1/admin/tenants/:id/suspend  ->  "tenant.suspend"
- *   PUT  /api/v1/admin/feature-flags/:id    ->  "feature-flags.update"
+ *   PUT  /api/v1/admin/providers/:id        ->  "providers.update"
  *   DELETE /api/v1/admin/users/:id          ->  "users.delete"
  */
 function deriveAction(method: string, url: string): string {

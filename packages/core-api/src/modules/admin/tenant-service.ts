@@ -424,8 +424,7 @@ export class TenantService {
       // Delete users
       await tx.user.deleteMany({ where: { tenantId } });
 
-      // Delete flag overrides and impersonation sessions
-      await tx.featureFlagOverride.deleteMany({ where: { tenantId } });
+      // Delete impersonation sessions
       await tx.impersonationSession.deleteMany({ where: { tenantId } });
 
       // Delete the tenant itself
