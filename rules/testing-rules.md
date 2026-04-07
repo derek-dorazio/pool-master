@@ -94,6 +94,32 @@ Backend-first refactor branch exception:
   - browser E2E
 - This exception does not apply to `main`.
 
+Backend-first refactor testing rules on `codex-backend-refactor-lane`:
+
+- Treat the active use-case documents as required test inputs, not just design notes.
+- New backend slices should prefer test-driven development when it helps clarify the behavior:
+  - write the use-case-oriented unit or integration test first
+  - implement until the test turns green
+- Coverage is not only a percentage target. New backend code on this branch should aim for:
+  - 80% or greater coverage on the newly added or materially rewritten backend code
+  - plus explicit test cases for the identified use cases that code is intended to support
+- For every new or materially redesigned domain object, add DB-backed integration coverage for at least:
+  - create
+  - update
+  - delete or inactivate, as appropriate
+  - `findById`
+- For service slices driven by commissioner/member workflows, add tests that prove the backend supports the use cases documented in the corresponding plan companion.
+- Do not spend effort fixing web/admin tests on this branch unless the user explicitly asks for frontend work.
+- Frontend failures caused by intentional backend-contract redesign should not drive backend design compromises on this branch.
+- Do not add fake seed data or fixture catalogs to application seed paths in order to satisfy tests. Tests must create and clean up their own data or use dedicated mock-provider infrastructure.
+- Never add mock or fake behavior to application code in order to satisfy a test.
+- Never replace real backend behavior with a fake response, fake fallback, or hardcoded success path just to turn a test green.
+- If a test fails, determine whether it exposed a real application defect:
+  - if yes, fix the production code with a real implementation
+  - if no, correct the test
+- Do not “fix” a legitimate application defect by weakening the test or mocking around the defect.
+- Before committing a backend slice on this branch, make sure the required unit tests and DB integration tests for that slice pass and the slice meets the branch coverage expectation.
+
 ---
 
 ## 4. Contract Testing Rules

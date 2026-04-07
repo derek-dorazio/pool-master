@@ -114,6 +114,30 @@ Backend-first refactor lane exception:
 - This exception is branch-specific only. `main` and ordinary feature branches
   still use the full default validation set.
 
+Backend-first refactor execution rules on `codex-backend-refactor-lane`:
+
+- Focus implementation on the backend service stack only:
+  - database schema
+  - migrations
+  - ORM mappings
+  - domain entities
+  - repositories/services
+  - DTOs
+  - mappers
+  - API endpoints
+  - generated service-side contracts
+- Do not update web/admin application code just to keep it compiling during this branch.
+- It is expected that web/admin may be temporarily out of sync while the backend contract is being redesigned.
+- Do not preserve old filenames, function names, object names, or DTO names when the domain model has been renamed.
+- Do not hide a new domain concept inside a legacy function or file name just to reduce diff size.
+- Do not let existing service code or old model naming override the decisions already captured in active plans and use-case documents.
+- Prefer replacing old backend slices outright over building compatibility shims around retired domain concepts.
+- If a legacy endpoint or model shape is being replaced, implement the new contract cleanly rather than keeping a parallel alias unless the user explicitly asks for backward compatibility.
+- Use the active plans and use-case companions as the implementation source of truth for how the application should behave.
+- Do not mix old and new domain terminology within the same execution slice.
+- If an implementation slice needs behavior that is not covered by an active use-case document, stop and document that use case before inventing the behavior from old code.
+- If use cases are unclear or ambiguous, ask for clarification instead of inventing product behavior.
+
 ---
 
 ## 4. Do Not Preserve Bad Patterns
