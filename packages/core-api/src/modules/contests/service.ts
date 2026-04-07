@@ -2,7 +2,7 @@
  * ContestService — contest creation, retrieval, update, and deletion.
  *
  * Implements the multi-step contest wizard: sport/event, draft config,
- * scoring rules (with template support), payout structure, and scheduling.
+ * scoring rules, payout structure, and scheduling.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -31,20 +31,6 @@ import type { ContestEntryDto } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
 } from '../../mappers/contests.mapper';
-/**
- * Scoring template registry — populated at application startup via
- * `registerScoringTemplates()`. This avoids a cross-package import of
- * scoring-service which lives outside core-api's rootDir.
- */
-let _scoringTemplates: Record<string, Record<string, unknown>> = {};
-
-/** Register scoring templates at startup (called from app bootstrap). */
-export function registerScoringTemplates(
-  templates: Record<string, Record<string, unknown>>,
-): void {
-  _scoringTemplates = templates;
-}
-
 export interface CreateContestInput {
   leagueId: string;
   tenantId: string;
@@ -57,7 +43,6 @@ export interface CreateContestInput {
   selectionConfig: Partial<Omit<SelectionConfig, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
   scoringEngine: ScoringEngine;
   scoringRules?: Record<string, unknown>;
-  scoringTemplateKey?: string;
   payoutConfig?: PayoutConfig;
   startsAt?: Date;
   endsAt?: Date;
@@ -94,7 +79,7 @@ export class ContestService {
     if (!league) {
       throw new ContestOperationError('League not found');
     }
-    const scoringRules = resolveScoringRules(input.scoringRules, input.scoringTemplateKey);
+    const scoringRules = input.scoringRules ?? {};
     if (input.payoutConfig) {
       validatePayoutConfig(input.payoutConfig);
     }
@@ -371,24 +356,6 @@ export class ContestService {
     }
     return this.prisma;
   }
-}
-
-/**
- * Resolves scoring rules from either explicit rules or a template key.
- * Template key takes precedence if both are provided.
- */
-function resolveScoringRules(
-  explicitRules?: Record<string, unknown>,
-  templateKey?: string,
-): Record<string, unknown> {
-  if (templateKey) {
-    const template = _scoringTemplates[templateKey];
-    if (!template) {
-      throw new ContestOperationError(`Scoring template not found: ${templateKey}`);
-    }
-    return template;
-  }
-  return explicitRules ?? {};
 }
 
 /** Validates payout configuration: percentages sum ≤ 100, unique ranks. */

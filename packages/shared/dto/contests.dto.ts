@@ -88,7 +88,6 @@ export const CreateContestRequestSchema = z.object({
     ScoringEngine.CUMULATIVE,
   ]),
   scoringRules: z.record(z.unknown()).optional(),
-  scoringTemplateKey: z.string().optional(),
   payoutConfig: PayoutConfigRequestSchema.optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),

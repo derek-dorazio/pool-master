@@ -11,8 +11,6 @@
 
 import type { FastifyInstance } from 'fastify';
 import {
-  AdminScoringTemplateListResponseSchema,
-  AdminScoringTemplateResponseSchema,
   SelectionTemplateListResponseSchema,
   SelectionTemplateResponseSchema,
   SuccessSchema,
@@ -39,81 +37,6 @@ export async function configRoutes(fastify: FastifyInstance): Promise<void> {
   const notificationConfig = createNotificationConfigHandlers(notificationConfigService);
   const pushTriggerConfig = createPushTriggerConfigHandlers(pushTriggerConfigService);
   const rateLimitConfig = createRateLimitConfigHandlers(rateLimitConfigService);
-
-  // -----------------------------------------------------------------------
-  // Scoring Template Routes
-  // Permission: config.scoring_templates
-  // -----------------------------------------------------------------------
-
-  fastify.get('/config/scoring-templates', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List scoring templates',
-      operationId: 'adminListScoringTemplates',
-      response: { 200: zodToJsonSchema(AdminScoringTemplateListResponseSchema) },
-    },
-    handler: templateConfig.listScoringTemplates,
-  });
-
-  fastify.get('/config/scoring-templates/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get scoring template by ID',
-      operationId: 'adminGetScoringTemplate',
-      response: { 200: zodToJsonSchema(AdminScoringTemplateResponseSchema) },
-    },
-    handler: templateConfig.getScoringTemplate,
-  });
-
-  fastify.post('/config/scoring-templates', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Create a scoring template',
-      operationId: 'adminCreateScoringTemplate',
-      response: { 201: zodToJsonSchema(AdminScoringTemplateResponseSchema) },
-      body: {
-        type: 'object',
-        required: ['id', 'sport', 'name', 'description', 'config'],
-        properties: {
-          id: { type: 'string', minLength: 1 },
-          sport: { type: 'string', minLength: 1 },
-          name: { type: 'string', minLength: 1 },
-          description: { type: 'string', minLength: 1 },
-          config: { type: 'object' },
-        },
-      },
-    },
-    handler: templateConfig.createScoringTemplate,
-  });
-
-  fastify.put('/config/scoring-templates/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Update a scoring template',
-      operationId: 'adminUpdateScoringTemplate',
-      response: { 200: zodToJsonSchema(AdminScoringTemplateResponseSchema) },
-      body: {
-        type: 'object',
-        properties: {
-          sport: { type: 'string', minLength: 1 },
-          name: { type: 'string', minLength: 1 },
-          description: { type: 'string', minLength: 1 },
-          config: { type: 'object' },
-        },
-      },
-    },
-    handler: templateConfig.updateScoringTemplate,
-  });
-
-  fastify.delete('/config/scoring-templates/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Delete a scoring template',
-      operationId: 'adminDeleteScoringTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: templateConfig.deleteScoringTemplate,
-  });
 
   // -----------------------------------------------------------------------
   // Selection Template Routes

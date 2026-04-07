@@ -2,7 +2,6 @@ import {
   ContestService,
   ContestNotFoundError,
   ContestOperationError,
-  registerScoringTemplates,
 } from '../../../packages/core-api/src/modules/contests/service';
 import type {
   ContestRepository,
@@ -13,12 +12,6 @@ import type {
 } from '@poolmaster/shared/db';
 import { ContestStatus, SelectionType, ScoringEngine, ContestType } from '@poolmaster/shared/domain';
 import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
-
-beforeAll(() => {
-  registerScoringTemplates({
-    golf_dfs_standard: { sport: 'GOLF', scoring_type: 'CUMULATIVE', stat_rules: [{ stat_key: 'birdie', points_per_unit: 3 }] },
-  });
-});
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return {
@@ -228,54 +221,6 @@ describe('ContestService', () => {
           selectionType: SelectionType.SNAKE_DRAFT,
           selectionConfig: {},
           scoringEngine: ScoringEngine.CUMULATIVE,
-        }),
-      ).rejects.toThrow(ContestOperationError);
-    });
-
-    it('resolves scoring template key to scoring rules', async () => {
-      const contestRepo = createMockContestRepo();
-      const service = new ContestService(
-        contestRepo,
-        createMockSelectionConfigRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await service.createContest({
-        leagueId: 'league-1',
-        tenantId: 'tenant-1',
-        createdBy: 'user-1',
-        name: 'Golf Pool',
-        sport: 'GOLF',
-        contestType: ContestType.SINGLE_EVENT,
-        selectionType: SelectionType.SNAKE_DRAFT,
-        selectionConfig: {},
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-        scoringTemplateKey: 'golf_dfs_standard',
-      });
-      const createArg = (contestRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.scoringRules).toBeDefined();
-      expect((createArg.scoringRules as Record<string, unknown>).sport).toBe('GOLF');
-    });
-
-    it('throws for unknown scoring template key', async () => {
-      const service = new ContestService(
-        createMockContestRepo(),
-        createMockSelectionConfigRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await expect(
-        service.createContest({
-          leagueId: 'league-1',
-          tenantId: 'tenant-1',
-          createdBy: 'user-1',
-          name: 'Test',
-          sport: 'GOLF',
-          contestType: ContestType.SINGLE_EVENT,
-          selectionType: SelectionType.SNAKE_DRAFT,
-          selectionConfig: {},
-          scoringEngine: ScoringEngine.CUMULATIVE,
-          scoringTemplateKey: 'nonexistent_template',
         }),
       ).rejects.toThrow(ContestOperationError);
     });

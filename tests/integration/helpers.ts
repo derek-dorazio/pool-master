@@ -35,8 +35,6 @@ import { contestPoolModule } from '../../packages/core-api/src/modules/participa
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
 import { socialModule } from '../../packages/core-api/src/modules/social/routes';
-import { registerScoringTemplates } from '../../packages/core-api/src/modules/contests/service';
-import { SCORING_TEMPLATES } from '../../packages/core-api/src/modules/scoring/templates/registry';
 import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
 import { loadConfig as loadNotifConfig } from '../../packages/core-api/src/modules/notifications/core/config';
 import { createChannels } from '../../packages/core-api/src/modules/notifications/channels/channel-factory';
@@ -72,8 +70,6 @@ export function getTestTenantId(): string {
 /** Build the Fastify app with real plugins and modules (no background jobs). */
 async function buildTestApp(): Promise<FastifyInstance> {
   const testApp = Fastify({ logger: false });
-
-  registerScoringTemplates(SCORING_TEMPLATES as Record<string, Record<string, unknown>>);
 
   // Core plugins
   testApp.register(healthPlugin);

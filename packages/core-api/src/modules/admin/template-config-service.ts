@@ -1,26 +1,15 @@
 /**
- * TemplateConfigService — in-memory CRUD for scoring and selection templates.
+ * TemplateConfigService — in-memory CRUD for selection templates.
  *
- * Loads seed data from the scoring-service and draft-service template
- * registries on init. Changes are persisted in-memory (production would
- * write to the database).
+ * Loads seed data from the draft-service template registry on init. Changes
+ * are persisted in-memory (production would write to the database).
  */
 
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
-// Types — mirrors the shapes from scoring-service and draft-service
+// Types — mirrors the shapes from draft-service
 // ---------------------------------------------------------------------------
-
-export interface ScoringTemplateEntry {
-  id: string;
-  sport: string;
-  name: string;
-  description: string;
-  config: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 export interface SelectionTemplateEntry {
   id: string;
@@ -32,21 +21,6 @@ export interface SelectionTemplateEntry {
   config: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface CreateScoringTemplateInput {
-  id: string;
-  sport: string;
-  name: string;
-  description: string;
-  config: Record<string, unknown>;
-}
-
-export interface UpdateScoringTemplateInput {
-  sport?: string;
-  name?: string;
-  description?: string;
-  config?: Record<string, unknown>;
 }
 
 export interface CreateSelectionTemplateInput {
@@ -90,40 +64,6 @@ export class TemplateAlreadyExistsError extends Error {
 // Seed data
 // ---------------------------------------------------------------------------
 
-function seedScoringTemplates(): Map<string, ScoringTemplateEntry> {
-  const now = new Date();
-  const templates = new Map<string, ScoringTemplateEntry>();
-
-  const seeds: Array<{ id: string; sport: string; name: string; description: string }> = [
-    { id: 'nfl-standard', sport: 'NFL', name: 'NFL Standard', description: 'Standard NFL fantasy scoring' },
-    { id: 'nfl-ppr', sport: 'NFL', name: 'NFL PPR', description: 'NFL point-per-reception scoring' },
-    { id: 'golf-stroke-play', sport: 'GOLF', name: 'Golf Stroke Play', description: 'Standard stroke play scoring for golf tournaments' },
-    { id: 'golf-stableford', sport: 'GOLF', name: 'Golf Stableford', description: 'Modified Stableford scoring for golf' },
-    { id: 'f1-constructor', sport: 'F1', name: 'F1 Constructor', description: 'F1 constructor championship scoring' },
-    { id: 'f1-driver', sport: 'F1', name: 'F1 Driver', description: 'F1 driver championship scoring' },
-    { id: 'nascar-finish', sport: 'NASCAR', name: 'NASCAR Finish Position', description: 'Points by finish position for NASCAR' },
-    { id: 'ncaa-bracket', sport: 'NCAA_BASKETBALL', name: 'NCAA Bracket', description: 'March Madness bracket scoring with round multipliers' },
-    { id: 'nba-standard', sport: 'NBA', name: 'NBA Standard', description: 'Standard NBA fantasy scoring' },
-    { id: 'tennis-match', sport: 'TENNIS', name: 'Tennis Match', description: 'Tennis tournament match scoring' },
-    { id: 'horse-racing-finish', sport: 'HORSE_RACING', name: 'Horse Racing Finish', description: 'Points by finish position for horse racing' },
-    { id: 'soccer-standard', sport: 'SOCCER', name: 'Soccer Standard', description: 'Standard soccer fantasy scoring' },
-  ];
-
-  for (const seed of seeds) {
-    templates.set(seed.id, {
-      id: seed.id,
-      sport: seed.sport,
-      name: seed.name,
-      description: seed.description,
-      config: {},
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-
-  return templates;
-}
-
 function seedSelectionTemplates(): Map<string, SelectionTemplateEntry> {
   const now = new Date();
   const templates = new Map<string, SelectionTemplateEntry>();
@@ -154,113 +94,7 @@ function seedSelectionTemplates(): Map<string, SelectionTemplateEntry> {
 // ---------------------------------------------------------------------------
 
 export class TemplateConfigService {
-  private scoringTemplates: Map<string, ScoringTemplateEntry> = seedScoringTemplates();
   private selectionTemplates: Map<string, SelectionTemplateEntry> = seedSelectionTemplates();
-
-  // --- Scoring Templates ---
-
-  async listScoringTemplates(): Promise<ScoringTemplateEntry[]> {
-    return Array.from(this.scoringTemplates.values());
-  }
-
-  async getScoringTemplate(id: string): Promise<ScoringTemplateEntry> {
-    const template = this.scoringTemplates.get(id);
-    if (!template) {
-      throw new TemplateNotFoundError('Scoring', id);
-    }
-    return template;
-  }
-
-  async createScoringTemplate(
-    input: CreateScoringTemplateInput,
-    adminUserId: string,
-    adminUserEmail: string,
-  ): Promise<ScoringTemplateEntry> {
-    if (this.scoringTemplates.has(input.id)) {
-      throw new TemplateAlreadyExistsError('Scoring', input.id);
-    }
-
-    const now = new Date();
-    const template: ScoringTemplateEntry = {
-      id: input.id,
-      sport: input.sport,
-      name: input.name,
-      description: input.description,
-      config: input.config,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.scoringTemplates.set(template.id, template);
-
-    await logAdminAction({
-      adminUserId,
-      adminUserEmail,
-      action: 'config.scoring_template.create',
-      resourceType: 'SCORING_TEMPLATE',
-      resourceId: template.id,
-      description: `Created scoring template "${template.name}" (${template.id})`,
-      afterState: template as unknown as Record<string, unknown>,
-    });
-
-    return template;
-  }
-
-  async updateScoringTemplate(
-    id: string,
-    updates: UpdateScoringTemplateInput,
-    adminUserId: string,
-    adminUserEmail: string,
-  ): Promise<ScoringTemplateEntry> {
-    const template = this.scoringTemplates.get(id);
-    if (!template) {
-      throw new TemplateNotFoundError('Scoring', id);
-    }
-
-    const beforeState = { ...template };
-
-    if (updates.sport !== undefined) template.sport = updates.sport;
-    if (updates.name !== undefined) template.name = updates.name;
-    if (updates.description !== undefined) template.description = updates.description;
-    if (updates.config !== undefined) template.config = updates.config;
-    template.updatedAt = new Date();
-
-    await logAdminAction({
-      adminUserId,
-      adminUserEmail,
-      action: 'config.scoring_template.update',
-      resourceType: 'SCORING_TEMPLATE',
-      resourceId: id,
-      description: `Updated scoring template "${template.name}" (${id})`,
-      beforeState: beforeState as unknown as Record<string, unknown>,
-      afterState: template as unknown as Record<string, unknown>,
-    });
-
-    return template;
-  }
-
-  async deleteScoringTemplate(
-    id: string,
-    adminUserId: string,
-    adminUserEmail: string,
-  ): Promise<void> {
-    const template = this.scoringTemplates.get(id);
-    if (!template) {
-      throw new TemplateNotFoundError('Scoring', id);
-    }
-
-    this.scoringTemplates.delete(id);
-
-    await logAdminAction({
-      adminUserId,
-      adminUserEmail,
-      action: 'config.scoring_template.delete',
-      resourceType: 'SCORING_TEMPLATE',
-      resourceId: id,
-      description: `Deleted scoring template "${template.name}" (${id})`,
-      beforeState: template as unknown as Record<string, unknown>,
-    });
-  }
 
   // --- Selection Templates ---
 

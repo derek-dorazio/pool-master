@@ -1,5 +1,5 @@
 /**
- * Template Consistency Tests — validates that scoring and selection templates
+ * Selection Template Consistency Tests — validates that selection templates
  * reference valid enum values from the shared domain.
  *
  * Catches drift when enums change but template files are not updated,
@@ -10,9 +10,7 @@ import {
   Sport,
   SelectionType,
   ContestType,
-  ScoringType,
 } from '@poolmaster/shared/domain';
-import { SCORING_TEMPLATES } from '../../../packages/core-api/src/modules/scoring/templates/registry';
 import { SELECTION_TEMPLATES } from '../../../packages/core-api/src/modules/drafts/templates/selection-templates';
 
 // --- Helpers ---
@@ -20,49 +18,6 @@ import { SELECTION_TEMPLATES } from '../../../packages/core-api/src/modules/draf
 function enumValues<T extends Record<string, string>>(obj: T): string[] {
   return Object.values(obj);
 }
-
-// ========================================================================
-// Scoring Template Tests
-// ========================================================================
-
-describe('Scoring template consistency', () => {
-  const templateEntries = Object.entries(SCORING_TEMPLATES);
-
-  it('registry is not empty', () => {
-    expect(templateEntries.length).toBeGreaterThan(0);
-  });
-
-  it.each(templateEntries)(
-    '%s has a valid Sport enum value for sport field',
-    (_key, config) => {
-      expect(enumValues(Sport)).toContain(config.sport);
-    },
-  );
-
-  it.each(templateEntries)(
-    '%s has a valid ScoringType for scoring_type field',
-    (_key, config) => {
-      const validTypes = ScoringType.options;
-      expect(validTypes).toContain(config.scoring_type);
-    },
-  );
-
-  it.each(templateEntries)(
-    '%s has a non-empty sport field',
-    (_key, config) => {
-      expect(config.sport).toBeTruthy();
-      expect(config.sport.length).toBeGreaterThan(0);
-    },
-  );
-
-  it('no scoring template uses a sport value outside the Sport enum', () => {
-    const validSports = enumValues(Sport);
-    const invalidTemplates = templateEntries.filter(
-      ([, config]) => !validSports.includes(config.sport),
-    );
-    expect(invalidTemplates.map(([key]) => key)).toEqual([]);
-  });
-});
 
 // ========================================================================
 // Selection Template Tests

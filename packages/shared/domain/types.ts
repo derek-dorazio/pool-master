@@ -117,7 +117,6 @@ export interface LeagueSettings {
   inviteLinkCode?: string;
   allowMidSeasonJoin: boolean;
   requireApproval: boolean;
-  defaultScoringTemplateId?: string;
   defaultDraftType?: DraftMode;
   defaultPayoutTemplateId?: string;
   activityFeedEnabled: boolean;
@@ -644,8 +643,7 @@ export type AdminPermission =
   | 'user.view' | 'user.edit' | 'user.reset_password' | 'user.force_logout' | 'user.merge'
   | 'contest.view' | 'contest.override' | 'contest.recalculate' | 'contest.close'
   | 'sportsdata.view' | 'sportsdata.configure' | 'sportsdata.re_ingest'
-  | 'flags.view' | 'flags.edit'
-  | 'platform.health' | 'platform.announcements' | 'platform.migrations'
+  | 'platform.health' | 'platform.migrations'
   | 'audit.view';
 
 export interface AdminUser extends DomainEntity {
@@ -673,45 +671,6 @@ export interface AdminAuditEntry {
   reason?: string;
   ipAddress?: string;
   userAgent?: string;
-  createdAt: Date;
-}
-
-export interface FeatureFlag extends DomainEntity {
-  key: string;
-  name: string;
-  description?: string;
-  flagType: string;
-  enabledGlobally: boolean;
-  rolloutPercentage?: number;
-  owner?: string;
-  updatedById?: string;
-}
-
-export interface FeatureFlagOverride {
-  id: string;
-  flagId: string;
-  tenantId: string;
-  enabled: boolean;
-  reason?: string;
-  createdAt: Date;
-  createdById?: string;
-}
-
-export interface GlobalAnnouncement {
-  id: string;
-  type: string;
-  title: string;
-  body: string;
-  linkUrl?: string;
-  linkText?: string;
-  severity: string;
-  dismissable: boolean;
-  target: string;
-  targetTenantIds: string[];
-  startsAt: Date;
-  endsAt?: Date;
-  isActive: boolean;
-  createdById: string;
   createdAt: Date;
 }
 

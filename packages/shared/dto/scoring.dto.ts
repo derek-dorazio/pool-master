@@ -1,22 +1,5 @@
 import { z } from 'zod';
 
-export const ScoringTemplateSummaryDtoSchema = z.object({
-  key: z.string(),
-  sport: z.string(),
-});
-export type ScoringTemplateSummaryDto = z.infer<typeof ScoringTemplateSummaryDtoSchema>;
-
-export const ScoringTemplateListResponseSchema = z.object({
-  templates: z.array(ScoringTemplateSummaryDtoSchema),
-});
-export type ScoringTemplateListResponse = z.infer<typeof ScoringTemplateListResponseSchema>;
-
-export const ScoringTemplateResponseSchema = z.object({
-  key: z.string(),
-  config: z.record(z.unknown()),
-});
-export type ScoringTemplateResponse = z.infer<typeof ScoringTemplateResponseSchema>;
-
 export const ScoringConfigValidationResponseSchema = z.object({
   valid: z.boolean(),
   config: z.record(z.unknown()).optional(),

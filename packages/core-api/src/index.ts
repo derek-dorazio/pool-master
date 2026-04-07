@@ -18,7 +18,6 @@ import { authModule } from './modules/auth/routes';
 import { leaguesModule } from './modules/leagues/routes';
 import { invitationsModule } from './modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
-import { registerScoringTemplates } from './modules/contests/service';
 import { eventsModule } from './modules/events/routes';
 import { participantsModule } from './modules/participants/routes';
 import { contestPoolModule } from './modules/participants/pool-routes';
@@ -41,7 +40,6 @@ import { subscribeStatEventConsumer, ContestLookup } from './modules/scoring/con
 import { StandingsRollup } from './modules/scoring/rollup/standings-rollup';
 import { ScoringService } from './modules/scoring/service';
 import { scoringRoutes } from './modules/scoring/routes';
-import { SCORING_TEMPLATES } from './modules/scoring/templates/registry';
 
 // Notification module
 import { loadConfig as loadNotifConfig } from './modules/notifications/core/config';
@@ -67,8 +65,6 @@ export function buildApp() {
   const app = Fastify({ logger: true });
   const prisma = new PrismaClient();
   const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
-
-  registerScoringTemplates(SCORING_TEMPLATES as Record<string, Record<string, unknown>>);
 
   const registry = new ProviderRegistry();
   registry.register(Sport.GOLF, new PgaTourAdapter(), 'PRIMARY');

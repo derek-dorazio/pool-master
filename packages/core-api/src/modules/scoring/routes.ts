@@ -1,5 +1,5 @@
 /**
- * Scoring routes — template library and leaderboard/scoring endpoints.
+ * Scoring routes — leaderboard/scoring endpoints.
  */
 
 import type { FastifyInstance, FastifyReply } from 'fastify';
@@ -12,10 +12,7 @@ import {
   ScoringConfigValidationResponseSchema,
   ScoringHealthResponseSchema,
   ScoringLeaderboardResponseSchema,
-  ScoringTemplateListResponseSchema,
-  ScoringTemplateResponseSchema,
 } from '@poolmaster/shared/dto';
-import { getTemplate, listTemplates } from './templates/registry';
 import { validateStatKeys } from './engine/stat-schemas';
 import type { ScoringService } from './service';
 import {
@@ -39,46 +36,6 @@ export async function scoringRoutes(
   options: ScoringRoutesOptions,
 ): Promise<void> {
   const handlerDeps = { scoringService: options.scoringService };
-
-  // --- Template Routes ---
-
-  /** List all available scoring templates. */
-  app.get('/scoring/templates', {
-    schema: {
-      tags: ['Scoring'],
-      summary: 'List available scoring templates',
-      operationId: 'listScoringTemplates',
-      response: { 200: zodToJsonSchema(ScoringTemplateListResponseSchema) },
-    },
-    handler: async () => {
-      return {
-        templates: listTemplates(),
-      };
-    },
-  });
-
-  /** Get a specific template by key. Returns a mutable ScoringConfig. */
-  app.get<{ Params: { key: string } }>('/scoring/templates/:key', {
-    schema: {
-      tags: ['Scoring'],
-      summary: 'Get a scoring template by key',
-      operationId: 'getScoringTemplate',
-      response: { 200: zodToJsonSchema(ScoringTemplateResponseSchema) },
-    },
-    handler: async (request, reply) => {
-      const { key } = request.params;
-      const template = getTemplate(key);
-
-      if (!template) {
-        return sendWithStatus(reply, 404, { error: `Template "${key}" not found` });
-      }
-
-      return {
-        key,
-        config: template,
-      };
-    },
-  });
 
   /** Validate a ScoringConfig — parse with Zod and check stat keys. */
   app.post('/scoring/config/validate', {
