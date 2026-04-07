@@ -1210,6 +1210,7 @@ blocked in the domain-model review:
 | 51-005 | 2 | Redesign `ContestConfiguration` scoring shape around contest-owned scoring rules and entry aggregation rules | Done | Participant rules plus one active aggregation rule locked |
 | 51-006 | 2 | Replace score-store assumptions with participant score totals, score events, and entry aggregation | Done | `ContestEntryParticipantScore` and event ledger locked |
 | 51-007 | 3 | Defer bracket / pick'em scoring to a later focused design pass unless promoted | Done | Deferred |
+| 51-008 | 4 | Implement initial scoring-core registries and launch-rule unit tests under new module names | In Progress | `contest-scoring` module started with participant scoring definitions, aggregation functions, orchestrator, and unit coverage |
 
 ## Acceptance Criteria
 

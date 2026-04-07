@@ -23,20 +23,6 @@ CREATE TABLE "season_notes" (
 );
 
 -- CreateTable
-CREATE TABLE "retention_configs" (
-    "id" UUID NOT NULL,
-    "league_id" UUID NOT NULL,
-    "contest_result_retention" INTEGER NOT NULL DEFAULT -1,
-    "roster_history_retention" INTEGER NOT NULL DEFAULT -1,
-    "activity_log_retention" INTEGER NOT NULL DEFAULT 365,
-    "payout_record_retention" INTEGER NOT NULL DEFAULT -1,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "retention_configs_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "tenant_usage" (
     "id" UUID NOT NULL,
     "tenant_id" UUID NOT NULL,
@@ -88,9 +74,6 @@ CREATE TABLE "tenant_subscriptions" (
 
 -- CreateIndex
 CREATE INDEX "season_notes_league_id_season_idx" ON "season_notes"("league_id", "season");
-
--- CreateIndex
-CREATE UNIQUE INDEX "retention_configs_league_id_key" ON "retention_configs"("league_id");
 
 -- CreateIndex
 CREATE INDEX "tenant_usage_tenant_id_idx" ON "tenant_usage"("tenant_id");

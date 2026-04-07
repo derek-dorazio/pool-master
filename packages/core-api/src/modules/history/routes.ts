@@ -35,7 +35,6 @@ import { SeasonNotesService } from './season-notes-service';
 import { ImportService } from './import-service';
 import { HistoryMergeService } from './member-merge';
 import { HistoryExportService } from './export-service';
-import { RetentionService } from './retention-service';
 
 export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -50,7 +49,6 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const importService = new ImportService(prisma);
   const mergeService = new HistoryMergeService(prisma);
   const exportService = new HistoryExportService(prisma);
-  const retentionService = new RetentionService(prisma);
 
   // GET /contests/:id/history/summary
   fastify.get<{ Params: { id: string } }>(
@@ -767,56 +765,4 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
     },
   );
 
-  // --- Retention Configuration (Phase 6) ---
-
-  // GET /leagues/:id/retention
-  fastify.get<{ Params: { id: string } }>(
-    '/leagues/:id/retention',
-    {
-      schema: {
-        tags: ['History'],
-        summary: 'Get league data retention configuration',
-        operationId: 'getLeagueRetentionConfig',
-        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
-      },
-    },
-    async (request) => {
-      const config = await retentionService.getConfig(request.params.id);
-      return config;
-    },
-  );
-
-  // PUT /leagues/:id/retention
-  fastify.put<{ Params: { id: string }; Body: Record<string, unknown> }>(
-    '/leagues/:id/retention',
-    {
-      schema: {
-        tags: ['History'],
-        summary: 'Update league data retention configuration',
-        operationId: 'updateLeagueRetentionConfig',
-        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
-      },
-    },
-    async (request) => {
-      const config = await retentionService.updateConfig(request.params.id, request.body as any);
-      return config;
-    },
-  );
-
-  // POST /leagues/:id/retention/preview-cleanup
-  fastify.post<{ Params: { id: string } }>(
-    '/leagues/:id/retention/preview-cleanup',
-    {
-      schema: {
-        tags: ['History'],
-        summary: 'Preview retention cleanup impact',
-        operationId: 'previewRetentionCleanup',
-        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
-      },
-    },
-    async (request) => {
-      const preview = await retentionService.previewCleanup(request.params.id);
-      return preview;
-    },
-  );
 }

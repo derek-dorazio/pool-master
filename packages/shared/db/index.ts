@@ -1,4 +1,16 @@
 export type {
+  ContestConfigurationRepository,
+  ContestEntryAggregationRuleRepository,
+  ContestEntryParticipantScoreEventRepository,
+  ContestEntryParticipantScoreRepository,
+  ContestEntryPrizeAwardRepository,
+  ContestPrizeDefinitionRepository,
+  ParticipantContestScoringRuleRepository,
+  SportEventParticipantRepository,
+  SportEventParticipantSourceDataRepository,
+  SportEventParticipantValuationRepository,
+} from './contest-management-ports';
+export type {
   ActionItemRepository,
   BracketPredictionRepository,
   ContestEntryRepository,

@@ -21,19 +21,6 @@ CREATE TABLE IF NOT EXISTS "season_notes" (
     CONSTRAINT "season_notes_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "retention_configs" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "league_id" UUID NOT NULL UNIQUE,
-    "contest_result_retention_seasons" INTEGER NOT NULL DEFAULT -1,
-    "roster_history_retention_seasons" INTEGER NOT NULL DEFAULT -1,
-    "activity_log_retention_days" INTEGER NOT NULL DEFAULT 365,
-    "payout_record_retention_seasons" INTEGER NOT NULL DEFAULT -1,
-    "chat_message_retention_days" INTEGER NOT NULL DEFAULT 90,
-    "audit_log_retention_days" INTEGER NOT NULL DEFAULT -1,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "retention_configs_pkey" PRIMARY KEY ("id")
-);
-
 CREATE TABLE IF NOT EXISTS "tenant_subscriptions" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "tenant_id" UUID NOT NULL UNIQUE,

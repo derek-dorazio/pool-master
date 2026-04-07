@@ -12,7 +12,6 @@ import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
 import type { DunningConfigService } from './dunning-config-service';
 import type { ChannelConfigService } from './channel-config-service';
-import type { RetentionConfigService } from './retention-config-service';
 import type { DigestConfigService } from './digest-config-service';
 
 // ---------------------------------------------------------------------------
@@ -41,7 +40,6 @@ export function registerPlatformConfigRoutes(
     ingestionConfig: IngestionConfigService;
     dunningConfig: DunningConfigService;
     channelConfig: ChannelConfigService;
-    retentionConfig: RetentionConfigService;
     digestConfig: DigestConfigService;
   },
 ): void {
@@ -50,7 +48,6 @@ export function registerPlatformConfigRoutes(
     ingestionConfig,
     dunningConfig,
     channelConfig,
-    retentionConfig,
     digestConfig,
   } = services;
 
@@ -362,139 +359,6 @@ export function registerPlatformConfigRoutes(
     handler: async (request: FastifyRequest) => {
       const { adminUserId, adminUserEmail } = extractAdminContext(request);
       return channelConfig.resetDefaults(adminUserId, adminUserEmail);
-    },
-  });
-
-  // -------------------------------------------------------------------------
-  // Retention Defaults Configuration
-  // -------------------------------------------------------------------------
-
-  fastify.get('/config/retention', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get data retention defaults',
-      operationId: 'adminGetRetentionDefaults',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async () => {
-      return retentionConfig.getDefaults();
-    },
-  });
-
-  fastify.put('/config/retention', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Update data retention defaults',
-      operationId: 'adminUpdateRetentionDefaults',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        properties: {
-          contestResultRetentionSeasons: { type: 'integer' },
-          rosterHistoryRetentionSeasons: { type: 'integer' },
-          activityLogRetentionDays: { type: 'integer' },
-          payoutRecordRetentionSeasons: { type: 'integer' },
-          chatMessageRetentionDays: { type: 'integer' },
-          auditLogRetentionDays: { type: 'integer' },
-        },
-      },
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Body: {
-          contestResultRetentionSeasons?: number;
-          rosterHistoryRetentionSeasons?: number;
-          activityLogRetentionDays?: number;
-          payoutRecordRetentionSeasons?: number;
-          chatMessageRetentionDays?: number;
-          auditLogRetentionDays?: number;
-        };
-      }>,
-    ) => {
-      return retentionConfig.updateDefaults(request.body);
-    },
-  });
-
-  fastify.post('/config/retention/reset', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Reset data retention to defaults',
-      operationId: 'adminResetRetentionDefaults',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async () => {
-      return retentionConfig.resetDefaults();
-    },
-  });
-
-  fastify.get('/config/retention/:tenantId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get tenant-specific retention override',
-      operationId: 'adminGetTenantRetentionOverride',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async (
-      request: FastifyRequest<{ Params: { tenantId: string } }>,
-    ) => {
-      const override = retentionConfig.getTenantOverride(request.params.tenantId);
-      if (!override) {
-        return { override: null, defaults: retentionConfig.getDefaults() };
-      }
-      return { override };
-    },
-  });
-
-  fastify.put('/config/retention/:tenantId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Set tenant-specific retention override',
-      operationId: 'adminSetTenantRetentionOverride',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        properties: {
-          contestResultRetentionSeasons: { type: 'integer' },
-          rosterHistoryRetentionSeasons: { type: 'integer' },
-          activityLogRetentionDays: { type: 'integer' },
-          payoutRecordRetentionSeasons: { type: 'integer' },
-          chatMessageRetentionDays: { type: 'integer' },
-          auditLogRetentionDays: { type: 'integer' },
-        },
-      },
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Params: { tenantId: string };
-        Body: {
-          contestResultRetentionSeasons?: number;
-          rosterHistoryRetentionSeasons?: number;
-          activityLogRetentionDays?: number;
-          payoutRecordRetentionSeasons?: number;
-          chatMessageRetentionDays?: number;
-          auditLogRetentionDays?: number;
-        };
-      }>,
-    ) => {
-      return retentionConfig.setTenantOverride(
-        request.params.tenantId,
-        request.body,
-      );
-    },
-  });
-
-  fastify.delete('/config/retention/:tenantId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Clear tenant-specific retention override',
-      operationId: 'adminClearTenantRetentionOverride',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async (
-      request: FastifyRequest<{ Params: { tenantId: string } }>,
-    ) => {
-      retentionConfig.clearTenantOverride(request.params.tenantId);
-      return { cleared: true, tenantId: request.params.tenantId };
     },
   });
 

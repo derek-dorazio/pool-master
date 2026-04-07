@@ -72,8 +72,8 @@ affirmation can be stored as part of `ConsentRecord`.
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 55-001 | 1 | Remove non-consent compliance models from the target schema and migration plan | Not Started | |
-| 55-002 | 1 | Remove compliance routes/services that are out of scope for first pass | Not Started | |
-| 55-003 | 1 | Keep only the minimal consent persistence concept | Not Started | |
-| 55-004 | 2 | Remove or rewrite tests that enforce deleted compliance behavior | Not Started | |
-| 55-005 | 2 | Update docs/plans so agents do not treat the old compliance subsystem as active guidance | Not Started | |
+| 55-001 | 1 | Remove non-consent compliance models from the target schema and migration plan | Done | Retention and non-consent compliance schema artifacts removed; forward migration added for retained consent age-affirmation fields |
+| 55-002 | 1 | Remove compliance routes/services that are out of scope for first pass | Done | Compliance module removed; only minimal account-consent routes remain |
+| 55-003 | 1 | Keep only the minimal consent persistence concept | Done | `ConsentRecord` retained with age-affirmation fields exposed through the new account-consent module |
+| 55-004 | 2 | Remove or rewrite tests that enforce deleted compliance behavior | Done | Old compliance tests removed; new consent unit/integration coverage added |
+| 55-005 | 2 | Update docs/plans so agents do not treat the old compliance subsystem as active guidance | Done | Removal/deferred plans and consent use cases now match the implemented slice |

@@ -135,7 +135,6 @@ export const API_ROUTES = {
   // Account / Compliance
   account: {
     consent: '/api/v1/account/consent',
-    dataExport: '/api/v1/account/data-export',
   },
 
   // Health

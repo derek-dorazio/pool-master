@@ -3217,6 +3217,8 @@ export type GetConsentHistoryResponses = {
             consentType: string;
             granted: boolean;
             version: string;
+            minimumAgeThreshold?: number;
+            ageAffirmed?: boolean;
             ipAddress?: string;
             userAgent?: string;
             createdAt: string;
@@ -3273,7 +3275,6 @@ export type AdminListTenantsResponses = {
             id: string;
             name: string;
             slug: string;
-            planTier: string;
             memberCount: number;
             contestCount: number;
             leagueCount: number;
@@ -3330,7 +3331,6 @@ export type AdminGetTenantDetailResponses = {
             id: string;
             name: string;
             slug: string;
-            planTier: string;
             settings: {
                 [key: string]: unknown;
             };

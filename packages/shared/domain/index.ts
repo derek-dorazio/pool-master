@@ -1,5 +1,26 @@
 export * from './enums';
 export {
+  AggregationDefinitionIdSchema,
+  ParticipantScoringDefinitionIdSchema,
+} from './contest-scoring';
+export type {
+  AggregationDefinitionId,
+  ParticipantScoringDefinitionId,
+} from './contest-scoring';
+export type {
+  ContestConfiguration,
+  ContestCoreSummary,
+  ContestEntryAggregationRule,
+  ContestEntryParticipantScore,
+  ContestEntryParticipantScoreEvent,
+  ContestEntryPrizeAward,
+  ContestPrizeDefinition,
+  ParticipantContestScoringRule,
+  SportEventParticipant,
+  SportEventParticipantSourceData,
+  SportEventParticipantValuation,
+} from './contest-management-types';
+export {
   BonusRuleSchema,
   BonusTriggerSchema,
   BracketRoundRuleSchema,

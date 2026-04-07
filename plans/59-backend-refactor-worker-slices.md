@@ -166,9 +166,9 @@ Every slice should satisfy the backend-refactor rules:
 | 59-001 | 1 | Create the worker-slice execution plan for the backend refactor lane | Done | Slice plan created and staged for worker execution |
 | 59-002 | 1 | Implement bootstrap Slice A: Search And Discovery Removal | Done | Public discovery schema, routes, DTOs, mappers, and app wiring removed |
 | 59-003 | 1 | Implement bootstrap Slice B: Contest Template Removal | Done | Contest template model, routes, handlers, repository, tests, schema, and migration cleanup completed |
-| 59-004 | 2 | Implement Slice C: Compliance Removal Except Consent | Not Started | |
+| 59-004 | 2 | Implement Slice C: Compliance Removal Except Consent | Done | Compliance subsystem removed, retention routes/config removed, and minimal account-consent module plus consent tests added |
 | 59-005 | 2 | Implement Slice D: Identity, League, Membership, and Squad rebuild | Not Started | |
 | 59-006 | 3 | Implement Slice E: Contest core rebuild | Not Started | |
 | 59-007 | 3 | Implement Slice F: Event participant and source-data rebuild | Not Started | |
-| 59-008 | 4 | Implement Slice G: Scoring, aggregation, and prize rebuild | Not Started | |
+| 59-008 | 4 | Implement Slice G: Scoring, aggregation, and prize rebuild | In Progress | Main thread started `contest-scoring` module with participant scoring registry, aggregation registry, orchestration, and launch-rule unit tests |
 | 59-009 | 4 | Implement Slice H: Commissioner contest-management APIs | Not Started | |
