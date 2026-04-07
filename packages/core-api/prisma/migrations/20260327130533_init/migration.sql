@@ -132,29 +132,6 @@ CREATE TABLE "commissioner_action_items" (
 );
 
 -- CreateTable
-CREATE TABLE "contest_templates" (
-    "id" UUID NOT NULL,
-    "league_id" UUID NOT NULL,
-    "created_by" UUID NOT NULL,
-    "name" VARCHAR(255) NOT NULL,
-    "description" TEXT,
-    "sport" VARCHAR(50) NOT NULL,
-    "contest_type" VARCHAR(50) NOT NULL,
-    "draft_config" JSONB NOT NULL DEFAULT '{}',
-    "scoring_config" JSONB NOT NULL DEFAULT '{}',
-    "payout_config" JSONB NOT NULL DEFAULT '{}',
-    "pool_config" JSONB NOT NULL DEFAULT '{}',
-    "shared_with_tenant" BOOLEAN NOT NULL DEFAULT false,
-    "is_platform_template" BOOLEAN NOT NULL DEFAULT false,
-    "times_used" INTEGER NOT NULL DEFAULT 0,
-    "last_used_at" TIMESTAMPTZ,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "contest_templates_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "sports" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
@@ -772,61 +749,6 @@ CREATE TABLE "notification_delivery_log" (
 );
 
 -- CreateTable
-CREATE TABLE "discoverable_leagues" (
-    "league_id" UUID NOT NULL,
-    "name" VARCHAR(255) NOT NULL,
-    "description" TEXT,
-    "photo_url" TEXT,
-    "sports" VARCHAR(50)[],
-    "member_count" INTEGER NOT NULL DEFAULT 0,
-    "max_members" INTEGER,
-    "active_contest_count" INTEGER NOT NULL DEFAULT 0,
-    "activity_level" VARCHAR(20) NOT NULL DEFAULT 'LOW',
-    "join_policy" VARCHAR(20) NOT NULL DEFAULT 'OPEN',
-    "reported_count" INTEGER NOT NULL DEFAULT 0,
-    "is_hidden" BOOLEAN NOT NULL DEFAULT false,
-    "last_activity_at" TIMESTAMPTZ,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "discoverable_leagues_pkey" PRIMARY KEY ("league_id")
-);
-
--- CreateTable
-CREATE TABLE "discoverable_contests" (
-    "contest_id" UUID NOT NULL,
-    "league_id" UUID NOT NULL,
-    "league_name" VARCHAR(255),
-    "contest_name" VARCHAR(255) NOT NULL,
-    "sport" VARCHAR(50) NOT NULL,
-    "event_name" VARCHAR(500),
-    "draft_type" VARCHAR(50),
-    "member_count" INTEGER NOT NULL DEFAULT 0,
-    "max_members" INTEGER,
-    "entry_fee" INTEGER,
-    "prize_pool" INTEGER,
-    "draft_start" TIMESTAMPTZ,
-    "lock_time" TIMESTAMPTZ,
-    "status" VARCHAR(20) NOT NULL DEFAULT 'OPEN',
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "discoverable_contests_pkey" PRIMARY KEY ("contest_id")
-);
-
--- CreateTable
-CREATE TABLE "discovery_reports" (
-    "id" UUID NOT NULL,
-    "entity_type" VARCHAR(20) NOT NULL,
-    "entity_id" UUID NOT NULL,
-    "reported_by" UUID NOT NULL,
-    "reason" VARCHAR(500) NOT NULL,
-    "status" VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "discovery_reports_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "user_locale_preferences" (
     "user_id" UUID NOT NULL,
     "language" VARCHAR(10) NOT NULL DEFAULT 'en-US',
@@ -1094,12 +1016,6 @@ CREATE INDEX "commissioner_audit_log_contest_id_created_at_idx" ON "commissioner
 CREATE INDEX "commissioner_action_items_league_id_resolved_priority_idx" ON "commissioner_action_items"("league_id", "resolved", "priority");
 
 -- CreateIndex
-CREATE INDEX "contest_templates_league_id_idx" ON "contest_templates"("league_id");
-
--- CreateIndex
-CREATE INDEX "contest_templates_is_platform_template_idx" ON "contest_templates"("is_platform_template");
-
--- CreateIndex
 CREATE UNIQUE INDEX "sports_name_key" ON "sports"("name");
 
 -- CreateIndex
@@ -1274,15 +1190,6 @@ CREATE INDEX "notification_delivery_log_notification_event_id_idx" ON "notificat
 CREATE INDEX "notification_delivery_log_user_id_created_at_idx" ON "notification_delivery_log"("user_id", "created_at" DESC);
 
 -- CreateIndex
-CREATE INDEX "discoverable_leagues_activity_level_last_activity_at_idx" ON "discoverable_leagues"("activity_level", "last_activity_at" DESC);
-
--- CreateIndex
-CREATE INDEX "discoverable_contests_sport_status_lock_time_idx" ON "discoverable_contests"("sport", "status", "lock_time");
-
--- CreateIndex
-CREATE INDEX "discovery_reports_entity_type_entity_id_idx" ON "discovery_reports"("entity_type", "entity_id");
-
--- CreateIndex
 CREATE INDEX "consent_records_user_id_consent_type_idx" ON "consent_records"("user_id", "consent_type");
 
 -- CreateIndex
@@ -1356,12 +1263,6 @@ ALTER TABLE "commissioner_audit_log" ADD CONSTRAINT "commissioner_audit_log_acto
 
 -- AddForeignKey
 ALTER TABLE "commissioner_action_items" ADD CONSTRAINT "commissioner_action_items_league_id_fkey" FOREIGN KEY ("league_id") REFERENCES "leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "contest_templates" ADD CONSTRAINT "contest_templates_league_id_fkey" FOREIGN KEY ("league_id") REFERENCES "leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "contest_templates" ADD CONSTRAINT "contest_templates_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "seasons" ADD CONSTRAINT "seasons_sport_id_fkey" FOREIGN KEY ("sport_id") REFERENCES "sports"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

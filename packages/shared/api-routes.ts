@@ -19,12 +19,10 @@ export const API_PREFIXES = {
   INVITATIONS: '/api/v1/invitations',
   CONTESTS_BY_LEAGUE: '/api/v1/leagues/:id/contests',
   CONTESTS: '/api/v1/contests',
-  TEMPLATES: '/api/v1/templates',
   PARTICIPANTS: '/api/v1/participants',
   CONTEST_POOL: '/api/v1/contests/:contestId/pool',
   STANDINGS: '/api/v1/contests/:contestId/standings',
   HISTORY: '/api/v1',
-  SEARCH: '/api/v1/search',
   ACCOUNT: '/api/v1/account',
   ADMIN: '/api/v1/admin',
   CONFIG: '/api/v1/config',
@@ -109,21 +107,6 @@ export const API_ROUTES = {
     entitlements: '/api/v1/billing/entitlements',
     invoices: '/api/v1/billing/invoices',
     tiers: '/api/v1/billing/tiers',
-  },
-
-  // Search
-  search: {
-    participants: '/api/v1/search/participants',
-    leagues: '/api/v1/search/leagues',
-    contests: '/api/v1/search/contests',
-    discoverLeagues: '/api/v1/search/discover/leagues',
-    discoverContests: '/api/v1/search/discover/contests',
-    joinDiscoverableLeague: (leagueId: string) => `/api/v1/search/discover/leagues/${leagueId}/join`,
-  },
-
-  // Templates
-  templates: {
-    scoring: '/api/v1/templates/scoring',
   },
 
   // Admin

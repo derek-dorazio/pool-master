@@ -1697,84 +1697,6 @@
         }
       }
     },
-    "/api/v1/leagues/{id}/contests/bulk": {
-      "post": {
-        "operationId": "bulkCreateContests",
-        "summary": "Bulk-create contests from a template",
-        "tags": [
-          "Leagues"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "templateId",
-                  "namingPattern",
-                  "events"
-                ],
-                "properties": {
-                  "templateId": {
-                    "type": "string"
-                  },
-                  "namingPattern": {
-                    "type": "string"
-                  },
-                  "events": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "startsAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "endsAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    },
-                    "minItems": 1
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {}
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/leagues/{id}/contests/copy-season": {
       "post": {
         "operationId": "copySeason",
@@ -4345,616 +4267,6 @@
             },
             "in": "path",
             "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/templates/": {
-      "get": {
-        "operationId": "listTemplates",
-        "summary": "List contest templates for a league",
-        "tags": [
-          "Templates"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "query",
-            "name": "leagueId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "templates": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "leagueId": {
-                            "type": "string"
-                          },
-                          "createdBy": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "sport": {
-                            "type": "string"
-                          },
-                          "contestType": {
-                            "type": "string"
-                          },
-                          "draftConfig": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          },
-                          "scoringConfig": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          },
-                          "payoutConfig": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          },
-                          "poolConfig": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          },
-                          "sharedWithTenant": {
-                            "type": "boolean"
-                          },
-                          "isPlatformTemplate": {
-                            "type": "boolean"
-                          },
-                          "timesUsed": {
-                            "type": "number"
-                          },
-                          "lastUsedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "nullable": true
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "nullable": true
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "nullable": true
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "leagueId",
-                          "createdBy",
-                          "name",
-                          "sport",
-                          "contestType",
-                          "draftConfig",
-                          "scoringConfig",
-                          "payoutConfig",
-                          "poolConfig",
-                          "sharedWithTenant",
-                          "isPlatformTemplate",
-                          "timesUsed",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "templates"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "operationId": "createTemplate",
-        "summary": "Create a new contest template",
-        "tags": [
-          "Templates"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "leagueId",
-                  "name",
-                  "sport",
-                  "contestType"
-                ],
-                "properties": {
-                  "leagueId": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 255
-                  },
-                  "description": {
-                    "type": "string",
-                    "maxLength": 1000
-                  },
-                  "sport": {
-                    "type": "string"
-                  },
-                  "contestType": {
-                    "type": "string",
-                    "enum": [
-                      "SINGLE_EVENT"
-                    ]
-                  },
-                  "draftConfig": {
-                    "type": "object"
-                  },
-                  "scoringConfig": {
-                    "type": "object"
-                  },
-                  "payoutConfig": {
-                    "type": "object"
-                  },
-                  "poolConfig": {
-                    "type": "object"
-                  },
-                  "sharedWithTenant": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "template": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "leagueId": {
-                          "type": "string"
-                        },
-                        "createdBy": {
-                          "type": "string"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "sport": {
-                          "type": "string"
-                        },
-                        "contestType": {
-                          "type": "string"
-                        },
-                        "draftConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "scoringConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "payoutConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "poolConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "sharedWithTenant": {
-                          "type": "boolean"
-                        },
-                        "isPlatformTemplate": {
-                          "type": "boolean"
-                        },
-                        "timesUsed": {
-                          "type": "number"
-                        },
-                        "lastUsedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "createdBy",
-                        "name",
-                        "sport",
-                        "contestType",
-                        "draftConfig",
-                        "scoringConfig",
-                        "payoutConfig",
-                        "poolConfig",
-                        "sharedWithTenant",
-                        "isPlatformTemplate",
-                        "timesUsed",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "template"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/templates/{id}": {
-      "get": {
-        "operationId": "getTemplate",
-        "summary": "Get a contest template by ID",
-        "tags": [
-          "Templates"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "template": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "leagueId": {
-                          "type": "string"
-                        },
-                        "createdBy": {
-                          "type": "string"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "sport": {
-                          "type": "string"
-                        },
-                        "contestType": {
-                          "type": "string"
-                        },
-                        "draftConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "scoringConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "payoutConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "poolConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "sharedWithTenant": {
-                          "type": "boolean"
-                        },
-                        "isPlatformTemplate": {
-                          "type": "boolean"
-                        },
-                        "timesUsed": {
-                          "type": "number"
-                        },
-                        "lastUsedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "createdBy",
-                        "name",
-                        "sport",
-                        "contestType",
-                        "draftConfig",
-                        "scoringConfig",
-                        "payoutConfig",
-                        "poolConfig",
-                        "sharedWithTenant",
-                        "isPlatformTemplate",
-                        "timesUsed",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "template"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "operationId": "updateTemplate",
-        "summary": "Update a contest template",
-        "tags": [
-          "Templates"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 255
-                  },
-                  "description": {
-                    "type": "string",
-                    "maxLength": 1000
-                  },
-                  "draftConfig": {
-                    "type": "object"
-                  },
-                  "scoringConfig": {
-                    "type": "object"
-                  },
-                  "payoutConfig": {
-                    "type": "object"
-                  },
-                  "poolConfig": {
-                    "type": "object"
-                  },
-                  "sharedWithTenant": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "template": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "leagueId": {
-                          "type": "string"
-                        },
-                        "createdBy": {
-                          "type": "string"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "sport": {
-                          "type": "string"
-                        },
-                        "contestType": {
-                          "type": "string"
-                        },
-                        "draftConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "scoringConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "payoutConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "poolConfig": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "sharedWithTenant": {
-                          "type": "boolean"
-                        },
-                        "isPlatformTemplate": {
-                          "type": "boolean"
-                        },
-                        "timesUsed": {
-                          "type": "number"
-                        },
-                        "lastUsedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "createdBy",
-                        "name",
-                        "sport",
-                        "contestType",
-                        "draftConfig",
-                        "scoringConfig",
-                        "payoutConfig",
-                        "poolConfig",
-                        "sharedWithTenant",
-                        "isPlatformTemplate",
-                        "timesUsed",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "template"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "operationId": "deleteTemplate",
-        "summary": "Delete a contest template",
-        "tags": [
-          "Templates"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
             "required": true
           }
         ],
@@ -9240,884 +8552,6 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": {}
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/search/participants": {
-      "get": {
-        "operationId": "searchParticipants",
-        "summary": "Search participants with filters",
-        "tags": [
-          "Search"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "q",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "sportId",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "status",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "position",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "team",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "nationality",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "RELEVANCE",
-                "RANKING",
-                "NAME",
-                "PRICE",
-                "FORM"
-              ]
-            },
-            "in": "query",
-            "name": "sortBy",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "offset",
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "participants": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "sportId": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "participantType": {
-                            "type": "string"
-                          },
-                          "externalId": {
-                            "type": "string"
-                          },
-                          "metadata": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          },
-                          "firstName": {
-                            "type": "string"
-                          },
-                          "lastName": {
-                            "type": "string"
-                          },
-                          "shortName": {
-                            "type": "string"
-                          },
-                          "nationality": {
-                            "type": "string"
-                          },
-                          "position": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "teamAffiliation": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "status": {
-                            "type": "string"
-                          },
-                          "injuryStatus": {
-                            "type": "object",
-                            "properties": {
-                              "status": {
-                                "type": "string"
-                              },
-                              "detail": {
-                                "type": "string"
-                              },
-                              "expectedReturn": {
-                                "type": "string",
-                                "format": "date-time"
-                              },
-                              "updatedAt": {
-                                "type": "string",
-                                "format": "date-time"
-                              },
-                              "source": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "status"
-                            ],
-                            "additionalProperties": false
-                          },
-                          "photoUrl": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "photoLastUpdated": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "externalIds": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "sportId",
-                          "name",
-                          "participantType",
-                          "metadata",
-                          "status",
-                          "injuryStatus",
-                          "externalIds",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "total": {
-                      "type": "number"
-                    },
-                    "facets": {
-                      "type": "object",
-                      "properties": {
-                        "positions": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "value": {
-                                "type": "string"
-                              },
-                              "count": {
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "value",
-                              "count"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "teams": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "value": {
-                                "type": "string"
-                              },
-                              "count": {
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "value",
-                              "count"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "nationalities": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "value": {
-                                "type": "string"
-                              },
-                              "count": {
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "value",
-                              "count"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "rankingDistribution": {
-                          "type": "object",
-                          "properties": {
-                            "top10": {
-                              "type": "number"
-                            },
-                            "top25": {
-                              "type": "number"
-                            },
-                            "top50": {
-                              "type": "number"
-                            },
-                            "top100": {
-                              "type": "number"
-                            },
-                            "unranked": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "top10",
-                            "top25",
-                            "top50",
-                            "top100",
-                            "unranked"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "required": [
-                        "positions",
-                        "teams",
-                        "nationalities",
-                        "rankingDistribution"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "participants",
-                    "total",
-                    "facets"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/search/discover/leagues": {
-      "get": {
-        "operationId": "discoverLeagues",
-        "summary": "Discover public leagues",
-        "tags": [
-          "Search"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "q",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "sport",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "POPULAR",
-                "NEWEST",
-                "ACTIVITY"
-              ]
-            },
-            "in": "query",
-            "name": "sort",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "offset",
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "leagues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "sport": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "memberCount": {
-                            "type": "number"
-                          },
-                          "maxMembers": {
-                            "type": "number",
-                            "nullable": true
-                          },
-                          "activeContestCount": {
-                            "type": "number"
-                          },
-                          "activityLevel": {
-                            "type": "string"
-                          },
-                          "joinPolicy": {
-                            "type": "string"
-                          },
-                          "commissionerName": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "visibility": {
-                            "type": "string"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "memberCount",
-                          "activeContestCount",
-                          "activityLevel",
-                          "joinPolicy"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "total": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "leagues",
-                    "total"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/search/discover/contests": {
-      "get": {
-        "operationId": "discoverContests",
-        "summary": "Discover open contests",
-        "tags": [
-          "Search"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "q",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "sport",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "STARTING_SOON",
-                "POPULAR",
-                "PRIZE_POOL"
-              ]
-            },
-            "in": "query",
-            "name": "sort",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "offset",
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "contests": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "leagueName": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "contestName": {
-                            "type": "string"
-                          },
-                          "sport": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "eventName": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "draftType": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "status": {
-                            "type": "string"
-                          },
-                          "memberCount": {
-                            "type": "number"
-                          },
-                          "maxMembers": {
-                            "type": "number",
-                            "nullable": true
-                          },
-                          "entryFee": {
-                            "type": "number",
-                            "nullable": true
-                          },
-                          "prizePool": {
-                            "type": "number",
-                            "nullable": true
-                          },
-                          "draftStart": {
-                            "type": "string",
-                            "format": "date-time",
-                            "nullable": true
-                          },
-                          "lockTime": {
-                            "type": "string",
-                            "format": "date-time",
-                            "nullable": true
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "contestName",
-                          "status",
-                          "memberCount"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "total": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "contests",
-                    "total"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/search/discover/leagues/{leagueId}/join": {
-      "post": {
-        "operationId": "joinDiscoverableLeague",
-        "summary": "Join an open public league from discovery",
-        "tags": [
-          "Search"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "leagueId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "membership": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "leagueId": {
-                          "type": "string"
-                        },
-                        "userId": {
-                          "type": "string"
-                        },
-                        "role": {
-                          "type": "string"
-                        },
-                        "permissions": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "joinedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "userId",
-                        "role",
-                        "permissions",
-                        "joinedAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "membership"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {}
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {}
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {}
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {}
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {}
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/search/discover/report": {
-      "post": {
-        "operationId": "reportDiscoveryEntity",
-        "summary": "Report a league or contest",
-        "tags": [
-          "Search"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "entityType",
-                  "entityId",
-                  "reason"
-                ],
-                "properties": {
-                  "entityType": {
-                    "type": "string",
-                    "enum": [
-                      "LEAGUE",
-                      "CONTEST"
-                    ]
-                  },
-                  "entityId": {
-                    "type": "string"
-                  },
-                  "reason": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "report": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "reportCount": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "report",
-                    "reportCount"
-                  ],
-                  "additionalProperties": false
                 }
               }
             }
@@ -24011,7 +22445,67 @@
                     "replies": {
                       "type": "array",
                       "items": {
-                        "$ref": "#"
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "leagueId": {
+                            "type": "string"
+                          },
+                          "authorId": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "authorName": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "isPinned": {
+                            "type": "boolean"
+                          },
+                          "reactions": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "replyCount": {
+                            "type": "number"
+                          },
+                          "parentId": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "authorId",
+                          "type",
+                          "authorName",
+                          "content",
+                          "isPinned",
+                          "reactions",
+                          "replyCount",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -24118,7 +22612,67 @@
                     "replies": {
                       "type": "array",
                       "items": {
-                        "$ref": "#"
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "leagueId": {
+                            "type": "string"
+                          },
+                          "authorId": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "authorName": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "isPinned": {
+                            "type": "boolean"
+                          },
+                          "reactions": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "replyCount": {
+                            "type": "number"
+                          },
+                          "parentId": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "authorId",
+                          "type",
+                          "authorName",
+                          "content",
+                          "isPinned",
+                          "reactions",
+                          "replyCount",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -24296,7 +22850,67 @@
                     "replies": {
                       "type": "array",
                       "items": {
-                        "$ref": "#"
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "leagueId": {
+                            "type": "string"
+                          },
+                          "authorId": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "authorName": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "isPinned": {
+                            "type": "boolean"
+                          },
+                          "reactions": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "replyCount": {
+                            "type": "number"
+                          },
+                          "parentId": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "authorId",
+                          "type",
+                          "authorName",
+                          "content",
+                          "isPinned",
+                          "reactions",
+                          "replyCount",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -32056,14 +30670,6 @@
     {
       "name": "Participants",
       "description": "Participant profiles and contest pools"
-    },
-    {
-      "name": "Search",
-      "description": "Search and discovery"
-    },
-    {
-      "name": "Templates",
-      "description": "Scoring templates"
     },
     {
       "name": "Invitations",

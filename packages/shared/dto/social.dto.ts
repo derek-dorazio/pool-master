@@ -25,6 +25,7 @@ export type FeedItemDto = z.infer<typeof FeedItemDtoSchema>;
 export const FeedPostDtoSchema: z.ZodType<any> = FeedItemDtoSchema.extend({
   replies: z.lazy(() => z.array(FeedPostDtoSchema)).optional(),
 });
+export type FeedPostDto = z.infer<typeof FeedPostDtoSchema>;
 
 // --- Responses ---
 

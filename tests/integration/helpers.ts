@@ -28,11 +28,9 @@ import { invitationsModule } from '../../packages/core-api/src/modules/invitatio
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { standingsModule } from '../../packages/core-api/src/modules/standings/routes';
-import { searchModule } from '../../packages/core-api/src/modules/search/routes';
 import { complianceModule } from '../../packages/core-api/src/modules/compliance/routes';
 import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
-import { templatesModule } from '../../packages/core-api/src/modules/templates/routes';
 import { contestPoolModule } from '../../packages/core-api/src/modules/participants/pool-routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
@@ -91,11 +89,9 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
   testApp.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
-  testApp.register(searchModule, { prefix: '/api/v1/search' });
   testApp.register(complianceModule, { prefix: '/api/v1/account' });
   testApp.register(configModule, { prefix: '/api/v1/config' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
-  testApp.register(templatesModule, { prefix: '/api/v1/templates' });
   testApp.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
   testApp.register(historyModule, { prefix: '/api/v1' });

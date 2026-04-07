@@ -11,16 +11,16 @@ import { buildMembership } from '../../factories';
 
 describe('Commissioner Permissions', () => {
   describe('ALL_COMMISSIONER_PERMISSIONS', () => {
-    it('contains all 25 permission values', () => {
-      expect(ALL_COMMISSIONER_PERMISSIONS).toHaveLength(25);
+    it('contains all 23 permission values', () => {
+      expect(ALL_COMMISSIONER_PERMISSIONS).toHaveLength(23);
     });
 
     it('includes league.settings.edit', () => {
       expect(ALL_COMMISSIONER_PERMISSIONS).toContain('league.settings.edit');
     });
 
-    it('includes template.share', () => {
-      expect(ALL_COMMISSIONER_PERMISSIONS).toContain('template.share');
+    it('includes scoring.override', () => {
+      expect(ALL_COMMISSIONER_PERMISSIONS).toContain('scoring.override');
     });
   });
 

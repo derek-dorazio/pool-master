@@ -1,13 +1,12 @@
-import { BulkService, BulkOperationError } from '../../../packages/core-api/src/modules/leagues/bulk-service';
+import { BulkService } from '../../../packages/core-api/src/modules/leagues/bulk-service';
 import type {
   ContestRepository,
-  ContestTemplateRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
 } from '@poolmaster/shared/db';
 import { ContestStatus } from '@poolmaster/shared/domain';
-import { buildContest, buildContestTemplate, buildLeague, buildMembership, buildInvitation } from '../../factories';
+import { buildContest, buildLeague, buildMembership, buildInvitation } from '../../factories';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return {
@@ -18,19 +17,6 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
     })),
     update: jest.fn().mockResolvedValue(buildContest()),
     delete: jest.fn().mockResolvedValue(undefined),
-    ...overrides,
-  };
-}
-
-function createMockTemplateRepo(overrides: Partial<ContestTemplateRepository> = {}): ContestTemplateRepository {
-  return {
-    findById: jest.fn().mockResolvedValue(buildContestTemplate()),
-    findByLeague: jest.fn().mockResolvedValue([]),
-    findPlatformTemplates: jest.fn().mockResolvedValue([]),
-    create: jest.fn().mockResolvedValue(buildContestTemplate()),
-    update: jest.fn().mockResolvedValue(buildContestTemplate()),
-    delete: jest.fn().mockResolvedValue(undefined),
-    incrementUsage: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -74,47 +60,11 @@ function createMockInvitationRepo(overrides: Partial<LeagueInvitationRepository>
 }
 
 describe('BulkService', () => {
-  describe('bulkCreateContests', () => {
-    it('creates one contest per event from template', async () => {
-      const contestRepo = createMockContestRepo();
-      const service = new BulkService(
-        contestRepo, createMockTemplateRepo(), createMockLeagueRepo(),
-        createMockMembershipRepo(), createMockInvitationRepo(),
-      );
-      const result = await service.bulkCreateContests({
-        leagueId: 'league-1',
-        tenantId: 'tenant-1',
-        createdBy: 'user-1',
-        templateId: 'template-1',
-        namingPattern: '{event_name} Pool',
-        events: [
-          { name: 'Masters' },
-          { name: 'US Open' },
-        ],
-      });
-      expect(result.created).toHaveLength(2);
-      expect(contestRepo.create).toHaveBeenCalledTimes(2);
-    });
-
-    it('throws when template not found', async () => {
-      const templateRepo = createMockTemplateRepo({ findById: jest.fn().mockResolvedValue(null) });
-      const service = new BulkService(
-        createMockContestRepo(), templateRepo, createMockLeagueRepo(),
-        createMockMembershipRepo(), createMockInvitationRepo(),
-      );
-      await expect(service.bulkCreateContests({
-        leagueId: 'league-1', tenantId: 'tenant-1', createdBy: 'user-1',
-        templateId: 'missing', namingPattern: '{event_name}',
-        events: [{ name: 'Test' }],
-      })).rejects.toThrow(BulkOperationError);
-    });
-  });
-
   describe('copyLastSeason', () => {
     it('copies contests with DRAFT status', async () => {
       const contestRepo = createMockContestRepo();
       const service = new BulkService(
-        contestRepo, createMockTemplateRepo(), createMockLeagueRepo(),
+        contestRepo, createMockLeagueRepo(),
         createMockMembershipRepo(), createMockInvitationRepo(),
       );
       const result = await service.copyLastSeason({
@@ -131,7 +81,7 @@ describe('BulkService', () => {
     it('creates invitations for valid emails', async () => {
       const invitationRepo = createMockInvitationRepo();
       const service = new BulkService(
-        createMockContestRepo(), createMockTemplateRepo(), createMockLeagueRepo(),
+        createMockContestRepo(), createMockLeagueRepo(),
         createMockMembershipRepo(), invitationRepo,
       );
       const result = await service.importMembersFromCsv('league-1', 'user-1', [
@@ -144,7 +94,7 @@ describe('BulkService', () => {
 
     it('skips invalid emails', async () => {
       const service = new BulkService(
-        createMockContestRepo(), createMockTemplateRepo(), createMockLeagueRepo(),
+        createMockContestRepo(), createMockLeagueRepo(),
         createMockMembershipRepo(), createMockInvitationRepo(),
       );
       const result = await service.importMembersFromCsv('league-1', 'user-1', [
@@ -163,7 +113,7 @@ describe('BulkService', () => {
         }),
       });
       const service = new BulkService(
-        createMockContestRepo(), createMockTemplateRepo(), createMockLeagueRepo(),
+        createMockContestRepo(), createMockLeagueRepo(),
         createMockMembershipRepo(), invitationRepo,
       );
       const result = await service.importMembersFromCsv('league-1', 'user-1', [

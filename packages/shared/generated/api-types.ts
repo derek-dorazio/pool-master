@@ -259,6 +259,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List league members */
+        get: operations["listLeagueMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/members/{uid}/role": {
         parameters: {
             query?: never;
@@ -288,6 +305,23 @@ export interface paths {
         post?: never;
         /** Remove a member from the league */
         delete: operations["removeMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/members/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Leave a league as the current member */
+        delete: operations["leaveLeague"];
         options?: never;
         head?: never;
         patch?: never;
@@ -378,23 +412,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/leagues/{id}/contests/bulk": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Bulk-create contests from a template */
-        post: operations["bulkCreateContests"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/leagues/{id}/contests/copy-season": {
         parameters: {
             query?: never;
@@ -478,6 +495,42 @@ export interface paths {
         post?: never;
         /** Delete a contest */
         delete: operations["deleteContest"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contests/{contestId}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List contest entries */
+        get: operations["listContestEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contests/{contestId}/entries/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the current user contest entry */
+        get: operations["getMyContestEntry"];
+        put?: never;
+        /** Create or return the current user contest entry */
+        post: operations["enterContest"];
+        /** Delete the current user contest entry */
+        delete: operations["leaveContest"];
         options?: never;
         head?: never;
         patch?: never;
@@ -687,38 +740,18 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/templates/": {
+    "/api/v1/events/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List contest templates for a league */
-        get: operations["listTemplates"];
+        /** List ingested sport events */
+        get: operations["listEvents"];
         put?: never;
-        /** Create a new contest template */
-        post: operations["createTemplate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/templates/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a contest template by ID */
-        get: operations["getTemplate"];
-        /** Update a contest template */
-        put: operations["updateTemplate"];
         post?: never;
-        /** Delete a contest template */
-        delete: operations["deleteTemplate"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1699,74 +1732,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/search/participants": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Search participants with filters */
-        get: operations["searchParticipants"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/search/discover/leagues": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Discover public leagues */
-        get: operations["discoverLeagues"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/search/discover/contests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Discover open contests */
-        get: operations["discoverContests"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/search/discover/report": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Report a league or contest */
-        post: operations["reportDiscoveryEntity"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/account/verify-age": {
         parameters: {
             query?: never;
@@ -1809,7 +1774,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Check current personal data export status */
+        get: operations["getDataExportStatus"];
         put?: never;
         /** Request personal data export (GDPR) */
         post: operations["requestDataExport"];
@@ -1843,10 +1809,47 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get current account deletion request status */
+        get: operations["getAccountDeletionStatus"];
         put?: never;
         /** Request account deletion */
         post: operations["requestAccountDeletion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/activity-limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get activity limit settings for current user */
+        get: operations["getActivityLimit"];
+        /** Update activity limit settings for current user */
+        put: operations["updateActivityLimit"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/session-reminder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get session reminder settings for current user */
+        get: operations["getSessionReminder"];
+        /** Update session reminder settings for current user */
+        put: operations["updateSessionReminder"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2990,7 +2993,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get recent API requests for a tenant */
+        /** Get recent support activity for a tenant */
         get: operations["adminGetTenantRequests"];
         put?: never;
         post?: never;
@@ -3128,6 +3131,57 @@ export interface paths {
         };
         /** Download tenant export */
         get: operations["adminDownloadExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit-log/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export audit log entries */
+        get: operations["adminExportAuditLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List audit log entries */
+        get: operations["adminListAuditLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit-log/{entryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get audit log entry detail */
+        get: operations["adminGetAuditEntry"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3917,23 +3971,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/billing/invoices/{invoiceId}/pdf": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get invoice PDF download URL */
-        get: operations["getInvoicePdf"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/billing/upgrade-preview/{planSlug}": {
         parameters: {
             query?: never;
@@ -4243,6 +4280,144 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/social/messages/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List direct message conversations */
+        get: operations["listSocialConversations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/messages/conversations/{conversationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get messages in a direct message conversation */
+        get: operations["getSocialConversationMessages"];
+        put?: never;
+        /** Send a direct message */
+        post: operations["sendSocialConversationMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/messages/conversations/{conversationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark a direct message conversation as read */
+        patch: operations["markSocialConversationRead"];
+        trace?: never;
+    };
+    "/api/v1/social/contests/{contestId}/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get contest chat messages */
+        get: operations["getContestChat"];
+        put?: never;
+        /** Send a contest chat message */
+        post: operations["sendContestChatMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/shares/{shareId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get share card details */
+        get: operations["getShareCard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/leagues/{leagueId}/recap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get league recap */
+        get: operations["getLeagueRecap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drafts/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List selection templates */
+        get: operations["listSelectionTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drafts/templates/{templateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a selection template by ID */
+        get: operations["getSelectionTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/drafts/{contestId}": {
         parameters: {
             query?: never;
@@ -4288,6 +4463,40 @@ export interface paths {
         put?: never;
         /** Submit a draft pick */
         post: operations["submitDraftPick"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drafts/{contestId}/bracket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Reset the current user bracket submission */
+        delete: operations["resetBracketSubmission"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drafts/{contestId}/bracket/auto-fill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auto-fill the current user bracket submission */
+        post: operations["autoFillBracketSubmission"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4345,34 +4554,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/drafts/templates": {
+    "/api/v1/drafts/{contestId}/undo": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List selection templates */
-        get: operations["listSelectionTemplates"];
+        get?: never;
         put?: never;
-        post?: never;
+        /** Undo the most recent snake draft pick */
+        post: operations["undoLiveDraftPick"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/drafts/templates/{templateId}": {
+    "/api/v1/drafts/{contestId}/skip": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get a selection template by ID */
-        get: operations["getSelectionTemplate"];
+        get?: never;
         put?: never;
-        post?: never;
+        /** Skip the current snake draft pick */
+        post: operations["skipLiveDraftPick"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4949,6 +5158,8 @@ export interface operations {
                             id: string;
                             email: string;
                             displayName: string;
+                            /** @enum {string} */
+                            authProvider?: "email" | "google" | "apple";
                             tenantId?: string;
                             timezone?: string;
                             locale?: string;
@@ -4994,6 +5205,8 @@ export interface operations {
                             id: string;
                             email: string;
                             displayName: string;
+                            /** @enum {string} */
+                            authProvider?: "email" | "google" | "apple";
                             tenantId?: string;
                             timezone?: string;
                             locale?: string;
@@ -5061,7 +5274,12 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                    };
+                };
             };
         };
     };
@@ -5086,7 +5304,11 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
             };
         };
     };
@@ -5097,14 +5319,27 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    code: string;
+                    state: string;
+                };
+            };
+        };
         responses: {
             /** @description Default Response */
-            200: {
+            501: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
             };
         };
     };
@@ -5128,6 +5363,8 @@ export interface operations {
                             id: string;
                             email: string;
                             displayName: string;
+                            /** @enum {string} */
+                            authProvider?: "email" | "google" | "apple";
                             tenantId?: string;
                             timezone?: string;
                             locale?: string;
@@ -5338,8 +5575,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5370,8 +5606,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5396,8 +5631,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    listLeagueMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        members: {
+                            id: string;
+                            userId: string;
+                            displayName: string;
+                            role: string;
+                            /** Format: date-time */
+                            joinedAt?: string;
+                        }[];
                     };
                 };
             };
@@ -5430,8 +5695,19 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        membership: {
+                            id: string;
+                            leagueId: string;
+                            userId: string;
+                            role: string;
+                            permissions: string[];
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -5444,6 +5720,31 @@ export interface operations {
             path: {
                 id: string;
                 uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                    };
+                };
+            };
+        };
+    };
+    leaveLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
             };
             cookie?: never;
         };
@@ -5487,8 +5788,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        previousOwner: {
+                            id: string;
+                            leagueId: string;
+                            userId: string;
+                            role: string;
+                            permissions: string[];
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                        newOwner: {
+                            id: string;
+                            leagueId: string;
+                            userId: string;
+                            role: string;
+                            permissions: string[];
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -5512,22 +5837,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        league: {
-                            id: string;
-                            name: string;
-                            description?: string | null;
-                            visibility: string;
-                            memberCount: number;
-                            activeContestCount: number;
-                            role?: string;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            maxMembers?: number;
-                            settings?: {
-                                [key: string]: unknown;
-                            };
-                            invitePolicy?: string;
-                        };
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5552,8 +5862,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5577,8 +5886,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5602,47 +5910,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    bulkCreateContests: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    templateId: string;
-                    namingPattern: string;
-                    events: {
-                        name: string;
-                        /** Format: date-time */
-                        startsAt?: string;
-                        /** Format: date-time */
-                        endsAt?: string;
-                    }[];
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entries: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -5667,14 +5937,13 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5702,14 +5971,13 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5731,14 +5999,64 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        membership: {
+                            id: string;
+                            leagueId: string;
+                            userId: string;
+                            role: string;
+                            permissions: string[];
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Default Response */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -5770,6 +6088,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
                             startsAt?: string | null;
@@ -5777,6 +6096,8 @@ export interface operations {
                             endsAt?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
                         }[];
                     };
                 };
@@ -5796,25 +6117,67 @@ export interface operations {
             content: {
                 "application/json": {
                     name: string;
+                    sport: string;
+                    eventId?: string;
+                    seasonId?: string;
                     /** @enum {string} */
                     contestType: "SINGLE_EVENT";
                     /** @enum {string} */
-                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+                    selectionConfig?: {
+                        draftMode?: string;
+                        rounds?: number;
+                        timePerPickSeconds?: number;
+                        autoPickPolicy?: string;
+                        tierConfig?: {
+                            tierId: string;
+                            tierName: string;
+                            tierNumber: number;
+                            picksFromTier: number;
+                            rankingRange?: [
+                                number,
+                                number
+                            ];
+                            priceRange?: [
+                                number,
+                                number
+                            ];
+                            maxParticipants?: number;
+                            participantIds: string[];
+                        }[];
+                        tierAssignmentMethod?: string;
+                        budget?: number;
+                        pricingMethod?: string;
+                        rosterSize?: number;
+                        pickCount?: number;
+                        survivorStyle?: string;
+                        picksPerPeriod?: number;
+                        oneEntityPerSeason?: boolean;
+                        strikesBeforeElimination?: number;
+                        buybacksAllowed?: boolean;
+                        roundValues?: number[];
+                        startRound?: string;
+                        isExclusive?: boolean;
+                        bestBallN?: number;
+                        missedCutPenalty?: number;
+                        captainSlot?: boolean;
+                        captainMultiplier?: number;
+                    };
                     /** @enum {string} */
                     scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                    seasonId?: string;
-                    selectionConfig?: Record<string, never>;
-                    scoringRules?: Record<string, never>;
+                    scoringRules?: {
+                        [key: string]: unknown;
+                    };
                     scoringTemplateKey?: string;
                     payoutConfig?: {
                         entryFee?: number;
                         prizePool?: number;
-                        payoutStructure?: {
+                        payoutStructure: {
                             rank: number;
                             percentage: number;
                             fixedAmount?: number;
                         }[];
-                        intermediatePrizes?: {
+                        intermediatePrizes: {
                             name: string;
                             description?: string;
                             amount?: number;
@@ -5848,6 +6211,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
                             startsAt?: string | null;
@@ -5855,13 +6219,14 @@ export interface operations {
                             endsAt?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
                             scoringRules?: {
                                 [key: string]: unknown;
                             };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
-                            sport?: string | null;
                         };
                         selectionConfig?: {
                             [key: string]: unknown;
@@ -5897,6 +6262,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
                             startsAt?: string | null;
@@ -5904,13 +6270,14 @@ export interface operations {
                             endsAt?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
                             scoringRules?: {
                                 [key: string]: unknown;
                             };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
-                            sport?: string | null;
                         };
                         selectionConfig?: {
                             [key: string]: unknown;
@@ -5933,8 +6300,24 @@ export interface operations {
             content: {
                 "application/json": {
                     name?: string;
-                    scoringRules?: Record<string, never>;
-                    payoutConfig?: Record<string, never>;
+                    scoringRules?: {
+                        [key: string]: unknown;
+                    };
+                    payoutConfig?: {
+                        entryFee?: number;
+                        prizePool?: number;
+                        payoutStructure: {
+                            rank: number;
+                            percentage: number;
+                            fixedAmount?: number;
+                        }[];
+                        intermediatePrizes: {
+                            name: string;
+                            description?: string;
+                            amount?: number;
+                            percentage?: number;
+                        }[];
+                    };
                     /** Format: date-time */
                     startsAt?: string;
                     /** Format: date-time */
@@ -5961,6 +6344,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
                             startsAt?: string | null;
@@ -5968,13 +6352,14 @@ export interface operations {
                             endsAt?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
                             scoringRules?: {
                                 [key: string]: unknown;
                             };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
-                            sport?: string | null;
                         };
                         selectionConfig?: {
                             [key: string]: unknown;
@@ -6004,6 +6389,178 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
+                    };
+                };
+            };
+        };
+    };
+    listContestEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        total: number;
+                        isJoined: boolean;
+                        myEntryId: string | null;
+                        entries: {
+                            id: string;
+                            contestId: string;
+                            leagueMembershipId: string;
+                            name: string;
+                            totalScore: number;
+                            rank?: number | null;
+                            isEliminated: boolean;
+                            ownerId: string;
+                            ownerDisplayName: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    getMyContestEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        entry: {
+                            id: string;
+                            contestId: string;
+                            leagueMembershipId: string;
+                            name: string;
+                            totalScore: number;
+                            rank?: number | null;
+                            isEliminated: boolean;
+                            ownerId: string;
+                            ownerDisplayName: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        } | null;
+                    };
+                };
+            };
+        };
+    };
+    enterContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        entry: {
+                            id: string;
+                            contestId: string;
+                            leagueMembershipId: string;
+                            name: string;
+                            totalScore: number;
+                            rank?: number | null;
+                            isEliminated: boolean;
+                            ownerId: string;
+                            ownerDisplayName: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        entry: {
+                            id: string;
+                            contestId: string;
+                            leagueMembershipId: string;
+                            name: string;
+                            totalScore: number;
+                            rank?: number | null;
+                            isEliminated: boolean;
+                            ownerId: string;
+                            ownerDisplayName: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    leaveContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        /** @enum {boolean} */
+                        deleted: true;
                     };
                 };
             };
@@ -6179,8 +6736,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        teamsAffected: number;
+                        standingsChanged: boolean;
+                        changes: {
+                            entryId: string;
+                            oldRank: number;
+                            newRank: number;
+                            oldScore: number;
+                            newScore: number;
+                        }[];
                     };
                 };
             };
@@ -6210,8 +6775,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contest: {
+                            id: string;
+                            name: string;
+                            status: string;
+                            contestType: string;
+                            selectionType: string;
+                            scoringEngine: string;
+                            leagueId: string;
+                            sport?: string | null;
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
+                            scoringRules?: {
+                                [key: string]: unknown;
+                            };
+                            /** Format: date-time */
+                            lockAt?: string | null;
+                            isExclusive?: boolean;
+                        };
+                        selectionConfig?: {
+                            [key: string]: unknown;
+                        } | null;
                     };
                 };
             };
@@ -6241,8 +6832,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contest: {
+                            id: string;
+                            name: string;
+                            status: string;
+                            contestType: string;
+                            selectionType: string;
+                            scoringEngine: string;
+                            leagueId: string;
+                            sport?: string | null;
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
+                            scoringRules?: {
+                                [key: string]: unknown;
+                            };
+                            /** Format: date-time */
+                            lockAt?: string | null;
+                            isExclusive?: boolean;
+                        };
+                        selectionConfig?: {
+                            [key: string]: unknown;
+                        } | null;
                     };
                 };
             };
@@ -6274,8 +6891,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contest: {
+                            id: string;
+                            name: string;
+                            status: string;
+                            contestType: string;
+                            selectionType: string;
+                            scoringEngine: string;
+                            leagueId: string;
+                            sport?: string | null;
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
+                            scoringRules?: {
+                                [key: string]: unknown;
+                            };
+                            /** Format: date-time */
+                            lockAt?: string | null;
+                            isExclusive?: boolean;
+                        };
+                        selectionConfig?: {
+                            [key: string]: unknown;
+                        } | null;
                     };
                 };
             };
@@ -6307,8 +6950,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contest: {
+                            id: string;
+                            name: string;
+                            status: string;
+                            contestType: string;
+                            selectionType: string;
+                            scoringEngine: string;
+                            leagueId: string;
+                            sport?: string | null;
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
+                            scoringRules?: {
+                                [key: string]: unknown;
+                            };
+                            /** Format: date-time */
+                            lockAt?: string | null;
+                            isExclusive?: boolean;
+                        };
+                        selectionConfig?: {
+                            [key: string]: unknown;
+                        } | null;
                     };
                 };
             };
@@ -6364,10 +7033,12 @@ export interface operations {
             };
         };
     };
-    listTemplates: {
+    listEvents: {
         parameters: {
-            query: {
-                leagueId: string;
+            query?: {
+                sport?: string;
+                status?: string;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -6382,134 +7053,19 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    createTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    leagueId: string;
-                    name: string;
-                    description?: string;
-                    sport: string;
-                    /** @enum {string} */
-                    contestType: "SINGLE_EVENT" | "SEASON_LONG";
-                    draftConfig?: Record<string, never>;
-                    scoringConfig?: Record<string, never>;
-                    payoutConfig?: Record<string, never>;
-                    poolConfig?: Record<string, never>;
-                    sharedWithTenant?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    updateTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name?: string;
-                    description?: string;
-                    draftConfig?: Record<string, never>;
-                    scoringConfig?: Record<string, never>;
-                    payoutConfig?: Record<string, never>;
-                    poolConfig?: Record<string, never>;
-                    sharedWithTenant?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    deleteTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        events: {
+                            id: string;
+                            sport: string;
+                            name: string;
+                            venue?: string | null;
+                            location?: string | null;
+                            status: string;
+                            /** Format: date-time */
+                            startDate: string;
+                            endDate?: string | null;
+                            participantCount?: number | null;
+                            fieldLocked: boolean;
+                        }[];
                     };
                 };
             };
@@ -6542,12 +7098,39 @@ export interface operations {
                     "application/json": {
                         participants: {
                             id: string;
+                            sportId: string;
                             name: string;
-                            sport: string;
+                            participantType: string;
+                            externalId?: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            firstName?: string;
+                            lastName?: string;
+                            shortName?: string;
+                            nationality?: string;
                             position?: string | null;
                             teamAffiliation?: string | null;
                             status: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
                             photoUrl?: string | null;
+                            /** Format: date-time */
+                            photoLastUpdated?: string;
+                            externalIds: {
+                                [key: string]: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
                         }[];
                         total: number;
                     };
@@ -6589,8 +7172,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participant: {
+                            id: string;
+                            sportId: string;
+                            name: string;
+                            participantType: string;
+                            externalId?: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            firstName?: string;
+                            lastName?: string;
+                            shortName?: string;
+                            nationality?: string;
+                            position?: string | null;
+                            teamAffiliation?: string | null;
+                            status: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
+                            photoUrl?: string | null;
+                            /** Format: date-time */
+                            photoLastUpdated?: string;
+                            externalIds: {
+                                [key: string]: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -6614,8 +7231,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participant: {
+                            id: string;
+                            sportId: string;
+                            name: string;
+                            participantType: string;
+                            externalId?: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            firstName?: string;
+                            lastName?: string;
+                            shortName?: string;
+                            nationality?: string;
+                            position?: string | null;
+                            teamAffiliation?: string | null;
+                            status: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
+                            photoUrl?: string | null;
+                            /** Format: date-time */
+                            photoLastUpdated?: string;
+                            externalIds: {
+                                [key: string]: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -6657,8 +7308,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participant: {
+                            id: string;
+                            sportId: string;
+                            name: string;
+                            participantType: string;
+                            externalId?: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            firstName?: string;
+                            lastName?: string;
+                            shortName?: string;
+                            nationality?: string;
+                            position?: string | null;
+                            teamAffiliation?: string | null;
+                            status: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
+                            photoUrl?: string | null;
+                            /** Format: date-time */
+                            photoLastUpdated?: string;
+                            externalIds: {
+                                [key: string]: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -6682,8 +7367,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        seasonRecords: {
+                            id: string;
+                            participantId: string;
+                            sport: string;
+                            season: string;
+                            rankings: {
+                                rankingType: string;
+                                rank: number;
+                                points?: number;
+                                /** Format: date-time */
+                                asOfDate: string;
+                            }[];
+                            budgetPrice: number;
+                            priceTier?: string;
+                            /** Format: date-time */
+                            priceUpdatedAt?: string;
+                            eventsEntered: number;
+                            eventsCompleted: number;
+                            wins: number;
+                            top5Finishes: number;
+                            top10Finishes: number;
+                            top25Finishes: number;
+                            seasonStats: {
+                                [key: string]: number;
+                            };
+                            formRating: number;
+                            formTrend: string;
+                            /** Format: date-time */
+                            lastUpdated: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
                     };
                 };
             };
@@ -6708,8 +7425,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        seasonRecord: {
+                            id: string;
+                            participantId: string;
+                            sport: string;
+                            season: string;
+                            rankings: {
+                                rankingType: string;
+                                rank: number;
+                                points?: number;
+                                /** Format: date-time */
+                                asOfDate: string;
+                            }[];
+                            budgetPrice: number;
+                            priceTier?: string;
+                            /** Format: date-time */
+                            priceUpdatedAt?: string;
+                            eventsEntered: number;
+                            eventsCompleted: number;
+                            wins: number;
+                            top5Finishes: number;
+                            top10Finishes: number;
+                            top25Finishes: number;
+                            seasonStats: {
+                                [key: string]: number;
+                            };
+                            formRating: number;
+                            formTrend: string;
+                            /** Format: date-time */
+                            lastUpdated: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -6733,16 +7482,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        pool: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        contestId: string;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -6775,16 +7515,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        pool: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        contestId: string;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -6818,16 +7549,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        pool: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        contestId: string;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -6851,8 +7573,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -6876,16 +7597,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        pool: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        contestId: string;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -6909,8 +7621,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -6935,8 +7646,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -6961,8 +7671,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -6993,8 +7702,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7019,8 +7727,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7062,8 +7769,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7095,8 +7801,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7138,8 +7843,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7165,8 +7869,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7200,8 +7903,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participants: {
+                            participantId: string;
+                            displayName: string;
+                            photoUrl: string;
+                            sport: string;
+                            position?: string;
+                            teamAffiliation?: string;
+                            nationality?: string;
+                            ranking?: number;
+                            budgetPrice?: number;
+                            tier?: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
+                            isAvailable: boolean;
+                            unavailableReason?: string;
+                            isDrafted: boolean;
+                        }[];
+                        total: number;
+                        facets: {
+                            positions: {
+                                value: string;
+                                count: number;
+                            }[];
+                            teams: {
+                                value: string;
+                                count: number;
+                            }[];
+                            nationalities: {
+                                value: string;
+                                count: number;
+                            }[];
+                            tiers: {
+                                value: string;
+                                count: number;
+                            }[];
+                            injuryStatuses: {
+                                value: string;
+                                count: number;
+                            }[];
+                        };
                     };
                 };
             };
@@ -7232,17 +7980,20 @@ export interface operations {
                         standings: {
                             rank: number;
                             entryId: string;
-                            userId: string;
-                            displayName: string;
-                            score: number;
-                            wins: number;
-                            losses: number;
-                            previousRank?: number | null;
+                            entryName: string;
+                            ownerDisplayName: string;
+                            ownerId: string;
+                            totalScore: number;
+                            previousRank: number | null;
                             /** @enum {string} */
-                            movement?: "up" | "down" | "same" | "new";
-                            isEliminated?: boolean;
+                            movement: "up" | "down" | "same" | "new";
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            lastUpdatedAt: string;
                         }[];
                         total: number;
+                        page: number;
+                        pageSize: number;
                         contestId: string;
                     };
                 };
@@ -7269,20 +8020,21 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        standings: {
+                        topEntries: {
                             rank: number;
                             entryId: string;
-                            userId: string;
-                            displayName: string;
-                            score: number;
-                            wins: number;
-                            losses: number;
-                            previousRank?: number | null;
+                            entryName: string;
+                            ownerDisplayName: string;
+                            ownerId: string;
+                            totalScore: number;
+                            previousRank: number | null;
                             /** @enum {string} */
-                            movement?: "up" | "down" | "same" | "new";
-                            isEliminated?: boolean;
+                            movement: "up" | "down" | "same" | "new";
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            lastUpdatedAt: string;
                         }[];
-                        total: number;
+                        totalEntries: number;
                         contestId: string;
                     };
                 };
@@ -7307,8 +8059,22 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entry: {
+                            rank: number;
+                            entryId: string;
+                            entryName: string;
+                            ownerDisplayName: string;
+                            ownerId: string;
+                            totalScore: number;
+                            previousRank: number | null;
+                            /** @enum {string} */
+                            movement: "up" | "down" | "same" | "new";
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            lastUpdatedAt: string;
+                        };
+                        totalEntries: number;
+                        contestId: string;
                     };
                 };
             };
@@ -7332,8 +8098,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7357,8 +8122,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        standings: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7383,8 +8149,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7408,8 +8173,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        payouts: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7433,8 +8199,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        results: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7459,8 +8226,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        results: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7484,8 +8252,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7509,8 +8276,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7535,8 +8301,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7560,8 +8325,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        seasons: {
+                            id: string;
+                            leagueId: string;
+                            seasonId?: string | null;
+                            seasonName: string;
+                            sport?: string | null;
+                            year?: number | null;
+                            numMembers: number;
+                            numContests: number;
+                            totalPrizePool: number;
+                            champions: {
+                                contestId: string;
+                                contestName: string;
+                                entryId: string;
+                                entryName: string;
+                                memberId: string;
+                                memberName: string;
+                                finalScore: number;
+                                prizeWon?: number;
+                            }[];
+                            highlights: {
+                                highestScore?: number;
+                                lowestScore?: number;
+                            };
+                            commissionerNote?: string | null;
+                            /** Format: date-time */
+                            openedAt?: string | null;
+                            closedAt?: (string | null) | null;
+                            /** Format: date-time */
+                            createdAt: string | null;
+                            /** Format: date-time */
+                            updatedAt: string | null;
+                        }[];
                     };
                 };
             };
@@ -7586,8 +8382,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7611,8 +8406,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        champions: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7637,8 +8433,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7662,8 +8457,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        leaderboard: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7688,8 +8484,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        trophies: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7713,8 +8510,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        records: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7739,8 +8537,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7764,8 +8561,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7789,8 +8585,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        rivalries: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7816,8 +8613,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7841,8 +8637,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7866,8 +8661,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        luckScores: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7891,8 +8687,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        powerRatings: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7916,8 +8713,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        consistencyScores: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7941,8 +8739,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7966,8 +8763,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7991,8 +8787,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        rankings: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -8017,8 +8814,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        notes: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -8043,8 +8841,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8069,8 +8866,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8094,8 +8890,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        trophies: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -8119,8 +8916,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8142,8 +8938,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8165,8 +8960,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8190,8 +8984,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8215,8 +9008,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8240,8 +9032,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8265,8 +9056,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8290,148 +9080,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    searchParticipants: {
-        parameters: {
-            query?: {
-                q?: string;
-                sportId?: string;
-                status?: string;
-                position?: string;
-                team?: string;
-                nationality?: string;
-                sortBy?: "RELEVANCE" | "RANKING" | "NAME" | "PRICE" | "FORM";
-                limit?: string;
-                offset?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        participants: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        total: number;
-                        facets: {
-                            positions: {
-                                value: string;
-                                count: number;
-                            }[];
-                            teams: {
-                                value: string;
-                                count: number;
-                            }[];
-                            nationalities: {
-                                value: string;
-                                count: number;
-                            }[];
-                            rankingDistribution: {
-                                top10: number;
-                                top25: number;
-                                top50: number;
-                                top100: number;
-                                unranked: number;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-    };
-    discoverLeagues: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    discoverContests: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    reportDiscoveryEntity: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @enum {string} */
-                    entityType: "LEAGUE" | "CONTEST";
-                    entityId: string;
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -8459,8 +9108,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        allowed: boolean;
+                        age: number;
+                        reason?: string;
                     };
                 };
             };
@@ -8482,8 +9132,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        consents: {
+                            id: string;
+                            userId: string;
+                            consentType: string;
+                            granted: boolean;
+                            version: string;
+                            ipAddress?: string | null;
+                            userAgent?: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
                     };
                 };
             };
@@ -8500,7 +9159,7 @@ export interface operations {
             content: {
                 "application/json": {
                     /** @enum {string} */
-                    consentType: "terms_of_service" | "privacy_policy" | "marketing_email" | "analytics_cookies";
+                    consentType: "terms_of_service" | "privacy_policy" | "marketing_email" | "analytics_cookies" | "third_party_integrations" | "do_not_sell";
                     granted: boolean;
                     version: string;
                 };
@@ -8514,8 +9173,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        success: boolean;
+                    };
+                };
+            };
+        };
+    };
+    getDataExportStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "none" | "pending" | "ready";
+                        /** Format: date-time */
+                        requestedAt: string | null;
+                        downloadUrl: string | null;
+                        expiresAt: (string | null) | null;
+                        nextAllowedAt: (string | null) | null;
                     };
                 };
             };
@@ -8537,8 +9223,8 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        requestId: string;
+                        message: string;
                     };
                 };
             };
@@ -8562,8 +9248,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    getAccountDeletionStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "none" | "pending" | "cancelled" | "completed";
+                        requestId: string | null;
+                        /** Format: date-time */
+                        requestedAt: string | null;
+                        scheduledDeletionAt: (string | null) | null;
+                        cancelledAt: (string | null) | null;
+                        completedAt: (string | null) | null;
+                        reason: string | null;
                     };
                 };
             };
@@ -8576,7 +9291,13 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason?: string;
+                };
+            };
+        };
         responses: {
             /** @description Default Response */
             202: {
@@ -8585,8 +9306,122 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        requestId: string;
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    getActivityLimit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        activityLimit: {
+                            enabled: boolean;
+                            weeklyContestLimit: number;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateActivityLimit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    enabled: boolean;
+                    weeklyContestLimit: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        activityLimit: {
+                            enabled: boolean;
+                            weeklyContestLimit: number;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getSessionReminder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        sessionReminder: {
+                            enabled: boolean;
+                            intervalMinutes: number;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateSessionReminder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    enabled: boolean;
+                    intervalMinutes: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        sessionReminder: {
+                            enabled: boolean;
+                            intervalMinutes: number;
+                        };
                     };
                 };
             };
@@ -8612,6 +9447,7 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
+                        message: string;
                     };
                 };
             };
@@ -8633,8 +9469,18 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        exclusion: {
+                            id: string;
+                            userId: string;
+                            exclusionType: string;
+                            duration: string;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            isActive: boolean;
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            reactivatedAt?: (string | null) | null;
+                        } | null;
                     };
                 };
             };
@@ -8665,8 +9511,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        exclusionId: string;
                     };
                 };
             };
@@ -8699,8 +9544,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        enforcementId: string;
                     };
                 };
             };
@@ -8724,8 +9568,19 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        enforcement: {
+                            id: string;
+                            userId: string;
+                            level: string;
+                            reason: string;
+                            trigger: string;
+                            enforcedBy?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            appealStatus?: string | null;
+                            /** Format: date-time */
+                            createdAt: string | null;
+                        }[];
                     };
                 };
             };
@@ -8749,8 +9604,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        success: boolean;
                     };
                 };
             };
@@ -8772,8 +9626,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: number;
                     };
                 };
             };
@@ -8803,8 +9656,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            name: string;
+                            slug: string;
+                            planTier: string;
+                            memberCount: number;
+                            contestCount: number;
+                            leagueCount: number;
+                            /** @enum {string} */
+                            status: "active" | "suspended" | "trial";
+                            /** Format: date-time */
+                            lastActiveAt?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                        totalPages: number;
                     };
                 };
             };
@@ -8828,8 +9698,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        tenant: {
+                            id: string;
+                            name: string;
+                            slug: string;
+                            planTier: string;
+                            settings: {
+                                [key: string]: unknown;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                        memberCount: number;
+                        leagueCount: number;
+                        contestCount: number;
+                        activeContestCount: number;
+                        /** @enum {string} */
+                        status: "active" | "suspended" | "trial";
+                        /** Format: date-time */
+                        lastActiveAt?: string;
+                        recentMembers: {
+                            id: string;
+                            email: string;
+                            displayName: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
                     };
                 };
             };
@@ -9040,8 +9936,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            email: string;
+                            displayName: string;
+                            tenants: {
+                                id: string;
+                                name: string;
+                                role: string;
+                            }[];
+                            /** Format: date-time */
+                            lastLoginAt?: string;
+                            /** @enum {string} */
+                            status: "active" | "disabled";
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                        totalPages: number;
                     };
                 };
             };
@@ -9095,8 +10009,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        email: string;
+                        displayName: string;
+                        authProvider?: string;
+                        /** @enum {string} */
+                        status: "active" | "disabled";
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        lastLoginAt?: string;
+                        tenants: {
+                            id: string;
+                            name: string;
+                            slug: string;
+                            role: string;
+                            /** Format: date-time */
+                            joinedAt: string;
+                        }[];
+                        leagues: {
+                            id: string;
+                            name: string;
+                            sport: string;
+                            role: string;
+                            tenantName: string;
+                        }[];
+                        activeContests: {
+                            id: string;
+                            name: string;
+                            sport: string;
+                            status: string;
+                            rank?: number;
+                        }[];
+                        devices: {
+                            id: string;
+                            platform: string;
+                            /** Format: date-time */
+                            lastActiveAt: string;
+                            tokenStatus: string;
+                        }[];
+                        recentAuthEvents: {
+                            type: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                            ipAddress?: string;
+                            success: boolean;
+                        }[];
                     };
                 };
             };
@@ -9265,8 +10223,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            name: string;
+                            leagueName: string;
+                            tenantName: string;
+                            sport: string;
+                            contestType: string;
+                            selectionType: string;
+                            status: string;
+                            entryCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        total: number;
                     };
                 };
             };
@@ -9290,8 +10260,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        sport: string;
+                        contestType: string;
+                        selectionType: string;
+                        scoringEngine: string;
+                        status: string;
+                        leagueName: string;
+                        leagueId: string;
+                        tenantName: string;
+                        tenantId: string;
+                        entryCount: number;
+                        /** Format: date-time */
+                        startsAt?: string | null;
+                        /** Format: date-time */
+                        endsAt?: string | null;
+                        /** Format: date-time */
+                        lockAt?: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        standings: {
+                            entryId: string;
+                            entryName: string;
+                            ownerEmail: string;
+                            rank: number;
+                            totalScore: number;
+                        }[];
+                        draftStatus?: {
+                            status: string;
+                            currentPick: number;
+                            totalPicks: number;
+                            /** Format: date-time */
+                            startedAt?: string | null;
+                        };
+                        picks: {
+                            round: number;
+                            pick: number;
+                            participant: string;
+                            owner: string;
+                            autoPicked: boolean;
+                            /** Format: date-time */
+                            time: string;
+                        }[];
+                        scoringFreshness: {
+                            /** Format: date-time */
+                            lastStatEvent?: string | null;
+                            isStale: boolean;
+                            staleMinutes: number;
+                        };
+                        statEventCount: number;
+                        correctionsApplied: number;
+                        overrides: {
+                            id: string;
+                            adminEmail: string;
+                            entryId: string;
+                            oldScore: number;
+                            newScore: number;
+                            reason: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
                     };
                 };
             };
@@ -9410,8 +10439,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        entriesAffected: number;
+                        rankChanges: {
+                            entryId: string;
+                            oldRank: number;
+                            newRank: number;
+                        }[];
+                        /** Format: date-time */
+                        recalculatedAt: string;
                     };
                 };
             };
@@ -9466,8 +10502,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        entriesAffected: number;
+                        rankChanges: {
+                            entryId: string;
+                            oldRank: number;
+                            newRank: number;
+                        }[];
+                        /** Format: date-time */
+                        recalculatedAt: string;
                     };
                 };
             };
@@ -9489,8 +10532,18 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            providerId: string;
+                            providerName: string;
+                            /** @enum {string} */
+                            status: "HEALTHY" | "DEGRADED" | "DOWN";
+                            errorRate: number;
+                            latencyMs: number;
+                            /** Format: date-time */
+                            lastEventAt: string | null;
+                            sportsCovered: string[];
+                            activeEventCount: number;
+                        }[];
                     };
                 };
             };
@@ -9512,8 +10565,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        sportProviderStatus: {
+                            sport: string;
+                            providerId: string;
+                            /** Format: date-time */
+                            lastPollAt: string | null;
+                            /** Format: date-time */
+                            lastEventReceivedAt: string | null;
+                            eventsToday: number;
+                            errorsToday: number;
+                            activeEventCount: number;
+                            contestsDepending: number;
+                        }[];
+                        recentErrors: {
+                            providerId: string;
+                            errorType: string;
+                            message: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                            eventId?: string | null;
+                        }[];
+                        activeJobs: {
+                            id: string;
+                            providerId: string;
+                            sport: string;
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            recordsProcessed: number;
+                            errors: number;
+                        }[];
+                        recentCompletedJobs: {
+                            id: string;
+                            providerId: string;
+                            sport: string;
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            recordsProcessed: number;
+                            errors: number;
+                        }[];
+                        throughputPerMinute: number;
                     };
                 };
             };
@@ -9535,9 +10635,12 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
+                        providerId: string;
+                        providerName: string;
+                        externalId: string;
+                        externalName: string;
+                        sport: string;
+                    }[];
                 };
             };
         };
@@ -9552,6 +10655,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    providerId: string;
                     externalId: string;
                     internalId: string;
                 };
@@ -9590,8 +10694,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        providerId: string;
+                        providerName: string;
+                        /** @enum {string} */
+                        status: "HEALTHY" | "DEGRADED" | "DOWN";
+                        errorRate: number;
+                        latencyMs: number;
+                        /** Format: date-time */
+                        lastEventAt: string | null;
+                        sportsCovered: string[];
+                        activeEventCount: number;
+                        recentHealthChecks: {
+                            providerId: string;
+                            providerName: string;
+                            /** @enum {string} */
+                            status: "HEALTHY" | "DEGRADED" | "DOWN";
+                            errorRate: number;
+                            latencyMs: number;
+                            /** Format: date-time */
+                            checkedAt: string;
+                            details: string;
+                        }[];
+                        ingestionStats: {
+                            sport: string;
+                            providerId: string;
+                            /** Format: date-time */
+                            lastPollAt: string | null;
+                            /** Format: date-time */
+                            lastEventReceivedAt: string | null;
+                            eventsToday: number;
+                            errorsToday: number;
+                            activeEventCount: number;
+                            contestsDepending: number;
+                        }[];
+                        recentErrors: {
+                            providerId: string;
+                            errorType: string;
+                            message: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                            eventId?: string | null;
+                        }[];
+                        recentJobs: {
+                            id: string;
+                            providerId: string;
+                            sport: string;
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            recordsProcessed: number;
+                            errors: number;
+                        }[];
+                        unmappedParticipants: {
+                            providerId: string;
+                            providerName: string;
+                            externalId: string;
+                            externalName: string;
+                            sport: string;
+                        }[];
+                        mappedParticipantCount: number;
                     };
                 };
             };
@@ -9655,8 +10820,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        providerId: string;
+                        providerName: string;
+                        /** @enum {string} */
+                        status: "HEALTHY" | "DEGRADED" | "DOWN";
+                        errorRate: number;
+                        latencyMs: number;
+                        /** Format: date-time */
+                        checkedAt: string;
+                        details: string;
                     };
                 };
             };
@@ -9934,8 +11106,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        services: {
+                            name: string;
+                            /** @enum {string} */
+                            status: "UP" | "DEGRADED" | "DOWN";
+                            uptimePercent: number;
+                            errorRatePercent: number;
+                            p95LatencyMs: number;
+                            version: string;
+                            uptimeSeconds: number;
+                            /** Format: date-time */
+                            checkedAt: string;
+                            dependencies: {
+                                name: string;
+                                /** @enum {string} */
+                                status: "UP" | "DOWN";
+                                latencyMs: number;
+                            }[];
+                        }[];
                     };
                 };
             };
@@ -9957,8 +11145,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        postgres: {
+                            /** @enum {string} */
+                            status: "UP" | "DEGRADED" | "DOWN";
+                            cpuPercent: number;
+                            connectionsCurrent: number;
+                            connectionsMax: number;
+                            diskUsageGb: number;
+                            diskTotalGb: number;
+                            replicationLagMs: number;
+                            slowQueriesLast24h: number;
+                        };
+                        messageBus: {
+                            /** @enum {string} */
+                            status: "UP" | "DEGRADED" | "DOWN";
+                            queueDepth: number;
+                            consumerLagSeconds: number;
+                            messagesPerSecond: number;
+                            deadLetterCount: number;
+                        };
+                        s3Cdn: {
+                            /** @enum {string} */
+                            status: "UP" | "DEGRADED" | "DOWN";
+                            bandwidthGbPerDay: number;
+                            requestsLast24h: number;
+                            errorRatePercent: number;
+                            storageUsedGb: number;
+                        };
+                        /** Format: date-time */
+                        checkedAt: string;
                     };
                 };
             };
@@ -9980,26 +11195,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        activeTenants: {
-                            value: number;
-                            trend: number;
-                        };
-                        totalUsers: {
-                            value: number;
-                            trend: number;
-                        };
-                        activeContests: {
-                            value: number;
-                            trend: number;
-                        };
-                        liveDrafts: {
-                            value: number;
-                            trend: number;
-                        };
-                        notificationRate: {
-                            value: number;
-                            trend: number;
-                        };
+                        activeUsersLast24h: number;
+                        websocketConnectionsCurrent: number;
+                        apiRequestsLast24h: number;
+                        notificationsSent: number;
+                        notificationsDelivered: number;
+                        notificationDeliveryRatePercent: number;
+                        activeContests: number;
+                        liveDrafts: number;
+                        /** Format: date-time */
+                        checkedAt: string;
                     };
                 };
             };
@@ -10029,8 +11234,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            service: string;
+                            /** @enum {string} */
+                            severity: "ERROR" | "CRITICAL" | "WARNING";
+                            message: string;
+                            errorType: string;
+                            requestId: string;
+                            tenantId?: string;
+                            userId?: string;
+                            stackTrace: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            /** Format: date-time */
+                            occurredAt: string;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                        totalPages: number;
                     };
                 };
             };
@@ -10054,8 +11278,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        service: string;
+                        /** @enum {string} */
+                        severity: "ERROR" | "CRITICAL" | "WARNING";
+                        message: string;
+                        errorType: string;
+                        requestId: string;
+                        tenantId?: string;
+                        userId?: string;
+                        stackTrace: string;
+                        metadata: {
+                            [key: string]: unknown;
+                        };
+                        /** Format: date-time */
+                        occurredAt: string;
+                        httpMethod?: string;
+                        httpPath?: string;
+                        httpStatusCode?: number;
+                        headers?: {
+                            [key: string]: string;
+                        };
+                        requestBody?: {
+                            [key: string]: unknown;
+                        };
+                        responseTimeMs?: number;
+                        hostName: string;
+                        environment: string;
                     };
                 };
             };
@@ -10077,8 +11326,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        rules: {
+                            id: string;
+                            name: string;
+                            description: string;
+                            /** @enum {string} */
+                            category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
+                            isEnabled: boolean;
+                            isMuted: boolean;
+                            /** Format: date-time */
+                            mutedUntil?: string;
+                            /** @enum {string} */
+                            severity: "P1" | "P2" | "P3";
+                            channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
+                            thresholds: {
+                                [key: string]: number;
+                            };
+                            windowMinutes: number;
+                            /** Format: date-time */
+                            lastTriggeredAt?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
                     };
                 };
             };
@@ -10113,8 +11384,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        /** @enum {string} */
+                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
+                        isEnabled: boolean;
+                        isMuted: boolean;
+                        /** Format: date-time */
+                        mutedUntil?: string;
+                        /** @enum {string} */
+                        severity: "P1" | "P2" | "P3";
+                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
+                        thresholds: {
+                            [key: string]: number;
+                        };
+                        windowMinutes: number;
+                        /** Format: date-time */
+                        lastTriggeredAt?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10145,8 +11436,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        /** @enum {string} */
+                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
+                        isEnabled: boolean;
+                        isMuted: boolean;
+                        /** Format: date-time */
+                        mutedUntil?: string;
+                        /** @enum {string} */
+                        severity: "P1" | "P2" | "P3";
+                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
+                        thresholds: {
+                            [key: string]: number;
+                        };
+                        windowMinutes: number;
+                        /** Format: date-time */
+                        lastTriggeredAt?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10170,8 +11481,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        /** @enum {string} */
+                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
+                        isEnabled: boolean;
+                        isMuted: boolean;
+                        /** Format: date-time */
+                        mutedUntil?: string;
+                        /** @enum {string} */
+                        severity: "P1" | "P2" | "P3";
+                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
+                        thresholds: {
+                            [key: string]: number;
+                        };
+                        windowMinutes: number;
+                        /** Format: date-time */
+                        lastTriggeredAt?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10268,8 +11599,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "BANNER" | "NOTIFICATION" | "BOTH";
+                            title: string;
+                            body: string;
+                            linkUrl?: string;
+                            linkText?: string;
+                            /** @enum {string} */
+                            severity: "INFO" | "WARNING" | "CRITICAL";
+                            dismissable: boolean;
+                            /** @enum {string} */
+                            target: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
+                            targetTenantIds?: string[];
+                            /** Format: date-time */
+                            startsAt: string;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            isActive: boolean;
+                            createdBy: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
+                        total: number;
                     };
                 };
             };
@@ -10291,8 +11646,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            /** @enum {string} */
+                            type: "BANNER" | "NOTIFICATION" | "BOTH";
+                            title: string;
+                            body: string;
+                            linkUrl?: string;
+                            linkText?: string;
+                            /** @enum {string} */
+                            severity: "INFO" | "WARNING" | "CRITICAL";
+                            dismissable: boolean;
+                            /** @enum {string} */
+                            target: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
+                            targetTenantIds?: string[];
+                            /** Format: date-time */
+                            startsAt: string;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            isActive: boolean;
+                            createdBy: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
+                        total: number;
                     };
                 };
             };
@@ -10329,14 +11708,35 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        /** @enum {string} */
+                        type: "BANNER" | "NOTIFICATION" | "BOTH";
+                        title: string;
+                        body: string;
+                        linkUrl?: string;
+                        linkText?: string;
+                        /** @enum {string} */
+                        severity: "INFO" | "WARNING" | "CRITICAL";
+                        dismissable: boolean;
+                        /** @enum {string} */
+                        target: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
+                        targetTenantIds?: string[];
+                        /** Format: date-time */
+                        startsAt: string;
+                        /** Format: date-time */
+                        endsAt?: string | null;
+                        isActive: boolean;
+                        createdBy: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10360,8 +11760,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        /** @enum {string} */
+                        type: "BANNER" | "NOTIFICATION" | "BOTH";
+                        title: string;
+                        body: string;
+                        linkUrl?: string;
+                        linkText?: string;
+                        /** @enum {string} */
+                        severity: "INFO" | "WARNING" | "CRITICAL";
+                        dismissable: boolean;
+                        /** @enum {string} */
+                        target: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
+                        targetTenantIds?: string[];
+                        /** Format: date-time */
+                        startsAt: string;
+                        /** Format: date-time */
+                        endsAt?: string | null;
+                        isActive: boolean;
+                        createdBy: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10404,8 +11825,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        /** @enum {string} */
+                        type: "BANNER" | "NOTIFICATION" | "BOTH";
+                        title: string;
+                        body: string;
+                        linkUrl?: string;
+                        linkText?: string;
+                        /** @enum {string} */
+                        severity: "INFO" | "WARNING" | "CRITICAL";
+                        dismissable: boolean;
+                        /** @enum {string} */
+                        target: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
+                        targetTenantIds?: string[];
+                        /** Format: date-time */
+                        startsAt: string;
+                        /** Format: date-time */
+                        endsAt?: string | null;
+                        isActive: boolean;
+                        createdBy: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10454,8 +11896,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        /** @enum {string} */
+                        type: "BANNER" | "NOTIFICATION" | "BOTH";
+                        title: string;
+                        body: string;
+                        linkUrl?: string;
+                        linkText?: string;
+                        /** @enum {string} */
+                        severity: "INFO" | "WARNING" | "CRITICAL";
+                        dismissable: boolean;
+                        /** @enum {string} */
+                        target: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
+                        targetTenantIds?: string[];
+                        /** Format: date-time */
+                        startsAt: string;
+                        /** Format: date-time */
+                        endsAt?: string | null;
+                        isActive: boolean;
+                        createdBy: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10479,8 +11942,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        /** @enum {string} */
+                        type: "BANNER" | "NOTIFICATION" | "BOTH";
+                        title: string;
+                        body: string;
+                        linkUrl?: string;
+                        linkText?: string;
+                        /** @enum {string} */
+                        severity: "INFO" | "WARNING" | "CRITICAL";
+                        dismissable: boolean;
+                        /** @enum {string} */
+                        target: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
+                        targetTenantIds?: string[];
+                        /** Format: date-time */
+                        startsAt: string;
+                        /** Format: date-time */
+                        endsAt?: string | null;
+                        isActive: boolean;
+                        createdBy: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10502,8 +11986,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        available: {
+                            id: string;
+                            name: string;
+                            description: string;
+                            estimatedRecords: number;
+                            /** Format: date-time */
+                            lastRunAt: string | null;
+                            /** @enum {string|null} */
+                            lastRunStatus: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED" | null;
+                        }[];
+                        activeRuns: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string|null} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED" | null;
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        }[];
+                        recentHistory: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string|null} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED" | null;
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        }[];
                     };
                 };
             };
@@ -10528,14 +12080,42 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        run: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        };
                     };
                 };
             };
@@ -10559,8 +12139,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        run: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        };
                     };
                 };
             };
@@ -10584,8 +12192,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        run: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        };
                     };
                 };
             };
@@ -10609,8 +12245,45 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        tenantId: string;
+                        recentErrors: {
+                            id: string;
+                            service: string;
+                            errorType: string;
+                            message: string;
+                            requestId: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                        }[];
+                        notificationFailures: {
+                            id: string;
+                            eventType: string;
+                            channel: string;
+                            failureReason: string;
+                            userId: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                        }[];
+                        recentActivity: {
+                            id: string;
+                            action: string;
+                            resourceType: string;
+                            resourceId: string;
+                            description: string;
+                            adminUserEmail: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                        }[];
+                        scoringStaleness: {
+                            contestId: string;
+                            contestName: string;
+                            sport: string;
+                            /** Format: date-time */
+                            lastScoringUpdate: string;
+                            staleMinutes: number;
+                        }[];
+                        pendingCorrections: number;
+                        failedWebhooks: number;
                     };
                 };
             };
@@ -10634,8 +12307,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            service: string;
+                            errorType: string;
+                            message: string;
+                            requestId: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                        }[];
+                        total: number;
                     };
                 };
             };
@@ -10659,8 +12340,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            eventType: string;
+                            channel: string;
+                            failureReason: string;
+                            userId: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                        }[];
+                        total: number;
                     };
                 };
             };
@@ -10684,8 +12373,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            action: string;
+                            resourceType: string;
+                            resourceId: string;
+                            description: string;
+                            adminUserEmail: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                        }[];
+                        total: number;
                     };
                 };
             };
@@ -10714,8 +12412,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        /** @enum {string} */
+                        action: "reset-password";
+                        userId: string;
+                        email: string;
+                        /** @enum {string} */
+                        result: "PASSWORD_RESET_TRIGGERED";
+                        /** Format: date-time */
+                        triggeredAt: string;
                     };
                 };
             };
@@ -10744,8 +12448,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        /** @enum {string} */
+                        action: "check-provider";
+                        requestedSport: string;
+                        matchesSportCoverage: boolean;
+                        provider: {
+                            providerId: string;
+                            providerName: string;
+                            /** @enum {string} */
+                            status: "HEALTHY" | "DEGRADED" | "DOWN";
+                            errorRate: number;
+                            latencyMs: number;
+                            /** Format: date-time */
+                            lastEventAt: string | null;
+                            sportsCovered: string[];
+                            activeEventCount: number;
+                        };
+                        /** Format: date-time */
+                        checkedAt: string;
                     };
                 };
             };
@@ -10773,8 +12493,45 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        /** @enum {string} */
+                        action: "check-entitlements";
+                        tenantId: string;
+                        planTier: string;
+                        entitlements: {
+                            [key: string]: {
+                                entitled: boolean;
+                                reason?: string;
+                                currentUsage?: number;
+                                limit?: number;
+                                upgradePlan?: string;
+                            };
+                        };
+                        usage: {
+                            leagues: {
+                                /** @enum {string} */
+                                resource: "LEAGUES" | "MEMBERS" | "CONTESTS";
+                                current: number;
+                                limit: number;
+                                percentage: number;
+                            };
+                            members: {
+                                /** @enum {string} */
+                                resource: "LEAGUES" | "MEMBERS" | "CONTESTS";
+                                current: number;
+                                limit: number;
+                                percentage: number;
+                            };
+                            contests: {
+                                /** @enum {string} */
+                                resource: "LEAGUES" | "MEMBERS" | "CONTESTS";
+                                current: number;
+                                limit: number;
+                                percentage: number;
+                            };
+                        };
+                        withinLimits: boolean;
+                        /** Format: date-time */
+                        checkedAt: string;
                     };
                 };
             };
@@ -10802,8 +12559,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        /** @enum {string} */
+                        action: "check-notifications";
+                        userId: string;
+                        preferences: {
+                            doNotDisturb: boolean;
+                            categories: {
+                                [key: string]: boolean;
+                            };
+                        };
+                        devices: {
+                            platform: string;
+                            /** Format: date-time */
+                            lastSeen: string;
+                            tokenStatus: string;
+                        }[];
+                        recentDelivery: {
+                            sent: number;
+                            delivered: number;
+                            failed: number;
+                            deliveryRate: number;
+                        };
+                        failures: {
+                            eventType: string;
+                            channel: string;
+                            reason: string;
+                            /** Format: date-time */
+                            at: string;
+                        }[];
+                        /** Format: date-time */
+                        checkedAt: string;
                     };
                 };
             };
@@ -10832,8 +12617,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        entriesAffected: number;
+                        rankChanges: {
+                            entryId: string;
+                            oldRank: number;
+                            newRank: number;
+                        }[];
+                        /** Format: date-time */
+                        recalculatedAt: string;
+                        /** @enum {string} */
+                        action: "re-ingest-scores";
                     };
                 };
             };
@@ -10909,6 +12703,124 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
+                    };
+                };
+            };
+        };
+    };
+    adminExportAuditLog: {
+        parameters: {
+            query?: {
+                adminUserId?: string;
+                action?: string;
+                resourceType?: string;
+                resourceId?: string;
+                dateFrom?: string;
+                dateTo?: string;
+                search?: string;
+                page?: string;
+                pageSize?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                    };
+                };
+            };
+        };
+    };
+    adminListAuditLog: {
+        parameters: {
+            query?: {
+                adminUserId?: string;
+                action?: string;
+                resourceType?: string;
+                resourceId?: string;
+                dateFrom?: string;
+                dateTo?: string;
+                search?: string;
+                page?: string;
+                pageSize?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            adminUserEmail: string;
+                            adminUserName: string;
+                            action: string;
+                            resourceType: string;
+                            resourceId: string;
+                            description: string;
+                            reason?: string;
+                            ipAddress?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            hasStateChanges: boolean;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                    };
+                };
+            };
+        };
+    };
+    adminGetAuditEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        entry: {
+                            id: string;
+                            adminUserEmail: string;
+                            adminUserName: string;
+                            action: string;
+                            resourceType: string;
+                            resourceId: string;
+                            description: string;
+                            reason?: string;
+                            ipAddress?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            hasStateChanges: boolean;
+                        };
                     };
                 };
             };
@@ -11560,9 +13472,18 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
+                        id: string;
+                        sport: string;
+                        name: string;
+                        description: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    }[];
                 };
             };
         };
@@ -11587,14 +13508,23 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        sport: string;
+                        name: string;
+                        description: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -11618,8 +13548,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        sport: string;
+                        name: string;
+                        description: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -11652,8 +13591,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        sport: string;
+                        name: string;
+                        description: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -11700,9 +13648,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
+                        id: string;
+                        name: string;
+                        description: string;
+                        sport: string;
+                        contestType: string;
+                        selectionType: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
+                    }[];
                 };
             };
         };
@@ -11729,14 +13684,21 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        sport: string;
+                        contestType: string;
+                        selectionType: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
                     };
                 };
             };
@@ -11760,8 +13722,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        sport: string;
+                        contestType: string;
+                        selectionType: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
                     };
                 };
             };
@@ -11796,8 +13765,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        sport: string;
+                        contestType: string;
+                        selectionType: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
                     };
                 };
             };
@@ -12223,14 +14199,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        slug: string;
-                        name: string;
-                        displayOrder?: number;
-                        monthlyPriceCents?: number;
-                        annualPriceCents?: number;
-                        entitlements: {
-                            [key: string]: unknown;
+                        subscription: {
+                            id: string;
+                            tenantId: string;
+                            stripeCustomerId: string;
+                            stripeSubscriptionId: string | null;
+                            planSlug: string;
+                            /** @enum {string} */
+                            billingCycle: "MONTHLY" | "ANNUAL";
+                            status: string;
+                            /** Format: date-time */
+                            trialStart: string | null;
+                            /** Format: date-time */
+                            trialEnd: string | null;
+                            /** Format: date-time */
+                            currentPeriodStart: string;
+                            /** Format: date-time */
+                            currentPeriodEnd: string;
+                            /** Format: date-time */
+                            cancelledAt: string | null;
+                            cancelAtPeriodEnd: boolean;
+                            paymentMethodLast4: string | null;
+                            paymentMethodBrand: string | null;
+                            currency: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
                         };
+                    };
+                };
+            };
+            /** @description Default Response */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -12277,11 +14286,25 @@ export interface operations {
                 content: {
                     "application/json": {
                         usage: {
-                            resource: string;
-                            currentCount: number;
-                            limit: number;
-                            percentage: number;
-                        }[];
+                            leagues: {
+                                resource: string;
+                                current: number;
+                                limit: number;
+                                percentage: number;
+                            };
+                            members: {
+                                resource: string;
+                                current: number;
+                                limit: number;
+                                percentage: number;
+                            };
+                            contests: {
+                                resource: string;
+                                current: number;
+                                limit: number;
+                                percentage: number;
+                            };
+                        };
                     };
                 };
             };
@@ -12313,6 +14336,8 @@ export interface operations {
                                 [key: string]: unknown;
                             };
                         }[];
+                        billingEnabled?: boolean;
+                        upgradeLabel?: string;
                     };
                 };
             };
@@ -12328,14 +14353,53 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        subscription: {
+                            id: string;
+                            tenantId: string;
+                            stripeCustomerId: string;
+                            stripeSubscriptionId: string | null;
+                            planSlug: string;
+                            /** @enum {string} */
+                            billingCycle: "MONTHLY" | "ANNUAL";
+                            status: string;
+                            /** Format: date-time */
+                            trialStart: string | null;
+                            /** Format: date-time */
+                            trialEnd: string | null;
+                            /** Format: date-time */
+                            currentPeriodStart: string;
+                            /** Format: date-time */
+                            currentPeriodEnd: string;
+                            /** Format: date-time */
+                            cancelledAt: string | null;
+                            cancelAtPeriodEnd: boolean;
+                            paymentMethodLast4: string | null;
+                            paymentMethodBrand: string | null;
+                            currency: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Default Response */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -12357,8 +14421,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        subscription: {
+                            id: string;
+                            tenantId: string;
+                            stripeCustomerId: string;
+                            stripeSubscriptionId: string | null;
+                            planSlug: string;
+                            /** @enum {string} */
+                            billingCycle: "MONTHLY" | "ANNUAL";
+                            status: string;
+                            /** Format: date-time */
+                            trialStart: string | null;
+                            /** Format: date-time */
+                            trialEnd: string | null;
+                            /** Format: date-time */
+                            currentPeriodStart: string;
+                            /** Format: date-time */
+                            currentPeriodEnd: string;
+                            /** Format: date-time */
+                            cancelledAt: string | null;
+                            cancelAtPeriodEnd: boolean;
+                            paymentMethodLast4: string | null;
+                            paymentMethodBrand: string | null;
+                            currency: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Default Response */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -12380,8 +14483,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        subscription: {
+                            id: string;
+                            tenantId: string;
+                            stripeCustomerId: string;
+                            stripeSubscriptionId: string | null;
+                            planSlug: string;
+                            /** @enum {string} */
+                            billingCycle: "MONTHLY" | "ANNUAL";
+                            status: string;
+                            /** Format: date-time */
+                            trialStart: string | null;
+                            /** Format: date-time */
+                            trialEnd: string | null;
+                            /** Format: date-time */
+                            currentPeriodStart: string;
+                            /** Format: date-time */
+                            currentPeriodEnd: string;
+                            /** Format: date-time */
+                            cancelledAt: string | null;
+                            cancelAtPeriodEnd: boolean;
+                            paymentMethodLast4: string | null;
+                            paymentMethodBrand: string | null;
+                            currency: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -12403,8 +14532,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        clientSecret: string;
+                    };
+                };
+            };
+            /** @description Default Response */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -12426,8 +14580,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        url: string;
+                    };
+                };
+            };
+            /** @description Default Response */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -12495,9 +14674,12 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        invoices: {
+                        items: {
                             id: string;
-                            amount: number;
+                            tenantId?: string;
+                            stripeInvoiceId?: string;
+                            amount?: number;
+                            amountCents?: number;
                             currency: string;
                             status: string;
                             /** Format: date-time */
@@ -12505,8 +14687,17 @@ export interface operations {
                             /** Format: date-time */
                             periodEnd?: string;
                             /** Format: date-time */
+                            paidAt?: string | null;
+                            invoicePdfUrl?: string | null;
+                            lineItems?: {
+                                description: string;
+                                amountCents: number;
+                                quantity: number;
+                            }[];
+                            /** Format: date-time */
                             createdAt?: string;
                         }[];
+                        total: number;
                     };
                 };
             };
@@ -12528,18 +14719,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        invoices: {
-                            id: string;
-                            amount: number;
-                            currency: string;
-                            status: string;
-                            /** Format: date-time */
-                            periodStart?: string;
-                            /** Format: date-time */
-                            periodEnd?: string;
-                            /** Format: date-time */
-                            createdAt?: string;
+                        id: string;
+                        tenantId?: string;
+                        stripeInvoiceId?: string;
+                        amount?: number;
+                        amountCents?: number;
+                        currency: string;
+                        status: string;
+                        /** Format: date-time */
+                        periodStart?: string;
+                        /** Format: date-time */
+                        periodEnd?: string;
+                        /** Format: date-time */
+                        paidAt?: string | null;
+                        invoicePdfUrl?: string | null;
+                        lineItems?: {
+                            description: string;
+                            amountCents: number;
+                            quantity: number;
                         }[];
+                        /** Format: date-time */
+                        createdAt?: string;
+                    };
+                };
+            };
+            /** @description Default Response */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -12563,30 +14776,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        tenantId?: string;
+                        stripeInvoiceId?: string;
+                        amount?: number;
+                        amountCents?: number;
+                        currency: string;
+                        status: string;
+                        /** Format: date-time */
+                        periodStart?: string;
+                        /** Format: date-time */
+                        periodEnd?: string;
+                        /** Format: date-time */
+                        paidAt?: string | null;
+                        invoicePdfUrl?: string | null;
+                        lineItems?: {
+                            description: string;
+                            amountCents: number;
+                            quantity: number;
+                        }[];
+                        /** Format: date-time */
+                        createdAt?: string;
                     };
                 };
             };
-        };
-    };
-    getInvoicePdf: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invoiceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
             /** @description Default Response */
-            200: {
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
             };
         };
     };
@@ -12704,6 +14942,19 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
+                    };
+                };
+            };
+            /** @description Default Response */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -12865,8 +15116,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        tenantId: string;
+                        /** @enum {string} */
+                        phase: "NONE" | "GRACE" | "DEGRADED" | "PENDING_CANCEL" | "CANCELLED";
+                        /** Format: date-time */
+                        failedAt: string | null;
+                        retryCount: number;
+                        /** Format: date-time */
+                        nextRetryAt: string | null;
+                        /** Format: date-time */
+                        gracePeriodEndsAt: string | null;
+                        /** Format: date-time */
+                        degradedPeriodEndsAt: string | null;
+                        /** Format: date-time */
+                        cancellationAt: string | null;
                     };
                 };
             };
@@ -12893,17 +15156,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        items: {
+                        posts: {
                             id: string;
+                            leagueId: string;
+                            authorId: string;
                             type: string;
                             authorName: string;
                             content: string;
+                            isPinned: boolean;
+                            reactions: {
+                                [key: string]: string[];
+                            };
+                            replyCount: number;
+                            parentId?: string;
                             /** Format: date-time */
                             createdAt: string;
-                            replyCount: number;
-                            likeCount: number;
+                            /** Format: date-time */
+                            updatedAt: string;
                         }[];
-                        hasMore: boolean;
+                        nextCursor?: string;
                     };
                 };
             };
@@ -12929,14 +15200,46 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        leagueId: string;
+                        authorId: string;
+                        type: string;
+                        authorName: string;
+                        content: string;
+                        isPinned: boolean;
+                        reactions: {
+                            [key: string]: string[];
+                        };
+                        replyCount: number;
+                        parentId?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        replies?: {
+                            id: string;
+                            leagueId: string;
+                            authorId: string;
+                            type: string;
+                            authorName: string;
+                            content: string;
+                            isPinned: boolean;
+                            reactions: {
+                                [key: string]: string[];
+                            };
+                            replyCount: number;
+                            parentId?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
                     };
                 };
             };
@@ -12961,8 +15264,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        leagueId: string;
+                        authorId: string;
+                        type: string;
+                        authorName: string;
+                        content: string;
+                        isPinned: boolean;
+                        reactions: {
+                            [key: string]: string[];
+                        };
+                        replyCount: number;
+                        parentId?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        replies?: {
+                            id: string;
+                            leagueId: string;
+                            authorId: string;
+                            type: string;
+                            authorName: string;
+                            content: string;
+                            isPinned: boolean;
+                            reactions: {
+                                [key: string]: string[];
+                            };
+                            replyCount: number;
+                            parentId?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
                     };
                 };
             };
@@ -13013,14 +15348,46 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        leagueId: string;
+                        authorId: string;
+                        type: string;
+                        authorName: string;
+                        content: string;
+                        isPinned: boolean;
+                        reactions: {
+                            [key: string]: string[];
+                        };
+                        replyCount: number;
+                        parentId?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        replies?: {
+                            id: string;
+                            leagueId: string;
+                            authorId: string;
+                            type: string;
+                            authorName: string;
+                            content: string;
+                            isPinned: boolean;
+                            reactions: {
+                                [key: string]: string[];
+                            };
+                            replyCount: number;
+                            parentId?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
                     };
                 };
             };
@@ -13051,8 +15418,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        added: boolean;
                     };
                 };
             };
@@ -13110,6 +15476,493 @@ export interface operations {
             };
         };
     };
+    listSocialConversations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        participantName: string;
+                        participantInitials: string;
+                        participantAvatarUrl: string | null;
+                        lastMessage: string;
+                        /** Format: date-time */
+                        lastMessageAt: string;
+                        unreadCount: number;
+                    }[];
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+        };
+    };
+    getSocialConversationMessages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        senderId: string;
+                        senderName: string;
+                        content: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        isOwn: boolean;
+                        delivered: boolean;
+                        read: boolean;
+                    }[];
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+        };
+    };
+    sendSocialConversationMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    content: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        senderId: string;
+                        senderName: string;
+                        content: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        isOwn: boolean;
+                        delivered: boolean;
+                        read: boolean;
+                    };
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+        };
+    };
+    markSocialConversationRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+        };
+    };
+    getContestChat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        /** @enum {string} */
+                        type: "user" | "system";
+                        authorName: string;
+                        authorInitials: string;
+                        content: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        isOwn: boolean;
+                    }[];
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+        };
+    };
+    sendContestChatMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    content: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        /** @enum {string} */
+                        type: "user" | "system";
+                        authorName: string;
+                        authorInitials: string;
+                        content: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        isOwn: boolean;
+                    };
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+        };
+    };
+    getShareCard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        /** @enum {string} */
+                        type: "contest_result" | "season_champion" | "achievement";
+                        title: string;
+                        sport: string;
+                        sportIcon: string;
+                        winnerName: string;
+                        winnerAvatarUrl: string | null;
+                        winnerScore: string;
+                        leaderboard: {
+                            rank: number;
+                            name: string;
+                            score: string;
+                        }[];
+                        dateRange: string;
+                        imageUrl: string | null;
+                        ogTitle: string;
+                        ogDescription: string;
+                    };
+                };
+            };
+            /** @description Default Response */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+        };
+    };
+    getLeagueRecap: {
+        parameters: {
+            query?: {
+                week?: string;
+            };
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        weekLabel: string;
+                        standings: {
+                            rank: number;
+                            name: string;
+                            initials: string;
+                            points: number;
+                            change: number;
+                        }[];
+                        highlights: {
+                            icon: string;
+                            title: string;
+                            detail: string;
+                        }[];
+                        upcoming: {
+                            name: string;
+                            /** Format: date-time */
+                            dateTime: string;
+                            daysUntil: number;
+                        }[];
+                    };
+                };
+            };
+            /** @description Default Response */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+        };
+    };
+    listSelectionTemplates: {
+        parameters: {
+            query?: {
+                sport?: string;
+                contestType?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        name: string;
+                        description: string;
+                        sport: string;
+                        contestType: string;
+                        selectionType: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
+                    }[];
+                };
+            };
+        };
+    };
+    getSelectionTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        name: string;
+                        description: string;
+                        sport: string;
+                        contestType: string;
+                        selectionType: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     getDraftState: {
         parameters: {
             query?: never;
@@ -13128,28 +15981,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13184,28 +16113,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13227,6 +16232,13 @@ export interface operations {
                     entryId: string;
                     /** Format: uuid */
                     participantId: string;
+                    /** Format: uuid */
+                    eventId?: string;
+                    period?: number;
+                    matchupIndex?: number;
+                    roundNumber?: number;
+                    matchNumber?: number;
+                    confidenceWeight?: number;
                 };
             };
         };
@@ -13238,37 +16250,346 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        pick: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
+                            id: string;
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
                             pickNumber: number;
                             round: number;
+                            pickInRound: number;
                             entryId: string;
-                            participantId: string;
-                            isAutoPick: boolean;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
                             /** Format: date-time */
                             pickedAt: string;
-                        };
-                        draft: {
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    resetBracketSubmission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
                             }[];
-                        };
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
+                            id: string;
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    autoFillBracketSubmission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
+                            id: string;
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13292,28 +16613,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13337,28 +16734,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13388,65 +16861,115 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
         };
     };
-    listSelectionTemplates: {
-        parameters: {
-            query?: {
-                sport?: string;
-                contestType?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getSelectionTemplate: {
+    undoLiveDraftPick: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                templateId: string;
+                contestId: string;
             };
             cookie?: never;
         };
@@ -13459,8 +16982,225 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
+                            id: string;
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    skipLiveDraftPick: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        selectionConfig?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        pickDeadline: string | null;
+                        entries: {
+                            id: string;
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        picks: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13482,8 +17222,10 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        templates: {
+                            key: string;
+                            sport: string;
+                        }[];
                     };
                 };
             };
@@ -13507,8 +17249,10 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        key: string;
+                        config: {
+                            [key: string]: unknown;
+                        };
                     };
                 };
             };
@@ -13530,8 +17274,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        valid: boolean;
+                        config?: {
+                            [key: string]: unknown;
+                        };
+                        warnings?: string[];
+                        errors?: unknown[];
+                    };
+                };
+            };
+            /** @description Default Response */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        valid: boolean;
+                        config?: {
+                            [key: string]: unknown;
+                        };
+                        warnings?: string[];
+                        errors?: unknown[];
                     };
                 };
             };
@@ -13555,8 +17319,13 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        leaderboard: {
+                            entryId: string;
+                            rank: number;
+                            totalScore: number;
+                            isTied: boolean;
+                        }[];
                     };
                 };
             };
@@ -13581,8 +17350,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entryId: string;
+                        contestId: string;
+                        totalScore: number;
+                        timeline: {
+                            contestId: string;
+                            entryId: string;
+                            /** Format: date-time */
+                            eventTimestamp: string;
+                            pointsEarned: number;
+                            runningTotal: number;
+                            participantBreakdowns: {
+                                participantId: string;
+                                participantName?: string | null;
+                                contextLabel?: string | null;
+                                statPoints: number;
+                                positionPoints: number;
+                                bonusPoints: number;
+                                penaltyPoints: number;
+                                multipliedTotal: number;
+                                dnfAdjustment: number;
+                                finalScore: number;
+                            }[];
+                        }[];
                     };
                 };
             };
@@ -13607,8 +17397,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participantId: string;
+                        contestId: string;
+                        scores: {
+                            contestId: string;
+                            participantId: string;
+                            eventTimestamp: string;
+                            stats: {
+                                [key: string]: number;
+                            };
+                            points: number;
+                            breakdown: {
+                                participantId: string;
+                                participantName?: string | null;
+                                contextLabel?: string | null;
+                                statPoints: number;
+                                positionPoints: number;
+                                bonusPoints: number;
+                                penaltyPoints: number;
+                                multipliedTotal: number;
+                                dnfAdjustment: number;
+                                finalScore: number;
+                            };
+                        }[];
+                        totalPoints: number;
                     };
                 };
             };
@@ -13632,8 +17444,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        entriesUpdated: number;
+                        rankChanges: number;
+                        /** Format: date-time */
+                        rolledUpAt: string;
                     };
                 };
             };
@@ -13655,8 +17470,12 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        status: string;
+                        service: string;
+                        rollupRunning: boolean;
+                        activeContests: number;
+                        /** Format: date-time */
+                        timestamp: string;
                     };
                 };
             };
@@ -13680,15 +17499,24 @@ export interface operations {
                     "application/json": {
                         notifications: {
                             id: string;
-                            type: string;
+                            userId?: string;
+                            eventType: string;
                             title: string;
                             body: string;
                             read: boolean;
                             /** Format: date-time */
-                            createdAt: string;
-                            linkTo?: string | null;
+                            readAt?: string | null;
+                            dismissed?: boolean;
+                            imageUrl?: string | null;
+                            actionScreen?: string | null;
+                            actionParams?: {
+                                [key: string]: unknown;
+                            };
+                            groupKey?: string | null;
+                            /** Format: date-time */
+                            createdAt: string | null;
                         }[];
-                        unreadCount: number;
+                        total: number;
                     };
                 };
             };
@@ -13710,8 +17538,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        unreadCount: number;
                     };
                 };
             };
@@ -13758,8 +17585,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        markedRead: number;
                     };
                 };
             };
@@ -13806,8 +17632,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        preferences: {
+                            doNotDisturb: boolean;
+                            dndSchedule?: {
+                                [key: string]: unknown;
+                            };
+                            categories: {
+                                [key: string]: unknown;
+                            };
+                        };
                     };
                 };
             };
@@ -13829,8 +17662,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        preferences: {
+                            doNotDisturb: boolean;
+                            dndSchedule?: {
+                                [key: string]: unknown;
+                            };
+                            categories: {
+                                [key: string]: unknown;
+                            };
+                        };
                     };
                 };
             };
@@ -13856,6 +17696,9 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
+                        category: string;
+                        /** @enum {boolean} */
+                        enabled: false;
                     };
                 };
             };
@@ -13877,8 +17720,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        devices: {
+                            id: string;
+                            userId: string;
+                            platform: string;
+                            token: string;
+                            appVersion?: string | null;
+                            osVersion?: string | null;
+                            deviceModel?: string | null;
+                            isActive: boolean;
+                            /** Format: date-time */
+                            registeredAt: string;
+                            /** Format: date-time */
+                            lastActiveAt: string;
+                        }[];
                     };
                 };
             };
@@ -13900,8 +17755,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        device: {
+                            id: string;
+                            userId: string;
+                            platform: string;
+                            token: string;
+                            appVersion?: string | null;
+                            osVersion?: string | null;
+                            deviceModel?: string | null;
+                            isActive: boolean;
+                            /** Format: date-time */
+                            registeredAt: string;
+                            /** Format: date-time */
+                            lastActiveAt: string;
+                        };
                     };
                 };
             };
@@ -13923,8 +17790,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        device: {
+                            id: string;
+                            userId: string;
+                            platform: string;
+                            token: string;
+                            appVersion?: string | null;
+                            osVersion?: string | null;
+                            deviceModel?: string | null;
+                            isActive: boolean;
+                            /** Format: date-time */
+                            registeredAt: string;
+                            /** Format: date-time */
+                            lastActiveAt: string;
+                        };
                     };
                 };
             };
@@ -13971,8 +17850,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -13994,8 +17872,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -14017,8 +17894,8 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        scheduled: boolean;
+                        id: string;
                     };
                 };
             };
@@ -14043,8 +17920,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        cancelled: number;
                     };
                 };
             };
@@ -14068,8 +17944,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -14091,8 +17966,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        period: {
+                            days: number;
+                            /** Format: date-time */
+                            since: string;
+                        };
+                        total: number;
+                        deliveryRate: number;
+                        sent: number;
+                        suppressed: number;
+                        failed: number;
+                        byChannel: {
+                            [key: string]: {
+                                sent: number;
+                                suppressed: number;
+                                failed: number;
+                            };
+                        };
+                        suppressionReasons: {
+                            [key: string]: number;
+                        };
                     };
                 };
             };
@@ -14114,8 +18007,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -14137,8 +18029,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };

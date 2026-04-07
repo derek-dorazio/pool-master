@@ -16,7 +16,6 @@ import type {
   ContestPool,
   ContestResult,
   ContestStanding,
-  ContestTemplate,
   DraftPick,
   DraftSession,
   League,
@@ -231,16 +230,4 @@ export interface ActionItemRepository {
   create(item: Omit<ActionItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<ActionItem>;
   resolve(id: string): Promise<ActionItem>;
   delete(id: string): Promise<void>;
-}
-
-// --- Contest Templates ---
-
-export interface ContestTemplateRepository {
-  findById(id: string): Promise<ContestTemplate | null>;
-  findByLeague(leagueId: string): Promise<ContestTemplate[]>;
-  findPlatformTemplates(): Promise<ContestTemplate[]>;
-  create(template: Omit<ContestTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestTemplate>;
-  update(id: string, updates: Partial<ContestTemplate>): Promise<ContestTemplate>;
-  delete(id: string): Promise<void>;
-  incrementUsage(id: string): Promise<void>;
 }

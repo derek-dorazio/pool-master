@@ -260,9 +260,6 @@ export const CommissionerPermission = {
   ANNOUNCEMENT_PIN: 'announcement.pin',
   MESSAGE_DELETE: 'message.delete',
   MEMBER_MUTE: 'member.mute',
-  // Templates
-  TEMPLATE_CREATE: 'template.create',
-  TEMPLATE_SHARE: 'template.share',
 } as const;
 export type CommissionerPermission = (typeof CommissionerPermission)[keyof typeof CommissionerPermission];
 

@@ -63,7 +63,6 @@ export type {
   ContestMatchup,
   ContestResult,
   ContestStanding,
-  ContestTemplate,
   DomainEntity,
   DraftPick,
   DraftSession,

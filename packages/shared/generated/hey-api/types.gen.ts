@@ -639,34 +639,6 @@ export type GetMemberAuditLogResponses = {
 
 export type GetMemberAuditLogResponse = GetMemberAuditLogResponses[keyof GetMemberAuditLogResponses];
 
-export type BulkCreateContestsData = {
-    body: {
-        templateId: string;
-        namingPattern: string;
-        events: Array<{
-            name: string;
-            startsAt?: string;
-            endsAt?: string;
-        }>;
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/contests/bulk';
-};
-
-export type BulkCreateContestsResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        [key: string]: unknown;
-    };
-};
-
-export type BulkCreateContestsResponse = BulkCreateContestsResponses[keyof BulkCreateContestsResponses];
-
 export type CopySeasonData = {
     body: {
         sourceContestIds: Array<string>;
@@ -1548,243 +1520,6 @@ export type GetContestAuditLogResponses = {
 };
 
 export type GetContestAuditLogResponse = GetContestAuditLogResponses[keyof GetContestAuditLogResponses];
-
-export type ListTemplatesData = {
-    body?: never;
-    path?: never;
-    query: {
-        leagueId: string;
-    };
-    url: '/api/v1/templates/';
-};
-
-export type ListTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        templates: Array<{
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            name: string;
-            description?: string;
-            sport: string;
-            contestType: string;
-            draftConfig: {
-                [key: string]: unknown;
-            };
-            scoringConfig: {
-                [key: string]: unknown;
-            };
-            payoutConfig: {
-                [key: string]: unknown;
-            };
-            poolConfig: {
-                [key: string]: unknown;
-            };
-            sharedWithTenant: boolean;
-            isPlatformTemplate: boolean;
-            timesUsed: number;
-            lastUsedAt?: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-    };
-};
-
-export type ListTemplatesResponse = ListTemplatesResponses[keyof ListTemplatesResponses];
-
-export type CreateTemplateData = {
-    body: {
-        leagueId: string;
-        name: string;
-        description?: string;
-        sport: string;
-        contestType: 'SINGLE_EVENT';
-        draftConfig?: {
-            [key: string]: unknown;
-        };
-        scoringConfig?: {
-            [key: string]: unknown;
-        };
-        payoutConfig?: {
-            [key: string]: unknown;
-        };
-        poolConfig?: {
-            [key: string]: unknown;
-        };
-        sharedWithTenant?: boolean;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/templates/';
-};
-
-export type CreateTemplateResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        template: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            name: string;
-            description?: string;
-            sport: string;
-            contestType: string;
-            draftConfig: {
-                [key: string]: unknown;
-            };
-            scoringConfig: {
-                [key: string]: unknown;
-            };
-            payoutConfig: {
-                [key: string]: unknown;
-            };
-            poolConfig: {
-                [key: string]: unknown;
-            };
-            sharedWithTenant: boolean;
-            isPlatformTemplate: boolean;
-            timesUsed: number;
-            lastUsedAt?: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type CreateTemplateResponse = CreateTemplateResponses[keyof CreateTemplateResponses];
-
-export type DeleteTemplateData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/templates/{id}';
-};
-
-export type DeleteTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type DeleteTemplateResponse = DeleteTemplateResponses[keyof DeleteTemplateResponses];
-
-export type GetTemplateData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/templates/{id}';
-};
-
-export type GetTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        template: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            name: string;
-            description?: string;
-            sport: string;
-            contestType: string;
-            draftConfig: {
-                [key: string]: unknown;
-            };
-            scoringConfig: {
-                [key: string]: unknown;
-            };
-            payoutConfig: {
-                [key: string]: unknown;
-            };
-            poolConfig: {
-                [key: string]: unknown;
-            };
-            sharedWithTenant: boolean;
-            isPlatformTemplate: boolean;
-            timesUsed: number;
-            lastUsedAt?: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type GetTemplateResponse = GetTemplateResponses[keyof GetTemplateResponses];
-
-export type UpdateTemplateData = {
-    body: {
-        name?: string;
-        description?: string;
-        draftConfig?: {
-            [key: string]: unknown;
-        };
-        scoringConfig?: {
-            [key: string]: unknown;
-        };
-        payoutConfig?: {
-            [key: string]: unknown;
-        };
-        poolConfig?: {
-            [key: string]: unknown;
-        };
-        sharedWithTenant?: boolean;
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/templates/{id}';
-};
-
-export type UpdateTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        template: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            name: string;
-            description?: string;
-            sport: string;
-            contestType: string;
-            draftConfig: {
-                [key: string]: unknown;
-            };
-            scoringConfig: {
-                [key: string]: unknown;
-            };
-            payoutConfig: {
-                [key: string]: unknown;
-            };
-            poolConfig: {
-                [key: string]: unknown;
-            };
-            sharedWithTenant: boolean;
-            isPlatformTemplate: boolean;
-            timesUsed: number;
-            lastUsedAt?: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type UpdateTemplateResponse = UpdateTemplateResponses[keyof UpdateTemplateResponses];
 
 export type ListEventsData = {
     body?: never;
@@ -3523,262 +3258,6 @@ export type PreviewRetentionCleanupResponses = {
 };
 
 export type PreviewRetentionCleanupResponse = PreviewRetentionCleanupResponses[keyof PreviewRetentionCleanupResponses];
-
-export type SearchParticipantsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        q?: string;
-        sportId?: string;
-        status?: string;
-        position?: string;
-        team?: string;
-        nationality?: string;
-        sortBy?: 'RELEVANCE' | 'RANKING' | 'NAME' | 'PRICE' | 'FORM';
-        limit?: string;
-        offset?: string;
-    };
-    url: '/api/v1/search/participants';
-};
-
-export type SearchParticipantsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        participants: Array<{
-            id: string;
-            sportId: string;
-            name: string;
-            participantType: string;
-            externalId?: string;
-            metadata: {
-                [key: string]: unknown;
-            };
-            firstName?: string;
-            lastName?: string;
-            shortName?: string;
-            nationality?: string;
-            position?: string;
-            teamAffiliation?: string;
-            status: string;
-            injuryStatus: {
-                status: string;
-                detail?: string;
-                expectedReturn?: string;
-                updatedAt?: string;
-                source?: string;
-            };
-            photoUrl?: string;
-            photoLastUpdated?: string;
-            externalIds: {
-                [key: string]: string;
-            };
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        total: number;
-        facets: {
-            positions: Array<{
-                value: string;
-                count: number;
-            }>;
-            teams: Array<{
-                value: string;
-                count: number;
-            }>;
-            nationalities: Array<{
-                value: string;
-                count: number;
-            }>;
-            rankingDistribution: {
-                top10: number;
-                top25: number;
-                top50: number;
-                top100: number;
-                unranked: number;
-            };
-        };
-    };
-};
-
-export type SearchParticipantsResponse = SearchParticipantsResponses[keyof SearchParticipantsResponses];
-
-export type DiscoverLeaguesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        q?: string;
-        sport?: string;
-        sort?: 'POPULAR' | 'NEWEST' | 'ACTIVITY';
-        limit?: string;
-        offset?: string;
-    };
-    url: '/api/v1/search/discover/leagues';
-};
-
-export type DiscoverLeaguesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        leagues: Array<{
-            id: string;
-            name: string;
-            description?: string;
-            sport?: string;
-            memberCount: number;
-            maxMembers?: number;
-            activeContestCount: number;
-            activityLevel: string;
-            joinPolicy: string;
-            commissionerName?: string;
-            visibility?: string;
-            createdAt?: string;
-        }>;
-        total: number;
-    };
-};
-
-export type DiscoverLeaguesResponse = DiscoverLeaguesResponses[keyof DiscoverLeaguesResponses];
-
-export type DiscoverContestsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        q?: string;
-        sport?: string;
-        sort?: 'STARTING_SOON' | 'POPULAR' | 'PRIZE_POOL';
-        limit?: string;
-        offset?: string;
-    };
-    url: '/api/v1/search/discover/contests';
-};
-
-export type DiscoverContestsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        contests: Array<{
-            id: string;
-            leagueName?: string;
-            contestName: string;
-            sport?: string;
-            eventName?: string;
-            draftType?: string;
-            status: string;
-            memberCount: number;
-            maxMembers?: number;
-            entryFee?: number;
-            prizePool?: number;
-            draftStart?: string;
-            lockTime?: string;
-        }>;
-        total: number;
-    };
-};
-
-export type DiscoverContestsResponse = DiscoverContestsResponses[keyof DiscoverContestsResponses];
-
-export type JoinDiscoverableLeagueData = {
-    body?: never;
-    path: {
-        leagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/search/discover/leagues/{leagueId}/join';
-};
-
-export type JoinDiscoverableLeagueErrors = {
-    /**
-     * Default Response
-     */
-    400: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    409: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type JoinDiscoverableLeagueError = JoinDiscoverableLeagueErrors[keyof JoinDiscoverableLeagueErrors];
-
-export type JoinDiscoverableLeagueResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        membership: {
-            id: string;
-            leagueId: string;
-            userId: string;
-            role: string;
-            permissions: Array<string>;
-            joinedAt: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type JoinDiscoverableLeagueResponse = JoinDiscoverableLeagueResponses[keyof JoinDiscoverableLeagueResponses];
-
-export type ReportDiscoveryEntityData = {
-    body: {
-        entityType: 'LEAGUE' | 'CONTEST';
-        entityId: string;
-        reason: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/search/discover/report';
-};
-
-export type ReportDiscoveryEntityResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        report: {
-            id: string;
-        };
-        reportCount: number;
-    };
-};
-
-export type ReportDiscoveryEntityResponse = ReportDiscoveryEntityResponses[keyof ReportDiscoveryEntityResponses];
 
 export type VerifyAgeData = {
     body: {
@@ -8667,7 +8146,22 @@ export type CreateFeedPostResponses = {
         parentId?: string;
         createdAt: string;
         updatedAt: string;
-        replies?: Array<unknown>;
+        replies?: Array<{
+            id: string;
+            leagueId: string;
+            authorId: string;
+            type: string;
+            authorName: string;
+            content: string;
+            isPinned: boolean;
+            reactions: {
+                [key: string]: Array<string>;
+            };
+            replyCount: number;
+            parentId?: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
     };
 };
 
@@ -8723,7 +8217,22 @@ export type GetFeedPostResponses = {
         parentId?: string;
         createdAt: string;
         updatedAt: string;
-        replies?: Array<unknown>;
+        replies?: Array<{
+            id: string;
+            leagueId: string;
+            authorId: string;
+            type: string;
+            authorName: string;
+            content: string;
+            isPinned: boolean;
+            reactions: {
+                [key: string]: Array<string>;
+            };
+            replyCount: number;
+            parentId?: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
     };
 };
 
@@ -8760,7 +8269,22 @@ export type AddFeedReplyResponses = {
         parentId?: string;
         createdAt: string;
         updatedAt: string;
-        replies?: Array<unknown>;
+        replies?: Array<{
+            id: string;
+            leagueId: string;
+            authorId: string;
+            type: string;
+            authorName: string;
+            content: string;
+            isPinned: boolean;
+            reactions: {
+                [key: string]: Array<string>;
+            };
+            replyCount: number;
+            parentId?: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
     };
 };
 

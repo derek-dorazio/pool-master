@@ -11,13 +11,61 @@ import {
   ConversationDtoSchema,
   DirectMessageDtoSchema,
   FeedResponseSchema,
-  FeedPostResponseSchema,
   FeedReactionResponseSchema,
   FeedPinResponseSchema,
   RecapDtoSchema,
   ShareCardDtoSchema,
 } from '@poolmaster/shared/dto/social.dto';
 import { ApiErrorSchema, SuccessSchema } from '@poolmaster/shared/dto/common.dto';
+
+const feedItemResponseJsonSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    leagueId: { type: 'string' },
+    authorId: { type: 'string' },
+    type: { type: 'string' },
+    authorName: { type: 'string' },
+    content: { type: 'string' },
+    isPinned: { type: 'boolean' },
+    reactions: {
+      type: 'object',
+      additionalProperties: {
+        type: 'array',
+        items: { type: 'string' },
+      },
+    },
+    replyCount: { type: 'number' },
+    parentId: { type: 'string' },
+    createdAt: { type: 'string', format: 'date-time' },
+    updatedAt: { type: 'string', format: 'date-time' },
+  },
+  required: [
+    'id',
+    'leagueId',
+    'authorId',
+    'type',
+    'authorName',
+    'content',
+    'isPinned',
+    'reactions',
+    'replyCount',
+    'createdAt',
+    'updatedAt',
+  ],
+  additionalProperties: false,
+} as const;
+
+const feedPostResponseJsonSchema = {
+  ...feedItemResponseJsonSchema,
+  properties: {
+    ...feedItemResponseJsonSchema.properties,
+    replies: {
+      type: 'array',
+      items: feedItemResponseJsonSchema,
+    },
+  },
+} as const;
 
 export async function socialModule(fastify: FastifyInstance): Promise<void> {
   const feedService = new FeedService();
@@ -67,7 +115,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           type: { type: 'string', enum: ['POST', 'ANNOUNCEMENT', 'SYSTEM'] },
         },
       },
-      response: { 201: zodToJsonSchema(FeedPostResponseSchema) },
+      response: { 201: feedPostResponseJsonSchema },
     },
     handler: handlers.createPost,
   });
@@ -86,7 +134,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           postId: { type: 'string', format: 'uuid' },
         },
       },
-      response: { 200: zodToJsonSchema(FeedPostResponseSchema) },
+      response: { 200: feedPostResponseJsonSchema },
     },
     handler: handlers.getPost,
   });
@@ -112,7 +160,7 @@ export async function socialModule(fastify: FastifyInstance): Promise<void> {
           content: { type: 'string', minLength: 1, maxLength: 5000 },
         },
       },
-      response: { 201: zodToJsonSchema(FeedPostResponseSchema) },
+      response: { 201: feedPostResponseJsonSchema },
     },
     handler: handlers.createReply,
   });

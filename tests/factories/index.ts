@@ -8,7 +8,6 @@
 
 import type {
   Contest,
-  ContestTemplate,
   League,
   LeagueInvitation,
   LeagueMembership,
@@ -139,27 +138,6 @@ export function buildPayoutConfig(overrides: Partial<PayoutConfig> = {}): Payout
       { rank: 3, percentage: 15 },
     ],
     intermediatePrizes: [],
-    ...overrides,
-  };
-}
-
-export function buildContestTemplate(overrides: Partial<ContestTemplate> = {}): ContestTemplate {
-  return {
-    id: nextId(),
-    leagueId: 'league-1',
-    createdBy: 'owner-1',
-    name: 'Standard Golf Pool',
-    sport: 'GOLF' as ContestTemplate['sport'],
-    contestType: ContestType.SINGLE_EVENT,
-    draftConfig: {},
-    scoringConfig: {},
-    payoutConfig: {},
-    poolConfig: {},
-    sharedWithTenant: false,
-    isPlatformTemplate: false,
-    timesUsed: 0,
-    createdAt: new Date('2026-01-01'),
-    updatedAt: new Date('2026-01-01'),
     ...overrides,
   };
 }

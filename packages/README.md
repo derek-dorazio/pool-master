@@ -33,7 +33,6 @@ Modular monolith — all backend modules run in a single Fastify process on port
 | **participants** | `/api/v1/participants` | Search, CRUD, season records, provider mappings |
 | **standings** | `/api/v1/contests/:id/standings` | Leaderboards, rankings |
 | **history** | `/api/v1/` | Standings history, timelines, records, rivalries, analytics |
-| **search** | `/api/v1/search` | Full-text search, league/contest discovery |
 | **social** | `/api/v1/social` | League feed, contest chat, direct messages, recaps, share cards; DTO-backed contract with persistence follow-up tracked in plans |
 | **compliance** | `/api/v1/account` | Age verify, consent, data export, deletion, self-exclusion; live contract with any persistence follow-up tracked in plans |
 | **billing** | `/api/v1/billing` | Entitlements, plan tiers, usage (free tier); live contract with paid-plan persistence still tracked in plans |

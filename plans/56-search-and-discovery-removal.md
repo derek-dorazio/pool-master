@@ -66,7 +66,7 @@ Those are regular contest and history features, not discovery features.
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 56-001 | 1 | Remove discovery models from the target schema and migration plan | Not Started | |
-| 56-002 | 1 | Remove discovery routes/services that exist only for public discovery behavior | Not Started | |
-| 56-003 | 2 | Remove or rewrite tests that enforce the old discovery subsystem | Not Started | |
+| 56-001 | 1 | Remove discovery models from the target schema and migration plan | Done | Removed `DiscoverableLeague`, `DiscoverableContest`, and `DiscoveryReport` from Prisma target schema and baseline migration |
+| 56-002 | 1 | Remove discovery routes/services that exist only for public discovery behavior | Done | Removed `/api/v1/search`, search/discovery service code, DTOs, mappers, and app wiring |
+| 56-003 | 2 | Remove or rewrite tests that enforce the old discovery subsystem | Done | Removed search/discovery harness wiring and refreshed active backend contract outputs |
 | 56-004 | 2 | Ensure contest browsing/history flows remain covered through the normal contest use-case docs | Done | Covered in Plans 38 and 41 |

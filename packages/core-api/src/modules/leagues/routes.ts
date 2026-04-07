@@ -23,7 +23,6 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
   PrismaContestRepository,
-  PrismaContestTemplateRepository,
   PrismaActionItemRepository,
 } from '../../adapters';
 import { requirePermission, requireOwner } from '../../core/require-permission';
@@ -52,7 +51,6 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
   const contestRepo = new PrismaContestRepository(prisma);
-  const contestTemplateRepo = new PrismaContestTemplateRepository(prisma);
   const actionItemRepo = new PrismaActionItemRepository(prisma);
 
   const leagueService = new LeagueService(leagueRepo, membershipRepo);
@@ -69,7 +67,6 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const auditService = new AuditService(prisma);
   const bulkService = new BulkService(
     contestRepo,
-    contestTemplateRepo,
     leagueRepo,
     membershipRepo,
     invitationRepo,
@@ -330,38 +327,6 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   });
 
   // --- Bulk Operations ---
-
-  fastify.post('/:id/contests/bulk', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Bulk-create contests from a template',
-      operationId: 'bulkCreateContests',
-      body: {
-        type: 'object',
-        required: ['templateId', 'namingPattern', 'events'],
-        properties: {
-          templateId: { type: 'string' },
-          namingPattern: { type: 'string' },
-          events: {
-            type: 'array',
-            items: {
-              type: 'object',
-              required: ['name'],
-              properties: {
-                name: { type: 'string' },
-                startsAt: { type: 'string', format: 'date-time' },
-                endsAt: { type: 'string', format: 'date-time' },
-              },
-            },
-            minItems: 1,
-          },
-        },
-      },
-      response: { 201: zodToJsonSchema(LeagueBulkOperationResponseSchema) },
-    },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
-    handler: bulk.bulkCreateContests,
-  });
 
   fastify.post('/:id/contests/copy-season', {
     schema: {

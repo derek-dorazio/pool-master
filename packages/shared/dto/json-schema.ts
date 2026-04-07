@@ -9,6 +9,12 @@
  * spec's paths, so we inline them here.
  */
 import { zodToJsonSchema as convert } from 'zod-to-json-schema';
+import type { ZodTypeAny } from 'zod';
+
+const convertToJsonSchema = convert as unknown as (
+  schema: ZodTypeAny,
+  options: { target: 'openApi3' }
+) => unknown;
 
 /**
  * Resolve every `{ $ref: "#/..." }` in a JSON-Schema-like tree by
@@ -40,8 +46,7 @@ function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown
   return resolved;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function zodToJsonSchema(schema: any): Record<string, unknown> {
-  const raw = convert(schema, { target: 'openApi3' }) as Record<string, unknown>;
+export function zodToJsonSchema(schema: ZodTypeAny): Record<string, unknown> {
+  const raw = convertToJsonSchema(schema, { target: 'openApi3' }) as Record<string, unknown>;
   return resolveLocalRefs(raw, raw) as Record<string, unknown>;
 }

@@ -785,22 +785,3 @@ export interface UpcomingEvent {
   date: Date;
   eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
 }
-
-// --- Contest Template ---
-
-export interface ContestTemplate extends DomainEntity {
-  leagueId: string;
-  createdBy: string;
-  name: string;
-  description?: string;
-  sport: Sport;
-  contestType: ContestType;
-  draftConfig: Record<string, unknown>;
-  scoringConfig: Record<string, unknown>;
-  payoutConfig: Record<string, unknown>;
-  poolConfig: Record<string, unknown>;
-  sharedWithTenant: boolean;
-  isPlatformTemplate: boolean;
-  timesUsed: number;
-  lastUsedAt?: Date;
-}

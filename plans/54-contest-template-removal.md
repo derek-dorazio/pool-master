@@ -82,8 +82,8 @@ re-designed from scratch on top of the new contest-configuration model.
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 54-001 | 1 | Remove `ContestTemplate` from the target schema and domain model | Not Started | |
-| 54-002 | 1 | Remove template CRUD routes, services, handlers, and repository interfaces | Not Started | |
-| 54-003 | 1 | Remove scoring-template and selection-template config surfaces that assume a template subsystem | Not Started | |
-| 54-004 | 2 | Update docs/plans/rules so agents do not treat templates as an active concept | In Progress | Active cleanup underway |
-| 54-005 | 2 | Remove or rewrite tests that enforce template behavior | Not Started | |
+| 54-001 | 1 | Remove `ContestTemplate` from the target schema and domain model | Done | Removed from Prisma target schema, baseline migration, shared domain model, and repository ports |
+| 54-002 | 1 | Remove template CRUD routes, services, handlers, and repository interfaces | Done | Removed `/api/v1/templates`, template service/handler, Prisma adapter, wiring, and bulk-create-from-template path |
+| 54-003 | 1 | Remove scoring-template and selection-template config surfaces that assume a template subsystem | Not Started | Remaining template-like scoring/selection surfaces tracked separately |
+| 54-004 | 2 | Update docs/plans/rules so agents do not treat templates as an active concept | Done | Active cleanup completed in the earlier domain-model review pass |
+| 54-005 | 2 | Remove or rewrite tests that enforce template behavior | Done | Template unit coverage removed and bulk/helper references cleaned up |

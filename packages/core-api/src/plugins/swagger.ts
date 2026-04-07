@@ -42,8 +42,6 @@ export const swaggerPlugin = fp(async (fastify) => {
         { name: 'Standings', description: 'Contest standings and leaderboards' },
         { name: 'Billing', description: 'Plans, subscriptions, usage, and invoices' },
         { name: 'Participants', description: 'Participant profiles and contest pools' },
-        { name: 'Search', description: 'Search and discovery' },
-        { name: 'Templates', description: 'Scoring templates' },
         { name: 'Invitations', description: 'League invitations and invite links' },
         { name: 'Notifications', description: 'User notifications and preferences' },
         { name: 'Social', description: 'Feed, chat, and sharing' },
