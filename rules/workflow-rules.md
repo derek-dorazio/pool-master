@@ -75,6 +75,22 @@ Examples that require rule updates:
 
 ---
 
+## 2A. Source-Of-Truth Priority During The Backend Refactor
+
+On `codex-backend-refactor-lane`:
+
+- `rules/` and active `plans/` / use-case companions are the authoritative implementation guidance.
+- Treat `docs/` as reference material only.
+- Do not use `docs/` as source-of-truth implementation guidance unless:
+  - the user explicitly directs you to use a specific doc, or
+  - an active rule or active plan explicitly points to that doc as current authoritative guidance.
+- If `docs/` conflicts with active plans or rules, follow the active plans/rules and treat the doc as stale.
+
+This exists because many docs in `docs/` were generated for review and may
+reflect older model decisions.
+
+---
+
 ## 3. Required Local Validation Before Push
 
 Before pushing code that could trigger CI, agents must run the full local quality gate set first unless the user explicitly approves skipping a gate for a narrow reason.
