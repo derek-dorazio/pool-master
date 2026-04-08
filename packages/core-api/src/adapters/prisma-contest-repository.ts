@@ -28,7 +28,6 @@ export class PrismaContestRepository implements ContestRepository {
     const row = await this.prisma.contest.create({
       data: {
         leagueId: contest.leagueId,
-        seasonId: contest.seasonId || undefined,
         sportEventId: contest.sportEventId || undefined,
         name: contest.name,
         status: contest.status,
@@ -38,8 +37,8 @@ export class PrismaContestRepository implements ContestRepository {
         sport: contest.sport,
         isExclusive: contest.isExclusive,
         scoringStopsOnElimination: contest.scoringStopsOnElimination,
-        scoringRules: contest.scoringRules as object,
-        payoutConfig: (contest as Contest & { payoutConfig?: object }).payoutConfig ?? {},
+        scoringRules: {},
+        payoutConfig: {},
         startsAt: contest.startsAt,
         endsAt: contest.endsAt,
         lockAt: contest.lockAt,
@@ -56,7 +55,6 @@ export class PrismaContestRepository implements ContestRepository {
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.sportEventId !== undefined && { sportEventId: updates.sportEventId }),
         ...(updates.sport !== undefined && { sport: updates.sport }),
-        ...(updates.scoringRules !== undefined && { scoringRules: updates.scoringRules as object }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
         ...(updates.lockAt !== undefined && { lockAt: updates.lockAt }),
@@ -103,7 +101,6 @@ function mapToContest(row: {
   return {
     id: row.id,
     leagueId: row.leagueId,
-    seasonId: row.seasonId ?? '',
     sportEventId: row.sportEventId ?? undefined,
     name: row.name,
     status: row.status as Contest['status'],
@@ -113,7 +110,6 @@ function mapToContest(row: {
     sport: row.sport as Contest['sport'],
     isExclusive: row.isExclusive,
     scoringStopsOnElimination: row.scoringStopsOnElimination,
-    scoringRules: (row.scoringRules ?? {}) as Contest['scoringRules'],
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
     lockAt: row.lockAt ?? undefined,

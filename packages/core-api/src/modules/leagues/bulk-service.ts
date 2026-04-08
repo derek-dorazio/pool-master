@@ -70,7 +70,6 @@ export class BulkService {
           scoringEngine: source.scoringEngine,
           isExclusive: source.isExclusive,
           scoringStopsOnElimination: source.scoringStopsOnElimination,
-          scoringRules: {},
         } as Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>);
         created.push(contest);
       } catch (err) {

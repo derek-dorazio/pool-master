@@ -90,7 +90,6 @@ export class ContestService {
       scoringEngine: input.scoringEngine,
       isExclusive: input.isExclusive ?? false,
       scoringStopsOnElimination: input.scoringStopsOnElimination ?? false,
-      scoringRules: {},
       startsAt: input.startsAt,
       endsAt: input.endsAt,
       lockAt: input.lockAt,

@@ -75,7 +75,6 @@ describe('BulkService', () => {
       const createArg = (contestRepo.create as jest.Mock).mock.calls[0][0];
       expect(createArg.status).toBe(ContestStatus.DRAFT);
       expect(createArg.sportEventId).toBeUndefined();
-      expect(createArg.scoringRules).toEqual({});
     });
   });
 

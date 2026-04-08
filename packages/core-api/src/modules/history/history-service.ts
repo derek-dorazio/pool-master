@@ -271,7 +271,7 @@ export class HistoryService {
             totalScore: entry.totalScore,
             prizeAmount: prizeAmount > 0 ? prizeAmount : undefined,
             leagueId: contest.leagueId,
-            seasonId: contest.seasonId ?? undefined,
+            seasonId: undefined,
             leagueMembershipId,
             contestName: contest.name,
             contestType: contest.contestType,

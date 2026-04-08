@@ -113,7 +113,6 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
   return {
     id: nextId(),
     leagueId: 'league-1',
-    seasonId: 'season-1',
     sportEventId: undefined,
     name: 'Masters Pool 2026',
     status: ContestStatus.DRAFT,
@@ -122,7 +121,6 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     scoringEngine: ScoringEngine.STROKE_PLAY,
     isExclusive: false,
     scoringStopsOnElimination: false,
-    scoringRules: {},
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

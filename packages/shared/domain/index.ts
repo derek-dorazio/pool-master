@@ -89,7 +89,6 @@ export type {
   RosterHistoryEntry,
   PricingConfig,
   RosterPick,
-  ScoringRulesConfig,
   Season,
   SeasonRanking,
   SportConfig,

@@ -226,7 +226,6 @@ export interface ParticipantProviderMapping extends DomainEntity {
 
 export interface Contest extends DomainEntity {
   leagueId: string;
-  seasonId: string;
   sportEventId?: string;
   name: string;
   status: ContestStatus;
@@ -240,45 +239,7 @@ export interface Contest extends DomainEntity {
   startsAt?: Date;
   endsAt?: Date;
   lockAt?: Date;
-
-  // Scoring behaviour
   scoringStopsOnElimination: boolean;
-  scoringRules: ScoringRulesConfig;
-}
-
-/**
- * Structured scoring configuration — stored as JSONB per contest.
- * Only the fields relevant to the contest's scoringEngine are populated.
- */
-export interface ScoringRulesConfig {
-  // Advancement scoring (team wins / series wins)
-  roundValues?: number[];                      // [1, 2, 4, 8] — multiplier per playoff round
-
-  // Stat accumulation scoring (player personal stats)
-  statWeights?: Record<string, number>;        // { goal: 6, assist: 3, cleanSheet: 4 }
-
-  // Stroke play (golf)
-  missedCutPenalty?: number;                   // e.g. 80 per missed round
-  bestBallN?: number;                          // pick 6, use best 4
-
-  // Position scoring (horse racing)
-  positionPoints?: Record<number, number>;     // { 1: 100, 2: 60, 3: 40 }
-
-  // Deferred bracket / pick'em catalog entries
-  roundMultipliers?: number[];                 // points per correct pick per round
-  seriesLengthBonus?: number;                  // bonus for predicting series length
-  correctScoreBonus?: number;                  // bonus for exact score prediction
-  groupStagePredictions?: boolean;             // soccer: includes group stage W/D/L
-
-  // Fight result (UFC)
-  resultWeights?: Record<string, number>;      // { ko_tko: 10, submission: 9, decision: 7 }
-  bonusWeights?: Record<string, number>;       // { round1_finish: 2, round1_ko: 3 }
-
-  // Confidence weighting (optional for deferred pick'em-style modes)
-  confidenceWeighted?: boolean;
-
-  // Tiebreaker
-  tiebreakerRule?: string;
 }
 
 export interface TierDefinition {
