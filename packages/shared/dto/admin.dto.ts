@@ -505,14 +505,14 @@ export const AdminContestListResponseSchema = z.object({
 });
 export type AdminContestListResponse = z.infer<typeof AdminContestListResponseSchema>;
 
-export const ContestStandingDtoSchema = z.object({
+export const ContestEntryStandingDtoSchema = z.object({
   entryId: z.string(),
   entryName: z.string(),
   ownerEmail: z.string(),
-  rank: z.number(),
+  standingsPosition: z.number(),
   totalScore: z.number(),
 });
-export type ContestStandingDto = z.infer<typeof ContestStandingDtoSchema>;
+export type ContestEntryStandingDto = z.infer<typeof ContestEntryStandingDtoSchema>;
 
 export const ContestDraftStatusDtoSchema = z.object({
   status: z.string(),
@@ -577,7 +577,7 @@ export const ContestAdminDetailResponseSchema = z.object({
   endsAt: z.string().datetime().nullable().optional(),
   lockAt: z.string().datetime().nullable().optional(),
   createdAt: z.string().datetime(),
-  standings: z.array(ContestStandingDtoSchema),
+  standings: z.array(ContestEntryStandingDtoSchema),
   draftStatus: ContestDraftStatusDtoSchema.optional(),
   draftPickHistories: z.array(AdminDraftPickHistoryDtoSchema),
   scoringFreshness: z.object({

@@ -348,7 +348,6 @@ export interface ContestHistoryResult extends DomainEntity {
 
   // Denormalised history fields (immutable after contest close)
   leagueId?: string;
-  seasonId?: string;
   leagueMembershipId?: string;
   contestName?: string;
   contestType?: string;

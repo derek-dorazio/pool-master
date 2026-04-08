@@ -1020,7 +1020,6 @@ export type ListContestsResponse = ListContestsResponses[keyof ListContestsRespo
 export type CreateContestData = {
     body: {
         name: string;
-        sport: string;
         eventId?: string;
         contestType: 'SINGLE_EVENT';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
@@ -3201,7 +3200,7 @@ export type AdminGetContestDetailResponses = {
             entryId: string;
             entryName: string;
             ownerEmail: string;
-            rank: number;
+            standingsPosition: number;
             totalScore: number;
         }>;
         draftStatus?: {

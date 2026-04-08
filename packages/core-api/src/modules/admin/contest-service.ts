@@ -60,7 +60,7 @@ export interface ContestAdminView {
     entryId: string;
     entryName: string;
     ownerEmail: string;
-    rank: number;
+    standingsPosition: number;
     totalScore: number;
   }[];
   draftStatus?: {
@@ -255,14 +255,14 @@ export class ContestService {
       throw new ContestNotFoundError(contestId);
     }
 
-    // Build standings from contest entries (which have rank and totalScore)
+    // Build standings directly from persisted contest-entry summary fields.
     const standings = contest.entries
       .filter((e) => e.standingsPosition !== null)
       .map((e) => ({
         entryId: e.id,
         entryName: e.name,
         ownerEmail: e.squad.memberships[0]?.user.email ?? '',
-        rank: e.standingsPosition!,
+        standingsPosition: e.standingsPosition!,
         totalScore: e.totalScore,
       }));
 

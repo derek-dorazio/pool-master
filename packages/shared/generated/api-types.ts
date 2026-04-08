@@ -4503,7 +4503,6 @@ export interface operations {
             content: {
                 "application/json": {
                     name: string;
-                    sport: string;
                     eventId?: string;
                     /** @enum {string} */
                     contestType: "SINGLE_EVENT";
@@ -7188,7 +7187,7 @@ export interface operations {
                             entryId: string;
                             entryName: string;
                             ownerEmail: string;
-                            rank: number;
+                            standingsPosition: number;
                             totalScore: number;
                         }[];
                         draftStatus?: {
