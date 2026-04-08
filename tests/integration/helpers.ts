@@ -237,7 +237,7 @@ export async function cleanupTestData(): Promise<void> {
   // Tables that reference contests
   const contestChildTables = [
     'contest_entry_participant_score_events', 'contest_entry_participant_scores', 'contest_entry_prize_awards',
-    'contest_entries', 'scoring_checkpoints',
+    'contest_entries',
     'draft_sessions', 'draft_picks', 'selection_configs', 'bracket_predictions',
     'contest_participant_pool', 'contest_pools', 'contest_matchups', 'roster_picks', 'contest_picks',
     'participant_contest_scoring_rules', 'contest_entry_aggregation_rules', 'contest_prize_definitions', 'contest_configurations',
@@ -246,8 +246,6 @@ export async function cleanupTestData(): Promise<void> {
   // Tables that reference leagues
   const leagueChildTables = [
     'squad_memberships', 'squads',
-    'season_notes', 'league_season_summaries', 'league_records', 'rivalry_records',
-    'trophies',
     'discoverable_leagues',
   ];
 

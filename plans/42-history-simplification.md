@@ -121,7 +121,7 @@ Avoid:
 | 42-003 | 1 | Remove `ContestResult` from the target first-pass contest/history model | Done | `contest_results` removed; history results now derive from completed `Contest` + `ContestEntry` |
 | 42-004 | 1 | Remove `TeamRosterHistory` from the target first-pass contest/history model | Done | `team_roster_history` removed; roster history now reads `RosterPick` + `SportEventParticipantSourceData` |
 | 42-005 | 1 | Remove `PayoutHistory` from the target first-pass contest/history model | Done | `payout_history` removed; payouts now derive from `ContestEntryPrizeAward` |
-| 42-006 | 1 | Defer `ScoringCheckpoint` until a proven checkpoint/history use case exists | Pending | schema still present and should be revisited separately if it becomes unused in first pass |
+| 42-006 | 1 | Defer `ScoringCheckpoint` until a proven checkpoint/history use case exists | Done | `scoring_checkpoints` and the remaining deferred history analytics tables are removed from the active schema until a real use case returns |
 | 42-007 | 2 | Defer records, rivalries, trophies, season summaries, and related analytics from core history implementation | Done | deferred history analytics/import/export services and routes removed from the runtime surface |
 | 42-008 | 2 | Redesign history routes and DTOs around `ContestEntry`, `RosterPick`, and `ContestEntryPrizeAward` | Done | retained history route coverage now exercises the new entry-centric model only |
 | 42-009 | 2 | Update documentation and plans so agents do not reintroduce removed history tables | Done | active plans now document the trimmed first-pass history surface and the removed `contest_results`, `payout_history`, and `team_roster_history` tables |
