@@ -7,7 +7,6 @@ import {
   ContestType,
   ScoringEngine,
   SelectionType,
-  type Sport,
 } from '@poolmaster/shared/domain';
 import type { z } from 'zod';
 import { z as zod } from 'zod';
@@ -62,7 +61,6 @@ const ContestConfigurationBodySchema = zod.object({
 
 const CreateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100),
-  sport: zod.string().min(1),
   eventId: zod.string().optional(),
   contestType: zod.enum([ContestType.SINGLE_EVENT]),
   selectionType: zod.enum([
@@ -129,7 +127,6 @@ export function createContestHandlers(contestService: ContestService) {
         createdBy: userId,
         sportEventId: body.eventId,
         name: body.name,
-        sport: body.sport as Sport,
         contestType: body.contestType,
         selectionType: body.selectionType,
         contestConfiguration: mapContestConfiguration(body.contestConfiguration),

@@ -44,7 +44,6 @@ export const ContestCrudConfigurationRequestSchema = z.object({
 
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100),
-  sport: z.string().min(1),
   eventId: z.string().optional(),
   contestType: z.enum([ContestType.SINGLE_EVENT]),
   selectionType: z.enum([

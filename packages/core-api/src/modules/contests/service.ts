@@ -19,7 +19,6 @@ import type {
   Contest,
   ContestEntry,
   ContestConfiguration,
-  Sport,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
@@ -39,7 +38,6 @@ export interface CreateContestInput {
   createdBy: string;
   sportEventId?: string;
   name: string;
-  sport: Sport;
   contestType: ContestType;
   selectionType: SelectionType;
   contestConfiguration: Partial<Omit<ContestConfiguration, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
@@ -84,7 +82,6 @@ export class ContestService {
       sportEventId: input.sportEventId || undefined,
       name: input.name,
       status: ContestStatus.DRAFT,
-      sport: input.sport,
       contestType: input.contestType,
       selectionType: input.selectionType,
       scoringEngine: input.scoringEngine,

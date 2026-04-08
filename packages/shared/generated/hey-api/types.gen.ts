@@ -642,7 +642,6 @@ export type GetMemberAuditLogResponse = GetMemberAuditLogResponses[keyof GetMemb
 export type CopySeasonData = {
     body: {
         sourceContestIds: Array<string>;
-        seasonId?: string;
     };
     path: {
         id: string;
@@ -2031,26 +2030,6 @@ export type UpdateContestLockTimeResponses = {
 };
 
 export type UpdateContestLockTimeResponse = UpdateContestLockTimeResponses[keyof UpdateContestLockTimeResponses];
-
-export type ConfirmPayoutsData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/payouts/confirm';
-};
-
-export type ConfirmPayoutsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type ConfirmPayoutsResponse = ConfirmPayoutsResponses[keyof ConfirmPayoutsResponses];
 
 export type GetContestAuditLogData = {
     body?: never;

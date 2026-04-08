@@ -827,23 +827,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/contests/{contestId}/payouts/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Confirm and finalize contest payouts */
-        post: operations["confirmPayouts"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/contests/{contestId}/audit-log": {
         parameters: {
             query?: never;
@@ -3986,7 +3969,6 @@ export interface operations {
             content: {
                 "application/json": {
                     sourceContestIds: string[];
-                    seasonId?: string;
                 };
             };
         };
@@ -5783,31 +5765,6 @@ export interface operations {
                         contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
-                    };
-                };
-            };
-        };
-    };
-    confirmPayouts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
                     };
                 };
             };
