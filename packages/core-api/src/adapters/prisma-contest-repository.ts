@@ -37,8 +37,6 @@ export class PrismaContestRepository implements ContestRepository {
         sport: contest.sport,
         isExclusive: contest.isExclusive,
         scoringStopsOnElimination: contest.scoringStopsOnElimination,
-        scoringRules: {},
-        payoutConfig: {},
         startsAt: contest.startsAt,
         endsAt: contest.endsAt,
         lockAt: contest.lockAt,
@@ -80,7 +78,6 @@ export class PrismaContestRepository implements ContestRepository {
 function mapToContest(row: {
   id: string;
   leagueId: string;
-  seasonId: string | null;
   sportEventId: string | null;
   name: string;
   status: string;
@@ -90,8 +87,6 @@ function mapToContest(row: {
   sport: string | null;
   isExclusive: boolean;
   scoringStopsOnElimination: boolean;
-  scoringRules: unknown;
-  payoutConfig: unknown;
   startsAt: Date | null;
   endsAt: Date | null;
   lockAt: Date | null;

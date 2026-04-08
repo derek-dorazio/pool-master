@@ -274,7 +274,6 @@ model Season {
 
   sport    Sport     @relation(fields: [sportId], references: [id])
   tenant   Tenant    @relation(fields: [tenantId], references: [id])
-  contests Contest[]
 
   @@map("seasons")
 }
@@ -366,7 +365,6 @@ model ParticipantProviderMapping {
 model Contest {
   id                        String    @id @default(uuid()) @db.Uuid
   leagueId                  String    @map("league_id") @db.Uuid
-  seasonId                  String?   @map("season_id") @db.Uuid
   sportEventId              String?   @map("sport_event_id") @db.Uuid
   name                      String
   status                    String    @default("DRAFT")
@@ -375,8 +373,6 @@ model Contest {
   scoringEngine             String    @map("scoring_engine")
   isExclusive               Boolean   @default(false) @map("is_exclusive")
   scoringStopsOnElimination Boolean   @default(false) @map("scoring_stops_on_elimination")
-  scoringRules              Json      @default("{}") @map("scoring_rules")
-  payoutConfig              Json      @default("{}") @map("payout_config")
   sport                     String?   @db.VarChar(50)
   isImported                Boolean   @default(false) @map("is_imported")
   importedBy                String?   @map("imported_by") @db.Uuid
@@ -389,7 +385,6 @@ model Contest {
   updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   league          League                  @relation(fields: [leagueId], references: [id])
-  season          Season?                 @relation(fields: [seasonId], references: [id])
   sportEvent      SportEvent?             @relation(fields: [sportEventId], references: [id])
   configuration   ContestConfiguration?
   entries         ContestEntry[]
