@@ -48,7 +48,7 @@ First-pass contest history should come from:
   - elimination state where relevant
 - `RosterPick`
   - the participants chosen for the entry
-- `ContestEntryPrize`
+- `ContestEntryPrizeAward`
   - the prizes won by the entry
 - `SportEventParticipant`
   - event-scoped participant identity
@@ -102,7 +102,7 @@ Goal:
 
 Flow:
 1. Member opens a completed contest.
-2. System loads `ContestEntryPrize` records for entries in that contest.
+2. System loads `ContestEntryPrizeAward` records for entries in that contest.
 3. UI shows the prize labels and winning amounts attached to the winning entries.
 
 Notes:
@@ -156,7 +156,7 @@ Goal:
 
 Flow:
 1. Commissioner opens a past contest.
-2. System loads the completed `Contest`, `ContestEntry`, `RosterPick`, and `ContestEntryPrize` data.
+2. System loads the completed `Contest`, `ContestEntry`, `RosterPick`, and `ContestEntryPrizeAward` data.
 3. Commissioner reviews final standings, rosters, and prizes.
 
 Notes:
@@ -189,7 +189,7 @@ Agents implementing first-pass history-related functionality should prefer:
 - `Contest`
 - `ContestEntry`
 - `RosterPick`
-- `ContestEntryPrize`
+- `ContestEntryPrizeAward`
 - `SportEventParticipant`
 - `SportEventParticipantSourceData`
 

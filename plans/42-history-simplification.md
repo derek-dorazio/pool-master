@@ -29,7 +29,7 @@ The primary history source of truth should be:
 - `Contest`
 - `ContestEntry`
 - `RosterPick`
-- `ContestEntryPrize`
+- `ContestEntryPrizeAward`
 - `SportEventParticipant`
 - `SportEventParticipantSourceData`
 
@@ -43,7 +43,7 @@ Examples:
 - `ContestStanding` duplicates live entry state
 - `ContestResult` duplicates final entry state and denormalizes legacy fields
 - `TeamRosterHistory` duplicates the locked entry roster
-- `PayoutHistory` duplicates prize outcomes that should live on `ContestEntryPrize`
+- `PayoutHistory` duplicates prize outcomes that should live on `ContestEntryPrizeAward`
 - many history services key off `leagueMembershipId` rather than `ContestEntry`
   or `Squad`
 - records, rivalry, YoY, trophy, and season-summary features are mixed into the
@@ -55,7 +55,7 @@ The following direction is considered settled for the first pass:
 
 - `ContestEntry` is the canonical live and final contest-entry record
 - `RosterPick` is the canonical historical source of the selected participants
-- `ContestEntryPrize` is the canonical historical source of prize outcomes
+- `ContestEntryPrizeAward` is the canonical historical source of prize outcomes
 - participant performance history should be read from `SportEventParticipantSourceData`
 - contest history should be primarily focused on reviewing past contests and
   contest prizes
@@ -101,7 +101,7 @@ When implementing first-pass history:
 
 - read completed-contest standings directly from `ContestEntry`
 - read entry rosters directly from `RosterPick`
-- read entry prizes directly from `ContestEntryPrize`
+- read entry prizes directly from `ContestEntryPrizeAward`
 - read participant performance from `SportEventParticipantSourceData`
 - keep history entry-centric and squad-aware
 
@@ -120,10 +120,10 @@ Avoid:
 | 42-002 | 1 | Remove `ContestStanding` from the target first-pass contest/history model | Pending | `ContestEntry` owns live/final standing data |
 | 42-003 | 1 | Remove `ContestResult` from the target first-pass contest/history model | Pending | final results come from `ContestEntry` |
 | 42-004 | 1 | Remove `TeamRosterHistory` from the target first-pass contest/history model | Pending | `RosterPick` is the historical source of truth |
-| 42-005 | 1 | Remove `PayoutHistory` from the target first-pass contest/history model | Pending | `ContestEntryPrize` replaces payout/history need |
+| 42-005 | 1 | Remove `PayoutHistory` from the target first-pass contest/history model | Pending | `ContestEntryPrizeAward` replaces payout/history need |
 | 42-006 | 1 | Defer `ScoringCheckpoint` until a proven checkpoint/history use case exists | Pending | not needed for first-pass contest review |
 | 42-007 | 2 | Defer records, rivalries, trophies, season summaries, and related analytics from core history implementation | Pending | keep them from influencing first-pass model changes |
-| 42-008 | 2 | Redesign history routes and DTOs around `ContestEntry`, `RosterPick`, and `ContestEntryPrize` | Pending | remove member-centric assumptions |
+| 42-008 | 2 | Redesign history routes and DTOs around `ContestEntry`, `RosterPick`, and `ContestEntryPrizeAward` | Pending | remove member-centric assumptions |
 | 42-009 | 2 | Update documentation and plans so agents do not reintroduce removed history tables | Pending | keep use-case and implementation docs aligned |
 
 ## Acceptance Criteria

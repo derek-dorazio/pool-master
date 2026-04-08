@@ -100,7 +100,7 @@ The following direction is now considered settled for the first pass:
   - `locksAt`
   - `minimumEntries`
   - selection/scoring/payout/draft rules
-- `ContestConfiguration` should also include contest prize definitions through a dedicated configuration concept such as `ContestPrize`
+- `ContestConfiguration` should also include contest prize definitions through a dedicated configuration concept such as `ContestPrizeDefinition`
 - `minimumEntries` is entry-based, not squad-based, and defaults to `2`
 - `Contest` should not move to live state until minimum active entries are met
 - `SportEvent` owns real-world timing and status
@@ -156,7 +156,7 @@ The following direction is now considered settled for the first pass:
 - no special persistence-level concurrency model is required for co-manager draft actions in the first pass
 - commissioner add/drop after a snake draft should be a simple `RosterPick` create/delete operation
 - contest outcome and history should reference `squadId`, not `leagueMembershipId`
-- prize wins should be represented by an entry-owned award relationship such as `ContestEntryPrize`
+- prize wins should be represented by an entry-owned award relationship such as `ContestEntryPrizeAward`
 - no extra contest-summary persistence concept is needed; summary views remain DTO/read-model concerns
 - no snapshot model is required in the first pass for squad/co-manager display state
 
@@ -324,8 +324,8 @@ Why this matters:
 ### G. Prizes, standings, and history
 
 19. Should `ContestEntry` be the only canonical live/final result record in the first pass, with no separate `ContestStanding` or `ContestResult` tables?
-20. Should `ContestEntryPrize` support multiple prize awards per entry in the first pass?
-21. Is the minimal first-pass `ContestEntryPrize` shape enough as:
+20. Should `ContestEntryPrizeAward` support multiple prize awards per entry in the first pass?
+21. Is the minimal first-pass `ContestEntryPrizeAward` shape enough as:
    - `entryId`
    - `prizeName`
    - `winningAmount`

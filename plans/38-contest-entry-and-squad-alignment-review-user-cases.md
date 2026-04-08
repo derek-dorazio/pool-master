@@ -431,7 +431,7 @@ Goal:
 Flow:
 1. Contest finishes.
 2. Backend evaluates configured contest prize rules.
-3. Backend creates one or more `ContestEntryPrize` awards for qualifying entries.
+3. Backend creates one or more `ContestEntryPrizeAward` awards for qualifying entries.
 4. Result screens show the prizes attached to each entry.
 
 Notes:
