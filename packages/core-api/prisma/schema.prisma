@@ -374,10 +374,6 @@ model Contest {
   isExclusive               Boolean   @default(false) @map("is_exclusive")
   scoringStopsOnElimination Boolean   @default(false) @map("scoring_stops_on_elimination")
   sport                     String?   @db.VarChar(50)
-  isImported                Boolean   @default(false) @map("is_imported")
-  importedBy                String?   @map("imported_by") @db.Uuid
-  startDate                 DateTime? @map("start_date") @db.Timestamptz
-  endDate                   DateTime? @map("end_date") @db.Timestamptz
   startsAt                  DateTime? @map("starts_at") @db.Timestamptz
   endsAt                    DateTime? @map("ends_at") @db.Timestamptz
   lockAt                    DateTime? @map("lock_at") @db.Timestamptz
