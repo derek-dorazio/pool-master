@@ -42,6 +42,7 @@ describe('Draft Session Flow Integration', () => {
   let contestId: string;
   let entryId: string;
   let participantId: string;
+  let sportEventParticipantId: string;
 
   beforeAll(async () => {
     const owner = await createTestUser({ displayName: 'Draft Flow Owner' });
@@ -124,6 +125,31 @@ describe('Draft Session Flow Integration', () => {
     createdParticipantIds.push(participant.id);
     participantId = participant.id;
 
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `draft-flow-event-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: 'GOLF',
+        name: 'Draft Flow Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId,
+        status: 'ACTIVE',
+      },
+    });
+    sportEventParticipantId = sportEventParticipant.id;
+
+    await prisma.contest.update({
+      where: { id: contestId },
+      data: { sportEventId: sportEvent.id },
+    });
+
     await prisma.selectionConfig.update({
       where: { contestId },
       data: {
@@ -189,7 +215,7 @@ describe('Draft Session Flow Integration', () => {
     expect(roomRes.json().contestId).toBe(contestId);
     expect(roomRes.json().selectionType).toBe(SelectionType.TIERED);
     expect(roomRes.json().myEntryId).toBe(entryId);
-    expect(roomRes.json().availableParticipantIds).toContain(participantId);
+    expect(roomRes.json().availableParticipantIds).toContain(sportEventParticipantId);
     expect(roomRes.json().picks).toEqual([]);
 
     const submitRes = await getApp().inject({
@@ -198,7 +224,7 @@ describe('Draft Session Flow Integration', () => {
       headers: ownerHeaders,
       payload: {
         entryId,
-        participantId,
+        participantId: sportEventParticipantId,
       },
     });
 
@@ -207,7 +233,7 @@ describe('Draft Session Flow Integration', () => {
     expect(submitRes.json().selectionType).toBe(SelectionType.TIERED);
     expect(submitRes.json().picks).toHaveLength(1);
     expect(submitRes.json().picks[0].entryId).toBe(entryId);
-    expect(submitRes.json().picks[0].participantId).toBe(participantId);
+    expect(submitRes.json().picks[0].participantId).toBe(sportEventParticipantId);
     expect(submitRes.json().picks[0].tierId).toBe('tier-1');
     expect(submitRes.json().picks[0].tierName).toBe('Tier 1');
     expect(submitRes.json().isComplete).toBe(true);
@@ -220,8 +246,8 @@ describe('Draft Session Flow Integration', () => {
 
     expect(afterPickRes.statusCode).toBe(200);
     expect(afterPickRes.json().picks).toHaveLength(1);
-    expect(afterPickRes.json().picks[0].participantId).toBe(participantId);
+    expect(afterPickRes.json().picks[0].participantId).toBe(sportEventParticipantId);
     expect(afterPickRes.json().isComplete).toBe(true);
-    expect(afterPickRes.json().availableParticipantIds).toContain(participantId);
+    expect(afterPickRes.json().availableParticipantIds).toContain(sportEventParticipantId);
   });
 });

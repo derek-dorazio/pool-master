@@ -304,7 +304,6 @@ model Participant {
 
   sport            Sport                    @relation(fields: [sportId], references: [id])
   poolEntries      ContestParticipantPool[]
-  rosterPicks      RosterPick[]
   contestPicks     ContestPick[]
   draftPicks       DraftPick[]
   seasonRecords    ParticipantSeasonRecord[]
@@ -642,7 +641,7 @@ model ContestEntry {
 model RosterPick {
   id              String   @id @default(uuid()) @db.Uuid
   entryId         String   @map("entry_id") @db.Uuid
-  participantId   String   @map("participant_id") @db.Uuid
+  sportEventParticipantId String @map("sport_event_participant_id") @db.Uuid
   draftRound      Int?     @map("draft_round")
   draftPickNumber Int?     @map("draft_pick_number")
   pickedAt        DateTime @default(now()) @map("picked_at") @db.Timestamptz
@@ -651,9 +650,10 @@ model RosterPick {
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   entry       ContestEntry @relation(fields: [entryId], references: [id])
-  participant Participant  @relation(fields: [participantId], references: [id])
+  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
 
   @@index([entryId])
+  @@unique([entryId, sportEventParticipantId])
   @@map("roster_picks")
 }
 
@@ -1010,6 +1010,7 @@ model SportEventParticipant {
   participant Participant @relation(fields: [participantId], references: [id])
   sourceData  SportEventParticipantSourceData[]
   valuations  SportEventParticipantValuation[]
+  rosterPicks RosterPick[]
 
   @@unique([sportEventId, participantId])
   @@index([sportEventId])

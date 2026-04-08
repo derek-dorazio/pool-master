@@ -44,9 +44,18 @@ describe('ContestLookup', () => {
     const prisma = {
       rosterPick: {
         findMany: jest.fn().mockResolvedValue([
-          { participantId: 'participant-1', entry: { id: 'entry-1', name: 'Team One' } },
-          { participantId: 'participant-1', entry: { id: 'entry-1', name: 'Team One' } },
-          { participantId: 'participant-1', entry: { id: 'entry-2', name: 'Team Two' } },
+          {
+            entry: { id: 'entry-1', name: 'Team One' },
+            sportEventParticipant: { participantId: 'participant-1' },
+          },
+          {
+            entry: { id: 'entry-1', name: 'Team One' },
+            sportEventParticipant: { participantId: 'participant-1' },
+          },
+          {
+            entry: { id: 'entry-2', name: 'Team Two' },
+            sportEventParticipant: { participantId: 'participant-1' },
+          },
         ]),
       },
     } as any;

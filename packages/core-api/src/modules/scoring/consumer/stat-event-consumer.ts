@@ -66,8 +66,18 @@ export class ContestLookup {
     participantId: string,
   ): Promise<EntryInfo[]> {
     const picks = await this.prisma.rosterPick.findMany({
-      where: { participantId, entry: { contestId } },
-      include: { entry: true },
+      where: {
+        sportEventParticipant: {
+          participantId,
+        },
+        entry: { contestId },
+      },
+      include: {
+        entry: true,
+        sportEventParticipant: {
+          select: { participantId: true },
+        },
+      },
     });
 
     const entriesById = new Map<string, EntryInfo>();
@@ -75,8 +85,8 @@ export class ContestLookup {
     for (const pick of picks) {
       const existing = entriesById.get(pick.entry.id);
       if (existing) {
-        if (!existing.participantIds.includes(pick.participantId)) {
-          existing.participantIds.push(pick.participantId);
+        if (!existing.participantIds.includes(pick.sportEventParticipant.participantId)) {
+          existing.participantIds.push(pick.sportEventParticipant.participantId);
         }
         continue;
       }
@@ -84,7 +94,7 @@ export class ContestLookup {
       entriesById.set(pick.entry.id, {
         entryId: pick.entry.id,
         entryName: pick.entry.name,
-        participantIds: [pick.participantId],
+        participantIds: [pick.sportEventParticipant.participantId],
       });
     }
 

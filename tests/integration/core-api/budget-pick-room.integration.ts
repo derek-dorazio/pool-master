@@ -41,8 +41,10 @@ describe('Budget Pick Room Integration', () => {
   let contestId: string;
   let entryId: string;
   let firstParticipantId: string;
+  let firstSportEventParticipantId: string;
   let firstParticipantPrice: number;
   let secondParticipantId: string;
+  let secondSportEventParticipantId: string;
 
   beforeAll(async () => {
     const owner = await createTestUser({ displayName: 'Budget Room Owner' });
@@ -132,6 +134,40 @@ describe('Budget Pick Room Integration', () => {
     createdParticipantIds.push(secondParticipant.id);
     secondParticipantId = secondParticipant.id;
 
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `budget-room-event-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: 'GOLF',
+        name: 'Budget Room Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+
+    const firstSportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: firstParticipantId,
+        status: 'ACTIVE',
+      },
+    });
+    firstSportEventParticipantId = firstSportEventParticipant.id;
+
+    const secondSportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: secondParticipantId,
+        status: 'ACTIVE',
+      },
+    });
+    secondSportEventParticipantId = secondSportEventParticipant.id;
+
+    await prisma.contest.update({
+      where: { id: contestId },
+      data: { sportEventId: sportEvent.id },
+    });
+
     const pool = await prisma.contestPool.create({
       data: {
         contestId,
@@ -196,7 +232,7 @@ describe('Budget Pick Room Integration', () => {
     expect(roomRes.json().selectionConfig?.pricingMethod).toBe('WORLD_RANKING');
     expect(roomRes.json().selectionConfig?.rosterSize).toBe(1);
     expect(roomRes.json().availableParticipantIds).toEqual(
-      expect.arrayContaining([firstParticipantId, secondParticipantId]),
+      expect.arrayContaining([firstSportEventParticipantId, secondSportEventParticipantId]),
     );
 
     const submitRes = await getApp().inject({
@@ -205,7 +241,7 @@ describe('Budget Pick Room Integration', () => {
       headers: ownerHeaders,
       payload: {
         entryId,
-        participantId: firstParticipantId,
+        participantId: firstSportEventParticipantId,
       },
     });
 
@@ -216,7 +252,7 @@ describe('Budget Pick Room Integration', () => {
     expect(submitRes.json().picks[0]).toEqual(
       expect.objectContaining({
         entryId,
-        participantId: firstParticipantId,
+        participantId: firstSportEventParticipantId,
         price: firstParticipantPrice,
       }),
     );
@@ -233,12 +269,12 @@ describe('Budget Pick Room Integration', () => {
     expect(afterPickRes.json().picks[0]).toEqual(
       expect.objectContaining({
         entryId,
-        participantId: firstParticipantId,
+        participantId: firstSportEventParticipantId,
         price: firstParticipantPrice,
       }),
     );
-    expect(afterPickRes.json().availableParticipantIds).not.toContain(firstParticipantId);
-    expect(afterPickRes.json().availableParticipantIds).toContain(secondParticipantId);
+    expect(afterPickRes.json().availableParticipantIds).not.toContain(firstSportEventParticipantId);
+    expect(afterPickRes.json().availableParticipantIds).toContain(secondSportEventParticipantId);
     expect(afterPickRes.json().isComplete).toBe(true);
   });
 });

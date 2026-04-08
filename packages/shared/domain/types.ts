@@ -459,7 +459,7 @@ export interface ContestEntry extends DomainEntity {
  */
 export interface RosterPick extends DomainEntity {
   entryId: string;
-  participantId: string;
+  sportEventParticipantId: string;
   draftRound?: number;
   draftPickNumber?: number;
   pickedAt: Date;

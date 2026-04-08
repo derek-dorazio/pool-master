@@ -160,6 +160,30 @@ describe('Contest Entry Negative Integration', () => {
     });
     createdParticipantId = participant.id;
 
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `contest-entry-negative-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: 'Contest Entry Negative Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+      },
+    });
+
+    await prisma.contest.update({
+      where: { id: openContestId },
+      data: { sportEventId: sportEvent.id },
+    });
+
     await prisma.selectionConfig.update({
       where: { contestId: openContestId },
       data: {
@@ -208,7 +232,7 @@ describe('Contest Entry Negative Integration', () => {
     await prisma.rosterPick.create({
       data: {
         entryId: openContestEntryId,
-        participantId: participant.id,
+        sportEventParticipantId: sportEventParticipant.id,
         draftRound: 1,
         draftPickNumber: 1,
         autoPicked: false,

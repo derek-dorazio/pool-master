@@ -203,12 +203,16 @@ export class TimelineService {
       // Fall back to live roster picks
       const picks = await this.prisma.rosterPick.findMany({
         where: { entryId },
-        include: { participant: true },
+        include: {
+          sportEventParticipant: {
+            include: { participant: true },
+          },
+        },
         orderBy: { draftRound: 'asc' },
       });
       roster = picks.map((p) => ({
-        participantId: p.participantId,
-        participantName: p.participant.name,
+        participantId: p.sportEventParticipant.participantId,
+        participantName: p.sportEventParticipant.participant.name,
         draftRound: p.draftRound ?? undefined,
         draftPick: p.draftPickNumber ?? undefined,
       }));
