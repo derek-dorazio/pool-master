@@ -69,7 +69,7 @@ export interface ContestAdminView {
     totalPicks: number;
     startedAt?: Date;
   };
-  picks: {
+  draftPickHistories: {
     round: number;
     pick: number;
     participant: string;
@@ -289,7 +289,7 @@ export class ContestService {
       createdAt: contest.createdAt,
       standings,
       draftStatus,
-      picks: contest.draftSession?.pickHistories.map((pick) => ({
+      draftPickHistories: contest.draftSession?.pickHistories.map((pick) => ({
         round: pick.round,
         pick: pick.pickNumber,
         participant: pick.rosterPick.sportEventParticipant.participant.name,

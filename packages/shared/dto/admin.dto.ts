@@ -522,7 +522,7 @@ export const ContestDraftStatusDtoSchema = z.object({
 });
 export type ContestDraftStatusDto = z.infer<typeof ContestDraftStatusDtoSchema>;
 
-export const ContestPickDtoSchema = z.object({
+export const AdminDraftPickHistoryDtoSchema = z.object({
   round: z.number(),
   pick: z.number(),
   participant: z.string(),
@@ -530,7 +530,9 @@ export const ContestPickDtoSchema = z.object({
   autoPicked: z.boolean(),
   time: z.string().datetime(),
 });
-export type ContestPickDto = z.infer<typeof ContestPickDtoSchema>;
+export type AdminDraftPickHistoryDto = z.infer<
+  typeof AdminDraftPickHistoryDtoSchema
+>;
 
 export const ContestOverrideDtoSchema = z.object({
   id: z.string(),
@@ -577,7 +579,7 @@ export const ContestAdminDetailResponseSchema = z.object({
   createdAt: z.string().datetime(),
   standings: z.array(ContestStandingDtoSchema),
   draftStatus: ContestDraftStatusDtoSchema.optional(),
-  picks: z.array(ContestPickDtoSchema),
+  draftPickHistories: z.array(AdminDraftPickHistoryDtoSchema),
   scoringFreshness: z.object({
     lastStatEvent: z.string().datetime().nullable().optional(),
     isStale: z.boolean(),
