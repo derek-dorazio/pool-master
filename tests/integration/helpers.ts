@@ -36,7 +36,6 @@ import { ScoringService } from '../../packages/core-api/src/modules/scoring/serv
 import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
 import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
-import { contestPoolModule } from '../../packages/core-api/src/modules/participants/pool-routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
 import { socialModule } from '../../packages/core-api/src/modules/social/routes';
@@ -107,7 +106,6 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(accountConsentModule, { prefix: '/api/v1/account' });
   testApp.register(configModule, { prefix: '/api/v1/config' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
-  testApp.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
   testApp.register(historyModule, { prefix: '/api/v1' });
   testApp.register(socialModule, { prefix: '/api/v1' });

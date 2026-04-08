@@ -22,7 +22,6 @@ import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
 import { eventsModule } from './modules/events/routes';
 import { participantsModule } from './modules/participants/routes';
-import { contestPoolModule } from './modules/participants/pool-routes';
 import { standingsModule } from './modules/standings/routes';
 import { historyModule } from './modules/history/routes';
 import { accountConsentModule } from './modules/account-consent/routes';
@@ -113,7 +112,6 @@ export function buildApp() {
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   app.register(eventsModule, { prefix: '/api/v1/events' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
-  app.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool', registry });
   app.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
   app.register(historyModule, { prefix: '/api/v1' });
   app.register(accountConsentModule, { prefix: '/api/v1/account' });
