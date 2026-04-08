@@ -252,7 +252,9 @@ export class UserService {
           select: {
             id: true,
             name: true,
-            sport: true,
+            sportEvent: {
+              select: { sport: true },
+            },
             status: true,
           },
         },
@@ -264,7 +266,7 @@ export class UserService {
       activeContests.push({
         id: entry.contest.id,
         name: entry.contest.name,
-        sport: entry.contest.sport ?? '',
+        sport: entry.contest.sportEvent?.sport ?? '',
         status: entry.contest.status.toLowerCase(),
         rank: entry.standingsPosition ?? undefined,
       });

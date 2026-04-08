@@ -170,7 +170,9 @@ export class ExportService {
           leagueId: true,
           name: true,
           status: true,
-          sport: true,
+          sportEvent: {
+            select: { sport: true },
+          },
           createdAt: true,
         },
       }),
@@ -197,7 +199,7 @@ export class ExportService {
           leagueId: c.leagueId,
           name: c.name,
           status: c.status,
-          sport: c.sport,
+          sport: c.sportEvent?.sport ?? null,
         })),
       },
     };

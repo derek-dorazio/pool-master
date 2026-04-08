@@ -132,7 +132,7 @@ export class ContestService {
 
     const where: Record<string, unknown> = {};
 
-    if (query.sport) where.sport = query.sport;
+    if (query.sport) where.sportEvent = { is: { sport: query.sport } };
     if (query.status) where.status = query.status.toUpperCase();
     if (query.contestType) where.contestType = query.contestType;
     if (query.selectionType) where.selectionType = query.selectionType;
@@ -154,6 +154,9 @@ export class ContestService {
               tenant: { select: { name: true } },
             },
           },
+          sportEvent: {
+            select: { sport: true },
+          },
           _count: { select: { entries: true } },
         },
       }),
@@ -165,7 +168,7 @@ export class ContestService {
       name: row.name,
       leagueName: row.league.name,
       tenantName: row.league.tenant.name,
-      sport: row.sport ?? '',
+      sport: row.sportEvent?.sport ?? '',
       contestType: row.contestType,
       selectionType: row.selectionType,
       status: row.status.toLowerCase(),
@@ -190,6 +193,9 @@ export class ContestService {
             tenantId: true,
             tenant: { select: { name: true } },
           },
+        },
+        sportEvent: {
+          select: { sport: true },
         },
         entries: {
           include: {
@@ -273,7 +279,7 @@ export class ContestService {
     return {
       id: contest.id,
       name: contest.name,
-      sport: contest.sport ?? '',
+      sport: contest.sportEvent?.sport ?? '',
       contestType: contest.contestType,
       selectionType: contest.selectionType,
       scoringEngine: contest.scoringEngine,

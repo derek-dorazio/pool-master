@@ -12,6 +12,9 @@ export class PrismaContestRepository implements ContestRepository {
   async findById(id: string, tenantId: string): Promise<Contest | null> {
     const row = await this.prisma.contest.findFirst({
       where: { id, league: { tenantId } },
+      include: {
+        sportEvent: { select: { sport: true } },
+      },
     });
     return row ? mapToContest(row) : null;
   }
@@ -20,6 +23,9 @@ export class PrismaContestRepository implements ContestRepository {
     const rows = await this.prisma.contest.findMany({
       where: { leagueId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        sportEvent: { select: { sport: true } },
+      },
     });
     return rows.map(mapToContest);
   }
@@ -34,7 +40,6 @@ export class PrismaContestRepository implements ContestRepository {
         contestType: contest.contestType,
         selectionType: contest.selectionType,
         scoringEngine: contest.scoringEngine,
-        sport: contest.sport,
         isExclusive: contest.isExclusive,
         scoringStopsOnElimination: contest.scoringStopsOnElimination,
         startsAt: contest.startsAt,
@@ -52,7 +57,6 @@ export class PrismaContestRepository implements ContestRepository {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.sportEventId !== undefined && { sportEventId: updates.sportEventId }),
-        ...(updates.sport !== undefined && { sport: updates.sport }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
         ...(updates.lockAt !== undefined && { lockAt: updates.lockAt }),
@@ -84,7 +88,7 @@ function mapToContest(row: {
   contestType: string;
   selectionType: string;
   scoringEngine: string;
-  sport: string | null;
+  sportEvent?: { sport: string } | null;
   isExclusive: boolean;
   scoringStopsOnElimination: boolean;
   startsAt: Date | null;
@@ -102,7 +106,7 @@ function mapToContest(row: {
     contestType: row.contestType as Contest['contestType'],
     selectionType: row.selectionType as Contest['selectionType'],
     scoringEngine: row.scoringEngine as Contest['scoringEngine'],
-    sport: row.sport as Contest['sport'],
+    sport: row.sportEvent?.sport as Contest['sport'],
     isExclusive: row.isExclusive,
     scoringStopsOnElimination: row.scoringStopsOnElimination,
     startsAt: row.startsAt ?? undefined,

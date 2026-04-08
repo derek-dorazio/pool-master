@@ -190,6 +190,9 @@ export class HistoryService {
         status: 'COMPLETED',
       },
       include: {
+        sportEvent: {
+          select: { sport: true },
+        },
         entries: {
           include: {
             squad: {
@@ -275,7 +278,7 @@ export class HistoryService {
             leagueMembershipId,
             contestName: contest.name,
             contestType: contest.contestType,
-            sport: contest.sport ?? undefined,
+            sport: contest.sportEvent?.sport ?? undefined,
             numEntries,
             startedAt: contest.startsAt ?? undefined,
             endedAt: contest.endsAt ?? undefined,
