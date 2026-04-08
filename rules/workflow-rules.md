@@ -153,6 +153,15 @@ Backend-first refactor execution rules on `codex-backend-refactor-lane`:
 - Do not mix old and new domain terminology within the same execution slice.
 - If an implementation slice needs behavior that is not covered by an active use-case document, stop and document that use case before inventing the behavior from old code.
 - If use cases are unclear or ambiguous, ask for clarification instead of inventing product behavior.
+- Prefer incremental target-shaped slices:
+  - it is acceptable to introduce new target-model tables, repositories, DTOs, and APIs in a narrow slice before every old consumer is removed
+  - but the slice must use the new domain names directly
+  - and it must not add compatibility shims, aliases, or legacy wrappers just to bridge old and new models
+- Finish and commit ancillary cleanup that touches shared schema files before beginning the next core schema/model slice.
+- Keep runtime/model commits separate from docs-only terminology cleanup when practical so validation, rollback, and review stay clear.
+- Plan-row updates are part of the slice itself, not a follow-up task:
+  - every implementation slice must update the relevant plan rows before commit
+  - do not leave slice status changes for a later cleanup pass
 
 ---
 

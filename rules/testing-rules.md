@@ -75,6 +75,7 @@ Notes:
 
 - DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
 - In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
+- If a DB-backed integration command fails with a local connection error in the sandbox but local database commands such as `prisma migrate deploy` or `psql` succeed, retry the exact test command outside the sandbox before assuming the failure is in application code.
 
 Backend-first refactor branch exception:
 
@@ -119,6 +120,7 @@ Backend-first refactor testing rules on `codex-backend-refactor-lane`:
   - if no, correct the test
 - Do not “fix” a legitimate application defect by weakening the test or mocking around the defect.
 - Before committing a backend slice on this branch, make sure the required unit tests and DB integration tests for that slice pass and the slice meets the branch coverage expectation.
+- When DTO/Zod schemas produce invalid Fastify or OpenAPI validation output, it is acceptable to keep the DTO schema for typing/parsing and use explicit JSON route schemas in the route module instead of forcing the route to use `zodToJsonSchema`.
 
 ---
 
