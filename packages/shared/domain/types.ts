@@ -444,10 +444,12 @@ export interface ContestMatchup extends DomainEntity {
  */
 export interface ContestEntry extends DomainEntity {
   contestId: string;
-  leagueMembershipId: string;
+  squadId: string;
+  entryNumber: number;
   name: string;
+  status: 'ACTIVE' | 'INACTIVE';
   totalScore: number;
-  rank?: number;
+  standingsPosition?: number;
   isEliminated: boolean;
 }
 

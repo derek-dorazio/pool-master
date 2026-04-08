@@ -138,13 +138,14 @@ export type ContestDetailDto = z.infer<typeof ContestDetailDtoSchema>;
 export const ContestEntryDtoSchema = z.object({
   id: z.string(),
   contestId: z.string(),
-  leagueMembershipId: z.string(),
+  squadId: z.string(),
+  squadName: z.string(),
+  entryNumber: z.number().int().min(1),
   name: z.string(),
+  status: z.enum(['ACTIVE', 'INACTIVE']),
   totalScore: z.number(),
-  rank: z.number().nullable().optional(),
+  standingsPosition: z.number().nullable().optional(),
   isEliminated: z.boolean(),
-  ownerId: z.string(),
-  ownerDisplayName: z.string(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -174,6 +175,7 @@ export const ContestEntryListResponseSchema = z.object({
   total: z.number(),
   isJoined: z.boolean(),
   myEntryId: z.string().nullable(),
+  myEntryIds: z.array(z.string()).optional(),
   entries: z.array(ContestEntryDtoSchema),
 });
 export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;

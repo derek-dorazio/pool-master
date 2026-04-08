@@ -1554,16 +1554,18 @@ export type ListContestEntriesResponses = {
         total: number;
         isJoined: boolean;
         myEntryId: string;
+        myEntryIds?: Array<string>;
         entries: Array<{
             id: string;
             contestId: string;
-            leagueMembershipId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
             name: string;
+            status: 'ACTIVE' | 'INACTIVE';
             totalScore: number;
-            rank?: number;
+            standingsPosition?: number;
             isEliminated: boolean;
-            ownerId: string;
-            ownerDisplayName: string;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -1611,13 +1613,14 @@ export type GetMyContestEntryResponses = {
         entry: {
             id: string;
             contestId: string;
-            leagueMembershipId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
             name: string;
+            status: 'ACTIVE' | 'INACTIVE';
             totalScore: number;
-            rank?: number;
+            standingsPosition?: number;
             isEliminated: boolean;
-            ownerId: string;
-            ownerDisplayName: string;
             createdAt: string;
             updatedAt: string;
         };
@@ -1644,13 +1647,14 @@ export type EnterContestResponses = {
         entry: {
             id: string;
             contestId: string;
-            leagueMembershipId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
             name: string;
+            status: 'ACTIVE' | 'INACTIVE';
             totalScore: number;
-            rank?: number;
+            standingsPosition?: number;
             isEliminated: boolean;
-            ownerId: string;
-            ownerDisplayName: string;
             createdAt: string;
             updatedAt: string;
         };
@@ -1663,13 +1667,14 @@ export type EnterContestResponses = {
         entry: {
             id: string;
             contestId: string;
-            leagueMembershipId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
             name: string;
+            status: 'ACTIVE' | 'INACTIVE';
             totalScore: number;
-            rank?: number;
+            standingsPosition?: number;
             isEliminated: boolean;
-            ownerId: string;
-            ownerDisplayName: string;
             createdAt: string;
             updatedAt: string;
         };

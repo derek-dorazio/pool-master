@@ -193,13 +193,19 @@ export class ContestService {
         },
         entries: {
           include: {
-            membership: {
+            squad: {
               include: {
-                user: { select: { email: true } },
+                memberships: {
+                  where: { status: 'ACTIVE' },
+                  include: {
+                    user: { select: { email: true } },
+                  },
+                  orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+                },
               },
             },
           },
-          orderBy: { rank: 'asc' },
+          orderBy: { standingsPosition: 'asc' },
         },
         standings: {
           orderBy: { rank: 'asc' },
@@ -213,9 +219,15 @@ export class ContestService {
                 },
                 entry: {
                   include: {
-                    membership: {
+                    squad: {
                       include: {
-                        user: { select: { email: true } },
+                        memberships: {
+                          where: { status: 'ACTIVE' },
+                          include: {
+                            user: { select: { email: true } },
+                          },
+                          orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+                        },
                       },
                     },
                   },
@@ -234,12 +246,12 @@ export class ContestService {
 
     // Build standings from contest entries (which have rank and totalScore)
     const standings = contest.entries
-      .filter((e) => e.rank !== null)
+      .filter((e) => e.standingsPosition !== null)
       .map((e) => ({
         entryId: e.id,
         entryName: e.name,
-        ownerEmail: e.membership.user.email,
-        rank: e.rank!,
+        ownerEmail: e.squad.memberships[0]?.user.email ?? '',
+        rank: e.standingsPosition!,
         totalScore: e.totalScore,
       }));
 
@@ -276,7 +288,7 @@ export class ContestService {
         round: pick.round,
         pick: pick.pickNumber,
         participant: pick.participant.name,
-        owner: pick.entry.membership.user.email,
+        owner: pick.entry.squad.memberships[0]?.user.email ?? '',
         autoPicked: pick.autoPicked,
         time: pick.pickedAt,
       })) ?? [],
@@ -421,7 +433,7 @@ export class ContestService {
     // Assign new ranks and record changes
     for (let i = 0; i < entries.length; i++) {
       const newRank = i + 1;
-      const oldRank = entries[i].rank ?? 0;
+      const oldRank = entries[i].standingsPosition ?? 0;
 
       if (oldRank !== newRank) {
         rankChanges.push({ entryId: entries[i].id, oldRank, newRank });
@@ -430,7 +442,7 @@ export class ContestService {
 
       await this.prisma.contestEntry.update({
         where: { id: entries[i].id },
-        data: { rank: newRank },
+        data: { standingsPosition: newRank },
       });
 
       // Also upsert into contest_standings

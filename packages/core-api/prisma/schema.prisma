@@ -133,7 +133,6 @@ model LeagueMembership {
 
   league  League         @relation(fields: [leagueId], references: [id])
   user    User           @relation(fields: [userId], references: [id])
-  entries ContestEntry[]
 
   @@unique([leagueId, userId])
   @@map("league_memberships")
@@ -152,6 +151,7 @@ model Squad {
   league       League            @relation(fields: [leagueId], references: [id])
   creator      User              @relation("SquadCreatedBy", fields: [createdBy], references: [id])
   memberships  SquadMembership[]
+  entries      ContestEntry[]
 
   @@index([leagueId, status])
   @@map("squads")
@@ -613,26 +613,28 @@ model ContestMatchup {
 // =============================================================================
 
 model ContestEntry {
-  id                 String   @id @default(uuid()) @db.Uuid
-  contestId          String   @map("contest_id") @db.Uuid
-  leagueMembershipId String   @map("league_membership_id") @db.Uuid
-  name               String
-  totalScore         Float    @default(0) @map("total_score")
-  rank               Int?
-  isEliminated       Boolean  @default(false) @map("is_eliminated")
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id                String   @id @default(uuid()) @db.Uuid
+  contestId         String   @map("contest_id") @db.Uuid
+  squadId           String   @map("squad_id") @db.Uuid
+  entryNumber       Int      @default(1) @map("entry_number")
+  name              String
+  status            String   @default("ACTIVE") @db.VarChar(20)
+  totalScore        Float    @default(0) @map("total_score")
+  standingsPosition Int?     @map("standings_position")
+  isEliminated      Boolean  @default(false) @map("is_eliminated")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  contest    Contest          @relation(fields: [contestId], references: [id])
-  membership LeagueMembership @relation(fields: [leagueMembershipId], references: [id])
+  contest Contest @relation(fields: [contestId], references: [id])
+  squad   Squad   @relation(fields: [squadId], references: [id])
 
   rosterPicks RosterPick[]
   contestPicks ContestPick[]
   bracket      BracketPrediction?
   draftPicks   DraftPick[]
 
-  @@unique([contestId, leagueMembershipId])
-  @@index([contestId])
+  @@unique([contestId, squadId, entryNumber])
+  @@index([contestId, standingsPosition])
   @@map("contest_entries")
 }
 

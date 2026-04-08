@@ -9,8 +9,17 @@ import type {
   LeagueMembershipRepository,
   LeagueRepository,
   SelectionConfigRepository,
+  SquadMembershipRepository,
+  SquadRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, SelectionType, ScoringEngine, ContestType } from '@poolmaster/shared/domain';
+import {
+  ContestStatus,
+  SelectionType,
+  ScoringEngine,
+  ContestType,
+  SquadMembershipStatus,
+  SquadStatus,
+} from '@poolmaster/shared/domain';
 import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
@@ -66,7 +75,7 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
   return {
     findById: jest.fn().mockResolvedValue(null),
     findByContest: jest.fn().mockResolvedValue([]),
-    findByMember: jest.fn().mockResolvedValue([]),
+    findBySquad: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
       id: 'entry-1',
@@ -76,9 +85,12 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
     update: jest.fn().mockImplementation(async (id, updates) => ({
       id,
       contestId: 'contest-1',
-      leagueMembershipId: 'membership-1',
-      name: 'Entry',
+      squadId: 'squad-1',
+      entryNumber: 1,
+      name: 'Ace Squad Entry 1',
+      status: 'ACTIVE',
       totalScore: 0,
+      standingsPosition: undefined,
       isEliminated: false,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
@@ -100,6 +112,58 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
   };
 }
 
+function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
+  return {
+    findById: jest.fn().mockResolvedValue({
+      id: 'squad-1',
+      leagueId: 'league-1',
+      createdBy: 'user-1',
+      name: "Derek's Squad",
+      iconUrl: undefined,
+      status: SquadStatus.ACTIVE,
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    }),
+    findByLeague: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockResolvedValue({
+      id: 'squad-1',
+      leagueId: 'league-1',
+      createdBy: 'user-1',
+      name: "Derek's Squad",
+      iconUrl: undefined,
+      status: SquadStatus.ACTIVE,
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    }),
+    update: jest.fn(),
+    delete: jest.fn(),
+    ...overrides,
+  };
+}
+
+function createMockSquadMembershipRepo(
+  overrides: Partial<SquadMembershipRepository> = {},
+): SquadMembershipRepository {
+  return {
+    findBySquad: jest.fn().mockResolvedValue([]),
+    findBySquadAndUser: jest.fn().mockResolvedValue(null),
+    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({
+      id: 'squad-membership-1',
+      squadId: 'squad-1',
+      leagueId: 'league-1',
+      userId: 'user-1',
+      status: SquadMembershipStatus.ACTIVE,
+      joinedAt: new Date('2026-01-01'),
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    }),
+    update: jest.fn(),
+    delete: jest.fn(),
+    ...overrides,
+  };
+}
+
 function createMockPrisma(overrides: Record<string, unknown> = {}) {
   const user = buildUser({ id: 'user-1', displayName: 'Derek' });
   return {
@@ -108,35 +172,31 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
         {
           id: 'entry-1',
           contestId: 'contest-1',
-          leagueMembershipId: 'membership-1',
-          name: "Derek's Entry",
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: "Derek's Squad Entry 1",
+          status: 'ACTIVE',
           totalScore: 0,
-          rank: null,
+          standingsPosition: null,
           isEliminated: false,
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-01'),
-          membership: {
-            id: 'membership-1',
-            userId: user.id,
-            user,
-          },
+          squad: { id: 'squad-1', name: "Derek's Squad" },
         },
       ]),
       findUnique: jest.fn().mockResolvedValue({
         id: 'entry-1',
         contestId: 'contest-1',
-        leagueMembershipId: 'membership-1',
-        name: "Derek's Entry",
+        squadId: 'squad-1',
+        entryNumber: 1,
+        name: "Derek's Squad Entry 1",
+        status: 'ACTIVE',
         totalScore: 0,
-        rank: null,
+        standingsPosition: null,
         isEliminated: false,
         createdAt: new Date('2026-01-01'),
         updatedAt: new Date('2026-01-01'),
-        membership: {
-          id: 'membership-1',
-          userId: user.id,
-          user,
-        },
+        squad: { id: 'squad-1', name: "Derek's Squad" },
       }),
     },
     rosterPick: { count: jest.fn().mockResolvedValue(0) },
@@ -144,6 +204,7 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
     bracketPrediction: { count: jest.fn().mockResolvedValue(0) },
     draftPick: { count: jest.fn().mockResolvedValue(0) },
     user: { findUnique: jest.fn().mockResolvedValue(user) },
+    contestConfiguration: { findUnique: jest.fn().mockResolvedValue({ maxEntriesPerSquad: 1 }) },
     ...overrides,
   };
 }
@@ -423,7 +484,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findByMember: jest.fn().mockResolvedValue([]),
+        findBySquad: jest.fn().mockResolvedValue([]),
       });
       const prisma = createMockPrisma();
       const service = new ContestService(
@@ -431,6 +492,8 @@ describe('ContestService', () => {
         createMockSelectionConfigRepo(),
         membershipRepo,
         createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo(),
         entryRepo,
         prisma as any,
       );
@@ -440,8 +503,9 @@ describe('ContestService', () => {
       expect(result.created).toBe(true);
       expect(entryRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         contestId: 'contest-1',
-        leagueMembershipId: 'membership-1',
-        name: "Derek's Entry",
+        squadId: 'squad-1',
+        entryNumber: 1,
+        name: "Derek's Squad Entry 1",
       }));
     });
 
@@ -459,6 +523,19 @@ describe('ContestService', () => {
         createMockSelectionConfigRepo(),
         membershipRepo,
         createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
         createMockEntryRepo(),
         createMockPrisma() as any,
       );
@@ -467,7 +544,7 @@ describe('ContestService', () => {
 
       expect(result.isJoined).toBe(true);
       expect(result.myEntryId).toBe('entry-1');
-      expect(result.entries[0].ownerDisplayName).toBe('Derek');
+      expect(result.entries[0].squadName).toBe("Derek's Squad");
     });
 
     it('rejects leaving a contest after picks already exist', async () => {
@@ -480,13 +557,16 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findByMember: jest.fn().mockResolvedValue([
+        findBySquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
-            leagueMembershipId: 'membership-1',
-            name: "Derek's Entry",
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
             totalScore: 0,
+            standingsPosition: undefined,
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -501,6 +581,19 @@ describe('ContestService', () => {
         createMockSelectionConfigRepo(),
         membershipRepo,
         createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
         entryRepo,
         prisma as any,
       );

@@ -304,6 +304,7 @@ export function createContestHandlers(
         entries: result.entries,
         isJoined: result.isJoined,
         myEntryId: result.myEntryId,
+        myEntryIds: result.myEntryIds,
       }));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {

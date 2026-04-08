@@ -5130,7 +5130,7 @@ export interface operations {
                 "application/json": {
                     name?: string;
                     /** Format: uri */
-                    iconUrl?: string | null;
+                    iconUrl?: string;
                 };
             };
         };
@@ -6072,16 +6072,19 @@ export interface operations {
                         total: number;
                         isJoined: boolean;
                         myEntryId: string | null;
+                        myEntryIds?: string[];
                         entries: {
                             id: string;
                             contestId: string;
-                            leagueMembershipId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
                             name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
                             totalScore: number;
-                            rank?: number | null;
+                            standingsPosition?: number | null;
                             isEliminated: boolean;
-                            ownerId: string;
-                            ownerDisplayName: string;
                             /** Format: date-time */
                             createdAt: string;
                             /** Format: date-time */
@@ -6114,13 +6117,15 @@ export interface operations {
                         entry: {
                             id: string;
                             contestId: string;
-                            leagueMembershipId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
                             name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
                             totalScore: number;
-                            rank?: number | null;
+                            standingsPosition?: number | null;
                             isEliminated: boolean;
-                            ownerId: string;
-                            ownerDisplayName: string;
                             /** Format: date-time */
                             createdAt: string;
                             /** Format: date-time */
@@ -6153,13 +6158,15 @@ export interface operations {
                         entry: {
                             id: string;
                             contestId: string;
-                            leagueMembershipId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
                             name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
                             totalScore: number;
-                            rank?: number | null;
+                            standingsPosition?: number | null;
                             isEliminated: boolean;
-                            ownerId: string;
-                            ownerDisplayName: string;
                             /** Format: date-time */
                             createdAt: string;
                             /** Format: date-time */
@@ -6179,13 +6186,15 @@ export interface operations {
                         entry: {
                             id: string;
                             contestId: string;
-                            leagueMembershipId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
                             name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
                             totalScore: number;
-                            rank?: number | null;
+                            standingsPosition?: number | null;
                             isEliminated: boolean;
-                            ownerId: string;
-                            ownerDisplayName: string;
                             /** Format: date-time */
                             createdAt: string;
                             /** Format: date-time */

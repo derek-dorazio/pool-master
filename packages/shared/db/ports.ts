@@ -194,7 +194,7 @@ export interface ContestMatchupRepository {
 export interface ContestEntryRepository {
   findById(id: string): Promise<ContestEntry | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
-  findByMember(leagueMembershipId: string): Promise<ContestEntry[]>;
+  findBySquad(squadId: string): Promise<ContestEntry[]>;
   create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntry>;
   update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry>;
   delete(id: string): Promise<void>;

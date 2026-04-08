@@ -116,7 +116,7 @@ export class StandingsRollup {
     return this.activeContestIds;
   }
 
-  /** Persist standings to ContestStanding and update ContestEntry.rank via Prisma. */
+  /** Persist standings to ContestStanding and update ContestEntry.standingsPosition via Prisma. */
   private async persistStandings(
     contestId: string,
     standings: StandingEntry[],
@@ -144,12 +144,12 @@ export class StandingsRollup {
       ),
     );
 
-    // Update rank on ContestEntry for quick lookups
+    // Update standings position on ContestEntry for quick lookups
     await this.prisma.$transaction(
       standings.map((s) =>
         this.prisma.contestEntry.update({
           where: { id: s.entryId },
-          data: { rank: s.rank },
+          data: { standingsPosition: s.rank },
         }),
       ),
     );

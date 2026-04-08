@@ -24,7 +24,6 @@ import {
 } from '@poolmaster/shared/dto/drafts.dto';
 import {
   PrismaContestEntryRepository,
-  PrismaLeagueMembershipRepository,
   PrismaParticipantRepository,
 } from '../../adapters';
 import crypto from 'node:crypto';
@@ -60,6 +59,7 @@ interface ContestRecord {
 }
 type ContestEntryRecord = Awaited<ReturnType<PrismaClient['contestEntry']['findMany']>>[number];
 type MembershipRecord = Awaited<ReturnType<PrismaClient['leagueMembership']['findMany']>>[number];
+type SquadMembershipRecord = Awaited<ReturnType<PrismaClient['squadMembership']['findMany']>>[number];
 type PoolParticipantRecord = Awaited<ReturnType<PrismaClient['contestParticipantPool']['findMany']>>[number];
 type RosterPickRecord = Awaited<ReturnType<PrismaClient['rosterPick']['findMany']>>[number];
 type ContestMatchupRecord = Awaited<ReturnType<PrismaClient['contestMatchup']['findMany']>>[number];
@@ -71,6 +71,7 @@ interface DraftContext {
   selectionConfig: ContestSelectionConfig;
   contestEntries: ContestEntryRecord[];
   memberships: MembershipRecord[];
+  squadMemberships: SquadMembershipRecord[];
   poolParticipants: PoolParticipantRecord[];
   contestMatchups: ContestMatchupRecord[];
 }
@@ -114,6 +115,28 @@ function getIsCommissioner(
 ): boolean {
   const membership = getRequestMembership(context, requestUserId);
   return membership ? isCommissionerRole(membership.role) : false;
+}
+
+function buildEntryUserIdMap(context: DraftContext): Map<string, string> {
+  const membershipBySquadId = new Map<string, string>();
+  for (const membership of context.squadMemberships) {
+    if (!membershipBySquadId.has(membership.squadId)) {
+      membershipBySquadId.set(membership.squadId, membership.userId);
+    }
+  }
+
+  return new Map(
+    context.contestEntries.map((entry) => [entry.id, membershipBySquadId.get(entry.squadId) ?? '']),
+  );
+}
+
+function findEntryForUser(
+  context: DraftContext,
+  requestUserId?: string,
+): ContestEntryRecord | undefined {
+  if (!requestUserId) return undefined;
+  const entryUserIdMap = buildEntryUserIdMap(context);
+  return context.contestEntries.find((entry) => entryUserIdMap.get(entry.id) === requestUserId);
 }
 
 function rewindSnakeDraftState(state: DraftState): DraftState {
@@ -259,7 +282,26 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
     }),
   ]);
 
-  return { contest, selectionConfig, contestEntries, memberships, poolParticipants, contestMatchups };
+  const squadIds = Array.from(new Set(contestEntries.map((entry) => entry.squadId)));
+  const squadMemberships = squadIds.length === 0
+    ? []
+    : await prisma.squadMembership.findMany({
+        where: {
+          squadId: { in: squadIds },
+          status: 'ACTIVE',
+        },
+        orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+      });
+
+  return {
+    contest,
+    selectionConfig,
+    contestEntries,
+    memberships,
+    squadMemberships,
+    poolParticipants,
+    contestMatchups,
+  };
 }
 
 function buildSelectionConfigResponse(
@@ -301,13 +343,11 @@ async function buildSnakeDraftResponse(
   const takenIds = engine.getTakenParticipantIds(state);
   const remaining = availableParticipants.filter((id) => !takenIds.includes(id));
   const contestEntryRepo = new PrismaContestEntryRepository(prisma);
-  const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const participantRepo = new PrismaParticipantRepository(prisma);
 
   const contestEntries = await contestEntryRepo.findByContest(state.contestId);
-  const memberships = context.contest?.leagueId ? await membershipRepo.findByLeague(context.contest.leagueId) : [];
-  const membershipById = new Map(memberships.map((membership) => [membership.id, membership]));
   const contestEntryById = new Map(contestEntries.map((entry) => [entry.id, entry]));
+  const entryUserIdMap = buildEntryUserIdMap(context);
   const participantIds = Array.from(new Set(
     state.picks.map((pick) => pick.participantId).filter((value): value is string => Boolean(value)),
   ));
@@ -320,10 +360,9 @@ async function buildSnakeDraftResponse(
 
   const entries = state.entryIds.map((entryId) => {
     const contestEntry = contestEntryById.get(entryId);
-    const membership = contestEntry ? membershipById.get(contestEntry.leagueMembershipId) : undefined;
     return {
       id: entryId,
-      userId: membership?.userId ?? '',
+      userId: contestEntry ? entryUserIdMap.get(contestEntry.id) ?? '' : '',
       name: contestEntry?.name ?? entryId,
       isOnClock: session.currentEntryId === entryId && session.status === DraftStatus.LIVE,
     };
@@ -388,8 +427,8 @@ async function buildRosterSelectionResponse(
   context: DraftContext,
   requestUserId?: string,
 ) {
-  const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
   const contestEntryById = new Map(context.contestEntries.map((entry) => [entry.id, entry]));
+  const entryUserIdMap = buildEntryUserIdMap(context);
   const entryIds = context.contestEntries.map((entry) => entry.id);
   const tiers = deriveTierConfig(context.selectionConfig, context.poolParticipants);
   const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
@@ -433,11 +472,10 @@ async function buildRosterSelectionResponse(
   }
 
   const entries = context.contestEntries.map((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
     const entryPicks = picksByEntry.get(entry.id) ?? [];
     return {
       id: entry.id,
-      userId: membership?.userId ?? '',
+      userId: entryUserIdMap.get(entry.id) ?? '',
       name: entry.name,
       isOnClock: false,
       pickCount: entryPicks.length,
@@ -537,17 +575,13 @@ async function buildPickEmResponse(
   context: DraftContext,
   requestUserId?: string,
 ) {
-  const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-  const myEntry = context.contestEntries.find((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
-    return membership?.userId === requestUserId;
-  });
+  const entryUserIdMap = buildEntryUserIdMap(context);
+  const myEntry = findEntryForUser(context, requestUserId);
 
   const entries = context.contestEntries.map((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
     return {
       id: entry.id,
-      userId: membership?.userId ?? '',
+      userId: entryUserIdMap.get(entry.id) ?? '',
       name: entry.name,
       isOnClock: false,
     };
@@ -741,20 +775,16 @@ async function buildBracketResponse(
   context: DraftContext,
   requestUserId?: string,
 ) {
-  const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
+  const entryUserIdMap = buildEntryUserIdMap(context);
   const entries = context.contestEntries.map((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
     return {
       id: entry.id,
-      userId: membership?.userId ?? '',
+      userId: entryUserIdMap.get(entry.id) ?? '',
       name: entry.name,
       isOnClock: false,
     };
   });
-  const myEntry = context.contestEntries.find((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
-    return membership?.userId === requestUserId;
-  });
+  const myEntry = findEntryForUser(context, requestUserId);
   const myEntryId = myEntry?.id ?? null;
 
   const bracketPredictions = context.contestEntries.length === 0
@@ -1178,9 +1208,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
       }
 
-      const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-      const requestedMembership = membershipById.get(requestedEntry.leagueMembershipId);
-      if (!requestedMembership || requestedMembership.userId !== requestUserId) {
+      const requestedSquadMembership = context.squadMemberships.find(
+        (membership) => membership.squadId === requestedEntry.squadId && membership.userId === requestUserId,
+      );
+      if (!requestedSquadMembership) {
         return sendWithStatus(reply, 403, { error: 'FORBIDDEN', message: 'You can only draft for your own entry' });
       }
 
@@ -1534,11 +1565,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
       }
 
-      const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-      const myEntry = context.contestEntries.find((entry) => {
-        const membership = membershipById.get(entry.leagueMembershipId);
-        return membership?.userId === requestUserId;
-      });
+      const myEntry = findEntryForUser(context, requestUserId);
       if (!myEntry) {
         return sendWithStatus(reply, 404, { error: 'ENTRY_NOT_FOUND', message: `No entry exists for user ${requestUserId}` });
       }
@@ -1589,11 +1616,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
       }
 
-      const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-      const myEntry = context.contestEntries.find((entry) => {
-        const membership = membershipById.get(entry.leagueMembershipId);
-        return membership?.userId === requestUserId;
-      });
+      const myEntry = findEntryForUser(context, requestUserId);
       if (!myEntry) {
         return sendWithStatus(reply, 404, { error: 'ENTRY_NOT_FOUND', message: `No entry exists for user ${requestUserId}` });
       }

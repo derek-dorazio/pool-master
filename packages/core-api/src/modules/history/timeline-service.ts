@@ -220,7 +220,7 @@ export class TimelineService {
       entryName: entry.name,
       roster,
       totalScore: result?.totalScore ?? entry.totalScore,
-      finalRank: result?.finalRank ?? entry.rank ?? 0,
+      finalRank: result?.finalRank ?? entry.standingsPosition ?? 0,
     };
   }
 }

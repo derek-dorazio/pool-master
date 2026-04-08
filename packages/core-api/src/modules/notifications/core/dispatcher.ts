@@ -146,11 +146,20 @@ export class NotificationDispatcher {
       }
       case 'ALL_CONTEST': {
         if (!event.contestId) return [];
-        const entries = await this.prisma.contestEntry.findMany({
-          where: { contestId: event.contestId },
-          include: { membership: { select: { userId: true } } },
+        const squadMemberships = await this.prisma.squadMembership.findMany({
+          where: {
+            squad: {
+              entries: {
+                some: {
+                  contestId: event.contestId,
+                },
+              },
+            },
+            status: 'ACTIVE',
+          },
+          select: { userId: true },
         });
-        return entries.map((e: { membership: { userId: string } }) => e.membership.userId);
+        return Array.from(new Set(squadMemberships.map((membership) => membership.userId)));
       }
       case 'COMMISSIONERS': {
         if (!event.leagueId) return [];

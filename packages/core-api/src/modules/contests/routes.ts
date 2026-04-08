@@ -26,6 +26,8 @@ import {
   PrismaContestEntryRepository,
   PrismaContestStandingRepository,
   PrismaDraftSessionRepository,
+  PrismaSquadMembershipRepository,
+  PrismaSquadRepository,
   PrismaContestPoolRepository,
   PrismaContestParticipantPoolRepository,
   PrismaContestMatchupRepository,
@@ -46,6 +48,8 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
   const contestRepo = new PrismaContestRepository(prisma);
   const selectionConfigRepo = new PrismaSelectionConfigRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
+  const squadRepo = new PrismaSquadRepository(prisma);
+  const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
 
   const contestService = new ContestService(
@@ -53,6 +57,8 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
     selectionConfigRepo,
     membershipRepo,
     leagueRepo,
+    squadRepo,
+    squadMembershipRepo,
     undefined,
     prisma,
   );
@@ -112,6 +118,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   const contestRepo = new PrismaContestRepository(prisma);
   const selectionConfigRepo = new PrismaSelectionConfigRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
+  const squadRepo = new PrismaSquadRepository(prisma);
+  const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const entryRepo = new PrismaContestEntryRepository(prisma);
   const standingRepo = new PrismaContestStandingRepository(prisma);
@@ -122,6 +130,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     selectionConfigRepo,
     membershipRepo,
     leagueRepo,
+    squadRepo,
+    squadMembershipRepo,
     entryRepo,
     prisma,
   );

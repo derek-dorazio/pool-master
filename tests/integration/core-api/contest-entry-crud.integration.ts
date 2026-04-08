@@ -100,8 +100,9 @@ describe('Contest Entry CRUD Integration', () => {
     const createdEntry = createEntryRes.json().entry;
     expect(createEntryRes.json().contestId).toBe(contestId);
     expect(createdEntry.contestId).toBe(contestId);
-    expect(createdEntry.ownerDisplayName).toBe(ownerDisplayName);
-    expect(createdEntry.name).toContain(ownerDisplayName);
+    expect(createdEntry.squadName).toBe(`${ownerDisplayName}'s Squad`);
+    expect(createdEntry.entryNumber).toBe(1);
+    expect(createdEntry.name).toBe(`${ownerDisplayName}'s Squad Entry 1`);
 
     const listRes = await getApp().inject({
       method: 'GET',
@@ -113,6 +114,7 @@ describe('Contest Entry CRUD Integration', () => {
     expect(listRes.json().contestId).toBe(contestId);
     expect(listRes.json().isJoined).toBe(true);
     expect(listRes.json().myEntryId).toBe(createdEntry.id);
+    expect(listRes.json().myEntryIds).toContain(createdEntry.id);
     expect(listRes.json().total).toBeGreaterThanOrEqual(1);
     expect(
       listRes.json().entries.some((entry: { id: string }) => entry.id === createdEntry.id),

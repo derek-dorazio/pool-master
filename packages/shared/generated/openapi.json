@@ -2316,8 +2316,7 @@
                   "iconUrl": {
                     "type": "string",
                     "format": "uri",
-                    "maxLength": 500,
-                    "nullable": true
+                    "maxLength": 500
                   }
                 },
                 "additionalProperties": false
@@ -4920,6 +4919,12 @@
                       "type": "string",
                       "nullable": true
                     },
+                    "myEntryIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
                     "entries": {
                       "type": "array",
                       "items": {
@@ -4931,27 +4936,35 @@
                           "contestId": {
                             "type": "string"
                           },
-                          "leagueMembershipId": {
+                          "squadId": {
                             "type": "string"
+                          },
+                          "squadName": {
+                            "type": "string"
+                          },
+                          "entryNumber": {
+                            "type": "integer",
+                            "minimum": 1
                           },
                           "name": {
                             "type": "string"
                           },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "ACTIVE",
+                              "INACTIVE"
+                            ]
+                          },
                           "totalScore": {
                             "type": "number"
                           },
-                          "rank": {
+                          "standingsPosition": {
                             "type": "number",
                             "nullable": true
                           },
                           "isEliminated": {
                             "type": "boolean"
-                          },
-                          "ownerId": {
-                            "type": "string"
-                          },
-                          "ownerDisplayName": {
-                            "type": "string"
                           },
                           "createdAt": {
                             "type": "string",
@@ -4965,12 +4978,13 @@
                         "required": [
                           "id",
                           "contestId",
-                          "leagueMembershipId",
+                          "squadId",
+                          "squadName",
+                          "entryNumber",
                           "name",
+                          "status",
                           "totalScore",
                           "isEliminated",
-                          "ownerId",
-                          "ownerDisplayName",
                           "createdAt",
                           "updatedAt"
                         ],
@@ -5030,27 +5044,35 @@
                         "contestId": {
                           "type": "string"
                         },
-                        "leagueMembershipId": {
+                        "squadId": {
                           "type": "string"
+                        },
+                        "squadName": {
+                          "type": "string"
+                        },
+                        "entryNumber": {
+                          "type": "integer",
+                          "minimum": 1
                         },
                         "name": {
                           "type": "string"
                         },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE"
+                          ]
+                        },
                         "totalScore": {
                           "type": "number"
                         },
-                        "rank": {
+                        "standingsPosition": {
                           "type": "number",
                           "nullable": true
                         },
                         "isEliminated": {
                           "type": "boolean"
-                        },
-                        "ownerId": {
-                          "type": "string"
-                        },
-                        "ownerDisplayName": {
-                          "type": "string"
                         },
                         "createdAt": {
                           "type": "string",
@@ -5064,12 +5086,13 @@
                       "required": [
                         "id",
                         "contestId",
-                        "leagueMembershipId",
+                        "squadId",
+                        "squadName",
+                        "entryNumber",
                         "name",
+                        "status",
                         "totalScore",
                         "isEliminated",
-                        "ownerId",
-                        "ownerDisplayName",
                         "createdAt",
                         "updatedAt"
                       ],
@@ -5124,27 +5147,35 @@
                         "contestId": {
                           "type": "string"
                         },
-                        "leagueMembershipId": {
+                        "squadId": {
                           "type": "string"
+                        },
+                        "squadName": {
+                          "type": "string"
+                        },
+                        "entryNumber": {
+                          "type": "integer",
+                          "minimum": 1
                         },
                         "name": {
                           "type": "string"
                         },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE"
+                          ]
+                        },
                         "totalScore": {
                           "type": "number"
                         },
-                        "rank": {
+                        "standingsPosition": {
                           "type": "number",
                           "nullable": true
                         },
                         "isEliminated": {
                           "type": "boolean"
-                        },
-                        "ownerId": {
-                          "type": "string"
-                        },
-                        "ownerDisplayName": {
-                          "type": "string"
                         },
                         "createdAt": {
                           "type": "string",
@@ -5158,12 +5189,13 @@
                       "required": [
                         "id",
                         "contestId",
-                        "leagueMembershipId",
+                        "squadId",
+                        "squadName",
+                        "entryNumber",
                         "name",
+                        "status",
                         "totalScore",
                         "isEliminated",
-                        "ownerId",
-                        "ownerDisplayName",
                         "createdAt",
                         "updatedAt"
                       ],
@@ -5198,27 +5230,35 @@
                         "contestId": {
                           "type": "string"
                         },
-                        "leagueMembershipId": {
+                        "squadId": {
                           "type": "string"
+                        },
+                        "squadName": {
+                          "type": "string"
+                        },
+                        "entryNumber": {
+                          "type": "integer",
+                          "minimum": 1
                         },
                         "name": {
                           "type": "string"
                         },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE"
+                          ]
+                        },
                         "totalScore": {
                           "type": "number"
                         },
-                        "rank": {
+                        "standingsPosition": {
                           "type": "number",
                           "nullable": true
                         },
                         "isEliminated": {
                           "type": "boolean"
-                        },
-                        "ownerId": {
-                          "type": "string"
-                        },
-                        "ownerDisplayName": {
-                          "type": "string"
                         },
                         "createdAt": {
                           "type": "string",
@@ -5232,12 +5272,13 @@
                       "required": [
                         "id",
                         "contestId",
-                        "leagueMembershipId",
+                        "squadId",
+                        "squadName",
+                        "entryNumber",
                         "name",
+                        "status",
                         "totalScore",
                         "isEliminated",
-                        "ownerId",
-                        "ownerDisplayName",
                         "createdAt",
                         "updatedAt"
                       ],

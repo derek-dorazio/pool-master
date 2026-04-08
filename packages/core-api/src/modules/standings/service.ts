@@ -152,8 +152,14 @@ export class StandingsService {
     const entries = await this.prisma.contestEntry.findMany({
       where: { contestId },
       include: {
-        membership: {
-          include: { user: true },
+        squad: {
+          include: {
+            memberships: {
+              where: { status: 'ACTIVE' },
+              include: { user: true },
+              orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+            },
+          },
         },
       },
     });
@@ -162,7 +168,8 @@ export class StandingsService {
 
     return standings.map((s) => {
       const entry = entryMap.get(s.entryId);
-      const previousRank = entry?.rank ?? null;
+      const ownerMembership = entry?.squad.memberships[0];
+      const previousRank = entry?.standingsPosition ?? null;
       const movement = computeMovement(s.rank, previousRank);
 
       return {
@@ -171,8 +178,8 @@ export class StandingsService {
         movement,
         entryId: s.entryId,
         entryName: entry?.name ?? 'Unknown',
-        ownerDisplayName: entry?.membership?.user?.displayName ?? 'Unknown',
-        ownerId: entry?.membership?.user?.id ?? '',
+        ownerDisplayName: ownerMembership?.user?.displayName ?? entry?.squad.name ?? 'Unknown',
+        ownerId: ownerMembership?.user?.id ?? '',
         totalScore: s.totalScore,
         isEliminated: entry?.isEliminated ?? false,
         lastUpdatedAt: s.lastUpdatedAt,

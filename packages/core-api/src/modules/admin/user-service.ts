@@ -193,18 +193,6 @@ export class UserService {
                 tenant: { select: { name: true } },
               },
             },
-            entries: {
-              include: {
-                contest: {
-                  select: {
-                    id: true,
-                    name: true,
-                    sport: true,
-                    status: true,
-                  },
-                },
-              },
-            },
           },
         },
         deviceRegistrations: {
@@ -231,7 +219,7 @@ export class UserService {
       joinedAt: user.createdAt,
     });
 
-    // Build leagues and active contests from memberships
+    // Build leagues from memberships
     const leagues: UserDetailView['leagues'] = [];
     const activeContests: UserDetailView['activeContests'] = [];
 
@@ -243,18 +231,43 @@ export class UserService {
         role: m.role.toLowerCase(),
         tenantName: m.league.tenant.name,
       });
+    }
 
-      for (const entry of m.entries) {
-        if (['ACTIVE', 'OPEN', 'IN_PROGRESS', 'DRAFT'].includes(entry.contest.status)) {
-          activeContests.push({
-            id: entry.contest.id,
-            name: entry.contest.name,
-            sport: entry.contest.sport ?? '',
-            status: entry.contest.status.toLowerCase(),
-            rank: entry.rank ?? undefined,
-          });
-        }
-      }
+    const activeEntries = await this.prisma.contestEntry.findMany({
+      where: {
+        squad: {
+          memberships: {
+            some: {
+              userId,
+              status: 'ACTIVE',
+            },
+          },
+        },
+        contest: {
+          status: { in: ['ACTIVE', 'OPEN', 'IN_PROGRESS', 'DRAFT'] },
+        },
+      },
+      include: {
+        contest: {
+          select: {
+            id: true,
+            name: true,
+            sport: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+
+    for (const entry of activeEntries) {
+      activeContests.push({
+        id: entry.contest.id,
+        name: entry.contest.name,
+        sport: entry.contest.sport ?? '',
+        status: entry.contest.status.toLowerCase(),
+        rank: entry.standingsPosition ?? undefined,
+      });
     }
 
     // Build devices
@@ -497,9 +510,43 @@ export class UserService {
 
       // Transfer contest entries
       const dupEntries = await tx.contestEntry.findMany({
-        where: { membership: { userId: duplicateId } },
+        where: {
+          squad: {
+            memberships: {
+              some: {
+                userId: duplicateId,
+                status: 'ACTIVE',
+              },
+            },
+          },
+        },
       });
       entriesTransferred = dupEntries.length;
+
+      const duplicateSquadMemberships = await tx.squadMembership.findMany({
+        where: { userId: duplicateId },
+        orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+      });
+
+      for (const membership of duplicateSquadMemberships) {
+        const existing = await tx.squadMembership.findUnique({
+          where: {
+            squadId_userId: {
+              squadId: membership.squadId,
+              userId: primaryId,
+            },
+          },
+        });
+
+        if (existing) {
+          await tx.squadMembership.delete({ where: { id: membership.id } });
+        } else {
+          await tx.squadMembership.update({
+            where: { id: membership.id },
+            data: { userId: primaryId },
+          });
+        }
+      }
 
       // Revoke duplicate's tokens
       await tx.refreshToken.updateMany({

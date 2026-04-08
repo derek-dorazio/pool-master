@@ -36,10 +36,12 @@ interface ContestRow {
 interface ContestEntryRow {
   id: string;
   contestId: string;
-  leagueMembershipId: string;
+  squadId: string;
+  entryNumber: number;
   name: string;
+  status: string;
   totalScore: number;
-  rank?: number | null;
+  standingsPosition?: number | null;
   isEliminated: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -101,18 +103,19 @@ export function toContestListResponse(
 
 export function toContestEntryDto(
   entry: ContestEntryRow,
-  owner: { id: string; displayName: string },
+  squad: { name: string },
 ): ContestEntryDto {
   return {
     id: entry.id,
     contestId: entry.contestId,
-    leagueMembershipId: entry.leagueMembershipId,
+    squadId: entry.squadId,
+    squadName: squad.name,
+    entryNumber: entry.entryNumber,
     name: entry.name,
+    status: entry.status as ContestEntryDto['status'],
     totalScore: entry.totalScore,
-    rank: entry.rank ?? null,
+    standingsPosition: entry.standingsPosition ?? null,
     isEliminated: entry.isEliminated,
-    ownerId: owner.id,
-    ownerDisplayName: owner.displayName,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
   };
@@ -127,12 +130,14 @@ export function toContestEntryListResponse(input: {
   entries: ContestEntryDto[];
   isJoined: boolean;
   myEntryId: string | null;
+  myEntryIds?: string[];
 }): ContestEntryListResponse {
   return {
     contestId: input.contestId,
     total: input.entries.length,
     isJoined: input.isJoined,
     myEntryId: input.myEntryId,
+    myEntryIds: input.myEntryIds,
     entries: input.entries,
   };
 }
