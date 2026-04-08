@@ -37,11 +37,11 @@ import { socialModule } from './modules/social/routes';
 
 // Scoring module
 import { eventBus } from '@poolmaster/shared/events/event-bus';
-import { ScoreStore } from './modules/scoring/storage/score-store';
 import { subscribeStatEventConsumer, ContestLookup } from './modules/scoring/consumer/stat-event-consumer';
 import { StandingsRollup } from './modules/scoring/rollup/standings-rollup';
 import { ScoringService } from './modules/scoring/service';
 import { scoringRoutes } from './modules/scoring/routes';
+import { ContestScoringRecalculationService } from './modules/contest-scoring';
 
 // Notification module
 import { loadConfig as loadNotifConfig } from './modules/notifications/core/config';
@@ -80,10 +80,10 @@ export function buildApp() {
   const ingestionPersistence = new IngestionPersistence(prisma);
 
   // --- Scoring subsystem (Prisma-backed) ---
-  const scoreStore = new ScoreStore(prisma);
   const contestLookup = new ContestLookup(prisma);
   const standingsRollup = new StandingsRollup({ eventBus, prisma });
   const scoringService = new ScoringService({ standingsRollup, prisma });
+  const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma);
 
   // =========================================================================
   // Core plugins
@@ -137,7 +137,11 @@ export function buildApp() {
 
   // Subscribe stat event consumer + start periodic standings rollup
   if (!isOpenApiExport) {
-    subscribeStatEventConsumer({ eventBus, scoreStore, contestLookup });
+    subscribeStatEventConsumer({
+      eventBus,
+      contestLookup,
+      contestScoringRecalculationService,
+    });
     standingsRollup.startPeriodicRollup();
   }
 

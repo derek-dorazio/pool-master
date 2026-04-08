@@ -20,7 +20,6 @@ import {
 } from '../../../packages/core-api/src/modules/scoring/consumer/stat-event-consumer';
 import type { StatEventConsumerDeps } from '../../../packages/core-api/src/modules/scoring/consumer/stat-event-consumer';
 import { assignRanks, StandingsRollup } from '../../../packages/core-api/src/modules/scoring/rollup/standings-rollup';
-import type { ScoreStore } from '../../../packages/core-api/src/modules/scoring/storage/score-store';
 
 // --- Helpers ---
 
@@ -59,34 +58,11 @@ function buildStatEvent(overrides: Partial<StatEvent> = {}): StatEvent {
   };
 }
 
-function createMockScoreStore(overrides: Partial<ScoreStore> = {}): ScoreStore {
-  return {
-    appendParticipantScore: jest.fn().mockResolvedValue(undefined),
-    appendEntryScore: jest.fn().mockResolvedValue(undefined),
-    getEntryTotal: jest.fn().mockResolvedValue(0),
-    getLeaderboard: jest.fn().mockResolvedValue([]),
-    getEntryTimeline: jest.fn().mockResolvedValue([]),
-    getParticipantScores: jest.fn().mockResolvedValue([]),
-    clear: jest.fn(),
-    ...overrides,
-  } as unknown as ScoreStore;
-}
-
 function createMockContestLookup(
-  contests: { contestId: string; scoringRules: ScoringConfig }[] = [],
-  entries: { entryId: string; entryName: string; participantIds: string[] }[] = [],
+  contests: { contestId: string }[] = [],
 ) {
   return {
-    findActiveContestsForParticipant: jest.fn().mockResolvedValue(
-      contests.map((c) => ({
-        contestId: c.contestId,
-        scoringEngine: 'default',
-        scoringRules: c.scoringRules,
-      })),
-    ),
-    findEntriesWithParticipant: jest.fn().mockResolvedValue(entries),
-    getScoringConfig: jest.fn().mockResolvedValue(undefined),
-    clear: jest.fn(),
+    findActiveContestsForParticipant: jest.fn().mockResolvedValue(contests),
   };
 }
 
@@ -97,13 +73,15 @@ function createMockContestLookup(
 describe('handleStatEvent error paths', () => {
   it('does nothing when participant is not in any contest', async () => {
     const eventBus = new EventBus();
-    const scoreStore = createMockScoreStore();
-    const contestLookup = createMockContestLookup([], []);
+    const contestLookup = createMockContestLookup([]);
+    const contestScoringRecalculationService = {
+      recalculateContest: jest.fn(),
+    };
 
     const deps: StatEventConsumerDeps = {
       eventBus,
-      scoreStore,
       contestLookup: contestLookup as any,
+      contestScoringRecalculationService: contestScoringRecalculationService as any,
     };
 
     const event = buildStatEvent();
@@ -111,9 +89,7 @@ describe('handleStatEvent error paths', () => {
     // Should not throw
     await handleStatEvent(event, deps);
 
-    // No scores should be stored
-    expect(scoreStore.appendParticipantScore).not.toHaveBeenCalled();
-    expect(scoreStore.appendEntryScore).not.toHaveBeenCalled();
+    expect(contestScoringRecalculationService.recalculateContest).not.toHaveBeenCalled();
   });
 });
 
@@ -314,12 +290,14 @@ describe('scoreParticipant with missing stat keys', () => {
 describe('StandingsRollup error paths', () => {
   it('rollupAll returns empty results when no contests are registered', async () => {
     const eventBus = new EventBus();
-    const scoreStore = createMockScoreStore();
-    const mockPrisma = {} as any;
+    const mockPrisma = {
+      contestEntry: {
+        findMany: jest.fn(),
+      },
+    } as any;
 
     const rollup = new StandingsRollup({
       eventBus,
-      scoreStore,
       prisma: mockPrisma,
     });
 
@@ -327,6 +305,6 @@ describe('StandingsRollup error paths', () => {
     const results = await rollup.rollupAll();
 
     expect(results).toEqual([]);
-    expect(scoreStore.getLeaderboard).not.toHaveBeenCalled();
+    expect(mockPrisma.contestEntry.findMany).not.toHaveBeenCalled();
   });
 });
