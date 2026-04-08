@@ -338,7 +338,6 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         required: ['sourceContestIds'],
         properties: {
           sourceContestIds: { type: 'array', items: { type: 'string' }, minItems: 1 },
-          seasonId: { type: 'string' },
         },
       },
       response: { 201: zodToJsonSchema(LeagueBulkOperationResponseSchema) },

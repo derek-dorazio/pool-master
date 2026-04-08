@@ -16,7 +16,6 @@ import type { ContestConfiguration } from '@poolmaster/shared/domain';
 interface ContestRow {
   id: string;
   leagueId: string;
-  seasonId?: string | null;
   sportEventId?: string | null;
   name: string;
   status: string;
@@ -25,8 +24,6 @@ interface ContestRow {
   scoringEngine: string;
   sport?: string | null;
   isExclusive: boolean;
-  scoringStopsOnElimination: boolean;
-  scoringRules: unknown;
   startsAt?: Date | null;
   endsAt?: Date | null;
   lockAt?: Date | null;
@@ -76,7 +73,6 @@ export function toContestDetailDto(
 ): ContestDetailDto {
   return {
     ...toContestSummaryDto(contest),
-    scoringRules: (contest.scoringRules ?? {}) as Record<string, unknown>,
     lockAt: contest.lockAt?.toISOString() ?? null,
     isExclusive: contest.isExclusive,
     sport: contest.sport ?? null,

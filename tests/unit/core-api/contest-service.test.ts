@@ -232,7 +232,6 @@ describe('ContestService', () => {
         selectionType: SelectionType.SNAKE_DRAFT,
         contestConfiguration: { rounds: 5, timePerPickSeconds: 60 },
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        scoringRules: { missedCutPenalty: 80 },
       });
       expect(contestRepo.create).toHaveBeenCalledTimes(1);
       expect(contestRepo.create).toHaveBeenCalledWith(
@@ -293,63 +292,6 @@ describe('ContestService', () => {
       ).rejects.toThrow(ContestOperationError);
     });
 
-    it('validates payout config — rejects duplicate ranks', async () => {
-      const service = new ContestService(
-        createMockContestRepo(),
-        createMockContestConfigurationRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await expect(
-        service.createContest({
-          leagueId: 'league-1',
-          tenantId: 'tenant-1',
-          createdBy: 'user-1',
-          name: 'Test',
-          sport: 'GOLF',
-          contestType: ContestType.SINGLE_EVENT,
-          selectionType: SelectionType.SNAKE_DRAFT,
-          contestConfiguration: {},
-          scoringEngine: ScoringEngine.CUMULATIVE,
-          payoutConfig: {
-            payoutStructure: [
-              { rank: 1, percentage: 60 },
-              { rank: 1, percentage: 40 },
-            ],
-            intermediatePrizes: [],
-          },
-        }),
-      ).rejects.toThrow('duplicate ranks');
-    });
-
-    it('validates payout config — rejects percentages over 100', async () => {
-      const service = new ContestService(
-        createMockContestRepo(),
-        createMockContestConfigurationRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await expect(
-        service.createContest({
-          leagueId: 'league-1',
-          tenantId: 'tenant-1',
-          createdBy: 'user-1',
-          name: 'Test',
-          sport: 'GOLF',
-          contestType: ContestType.SINGLE_EVENT,
-          selectionType: SelectionType.SNAKE_DRAFT,
-          contestConfiguration: {},
-          scoringEngine: ScoringEngine.CUMULATIVE,
-          payoutConfig: {
-            payoutStructure: [
-              { rank: 1, percentage: 70 },
-              { rank: 2, percentage: 40 },
-            ],
-            intermediatePrizes: [],
-          },
-        }),
-      ).rejects.toThrow('exceeds 100%');
-    });
   });
 
   describe('updateContest', () => {

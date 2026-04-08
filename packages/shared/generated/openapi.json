@@ -1720,9 +1720,6 @@
                       "type": "string"
                     },
                     "minItems": 1
-                  },
-                  "seasonId": {
-                    "type": "string"
                   }
                 }
               }
@@ -2991,9 +2988,6 @@
                   "eventId": {
                     "type": "string"
                   },
-                  "seasonId": {
-                    "type": "string"
-                  },
                   "contestType": {
                     "type": "string",
                     "enum": [
@@ -3143,81 +3137,6 @@
                       "CUMULATIVE"
                     ]
                   },
-                  "scoringRules": {
-                    "type": "object",
-                    "additionalProperties": {}
-                  },
-                  "payoutConfig": {
-                    "type": "object",
-                    "properties": {
-                      "entryFee": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "prizePool": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "payoutStructure": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "rank": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "percentage": {
-                              "type": "number",
-                              "minimum": 0,
-                              "maximum": 100
-                            },
-                            "fixedAmount": {
-                              "type": "integer",
-                              "minimum": 0
-                            }
-                          },
-                          "required": [
-                            "rank",
-                            "percentage"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "intermediatePrizes": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "name": {
-                              "type": "string"
-                            },
-                            "description": {
-                              "type": "string"
-                            },
-                            "amount": {
-                              "type": "integer",
-                              "minimum": 0
-                            },
-                            "percentage": {
-                              "type": "number",
-                              "minimum": 0,
-                              "maximum": 100
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "additionalProperties": false
-                        }
-                      }
-                    },
-                    "required": [
-                      "payoutStructure",
-                      "intermediatePrizes"
-                    ],
-                    "additionalProperties": false
-                  },
                   "startsAt": {
                     "type": "string",
                     "format": "date-time"
@@ -3319,10 +3238,6 @@
                         "updatedAt": {
                           "type": "string",
                           "format": "date-time"
-                        },
-                        "scoringRules": {
-                          "type": "object",
-                          "additionalProperties": {}
                         },
                         "lockAt": {
                           "type": "string",
@@ -4971,10 +4886,6 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "scoringRules": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
                         "lockAt": {
                           "type": "string",
                           "format": "date-time",
@@ -5028,81 +4939,6 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 100
-                  },
-                  "scoringRules": {
-                    "type": "object",
-                    "additionalProperties": {}
-                  },
-                  "payoutConfig": {
-                    "type": "object",
-                    "properties": {
-                      "entryFee": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "prizePool": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "payoutStructure": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "rank": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "percentage": {
-                              "type": "number",
-                              "minimum": 0,
-                              "maximum": 100
-                            },
-                            "fixedAmount": {
-                              "type": "integer",
-                              "minimum": 0
-                            }
-                          },
-                          "required": [
-                            "rank",
-                            "percentage"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "intermediatePrizes": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "name": {
-                              "type": "string"
-                            },
-                            "description": {
-                              "type": "string"
-                            },
-                            "amount": {
-                              "type": "integer",
-                              "minimum": 0
-                            },
-                            "percentage": {
-                              "type": "number",
-                              "minimum": 0,
-                              "maximum": 100
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "additionalProperties": false
-                        }
-                      }
-                    },
-                    "required": [
-                      "payoutStructure",
-                      "intermediatePrizes"
-                    ],
-                    "additionalProperties": false
                   },
                   "startsAt": {
                     "type": "string",
@@ -5195,10 +5031,6 @@
                         "updatedAt": {
                           "type": "string",
                           "format": "date-time"
-                        },
-                        "scoringRules": {
-                          "type": "object",
-                          "additionalProperties": {}
                         },
                         "lockAt": {
                           "type": "string",
@@ -6214,10 +6046,6 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "scoringRules": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
                         "lockAt": {
                           "type": "string",
                           "format": "date-time",
@@ -6350,10 +6178,6 @@
                         "updatedAt": {
                           "type": "string",
                           "format": "date-time"
-                        },
-                        "scoringRules": {
-                          "type": "object",
-                          "additionalProperties": {}
                         },
                         "lockAt": {
                           "type": "string",
@@ -6493,10 +6317,6 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "scoringRules": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
                         "lockAt": {
                           "type": "string",
                           "format": "date-time",
@@ -6635,10 +6455,6 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "scoringRules": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
                         "lockAt": {
                           "type": "string",
                           "format": "date-time",
@@ -6667,49 +6483,6 @@
                   },
                   "required": [
                     "contest"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/contests/{contestId}/payouts/confirm": {
-      "post": {
-        "operationId": "confirmPayouts",
-        "summary": "Confirm and finalize contest payouts",
-        "tags": [
-          "Contests"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "success"
                   ],
                   "additionalProperties": false
                 }

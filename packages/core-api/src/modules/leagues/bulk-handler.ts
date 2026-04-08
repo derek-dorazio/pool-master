@@ -15,7 +15,7 @@ export function createBulkHandlers(bulkService: BulkService) {
   async function copySeason(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: { sourceContestIds: string[]; seasonId?: string };
+      Body: { sourceContestIds: string[] };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
@@ -26,7 +26,6 @@ export function createBulkHandlers(bulkService: BulkService) {
       tenantId,
       createdBy: userId,
       sourceContestIds: request.body.sourceContestIds,
-      seasonId: request.body.seasonId,
     });
     return reply.status(201).send(result);
   }

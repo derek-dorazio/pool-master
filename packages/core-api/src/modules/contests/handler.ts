@@ -60,27 +60,10 @@ const ContestConfigurationBodySchema = zod.object({
   captainMultiplier: zod.number().optional(),
 });
 
-const PayoutConfigBodySchema = zod.object({
-  entryFee: zod.number().int().min(0).optional(),
-  prizePool: zod.number().int().min(0).optional(),
-  payoutStructure: zod.array(zod.object({
-    rank: zod.number().int().min(1),
-    percentage: zod.number().min(0).max(100),
-    fixedAmount: zod.number().int().min(0).optional(),
-  })),
-  intermediatePrizes: zod.array(zod.object({
-    name: zod.string(),
-    description: zod.string().optional(),
-    amount: zod.number().int().min(0).optional(),
-    percentage: zod.number().min(0).max(100).optional(),
-  })),
-});
-
 const CreateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100),
   sport: zod.string().min(1),
   eventId: zod.string().optional(),
-  seasonId: zod.string().optional(),
   contestType: zod.enum([ContestType.SINGLE_EVENT]),
   selectionType: zod.enum([
     SelectionType.SNAKE_DRAFT,
@@ -97,8 +80,6 @@ const CreateContestBodySchema = zod.object({
     ScoringEngine.FIGHT_RESULT,
     ScoringEngine.CUMULATIVE,
   ]),
-  scoringRules: zod.record(zod.unknown()).optional(),
-  payoutConfig: PayoutConfigBodySchema.optional(),
   startsAt: zod.string().datetime().optional(),
   endsAt: zod.string().datetime().optional(),
   lockAt: zod.string().datetime().optional(),
@@ -108,8 +89,6 @@ const CreateContestBodySchema = zod.object({
 
 const UpdateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100).optional(),
-  scoringRules: zod.record(zod.unknown()).optional(),
-  payoutConfig: PayoutConfigBodySchema.optional(),
   startsAt: zod.string().datetime().optional(),
   endsAt: zod.string().datetime().optional(),
   lockAt: zod.string().datetime().optional(),
@@ -148,7 +127,6 @@ export function createContestHandlers(contestService: ContestService) {
         leagueId: request.params.id,
         tenantId,
         createdBy: userId,
-        seasonId: body.seasonId,
         sportEventId: body.eventId,
         name: body.name,
         sport: body.sport as Sport,
@@ -156,8 +134,6 @@ export function createContestHandlers(contestService: ContestService) {
         selectionType: body.selectionType,
         contestConfiguration: mapContestConfiguration(body.contestConfiguration),
         scoringEngine: body.scoringEngine,
-        scoringRules: body.scoringRules,
-        payoutConfig: body.payoutConfig,
         startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
         endsAt: body.endsAt ? new Date(body.endsAt) : undefined,
         lockAt: body.lockAt ? new Date(body.lockAt) : undefined,
@@ -300,8 +276,6 @@ export function createContestHandlers(contestService: ContestService) {
         tenantId,
         {
           name: body.name,
-          scoringRules: body.scoringRules,
-          payoutConfig: body.payoutConfig,
           startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
           endsAt: body.endsAt ? new Date(body.endsAt) : undefined,
           lockAt: body.lockAt ? new Date(body.lockAt) : undefined,

@@ -19,8 +19,6 @@ import type {
   Contest,
   ContestEntry,
   ContestConfiguration,
-  PayoutConfig,
-  ScoringRulesConfig,
   Sport,
 } from '@poolmaster/shared/domain';
 import {
@@ -39,7 +37,6 @@ export interface CreateContestInput {
   leagueId: string;
   tenantId: string;
   createdBy: string;
-  seasonId?: string;
   sportEventId?: string;
   name: string;
   sport: Sport;
@@ -47,8 +44,6 @@ export interface CreateContestInput {
   selectionType: SelectionType;
   contestConfiguration: Partial<Omit<ContestConfiguration, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
   scoringEngine: ScoringEngine;
-  scoringRules?: Record<string, unknown>;
-  payoutConfig?: PayoutConfig;
   startsAt?: Date;
   endsAt?: Date;
   lockAt?: Date;
@@ -58,8 +53,6 @@ export interface CreateContestInput {
 
 export interface UpdateContestInput {
   name?: string;
-  scoringRules?: Record<string, unknown>;
-  payoutConfig?: PayoutConfig;
   startsAt?: Date;
   endsAt?: Date;
   lockAt?: Date;
@@ -86,13 +79,8 @@ export class ContestService {
     if (!league) {
       throw new ContestOperationError('League not found');
     }
-    const scoringRules = input.scoringRules ?? {};
-    if (input.payoutConfig) {
-      validatePayoutConfig(input.payoutConfig);
-    }
     const contest = await this.contestRepo.create({
       leagueId: input.leagueId,
-      seasonId: input.seasonId || undefined,
       sportEventId: input.sportEventId || undefined,
       name: input.name,
       status: ContestStatus.DRAFT,
@@ -102,7 +90,7 @@ export class ContestService {
       scoringEngine: input.scoringEngine,
       isExclusive: input.isExclusive ?? false,
       scoringStopsOnElimination: input.scoringStopsOnElimination ?? false,
-      scoringRules: scoringRules as ScoringRulesConfig,
+      scoringRules: {},
       startsAt: input.startsAt,
       endsAt: input.endsAt,
       lockAt: input.lockAt,
@@ -147,9 +135,6 @@ export class ContestService {
     }
     if (contest.status !== ContestStatus.DRAFT) {
       throw new ContestOperationError('Contest can only be edited in DRAFT status');
-    }
-    if (updates.payoutConfig) {
-      validatePayoutConfig(updates.payoutConfig);
     }
     return this.contestRepo.update(contestId, updates as Partial<Contest>);
   }
@@ -438,24 +423,6 @@ export class ContestService {
       throw new ContestEntryOperationError('Prisma client is unavailable');
     }
     return this.prisma;
-  }
-}
-
-/** Validates payout configuration: percentages sum ≤ 100, unique ranks. */
-function validatePayoutConfig(config: PayoutConfig): void {
-  if (config.payoutStructure.length === 0) {
-    return;
-  }
-  const ranks = config.payoutStructure.map((s) => s.rank);
-  const uniqueRanks = new Set(ranks);
-  if (uniqueRanks.size !== ranks.length) {
-    throw new ContestOperationError('Payout structure has duplicate ranks');
-  }
-  const totalPercentage = config.payoutStructure.reduce((sum, s) => sum + s.percentage, 0);
-  if (totalPercentage > 100) {
-    throw new ContestOperationError(
-      `Payout percentages sum to ${totalPercentage}%, which exceeds 100%`,
-    );
   }
 }
 

@@ -1,8 +1,7 @@
 /**
  * OverrideService — commissioner safety-valve tools for in-season contest management.
  *
- * Covers draft overrides, scoring overrides, contest lifecycle overrides,
- * and payout confirmation/override.
+ * Covers draft overrides, scoring overrides, and contest lifecycle overrides.
  */
 
 import type {
@@ -179,24 +178,6 @@ export class OverrideService {
       throw new OverrideError('Contest not found');
     }
     return this.contestRepo.update(contestId, { lockAt: newLock } as Partial<Contest>);
-  }
-
-  // --- Payout Overrides (08-024) ---
-
-  /** Confirms payouts for a completed contest. */
-  async confirmPayouts(contestId: string, tenantId: string): Promise<void> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
-    if (!contest) {
-      throw new OverrideError('Contest not found');
-    }
-    if (contest.status !== ContestStatus.COMPLETED) {
-      throw new OverrideError('Payouts can only be confirmed for completed contests');
-    }
-    // Mark payouts confirmed in contest settings
-    const settings = (contest.scoringRules as Record<string, unknown>) ?? {};
-    await this.contestRepo.update(contestId, {
-      scoringRules: { ...settings, payoutsConfirmed: true },
-    } as Partial<Contest>);
   }
 
   // --- Helpers ---

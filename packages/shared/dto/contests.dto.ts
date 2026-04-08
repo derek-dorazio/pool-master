@@ -42,31 +42,10 @@ export const ContestCrudConfigurationRequestSchema = z.object({
   captainMultiplier: z.number().optional(),
 });
 
-export const PayoutSlotRequestSchema = z.object({
-  rank: z.number().int().min(1),
-  percentage: z.number().min(0).max(100),
-  fixedAmount: z.number().int().min(0).optional(),
-});
-
-export const IntermediatePrizeRequestSchema = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  amount: z.number().int().min(0).optional(),
-  percentage: z.number().min(0).max(100).optional(),
-});
-
-export const PayoutConfigRequestSchema = z.object({
-  entryFee: z.number().int().min(0).optional(),
-  prizePool: z.number().int().min(0).optional(),
-  payoutStructure: z.array(PayoutSlotRequestSchema),
-  intermediatePrizes: z.array(IntermediatePrizeRequestSchema),
-});
-
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100),
   sport: z.string().min(1),
   eventId: z.string().optional(),
-  seasonId: z.string().optional(),
   contestType: z.enum([ContestType.SINGLE_EVENT]),
   selectionType: z.enum([
     SelectionType.SNAKE_DRAFT,
@@ -83,8 +62,6 @@ export const CreateContestRequestSchema = z.object({
     ScoringEngine.FIGHT_RESULT,
     ScoringEngine.CUMULATIVE,
   ]),
-  scoringRules: z.record(z.unknown()).optional(),
-  payoutConfig: PayoutConfigRequestSchema.optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
   lockAt: z.string().datetime().optional(),
@@ -95,8 +72,6 @@ export type CreateContestRequest = z.infer<typeof CreateContestRequestSchema>;
 
 export const UpdateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  scoringRules: z.record(z.unknown()).optional(),
-  payoutConfig: PayoutConfigRequestSchema.optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
   lockAt: z.string().datetime().optional(),
@@ -125,7 +100,6 @@ export const ContestSummaryDtoSchema = z.object({
 export type ContestSummaryDto = z.infer<typeof ContestSummaryDtoSchema>;
 
 export const ContestDetailDtoSchema = ContestSummaryDtoSchema.extend({
-  scoringRules: z.record(z.unknown()).optional(),
   lockAt: z.string().datetime().nullable().optional(),
   isExclusive: z.boolean().optional(),
   sport: z.string().nullable().optional(),

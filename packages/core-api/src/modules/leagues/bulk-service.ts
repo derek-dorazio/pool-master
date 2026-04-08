@@ -24,7 +24,6 @@ export interface CopySeasonInput {
   tenantId: string;
   createdBy: string;
   sourceContestIds: string[];
-  seasonId?: string;
 }
 
 // --- CSV Member Import (08-029) ---
@@ -63,7 +62,7 @@ export class BulkService {
         }
         const contest = await this.contestRepo.create({
           leagueId: input.leagueId,
-          seasonId: input.seasonId ?? '',
+          sportEventId: source.sportEventId,
           name: `${source.name} (Copy)`,
           status: ContestStatus.DRAFT,
           contestType: source.contestType,
@@ -71,7 +70,7 @@ export class BulkService {
           scoringEngine: source.scoringEngine,
           isExclusive: source.isExclusive,
           scoringStopsOnElimination: source.scoringStopsOnElimination,
-          scoringRules: source.scoringRules,
+          scoringRules: {},
         } as Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>);
         created.push(contest);
       } catch (err) {

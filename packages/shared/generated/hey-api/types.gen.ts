@@ -1023,7 +1023,6 @@ export type CreateContestData = {
         name: string;
         sport: string;
         eventId?: string;
-        seasonId?: string;
         contestType: 'SINGLE_EVENT';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
         contestConfiguration?: {
@@ -1062,24 +1061,6 @@ export type CreateContestData = {
             captainMultiplier?: number;
         };
         scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
-        scoringRules?: {
-            [key: string]: unknown;
-        };
-        payoutConfig?: {
-            entryFee?: number;
-            prizePool?: number;
-            payoutStructure: Array<{
-                rank: number;
-                percentage: number;
-                fixedAmount?: number;
-            }>;
-            intermediatePrizes: Array<{
-                name: string;
-                description?: string;
-                amount?: number;
-                percentage?: number;
-            }>;
-        };
         startsAt?: string;
         endsAt?: string;
         lockAt?: string;
@@ -1113,9 +1094,6 @@ export type CreateContestResponses = {
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
@@ -1540,9 +1518,6 @@ export type GetContestResponses = {
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
@@ -1557,24 +1532,6 @@ export type GetContestResponse = GetContestResponses[keyof GetContestResponses];
 export type UpdateContestData = {
     body: {
         name?: string;
-        scoringRules?: {
-            [key: string]: unknown;
-        };
-        payoutConfig?: {
-            entryFee?: number;
-            prizePool?: number;
-            payoutStructure: Array<{
-                rank: number;
-                percentage: number;
-                fixedAmount?: number;
-            }>;
-            intermediatePrizes: Array<{
-                name: string;
-                description?: string;
-                amount?: number;
-                percentage?: number;
-            }>;
-        };
         startsAt?: string;
         endsAt?: string;
         lockAt?: string;
@@ -1607,9 +1564,6 @@ export type UpdateContestResponses = {
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
@@ -1939,9 +1893,6 @@ export type ReopenContestResponses = {
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
@@ -1984,9 +1935,6 @@ export type CloseContestResponses = {
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
@@ -2030,9 +1978,6 @@ export type ExtendContestDeadlineResponses = {
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
@@ -2076,9 +2021,6 @@ export type UpdateContestLockTimeResponses = {
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };

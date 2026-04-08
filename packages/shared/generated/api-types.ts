@@ -4523,7 +4523,6 @@ export interface operations {
                     name: string;
                     sport: string;
                     eventId?: string;
-                    seasonId?: string;
                     /** @enum {string} */
                     contestType: "SINGLE_EVENT";
                     /** @enum {string} */
@@ -4565,24 +4564,6 @@ export interface operations {
                     };
                     /** @enum {string} */
                     scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                    scoringRules?: {
-                        [key: string]: unknown;
-                    };
-                    payoutConfig?: {
-                        entryFee?: number;
-                        prizePool?: number;
-                        payoutStructure: {
-                            rank: number;
-                            percentage: number;
-                            fixedAmount?: number;
-                        }[];
-                        intermediatePrizes: {
-                            name: string;
-                            description?: string;
-                            amount?: number;
-                            percentage?: number;
-                        }[];
-                    };
                     /** Format: date-time */
                     startsAt?: string;
                     /** Format: date-time */
@@ -4621,9 +4602,6 @@ export interface operations {
                             createdAt?: string;
                             /** Format: date-time */
                             updatedAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
@@ -5121,9 +5099,6 @@ export interface operations {
                             createdAt?: string;
                             /** Format: date-time */
                             updatedAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
@@ -5149,24 +5124,6 @@ export interface operations {
             content: {
                 "application/json": {
                     name?: string;
-                    scoringRules?: {
-                        [key: string]: unknown;
-                    };
-                    payoutConfig?: {
-                        entryFee?: number;
-                        prizePool?: number;
-                        payoutStructure: {
-                            rank: number;
-                            percentage: number;
-                            fixedAmount?: number;
-                        }[];
-                        intermediatePrizes: {
-                            name: string;
-                            description?: string;
-                            amount?: number;
-                            percentage?: number;
-                        }[];
-                    };
                     /** Format: date-time */
                     startsAt?: string;
                     /** Format: date-time */
@@ -5204,9 +5161,6 @@ export interface operations {
                             createdAt?: string;
                             /** Format: date-time */
                             updatedAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
@@ -5653,9 +5607,6 @@ export interface operations {
                             createdAt?: string;
                             /** Format: date-time */
                             updatedAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
@@ -5711,9 +5662,6 @@ export interface operations {
                             createdAt?: string;
                             /** Format: date-time */
                             updatedAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
@@ -5771,9 +5719,6 @@ export interface operations {
                             createdAt?: string;
                             /** Format: date-time */
                             updatedAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
@@ -5831,9 +5776,6 @@ export interface operations {
                             createdAt?: string;
                             /** Format: date-time */
                             updatedAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;

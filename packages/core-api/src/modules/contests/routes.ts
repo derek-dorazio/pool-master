@@ -303,18 +303,6 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     },
     handler: overrides.updateLockTime,
   });
-
-  // --- Payout Overrides ---
-  fastify.post('/:contestId/payouts/confirm', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Confirm and finalize contest payouts',
-      operationId: 'confirmPayouts',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: overrides.confirmPayouts,
-  });
-
   // --- Contest Audit Log ---
   fastify.get('/:contestId/audit-log', {
     schema: {

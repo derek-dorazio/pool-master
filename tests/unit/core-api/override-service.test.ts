@@ -263,25 +263,4 @@ describe('OverrideService', () => {
     });
   });
 
-  describe('confirmPayouts', () => {
-    it('confirms payouts for a completed contest', async () => {
-      const contestRepo = createMockContestRepo({
-        findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.COMPLETED })),
-      });
-      const service = new OverrideService(
-        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(),
-        createMockContestScoringRecalculationService(),
-      );
-      await service.confirmPayouts('contest-1', 'tenant-1');
-      expect(contestRepo.update).toHaveBeenCalled();
-    });
-
-    it('throws when contest is not completed', async () => {
-      const service = new OverrideService(
-        createMockContestRepo(), createMockDraftSessionRepo(), createMockEntryRepo(),
-        createMockContestScoringRecalculationService(),
-      );
-      await expect(service.confirmPayouts('contest-1', 'tenant-1')).rejects.toThrow('completed');
-    });
-  });
 });

@@ -20,7 +20,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     closeContest,
     extendDeadline,
     updateLockTime,
-    confirmPayouts,
   };
 
   function handleOverrideError(err: unknown, reply: FastifyReply): void {
@@ -213,16 +212,4 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     }
   }
 
-  async function confirmPayouts(
-    request: FastifyRequest<{ Params: { contestId: string } }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
-    try {
-      await overrideService.confirmPayouts(request.params.contestId, tenantId);
-      return reply.status(204).send();
-    } catch (err) {
-      handleOverrideError(err, reply);
-    }
-  }
 }
