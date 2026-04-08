@@ -2,8 +2,8 @@
  * Admin Config Routes — sub-module that groups all configuration management
  * routes under the /config prefix.
  *
- * Covers scoring templates, selection templates, notification templates,
- * push trigger configuration, and rate limit configuration.
+ * Covers notification templates, push trigger configuration, and rate limit
+ * configuration.
  *
  * Registered as a sub-plugin inside the main admin module so that
  * the adminAuth preHandler is inherited automatically.

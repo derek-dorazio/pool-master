@@ -1,8 +1,9 @@
 /**
  * Enumerations used across the PoolMaster domain.
  *
- * Aligned to poolmaster-contest-structures-v4.md — the source of truth
- * for all supported contest types and mechanics.
+ * Aligned to poolmaster-contest-structures-v4.md and the active backend
+ * refactor plans. Some values remain as deferred catalog entries even when
+ * they are no longer part of the first-pass runtime surface.
  */
 
 // --- Sports ---
@@ -90,9 +91,9 @@ export type ContestType = (typeof ContestType)[keyof typeof ContestType];
  * SNAKE_DRAFT — turn-based exclusive selection; each pick owned by one manager.
  * TIERED — pick N from defined tier groups; non-exclusive.
  * BUDGET_PICK — build a roster within a cost budget; non-exclusive.
- * OPEN_SELECTION — pick N from unrestricted field (e.g. NCAA "Pick 8").
- * PICK_EM — predict outcomes (winners, scores); no squad to build.
- * BRACKET_PICK_EM — predict bracket progression; single submission.
+ * OPEN_SELECTION — deferred unrestricted selection catalog entry.
+ * PICK_EM — deferred outcome prediction catalog entry.
+ * BRACKET_PICK_EM — deferred bracket prediction catalog entry.
  */
 export const SelectionType = {
   SNAKE_DRAFT: 'SNAKE_DRAFT',
@@ -111,9 +112,9 @@ export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
  * STAT_ACCUMULATION — points from personal player stats (goals, assists, etc.).
  * STROKE_PLAY — lower total strokes wins (golf).
  * POSITION — points by finish position (horse racing, F1).
- * BRACKET — points for correct bracket predictions.
+ * BRACKET — deferred bracket prediction scoring catalog entry.
  * FIGHT_RESULT — points by win method: KO, submission, decision (UFC).
- * CUMULATIVE — generic point accumulation (pick'em correct picks, etc.).
+ * CUMULATIVE — generic point accumulation for deferred or catch-all modes.
  */
 export const ScoringEngine = {
   ADVANCEMENT: 'ADVANCEMENT',
@@ -127,7 +128,7 @@ export const ScoringEngine = {
 export type ScoringEngine = (typeof ScoringEngine)[keyof typeof ScoringEngine];
 
 /**
- * For survivor/knockout contests — how picks are submitted.
+ * Deferred survivor/knockout catalog — how picks would be submitted.
  *
  * LIVE_PICK — one pick per period, submitted before each period begins.
  * LOCKED_PICK — all picks submitted upfront before the event starts.

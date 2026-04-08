@@ -1,9 +1,9 @@
 /**
- * Draft module — REST routes for async snake draft and selection templates.
+ * Draft module — REST routes for async snake draft and roster-based selection.
  *
  * The route surface is shared by snake drafts plus roster-based selection modes
- * such as tiered and open selection so the web draft room can consume one
- * honest contract instead of frontend-only mock state.
+ * such as tiered and budget pick so the web draft room can consume one honest
+ * contract instead of frontend-only mock state.
  */
 
 import type { FastifyInstance, FastifyReply } from 'fastify';

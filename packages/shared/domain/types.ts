@@ -1,9 +1,10 @@
 /**
  * Domain types — TypeScript interfaces for the full PoolMaster domain model.
  *
- * Aligned to poolmaster-contest-structures-v4.md.
- * Three contest categories: squad selection pools, survivor/knockout pools, pick'em/bracket.
- * No roster management, waivers, trades, or DFS mechanics.
+ * Aligned to poolmaster-contest-structures-v4.md and the active refactor plans.
+ * The current backend is centered on roster-based contests and core league/
+ * contest operations; deferred mechanics remain in the shared type catalog
+ * until they are rebuilt or removed.
  */
 
 import type {
@@ -262,7 +263,7 @@ export interface ScoringRulesConfig {
   // Position scoring (horse racing)
   positionPoints?: Record<number, number>;     // { 1: 100, 2: 60, 3: 40 }
 
-  // Bracket / pick'em
+  // Deferred bracket / pick'em catalog entries
   roundMultipliers?: number[];                 // points per correct pick per round
   seriesLengthBonus?: number;                  // bonus for predicting series length
   correctScoreBonus?: number;                  // bonus for exact score prediction
@@ -272,7 +273,7 @@ export interface ScoringRulesConfig {
   resultWeights?: Record<string, number>;      // { ko_tko: 10, submission: 9, decision: 7 }
   bonusWeights?: Record<string, number>;       // { round1_finish: 2, round1_ko: 3 }
 
-  // Confidence weighting (optional for pick'em)
+  // Confidence weighting (optional for deferred pick'em-style modes)
   confidenceWeighted?: boolean;
 
   // Tiebreaker
@@ -327,8 +328,7 @@ export interface TierConfig {
 
 /**
  * An entry in a contest — one per league member per contest.
- * For squad contests, this owns the drafted/picked roster.
- * For survivor/pick'em, this owns the submitted picks.
+ * For roster-based contests, this owns the selected roster.
  */
 export interface ContestEntry extends DomainEntity {
   contestId: string;
