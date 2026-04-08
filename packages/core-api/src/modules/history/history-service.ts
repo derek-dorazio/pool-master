@@ -15,19 +15,13 @@ export class HistoryService {
 
   /** Returns a full contest history summary for a completed contest. */
   async getContestSummary(contestId: string): Promise<ContestHistorySummary | null> {
-    const results = await this.prisma.contestResult.findMany({
-      where: { contestId },
-      orderBy: { finalRank: 'asc' },
-    });
+    const results = await this.getContestResultsForHistory(contestId);
 
     if (results.length === 0) return null;
 
     const first = results[0];
 
-    const payouts = await this.prisma.payoutHistory.findMany({
-      where: { contestId },
-      orderBy: { prizeRank: 'asc' },
-    });
+    const payouts = await this.getContestPayouts(contestId);
 
     const entries = await this.prisma.contestEntry.findMany({
       where: { contestId },
@@ -44,37 +38,53 @@ export class HistoryService {
       startedAt: first.startedAt ?? undefined,
       endedAt: first.endedAt ?? undefined,
       numEntries: first.numEntries ?? results.length,
-      finalStandings: results.map(mapResult),
-      payouts: payouts.map(mapPayout),
+      finalStandings: results,
+      payouts,
       highlights,
     };
   }
 
   /** Returns final standings for a contest. */
   async getContestStandings(contestId: string): Promise<ContestResult[]> {
-    const results = await this.prisma.contestResult.findMany({
-      where: { contestId },
-      orderBy: { finalRank: 'asc' },
-    });
-    return results.map(mapResult);
+    return this.getContestResultsForHistory(contestId);
   }
 
   /** Returns all contest results for a league member across all contests. */
   async getMemberResults(leagueMembershipId: string): Promise<ContestResult[]> {
-    const results = await this.prisma.contestResult.findMany({
+    const persistedResults = await this.prisma.contestResult.findMany({
       where: { leagueMembershipId },
       orderBy: { closedAt: 'desc' },
     });
-    return results.map(mapResult);
+    if (persistedResults.length > 0) {
+      return persistedResults.map(mapResult);
+    }
+
+    const membership = await this.prisma.leagueMembership.findUnique({
+      where: { id: leagueMembershipId },
+      select: { leagueId: true, userId: true },
+    });
+    if (!membership) {
+      return [];
+    }
+
+    const results = await this.buildFallbackResults({
+      leagueId: membership.leagueId,
+      userId: membership.userId,
+    });
+    return results.filter((result) => result.leagueMembershipId === leagueMembershipId);
   }
 
   /** Returns all contest results for a league. */
   async getLeagueResults(leagueId: string): Promise<ContestResult[]> {
-    const results = await this.prisma.contestResult.findMany({
+    const persistedResults = await this.prisma.contestResult.findMany({
       where: { leagueId },
       orderBy: { closedAt: 'desc' },
     });
-    return results.map(mapResult);
+    if (persistedResults.length > 0) {
+      return persistedResults.map(mapResult);
+    }
+
+    return this.buildFallbackResults({ leagueId });
   }
 
   /** Returns roster history snapshot for an entry. */
@@ -90,7 +100,195 @@ export class HistoryService {
       where: { contestId },
       orderBy: { prizeRank: 'asc' },
     });
-    return payouts.map(mapPayout);
+    if (payouts.length > 0) {
+      return payouts.map(mapPayout);
+    }
+
+    const awards = await this.prisma.contestEntryPrizeAward.findMany({
+      where: { entry: { contestId } },
+      include: {
+        entry: {
+          include: {
+            squad: {
+              include: {
+                memberships: {
+                  where: { status: 'ACTIVE' },
+                  orderBy: { joinedAt: 'asc' },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ awardedAt: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    if (awards.length === 0) {
+      return [];
+    }
+
+    const leagueMemberships = await this.prisma.leagueMembership.findMany({
+      where: {
+        leagueId: awards[0]?.entry.squad.leagueId,
+        userId: {
+          in: awards
+            .map((award) => award.entry.squad.memberships[0]?.userId)
+            .filter((userId): userId is string => Boolean(userId)),
+        },
+      },
+    });
+    const leagueMembershipIdByUserId = new Map(
+      leagueMemberships.map((membership) => [membership.userId, membership.id]),
+    );
+
+    return awards.map((award, index) => ({
+      id: award.id,
+      contestId: award.entry.contestId,
+      leagueId: award.entry.squad.leagueId,
+      entryId: award.entryId,
+      leagueMembershipId:
+        leagueMembershipIdByUserId.get(award.entry.squad.memberships[0]?.userId ?? '') ?? '',
+      prizeType: 'FINAL_STANDING',
+      prizeLabel: award.displayName,
+      prizeRank: index + 1,
+      amount: award.amount ?? 0,
+      isCash: true,
+      nonCashDescription: undefined,
+      paidAt: award.awardedAt,
+      acknowledgedByMember: false,
+      createdAt: award.createdAt,
+    }));
+  }
+
+  private async getContestResultsForHistory(contestId: string): Promise<ContestResult[]> {
+    const persistedResults = await this.prisma.contestResult.findMany({
+      where: { contestId },
+      orderBy: { finalRank: 'asc' },
+    });
+    if (persistedResults.length > 0) {
+      return persistedResults.map(mapResult);
+    }
+
+    return this.buildFallbackResults({ contestId });
+  }
+
+  private async buildFallbackResults(filters: {
+    contestId?: string;
+    leagueId?: string;
+    userId?: string;
+  }): Promise<ContestResult[]> {
+    const contests = await this.prisma.contest.findMany({
+      where: {
+        ...(filters.contestId && { id: filters.contestId }),
+        ...(filters.leagueId && { leagueId: filters.leagueId }),
+        status: 'COMPLETED',
+      },
+      include: {
+        entries: {
+          include: {
+            squad: {
+              include: {
+                memberships: {
+                  where: {
+                    status: 'ACTIVE',
+                    ...(filters.userId && { userId: filters.userId }),
+                  },
+                  orderBy: { joinedAt: 'asc' },
+                },
+              },
+            },
+            prizeAwards: {
+              orderBy: [{ awardedAt: 'asc' }, { createdAt: 'asc' }],
+            },
+          },
+          orderBy: [{ standingsPosition: 'asc' }, { createdAt: 'asc' }],
+        },
+      },
+      orderBy: [{ endsAt: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    if (contests.length === 0) {
+      return [];
+    }
+
+    const membershipPairs = contests.flatMap((contest) =>
+      contest.entries.flatMap((entry) =>
+        entry.squad.memberships.map((membership) => ({
+          leagueId: contest.leagueId,
+          userId: membership.userId,
+        })),
+      ),
+    );
+    const uniqueMembershipPairs = Array.from(
+      new Map(
+        membershipPairs.map((pair) => [`${pair.leagueId}:${pair.userId}`, pair] as const),
+      ).values(),
+    );
+
+    const leagueMemberships = await this.prisma.leagueMembership.findMany({
+      where: {
+        OR: uniqueMembershipPairs.map((pair) => ({
+          leagueId: pair.leagueId,
+          userId: pair.userId,
+        })),
+      },
+    });
+    const leagueMembershipIdByKey = new Map(
+      leagueMemberships.map((membership) => [
+        `${membership.leagueId}:${membership.userId}`,
+        membership.id,
+      ]),
+    );
+
+    return contests.flatMap((contest) => {
+      const numEntries = contest.entries.length;
+      const winnerScore = contest.entries[0]?.totalScore ?? 0;
+
+      return contest.entries
+        .filter((entry) => entry.squad.memberships.length > 0)
+        .map((entry) => {
+          const firstMembership = entry.squad.memberships[0]!;
+          const leagueMembershipId = leagueMembershipIdByKey.get(
+            `${contest.leagueId}:${firstMembership.userId}`,
+          );
+          const prizeAmount = entry.prizeAwards.reduce(
+            (sum, award) => sum + (award.amount ?? 0),
+            0,
+          );
+          const rank = entry.standingsPosition ?? numEntries;
+
+          return {
+            id: `${contest.id}:${entry.id}`,
+            contestId: contest.id,
+            entryId: entry.id,
+            finalRank: rank,
+            totalScore: entry.totalScore,
+            prizeAmount: prizeAmount > 0 ? prizeAmount : undefined,
+            leagueId: contest.leagueId,
+            seasonId: contest.seasonId ?? undefined,
+            leagueMembershipId,
+            contestName: contest.name,
+            contestType: contest.contestType,
+            sport: contest.sport ?? undefined,
+            numEntries,
+            startedAt: contest.startsAt ?? contest.startDate ?? undefined,
+            endedAt: contest.endsAt ?? contest.endDate ?? undefined,
+            isWinner: rank === 1,
+            isPaidPosition: entry.prizeAwards.length > 0,
+            entryFeePaid: undefined,
+            prizeLabel: entry.prizeAwards[0]?.displayName,
+            netResult: undefined,
+            percentileRank: numEntries > 0 ? ((numEntries - rank + 1) / numEntries) * 100 : undefined,
+            pointsBehindWinner: winnerScore - entry.totalScore,
+            pointsBehindNext: undefined,
+            draftPosition: undefined,
+            rosterSnapshotId: undefined,
+            closedAt: contest.endsAt ?? contest.endDate ?? undefined,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
+          } satisfies ContestResult;
+        });
+    });
   }
 }
 
