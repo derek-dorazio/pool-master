@@ -1,6 +1,6 @@
 /**
- * StandingsRollup — periodic job that reads totals from ContestEntry
- * and writes ranked standings to the ContestStanding table via Prisma.
+ * StandingsRollup — periodic job that reads contest totals and persists
+ * standings positions back onto ContestEntry.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -33,7 +33,7 @@ export interface StandingsRollupDeps {
 
 const DEFAULT_INTERVAL_MS = 30_000;
 
-/** Reads ScoreStore leaderboards, assigns ranks, and persists standings to Prisma. */
+/** Reads current totals, assigns ranks, and persists standings to ContestEntry. */
 export class StandingsRollup {
   private intervalHandle: ReturnType<typeof setInterval> | null = null;
   private activeContestIds: Set<string> = new Set();
@@ -67,7 +67,6 @@ export class StandingsRollup {
     this.updatePreviousRanks(contestId, standings);
     const rolledUpAt = new Date();
 
-    // Persist standings to Prisma
     await this.persistStandings(contestId, standings, rolledUpAt);
 
     await this.publishStandingsUpdated(contestId, standings, rolledUpAt);
@@ -116,35 +115,12 @@ export class StandingsRollup {
     return this.activeContestIds;
   }
 
-  /** Persist standings to ContestStanding and update ContestEntry.standingsPosition via Prisma. */
+  /** Persist standings positions onto ContestEntry. */
   private async persistStandings(
     contestId: string,
     standings: StandingEntry[],
-    rolledUpAt: Date,
+    _rolledUpAt: Date,
   ): Promise<void> {
-    await this.prisma.$transaction(
-      standings.map((s) =>
-        this.prisma.contestStanding.upsert({
-          where: {
-            contestId_entryId: { contestId, entryId: s.entryId },
-          },
-          create: {
-            contestId,
-            entryId: s.entryId,
-            rank: s.rank,
-            totalScore: s.totalScore,
-            lastUpdatedAt: rolledUpAt,
-          },
-          update: {
-            rank: s.rank,
-            totalScore: s.totalScore,
-            lastUpdatedAt: rolledUpAt,
-          },
-        }),
-      ),
-    );
-
-    // Update standings position on ContestEntry for quick lookups
     await this.prisma.$transaction(
       standings.map((s) =>
         this.prisma.contestEntry.update({
