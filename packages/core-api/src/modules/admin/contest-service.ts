@@ -445,24 +445,6 @@ export class ContestService {
         data: { standingsPosition: newRank },
       });
 
-      // Also upsert into contest_standings
-      await this.prisma.contestStanding.upsert({
-        where: {
-          contestId_entryId: { contestId, entryId: entries[i].id },
-        },
-        create: {
-          contestId,
-          entryId: entries[i].id,
-          rank: newRank,
-          totalScore: entries[i].totalScore,
-          lastUpdatedAt: new Date(),
-        },
-        update: {
-          rank: newRank,
-          totalScore: entries[i].totalScore,
-          lastUpdatedAt: new Date(),
-        },
-      });
     }
 
     const result: RecalculationResult = {
