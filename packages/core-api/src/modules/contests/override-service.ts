@@ -12,6 +12,7 @@ import type {
 } from '@poolmaster/shared/db';
 import type { Contest, DraftSession } from '@poolmaster/shared/domain';
 import { ContestStatus, DraftStatus } from '@poolmaster/shared/domain';
+import type { ContestScoringRecalculationService } from '../contest-scoring';
 
 export interface RecalculationResult {
   contestId: string;
@@ -35,6 +36,7 @@ export class OverrideService {
     private readonly contestRepo: ContestRepository,
     private readonly draftSessionRepo: DraftSessionRepository,
     private readonly entryRepo: ContestEntryRepository,
+    private readonly contestScoringRecalculationService: ContestScoringRecalculationService,
   ) {}
 
   // --- Draft Overrides (08-018, 08-019, 08-020) ---
@@ -118,44 +120,7 @@ export class OverrideService {
     if (!contest) {
       throw new OverrideError('Contest not found');
     }
-    const entries = await this.entryRepo.findByContest(contestId);
-    const oldRankMap = new Map(
-      entries.map((entry) => [
-        entry.id,
-        {
-          rank: entry.standingsPosition ?? 0,
-          totalScore: entry.totalScore,
-        },
-      ]),
-    );
-    // Sort entries by score (descending) and assign new ranks
-    const sorted = [...entries].sort((a, b) => b.totalScore - a.totalScore);
-    const changes: StandingsChange[] = [];
-    for (let i = 0; i < sorted.length; i++) {
-      const entry = sorted[i];
-      const newRank = i + 1;
-      const old = oldRankMap.get(entry.id);
-      const oldRank = old?.rank ?? 0;
-      const oldScore = old?.totalScore ?? 0;
-      if (oldRank !== newRank || oldScore !== entry.totalScore) {
-        changes.push({
-          entryId: entry.id,
-          oldRank,
-          newRank,
-          oldScore,
-          newScore: entry.totalScore,
-        });
-      }
-      await this.entryRepo.update(entry.id, {
-        standingsPosition: newRank,
-      });
-    }
-    return {
-      contestId,
-      teamsAffected: changes.length,
-      standingsChanged: changes.length > 0,
-      changes,
-    };
+    return this.contestScoringRecalculationService.recalculateContest(contestId);
   }
 
   // --- Contest Lifecycle Overrides (08-023) ---

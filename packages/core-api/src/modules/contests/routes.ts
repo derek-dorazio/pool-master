@@ -36,6 +36,7 @@ import {
 import { requirePermission } from '../../core/require-permission';
 import { ContestService } from './service';
 import { OverrideService } from './override-service';
+import { ContestScoringRecalculationService } from '../contest-scoring';
 import { createContestHandlers } from './handler';
 import { createOverrideHandlers } from './override-handler';
 import { ContestPoolService } from '../participants/pool-service';
@@ -133,7 +134,12 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     entryRepo,
     prisma,
   );
-  const overrideService = new OverrideService(contestRepo, draftSessionRepo, entryRepo);
+  const overrideService = new OverrideService(
+    contestRepo,
+    draftSessionRepo,
+    entryRepo,
+    new ContestScoringRecalculationService(prisma),
+  );
   const handlers = createContestHandlers(contestService);
   const overrides = createOverrideHandlers(overrideService);
 
