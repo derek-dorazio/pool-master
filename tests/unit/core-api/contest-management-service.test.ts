@@ -212,6 +212,8 @@ describe('ContestManagementService', () => {
       leagueId: 'league-1',
       sportEventId: '11111111-1111-1111-1111-111111111111',
       name: 'Masters Pick 6',
+      selectionType: 'BUDGET_PICK',
+      scoringEngine: 'CUMULATIVE',
       status: ContestStatus.DRAFT,
     });
     expect(result.configuration.participantScoringRules).toHaveLength(1);
