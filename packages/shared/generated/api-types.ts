@@ -4491,6 +4491,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
                             sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
@@ -4609,6 +4610,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
                             sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
@@ -5108,6 +5110,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
                             sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
@@ -5190,6 +5193,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
                             sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
@@ -5638,6 +5642,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
                             sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
@@ -5695,6 +5700,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
                             sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
@@ -5754,6 +5760,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
                             sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
@@ -5813,6 +5820,7 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
                             sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
@@ -7291,7 +7299,7 @@ export interface operations {
                             /** Format: date-time */
                             startedAt?: string | null;
                         };
-                        picks: {
+                        draftPickHistories: {
                             round: number;
                             pick: number;
                             participant: string;

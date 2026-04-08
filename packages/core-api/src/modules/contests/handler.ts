@@ -149,6 +149,7 @@ export function createContestHandlers(contestService: ContestService) {
         tenantId,
         createdBy: userId,
         seasonId: body.seasonId,
+        sportEventId: body.eventId,
         name: body.name,
         sport: body.sport as Sport,
         contestType: body.contestType,

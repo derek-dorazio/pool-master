@@ -114,6 +114,7 @@ export const ContestSummaryDtoSchema = z.object({
   selectionType: z.string(),
   scoringEngine: z.string(),
   leagueId: z.string(),
+  sportEventId: z.string().nullable().optional(),
   sport: z.string().nullable().optional(),
   entryCount: z.number().optional(),
   startsAt: z.string().datetime().nullable().optional(),

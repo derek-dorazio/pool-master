@@ -225,6 +225,7 @@ describe('ContestService', () => {
         leagueId: 'league-1',
         tenantId: 'tenant-1',
         createdBy: 'user-1',
+        sportEventId: 'event-1',
         name: 'Masters Pool',
         sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
@@ -234,6 +235,11 @@ describe('ContestService', () => {
         scoringRules: { missedCutPenalty: 80 },
       });
       expect(contestRepo.create).toHaveBeenCalledTimes(1);
+      expect(contestRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sportEventId: 'event-1',
+        }),
+      );
       expect(contestConfigurationRepo.create).toHaveBeenCalledTimes(1);
       expect(result.contest.id).toBe('new-contest-id');
       expect(result.contestConfiguration.id).toBe('new-config-id');

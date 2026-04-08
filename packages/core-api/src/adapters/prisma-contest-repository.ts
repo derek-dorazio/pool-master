@@ -29,6 +29,7 @@ export class PrismaContestRepository implements ContestRepository {
       data: {
         leagueId: contest.leagueId,
         seasonId: contest.seasonId || undefined,
+        sportEventId: contest.sportEventId || undefined,
         name: contest.name,
         status: contest.status,
         contestType: contest.contestType,
@@ -53,6 +54,7 @@ export class PrismaContestRepository implements ContestRepository {
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.status !== undefined && { status: updates.status }),
+        ...(updates.sportEventId !== undefined && { sportEventId: updates.sportEventId }),
         ...(updates.sport !== undefined && { sport: updates.sport }),
         ...(updates.scoringRules !== undefined && { scoringRules: updates.scoringRules as object }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
@@ -81,6 +83,7 @@ function mapToContest(row: {
   id: string;
   leagueId: string;
   seasonId: string | null;
+  sportEventId: string | null;
   name: string;
   status: string;
   contestType: string;
@@ -101,6 +104,7 @@ function mapToContest(row: {
     id: row.id,
     leagueId: row.leagueId,
     seasonId: row.seasonId ?? '',
+    sportEventId: row.sportEventId ?? undefined,
     name: row.name,
     status: row.status as Contest['status'],
     contestType: row.contestType as Contest['contestType'],

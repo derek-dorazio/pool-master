@@ -40,6 +40,7 @@ export interface CreateContestInput {
   tenantId: string;
   createdBy: string;
   seasonId?: string;
+  sportEventId?: string;
   name: string;
   sport: Sport;
   contestType: ContestType;
@@ -92,6 +93,7 @@ export class ContestService {
     const contest = await this.contestRepo.create({
       leagueId: input.leagueId,
       seasonId: input.seasonId || undefined,
+      sportEventId: input.sportEventId || undefined,
       name: input.name,
       status: ContestStatus.DRAFT,
       sport: input.sport,

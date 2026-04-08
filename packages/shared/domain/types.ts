@@ -227,6 +227,7 @@ export interface ParticipantProviderMapping extends DomainEntity {
 export interface Contest extends DomainEntity {
   leagueId: string;
   seasonId: string;
+  sportEventId?: string;
   name: string;
   status: ContestStatus;
   contestType: ContestType;

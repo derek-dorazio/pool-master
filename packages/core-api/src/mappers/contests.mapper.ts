@@ -17,6 +17,7 @@ interface ContestRow {
   id: string;
   leagueId: string;
   seasonId?: string | null;
+  sportEventId?: string | null;
   name: string;
   status: string;
   contestType: string;
@@ -59,6 +60,7 @@ export function toContestSummaryDto(
     selectionType: contest.selectionType,
     scoringEngine: contest.scoringEngine,
     leagueId: contest.leagueId,
+    sportEventId: contest.sportEventId ?? null,
     sport: contest.sport ?? null,
     entryCount: opts?.entryCount,
     startsAt: contest.startsAt?.toISOString() ?? null,

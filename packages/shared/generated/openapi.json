@@ -2913,6 +2913,10 @@
                           "leagueId": {
                             "type": "string"
                           },
+                          "sportEventId": {
+                            "type": "string",
+                            "nullable": true
+                          },
                           "sport": {
                             "type": "string",
                             "nullable": true
@@ -3286,6 +3290,10 @@
                         },
                         "leagueId": {
                           "type": "string"
+                        },
+                        "sportEventId": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "sport": {
                           "type": "string",
@@ -4934,6 +4942,10 @@
                         "leagueId": {
                           "type": "string"
                         },
+                        "sportEventId": {
+                          "type": "string",
+                          "nullable": true
+                        },
                         "sport": {
                           "type": "string",
                           "nullable": true
@@ -5154,6 +5166,10 @@
                         },
                         "leagueId": {
                           "type": "string"
+                        },
+                        "sportEventId": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "sport": {
                           "type": "string",
@@ -6169,6 +6185,10 @@
                         "leagueId": {
                           "type": "string"
                         },
+                        "sportEventId": {
+                          "type": "string",
+                          "nullable": true
+                        },
                         "sport": {
                           "type": "string",
                           "nullable": true
@@ -6301,6 +6321,10 @@
                         },
                         "leagueId": {
                           "type": "string"
+                        },
+                        "sportEventId": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "sport": {
                           "type": "string",
@@ -6440,6 +6464,10 @@
                         "leagueId": {
                           "type": "string"
                         },
+                        "sportEventId": {
+                          "type": "string",
+                          "nullable": true
+                        },
                         "sport": {
                           "type": "string",
                           "nullable": true
@@ -6577,6 +6605,10 @@
                         },
                         "leagueId": {
                           "type": "string"
+                        },
+                        "sportEventId": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "sport": {
                           "type": "string",
@@ -10248,7 +10280,7 @@
                       ],
                       "additionalProperties": false
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -10367,7 +10399,7 @@
                     "entryCount",
                     "createdAt",
                     "standings",
-                    "picks",
+                    "draftPickHistories",
                     "scoringFreshness",
                     "statEventCount",
                     "correctionsApplied",

@@ -1005,6 +1005,7 @@ export type ListContestsResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -1051,11 +1052,7 @@ export type CreateContestData = {
             pricingMethod?: string;
             rosterSize?: number;
             pickCount?: number;
-            survivorStyle?: string;
             picksPerPeriod?: number;
-            oneEntityPerSeason?: boolean;
-            strikesBeforeElimination?: number;
-            buybacksAllowed?: boolean;
             roundValues?: Array<number>;
             startRound?: string;
             isExclusive?: boolean;
@@ -1109,6 +1106,7 @@ export type CreateContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -1535,6 +1533,7 @@ export type GetContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -1601,6 +1600,7 @@ export type UpdateContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -1932,6 +1932,7 @@ export type ReopenContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -1976,6 +1977,7 @@ export type CloseContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -2021,6 +2023,7 @@ export type ExtendContestDeadlineResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -2066,6 +2069,7 @@ export type UpdateContestLockTimeResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -3285,7 +3289,7 @@ export type AdminGetContestDetailResponses = {
             totalPicks: number;
             startedAt?: string;
         };
-        picks: Array<{
+        draftPickHistories: Array<{
             round: number;
             pick: number;
             participant: string;
@@ -4779,7 +4783,6 @@ export type AdminResetChannelConfigResponses = {
 
 export type AdminResetChannelConfigResponse = AdminResetChannelConfigResponses[keyof AdminResetChannelConfigResponses];
 
-
 export type AdminListNotificationTemplatesData = {
     body?: never;
     path?: never;
@@ -5687,7 +5690,6 @@ export type GetLeagueRecapResponses = {
 };
 
 export type GetLeagueRecapResponse = GetLeagueRecapResponses[keyof GetLeagueRecapResponses];
-
 
 export type GetDraftStateData = {
     body?: never;

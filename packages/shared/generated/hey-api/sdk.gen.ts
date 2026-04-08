@@ -1504,7 +1504,6 @@ export const adminResetChannelConfig = <ThrowOnError extends boolean = false>(op
     ...options
 });
 
-
 /**
  * List notification templates
  */
@@ -1797,7 +1796,6 @@ export const getLeagueRecap = <ThrowOnError extends boolean = false>(options: Op
     url: '/api/v1/social/leagues/{leagueId}/recap',
     ...options
 });
-
 
 /**
  * Get current draft state for a contest
