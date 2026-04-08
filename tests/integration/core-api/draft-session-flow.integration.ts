@@ -150,7 +150,7 @@ describe('Draft Session Flow Integration', () => {
       data: { sportEventId: sportEvent.id },
     });
 
-    await prisma.selectionConfig.update({
+    await prisma.contestConfiguration.update({
       where: { contestId },
       data: {
         tierConfig: [
@@ -161,7 +161,7 @@ describe('Draft Session Flow Integration', () => {
             picksFromTier: 1,
             participantIds: [participantId],
           },
-        ],
+        ] as object[],
       },
     });
 

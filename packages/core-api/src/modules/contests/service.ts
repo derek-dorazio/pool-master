@@ -111,6 +111,30 @@ export class ContestService {
       isExclusive: input.isExclusive ?? false,
       ...input.selectionConfig,
     } as Omit<SelectionConfig, 'id' | 'createdAt' | 'updatedAt'>);
+    await this.requirePrisma().contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        selectionType: input.selectionType,
+        rounds: input.selectionConfig.rounds,
+        timePerPickSeconds: input.selectionConfig.timePerPickSeconds,
+        autoPickPolicy: input.selectionConfig.autoPickPolicy,
+        tierConfig: input.selectionConfig.tierConfig as object[] | undefined,
+        budget: input.selectionConfig.budget,
+        pricingMethod: input.selectionConfig.pricingMethod,
+        pickCount: input.selectionConfig.pickCount,
+        isExclusive:
+          input.selectionConfig.isExclusive
+          ?? input.isExclusive
+          ?? false,
+        picksPerPeriod: input.selectionConfig.picksPerPeriod,
+        roundValues: input.selectionConfig.roundValues as number[] | undefined,
+        startRound: input.selectionConfig.startRound,
+        rosterSize:
+          input.selectionConfig.rosterSize
+          ?? input.selectionConfig.pickCount
+          ?? input.selectionConfig.rounds,
+      },
+    });
     return { contest, selectionConfig };
   }
 

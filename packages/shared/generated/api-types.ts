@@ -4763,6 +4763,23 @@ export interface operations {
                     configuration: {
                         /** @enum {string} */
                         selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                        rounds?: number;
+                        timePerPickSeconds?: number;
+                        autoPickPolicy?: string;
+                        tierConfig?: {
+                            tierId: string;
+                            tierName: string;
+                            tierNumber: number;
+                            picksFromTier: number;
+                            participantIds: string[];
+                        }[];
+                        budget?: number;
+                        pricingMethod?: string;
+                        pickCount?: number;
+                        isExclusive?: boolean;
+                        picksPerPeriod?: number;
+                        roundValues?: number[];
+                        startRound?: string;
                         /** Format: date-time */
                         locksAt?: string | null;
                         minimumEntries?: number;
@@ -4826,6 +4843,23 @@ export interface operations {
                             configuration: {
                                 /** @enum {string} */
                                 selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                rounds?: number;
+                                timePerPickSeconds?: number;
+                                autoPickPolicy?: string;
+                                tierConfig?: {
+                                    tierId: string;
+                                    tierName: string;
+                                    tierNumber: number;
+                                    picksFromTier: number;
+                                    participantIds: string[];
+                                }[];
+                                budget?: number;
+                                pricingMethod?: string;
+                                pickCount?: number;
+                                isExclusive?: boolean;
+                                picksPerPeriod?: number;
+                                roundValues?: number[];
+                                startRound?: string;
                                 /** Format: date-time */
                                 locksAt?: string | null;
                                 minimumEntries?: number;
@@ -4913,6 +4947,23 @@ export interface operations {
                             configuration: {
                                 /** @enum {string} */
                                 selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                rounds?: number;
+                                timePerPickSeconds?: number;
+                                autoPickPolicy?: string;
+                                tierConfig?: {
+                                    tierId: string;
+                                    tierName: string;
+                                    tierNumber: number;
+                                    picksFromTier: number;
+                                    participantIds: string[];
+                                }[];
+                                budget?: number;
+                                pricingMethod?: string;
+                                pickCount?: number;
+                                isExclusive?: boolean;
+                                picksPerPeriod?: number;
+                                roundValues?: number[];
+                                startRound?: string;
                                 /** Format: date-time */
                                 locksAt?: string | null;
                                 minimumEntries?: number;
@@ -4986,6 +5037,23 @@ export interface operations {
                 "application/json": {
                     /** @enum {string} */
                     selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                    rounds?: number;
+                    timePerPickSeconds?: number;
+                    autoPickPolicy?: string;
+                    tierConfig?: {
+                        tierId: string;
+                        tierName: string;
+                        tierNumber: number;
+                        picksFromTier: number;
+                        participantIds: string[];
+                    }[];
+                    budget?: number;
+                    pricingMethod?: string;
+                    pickCount?: number;
+                    isExclusive?: boolean;
+                    picksPerPeriod?: number;
+                    roundValues?: number[];
+                    startRound?: string;
                     /** Format: date-time */
                     locksAt?: string | null;
                     minimumEntries?: number;
@@ -5048,6 +5116,23 @@ export interface operations {
                             configuration: {
                                 /** @enum {string} */
                                 selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                rounds?: number;
+                                timePerPickSeconds?: number;
+                                autoPickPolicy?: string;
+                                tierConfig?: {
+                                    tierId: string;
+                                    tierName: string;
+                                    tierNumber: number;
+                                    picksFromTier: number;
+                                    participantIds: string[];
+                                }[];
+                                budget?: number;
+                                pricingMethod?: string;
+                                pickCount?: number;
+                                isExclusive?: boolean;
+                                picksPerPeriod?: number;
+                                roundValues?: number[];
+                                startRound?: string;
                                 /** Format: date-time */
                                 locksAt?: string | null;
                                 minimumEntries?: number;
@@ -10554,7 +10639,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -10686,7 +10771,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -10823,7 +10908,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -10944,7 +11029,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -11065,7 +11150,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -11186,7 +11271,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -11307,7 +11392,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -11434,7 +11519,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -11555,7 +11640,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;
@@ -11676,7 +11761,7 @@ export interface operations {
                         isTurnBased: boolean;
                         isCommissioner?: boolean;
                         rosterSize: number;
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             isExclusive: boolean;
                             rounds?: number;
                             pickCount?: number;

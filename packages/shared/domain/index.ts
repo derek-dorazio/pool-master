@@ -9,6 +9,7 @@ export type {
 } from './contest-scoring';
 export type {
   ContestConfiguration,
+  ContestConfigurationTier,
   ContestCoreSummary,
   ContestEntryAggregationRule,
   ContestEntryParticipantScore,

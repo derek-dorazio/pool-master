@@ -47,7 +47,7 @@ import { draftQueue } from './engine/draft-queue';
 
 const engine = new SnakeDraftEngine();
 
-type ContestSelectionConfig = Awaited<ReturnType<PrismaClient['selectionConfig']['findUnique']>>;
+type ContestConfigurationRecord = Awaited<ReturnType<PrismaClient['contestConfiguration']['findUnique']>>;
 interface ContestRecord {
   id: string;
   name: string;
@@ -87,7 +87,7 @@ type BracketPredictionRecord = Awaited<ReturnType<PrismaClient['bracketPredictio
 
 interface DraftContext {
   contest: ContestRecord;
-  selectionConfig: ContestSelectionConfig;
+  contestConfiguration: ContestConfigurationRecord;
   contestEntries: ContestEntryRecord[];
   memberships: MembershipRecord[];
   squadMemberships: SquadMembershipRecord[];
@@ -226,12 +226,12 @@ function mapContestStatusToDraftStatus(
 
 function getRosterSize(
   selectionType: string,
-  selectionConfig: ContestSelectionConfig,
+  contestConfiguration: ContestConfigurationRecord,
   tiers: DraftTierConfig[],
 ): number {
-  if (selectionType === SelectionType.SNAKE_DRAFT) return selectionConfig?.rounds ?? 0;
-  if (selectionType === SelectionType.OPEN_SELECTION) return selectionConfig?.pickCount ?? 0;
-  if (selectionType === SelectionType.BUDGET_PICK) return selectionConfig?.rosterSize ?? 0;
+  if (selectionType === SelectionType.SNAKE_DRAFT) return contestConfiguration?.rounds ?? 0;
+  if (selectionType === SelectionType.OPEN_SELECTION) return contestConfiguration?.pickCount ?? 0;
+  if (selectionType === SelectionType.BUDGET_PICK) return contestConfiguration?.rosterSize ?? 0;
   if (selectionType === SelectionType.TIERED) {
     return tiers.reduce((sum, tier) => sum + tier.picksFromTier, 0);
   }
@@ -248,11 +248,11 @@ function compareTierNames(a: string, b: string): number {
 }
 
 function deriveTierConfig(
-  selectionConfig: ContestSelectionConfig,
+  contestConfiguration: ContestConfigurationRecord,
   selectionParticipants: SelectionParticipantRecord[],
 ): DraftTierConfig[] {
-  if (Array.isArray(selectionConfig?.tierConfig) && selectionConfig.tierConfig.length > 0) {
-    return selectionConfig.tierConfig.map((tier, index) => {
+  if (Array.isArray(contestConfiguration?.tierConfig) && contestConfiguration.tierConfig.length > 0) {
+    return contestConfiguration.tierConfig.map((tier, index) => {
       const record = tier as Record<string, unknown>;
       return {
         tierId: String(record.tierId ?? record.tierName ?? `tier-${index + 1}`),
@@ -300,8 +300,8 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
   });
   if (!contest) return null;
 
-  const [selectionConfig, contestEntries, memberships, sportEventParticipants, contestMatchups] = await Promise.all([
-    prisma.selectionConfig.findUnique({ where: { contestId } }),
+  const [contestConfiguration, contestEntries, memberships, sportEventParticipants, contestMatchups] = await Promise.all([
+    prisma.contestConfiguration.findUnique({ where: { contestId } }),
     prisma.contestEntry.findMany({
       where: { contestId },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -341,7 +341,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
 
   return {
     contest,
-    selectionConfig,
+    contestConfiguration,
     contestEntries,
     memberships,
     squadMemberships,
@@ -374,23 +374,23 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
   };
 }
 
-function buildSelectionConfigResponse(
-  selectionConfig: ContestSelectionConfig,
+function buildContestConfigurationResponse(
+  contestConfiguration: ContestConfigurationRecord,
   tiers: DraftTierConfig[],
   rosterSize: number,
 ) {
-  if (!selectionConfig) return null;
+  if (!contestConfiguration) return null;
   return {
-    isExclusive: selectionConfig.isExclusive,
-    rounds: selectionConfig.rounds ?? undefined,
-    pickCount: selectionConfig.pickCount ?? undefined,
-    rosterSize: rosterSize || selectionConfig.rosterSize || selectionConfig.pickCount || selectionConfig.rounds || undefined,
-    budget: selectionConfig.budget ?? undefined,
-    pricingMethod: selectionConfig.pricingMethod ?? undefined,
-    timePerPickSeconds: selectionConfig.timePerPickSeconds ?? undefined,
-    picksPerPeriod: selectionConfig.picksPerPeriod ?? undefined,
-    roundValues: selectionConfig.roundValues ?? undefined,
-    startRound: selectionConfig.startRound ?? undefined,
+    isExclusive: contestConfiguration.isExclusive,
+    rounds: contestConfiguration.rounds ?? undefined,
+    pickCount: contestConfiguration.pickCount ?? undefined,
+    rosterSize: rosterSize || contestConfiguration.rosterSize || contestConfiguration.pickCount || contestConfiguration.rounds || undefined,
+    budget: contestConfiguration.budget ?? undefined,
+    pricingMethod: contestConfiguration.pricingMethod ?? undefined,
+    timePerPickSeconds: contestConfiguration.timePerPickSeconds ?? undefined,
+    picksPerPeriod: contestConfiguration.picksPerPeriod ?? undefined,
+    roundValues: contestConfiguration.roundValues ?? undefined,
+    startRound: contestConfiguration.startRound ?? undefined,
     tierConfig: tiers.length > 0
       ? tiers.map((tier) => ({
           tierId: tier.tierId,
@@ -424,8 +424,8 @@ async function buildSnakeDraftResponse(
     prisma,
     sportEventParticipantIds,
   );
-  const tiers = deriveTierConfig(context.selectionConfig, context.selectionParticipants);
-  const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
+  const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+  const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
 
   const entries = state.entryIds.map((entryId) => {
     const contestEntry = contestEntryById.get(entryId);
@@ -449,7 +449,7 @@ async function buildSnakeDraftResponse(
     isTurnBased: true,
     isCommissioner,
     rosterSize,
-    selectionConfig: buildSelectionConfigResponse(context.selectionConfig, tiers, rosterSize),
+    contestConfiguration: buildContestConfigurationResponse(context.contestConfiguration, tiers, rosterSize),
     status: session.status,
     currentPickNumber: state.currentPickNumber,
     currentRound: engine.getCurrentPickPosition(state).round,
@@ -503,8 +503,8 @@ async function buildRosterSelectionResponse(
   const contestEntryById = new Map(context.contestEntries.map((entry) => [entry.id, entry]));
   const entryUserIdMap = buildEntryUserIdMap(context);
   const entryIds = context.contestEntries.map((entry) => entry.id);
-  const tiers = deriveTierConfig(context.selectionConfig, context.selectionParticipants);
-  const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
+  const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+  const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
   const tierByParticipantId = new Map<string, DraftTierConfig>();
   const priceBySportEventParticipantId = new Map(
     context.selectionParticipants.map((participant) => [
@@ -596,7 +596,7 @@ async function buildRosterSelectionResponse(
     };
   });
 
-  const availableParticipantIds = context.selectionConfig?.isExclusive
+  const availableParticipantIds = context.contestConfiguration?.isExclusive
     ? context.selectionParticipants.flatMap((participant) => {
         if (!participant.isAvailable) return [];
         if (rosterPicks.some((pick) => pick.sportEventParticipantId === participant.sportEventParticipantId)) {
@@ -624,7 +624,7 @@ async function buildRosterSelectionResponse(
     isTurnBased: false,
     isCommissioner,
     rosterSize,
-    selectionConfig: buildSelectionConfigResponse(context.selectionConfig, tiers, rosterSize),
+    contestConfiguration: buildContestConfigurationResponse(context.contestConfiguration, tiers, rosterSize),
     status,
     currentPickNumber: canCurrentUserSubmit ? myEntryPicks.length + 1 : myEntryPicks.length,
     currentRound: context.contest.selectionType === SelectionType.TIERED
@@ -702,7 +702,7 @@ async function buildPickEmResponse(
     ? picks.filter((pick) => pick.entryId === myEntryId && pick.period === currentPeriod)
     : [];
   const isCommissioner = getIsCommissioner(context, requestUserId);
-  const picksPerPeriod = context.selectionConfig?.picksPerPeriod
+  const picksPerPeriod = context.contestConfiguration?.picksPerPeriod
     ?? currentPeriodMatchups.length
     ?? 0;
   const openMatchups = currentPeriodMatchups.filter((matchup) => {
@@ -718,7 +718,7 @@ async function buildPickEmResponse(
     isTurnBased: false,
     isCommissioner,
     rosterSize: picksPerPeriod,
-    selectionConfig: buildSelectionConfigResponse(context.selectionConfig, [], picksPerPeriod),
+    contestConfiguration: buildContestConfigurationResponse(context.contestConfiguration, [], picksPerPeriod),
     status: mapContestStatusToDraftStatus(context.contest.status, false),
     currentPickNumber: myCurrentPeriodPicks.length + 1,
     currentRound: currentPeriod,
@@ -942,7 +942,7 @@ async function buildBracketResponse(
     isTurnBased: false,
     isCommissioner,
     rosterSize: sortedMatchups.length,
-    selectionConfig: buildSelectionConfigResponse(context.selectionConfig, [], sortedMatchups.length),
+    contestConfiguration: buildContestConfigurationResponse(context.contestConfiguration, [], sortedMatchups.length),
     status: mapContestStatusToDraftStatus(context.contest.status, false),
     currentPickNumber: myPredictions.length + 1,
     currentRound: nextIncompleteMatchup?.roundNumber ?? nextIncompleteMatchup?.period ?? 1,
@@ -1497,8 +1497,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const tiers = deriveTierConfig(context.selectionConfig, context.selectionParticipants);
-      const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
+      const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+      const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
       if (rosterSize <= 0) {
         return sendWithStatus(reply, 400, {
           error: 'SELECTION_CONFIG_INVALID',
@@ -1557,7 +1557,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const exclusiveTaken = context.selectionConfig?.isExclusive
+      const exclusiveTaken = context.contestConfiguration?.isExclusive
         ? await prisma.rosterPick.findFirst({
             where: {
               sportEventParticipantId: participantId,

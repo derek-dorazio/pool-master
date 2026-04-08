@@ -409,6 +409,17 @@ model ContestConfiguration {
   id                   String    @id @default(uuid()) @db.Uuid
   contestId            String    @unique @map("contest_id") @db.Uuid
   selectionType        String    @map("selection_type") @db.VarChar(50)
+  rounds               Int?
+  timePerPickSeconds   Int?      @map("time_per_pick_seconds")
+  autoPickPolicy       String?   @map("auto_pick_policy") @db.VarChar(50)
+  tierConfig           Json?     @map("tier_config")
+  budget               Int?
+  pricingMethod        String?   @map("pricing_method") @db.VarChar(50)
+  pickCount            Int?      @map("pick_count")
+  isExclusive          Boolean   @default(false) @map("is_exclusive")
+  picksPerPeriod       Int?      @map("picks_per_period")
+  roundValues          Json?     @map("round_values")
+  startRound           String?   @map("start_round") @db.VarChar(50)
   locksAt              DateTime? @map("locks_at") @db.Timestamptz
   minimumEntries       Int?      @map("minimum_entries")
   maxEntriesPerSquad   Int?      @map("max_entries_per_squad")

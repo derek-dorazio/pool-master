@@ -279,6 +279,17 @@ export class PrismaContestConfigurationRepository
       data: {
         contestId: configuration.contestId,
         selectionType: configuration.selectionType,
+        rounds: configuration.rounds,
+        timePerPickSeconds: configuration.timePerPickSeconds,
+        autoPickPolicy: configuration.autoPickPolicy,
+        tierConfig: configuration.tierConfig as object[] | undefined,
+        budget: configuration.budget,
+        pricingMethod: configuration.pricingMethod,
+        pickCount: configuration.pickCount,
+        isExclusive: configuration.isExclusive ?? false,
+        picksPerPeriod: configuration.picksPerPeriod,
+        roundValues: configuration.roundValues as number[] | undefined,
+        startRound: configuration.startRound,
         locksAt: configuration.locksAt,
         minimumEntries: configuration.minimumEntries,
         maxEntriesPerSquad: configuration.maxEntriesPerSquad,
@@ -298,6 +309,33 @@ export class PrismaContestConfigurationRepository
       data: {
         ...(updates.selectionType !== undefined && {
           selectionType: updates.selectionType,
+        }),
+        ...(updates.rounds !== undefined && { rounds: updates.rounds }),
+        ...(updates.timePerPickSeconds !== undefined && {
+          timePerPickSeconds: updates.timePerPickSeconds,
+        }),
+        ...(updates.autoPickPolicy !== undefined && {
+          autoPickPolicy: updates.autoPickPolicy,
+        }),
+        ...(updates.tierConfig !== undefined && {
+          tierConfig: updates.tierConfig as object[],
+        }),
+        ...(updates.budget !== undefined && { budget: updates.budget }),
+        ...(updates.pricingMethod !== undefined && {
+          pricingMethod: updates.pricingMethod,
+        }),
+        ...(updates.pickCount !== undefined && { pickCount: updates.pickCount }),
+        ...(updates.isExclusive !== undefined && {
+          isExclusive: updates.isExclusive,
+        }),
+        ...(updates.picksPerPeriod !== undefined && {
+          picksPerPeriod: updates.picksPerPeriod,
+        }),
+        ...(updates.roundValues !== undefined && {
+          roundValues: updates.roundValues as number[],
+        }),
+        ...(updates.startRound !== undefined && {
+          startRound: updates.startRound,
         }),
         ...(updates.locksAt !== undefined && { locksAt: updates.locksAt }),
         ...(updates.minimumEntries !== undefined && {
@@ -761,6 +799,17 @@ function mapContestConfiguration(row: {
   id: string;
   contestId: string;
   selectionType: string;
+  rounds: number | null;
+  timePerPickSeconds: number | null;
+  autoPickPolicy: string | null;
+  tierConfig: unknown;
+  budget: number | null;
+  pricingMethod: string | null;
+  pickCount: number | null;
+  isExclusive: boolean;
+  picksPerPeriod: number | null;
+  roundValues: unknown;
+  startRound: string | null;
   locksAt: Date | null;
   minimumEntries: number | null;
   maxEntriesPerSquad: number | null;
@@ -773,6 +822,17 @@ function mapContestConfiguration(row: {
     id: row.id,
     contestId: row.contestId,
     selectionType: row.selectionType as ContestConfiguration['selectionType'],
+    rounds: row.rounds ?? undefined,
+    timePerPickSeconds: row.timePerPickSeconds ?? undefined,
+    autoPickPolicy: row.autoPickPolicy ?? undefined,
+    tierConfig: (row.tierConfig as ContestConfiguration['tierConfig']) ?? undefined,
+    budget: row.budget ?? undefined,
+    pricingMethod: row.pricingMethod ?? undefined,
+    pickCount: row.pickCount ?? undefined,
+    isExclusive: row.isExclusive,
+    picksPerPeriod: row.picksPerPeriod ?? undefined,
+    roundValues: (row.roundValues as number[]) ?? undefined,
+    startRound: row.startRound ?? undefined,
     locksAt: row.locksAt ?? undefined,
     minimumEntries: row.minimumEntries ?? undefined,
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,

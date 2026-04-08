@@ -57,7 +57,7 @@ export const DraftTierConfigDtoSchema = z.object({
 });
 export type DraftTierConfigDto = z.infer<typeof DraftTierConfigDtoSchema>;
 
-export const DraftSelectionConfigDtoSchema = z.object({
+export const DraftContestConfigurationDtoSchema = z.object({
   isExclusive: z.boolean(),
   rounds: z.number().optional(),
   pickCount: z.number().optional(),
@@ -70,7 +70,7 @@ export const DraftSelectionConfigDtoSchema = z.object({
   startRound: z.string().optional(),
   tierConfig: z.array(DraftTierConfigDtoSchema).optional(),
 });
-export type DraftSelectionConfigDto = z.infer<typeof DraftSelectionConfigDtoSchema>;
+export type DraftContestConfigurationDto = z.infer<typeof DraftContestConfigurationDtoSchema>;
 
 export const DraftPickEmEventDtoSchema = z.object({
   id: z.string(),
@@ -116,7 +116,7 @@ export const DraftStateDtoSchema = z.object({
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
-  selectionConfig: DraftSelectionConfigDtoSchema.nullable().optional(),
+  contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
   status: z.string(),
   currentPickNumber: z.number(),
   currentRound: z.number(),
@@ -155,7 +155,7 @@ export const DraftStateResponseSchema = z.object({
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
-  selectionConfig: DraftSelectionConfigDtoSchema.nullable().optional(),
+  contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
   status: z.string(),
   currentPickNumber: z.number(),
   currentRound: z.number(),
@@ -183,7 +183,7 @@ export const DraftPickResponseSchema = z.object({
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
-  selectionConfig: DraftSelectionConfigDtoSchema.nullable().optional(),
+  contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
   status: z.string(),
   currentPickNumber: z.number(),
   currentRound: z.number(),

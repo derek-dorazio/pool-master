@@ -3418,6 +3418,85 @@
                           "OPEN_SELECTION"
                         ]
                       },
+                      "rounds": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "timePerPickSeconds": {
+                        "type": "integer",
+                        "minimum": 10
+                      },
+                      "autoPickPolicy": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "tierConfig": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "tierId",
+                            "tierName",
+                            "tierNumber",
+                            "picksFromTier",
+                            "participantIds"
+                          ],
+                          "properties": {
+                            "tierId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "tierName": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "tierNumber": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "picksFromTier": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "participantIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "budget": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pricingMethod": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "pickCount": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "isExclusive": {
+                        "type": "boolean"
+                      },
+                      "picksPerPeriod": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "roundValues": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      },
+                      "startRound": {
+                        "type": "string",
+                        "minLength": 1
+                      },
                       "locksAt": {
                         "type": "string",
                         "format": "date-time",
@@ -3611,6 +3690,86 @@
                                 "BUDGET_PICK",
                                 "OPEN_SELECTION"
                               ]
+                            },
+                            "rounds": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "timePerPickSeconds": {
+                              "type": "integer",
+                              "minimum": 10
+                            },
+                            "autoPickPolicy": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "tierConfig": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "tierId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "tierName": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "tierNumber": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "picksFromTier": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "participantIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "tierId",
+                                  "tierName",
+                                  "tierNumber",
+                                  "picksFromTier",
+                                  "participantIds"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "budget": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "pricingMethod": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "pickCount": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "isExclusive": {
+                              "type": "boolean"
+                            },
+                            "picksPerPeriod": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "roundValues": {
+                              "type": "array",
+                              "items": {
+                                "type": "number"
+                              }
+                            },
+                            "startRound": {
+                              "type": "string",
+                              "minLength": 1
                             },
                             "locksAt": {
                               "type": "string",
@@ -3881,6 +4040,86 @@
                                 "OPEN_SELECTION"
                               ]
                             },
+                            "rounds": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "timePerPickSeconds": {
+                              "type": "integer",
+                              "minimum": 10
+                            },
+                            "autoPickPolicy": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "tierConfig": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "tierId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "tierName": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "tierNumber": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "picksFromTier": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "participantIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "tierId",
+                                  "tierName",
+                                  "tierNumber",
+                                  "picksFromTier",
+                                  "participantIds"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "budget": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "pricingMethod": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "pickCount": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "isExclusive": {
+                              "type": "boolean"
+                            },
+                            "picksPerPeriod": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "roundValues": {
+                              "type": "array",
+                              "items": {
+                                "type": "number"
+                              }
+                            },
+                            "startRound": {
+                              "type": "string",
+                              "minLength": 1
+                            },
                             "locksAt": {
                               "type": "string",
                               "format": "date-time",
@@ -4107,6 +4346,85 @@
                       "OPEN_SELECTION"
                     ]
                   },
+                  "rounds": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "timePerPickSeconds": {
+                    "type": "integer",
+                    "minimum": 10
+                  },
+                  "autoPickPolicy": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "tierConfig": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "tierId",
+                        "tierName",
+                        "tierNumber",
+                        "picksFromTier",
+                        "participantIds"
+                      ],
+                      "properties": {
+                        "tierId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "tierName": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "tierNumber": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "picksFromTier": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "participantIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "budget": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "pricingMethod": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "pickCount": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "isExclusive": {
+                    "type": "boolean"
+                  },
+                  "picksPerPeriod": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "roundValues": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "startRound": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "locksAt": {
                     "type": "string",
                     "format": "date-time",
@@ -4306,6 +4624,86 @@
                                 "BUDGET_PICK",
                                 "OPEN_SELECTION"
                               ]
+                            },
+                            "rounds": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "timePerPickSeconds": {
+                              "type": "integer",
+                              "minimum": 10
+                            },
+                            "autoPickPolicy": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "tierConfig": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "tierId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "tierName": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "tierNumber": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "picksFromTier": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "participantIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "tierId",
+                                  "tierName",
+                                  "tierNumber",
+                                  "picksFromTier",
+                                  "participantIds"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "budget": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "pricingMethod": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "pickCount": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "isExclusive": {
+                              "type": "boolean"
+                            },
+                            "picksPerPeriod": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "roundValues": {
+                              "type": "array",
+                              "items": {
+                                "type": "number"
+                              }
+                            },
+                            "startRound": {
+                              "type": "string",
+                              "minLength": 1
                             },
                             "locksAt": {
                               "type": "string",
@@ -17504,7 +17902,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -18004,7 +18402,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -18506,7 +18904,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -18960,7 +19358,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -19414,7 +19812,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -19868,7 +20266,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -20322,7 +20720,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -20796,7 +21194,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -21250,7 +21648,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {
@@ -21704,7 +22102,7 @@
                     "rosterSize": {
                       "type": "number"
                     },
-                    "selectionConfig": {
+                    "contestConfiguration": {
                       "type": "object",
                       "properties": {
                         "isExclusive": {

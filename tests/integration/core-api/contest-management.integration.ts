@@ -12,6 +12,7 @@ import {
   LeagueVisibility,
   Sport,
 } from '@poolmaster/shared/domain';
+import { randomUUID } from 'node:crypto';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -46,7 +47,7 @@ describe('Contest management integration', () => {
 
     const sportEvent = await getPrisma().sportEvent.create({
       data: {
-        externalId: 'masters-2026',
+        externalId: `masters-2026-${randomUUID().slice(0, 8)}`,
         providerId: 'PGA',
         sport: Sport.GOLF,
         name: 'Masters Tournament 2026',

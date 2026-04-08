@@ -2,6 +2,14 @@ import type { ContestStatus, SelectionType } from './enums';
 import type { AggregationDefinitionId, ParticipantScoringDefinitionId } from './contest-scoring';
 import type { DomainEntity } from './types';
 
+export interface ContestConfigurationTier {
+  tierId: string;
+  tierName: string;
+  tierNumber: number;
+  picksFromTier: number;
+  participantIds: string[];
+}
+
 export interface SportEventParticipant extends DomainEntity {
   sportEventId: string;
   participantId: string;
@@ -29,6 +37,17 @@ export interface SportEventParticipantValuation extends DomainEntity {
 export interface ContestConfiguration extends DomainEntity {
   contestId: string;
   selectionType: SelectionType;
+  rounds?: number;
+  timePerPickSeconds?: number;
+  autoPickPolicy?: string;
+  tierConfig?: ContestConfigurationTier[];
+  budget?: number;
+  pricingMethod?: string;
+  pickCount?: number;
+  isExclusive?: boolean;
+  picksPerPeriod?: number;
+  roundValues?: number[];
+  startRound?: string;
   locksAt?: Date;
   minimumEntries?: number;
   maxEntriesPerSquad?: number;

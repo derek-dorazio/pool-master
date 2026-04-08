@@ -48,6 +48,17 @@ export type ContestPrizeDefinitionRequest = z.infer<
   typeof ContestPrizeDefinitionRequestSchema
 >;
 
+export const ContestConfigurationTierRequestSchema = z.object({
+  tierId: z.string().min(1),
+  tierName: z.string().min(1),
+  tierNumber: z.number().int().min(1),
+  picksFromTier: z.number().int().min(1),
+  participantIds: z.array(z.string().min(1)),
+});
+export type ContestConfigurationTierRequest = z.infer<
+  typeof ContestConfigurationTierRequestSchema
+>;
+
 export const ContestConfigurationRequestSchema = z.object({
   selectionType: z.enum([
     SelectionType.SNAKE_DRAFT,
@@ -55,6 +66,17 @@ export const ContestConfigurationRequestSchema = z.object({
     SelectionType.BUDGET_PICK,
     SelectionType.OPEN_SELECTION,
   ]),
+  rounds: z.number().int().min(1).optional(),
+  timePerPickSeconds: z.number().int().min(10).optional(),
+  autoPickPolicy: z.string().min(1).optional(),
+  tierConfig: z.array(ContestConfigurationTierRequestSchema).optional(),
+  budget: z.number().min(0).optional(),
+  pricingMethod: z.string().min(1).optional(),
+  pickCount: z.number().int().min(1).optional(),
+  isExclusive: z.boolean().optional(),
+  picksPerPeriod: z.number().int().min(1).optional(),
+  roundValues: z.array(z.number()).optional(),
+  startRound: z.string().min(1).optional(),
   locksAt: z.string().datetime().nullable().optional(),
   minimumEntries: z.number().int().min(0).optional(),
   maxEntriesPerSquad: z.number().int().min(1).optional(),

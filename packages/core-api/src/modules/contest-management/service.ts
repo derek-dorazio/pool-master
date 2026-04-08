@@ -12,6 +12,7 @@ import type {
   ParticipantContestScoringRuleRequest,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
+import type { ContestConfigurationTier } from '@poolmaster/shared/domain';
 import { ContestStatus } from '@poolmaster/shared/domain';
 
 interface CreateContestManagementContext {
@@ -44,6 +45,17 @@ export class ContestManagementService {
     const configuration = await this.contestConfigurationRepo.create({
       contestId: contest.id,
       selectionType: input.configuration.selectionType,
+      rounds: input.configuration.rounds,
+      timePerPickSeconds: input.configuration.timePerPickSeconds,
+      autoPickPolicy: input.configuration.autoPickPolicy,
+      tierConfig: input.configuration.tierConfig,
+      budget: input.configuration.budget,
+      pricingMethod: input.configuration.pricingMethod,
+      pickCount: input.configuration.pickCount,
+      isExclusive: input.configuration.isExclusive,
+      picksPerPeriod: input.configuration.picksPerPeriod,
+      roundValues: input.configuration.roundValues,
+      startRound: input.configuration.startRound,
       locksAt: input.configuration.locksAt
         ? new Date(input.configuration.locksAt)
         : undefined,
@@ -132,6 +144,17 @@ export class ContestManagementService {
 
     await this.contestConfigurationRepo.update(configuration.id, {
       selectionType: input.selectionType,
+      rounds: input.rounds,
+      timePerPickSeconds: input.timePerPickSeconds,
+      autoPickPolicy: input.autoPickPolicy,
+      tierConfig: input.tierConfig,
+      budget: input.budget,
+      pricingMethod: input.pricingMethod,
+      pickCount: input.pickCount,
+      isExclusive: input.isExclusive,
+      picksPerPeriod: input.picksPerPeriod,
+      roundValues: input.roundValues,
+      startRound: input.startRound,
       locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
       minimumEntries: input.minimumEntries,
       maxEntriesPerSquad: input.maxEntriesPerSquad,
@@ -305,6 +328,17 @@ function buildContestManagementDetail(
     id: string;
     contestId: string;
     selectionType: string;
+    rounds?: number;
+    timePerPickSeconds?: number;
+    autoPickPolicy?: string;
+    tierConfig?: ContestConfigurationTier[];
+    budget?: number;
+    pricingMethod?: string;
+    pickCount?: number;
+    isExclusive?: boolean;
+    picksPerPeriod?: number;
+    roundValues?: number[];
+    startRound?: string;
     locksAt?: Date;
     minimumEntries?: number;
     maxEntriesPerSquad?: number;
@@ -349,6 +383,18 @@ function buildContestManagementDetail(
       contestId: configuration.contestId,
       selectionType:
         configuration.selectionType as ContestManagementDetailDto['configuration']['selectionType'],
+      rounds: configuration.rounds,
+      timePerPickSeconds: configuration.timePerPickSeconds,
+      autoPickPolicy: configuration.autoPickPolicy,
+      tierConfig:
+        configuration.tierConfig as ContestManagementDetailDto['configuration']['tierConfig'],
+      budget: configuration.budget,
+      pricingMethod: configuration.pricingMethod,
+      pickCount: configuration.pickCount,
+      isExclusive: configuration.isExclusive,
+      picksPerPeriod: configuration.picksPerPeriod,
+      roundValues: configuration.roundValues,
+      startRound: configuration.startRound,
       locksAt: configuration.locksAt?.toISOString(),
       minimumEntries: configuration.minimumEntries,
       maxEntriesPerSquad: configuration.maxEntriesPerSquad,

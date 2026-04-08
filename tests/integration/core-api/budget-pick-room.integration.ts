@@ -211,9 +211,9 @@ describe('Budget Pick Room Integration', () => {
     expect(roomRes.json().contestId).toBe(contestId);
     expect(roomRes.json().selectionType).toBe(SelectionType.BUDGET_PICK);
     expect(roomRes.json().myEntryId).toBe(entryId);
-    expect(roomRes.json().selectionConfig?.budget).toBe(8000);
-    expect(roomRes.json().selectionConfig?.pricingMethod).toBe('WORLD_RANKING');
-    expect(roomRes.json().selectionConfig?.rosterSize).toBe(1);
+    expect(roomRes.json().contestConfiguration?.budget).toBe(8000);
+    expect(roomRes.json().contestConfiguration?.pricingMethod).toBe('WORLD_RANKING');
+    expect(roomRes.json().contestConfiguration?.rosterSize).toBe(1);
     expect(roomRes.json().availableParticipantIds).toEqual(
       expect.arrayContaining([firstSportEventParticipantId, secondSportEventParticipantId]),
     );

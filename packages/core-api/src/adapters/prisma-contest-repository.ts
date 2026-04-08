@@ -73,6 +73,7 @@ export class PrismaContestRepository implements ContestRepository {
       this.prisma.draftPickHistory.deleteMany({ where: { session: { contestId: id } } }),
       this.prisma.draftSession.deleteMany({ where: { contestId: id } }),
       this.prisma.contestEntry.deleteMany({ where: { contestId: id } }),
+      this.prisma.contestConfiguration.deleteMany({ where: { contestId: id } }),
       this.prisma.selectionConfig.deleteMany({ where: { contestId: id } }),
       this.prisma.contest.delete({ where: { id } }),
     ]);
