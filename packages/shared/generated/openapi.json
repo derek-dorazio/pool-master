@@ -5567,7 +5567,7 @@
     },
     "/api/v1/contests/{contestId}/draft/undo-pick": {
       "post": {
-        "operationId": "undoDraftPick",
+        "operationId": "undoContestDraftSelection",
         "summary": "Undo a draft pick",
         "tags": [
           "Contests"
@@ -18093,7 +18093,7 @@
     },
     "/api/v1/drafts/{contestId}/pick": {
       "post": {
-        "operationId": "submitDraftPick",
+        "operationId": "submitContestSelection",
         "summary": "Submit a draft pick",
         "tags": [
           "Drafts"
@@ -19953,7 +19953,7 @@
     },
     "/api/v1/drafts/{contestId}/undo": {
       "post": {
-        "operationId": "undoLiveDraftPick",
+        "operationId": "undoSnakeDraftSelection",
         "summary": "Undo the most recent snake draft pick",
         "tags": [
           "Drafts"
@@ -20407,7 +20407,7 @@
     },
     "/api/v1/drafts/{contestId}/skip": {
       "post": {
-        "operationId": "skipLiveDraftPick",
+        "operationId": "skipSnakeDraftTurn",
         "summary": "Skip the current snake draft pick",
         "tags": [
           "Drafts"

@@ -15,7 +15,7 @@ export class HistoryService {
 
   /** Returns a full contest history summary for a completed contest. */
   async getContestSummary(contestId: string): Promise<ContestHistorySummary | null> {
-    const results = await this.getContestResultsForHistory(contestId);
+    const results = await this.getCompletedContestResults(contestId);
 
     if (results.length === 0) return null;
 
@@ -46,7 +46,7 @@ export class HistoryService {
 
   /** Returns final standings for a contest. */
   async getContestStandings(contestId: string): Promise<ContestHistoryResult[]> {
-    return this.getContestResultsForHistory(contestId);
+    return this.getCompletedContestResults(contestId);
   }
 
   /** Returns all contest results for a league member across all contests. */
@@ -174,7 +174,7 @@ export class HistoryService {
     }));
   }
 
-  private async getContestResultsForHistory(contestId: string): Promise<ContestHistoryResult[]> {
+  private async getCompletedContestResults(contestId: string): Promise<ContestHistoryResult[]> {
     return this.buildFallbackResults({ contestId });
   }
 

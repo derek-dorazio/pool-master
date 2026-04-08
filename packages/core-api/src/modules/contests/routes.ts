@@ -205,7 +205,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Undo a draft pick',
-      operationId: 'undoDraftPick',
+      operationId: 'undoContestDraftSelection',
       body: { type: 'object', required: ['pickId', 'reason'], properties: { pickId: { type: 'string' }, reason: { type: 'string' } } },
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },

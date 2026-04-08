@@ -667,7 +667,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Undo a draft pick */
-        post: operations["undoDraftPick"];
+        post: operations["undoContestDraftSelection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2585,7 +2585,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Submit a draft pick */
-        post: operations["submitDraftPick"];
+        post: operations["submitContestSelection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2653,7 +2653,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Undo the most recent snake draft pick */
-        post: operations["undoLiveDraftPick"];
+        post: operations["undoSnakeDraftSelection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2670,7 +2670,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Skip the current snake draft pick */
-        post: operations["skipLiveDraftPick"];
+        post: operations["skipSnakeDraftTurn"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5360,7 +5360,7 @@ export interface operations {
             };
         };
     };
-    undoDraftPick: {
+    undoContestDraftSelection: {
         parameters: {
             query?: never;
             header?: never;
@@ -10428,7 +10428,7 @@ export interface operations {
             };
         };
     };
-    submitDraftPick: {
+    submitContestSelection: {
         parameters: {
             query?: never;
             header?: never;
@@ -10927,7 +10927,7 @@ export interface operations {
             };
         };
     };
-    undoLiveDraftPick: {
+    undoSnakeDraftSelection: {
         parameters: {
             query?: never;
             header?: never;
@@ -11048,7 +11048,7 @@ export interface operations {
             };
         };
     };
-    skipLiveDraftPick: {
+    skipSnakeDraftTurn: {
         parameters: {
             query?: never;
             header?: never;

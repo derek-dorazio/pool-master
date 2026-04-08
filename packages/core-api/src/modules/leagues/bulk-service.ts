@@ -12,7 +12,7 @@ import type { Contest } from '@poolmaster/shared/domain';
 import { ContestStatus, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 
-export interface BulkContestResult {
+export interface BulkContestCopyResult {
   created: Contest[];
   errors: { eventName: string; reason: string }[];
 }
@@ -50,7 +50,7 @@ export class BulkService {
   ) {}
 
   /** Copies contests from a previous season, creating new DRAFT versions. */
-  async copyLastSeason(input: CopySeasonInput): Promise<BulkContestResult> {
+  async copyLastSeason(input: CopySeasonInput): Promise<BulkContestCopyResult> {
     const created: Contest[] = [];
     const errors: { eventName: string; reason: string }[] = [];
     for (const sourceId of input.sourceContestIds) {

@@ -771,7 +771,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Submit a draft pick',
-      operationId: 'submitDraftPick',
+      operationId: 'submitContestSelection',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -1181,7 +1181,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Undo the most recent snake draft pick',
-      operationId: 'undoLiveDraftPick',
+      operationId: 'undoSnakeDraftSelection',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -1241,7 +1241,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Skip the current snake draft pick',
-      operationId: 'skipLiveDraftPick',
+      operationId: 'skipSnakeDraftTurn',
       params: {
         type: 'object',
         required: ['contestId'],

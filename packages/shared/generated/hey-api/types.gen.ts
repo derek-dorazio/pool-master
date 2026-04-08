@@ -1720,7 +1720,7 @@ export type EnterContestResponses = {
 
 export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
 
-export type UndoDraftPickData = {
+export type UndoContestDraftSelectionData = {
     body: {
         pickId: string;
         reason: string;
@@ -1732,7 +1732,7 @@ export type UndoDraftPickData = {
     url: '/api/v1/contests/{contestId}/draft/undo-pick';
 };
 
-export type UndoDraftPickResponses = {
+export type UndoContestDraftSelectionResponses = {
     /**
      * Default Response
      */
@@ -1741,7 +1741,7 @@ export type UndoDraftPickResponses = {
     };
 };
 
-export type UndoDraftPickResponse = UndoDraftPickResponses[keyof UndoDraftPickResponses];
+export type UndoContestDraftSelectionResponse = UndoContestDraftSelectionResponses[keyof UndoContestDraftSelectionResponses];
 
 export type PauseContestDraftData = {
     body: {
@@ -5843,7 +5843,7 @@ export type StartDraftResponses = {
 
 export type StartDraftResponse = StartDraftResponses[keyof StartDraftResponses];
 
-export type SubmitDraftPickData = {
+export type SubmitContestSelectionData = {
     body: {
         entryId: string;
         participantId: string;
@@ -5855,7 +5855,7 @@ export type SubmitDraftPickData = {
     url: '/api/v1/drafts/{contestId}/pick';
 };
 
-export type SubmitDraftPickResponses = {
+export type SubmitContestSelectionResponses = {
     /**
      * Default Response
      */
@@ -5957,7 +5957,7 @@ export type SubmitDraftPickResponses = {
     };
 };
 
-export type SubmitDraftPickResponse = SubmitDraftPickResponses[keyof SubmitDraftPickResponses];
+export type SubmitContestSelectionResponse = SubmitContestSelectionResponses[keyof SubmitContestSelectionResponses];
 
 export type PauseDraftData = {
     body?: never;
@@ -6300,7 +6300,7 @@ export type ExtendCurrentTurnResponses = {
 
 export type ExtendCurrentTurnResponse = ExtendCurrentTurnResponses[keyof ExtendCurrentTurnResponses];
 
-export type UndoLiveDraftPickData = {
+export type UndoSnakeDraftSelectionData = {
     body?: never;
     path: {
         contestId: string;
@@ -6309,7 +6309,7 @@ export type UndoLiveDraftPickData = {
     url: '/api/v1/drafts/{contestId}/undo';
 };
 
-export type UndoLiveDraftPickResponses = {
+export type UndoSnakeDraftSelectionResponses = {
     /**
      * Default Response
      */
@@ -6411,9 +6411,9 @@ export type UndoLiveDraftPickResponses = {
     };
 };
 
-export type UndoLiveDraftPickResponse = UndoLiveDraftPickResponses[keyof UndoLiveDraftPickResponses];
+export type UndoSnakeDraftSelectionResponse = UndoSnakeDraftSelectionResponses[keyof UndoSnakeDraftSelectionResponses];
 
-export type SkipLiveDraftPickData = {
+export type SkipSnakeDraftTurnData = {
     body?: never;
     path: {
         contestId: string;
@@ -6422,7 +6422,7 @@ export type SkipLiveDraftPickData = {
     url: '/api/v1/drafts/{contestId}/skip';
 };
 
-export type SkipLiveDraftPickResponses = {
+export type SkipSnakeDraftTurnResponses = {
     /**
      * Default Response
      */
@@ -6524,7 +6524,7 @@ export type SkipLiveDraftPickResponses = {
     };
 };
 
-export type SkipLiveDraftPickResponse = SkipLiveDraftPickResponses[keyof SkipLiveDraftPickResponses];
+export type SkipSnakeDraftTurnResponse = SkipSnakeDraftTurnResponses[keyof SkipSnakeDraftTurnResponses];
 
 export type ValidateScoringConfigData = {
     body?: never;
