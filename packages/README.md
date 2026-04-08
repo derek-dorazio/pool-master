@@ -14,10 +14,10 @@ Modular monolith — all backend modules run in a single Fastify process on port
               │ auth / leagues      │──→ PostgreSQL (Prisma)
               │ contests / standings│
               │ drafts (engines)    │
-              │ scoring (engines)   │──→ In-memory ScoreStore
+              │ scoring / prizes    │
               │ notifications       │──→ SES / APNs / FCM
               │ ingestion           │──→ ESPN / OpenF1 / PGA
-              │ admin / billing     │
+              │ admin / consent     │
               └─────────────────────┘
 ```
 
@@ -29,14 +29,13 @@ Modular monolith — all backend modules run in a single Fastify process on port
 |--------|--------|----------------|
 | **auth** | `/api/v1/auth` | Register, login, refresh, logout, OAuth |
 | **leagues** | `/api/v1/leagues` | CRUD, members, invitations, dashboard, audit |
-| **contests** | `/api/v1/contests` | CRUD, pool management, overrides, templates |
+| **contests** | `/api/v1/contests` | Contest CRUD, entries, standings, overrides, recalculation |
 | **participants** | `/api/v1/participants` | Search, CRUD, season records, provider mappings |
 | **standings** | `/api/v1/contests/:id/standings` | Leaderboards, rankings |
-| **history** | `/api/v1/` | Standings history, timelines, records, rivalries, analytics |
+| **history** | `/api/v1/` | Completed contest summaries, standings, payouts, roster history, league/member results |
 | **social** | `/api/v1/social` | League feed, contest chat, direct messages, recaps, share cards; DTO-backed contract with persistence follow-up tracked in plans |
-| **compliance** | `/api/v1/account` | Age verify, consent, data export, deletion, self-exclusion; live contract with any persistence follow-up tracked in plans |
-| **billing** | `/api/v1/billing` | Entitlements, plan tiers, usage (free tier); live contract with paid-plan persistence still tracked in plans |
-| **admin** | `/api/v1/admin` | Platform admin operations; contract-aligned operational tools with remaining persistence follow-up tracked in plans |
+| **account-consent** | `/api/v1/account` | Consent and age-affirmation capture |
+| **admin** | `/api/v1/admin` | Platform admin operations for health, provider ingestion, migrations, audit, and contest administration |
 | **config** | `/api/v1/config` | Public configuration |
 
 ### Draft Module (`modules/drafts/`)
@@ -48,31 +47,34 @@ Pure-function engines that take state + input and return new state (immutable).
 | `SnakeDraftEngine` | Turn-based exclusive selection with snake order | NFL/NBA/MLB fantasy |
 | `TieredPickEngine` | Pick N from defined tier groups (non-exclusive) | Golf majors, NHL playoffs |
 | `BudgetPickEngine` | Build roster within cost budget (non-exclusive) | F1 season-long, DFS |
-| `SurvivorEngine` | Knockout-style picks with strikes/buybacks | NFL Survivor, NCAA |
-| `PickEmEngine` | Period-by-period outcome predictions | NFL pick'em, confidence pools |
-| `BracketEngine` | Full bracket submission with round multipliers | March Madness, NHL playoffs |
+| `SnakeDraftEngine` | Turn-based exclusive selection with snake order | Snake-draft roster contests |
+| `TieredPickEngine` | Pick N from defined tier groups (non-exclusive) | Tiered roster contests |
+| `BudgetPickEngine` | Build roster within cost budget (non-exclusive) | Budget roster contests |
 
-**Routes:** `GET /api/v1/drafts/templates`, `GET /api/v1/drafts/templates/:id`
+The active backend refactor lane only supports roster-based first-pass contest modes.
 
 ### Scoring Module (`modules/scoring/`)
 
-Configurable rule engines driven by `ScoringConfig` JSONB — no sport logic hard-coded.
+Contest scoring is driven by configured participant scoring rules, entry aggregation rules, and prize definitions owned by `ContestConfiguration`.
 
 | Component | Purpose |
 |-----------|---------|
-| `scoring-engine.ts` | Core: stat rules, position rules, bonuses, penalties, multipliers, counting |
-| `bracket-scoring.ts` | Round-based points, upset bonuses |
-| `rotisserie-scoring.ts` | Category rankings across entries |
-| `head-to-head-scoring.ts` | Weekly matchups, W/L/T records |
-| `stroke-play-scoring.ts` | Lower strokes wins, missed cut penalties |
-| `tiebreaker.ts` | 10-method tiebreaker chain |
-| `stat-schemas.ts` | Validates stat keys per sport (11 sports) |
-| `stat-event-consumer.ts` | Subscribes to `stat.updated` events, scores affected entries |
-| `standings-rollup.ts` | Periodic rollup (30s) — assigns ranks, detects changes |
+| `participant-scoring-definition-registry.ts` | Maps scoring definition ids to concrete participant scoring functions |
+| `entry-aggregation-function-registry.ts` | Maps aggregation ids to entry-total aggregation functions |
+| `contest-scoring-recalculation-service.ts` | Rebuilds participant score events, entry totals, standings, and prize awards |
+| `contest-entry-scoring-result-service.ts` | Persists participant score totals, score events, prize awards, and entry summary fields |
+| `stat-event-consumer.ts` | Treats incoming stat updates as contest recalculation triggers |
+| `standings-rollup.ts` | Recomputes standings on `ContestEntry.standingsPosition` |
 
-**16 templates** across 9 sports (NFL, Golf, F1, NASCAR, NCAA, NBA, Tennis, Horse Racing, Soccer).
+Launch scoring definitions currently implemented on this branch:
+- `GOLF_RELATIVE_TO_PAR_TOTAL`
+- `TEAM_WIN_POINTS`
+- `ROUND_MULTIPLIER`
+- `SEED_DIFFERENTIAL_BONUS`
 
-**Routes:** `GET /api/v1/scoring/templates`, `POST /api/v1/scoring/config/validate`, `GET /api/v1/scoring/contests/:id/leaderboard`
+Launch entry aggregation rules currently implemented on this branch:
+- `SUM_ALL_ENTRIES`
+- `SUM_TOP_N_ENTRIES`
 
 ### Notification Module (`modules/notifications/`)
 
