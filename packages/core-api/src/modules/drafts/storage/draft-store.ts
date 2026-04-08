@@ -1,8 +1,7 @@
 /**
  * DraftStore — in-memory Map-backed storage for draft sessions and state.
  *
- * v1 implementation: consistent with the ScoreStore pattern.
- * Will be swapped to database-backed persistence in production.
+ * Temporary implementation until the draft flow is fully persistence-backed.
  */
 
 import type { DraftState } from '../engine/snake-draft-engine';

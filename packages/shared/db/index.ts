@@ -21,7 +21,6 @@ export type {
   ContestPoolRepository,
   ContestRepository,
   ContestResultRepository,
-  ContestStandingRepository,
   DraftSessionRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,

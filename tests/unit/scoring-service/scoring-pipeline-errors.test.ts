@@ -3,7 +3,7 @@
  *
  * Tests the scoring pipeline's behavior when given unexpected, empty,
  * or edge-case input. Covers stat-event-consumer, scoring-engine,
- * standings-rollup, and score-store error handling.
+ * and standings-rollup error handling.
  */
 
 import type { ScoringConfig } from '@poolmaster/shared/domain/scoring-config';

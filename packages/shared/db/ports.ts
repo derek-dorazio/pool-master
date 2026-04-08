@@ -15,7 +15,6 @@ import type {
   ContestPick,
   ContestPool,
   ContestResult,
-  ContestStanding,
   DraftPick,
   DraftSession,
   League,
@@ -231,12 +230,7 @@ export interface DraftSessionRepository {
   addPick(pick: Omit<DraftPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<DraftPick>;
 }
 
-// --- Standings & Results ---
-
-export interface ContestStandingRepository {
-  findByContest(contestId: string): Promise<ContestStanding[]>;
-  upsert(standing: Omit<ContestStanding, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestStanding>;
-}
+// --- Results ---
 
 export interface ContestResultRepository {
   findByContest(contestId: string): Promise<ContestResult[]>;
