@@ -27,9 +27,6 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
       ]),
       update: jest.fn().mockResolvedValue(undefined),
     },
-    contestStanding: {
-      upsert: jest.fn(),
-    },
     ...overrides,
   };
 }
@@ -54,7 +51,6 @@ describe('Admin ContestService', () => {
       where: { id: 'entry-2' },
       data: { standingsPosition: 2 },
     });
-    expect(prisma.contestStanding.upsert).not.toHaveBeenCalled();
     expect(result.rankChanges).toEqual([
       { entryId: 'entry-1', oldRank: 2, newRank: 1 },
       { entryId: 'entry-2', oldRank: 1, newRank: 2 },

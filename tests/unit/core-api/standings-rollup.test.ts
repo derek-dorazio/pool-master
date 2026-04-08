@@ -15,9 +15,6 @@ describe('StandingsRollup', () => {
         ]),
         update: contestEntryUpdate,
       },
-      contestStanding: {
-        upsert: jest.fn(),
-      },
     } as any;
 
     const rollup = new StandingsRollup({
@@ -42,7 +39,6 @@ describe('StandingsRollup', () => {
       where: { id: 'entry-2' },
       data: { standingsPosition: 2 },
     });
-    expect(prisma.contestStanding.upsert).not.toHaveBeenCalled();
     expect(publish).toHaveBeenCalledWith(
       'standings.updated',
       expect.objectContaining({

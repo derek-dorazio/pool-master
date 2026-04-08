@@ -129,25 +129,6 @@ describe('History Read Integration', () => {
     challengerEntryId = challengerEntryRes.json().entry.id;
 
     const prisma = getPrisma();
-    await prisma.contestStanding.createMany({
-      data: [
-        {
-          contestId,
-          entryId: ownerEntryId,
-          rank: 2,
-          totalScore: 84.5,
-          lastUpdatedAt: new Date('2026-04-03T12:00:00Z'),
-        },
-        {
-          contestId,
-          entryId: challengerEntryId,
-          rank: 1,
-          totalScore: 91.25,
-          lastUpdatedAt: new Date('2026-04-03T12:00:00Z'),
-        },
-      ],
-    });
-
     await prisma.contestResult.createMany({
       data: [
         {

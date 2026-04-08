@@ -70,7 +70,6 @@ export type {
   ContestHistorySummary,
   ContestMatchup,
   ContestResult,
-  ContestStanding,
   DomainEntity,
   DraftPick,
   DraftSession,

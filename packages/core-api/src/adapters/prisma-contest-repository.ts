@@ -70,7 +70,6 @@ export class PrismaContestRepository implements ContestRepository {
       this.prisma.bracketPrediction.deleteMany({ where: { contestId: id } }),
       this.prisma.contestPick.deleteMany({ where: { contestId: id } }),
       this.prisma.rosterPick.deleteMany({ where: { entry: { contestId: id } } }),
-      this.prisma.contestStanding.deleteMany({ where: { contestId: id } }),
       this.prisma.contestResult.deleteMany({ where: { contestId: id } }),
       this.prisma.draftPick.deleteMany({ where: { session: { contestId: id } } }),
       this.prisma.draftSession.deleteMany({ where: { contestId: id } }),

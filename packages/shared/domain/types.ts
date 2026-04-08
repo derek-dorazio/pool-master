@@ -490,14 +490,6 @@ export interface DraftPick extends DomainEntity {
 
 // --- Standings & Results ---
 
-export interface ContestStanding extends DomainEntity {
-  contestId: string;
-  entryId: string;
-  rank: number;
-  totalScore: number;
-  lastUpdatedAt: Date;
-}
-
 export interface ContestResult extends DomainEntity {
   contestId: string;
   entryId: string;

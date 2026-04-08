@@ -399,7 +399,6 @@ model Contest {
   picks           ContestPick[]
   brackets        BracketPrediction[]
   draftSession    DraftSession?
-  standings       ContestStanding[]
   results         ContestResult[]
 
   @@index([leagueId])
@@ -757,25 +756,8 @@ model DraftPick {
 }
 
 // =============================================================================
-// Standings & Results
+// Results
 // =============================================================================
-
-model ContestStanding {
-  id            String   @id @default(uuid()) @db.Uuid
-  contestId     String   @map("contest_id") @db.Uuid
-  entryId       String   @map("entry_id") @db.Uuid
-  rank          Int
-  totalScore    Float    @map("total_score")
-  lastUpdatedAt DateTime @map("last_updated_at") @db.Timestamptz
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  contest Contest @relation(fields: [contestId], references: [id])
-
-  @@unique([contestId, entryId])
-  @@index([contestId, rank])
-  @@map("contest_standings")
-}
 
 model ContestResult {
   id          String   @id @default(uuid()) @db.Uuid
