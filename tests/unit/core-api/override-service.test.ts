@@ -27,14 +27,14 @@ function createMockDraftSessionRepo(overrides: Partial<DraftSessionRepository> =
       contestId: 'contest-1',
       status: DraftStatus.LIVE,
       currentPickNumber: 5,
-      pickDeadline: new Date(Date.now() + 60000),
+      currentTurnStartedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
     }),
     create: jest.fn().mockResolvedValue({}),
     update: jest.fn().mockImplementation(async (id, updates) => ({ id, ...updates })),
-    getPicks: jest.fn().mockResolvedValue([]),
-    addPick: jest.fn().mockResolvedValue({}),
+    getPickHistories: jest.fn().mockResolvedValue([]),
+    addPickHistory: jest.fn().mockResolvedValue({}),
     ...overrides,
   };
 }
@@ -166,7 +166,7 @@ describe('OverrideService', () => {
   });
 
   describe('extendPickClock', () => {
-    it('adds seconds to the pick deadline', async () => {
+    it('shifts the current turn start time', async () => {
       const draftRepo = createMockDraftSessionRepo();
       const service = new OverrideService(
         createMockContestRepo(), draftRepo, createMockEntryRepo(),
@@ -175,7 +175,7 @@ describe('OverrideService', () => {
       await service.extendPickClock('contest-1', 30);
       expect(draftRepo.update).toHaveBeenCalled();
       const updateArg = (draftRepo.update as jest.Mock).mock.calls[0][1];
-      expect(updateArg.pickDeadline).toBeDefined();
+      expect(updateArg.currentTurnStartedAt).toBeDefined();
     });
   });
 

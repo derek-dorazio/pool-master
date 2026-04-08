@@ -5854,14 +5854,14 @@ export type GetDraftStateResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -5973,14 +5973,14 @@ export type StartDraftResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -6095,14 +6095,14 @@ export type SubmitDraftPickResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -6208,14 +6208,14 @@ export type ResetBracketSubmissionResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -6321,14 +6321,14 @@ export type AutoFillBracketSubmissionResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -6434,14 +6434,14 @@ export type PauseDraftResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -6547,14 +6547,14 @@ export type ResumeDraftResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -6612,7 +6612,7 @@ export type ResumeDraftResponses = {
 
 export type ResumeDraftResponse = ResumeDraftResponses[keyof ResumeDraftResponses];
 
-export type ExtendPickDeadlineData = {
+export type ExtendCurrentTurnData = {
     body: {
         additionalSeconds: number;
     };
@@ -6623,7 +6623,7 @@ export type ExtendPickDeadlineData = {
     url: '/api/v1/drafts/{contestId}/extend';
 };
 
-export type ExtendPickDeadlineResponses = {
+export type ExtendCurrentTurnResponses = {
     /**
      * Default Response
      */
@@ -6662,14 +6662,14 @@ export type ExtendPickDeadlineResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -6725,7 +6725,7 @@ export type ExtendPickDeadlineResponses = {
     };
 };
 
-export type ExtendPickDeadlineResponse = ExtendPickDeadlineResponses[keyof ExtendPickDeadlineResponses];
+export type ExtendCurrentTurnResponse = ExtendCurrentTurnResponses[keyof ExtendCurrentTurnResponses];
 
 export type UndoLiveDraftPickData = {
     body?: never;
@@ -6775,14 +6775,14 @@ export type UndoLiveDraftPickResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -6888,14 +6888,14 @@ export type SkipLiveDraftPickResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;

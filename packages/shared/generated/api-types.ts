@@ -2757,8 +2757,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Extend the current pick deadline */
-        post: operations["extendPickDeadline"];
+        /** Shift the current turn start time */
+        post: operations["extendCurrentTurn"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10583,14 +10583,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -10715,14 +10715,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -10852,14 +10852,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -10973,14 +10973,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -11094,14 +11094,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -11215,14 +11215,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -11336,14 +11336,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -11404,7 +11404,7 @@ export interface operations {
             };
         };
     };
-    extendPickDeadline: {
+    extendCurrentTurn: {
         parameters: {
             query?: never;
             header?: never;
@@ -11463,14 +11463,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -11584,14 +11584,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;
@@ -11705,14 +11705,14 @@ export interface operations {
                         isMyPick: boolean;
                         timePerPickSeconds: number;
                         /** Format: date-time */
-                        pickDeadline: string | null;
+                        currentTurnStartedAt: string | null;
                         entries: {
                             id: string;
                             userId: string;
                             name: string;
                             isOnClock: boolean;
                         }[];
-                        picks: {
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
                             pickInRound: number;

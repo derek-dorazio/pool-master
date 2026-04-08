@@ -202,7 +202,7 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
     rosterPick: { count: jest.fn().mockResolvedValue(0) },
     contestPick: { count: jest.fn().mockResolvedValue(0) },
     bracketPrediction: { count: jest.fn().mockResolvedValue(0) },
-    draftPick: { count: jest.fn().mockResolvedValue(0) },
+    draftPickHistory: { count: jest.fn().mockResolvedValue(0) },
     user: { findUnique: jest.fn().mockResolvedValue(user) },
     contestConfiguration: { findUnique: jest.fn().mockResolvedValue({ maxEntriesPerSquad: 1 }) },
     ...overrides,

@@ -238,7 +238,7 @@ export async function cleanupTestData(): Promise<void> {
   const contestChildTables = [
     'contest_entry_participant_score_events', 'contest_entry_participant_scores', 'contest_entry_prize_awards',
     'contest_entries',
-    'draft_sessions', 'draft_picks', 'selection_configs', 'bracket_predictions',
+    'draft_sessions', 'draft_pick_histories', 'selection_configs', 'bracket_predictions',
     'contest_participant_pool', 'contest_pools', 'contest_matchups', 'roster_picks', 'contest_picks',
     'participant_contest_scoring_rules', 'contest_entry_aggregation_rules', 'contest_prize_definitions', 'contest_configurations',
     'commissioner_audit_log', 'commissioner_action_items', 'discoverable_contests',

@@ -365,13 +365,13 @@ export class ContestService {
 
   private async entryHasSelections(entryId: string): Promise<boolean> {
     const prisma = this.requirePrisma();
-    const [rosterPickCount, contestPickCount, bracketCount, draftPickCount] = await Promise.all([
+    const [rosterPickCount, contestPickCount, bracketCount, draftPickHistoryCount] = await Promise.all([
       prisma.rosterPick.count({ where: { entryId } }),
       prisma.contestPick.count({ where: { entryId } }),
       prisma.bracketPrediction.count({ where: { entryId } }),
-      prisma.draftPick.count({ where: { entryId } }),
+      prisma.draftPickHistory.count({ where: { entryId } }),
     ]);
-    return rosterPickCount + contestPickCount + bracketCount + draftPickCount > 0;
+    return rosterPickCount + contestPickCount + bracketCount + draftPickHistoryCount > 0;
   }
 
   private async resolveOrCreateSquadForEntry(

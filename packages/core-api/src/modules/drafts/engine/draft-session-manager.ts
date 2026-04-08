@@ -26,7 +26,7 @@ export interface SessionState {
   currentPickNumber: number;
   currentEntryId: string | null;
   startedAt: Date | null;
-  pickDeadline: Date | null;
+  currentTurnStartedAt: Date | null;
   timePerPickSeconds: number;
 }
 
@@ -70,7 +70,7 @@ export function startSession(session: SessionState): SessionState {
     status: 'LIVE',
     currentPickNumber: 1,
     startedAt: now,
-    pickDeadline: new Date(now.getTime() + session.timePerPickSeconds * 1000),
+    currentTurnStartedAt: now,
   };
 }
 
@@ -86,7 +86,7 @@ export function pauseSession(session: SessionState): SessionState {
   return {
     ...session,
     status: 'PAUSED',
-    pickDeadline: null,
+    currentTurnStartedAt: null,
   };
 }
 
@@ -105,7 +105,7 @@ export function resumeSession(session: SessionState): SessionState {
   return {
     ...session,
     status: 'LIVE',
-    pickDeadline: new Date(Date.now() + session.timePerPickSeconds * 1000),
+    currentTurnStartedAt: new Date(),
   };
 }
 
@@ -121,7 +121,7 @@ export function completeSession(session: SessionState): SessionState {
   return {
     ...session,
     status: 'COMPLETE',
-    pickDeadline: null,
+    currentTurnStartedAt: null,
   };
 }
 
@@ -129,7 +129,7 @@ export function completeSession(session: SessionState): SessionState {
  * Extend the pick deadline by additional seconds.
  * Commissioner control — only valid when LIVE.
  */
-export function extendPickDeadline(
+export function extendCurrentTurn(
   session: SessionState,
   additionalSeconds: number,
 ): SessionState {
@@ -137,13 +137,15 @@ export function extendPickDeadline(
     throw new Error(`Cannot extend deadline when status is ${session.status}`);
   }
 
-  if (!session.pickDeadline) {
-    throw new Error('No pick deadline to extend');
+  if (!session.currentTurnStartedAt) {
+    throw new Error('No current turn start time to extend');
   }
 
   return {
     ...session,
-    pickDeadline: new Date(session.pickDeadline.getTime() + additionalSeconds * 1000),
+    currentTurnStartedAt: new Date(
+      session.currentTurnStartedAt.getTime() + additionalSeconds * 1000,
+    ),
   };
 }
 
@@ -151,8 +153,10 @@ export function extendPickDeadline(
  * Check if the current pick has expired (timer ran out).
  */
 export function isPickExpired(session: SessionState): boolean {
-  if (session.status !== 'LIVE' || !session.pickDeadline) {
+  if (session.status !== 'LIVE' || !session.currentTurnStartedAt) {
     return false;
   }
-  return new Date() > session.pickDeadline;
+  return new Date() > new Date(
+    session.currentTurnStartedAt.getTime() + session.timePerPickSeconds * 1000,
+  );
 }

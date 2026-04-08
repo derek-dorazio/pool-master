@@ -304,7 +304,6 @@ model Participant {
 
   sport            Sport                    @relation(fields: [sportId], references: [id])
   contestPicks     ContestPick[]
-  draftPicks       DraftPick[]
   seasonRecords    ParticipantSeasonRecord[]
   providerMappings ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
@@ -580,7 +579,7 @@ model ContestEntry {
   rosterPicks RosterPick[]
   contestPicks ContestPick[]
   bracket      BracketPrediction?
-  draftPicks   DraftPick[]
+  draftPickHistories DraftPickHistory[]
   participantScores ContestEntryParticipantScore[]
   prizeAwards ContestEntryPrizeAward[]
 
@@ -604,6 +603,7 @@ model RosterPick {
   entry       ContestEntry @relation(fields: [entryId], references: [id])
   sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
   participantScores ContestEntryParticipantScore[]
+  draftPickHistories DraftPickHistory[]
 
   @@index([entryId])
   @@unique([entryId, sportEventParticipantId])
@@ -706,7 +706,6 @@ model BracketPrediction {
 
   entry   ContestEntry @relation(fields: [entryId], references: [id])
   contest Contest      @relation(fields: [contestId], references: [id])
-
   @@index([contestId])
   @@map("bracket_predictions")
 }
@@ -722,36 +721,36 @@ model DraftSession {
   currentPickNumber Int       @default(0) @map("current_pick_number")
   currentEntryId    String?   @map("current_entry_id") @db.Uuid
   startedAt         DateTime? @map("started_at") @db.Timestamptz
-  pickDeadline      DateTime? @map("pick_deadline") @db.Timestamptz
+  currentTurnStartedAt DateTime? @map("current_turn_started_at") @db.Timestamptz
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   contest Contest     @relation(fields: [contestId], references: [id])
-  picks   DraftPick[]
+  pickHistories DraftPickHistory[]
 
   @@map("draft_sessions")
 }
 
-model DraftPick {
+model DraftPickHistory {
   id             String   @id @default(uuid()) @db.Uuid
   draftSessionId String   @map("draft_session_id") @db.Uuid
+  rosterPickId   String   @map("roster_pick_id") @db.Uuid
   entryId        String   @map("entry_id") @db.Uuid
-  participantId  String   @map("participant_id") @db.Uuid
   pickNumber     Int      @map("pick_number")
   round          Int
   pickInRound    Int      @map("pick_in_round")
-  pickedAt       DateTime @default(now()) @map("picked_at") @db.Timestamptz
   autoPicked     Boolean  @default(false) @map("auto_picked")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   session     DraftSession @relation(fields: [draftSessionId], references: [id])
+  rosterPick  RosterPick   @relation(fields: [rosterPickId], references: [id])
   entry       ContestEntry @relation(fields: [entryId], references: [id])
-  participant Participant  @relation(fields: [participantId], references: [id])
 
   @@unique([draftSessionId, pickNumber])
   @@index([draftSessionId])
-  @@map("draft_picks")
+  @@index([rosterPickId])
+  @@map("draft_pick_histories")
 }
 
 // =============================================================================

@@ -231,8 +231,8 @@ describe('Budget Pick Room Integration', () => {
     expect(submitRes.statusCode).toBe(200);
     expect(submitRes.json().contestId).toBe(contestId);
     expect(submitRes.json().selectionType).toBe(SelectionType.BUDGET_PICK);
-    expect(submitRes.json().picks).toHaveLength(1);
-    expect(submitRes.json().picks[0]).toEqual(
+    expect(submitRes.json().draftPickHistories).toHaveLength(1);
+    expect(submitRes.json().draftPickHistories[0]).toEqual(
       expect.objectContaining({
         entryId,
         participantId: firstSportEventParticipantId,
@@ -248,8 +248,8 @@ describe('Budget Pick Room Integration', () => {
     });
 
     expect(afterPickRes.statusCode).toBe(200);
-    expect(afterPickRes.json().picks).toHaveLength(1);
-    expect(afterPickRes.json().picks[0]).toEqual(
+    expect(afterPickRes.json().draftPickHistories).toHaveLength(1);
+    expect(afterPickRes.json().draftPickHistories[0]).toEqual(
       expect.objectContaining({
         entryId,
         participantId: firstSportEventParticipantId,

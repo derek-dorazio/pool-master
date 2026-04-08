@@ -17607,7 +17607,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -17639,7 +17639,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -17900,9 +17900,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -18107,7 +18107,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -18139,7 +18139,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -18400,9 +18400,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -18609,7 +18609,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -18641,7 +18641,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -18902,9 +18902,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -19063,7 +19063,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -19095,7 +19095,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -19356,9 +19356,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -19517,7 +19517,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -19549,7 +19549,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -19810,9 +19810,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -19971,7 +19971,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -20003,7 +20003,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -20264,9 +20264,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -20425,7 +20425,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -20457,7 +20457,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -20718,9 +20718,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -20734,8 +20734,8 @@
     },
     "/api/v1/drafts/{contestId}/extend": {
       "post": {
-        "operationId": "extendPickDeadline",
-        "summary": "Extend the current pick deadline",
+        "operationId": "extendCurrentTurn",
+        "summary": "Shift the current turn start time",
         "tags": [
           "Drafts"
         ],
@@ -20899,7 +20899,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -20931,7 +20931,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -21192,9 +21192,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -21353,7 +21353,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -21385,7 +21385,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -21646,9 +21646,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],
@@ -21807,7 +21807,7 @@
                     "timePerPickSeconds": {
                       "type": "number"
                     },
-                    "pickDeadline": {
+                    "currentTurnStartedAt": {
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
@@ -21839,7 +21839,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "picks": {
+                    "draftPickHistories": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -22100,9 +22100,9 @@
                     "myEntryId",
                     "isMyPick",
                     "timePerPickSeconds",
-                    "pickDeadline",
+                    "currentTurnStartedAt",
                     "entries",
-                    "picks",
+                    "draftPickHistories",
                     "availableParticipantIds",
                     "isComplete"
                   ],

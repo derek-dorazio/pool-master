@@ -204,7 +204,7 @@ describe('Draft Session Flow Integration', () => {
     expect(roomRes.json().selectionType).toBe(SelectionType.TIERED);
     expect(roomRes.json().myEntryId).toBe(entryId);
     expect(roomRes.json().availableParticipantIds).toContain(sportEventParticipantId);
-    expect(roomRes.json().picks).toEqual([]);
+    expect(roomRes.json().draftPickHistories).toEqual([]);
 
     const submitRes = await getApp().inject({
       method: 'POST',
@@ -219,11 +219,11 @@ describe('Draft Session Flow Integration', () => {
     expect(submitRes.statusCode).toBe(200);
     expect(submitRes.json().contestId).toBe(contestId);
     expect(submitRes.json().selectionType).toBe(SelectionType.TIERED);
-    expect(submitRes.json().picks).toHaveLength(1);
-    expect(submitRes.json().picks[0].entryId).toBe(entryId);
-    expect(submitRes.json().picks[0].participantId).toBe(sportEventParticipantId);
-    expect(submitRes.json().picks[0].tierId).toBe('tier-1');
-    expect(submitRes.json().picks[0].tierName).toBe('Tier 1');
+    expect(submitRes.json().draftPickHistories).toHaveLength(1);
+    expect(submitRes.json().draftPickHistories[0].entryId).toBe(entryId);
+    expect(submitRes.json().draftPickHistories[0].participantId).toBe(sportEventParticipantId);
+    expect(submitRes.json().draftPickHistories[0].tierId).toBe('tier-1');
+    expect(submitRes.json().draftPickHistories[0].tierName).toBe('Tier 1');
     expect(submitRes.json().isComplete).toBe(true);
 
     const afterPickRes = await getApp().inject({
@@ -233,8 +233,8 @@ describe('Draft Session Flow Integration', () => {
     });
 
     expect(afterPickRes.statusCode).toBe(200);
-    expect(afterPickRes.json().picks).toHaveLength(1);
-    expect(afterPickRes.json().picks[0].participantId).toBe(sportEventParticipantId);
+    expect(afterPickRes.json().draftPickHistories).toHaveLength(1);
+    expect(afterPickRes.json().draftPickHistories[0].participantId).toBe(sportEventParticipantId);
     expect(afterPickRes.json().isComplete).toBe(true);
     expect(afterPickRes.json().availableParticipantIds).toContain(sportEventParticipantId);
   });

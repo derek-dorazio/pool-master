@@ -209,10 +209,18 @@ export class ContestService {
         },
         draftSession: {
           include: {
-            picks: {
+            pickHistories: {
               include: {
-                participant: {
-                  select: { name: true },
+                rosterPick: {
+                  include: {
+                    sportEventParticipant: {
+                      include: {
+                        participant: {
+                          select: { name: true },
+                        },
+                      },
+                    },
+                  },
                 },
                 entry: {
                   include: {
@@ -230,7 +238,7 @@ export class ContestService {
                   },
                 },
               },
-              orderBy: { pickedAt: 'asc' },
+              orderBy: { createdAt: 'asc' },
             },
           },
         },
@@ -281,13 +289,13 @@ export class ContestService {
       createdAt: contest.createdAt,
       standings,
       draftStatus,
-      picks: contest.draftSession?.picks.map((pick) => ({
+      picks: contest.draftSession?.pickHistories.map((pick) => ({
         round: pick.round,
         pick: pick.pickNumber,
-        participant: pick.participant.name,
+        participant: pick.rosterPick.sportEventParticipant.participant.name,
         owner: pick.entry.squad.memberships[0]?.user.email ?? '',
         autoPicked: pick.autoPicked,
-        time: pick.pickedAt,
+        time: pick.createdAt,
       })) ?? [],
       scoringFreshness: {
         lastStatEvent: undefined,

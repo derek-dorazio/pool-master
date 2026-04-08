@@ -44,18 +44,18 @@ export class OverrideService {
   /** Undoes a draft pick within the configurable window (default 5 min). */
   async undoPick(contestId: string, pickId: string, _reason: string): Promise<void> {
     const session = await this.requireDraftSession(contestId);
-    const picks = await this.draftSessionRepo.getPicks(session.id);
-    const pick = picks.find((p) => p.id === pickId);
-    if (!pick) {
+    const pickHistories = await this.draftSessionRepo.getPickHistories(session.id);
+    const pickHistory = pickHistories.find((history) => history.id === pickId);
+    if (!pickHistory) {
       throw new OverrideError('Pick not found in this draft session');
     }
-    const elapsed = Date.now() - pick.pickedAt.getTime();
+    const elapsed = Date.now() - pickHistory.createdAt.getTime();
     if (elapsed > UNDO_WINDOW_MS) {
       throw new OverrideError('Undo window has expired (5 minutes)');
     }
     // Reset current pick to the undone pick's position
     await this.draftSessionRepo.update(session.id, {
-      currentPickNumber: pick.pickNumber,
+      currentPickNumber: pickHistory.pickNumber,
     });
   }
 
@@ -87,12 +87,14 @@ export class OverrideService {
     additionalSeconds: number,
   ): Promise<void> {
     const session = await this.requireDraftSession(contestId);
-    if (!session.pickDeadline) {
-      throw new OverrideError('No active pick deadline to extend');
+    if (!session.currentTurnStartedAt) {
+      throw new OverrideError('No active current turn to extend');
     }
-    const newDeadline = new Date(session.pickDeadline.getTime() + additionalSeconds * 1000);
+    const shiftedTurnStart = new Date(
+      session.currentTurnStartedAt.getTime() + additionalSeconds * 1000,
+    );
     await this.draftSessionRepo.update(session.id, {
-      pickDeadline: newDeadline,
+      currentTurnStartedAt: shiftedTurnStart,
     } as Partial<DraftSession>);
   }
 

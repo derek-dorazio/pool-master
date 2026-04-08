@@ -10,7 +10,7 @@ function makeSession(overrides: Partial<SessionState> = {}): SessionState {
     currentPickNumber: 1,
     currentEntryId: 'entry-a',
     startedAt: new Date(),
-    pickDeadline: null,
+    currentTurnStartedAt: null,
     timePerPickSeconds: 60,
     ...overrides,
   };

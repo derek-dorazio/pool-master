@@ -3,7 +3,7 @@ import {
   pauseSession,
   resumeSession,
   completeSession,
-  extendPickDeadline,
+  extendCurrentTurn,
   isPickExpired,
   transitionSession,
 } from '../../../packages/core-api/src/modules/drafts/engine/draft-session-manager';
@@ -17,7 +17,7 @@ function createSession(overrides: Partial<SessionState> = {}): SessionState {
     currentPickNumber: 0,
     currentEntryId: null,
     startedAt: null,
-    pickDeadline: null,
+    currentTurnStartedAt: null,
     timePerPickSeconds: 60,
     ...overrides,
   };
@@ -62,13 +62,12 @@ describe('startSession', () => {
     expect(session.status).toBe('LIVE');
     expect(session.currentPickNumber).toBe(1);
     expect(session.startedAt).toBeInstanceOf(Date);
-    expect(session.pickDeadline).toBeInstanceOf(Date);
+    expect(session.currentTurnStartedAt).toBeInstanceOf(Date);
   });
 
-  it('sets pick deadline based on timePerPickSeconds', () => {
+  it('records current turn start time when the session starts', () => {
     const session = startSession(createSession({ timePerPickSeconds: 120 }));
-    const expectedDeadline = session.startedAt!.getTime() + 120 * 1000;
-    expect(session.pickDeadline!.getTime()).toBe(expectedDeadline);
+    expect(session.currentTurnStartedAt!.getTime()).toBe(session.startedAt!.getTime());
   });
 
   it('throws when starting from non-PENDING state', () => {
@@ -80,10 +79,10 @@ describe('pauseSession', () => {
   it('transitions to PAUSED and clears deadline', () => {
     const session = pauseSession(createSession({
       status: 'LIVE',
-      pickDeadline: new Date(),
+      currentTurnStartedAt: new Date(),
     }));
     expect(session.status).toBe('PAUSED');
-    expect(session.pickDeadline).toBeNull();
+    expect(session.currentTurnStartedAt).toBeNull();
   });
 
   it('throws when pausing from non-LIVE state', () => {
@@ -95,7 +94,7 @@ describe('resumeSession', () => {
   it('transitions to LIVE and sets new deadline', () => {
     const session = resumeSession(createSession({ status: 'PAUSED' }));
     expect(session.status).toBe('LIVE');
-    expect(session.pickDeadline).toBeInstanceOf(Date);
+    expect(session.currentTurnStartedAt).toBeInstanceOf(Date);
   });
 
   it('throws when resuming from non-PAUSED state', () => {
@@ -107,21 +106,21 @@ describe('completeSession', () => {
   it('transitions to COMPLETE', () => {
     const session = completeSession(createSession({ status: 'LIVE' }));
     expect(session.status).toBe('COMPLETE');
-    expect(session.pickDeadline).toBeNull();
+    expect(session.currentTurnStartedAt).toBeNull();
   });
 });
 
-describe('extendPickDeadline', () => {
-  it('extends deadline by given seconds', () => {
-    const deadline = new Date();
-    const session = createSession({ status: 'LIVE', pickDeadline: deadline });
-    const extended = extendPickDeadline(session, 30);
-    expect(extended.pickDeadline!.getTime()).toBe(deadline.getTime() + 30000);
+describe('extendCurrentTurn', () => {
+  it('shifts the current turn start time by given seconds', () => {
+    const currentTurnStartedAt = new Date();
+    const session = createSession({ status: 'LIVE', currentTurnStartedAt });
+    const extended = extendCurrentTurn(session, 30);
+    expect(extended.currentTurnStartedAt!.getTime()).toBe(currentTurnStartedAt.getTime() + 30000);
   });
 
   it('throws when not LIVE', () => {
     expect(() =>
-      extendPickDeadline(createSession({ status: 'PAUSED' }), 30),
+      extendCurrentTurn(createSession({ status: 'PAUSED' }), 30),
     ).toThrow();
   });
 });
@@ -134,7 +133,7 @@ describe('isPickExpired', () => {
   it('returns false when deadline is in the future', () => {
     const session = createSession({
       status: 'LIVE',
-      pickDeadline: new Date(Date.now() + 60000),
+      currentTurnStartedAt: new Date(),
     });
     expect(isPickExpired(session)).toBe(false);
   });
@@ -142,7 +141,7 @@ describe('isPickExpired', () => {
   it('returns true when deadline has passed', () => {
     const session = createSession({
       status: 'LIVE',
-      pickDeadline: new Date(Date.now() - 1000),
+      currentTurnStartedAt: new Date(Date.now() - 61000),
     });
     expect(isPickExpired(session)).toBe(true);
   });

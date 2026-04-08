@@ -22,7 +22,7 @@ export type SubmitPickRequest = z.infer<typeof SubmitPickRequestSchema>;
 
 // --- Response Sub-schemas ---
 
-export const DraftPickDtoSchema = z.object({
+export const DraftPickHistoryDtoSchema = z.object({
   pickNumber: z.number(),
   round: z.number(),
   pickInRound: z.number(),
@@ -39,7 +39,7 @@ export const DraftPickDtoSchema = z.object({
   isSkipped: z.boolean().optional(),
   pickedAt: z.string().datetime(),
 });
-export type DraftPickDto = z.infer<typeof DraftPickDtoSchema>;
+export type DraftPickHistoryDto = z.infer<typeof DraftPickHistoryDtoSchema>;
 
 export const DraftEntryDtoSchema = z.object({
   id: z.string(),
@@ -127,9 +127,9 @@ export const DraftStateDtoSchema = z.object({
   myEntryId: z.string().nullable(),
   isMyPick: z.boolean(),
   timePerPickSeconds: z.number(),
-  pickDeadline: z.string().datetime().nullable(),
+  currentTurnStartedAt: z.string().datetime().nullable(),
   availableParticipantIds: z.array(z.string()),
-  picks: z.array(DraftPickDtoSchema),
+  draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   entries: z.array(DraftEntryDtoSchema),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),
   bracketMatchups: z.array(DraftBracketMatchupDtoSchema).optional(),
@@ -166,9 +166,9 @@ export const DraftStateResponseSchema = z.object({
   myEntryId: z.string().nullable(),
   isMyPick: z.boolean(),
   timePerPickSeconds: z.number(),
-  pickDeadline: z.string().datetime().nullable(),
+  currentTurnStartedAt: z.string().datetime().nullable(),
   entries: z.array(DraftEntryDtoSchema),
-  picks: z.array(DraftPickDtoSchema),
+  draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   availableParticipantIds: z.array(z.string()),
   isComplete: z.boolean(),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),
@@ -194,9 +194,9 @@ export const DraftPickResponseSchema = z.object({
   myEntryId: z.string().nullable(),
   isMyPick: z.boolean(),
   timePerPickSeconds: z.number(),
-  pickDeadline: z.string().datetime().nullable(),
+  currentTurnStartedAt: z.string().datetime().nullable(),
   entries: z.array(DraftEntryDtoSchema),
-  picks: z.array(DraftPickDtoSchema),
+  draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   availableParticipantIds: z.array(z.string()),
   isComplete: z.boolean(),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),

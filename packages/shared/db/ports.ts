@@ -12,7 +12,7 @@ import type {
   ContestEntry,
   ContestMatchup,
   ContestPick,
-  DraftPick,
+  DraftPickHistory,
   DraftSession,
   League,
   LeagueInvitation,
@@ -207,8 +207,10 @@ export interface DraftSessionRepository {
   findByContest(contestId: string): Promise<DraftSession | null>;
   create(session: Omit<DraftSession, 'id' | 'createdAt' | 'updatedAt'>): Promise<DraftSession>;
   update(id: string, updates: Partial<DraftSession>): Promise<DraftSession>;
-  getPicks(sessionId: string): Promise<DraftPick[]>;
-  addPick(pick: Omit<DraftPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<DraftPick>;
+  getPickHistories(sessionId: string): Promise<DraftPickHistory[]>;
+  addPickHistory(
+    pickHistory: Omit<DraftPickHistory, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<DraftPickHistory>;
 }
 
 // --- Commissioner Action Items ---

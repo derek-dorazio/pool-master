@@ -71,7 +71,7 @@ export type {
   ContestMatchup,
   ContestHistoryResult,
   DomainEntity,
-  DraftPick,
+  DraftPickHistory,
   DraftSession,
   ImpersonationSession,
   InjuryStatus,

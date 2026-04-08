@@ -17,7 +17,7 @@ export {
   pauseSession,
   resumeSession,
   completeSession,
-  extendPickDeadline,
+  extendCurrentTurn,
   isPickExpired,
 } from './draft-session-manager';
 export type { SessionState, TransitionResult } from './draft-session-manager';

@@ -39,7 +39,7 @@ import {
   isPickExpired,
   pauseSession,
   resumeSession,
-  extendPickDeadline,
+  extendCurrentTurn,
 } from './engine/draft-session-manager';
 import type { SessionState } from './engine/draft-session-manager';
 import { draftStore } from './storage/draft-store';
@@ -463,10 +463,11 @@ async function buildSnakeDraftResponse(
       : null,
     myEntryId,
     isMyPick: myEntryId !== null && session.currentEntryId === myEntryId && session.status === DraftStatus.LIVE,
-    pickDeadline: session.pickDeadline?.toISOString?.() ?? session.pickDeadline,
+    currentTurnStartedAt:
+      session.currentTurnStartedAt?.toISOString?.() ?? session.currentTurnStartedAt ?? null,
     timePerPickSeconds: session.timePerPickSeconds,
     entries,
-    picks: state.picks.map((pick) => {
+    draftPickHistories: state.picks.map((pick) => {
       const contestEntry = contestEntryById.get(pick.entryId);
       const sportEventParticipant = pick.participantId
         ? sportEventParticipantById.get(pick.participantId)
@@ -635,10 +636,10 @@ async function buildRosterSelectionResponse(
     currentEntryName: canCurrentUserSubmit ? entries.find((entry) => entry.id === myEntryId)?.name ?? null : null,
     myEntryId,
     isMyPick: canCurrentUserSubmit,
-    pickDeadline: context.contest.lockAt?.toISOString?.() ?? context.contest.lockAt ?? null,
+    currentTurnStartedAt: null,
     timePerPickSeconds: 0,
     entries: entries.map(({ pickCount: _pickCount, ...entry }) => entry),
-    picks: pickDtos,
+    draftPickHistories: pickDtos,
     availableParticipantIds,
     isComplete,
   };
@@ -728,12 +729,9 @@ async function buildPickEmResponse(
     myEntryId,
     isMyPick,
     timePerPickSeconds: 0,
-    pickDeadline: currentPeriodMatchups
-      .map((matchup) => matchup.lockAt ?? context.contest.lockAt)
-      .filter((value): value is Date => Boolean(value))
-      .sort((a, b) => a.getTime() - b.getTime())[0]?.toISOString() ?? null,
+    currentTurnStartedAt: null,
     entries,
-    picks: picks.map((pick, index) => {
+    draftPickHistories: picks.map((pick, index) => {
       const participant = participantById.get(pick.participantId);
       const entry = entries.find((item) => item.id === pick.entryId);
       return {
@@ -955,9 +953,9 @@ async function buildBracketResponse(
     myEntryId,
     isMyPick: myEntryId !== null && !isLocked,
     timePerPickSeconds: 0,
-    pickDeadline: earliestLock?.toISOString() ?? null,
+    currentTurnStartedAt: null,
     entries,
-    picks,
+    draftPickHistories: picks,
     availableParticipantIds: [],
     isComplete: sortedMatchups.length > 0 && myPredictions.length >= sortedMatchups.length,
     bracketMatchups: sortedMatchups.map((matchup) => {
@@ -1192,7 +1190,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         currentPickNumber: 0,
         currentEntryId: null,
         startedAt: null,
-        pickDeadline: null,
+        currentTurnStartedAt: null,
         timePerPickSeconds,
       };
 
@@ -1313,13 +1311,13 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
 
           if (autoPickId) {
             state = engine.applyPick(state, { entryId: currentEntryId, participantId: autoPickId }, true);
-            session.pickDeadline = new Date(Date.now() + session.timePerPickSeconds * 1000);
+            session.currentTurnStartedAt = new Date();
 
             if (!engine.isComplete(state)) {
               session.currentEntryId = engine.getCurrentEntryId(state);
             } else {
               session.status = DraftStatus.COMPLETE;
-              session.pickDeadline = null;
+              session.currentTurnStartedAt = null;
               session.currentEntryId = null;
             }
 
@@ -1338,12 +1336,12 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         if (!engine.isComplete(state)) {
           session.currentEntryId = engine.getCurrentEntryId(state);
           session.currentPickNumber = state.currentPickNumber;
-          session.pickDeadline = new Date(Date.now() + session.timePerPickSeconds * 1000);
+          session.currentTurnStartedAt = new Date();
         } else {
           session.status = DraftStatus.COMPLETE;
           state = { ...state, status: DraftStatus.COMPLETE };
           session.currentEntryId = null;
-          session.pickDeadline = null;
+          session.currentTurnStartedAt = null;
         }
 
         await draftStore.setSession(contestId, session);
@@ -1866,8 +1864,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   fastify.post('/:contestId/extend', {
     schema: {
       tags: ['Drafts'],
-      summary: 'Extend the current pick deadline',
-      operationId: 'extendPickDeadline',
+      summary: 'Shift the current turn start time',
+      operationId: 'extendCurrentTurn',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -1911,7 +1909,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
       const available = await draftStore.getAvailableParticipants(contestId);
 
-      const extendedSession = extendPickDeadline(session, additionalSeconds);
+      const extendedSession = extendCurrentTurn(session, additionalSeconds);
       await draftStore.setSession(contestId, extendedSession);
 
       return buildSnakeDraftResponse(prisma, context, extendedSession, state, available, requestUserId);
@@ -1968,7 +1966,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         status: DraftStatus.LIVE,
         currentPickNumber: rewoundState.currentPickNumber,
         currentEntryId: rewoundEntryId,
-        pickDeadline: new Date(Date.now() + session.timePerPickSeconds * 1000),
+        currentTurnStartedAt: new Date(),
       };
 
       await draftStore.setState(contestId, rewoundState);
@@ -2028,7 +2026,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         status: isComplete ? DraftStatus.COMPLETE : DraftStatus.LIVE,
         currentPickNumber: skippedState.currentPickNumber,
         currentEntryId: isComplete ? null : engine.getCurrentEntryId(skippedState),
-        pickDeadline: isComplete ? null : new Date(Date.now() + session.timePerPickSeconds * 1000),
+        currentTurnStartedAt: isComplete ? null : new Date(),
       };
 
       await draftStore.setState(contestId, skippedState);

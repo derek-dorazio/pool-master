@@ -474,17 +474,16 @@ export interface DraftSession extends DomainEntity {
   currentPickNumber: number;
   currentEntryId?: string;
   startedAt?: Date;
-  pickDeadline?: Date;
+  currentTurnStartedAt?: Date;
 }
 
-export interface DraftPick extends DomainEntity {
+export interface DraftPickHistory extends DomainEntity {
   draftSessionId: string;
+  rosterPickId: string;
   entryId: string;
-  participantId: string;
   pickNumber: number;
   round: number;
   pickInRound: number;
-  pickedAt: Date;
   autoPicked: boolean;
 }
 
