@@ -82,8 +82,8 @@ export function buildApp() {
   // --- Scoring subsystem (Prisma-backed) ---
   const scoreStore = new ScoreStore(prisma);
   const contestLookup = new ContestLookup(prisma);
-  const standingsRollup = new StandingsRollup({ eventBus, scoreStore, prisma });
-  const scoringService = new ScoringService({ scoreStore, standingsRollup, prisma });
+  const standingsRollup = new StandingsRollup({ eventBus, prisma });
+  const scoringService = new ScoringService({ standingsRollup, prisma });
 
   // =========================================================================
   // Core plugins

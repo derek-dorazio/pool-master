@@ -2,10 +2,6 @@ import { StandingsRollup } from '../../../packages/core-api/src/modules/scoring/
 
 describe('StandingsRollup', () => {
   it('persists rankings onto contest entries without writing legacy contest standings', async () => {
-    const getLeaderboard = jest.fn().mockResolvedValue([
-      { entryId: 'entry-1', total: 15 },
-      { entryId: 'entry-2', total: 10 },
-    ]);
     const contestEntryUpdate = jest.fn().mockResolvedValue(undefined);
     const transaction = jest.fn().mockImplementation(async (operations: unknown[]) => Promise.all(operations as Promise<unknown>[]));
     const publish = jest.fn().mockResolvedValue(undefined);
@@ -13,6 +9,10 @@ describe('StandingsRollup', () => {
     const prisma = {
       $transaction: transaction,
       contestEntry: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'entry-1', totalScore: 15 },
+          { id: 'entry-2', totalScore: 10 },
+        ]),
         update: contestEntryUpdate,
       },
       contestStanding: {
@@ -22,7 +22,6 @@ describe('StandingsRollup', () => {
 
     const rollup = new StandingsRollup({
       eventBus: { publish } as any,
-      scoreStore: { getLeaderboard } as any,
       prisma,
     });
 

@@ -30,6 +30,9 @@ import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { standingsModule } from '../../packages/core-api/src/modules/standings/routes';
+import { scoringRoutes } from '../../packages/core-api/src/modules/scoring/routes';
+import { StandingsRollup } from '../../packages/core-api/src/modules/scoring/rollup/standings-rollup';
+import { ScoringService } from '../../packages/core-api/src/modules/scoring/service';
 import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
 import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
@@ -90,6 +93,17 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
   testApp.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
+  const standingsRollup = new StandingsRollup({
+    eventBus: {
+      publish: async () => undefined,
+    } as any,
+    prisma,
+  });
+  const scoringService = new ScoringService({
+    standingsRollup,
+    prisma,
+  });
+  testApp.register(scoringRoutes, { prefix: '/api/v1', scoringService });
   testApp.register(accountConsentModule, { prefix: '/api/v1/account' });
   testApp.register(configModule, { prefix: '/api/v1/config' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });

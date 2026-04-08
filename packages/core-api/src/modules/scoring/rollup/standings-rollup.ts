@@ -5,7 +5,6 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { EventBus } from '@poolmaster/shared/events/event-bus';
-import type { ScoreStore } from '../storage/score-store';
 
 // --- Types ---
 
@@ -25,7 +24,6 @@ export interface StandingEntry {
 
 export interface StandingsRollupDeps {
   eventBus: EventBus;
-  scoreStore: ScoreStore;
   prisma: PrismaClient;
 }
 
@@ -39,12 +37,10 @@ export class StandingsRollup {
   private activeContestIds: Set<string> = new Set();
   private previousRanks: Map<string, Map<string, number>> = new Map();
   private readonly eventBus: EventBus;
-  private readonly scoreStore: ScoreStore;
   private readonly prisma: PrismaClient;
 
   constructor(deps: StandingsRollupDeps) {
     this.eventBus = deps.eventBus;
-    this.scoreStore = deps.scoreStore;
     this.prisma = deps.prisma;
   }
 
@@ -61,7 +57,15 @@ export class StandingsRollup {
 
   /** Run rollup for a specific contest. */
   async rollupContest(contestId: string): Promise<RollupResult> {
-    const leaderboard = await this.scoreStore.getLeaderboard(contestId);
+    const entries = await this.prisma.contestEntry.findMany({
+      where: { contestId },
+      orderBy: [{ totalScore: 'desc' }, { id: 'asc' }],
+      select: { id: true, totalScore: true },
+    });
+    const leaderboard = entries.map((entry) => ({
+      entryId: entry.id,
+      total: entry.totalScore,
+    }));
     const standings = assignRanks(leaderboard);
     const rankChanges = this.countRankChanges(contestId, standings);
     this.updatePreviousRanks(contestId, standings);
