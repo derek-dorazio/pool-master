@@ -1,13 +1,10 @@
 import { StandingsService, StandingsError } from '../../../packages/core-api/src/modules/standings/service';
 
 describe('StandingsService', () => {
-  it('throws STANDINGS_UNAVAILABLE when no persisted standings exist', async () => {
+  it('throws STANDINGS_UNAVAILABLE when no contest entries exist', async () => {
     const prisma = {
-      contestStanding: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       contestEntry: {
-        findMany: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
     } as any;
 
@@ -17,7 +14,5 @@ describe('StandingsService', () => {
       code: 'STANDINGS_UNAVAILABLE',
       statusCode: 409,
     });
-
-    expect(prisma.contestEntry.findMany).not.toHaveBeenCalled();
   });
 });

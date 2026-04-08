@@ -8,7 +8,6 @@
 import type {
   ContestRepository,
   ContestEntryRepository,
-  ContestStandingRepository,
   DraftSessionRepository,
 } from '@poolmaster/shared/db';
 import type { Contest, DraftSession } from '@poolmaster/shared/domain';
@@ -36,7 +35,6 @@ export class OverrideService {
     private readonly contestRepo: ContestRepository,
     private readonly draftSessionRepo: DraftSessionRepository,
     private readonly entryRepo: ContestEntryRepository,
-    private readonly standingRepo: ContestStandingRepository,
   ) {}
 
   // --- Draft Overrides (08-018, 08-019, 08-020) ---
@@ -121,8 +119,15 @@ export class OverrideService {
       throw new OverrideError('Contest not found');
     }
     const entries = await this.entryRepo.findByContest(contestId);
-    const oldStandings = await this.standingRepo.findByContest(contestId);
-    const oldRankMap = new Map(oldStandings.map((s) => [s.entryId, s]));
+    const oldRankMap = new Map(
+      entries.map((entry) => [
+        entry.id,
+        {
+          rank: entry.standingsPosition ?? 0,
+          totalScore: entry.totalScore,
+        },
+      ]),
+    );
     // Sort entries by score (descending) and assign new ranks
     const sorted = [...entries].sort((a, b) => b.totalScore - a.totalScore);
     const changes: StandingsChange[] = [];
@@ -141,12 +146,8 @@ export class OverrideService {
           newScore: entry.totalScore,
         });
       }
-      await this.standingRepo.upsert({
-        contestId,
-        entryId: entry.id,
-        rank: newRank,
-        totalScore: entry.totalScore,
-        lastUpdatedAt: new Date(),
+      await this.entryRepo.update(entry.id, {
+        standingsPosition: newRank,
       });
     }
     return {

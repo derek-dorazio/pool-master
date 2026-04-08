@@ -24,7 +24,6 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaContestEntryRepository,
-  PrismaContestStandingRepository,
   PrismaDraftSessionRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
@@ -122,7 +121,6 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const entryRepo = new PrismaContestEntryRepository(prisma);
-  const standingRepo = new PrismaContestStandingRepository(prisma);
   const draftSessionRepo = new PrismaDraftSessionRepository(prisma);
 
   const contestService = new ContestService(
@@ -135,7 +133,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     entryRepo,
     prisma,
   );
-  const overrideService = new OverrideService(contestRepo, draftSessionRepo, entryRepo, standingRepo);
+  const overrideService = new OverrideService(contestRepo, draftSessionRepo, entryRepo);
   const handlers = createContestHandlers(contestService);
   const overrides = createOverrideHandlers(overrideService);
 

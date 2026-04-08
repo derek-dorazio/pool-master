@@ -2,7 +2,6 @@ import { OverrideService, OverrideError } from '../../../packages/core-api/src/m
 import type {
   ContestRepository,
   ContestEntryRepository,
-  ContestStandingRepository,
   DraftSessionRepository,
 } from '@poolmaster/shared/db';
 import { ContestStatus, DraftStatus } from '@poolmaster/shared/domain';
@@ -44,29 +43,48 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
     findById: jest.fn().mockResolvedValue({
       id: 'entry-1',
       contestId: 'contest-1',
-      leagueMembershipId: 'member-1',
+      squadId: 'squad-1',
+      entryNumber: 1,
       name: 'Team Alpha',
+      status: 'ACTIVE',
       totalScore: 100,
+      standingsPosition: 2,
       isEliminated: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }),
     findByContest: jest.fn().mockResolvedValue([
-      { id: 'entry-1', contestId: 'contest-1', name: 'Team A', totalScore: 150, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'entry-2', contestId: 'contest-1', name: 'Team B', totalScore: 120, createdAt: new Date(), updatedAt: new Date() },
+      {
+        id: 'entry-1',
+        contestId: 'contest-1',
+        squadId: 'squad-1',
+        entryNumber: 1,
+        name: 'Team A',
+        status: 'ACTIVE',
+        totalScore: 150,
+        standingsPosition: 2,
+        isEliminated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'entry-2',
+        contestId: 'contest-1',
+        squadId: 'squad-2',
+        entryNumber: 1,
+        name: 'Team B',
+        status: 'ACTIVE',
+        totalScore: 120,
+        standingsPosition: 1,
+        isEliminated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ]),
-    findByMember: jest.fn().mockResolvedValue([]),
-    create: jest.fn().mockResolvedValue({}),
-    update: jest.fn().mockResolvedValue({}),
+    findBySquad: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockResolvedValue({} as any),
+    update: jest.fn().mockResolvedValue({} as any),
     delete: jest.fn().mockResolvedValue(undefined),
-    ...overrides,
-  };
-}
-
-function createMockStandingRepo(overrides: Partial<ContestStandingRepository> = {}): ContestStandingRepository {
-  return {
-    findByContest: jest.fn().mockResolvedValue([]),
-    upsert: jest.fn().mockImplementation(async (s) => ({ ...s, id: 'standing-1', createdAt: new Date(), updatedAt: new Date() })),
     ...overrides,
   };
 }
@@ -79,7 +97,6 @@ describe('OverrideService', () => {
         createMockContestRepo(),
         draftRepo,
         createMockEntryRepo(),
-        createMockStandingRepo(),
       );
       await service.pauseDraft('contest-1', 'Technical issue');
       expect(draftRepo.update).toHaveBeenCalledWith('session-1', { status: DraftStatus.PAUSED });
@@ -93,7 +110,7 @@ describe('OverrideService', () => {
         }),
       });
       const service = new OverrideService(
-        createMockContestRepo(), draftRepo, createMockEntryRepo(), createMockStandingRepo(),
+        createMockContestRepo(), draftRepo, createMockEntryRepo(),
       );
       await expect(service.pauseDraft('contest-1', 'reason')).rejects.toThrow(OverrideError);
     });
@@ -108,7 +125,7 @@ describe('OverrideService', () => {
         }),
       });
       const service = new OverrideService(
-        createMockContestRepo(), draftRepo, createMockEntryRepo(), createMockStandingRepo(),
+        createMockContestRepo(), draftRepo, createMockEntryRepo(),
       );
       await service.resumeDraft('contest-1');
       expect(draftRepo.update).toHaveBeenCalledWith('session-1', { status: DraftStatus.LIVE });
@@ -119,7 +136,7 @@ describe('OverrideService', () => {
     it('adds seconds to the pick deadline', async () => {
       const draftRepo = createMockDraftSessionRepo();
       const service = new OverrideService(
-        createMockContestRepo(), draftRepo, createMockEntryRepo(), createMockStandingRepo(),
+        createMockContestRepo(), draftRepo, createMockEntryRepo(),
       );
       await service.extendPickClock('contest-1', 30);
       expect(draftRepo.update).toHaveBeenCalled();
@@ -132,7 +149,7 @@ describe('OverrideService', () => {
     it('adjusts entry score by delta', async () => {
       const entryRepo = createMockEntryRepo();
       const service = new OverrideService(
-        createMockContestRepo(), createMockDraftSessionRepo(), entryRepo, createMockStandingRepo(),
+        createMockContestRepo(), createMockDraftSessionRepo(), entryRepo,
       );
       await service.adjustScore('contest-1', 'entry-1', -10, 'Scoring error');
       expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { totalScore: 90 });
@@ -143,7 +160,7 @@ describe('OverrideService', () => {
         findById: jest.fn().mockResolvedValue({ id: 'entry-1', contestId: 'other-contest', totalScore: 50, createdAt: new Date(), updatedAt: new Date() }),
       });
       const service = new OverrideService(
-        createMockContestRepo(), createMockDraftSessionRepo(), entryRepo, createMockStandingRepo(),
+        createMockContestRepo(), createMockDraftSessionRepo(), entryRepo,
       );
       await expect(service.adjustScore('contest-1', 'entry-1', 5, 'reason')).rejects.toThrow(OverrideError);
     });
@@ -151,15 +168,17 @@ describe('OverrideService', () => {
 
   describe('recalculateStandings', () => {
     it('recalculates standings from entry scores', async () => {
+      const entryRepo = createMockEntryRepo();
       const service = new OverrideService(
         createMockContestRepo(),
         createMockDraftSessionRepo(),
-        createMockEntryRepo(),
-        createMockStandingRepo(),
+        entryRepo,
       );
       const result = await service.recalculateStandings('contest-1', 'tenant-1');
       expect(result.contestId).toBe('contest-1');
-      expect(result.teamsAffected).toBeGreaterThanOrEqual(0);
+      expect(result.teamsAffected).toBe(2);
+      expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { standingsPosition: 1 });
+      expect(entryRepo.update).toHaveBeenCalledWith('entry-2', { standingsPosition: 2 });
     });
   });
 
@@ -169,7 +188,7 @@ describe('OverrideService', () => {
         findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.COMPLETED })),
       });
       const service = new OverrideService(
-        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(), createMockStandingRepo(),
+        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(),
       );
       await service.reopenContest('contest-1', 'tenant-1', 'Scoring error found');
       expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { status: ContestStatus.ACTIVE });
@@ -177,7 +196,7 @@ describe('OverrideService', () => {
 
     it('throws when contest is not completed', async () => {
       const service = new OverrideService(
-        createMockContestRepo(), createMockDraftSessionRepo(), createMockEntryRepo(), createMockStandingRepo(),
+        createMockContestRepo(), createMockDraftSessionRepo(), createMockEntryRepo(),
       );
       await expect(service.reopenContest('contest-1', 'tenant-1', 'reason')).rejects.toThrow('completed');
     });
@@ -187,7 +206,7 @@ describe('OverrideService', () => {
     it('force-closes an active contest', async () => {
       const contestRepo = createMockContestRepo();
       const service = new OverrideService(
-        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(), createMockStandingRepo(),
+        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(),
       );
       await service.closeContest('contest-1', 'tenant-1', 'Season over');
       expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { status: ContestStatus.COMPLETED });
@@ -198,7 +217,7 @@ describe('OverrideService', () => {
         findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.COMPLETED })),
       });
       const service = new OverrideService(
-        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(), createMockStandingRepo(),
+        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(),
       );
       await expect(service.closeContest('contest-1', 'tenant-1', 'reason')).rejects.toThrow('already closed');
     });
@@ -210,7 +229,7 @@ describe('OverrideService', () => {
         findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.COMPLETED })),
       });
       const service = new OverrideService(
-        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(), createMockStandingRepo(),
+        contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(),
       );
       await service.confirmPayouts('contest-1', 'tenant-1');
       expect(contestRepo.update).toHaveBeenCalled();
@@ -218,7 +237,7 @@ describe('OverrideService', () => {
 
     it('throws when contest is not completed', async () => {
       const service = new OverrideService(
-        createMockContestRepo(), createMockDraftSessionRepo(), createMockEntryRepo(), createMockStandingRepo(),
+        createMockContestRepo(), createMockDraftSessionRepo(), createMockEntryRepo(),
       );
       await expect(service.confirmPayouts('contest-1', 'tenant-1')).rejects.toThrow('completed');
     });

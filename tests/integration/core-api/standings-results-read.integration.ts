@@ -4,7 +4,7 @@
  * This suite is intentionally self-contained:
  * - creates its own owner and second member through real invitation routes
  * - creates its own league, contest, and entries through real routes
- * - persists standings and final results snapshots through Prisma
+ * - persists live entry standings and final results snapshots through Prisma
  * - verifies live standings endpoints and history result endpoints
  */
 import {
@@ -143,36 +143,26 @@ describe('Standings and Results Read Integration', () => {
     challengerEntryId = challengerEntryRes.json().entry.id;
 
     const prisma = getPrisma();
+    const ownerMembership = await prisma.leagueMembership.findFirstOrThrow({
+      where: { leagueId, userId: ownerUserId },
+    });
     const challengerMembership = await prisma.leagueMembership.findUniqueOrThrow({
       where: { id: challengerMembershipId },
     });
 
     await prisma.contestEntry.update({
       where: { id: ownerEntryId },
-      data: { rank: 2 },
+      data: {
+        totalScore: 88.25,
+        standingsPosition: 2,
+      },
     });
     await prisma.contestEntry.update({
       where: { id: challengerEntryId },
-      data: { rank: 1 },
-    });
-
-    await prisma.contestStanding.createMany({
-      data: [
-        {
-          contestId,
-          entryId: challengerEntryId,
-          rank: 1,
-          totalScore: 92.5,
-          lastUpdatedAt: new Date('2026-04-03T12:00:00Z'),
-        },
-        {
-          contestId,
-          entryId: ownerEntryId,
-          rank: 2,
-          totalScore: 88.25,
-          lastUpdatedAt: new Date('2026-04-03T12:00:00Z'),
-        },
-      ],
+      data: {
+        totalScore: 92.5,
+        standingsPosition: 1,
+      },
     });
 
     await prisma.contestResult.createMany({
@@ -204,7 +194,7 @@ describe('Standings and Results Read Integration', () => {
           totalScore: 88.25,
           prizeAmount: 0,
           leagueId,
-          leagueMembershipId: ownerEntryRes.json().entry.leagueMembershipId,
+          leagueMembershipId: ownerMembership.id,
           contestName: 'Standings Read Contest',
           contestType: ContestType.SINGLE_EVENT,
           sport: 'GOLF',
