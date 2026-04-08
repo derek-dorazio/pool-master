@@ -267,6 +267,7 @@ model Participant {
   draftPicks       DraftPick[]
   seasonRecords    ParticipantSeasonRecord[]
   providerMappings ParticipantProviderMapping[]
+  sportEventParticipants SportEventParticipant[]
 
   @@index([sportId])
   @@index([sportId, status])
@@ -943,12 +944,68 @@ model SportEvent {
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  contests Contest[]
+  contests               Contest[]
+  sportEventParticipants SportEventParticipant[]
 
   @@unique([providerId, externalId])
   @@index([sport, status])
   @@index([startDate, endDate])
   @@map("sport_events")
+}
+
+model SportEventParticipant {
+  id            String   @id @default(uuid()) @db.Uuid
+  sportEventId  String   @map("sport_event_id") @db.Uuid
+  participantId String   @map("participant_id") @db.Uuid
+  status        String?  @db.VarChar(50)
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportEvent  SportEvent @relation(fields: [sportEventId], references: [id])
+  participant Participant @relation(fields: [participantId], references: [id])
+  sourceData  SportEventParticipantSourceData[]
+  valuations  SportEventParticipantValuation[]
+
+  @@unique([sportEventId, participantId])
+  @@index([sportEventId])
+  @@index([participantId])
+  @@map("sport_event_participants")
+}
+
+model SportEventParticipantSourceData {
+  id                      String   @id @default(uuid()) @db.Uuid
+  sportEventParticipantId String   @map("sport_event_participant_id") @db.Uuid
+  providerId              String   @map("provider_id") @db.VarChar(100)
+  externalId              String   @map("external_id") @db.VarChar(255)
+  rawPayload              Json     @default("{}") @map("raw_payload")
+  normalizedData          Json     @default("{}") @map("normalized_data")
+  receivedAt              DateTime @map("received_at") @db.Timestamptz
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
+
+  @@index([sportEventParticipantId, receivedAt(sort: Desc)])
+  @@index([providerId, externalId])
+  @@map("sport_event_participant_source_data")
+}
+
+model SportEventParticipantValuation {
+  id                      String   @id @default(uuid()) @db.Uuid
+  sportEventParticipantId String   @map("sport_event_participant_id") @db.Uuid
+  price                   Float?
+  tier                    String?  @db.VarChar(50)
+  orderIndex              Int?     @map("order_index")
+  valuationSource         String   @map("valuation_source") @db.VarChar(100)
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
+
+  @@unique([sportEventParticipantId, valuationSource])
+  @@index([sportEventParticipantId])
+  @@map("sport_event_participant_valuations")
 }
 
 model IngestionJob {

@@ -19,4 +19,7 @@ export {
   PrismaContestEntryAggregationRuleRepository,
   PrismaContestPrizeDefinitionRepository,
   PrismaParticipantContestScoringRuleRepository,
+  PrismaSportEventParticipantRepository,
+  PrismaSportEventParticipantSourceDataRepository,
+  PrismaSportEventParticipantValuationRepository,
 } from './prisma-contest-management-repositories';
