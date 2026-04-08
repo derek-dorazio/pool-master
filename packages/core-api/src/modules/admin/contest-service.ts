@@ -207,9 +207,6 @@ export class ContestService {
           },
           orderBy: { standingsPosition: 'asc' },
         },
-        standings: {
-          orderBy: { rank: 'asc' },
-        },
         draftSession: {
           include: {
             picks: {

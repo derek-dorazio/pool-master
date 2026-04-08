@@ -169,10 +169,6 @@ export class TimelineService {
       where: { contestId_entryId: { contestId, entryId } },
     });
 
-    const result = await this.prisma.contestResult.findUnique({
-      where: { contestId_entryId: { contestId, entryId } },
-    });
-
     const entry = await this.prisma.contestEntry.findUnique({
       where: { id: entryId },
     });
@@ -223,8 +219,8 @@ export class TimelineService {
       entryId,
       entryName: entry.name,
       roster,
-      totalScore: result?.totalScore ?? entry.totalScore,
-      finalRank: result?.finalRank ?? entry.standingsPosition ?? 0,
+      totalScore: entry.totalScore,
+      finalRank: entry.standingsPosition ?? 0,
     };
   }
 }
