@@ -183,6 +183,19 @@ export const LeagueVisibility = {
 } as const;
 export type LeagueVisibility = (typeof LeagueVisibility)[keyof typeof LeagueVisibility];
 
+export const SquadStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+} as const;
+export type SquadStatus = (typeof SquadStatus)[keyof typeof SquadStatus];
+
+export const SquadMembershipStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+} as const;
+export type SquadMembershipStatus =
+  (typeof SquadMembershipStatus)[keyof typeof SquadMembershipStatus];
+
 // --- Pricing (for Tiered and Budget Pick contests) ---
 
 export const PricingMethod = {

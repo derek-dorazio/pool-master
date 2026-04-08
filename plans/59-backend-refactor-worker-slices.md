@@ -181,7 +181,7 @@ Every slice should satisfy the backend-refactor rules:
 | 59-002 | 1 | Implement bootstrap Slice A: Search And Discovery Removal | Done | Public discovery schema, routes, DTOs, mappers, and app wiring removed |
 | 59-003 | 1 | Implement bootstrap Slice B: Contest Template Removal | Done | Contest template model, routes, handlers, repository, tests, schema, and migration cleanup completed |
 | 59-004 | 2 | Implement Slice C: Compliance Removal Except Consent | Done | Compliance subsystem removed, retention routes/config removed, and minimal account-consent module plus consent tests added |
-| 59-005 | 2 | Implement Slice D: Identity, League, Membership, and Squad rebuild | Not Started | |
+| 59-005 | 2 | Implement Slice D: Identity, League, Membership, and Squad rebuild | In Progress | Added `Squad` / `SquadMembership` schema, repositories, league-scoped squad management APIs, and focused unit + DB integration coverage as the first target-shaped ownership step before migrating contest entries off league membership |
 | 59-006 | 3 | Implement Slice E: Contest core rebuild | Not Started | |
 | 59-007 | 3 | Implement Slice F: Event participant and source-data rebuild | In Progress | Adding `SportEventParticipant`, provider source-data, and valuation persistence plus DB-backed repository coverage as the foundation for ingestion and scoring alignment |
 | 59-008 | 4 | Implement Slice G: Scoring, aggregation, and prize rebuild | In Progress | Main thread added `contest-scoring` registries, orchestration, launch-rule unit tests, and persisted contest configuration / prize-definition tables to support the new scoring architecture |

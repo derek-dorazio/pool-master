@@ -1,6 +1,8 @@
 export { PrismaLeagueRepository } from './prisma-league-repository';
 export { PrismaLeagueMembershipRepository } from './prisma-league-membership-repository';
 export { PrismaLeagueInvitationRepository } from './prisma-league-invitation-repository';
+export { PrismaSquadRepository } from './prisma-squad-repository';
+export { PrismaSquadMembershipRepository } from './prisma-squad-membership-repository';
 export { PrismaContestRepository } from './prisma-contest-repository';
 export { PrismaSelectionConfigRepository } from './prisma-selection-config-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';

@@ -16,6 +16,7 @@
 export const API_PREFIXES = {
   AUTH: '/api/v1/auth',
   LEAGUES: '/api/v1/leagues',
+  SQUADS_BY_LEAGUE: '/api/v1/leagues/:id/squads',
   INVITATIONS: '/api/v1/invitations',
   CONTESTS_BY_LEAGUE: '/api/v1/leagues/:id/contests',
   CONTEST_MANAGEMENT: '/api/v1/leagues/:id/contest-management/contests',
@@ -68,8 +69,20 @@ export const API_ROUTES = {
     inviteLink: (id: string) => `/api/v1/leagues/${id}/invite-link`,
     settings: (id: string) => `/api/v1/leagues/${id}/settings`,
     contests: (id: string) => `/api/v1/leagues/${id}/contests`,
+    squads: (id: string) => `/api/v1/leagues/${id}/squads`,
     contestManagement: (id: string) =>
       `/api/v1/leagues/${id}/contest-management/contests`,
+  },
+
+  squads: {
+    list: (leagueId: string) => `/api/v1/leagues/${leagueId}/squads`,
+    create: (leagueId: string) => `/api/v1/leagues/${leagueId}/squads`,
+    detail: (leagueId: string, squadId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}`,
+    addMember: (leagueId: string, squadId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}/members`,
+    removeMember: (leagueId: string, squadId: string, userId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}/members/${userId}`,
   },
 
   // Invitations

@@ -27,6 +27,8 @@ import type {
   ScoringEngine,
   SelectionType,
   Sport,
+  SquadMembershipStatus,
+  SquadStatus,
   SurvivorStyle,
   TierAssignmentMethod,
   WeekDay,
@@ -95,6 +97,22 @@ export interface LeagueMembership extends DomainEntity {
   userId: string;
   role: LeagueRole;
   permissions: CommissionerPermission[];
+  joinedAt: Date;
+}
+
+export interface Squad extends DomainEntity {
+  leagueId: string;
+  createdBy: string;
+  name: string;
+  iconUrl?: string;
+  status: SquadStatus;
+}
+
+export interface SquadMembership extends DomainEntity {
+  squadId: string;
+  leagueId: string;
+  userId: string;
+  status: SquadMembershipStatus;
   joinedAt: Date;
 }
 

@@ -64,6 +64,8 @@ model User {
 
   tenant              Tenant             @relation(fields: [tenantId], references: [id])
   memberships         LeagueMembership[]
+  createdSquads       Squad[]            @relation("SquadCreatedBy")
+  squadMemberships    SquadMembership[]
   invitationsSent     LeagueInvitation[] @relation("InvitedBy")
   invitationsAccepted LeagueInvitation[] @relation("AcceptedBy")
   auditActions        CommissionerAuditLog[] @relation("AuditActor")
@@ -109,6 +111,8 @@ model League {
 
   tenant      Tenant             @relation(fields: [tenantId], references: [id])
   memberships      LeagueMembership[]
+  squads           Squad[]
+  squadMemberships SquadMembership[]
   contests         Contest[]
   invitations      LeagueInvitation[]
   auditLog         CommissionerAuditLog[]
@@ -133,6 +137,44 @@ model LeagueMembership {
 
   @@unique([leagueId, userId])
   @@map("league_memberships")
+}
+
+model Squad {
+  id        String   @id @default(uuid()) @db.Uuid
+  leagueId   String   @map("league_id") @db.Uuid
+  createdBy String   @map("created_by") @db.Uuid
+  name      String
+  iconUrl   String?  @map("icon_url")
+  status    String   @default("ACTIVE") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  league       League            @relation(fields: [leagueId], references: [id])
+  creator      User              @relation("SquadCreatedBy", fields: [createdBy], references: [id])
+  memberships  SquadMembership[]
+
+  @@index([leagueId, status])
+  @@map("squads")
+}
+
+model SquadMembership {
+  id        String   @id @default(uuid()) @db.Uuid
+  squadId   String   @map("squad_id") @db.Uuid
+  leagueId  String   @map("league_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  status    String   @default("ACTIVE") @db.VarChar(20)
+  joinedAt  DateTime @default(now()) @map("joined_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  squad  Squad  @relation(fields: [squadId], references: [id])
+  league League @relation(fields: [leagueId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([squadId, userId])
+  @@unique([leagueId, userId])
+  @@index([squadId, status])
+  @@map("squad_memberships")
 }
 
 model LeagueInvitation {

@@ -688,6 +688,243 @@ export type ImportMembersResponses = {
 
 export type ImportMembersResponse = ImportMembersResponses[keyof ImportMembersResponses];
 
+export type ListLeagueSquadsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/';
+};
+
+export type ListLeagueSquadsResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        squads: Array<{
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            iconUrl?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            memberCount: number;
+            createdAt: string;
+            updatedAt: string;
+            members?: Array<{
+                id: string;
+                squadId: string;
+                leagueId: string;
+                userId: string;
+                displayName?: string;
+                status: 'ACTIVE' | 'INACTIVE';
+                joinedAt: string;
+                createdAt: string;
+                updatedAt: string;
+            }>;
+        }>;
+    };
+};
+
+export type ListLeagueSquadsResponse = ListLeagueSquadsResponses[keyof ListLeagueSquadsResponses];
+
+export type CreateLeagueSquadData = {
+    body: {
+        name?: string;
+        iconUrl?: string;
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/';
+};
+
+export type CreateLeagueSquadResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        squad: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            iconUrl?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            memberCount: number;
+            createdAt: string;
+            updatedAt: string;
+            members?: Array<{
+                id: string;
+                squadId: string;
+                leagueId: string;
+                userId: string;
+                displayName?: string;
+                status: 'ACTIVE' | 'INACTIVE';
+                joinedAt: string;
+                createdAt: string;
+                updatedAt: string;
+            }>;
+        };
+    };
+};
+
+export type CreateLeagueSquadResponse = CreateLeagueSquadResponses[keyof CreateLeagueSquadResponses];
+
+export type GetLeagueSquadData = {
+    body?: never;
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/{squadId}';
+};
+
+export type GetLeagueSquadResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        squad: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            iconUrl?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            memberCount: number;
+            createdAt: string;
+            updatedAt: string;
+            members?: Array<{
+                id: string;
+                squadId: string;
+                leagueId: string;
+                userId: string;
+                displayName?: string;
+                status: 'ACTIVE' | 'INACTIVE';
+                joinedAt: string;
+                createdAt: string;
+                updatedAt: string;
+            }>;
+        };
+    };
+};
+
+export type GetLeagueSquadResponse = GetLeagueSquadResponses[keyof GetLeagueSquadResponses];
+
+export type UpdateLeagueSquadData = {
+    body: {
+        name?: string;
+        iconUrl?: string;
+    };
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/{squadId}';
+};
+
+export type UpdateLeagueSquadResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        squad: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            iconUrl?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            memberCount: number;
+            createdAt: string;
+            updatedAt: string;
+            members?: Array<{
+                id: string;
+                squadId: string;
+                leagueId: string;
+                userId: string;
+                displayName?: string;
+                status: 'ACTIVE' | 'INACTIVE';
+                joinedAt: string;
+                createdAt: string;
+                updatedAt: string;
+            }>;
+        };
+    };
+};
+
+export type UpdateLeagueSquadResponse = UpdateLeagueSquadResponses[keyof UpdateLeagueSquadResponses];
+
+export type AddSquadCoManagerData = {
+    body: {
+        userId: string;
+    };
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/{squadId}/members';
+};
+
+export type AddSquadCoManagerResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        membership: {
+            id: string;
+            squadId: string;
+            leagueId: string;
+            userId: string;
+            displayName?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type AddSquadCoManagerResponse = AddSquadCoManagerResponses[keyof AddSquadCoManagerResponses];
+
+export type RemoveSquadCoManagerData = {
+    body?: never;
+    path: {
+        id: string;
+        squadId: string;
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/{squadId}/members/{userId}';
+};
+
+export type RemoveSquadCoManagerResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        membership: {
+            id: string;
+            squadId: string;
+            leagueId: string;
+            userId: string;
+            displayName?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type RemoveSquadCoManagerResponse = RemoveSquadCoManagerResponses[keyof RemoveSquadCoManagerResponses];
+
 export type AcceptInvitationData = {
     body: {
         inviteCode: string;
@@ -891,6 +1128,285 @@ export type CreateContestResponses = {
 };
 
 export type CreateContestResponse = CreateContestResponses[keyof CreateContestResponses];
+
+export type CreateManagedContestData = {
+    body: {
+        name: string;
+        sportEventId: string;
+        contestType: 'SINGLE_EVENT';
+        configuration: {
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+            locksAt?: string;
+            minimumEntries?: number;
+            maxEntriesPerSquad?: number;
+            rosterSize?: number;
+            totalPrizePoolAmount?: number;
+            participantScoringRules: Array<{
+                participantScoringDefinitionId: string;
+                sortOrder: number;
+                config: {
+                    [key: string]: unknown;
+                };
+                active: boolean;
+            }>;
+            entryAggregationRule: {
+                aggregationDefinitionId: string;
+                config: {
+                    [key: string]: unknown;
+                };
+                active: boolean;
+            };
+            prizeDefinitions: Array<{
+                prizeDefinitionId: string;
+                displayName: string;
+                sortOrder: number;
+                ruleConfig: {
+                    [key: string]: unknown;
+                };
+                payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                amount?: number;
+                percentage?: number;
+                active: boolean;
+            }>;
+        };
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/';
+};
+
+export type CreateManagedContestResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        contest: {
+            id: string;
+            leagueId: string;
+            sportEventId: string;
+            name: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            configuration: {
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+                locksAt?: string;
+                minimumEntries?: number;
+                maxEntriesPerSquad?: number;
+                rosterSize?: number;
+                totalPrizePoolAmount?: number;
+                participantScoringRules: Array<{
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS' | 'PREDICTION';
+                    sortOrder: number;
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                }>;
+                entryAggregationRule: {
+                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                };
+                prizeDefinitions: Array<{
+                    prizeDefinitionId: string;
+                    displayName: string;
+                    sortOrder: number;
+                    ruleConfig?: {
+                        [key: string]: unknown;
+                    };
+                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    amount?: number;
+                    percentage?: number;
+                    active?: boolean;
+                    id: string;
+                }>;
+                id: string;
+                contestId: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type CreateManagedContestResponse = CreateManagedContestResponses[keyof CreateManagedContestResponses];
+
+export type GetManagedContestData = {
+    body?: never;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}';
+};
+
+export type GetManagedContestResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contest: {
+            id: string;
+            leagueId: string;
+            sportEventId: string;
+            name: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            configuration: {
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+                locksAt?: string;
+                minimumEntries?: number;
+                maxEntriesPerSquad?: number;
+                rosterSize?: number;
+                totalPrizePoolAmount?: number;
+                participantScoringRules: Array<{
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS' | 'PREDICTION';
+                    sortOrder: number;
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                }>;
+                entryAggregationRule: {
+                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                };
+                prizeDefinitions: Array<{
+                    prizeDefinitionId: string;
+                    displayName: string;
+                    sortOrder: number;
+                    ruleConfig?: {
+                        [key: string]: unknown;
+                    };
+                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    amount?: number;
+                    percentage?: number;
+                    active?: boolean;
+                    id: string;
+                }>;
+                id: string;
+                contestId: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type GetManagedContestResponse = GetManagedContestResponses[keyof GetManagedContestResponses];
+
+export type UpdateManagedContestConfigurationData = {
+    body: {
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+        locksAt?: string;
+        minimumEntries?: number;
+        maxEntriesPerSquad?: number;
+        rosterSize?: number;
+        totalPrizePoolAmount?: number;
+        participantScoringRules: Array<{
+            participantScoringDefinitionId: string;
+            sortOrder: number;
+            config: {
+                [key: string]: unknown;
+            };
+            active: boolean;
+        }>;
+        entryAggregationRule: {
+            aggregationDefinitionId: string;
+            config: {
+                [key: string]: unknown;
+            };
+            active: boolean;
+        };
+        prizeDefinitions: Array<{
+            prizeDefinitionId: string;
+            displayName: string;
+            sortOrder: number;
+            ruleConfig: {
+                [key: string]: unknown;
+            };
+            payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+            amount?: number;
+            percentage?: number;
+            active: boolean;
+        }>;
+    };
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration';
+};
+
+export type UpdateManagedContestConfigurationResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contest: {
+            id: string;
+            leagueId: string;
+            sportEventId: string;
+            name: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            configuration: {
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+                locksAt?: string;
+                minimumEntries?: number;
+                maxEntriesPerSquad?: number;
+                rosterSize?: number;
+                totalPrizePoolAmount?: number;
+                participantScoringRules: Array<{
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS' | 'PREDICTION';
+                    sortOrder: number;
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                }>;
+                entryAggregationRule: {
+                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                };
+                prizeDefinitions: Array<{
+                    prizeDefinitionId: string;
+                    displayName: string;
+                    sortOrder: number;
+                    ruleConfig?: {
+                        [key: string]: unknown;
+                    };
+                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    amount?: number;
+                    percentage?: number;
+                    active?: boolean;
+                    id: string;
+                }>;
+                id: string;
+                contestId: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type UpdateManagedContestConfigurationResponse = UpdateManagedContestConfigurationResponses[keyof UpdateManagedContestConfigurationResponses];
 
 export type DeleteContestData = {
     body?: never;

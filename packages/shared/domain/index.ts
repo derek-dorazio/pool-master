@@ -101,6 +101,8 @@ export type {
   SeasonRanking,
   SelectionConfig,
   SportConfig,
+  Squad,
+  SquadMembership,
   TeamRosterHistory,
   Tenant,
   TierAssignmentMode,

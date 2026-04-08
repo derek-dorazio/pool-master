@@ -16,6 +16,7 @@ import { pollConfigPlugin } from './plugins/poll-config';
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
 import { leaguesModule } from './modules/leagues/routes';
+import { squadsModule } from './modules/squads/routes';
 import { invitationsModule } from './modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
@@ -103,6 +104,7 @@ export function buildApp() {
   // Domain modules (protected by auth-guard)
   // =========================================================================
   app.register(leaguesModule, { prefix: '/api/v1/leagues' });
+  app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
   app.register(invitationsModule, { prefix: '/api/v1/invitations' });
   app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
   app.register(contestManagementModule, {

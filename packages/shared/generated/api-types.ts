@@ -446,6 +446,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/squads/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List squads in a league */
+        get: operations["listLeagueSquads"];
+        put?: never;
+        /** Create a squad in a league */
+        post: operations["createLeagueSquad"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/squads/{squadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get squad details */
+        get: operations["getLeagueSquad"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update squad details */
+        patch: operations["updateLeagueSquad"];
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/squads/{squadId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add or reactivate a squad co-manager */
+        post: operations["addSquadCoManager"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/squads/{squadId}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a squad co-manager */
+        delete: operations["removeSquadCoManager"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invitations/accept": {
         parameters: {
             query?: never;
@@ -475,6 +545,57 @@ export interface paths {
         put?: never;
         /** Create a new contest in a league */
         post: operations["createContest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contest-management/contests/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a commissioner-managed contest with configuration */
+        post: operations["createManagedContest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get commissioner contest-management detail */
+        get: operations["getManagedContest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update commissioner contest configuration */
+        put: operations["updateManagedContestConfiguration"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4808,6 +4929,354 @@ export interface operations {
             };
         };
     };
+    listLeagueSquads: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        squads: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            name: string;
+                            iconUrl?: string | null;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            memberCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                displayName?: string;
+                                /** @enum {string} */
+                                status: "ACTIVE" | "INACTIVE";
+                                /** Format: date-time */
+                                joinedAt: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    createLeagueSquad: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    /** Format: uri */
+                    iconUrl?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        squad: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            name: string;
+                            iconUrl?: string | null;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            memberCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                displayName?: string;
+                                /** @enum {string} */
+                                status: "ACTIVE" | "INACTIVE";
+                                /** Format: date-time */
+                                joinedAt: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getLeagueSquad: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        squad: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            name: string;
+                            iconUrl?: string | null;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            memberCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                displayName?: string;
+                                /** @enum {string} */
+                                status: "ACTIVE" | "INACTIVE";
+                                /** Format: date-time */
+                                joinedAt: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateLeagueSquad: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    /** Format: uri */
+                    iconUrl?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        squad: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            name: string;
+                            iconUrl?: string | null;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            memberCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                displayName?: string;
+                                /** @enum {string} */
+                                status: "ACTIVE" | "INACTIVE";
+                                /** Format: date-time */
+                                joinedAt: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    addSquadCoManager: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    userId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        membership: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            squadId: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            userId: string;
+                            displayName?: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    removeSquadCoManager: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        membership: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            squadId: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            userId: string;
+                            displayName?: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
     acceptInvitation: {
         parameters: {
             query?: never;
@@ -5055,6 +5524,369 @@ export interface operations {
                         selectionConfig?: {
                             [key: string]: unknown;
                         } | null;
+                    };
+                };
+            };
+        };
+    };
+    createManagedContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /** Format: uuid */
+                    sportEventId: string;
+                    /** @enum {string} */
+                    contestType: "SINGLE_EVENT";
+                    configuration: {
+                        /** @enum {string} */
+                        selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                        /** Format: date-time */
+                        locksAt?: string | null;
+                        minimumEntries?: number;
+                        maxEntriesPerSquad?: number;
+                        rosterSize?: number;
+                        totalPrizePoolAmount?: number | null;
+                        participantScoringRules: {
+                            participantScoringDefinitionId: string;
+                            sortOrder: number;
+                            /** @default {} */
+                            config: {
+                                [key: string]: unknown;
+                            };
+                            /** @default true */
+                            active: boolean;
+                        }[];
+                        entryAggregationRule: {
+                            aggregationDefinitionId: string;
+                            /** @default {} */
+                            config: {
+                                [key: string]: unknown;
+                            };
+                            /** @default true */
+                            active: boolean;
+                        };
+                        /** @default [] */
+                        prizeDefinitions: {
+                            prizeDefinitionId: string;
+                            displayName: string;
+                            sortOrder: number;
+                            /** @default {} */
+                            ruleConfig: {
+                                [key: string]: unknown;
+                            };
+                            /** @enum {string} */
+                            payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                            amount?: number;
+                            percentage?: number;
+                            /** @default true */
+                            active: boolean;
+                        }[];
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contest: {
+                            id: string;
+                            leagueId: string;
+                            sportEventId: string;
+                            name: string;
+                            /** @enum {string} */
+                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                            configuration: {
+                                /** @enum {string} */
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                /** Format: date-time */
+                                locksAt?: string | null;
+                                minimumEntries?: number;
+                                maxEntriesPerSquad?: number;
+                                rosterSize?: number;
+                                totalPrizePoolAmount?: number | null;
+                                participantScoringRules: {
+                                    /** @enum {string} */
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS" | "PREDICTION";
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                entryAggregationRule: {
+                                    /** @enum {string} */
+                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                };
+                                prizeDefinitions: {
+                                    prizeDefinitionId: string;
+                                    displayName: string;
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    ruleConfig: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @enum {string} */
+                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                                    amount?: number;
+                                    percentage?: number;
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                id: string;
+                                contestId: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getManagedContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contest: {
+                            id: string;
+                            leagueId: string;
+                            sportEventId: string;
+                            name: string;
+                            /** @enum {string} */
+                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                            configuration: {
+                                /** @enum {string} */
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                /** Format: date-time */
+                                locksAt?: string | null;
+                                minimumEntries?: number;
+                                maxEntriesPerSquad?: number;
+                                rosterSize?: number;
+                                totalPrizePoolAmount?: number | null;
+                                participantScoringRules: {
+                                    /** @enum {string} */
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS" | "PREDICTION";
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                entryAggregationRule: {
+                                    /** @enum {string} */
+                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                };
+                                prizeDefinitions: {
+                                    prizeDefinitionId: string;
+                                    displayName: string;
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    ruleConfig: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @enum {string} */
+                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                                    amount?: number;
+                                    percentage?: number;
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                id: string;
+                                contestId: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateManagedContestConfiguration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                    /** Format: date-time */
+                    locksAt?: string | null;
+                    minimumEntries?: number;
+                    maxEntriesPerSquad?: number;
+                    rosterSize?: number;
+                    totalPrizePoolAmount?: number | null;
+                    participantScoringRules: {
+                        participantScoringDefinitionId: string;
+                        sortOrder: number;
+                        /** @default {} */
+                        config: {
+                            [key: string]: unknown;
+                        };
+                        /** @default true */
+                        active: boolean;
+                    }[];
+                    entryAggregationRule: {
+                        aggregationDefinitionId: string;
+                        /** @default {} */
+                        config: {
+                            [key: string]: unknown;
+                        };
+                        /** @default true */
+                        active: boolean;
+                    };
+                    /** @default [] */
+                    prizeDefinitions: {
+                        prizeDefinitionId: string;
+                        displayName: string;
+                        sortOrder: number;
+                        /** @default {} */
+                        ruleConfig: {
+                            [key: string]: unknown;
+                        };
+                        /** @enum {string} */
+                        payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                        amount?: number;
+                        percentage?: number;
+                        /** @default true */
+                        active: boolean;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contest: {
+                            id: string;
+                            leagueId: string;
+                            sportEventId: string;
+                            name: string;
+                            /** @enum {string} */
+                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                            configuration: {
+                                /** @enum {string} */
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                /** Format: date-time */
+                                locksAt?: string | null;
+                                minimumEntries?: number;
+                                maxEntriesPerSquad?: number;
+                                rosterSize?: number;
+                                totalPrizePoolAmount?: number | null;
+                                participantScoringRules: {
+                                    /** @enum {string} */
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS" | "PREDICTION";
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                entryAggregationRule: {
+                                    /** @enum {string} */
+                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                };
+                                prizeDefinitions: {
+                                    prizeDefinitionId: string;
+                                    displayName: string;
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    ruleConfig: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @enum {string} */
+                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                                    amount?: number;
+                                    percentage?: number;
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                id: string;
+                                contestId: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };

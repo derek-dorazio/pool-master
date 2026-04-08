@@ -28,6 +28,8 @@ import type {
   Season,
   SelectionConfig,
   SportConfig,
+  Squad,
+  SquadMembership,
   Tenant,
   User,
 } from '../domain';
@@ -68,6 +70,25 @@ export interface LeagueMembershipRepository {
   findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null>;
   create(membership: Omit<LeagueMembership, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueMembership>;
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
+  delete(id: string): Promise<void>;
+}
+
+export interface SquadRepository {
+  findById(id: string): Promise<Squad | null>;
+  findByLeague(leagueId: string, includeInactive?: boolean): Promise<Squad[]>;
+  create(squad: Omit<Squad, 'id' | 'createdAt' | 'updatedAt'>): Promise<Squad>;
+  update(id: string, updates: Partial<Squad>): Promise<Squad>;
+  delete(id: string): Promise<void>;
+}
+
+export interface SquadMembershipRepository {
+  findBySquad(squadId: string, includeInactive?: boolean): Promise<SquadMembership[]>;
+  findBySquadAndUser(squadId: string, userId: string): Promise<SquadMembership | null>;
+  findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
+  create(
+    membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<SquadMembership>;
+  update(id: string, updates: Partial<SquadMembership>): Promise<SquadMembership>;
   delete(id: string): Promise<void>;
 }
 

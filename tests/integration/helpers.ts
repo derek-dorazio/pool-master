@@ -24,6 +24,7 @@ import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
 import { tenantPlugin } from '../../packages/core-api/src/core/tenant-context';
 import { authModule } from '../../packages/core-api/src/modules/auth/routes';
 import { leaguesModule } from '../../packages/core-api/src/modules/leagues/routes';
+import { squadsModule } from '../../packages/core-api/src/modules/squads/routes';
 import { invitationsModule } from '../../packages/core-api/src/modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
@@ -80,6 +81,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth' });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues' });
+  testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations' });
   testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
   testApp.register(contestManagementModule, {
@@ -233,6 +235,7 @@ export async function cleanupTestData(): Promise<void> {
   ];
   // Tables that reference leagues
   const leagueChildTables = [
+    'squad_memberships', 'squads',
     'season_notes', 'league_season_summaries', 'league_records', 'rivalry_records',
     'trophies', 'team_roster_history',
     'discoverable_leagues',
