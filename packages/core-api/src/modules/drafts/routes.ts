@@ -67,7 +67,19 @@ type SportEventParticipantWithParticipantRecord = Awaited<
 >[number] & {
   participant: Awaited<ReturnType<PrismaClient['participant']['findMany']>>[number];
 };
-type PoolParticipantRecord = Awaited<ReturnType<PrismaClient['contestParticipantPool']['findMany']>>[number];
+interface SelectionParticipantRecord {
+  sportEventParticipantId: string;
+  participantId: string;
+  participantName: string;
+  position?: string | null;
+  teamAffiliation?: string | null;
+  status?: string | null;
+  price?: number;
+  tier?: string | null;
+  orderIndex?: number;
+  isAvailable: boolean;
+  unavailableReason?: string;
+}
 type RosterPickRecord = Awaited<ReturnType<PrismaClient['rosterPick']['findMany']>>[number];
 type ContestMatchupRecord = Awaited<ReturnType<PrismaClient['contestMatchup']['findMany']>>[number];
 type ContestPickRecord = Awaited<ReturnType<PrismaClient['contestPick']['findMany']>>[number];
@@ -79,7 +91,7 @@ interface DraftContext {
   contestEntries: ContestEntryRecord[];
   memberships: MembershipRecord[];
   squadMemberships: SquadMembershipRecord[];
-  poolParticipants: PoolParticipantRecord[];
+  selectionParticipants: SelectionParticipantRecord[];
   contestMatchups: ContestMatchupRecord[];
 }
 
@@ -144,44 +156,6 @@ function findEntryForUser(
   if (!requestUserId) return undefined;
   const entryUserIdMap = buildEntryUserIdMap(context);
   return context.contestEntries.find((entry) => entryUserIdMap.get(entry.id) === requestUserId);
-}
-
-function requireContestSportEventId(context: DraftContext): string {
-  if (!context.contest.sportEventId) {
-    throw new Error(`Contest ${context.contest.id} is missing sportEventId`);
-  }
-
-  return context.contest.sportEventId;
-}
-
-async function loadContestSportEventParticipants(
-  prisma: PrismaClient,
-  context: DraftContext,
-): Promise<{
-  byId: Map<string, SportEventParticipantWithParticipantRecord>;
-  byParticipantId: Map<string, SportEventParticipantWithParticipantRecord>;
-}> {
-  const sportEventId = requireContestSportEventId(context);
-  const participantIds = Array.from(
-    new Set(context.poolParticipants.map((participant) => participant.participantId)),
-  );
-
-  const records = participantIds.length === 0
-    ? []
-    : await prisma.sportEventParticipant.findMany({
-        where: {
-          sportEventId,
-          participantId: { in: participantIds },
-        },
-        include: {
-          participant: true,
-        },
-      });
-
-  return {
-    byId: new Map(records.map((record) => [record.id, record])),
-    byParticipantId: new Map(records.map((record) => [record.participantId, record])),
-  };
 }
 
 async function loadSportEventParticipantsByIds(
@@ -275,7 +249,7 @@ function compareTierNames(a: string, b: string): number {
 
 function deriveTierConfig(
   selectionConfig: ContestSelectionConfig,
-  poolParticipants: PoolParticipantRecord[],
+  selectionParticipants: SelectionParticipantRecord[],
 ): DraftTierConfig[] {
   if (Array.isArray(selectionConfig?.tierConfig) && selectionConfig.tierConfig.length > 0) {
     return selectionConfig.tierConfig.map((tier, index) => {
@@ -293,7 +267,7 @@ function deriveTierConfig(
   }
 
   const groups = new Map<string, string[]>();
-  for (const participant of poolParticipants) {
+  for (const participant of selectionParticipants) {
     const tierName = participant.tier ?? 'Unassigned';
     const existing = groups.get(tierName) ?? [];
     existing.push(participant.participantId);
@@ -326,7 +300,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
   });
   if (!contest) return null;
 
-  const [selectionConfig, contestEntries, memberships, poolParticipants, contestMatchups] = await Promise.all([
+  const [selectionConfig, contestEntries, memberships, sportEventParticipants, contestMatchups] = await Promise.all([
     prisma.selectionConfig.findUnique({ where: { contestId } }),
     prisma.contestEntry.findMany({
       where: { contestId },
@@ -336,10 +310,18 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
       where: { leagueId: contest.leagueId },
       orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
     }),
-    prisma.contestParticipantPool.findMany({
-      where: { contestId },
-      orderBy: [{ ranking: 'asc' }, { id: 'asc' }],
-    }),
+    contest.sportEventId
+      ? prisma.sportEventParticipant.findMany({
+          where: { sportEventId: contest.sportEventId },
+          include: {
+            participant: true,
+            valuations: {
+              orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+            },
+          },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        })
+      : Promise.resolve([]),
     prisma.contestMatchup.findMany({
       where: { contestId },
       orderBy: [{ period: 'asc' }, { matchupIndex: 'asc' }],
@@ -363,7 +345,31 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
     contestEntries,
     memberships,
     squadMemberships,
-    poolParticipants,
+    selectionParticipants: sportEventParticipants.map((record) => {
+      const valuation = record.valuations[0];
+      const normalizedStatus = record.status?.toUpperCase?.();
+      const isAvailable = !normalizedStatus || !['INACTIVE', 'REMOVED', 'WITHDRAWN'].includes(normalizedStatus);
+
+      return {
+        sportEventParticipantId: record.id,
+        participantId: record.participantId,
+        participantName: record.participant.name,
+        position: record.participant.position,
+        teamAffiliation: record.participant.teamAffiliation,
+        status: record.status,
+        price: valuation?.price ?? undefined,
+        tier: valuation?.tier ?? null,
+        orderIndex: valuation?.orderIndex ?? undefined,
+        isAvailable,
+        unavailableReason: isAvailable
+          ? undefined
+          : `SportEventParticipant ${record.id} is unavailable with status ${record.status ?? 'UNKNOWN'}`,
+      };
+    }).sort((a, b) => {
+      const orderDiff = (a.orderIndex ?? Number.MAX_SAFE_INTEGER) - (b.orderIndex ?? Number.MAX_SAFE_INTEGER);
+      if (orderDiff !== 0) return orderDiff;
+      return a.participantName.localeCompare(b.participantName, undefined, { sensitivity: 'base' });
+    }),
     contestMatchups,
   };
 }
@@ -418,7 +424,7 @@ async function buildSnakeDraftResponse(
     prisma,
     sportEventParticipantIds,
   );
-  const tiers = deriveTierConfig(context.selectionConfig, context.poolParticipants);
+  const tiers = deriveTierConfig(context.selectionConfig, context.selectionParticipants);
   const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
 
   const entries = state.entryIds.map((entryId) => {
@@ -496,20 +502,14 @@ async function buildRosterSelectionResponse(
   const contestEntryById = new Map(context.contestEntries.map((entry) => [entry.id, entry]));
   const entryUserIdMap = buildEntryUserIdMap(context);
   const entryIds = context.contestEntries.map((entry) => entry.id);
-  const tiers = deriveTierConfig(context.selectionConfig, context.poolParticipants);
+  const tiers = deriveTierConfig(context.selectionConfig, context.selectionParticipants);
   const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
   const tierByParticipantId = new Map<string, DraftTierConfig>();
-  const {
-    byParticipantId: sportEventParticipantByParticipantId,
-  } = await loadContestSportEventParticipants(prisma, context);
   const priceBySportEventParticipantId = new Map(
-    context.poolParticipants.flatMap((participant) => {
-      const sportEventParticipant = sportEventParticipantByParticipantId.get(participant.participantId);
-      if (!sportEventParticipant) {
-        return [];
-      }
-      return [[sportEventParticipant.id, participant.cost ?? undefined] as const];
-    }),
+    context.selectionParticipants.map((participant) => [
+      participant.sportEventParticipantId,
+      participant.price,
+    ] as const),
   );
 
   for (const tier of tiers) {
@@ -596,19 +596,16 @@ async function buildRosterSelectionResponse(
   });
 
   const availableParticipantIds = context.selectionConfig?.isExclusive
-    ? context.poolParticipants
-        .flatMap((participant) => {
-          const sportEventParticipant = sportEventParticipantByParticipantId.get(participant.participantId);
-          if (!sportEventParticipant) return [];
-          if (rosterPicks.some((pick) => pick.sportEventParticipantId === sportEventParticipant.id)) {
-            return [];
-          }
-          return [sportEventParticipant.id];
-        })
-    : context.poolParticipants.flatMap((participant) => {
-        const sportEventParticipant = sportEventParticipantByParticipantId.get(participant.participantId);
-        return sportEventParticipant ? [sportEventParticipant.id] : [];
-      });
+    ? context.selectionParticipants.flatMap((participant) => {
+        if (!participant.isAvailable) return [];
+        if (rosterPicks.some((pick) => pick.sportEventParticipantId === participant.sportEventParticipantId)) {
+          return [];
+        }
+        return [participant.sportEventParticipantId];
+      })
+    : context.selectionParticipants.flatMap((participant) =>
+        participant.isAvailable ? [participant.sportEventParticipantId] : [],
+      );
 
   const isComplete = rosterSize > 0
     ? entries.every((entry) => (picksByEntry.get(entry.id)?.length ?? 0) >= rosterSize)
@@ -1502,7 +1499,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const tiers = deriveTierConfig(context.selectionConfig, context.poolParticipants);
+      const tiers = deriveTierConfig(context.selectionConfig, context.selectionParticipants);
       const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
       if (rosterSize <= 0) {
         return sendWithStatus(reply, 400, {
@@ -1523,20 +1520,21 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
 
       const canonicalParticipantId = sportEventParticipant.participantId;
-      const poolParticipant = context.poolParticipants.find(
-        (participant) => participant.participantId === canonicalParticipantId,
+      const selectionParticipant = context.selectionParticipants.find(
+        (participant) => participant.sportEventParticipantId === participantId
+          || participant.participantId === canonicalParticipantId,
       );
-      if (!poolParticipant) {
+      if (!selectionParticipant) {
         return sendWithStatus(reply, 400, {
-          error: 'PARTICIPANT_NOT_IN_POOL',
-          message: `SportEventParticipant ${participantId} is not in the contest pool`,
+          error: 'PARTICIPANT_NOT_SELECTABLE',
+          message: `SportEventParticipant ${participantId} is not selectable for contest ${contestId}`,
         });
       }
-      if (!poolParticipant.isAvailable) {
+      if (!selectionParticipant.isAvailable) {
         return sendWithStatus(reply, 400, {
           error: 'PARTICIPANT_UNAVAILABLE',
           message:
-            poolParticipant.unavailableReason
+            selectionParticipant.unavailableReason
             ?? `SportEventParticipant ${participantId} is unavailable`,
         });
       }
@@ -1581,7 +1579,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
 
       let draftRound = existingEntryPicks.length + 1;
       if (context.contest.selectionType === SelectionType.TIERED) {
-        const participantTier = poolParticipant.tier;
+        const participantTier = selectionParticipant.tier;
         if (!participantTier) {
           return sendWithStatus(reply, 400, {
             error: 'TIER_MISSING',

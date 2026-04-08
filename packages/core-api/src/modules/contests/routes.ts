@@ -27,11 +27,6 @@ import {
   PrismaDraftSessionRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
-  PrismaContestPoolRepository,
-  PrismaContestParticipantPoolRepository,
-  PrismaContestMatchupRepository,
-  PrismaParticipantRepository,
-  PrismaParticipantSeasonRecordRepository,
 } from '../../adapters';
 import { requirePermission } from '../../core/require-permission';
 import { ContestService } from './service';
@@ -39,9 +34,6 @@ import { OverrideService } from './override-service';
 import { ContestScoringRecalculationService } from '../contest-scoring';
 import { createContestHandlers } from './handler';
 import { createOverrideHandlers } from './override-handler';
-import { ContestPoolService } from '../participants/pool-service';
-import { PricingAndTierService } from '../participants/pricing-service';
-import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
 
 export async function contestsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -62,26 +54,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
     undefined,
     prisma,
   );
-  const poolRepo = new PrismaContestPoolRepository(prisma);
-  const poolParticipantRepo = new PrismaContestParticipantPoolRepository(prisma);
-  const contestMatchupRepo = new PrismaContestMatchupRepository(prisma);
-  const participantRepo = new PrismaParticipantRepository(prisma);
-  const seasonRecordRepo = new PrismaParticipantSeasonRecordRepository(prisma);
-  const poolService = new ContestPoolService(
-    poolRepo,
-    poolParticipantRepo,
-    participantRepo,
-    contestMatchupRepo,
-    prisma,
-    new IngestionPersistence(prisma),
-  );
-  const pricingService = new PricingAndTierService(
-    poolRepo,
-    poolParticipantRepo,
-    seasonRecordRepo,
-    participantRepo,
-  );
-  const handlers = createContestHandlers(contestService, { poolService, pricingService });
+  const handlers = createContestHandlers(contestService);
 
   // --- League-scoped contest routes (under /api/v1/leagues/:id/contests) ---
   // Note: These are registered under the leagues prefix, so :id = leagueId

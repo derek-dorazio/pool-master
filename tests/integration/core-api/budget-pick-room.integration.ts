@@ -4,7 +4,7 @@
  * This suite is intentionally self-contained:
  * - creates its own owner user
  * - creates its own league and contest through the real routes
- * - seeds a tiny contest pool with real participant records directly
+ * - seeds event participants plus valuations with real participant records directly
  * - reads the room state
  * - submits a budget pick through the real draft route
  * - verifies read-after-write room state
@@ -168,36 +168,19 @@ describe('Budget Pick Room Integration', () => {
       data: { sportEventId: sportEvent.id },
     });
 
-    const pool = await prisma.contestPool.create({
-      data: {
-        contestId,
-        sport: 'GOLF',
-        poolType: 'CUSTOM',
-        config: {},
-      },
-    });
-
-    await prisma.contestParticipantPool.createMany({
+    await prisma.sportEventParticipantValuation.createMany({
       data: [
         {
-          poolId: pool.id,
-          contestId,
-          participantId: firstParticipantId,
-          cost: firstParticipantPrice,
-          tier: null,
-          tierAssignmentMethod: 'MANUAL',
-          ranking: 1,
-          isAvailable: true,
+          sportEventParticipantId: firstSportEventParticipantId,
+          price: firstParticipantPrice,
+          orderIndex: 1,
+          valuationSource: 'integration-test',
         },
         {
-          poolId: pool.id,
-          contestId,
-          participantId: secondParticipantId,
-          cost: 5100,
-          tier: null,
-          tierAssignmentMethod: 'MANUAL',
-          ranking: 2,
-          isAvailable: true,
+          sportEventParticipantId: secondSportEventParticipantId,
+          price: 5100,
+          orderIndex: 2,
+          valuationSource: 'integration-test',
         },
       ],
     });

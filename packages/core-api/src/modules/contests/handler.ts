@@ -7,10 +7,7 @@ import {
   ContestType,
   ScoringEngine,
   SelectionType,
-  type PricingConfig,
   type Sport,
-  type TierConfig,
-  type TierAssignmentMethod,
 } from '@poolmaster/shared/domain';
 import type { z } from 'zod';
 import { z as zod } from 'zod';
@@ -30,16 +27,6 @@ import {
   ContestNotFoundError,
   ContestOperationError,
 } from './service';
-import type { ContestPoolService } from '../participants/pool-service';
-import {
-  PoolAlreadyExistsError,
-  PoolEventMatchupsUnavailableError,
-  PoolEventNotFoundError,
-  PoolEventParticipantsUnavailableError,
-  PoolEventRequiredError,
-} from '../participants/pool-service';
-import type { PricingAndTierService } from '../participants/pricing-service';
-import { PoolNotFoundForPricingError, PricingLockedError } from '../participants/pricing-service';
 
 const TierDefinitionBodySchema = zod.object({
   tierId: zod.string(),
@@ -133,13 +120,7 @@ const UpdateContestBodySchema = zod.object({
   isExclusive: zod.boolean().optional(),
 });
 
-export function createContestHandlers(
-  contestService: ContestService,
-  options?: {
-    poolService?: ContestPoolService;
-    pricingService?: PricingAndTierService;
-  },
-) {
+export function createContestHandlers(contestService: ContestService) {
   return {
     createContest,
     listContests,
@@ -187,83 +168,8 @@ export function createContestHandlers(
         scoringStopsOnElimination: body.scoringStopsOnElimination,
       });
 
-      try {
-        if (shouldProvisionEventPool(body.selectionType) && body.eventId && options?.poolService) {
-          try {
-            await options.poolService.createPool({
-              contestId: result.contest.id,
-              sport: body.sport as Sport,
-              eventId: body.eventId,
-              poolType: 'EVENT_FIELD',
-              config: {
-                includeAlternates: false,
-                autoUpdateOnFieldChange: true,
-              },
-            });
-          } catch (err) {
-            if (!(err instanceof PoolAlreadyExistsError)) {
-              throw err;
-            }
-          }
-
-          await options.poolService.resolvePool(result.contest.id);
-
-          if (body.selectionType === SelectionType.BUDGET_PICK && options.pricingService) {
-            await options.pricingService.calculateAndApplyPrices(
-              result.contest.id,
-              buildPricingConfig(result.contest.id, body.sport as Sport, body.selectionConfig),
-            );
-          }
-
-          if (body.selectionType === SelectionType.TIERED && options.pricingService) {
-            const tierConfig = buildTierConfig(
-              result.contest.id,
-              body.sport as Sport,
-              body.selectionConfig,
-            );
-            await options.pricingService.assignAndApplyTiers(result.contest.id, tierConfig);
-            const existingSelectionConfig = result.selectionConfig;
-            if (existingSelectionConfig.id) {
-              await contestService.updateSelectionConfig(existingSelectionConfig.id, {
-                tierConfig: tierConfig.tiers,
-                tierAssignmentMethod: resolveStoredTierAssignmentMethod(
-                  body.selectionConfig?.tierAssignmentMethod,
-                ),
-              });
-              result.selectionConfig = {
-                ...existingSelectionConfig,
-                tierConfig: tierConfig.tiers,
-                tierAssignmentMethod: resolveStoredTierAssignmentMethod(
-                  body.selectionConfig?.tierAssignmentMethod,
-                ),
-              };
-            }
-          }
-        }
-      } catch (setupError) {
-        try {
-          await contestService.deleteContest(result.contest.id, tenantId);
-        } catch (cleanupError) {
-          request.log.error(
-            { err: cleanupError, contestId: result.contest.id },
-            'failed to clean up contest after setup error',
-          );
-        }
-        throw setupError;
-      }
-
       return reply.status(201).send(toContestResponse(result.contest, result.selectionConfig));
     } catch (err) {
-      if (
-        err instanceof PoolEventRequiredError ||
-        err instanceof PoolEventNotFoundError ||
-        err instanceof PoolEventParticipantsUnavailableError ||
-        err instanceof PoolEventMatchupsUnavailableError ||
-        err instanceof PoolNotFoundForPricingError ||
-        err instanceof PricingLockedError
-      ) {
-        return reply.status(422).send({ error: 'CONTEST_SETUP_FAILED', message: err.message });
-      }
       if (err instanceof ContestOperationError) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
       }
@@ -443,109 +349,6 @@ function validateCreateContestBody(body: z.infer<typeof CreateContestBodySchema>
     if (!tiers || tiers.length === 0) {
       throw new ContestOperationError('Tiered contests require tier configuration');
     }
-  }
-}
-
-function shouldProvisionEventPool(selectionType: string): boolean {
-  return new Set<string>([
-    SelectionType.SNAKE_DRAFT,
-    SelectionType.TIERED,
-    SelectionType.BUDGET_PICK,
-  ]).has(selectionType);
-}
-
-function buildPricingConfig(
-  contestId: string,
-  sport: Sport,
-  selectionConfig?: z.infer<typeof SelectionConfigBodySchema>,
-): PricingConfig {
-  const budget = Math.max(selectionConfig?.budget ?? 5000000, 1);
-  const rosterSize = Math.max(selectionConfig?.rosterSize ?? 6, 1);
-  const averageBudget = budget / rosterSize;
-  const pricingMethod = selectionConfig?.pricingMethod ?? 'WORLD_RANKING';
-  const pricingWeights = resolvePricingWeights(pricingMethod);
-
-  return {
-    contestId,
-    sport,
-    totalBudget: budget,
-    minPrice: Math.max(1000, Math.round(averageBudget * 0.3)),
-    maxPrice: Math.max(5000, Math.round(averageBudget * 2.2)),
-    priceIncrement: 1000,
-    rankingWeight: pricingWeights.rankingWeight,
-    formWeight: pricingWeights.formWeight,
-    oddsWeight: pricingWeights.oddsWeight,
-    seedWeight: pricingWeights.seedWeight,
-    manualOverrides: [],
-  };
-}
-
-function buildTierConfig(
-  contestId: string,
-  sport: Sport,
-  selectionConfig?: z.infer<typeof SelectionConfigBodySchema>,
-): TierConfig {
-  const tierConfig = selectionConfig?.tierConfig;
-  if (tierConfig && tierConfig.length > 0) {
-    return {
-      contestId,
-      sport,
-      assignmentMode: mapTierAssignmentMode(selectionConfig?.tierAssignmentMethod),
-      tiers: tierConfig,
-    };
-  }
-
-  throw new ContestOperationError('Tiered contests require tier configuration');
-}
-
-function mapTierAssignmentMode(assignmentMethod?: string): TierConfig['assignmentMode'] {
-  switch (assignmentMethod) {
-    case 'SEED':
-      return 'AUTO_SEED';
-    case 'COMMISSIONER':
-      return 'MANUAL';
-    case 'WORLD_RANKING':
-      return 'AUTO_RANKING';
-    case 'ODDS':
-      return 'AUTO_ODDS';
-    case 'PRICE':
-      return 'AUTO_PRICE';
-    case 'RANKING':
-    default:
-      return 'AUTO_RANKING';
-  }
-}
-
-function resolveStoredTierAssignmentMethod(assignmentMethod?: string): TierAssignmentMethod {
-  switch (assignmentMethod) {
-    case 'SEED':
-      return 'SEED';
-    case 'ODDS':
-      return 'ODDS';
-    case 'COMMISSIONER':
-      return 'COMMISSIONER';
-    case 'WORLD_RANKING':
-    default:
-      return 'WORLD_RANKING';
-  }
-}
-
-function resolvePricingWeights(pricingMethod: string): Pick<
-  PricingConfig,
-  'rankingWeight' | 'formWeight' | 'oddsWeight' | 'seedWeight'
-> {
-  switch (pricingMethod) {
-    case 'ODDS':
-      return { rankingWeight: 0.15, formWeight: 0.1, oddsWeight: 0.75, seedWeight: 0 };
-    case 'SEED':
-      return { rankingWeight: 0, formWeight: 0, oddsWeight: 0, seedWeight: 1 };
-    case 'SEASON_STATS':
-      return { rankingWeight: 0.2, formWeight: 0.8, oddsWeight: 0, seedWeight: 0 };
-    case 'COMMISSIONER':
-      return { rankingWeight: 0.7, formWeight: 0.3, oddsWeight: 0, seedWeight: 0 };
-    case 'WORLD_RANKING':
-    default:
-      return { rankingWeight: 0.75, formWeight: 0.25, oddsWeight: 0, seedWeight: 0 };
   }
 }
 

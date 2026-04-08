@@ -4,7 +4,7 @@
  * This suite is intentionally self-contained:
  * - creates its own owner user
  * - creates its own league, contest, and contest entry
- * - seeds a tiny contest pool through Prisma using real models
+ * - seeds event participants plus valuations through Prisma using real models
  * - reads the draft room state
  * - submits a selection through the real draft route
  * - verifies read-after-write room state
@@ -165,25 +165,13 @@ describe('Draft Session Flow Integration', () => {
       },
     });
 
-    const pool = await prisma.contestPool.create({
+    await prisma.sportEventParticipantValuation.create({
       data: {
-        contestId,
-        sport: 'GOLF',
-        poolType: 'EVENT_FIELD',
-        config: {},
-      },
-    });
-
-    await prisma.contestParticipantPool.create({
-      data: {
-        poolId: pool.id,
-        contestId,
-        participantId,
-        cost: 1200,
+        sportEventParticipantId,
+        price: 1200,
         tier: 'tier-1',
-        tierAssignmentMethod: 'AUTO_ODDS',
-        ranking: 1,
-        isAvailable: true,
+        orderIndex: 1,
+        valuationSource: 'integration-test',
       },
     });
   });
