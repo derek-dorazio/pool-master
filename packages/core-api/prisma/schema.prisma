@@ -303,7 +303,6 @@ model Participant {
   externalIds     Json     @default("{}") @map("external_ids")
 
   sport            Sport                    @relation(fields: [sportId], references: [id])
-  poolEntries      ContestParticipantPool[]
   contestPicks     ContestPick[]
   draftPicks       DraftPick[]
   seasonRecords    ParticipantSeasonRecord[]
@@ -396,8 +395,6 @@ model Contest {
   sportEvent      SportEvent?             @relation(fields: [sportEventId], references: [id])
   configuration   ContestConfiguration?
   selectionConfig SelectionConfig?
-  contestPool     ContestPool?
-  pool            ContestParticipantPool[]
   entries         ContestEntry[]
   picks           ContestPick[]
   brackets        BracketPrediction[]
@@ -536,53 +533,6 @@ model SelectionConfig {
   contest Contest @relation(fields: [contestId], references: [id])
 
   @@map("selection_configs")
-}
-
-// =============================================================================
-// Contest Pool (configuration) & Pool Participants (resolved membership)
-// =============================================================================
-
-model ContestPool {
-  id                     String    @id @default(uuid()) @db.Uuid
-  contestId              String    @unique @map("contest_id") @db.Uuid
-  sport                  String    @db.VarChar(50)
-  eventId                String?   @map("event_id") @db.Uuid
-  poolType               String    @map("pool_type") @db.VarChar(50)
-  config                 Json      @default("{}")
-  excludedParticipantIds String[]  @default([]) @map("excluded_participant_ids") @db.Uuid
-  poolLocked             Boolean   @default(false) @map("pool_locked")
-  poolLockedAt           DateTime? @map("pool_locked_at") @db.Timestamptz
-  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  contest      Contest                 @relation(fields: [contestId], references: [id])
-  participants ContestParticipantPool[]
-
-  @@map("contest_pools")
-}
-
-model ContestParticipantPool {
-  id                   String   @id @default(uuid()) @db.Uuid
-  poolId               String   @map("pool_id") @db.Uuid
-  contestId            String   @map("contest_id") @db.Uuid
-  participantId        String   @map("participant_id") @db.Uuid
-  cost                 Int?
-  tier                 String?
-  tierAssignmentMethod String?  @map("tier_assignment_method")
-  ranking              Int?
-  isAvailable          Boolean  @default(true) @map("is_available")
-  unavailableReason    String?  @map("unavailable_reason") @db.VarChar(255)
-  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  pool        ContestPool @relation(fields: [poolId], references: [id])
-  contest     Contest     @relation(fields: [contestId], references: [id])
-  participant Participant @relation(fields: [participantId], references: [id])
-
-  @@unique([contestId, participantId])
-  @@index([contestId])
-  @@index([poolId, tier])
-  @@map("contest_participant_pool")
 }
 
 /// A contest-owned matchup or bracket slot for prediction contests.

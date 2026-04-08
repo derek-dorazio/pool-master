@@ -20,7 +20,6 @@ import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
   ContestStatus,
   ContestType,
-  PoolType,
   TierAssignmentMethod,
   LeagueVisibility,
   ScoringEngine,
@@ -199,25 +198,13 @@ describe('Contest Entry Negative Integration', () => {
       },
     });
 
-    await prisma.contestPool.create({
+    await prisma.sportEventParticipantValuation.create({
       data: {
-        contestId: openContestId,
-        sport: Sport.GOLF,
-        poolType: PoolType.EVENT_FIELD,
-        config: {},
-      },
-    });
-
-    await prisma.contestParticipantPool.create({
-      data: {
-        poolId: (await prisma.contestPool.findUniqueOrThrow({ where: { contestId: openContestId } })).id,
-        contestId: openContestId,
-        participantId: participant.id,
-        cost: 1000,
+        sportEventParticipantId: sportEventParticipant.id,
+        price: 1000,
         tier: 'tier-1',
-        tierAssignmentMethod: TierAssignmentMethod.ODDS,
-        ranking: 1,
-        isAvailable: true,
+        orderIndex: 1,
+        valuationSource: 'integration-test',
       },
     });
 
