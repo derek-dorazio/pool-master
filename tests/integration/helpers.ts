@@ -46,7 +46,6 @@ import { NotificationDispatcher } from '../../packages/core-api/src/modules/noti
 import { InMemoryRateLimiter } from '../../packages/core-api/src/modules/notifications/core/rate-limiter';
 import { EventGrouper } from '../../packages/core-api/src/modules/notifications/core/event-grouper';
 import { ScheduledRunner } from '../../packages/core-api/src/modules/notifications/core/scheduled-runner';
-import { WeeklyDigestService } from '../../packages/core-api/src/modules/notifications/core/weekly-digest';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const TEST_TENANT_ID = randomUUID();
@@ -117,12 +116,10 @@ async function buildTestApp(): Promise<FastifyInstance> {
   const dispatcher = new NotificationDispatcher(prisma, notifChannels, rateLimiter);
   const eventGrouper = new EventGrouper();
   const scheduledRunner = new ScheduledRunner(prisma, dispatcher);
-  const digestService = new WeeklyDigestService(prisma, notifChannels);
-
   testApp.register(notificationsModule, {
     prefix: '/api/v1',
     prisma, channels: notifChannels, dispatcher, rateLimiter,
-    eventGrouper, scheduledRunner, digestService,
+    eventGrouper, scheduledRunner,
   });
 
   await testApp.ready();
@@ -240,9 +237,9 @@ export async function cleanupTestData(): Promise<void> {
   // Tables that reference contests
   const contestChildTables = [
     'contest_entry_participant_score_events', 'contest_entry_participant_scores', 'contest_entry_prize_awards',
-    'contest_entries', 'contest_standings', 'contest_results', 'scoring_checkpoints',
+    'contest_entries', 'scoring_checkpoints',
     'draft_sessions', 'draft_picks', 'selection_configs', 'bracket_predictions',
-    'contest_participant_pool', 'contest_pools', 'contest_matchups', 'roster_picks', 'contest_picks', 'payout_history',
+    'contest_participant_pool', 'contest_pools', 'contest_matchups', 'roster_picks', 'contest_picks',
     'participant_contest_scoring_rules', 'contest_entry_aggregation_rules', 'contest_prize_definitions', 'contest_configurations',
     'commissioner_audit_log', 'commissioner_action_items', 'discoverable_contests',
   ];
@@ -250,7 +247,7 @@ export async function cleanupTestData(): Promise<void> {
   const leagueChildTables = [
     'squad_memberships', 'squads',
     'season_notes', 'league_season_summaries', 'league_records', 'rivalry_records',
-    'trophies', 'team_roster_history',
+    'trophies',
     'discoverable_leagues',
   ];
 

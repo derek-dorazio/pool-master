@@ -490,7 +490,7 @@ export interface DraftPick extends DomainEntity {
 
 // --- Standings & Results ---
 
-export interface ContestResult extends DomainEntity {
+export interface ContestHistoryResult extends DomainEntity {
   contestId: string;
   entryId: string;
   finalRank: number;
@@ -522,16 +522,6 @@ export interface ContestResult extends DomainEntity {
 
 // --- Contest History ---
 
-export interface TeamRosterHistory {
-  id: string;
-  contestId: string;
-  entryId: string;
-  lockedAt: Date;
-  roster: RosterHistoryEntry[];
-  draftBudgetUsed?: number;
-  tiersSelected?: TierSelection[];
-}
-
 export interface RosterHistoryEntry {
   participantId: string;
   participantName: string;
@@ -547,7 +537,7 @@ export interface TierSelection {
   participantIds: string[];
 }
 
-export interface PayoutHistoryRecord {
+export interface ContestHistoryPayout {
   id: string;
   contestId: string;
   leagueId: string;
@@ -573,8 +563,8 @@ export interface ContestHistorySummary {
   startedAt?: Date;
   endedAt?: Date;
   numEntries: number;
-  finalStandings: ContestResult[];
-  payouts: PayoutHistoryRecord[];
+  finalStandings: ContestHistoryResult[];
+  payouts: ContestHistoryPayout[];
   highlights: ContestHighlights;
 }
 

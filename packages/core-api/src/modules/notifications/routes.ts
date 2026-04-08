@@ -6,7 +6,6 @@ import type { NotificationDispatcher } from './core/dispatcher';
 import type { InMemoryRateLimiter } from './core/rate-limiter';
 import type { EventGrouper } from './core/event-grouper';
 import type { ScheduledRunner } from './core/scheduled-runner';
-import type { WeeklyDigestService } from './core/weekly-digest';
 import type { Channels } from './channels/channel-factory';
 import { getDefaultPreferences } from './core/preference-service';
 import { DeliveryStatus } from '@poolmaster/shared/domain';
@@ -41,14 +40,13 @@ export interface NotificationModuleOpts {
   rateLimiter: InMemoryRateLimiter;
   eventGrouper: EventGrouper;
   scheduledRunner: ScheduledRunner;
-  digestService: WeeklyDigestService;
 }
 
 export async function notificationsModule(
   app: FastifyInstance,
   opts: NotificationModuleOpts,
 ): Promise<void> {
-  const { prisma, channels, dispatcher, eventGrouper, scheduledRunner, digestService } = opts;
+  const { prisma, channels, dispatcher, eventGrouper, scheduledRunner } = opts;
 
   // --- In-App Notification Centre ---
 
@@ -462,23 +460,6 @@ export async function notificationsModule(
     async (request) => {
       const count = await scheduledRunner.cancelForSource(request.params.sourceType, request.params.sourceId);
       return { cancelled: count };
-    },
-  );
-
-  // --- Weekly Digest ---
-
-  app.post<{ Params: { leagueId: string } }>(
-    '/notifications/digest/:leagueId',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Trigger weekly digest for a league',
-        operationId: 'triggerWeeklyDigest',
-        response: { 200: zodToJsonSchema(NotificationDispatchResponseSchema) },
-      },
-    },
-    async (request) => {
-      return digestService.sendDigest(request.params.leagueId);
     },
   );
 

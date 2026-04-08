@@ -49,7 +49,6 @@ import { NotificationDispatcher } from './modules/notifications/core/dispatcher'
 import { InMemoryRateLimiter } from './modules/notifications/core/rate-limiter';
 import { EventGrouper } from './modules/notifications/core/event-grouper';
 import { ScheduledRunner } from './modules/notifications/core/scheduled-runner';
-import { WeeklyDigestService } from './modules/notifications/core/weekly-digest';
 import { registerPushTriggers } from './modules/notifications/triggers/push-triggers';
 import { notificationsModule } from './modules/notifications/routes';
 
@@ -152,8 +151,6 @@ export function buildApp() {
   const dispatcher = new NotificationDispatcher(prisma, notifChannels, rateLimiter);
   const eventGrouper = new EventGrouper();
   const scheduledRunner = new ScheduledRunner(prisma, dispatcher);
-  const digestService = new WeeklyDigestService(prisma, notifChannels);
-
   app.register(notificationsModule, {
     prefix: '/api/v1',
     prisma,
@@ -162,7 +159,6 @@ export function buildApp() {
     rateLimiter,
     eventGrouper,
     scheduledRunner,
-    digestService,
   });
 
   // =========================================================================

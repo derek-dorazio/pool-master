@@ -18,7 +18,6 @@ export type {
   ContestMatchupRepository,
   ContestPickRepository,
   ContestRepository,
-  ContestResultRepository,
   DraftSessionRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,

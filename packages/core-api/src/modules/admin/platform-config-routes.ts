@@ -12,7 +12,6 @@ import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
 import type { DunningConfigService } from './dunning-config-service';
 import type { ChannelConfigService } from './channel-config-service';
-import type { DigestConfigService } from './digest-config-service';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -40,7 +39,6 @@ export function registerPlatformConfigRoutes(
     ingestionConfig: IngestionConfigService;
     dunningConfig: DunningConfigService;
     channelConfig: ChannelConfigService;
-    digestConfig: DigestConfigService;
   },
 ): void {
   const {
@@ -48,7 +46,6 @@ export function registerPlatformConfigRoutes(
     ingestionConfig,
     dunningConfig,
     channelConfig,
-    digestConfig,
   } = services;
 
   // -------------------------------------------------------------------------
@@ -362,93 +359,4 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  // -------------------------------------------------------------------------
-  // Weekly Digest Configuration
-  // -------------------------------------------------------------------------
-
-  fastify.get('/config/weekly-digest', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get weekly digest configuration',
-      operationId: 'adminGetDigestConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async () => {
-      return digestConfig.getConfig();
-    },
-  });
-
-  fastify.put('/config/weekly-digest', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Update weekly digest configuration',
-      operationId: 'adminUpdateDigestConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        properties: {
-          subjectTemplate: { type: 'string', minLength: 1 },
-          headerTemplate: { type: 'string', minLength: 1 },
-          footerTemplate: { type: 'string', minLength: 1 },
-          includeStandings: { type: 'boolean' },
-          includeHighlights: { type: 'boolean' },
-          includeUpcomingEvents: { type: 'boolean' },
-          lookbackDays: { type: 'integer', minimum: 1, maximum: 30 },
-          sendDay: {
-            type: 'string',
-            enum: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'],
-          },
-          sendHourUtc: { type: 'integer', minimum: 0, maximum: 23 },
-          enabled: { type: 'boolean' },
-        },
-      },
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Body: {
-          subjectTemplate?: string;
-          headerTemplate?: string;
-          footerTemplate?: string;
-          includeStandings?: boolean;
-          includeHighlights?: boolean;
-          includeUpcomingEvents?: boolean;
-          lookbackDays?: number;
-          sendDay?: string;
-          sendHourUtc?: number;
-          enabled?: boolean;
-        };
-      }>,
-    ) => {
-      return digestConfig.updateConfig(request.body);
-    },
-  });
-
-  fastify.post('/config/weekly-digest/reset', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Reset weekly digest configuration to defaults',
-      operationId: 'adminResetDigestConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async () => {
-      return digestConfig.resetDefaults();
-    },
-  });
-
-  fastify.get('/config/weekly-digest/preview', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Preview weekly digest for a league',
-      operationId: 'adminPreviewDigest',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Querystring: { leagueId?: string };
-      }>,
-    ) => {
-      const leagueId = (request.query as { leagueId?: string }).leagueId;
-      return { preview: digestConfig.previewDigest(leagueId) };
-    },
-  });
 }

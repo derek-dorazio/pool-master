@@ -12,7 +12,6 @@ import type {
   ContestEntry,
   ContestMatchup,
   ContestPick,
-  ContestResult,
   DraftPick,
   DraftSession,
   League,
@@ -210,13 +209,6 @@ export interface DraftSessionRepository {
   update(id: string, updates: Partial<DraftSession>): Promise<DraftSession>;
   getPicks(sessionId: string): Promise<DraftPick[]>;
   addPick(pick: Omit<DraftPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<DraftPick>;
-}
-
-// --- Results ---
-
-export interface ContestResultRepository {
-  findByContest(contestId: string): Promise<ContestResult[]>;
-  create(result: Omit<ContestResult, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestResult>;
 }
 
 // --- Commissioner Action Items ---

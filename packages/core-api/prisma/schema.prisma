@@ -399,7 +399,6 @@ model Contest {
   picks           ContestPick[]
   brackets        BracketPrediction[]
   draftSession    DraftSession?
-  results         ContestResult[]
 
   @@index([leagueId])
   @@index([sportEventId])
@@ -758,86 +757,6 @@ model DraftPick {
 // =============================================================================
 // Results
 // =============================================================================
-
-model ContestResult {
-  id          String   @id @default(uuid()) @db.Uuid
-  contestId   String   @map("contest_id") @db.Uuid
-  entryId     String   @map("entry_id") @db.Uuid
-  finalRank   Int      @map("final_rank")
-  totalScore  Float    @map("total_score")
-  prizeAmount Int?     @map("prize_amount")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  // Denormalised history fields (Plan 04 — immutable after contest close)
-  leagueId              String?  @map("league_id") @db.Uuid
-  seasonId              String?  @map("season_id") @db.Uuid
-  leagueMembershipId    String?  @map("league_membership_id") @db.Uuid
-  contestName           String?  @map("contest_name")
-  contestType           String?  @map("contest_type") @db.VarChar(50)
-  sport                 String?  @db.VarChar(50)
-  numEntries            Int?     @map("num_entries")
-  startedAt             DateTime? @map("started_at") @db.Timestamptz
-  endedAt               DateTime? @map("ended_at") @db.Timestamptz
-  isWinner              Boolean  @default(false) @map("is_winner")
-  isPaidPosition        Boolean  @default(false) @map("is_paid_position")
-  entryFeePaid          Int?     @map("entry_fee_paid")
-  prizeLabel            String?  @map("prize_label") @db.VarChar(100)
-  netResult             Int?     @map("net_result")
-  percentileRank        Float?   @map("percentile_rank")
-  pointsBehindWinner    Float?   @map("points_behind_winner")
-  pointsBehindNext      Float?   @map("points_behind_next")
-  draftPosition         Int?     @map("draft_position")
-  rosterSnapshotId      String?  @map("roster_snapshot_id") @db.Uuid
-  closedAt              DateTime? @map("closed_at") @db.Timestamptz
-
-  contest Contest @relation(fields: [contestId], references: [id])
-
-  @@unique([contestId, entryId])
-  @@index([contestId, finalRank])
-  @@index([leagueId, leagueMembershipId])
-  @@map("contest_results")
-}
-
-// =============================================================================
-// Contest History (Plan 04)
-// =============================================================================
-
-model TeamRosterHistory {
-  id              String   @id @default(uuid()) @db.Uuid
-  contestId       String   @map("contest_id") @db.Uuid
-  entryId         String   @map("entry_id") @db.Uuid
-  lockedAt        DateTime @map("locked_at") @db.Timestamptz
-  roster          Json     @default("[]")
-  draftBudgetUsed Int?     @map("draft_budget_used")
-  tiersSelected   Json?    @map("tiers_selected")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  @@unique([contestId, entryId])
-  @@index([contestId])
-  @@map("team_roster_history")
-}
-
-model PayoutHistory {
-  id                    String    @id @default(uuid()) @db.Uuid
-  contestId             String    @map("contest_id") @db.Uuid
-  leagueId              String    @map("league_id") @db.Uuid
-  entryId               String    @map("entry_id") @db.Uuid
-  leagueMembershipId    String    @map("league_membership_id") @db.Uuid
-  prizeType             String    @map("prize_type") @db.VarChar(50)
-  prizeLabel            String    @map("prize_label") @db.VarChar(255)
-  prizeRank             Int?      @map("prize_rank")
-  amount                Int
-  isCash                Boolean   @default(true) @map("is_cash")
-  nonCashDescription    String?   @map("non_cash_description")
-  paidAt                DateTime? @map("paid_at") @db.Timestamptz
-  acknowledgedByMember  Boolean   @default(false) @map("acknowledged_by_member")
-  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  @@index([contestId])
-  @@index([leagueId, leagueMembershipId])
-  @@map("payout_history")
-}
 
 model ScoringCheckpoint {
   id                String   @id @default(uuid()) @db.Uuid

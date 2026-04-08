@@ -4,8 +4,8 @@
  * This suite is intentionally self-contained:
  * - creates its own owner and second member through real invitation routes
  * - creates its own league, contest, and entries through real routes
- * - persists live entry standings and final results snapshots through Prisma
- * - verifies live standings endpoints and history result endpoints
+ * - persists live entry standings on contest entries through Prisma
+ * - verifies live standings endpoints and first-pass history result endpoints
  */
 import {
   setupIntegrationTests,
@@ -143,12 +143,6 @@ describe('Standings and Results Read Integration', () => {
     challengerEntryId = challengerEntryRes.json().entry.id;
 
     const prisma = getPrisma();
-    const ownerMembership = await prisma.leagueMembership.findFirstOrThrow({
-      where: { leagueId, userId: ownerUserId },
-    });
-    const challengerMembership = await prisma.leagueMembership.findUniqueOrThrow({
-      where: { id: challengerMembershipId },
-    });
 
     await prisma.contestEntry.update({
       where: { id: ownerEntryId },
@@ -165,52 +159,17 @@ describe('Standings and Results Read Integration', () => {
       },
     });
 
-    await prisma.contestResult.createMany({
-      data: [
-        {
-          contestId,
-          entryId: challengerEntryId,
-          finalRank: 1,
-          totalScore: 92.5,
-          prizeAmount: 500,
-          leagueId,
-          leagueMembershipId: challengerMembership.id,
-          contestName: 'Standings Read Contest',
-          contestType: ContestType.SINGLE_EVENT,
-          sport: 'GOLF',
-          numEntries: 2,
-          isWinner: true,
-          isPaidPosition: true,
-          prizeLabel: 'Champion',
-          percentileRank: 100,
-          pointsBehindWinner: 0,
-          pointsBehindNext: 0,
-          closedAt: new Date('2026-04-03T13:00:00Z'),
-        },
-        {
-          contestId,
-          entryId: ownerEntryId,
-          finalRank: 2,
-          totalScore: 88.25,
-          prizeAmount: 0,
-          leagueId,
-          leagueMembershipId: ownerMembership.id,
-          contestName: 'Standings Read Contest',
-          contestType: ContestType.SINGLE_EVENT,
-          sport: 'GOLF',
-          numEntries: 2,
-          isWinner: false,
-          isPaidPosition: false,
-          percentileRank: 50,
-          pointsBehindWinner: 4.25,
-          pointsBehindNext: 4.25,
-          closedAt: new Date('2026-04-03T13:00:00Z'),
-        },
-      ],
+    await prisma.contest.update({
+      where: { id: contestId },
+      data: {
+        status: 'COMPLETED',
+        startsAt: new Date('2026-04-03T12:00:00Z'),
+        endsAt: new Date('2026-04-03T13:00:00Z'),
+      },
     });
   });
 
-  it('returns live standings, summary, my-entry context, and historical results from persisted records', async () => {
+  it('returns live standings, summary, my-entry context, and historical results from contest entries', async () => {
     const standingsRes = await getApp().inject({
       method: 'GET',
       url: `${API_ROUTES.contests.standings(contestId)}?page=1&pageSize=10&sortBy=rank`,

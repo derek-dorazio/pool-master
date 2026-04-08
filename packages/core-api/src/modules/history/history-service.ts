@@ -6,8 +6,8 @@ import type { PrismaClient } from '@prisma/client';
 import type {
   ContestHistorySummary,
   ContestHighlights,
-  ContestResult,
-  PayoutHistoryRecord,
+  ContestHistoryPayout,
+  ContestHistoryResult,
 } from '@poolmaster/shared/domain';
 
 export class HistoryService {
@@ -45,20 +45,12 @@ export class HistoryService {
   }
 
   /** Returns final standings for a contest. */
-  async getContestStandings(contestId: string): Promise<ContestResult[]> {
+  async getContestStandings(contestId: string): Promise<ContestHistoryResult[]> {
     return this.getContestResultsForHistory(contestId);
   }
 
   /** Returns all contest results for a league member across all contests. */
-  async getMemberResults(leagueMembershipId: string): Promise<ContestResult[]> {
-    const persistedResults = await this.prisma.contestResult.findMany({
-      where: { leagueMembershipId },
-      orderBy: { closedAt: 'desc' },
-    });
-    if (persistedResults.length > 0) {
-      return persistedResults.map(mapResult);
-    }
-
+  async getMemberResults(leagueMembershipId: string): Promise<ContestHistoryResult[]> {
     const membership = await this.prisma.leagueMembership.findUnique({
       where: { id: leagueMembershipId },
       select: { leagueId: true, userId: true },
@@ -75,35 +67,57 @@ export class HistoryService {
   }
 
   /** Returns all contest results for a league. */
-  async getLeagueResults(leagueId: string): Promise<ContestResult[]> {
-    const persistedResults = await this.prisma.contestResult.findMany({
-      where: { leagueId },
-      orderBy: { closedAt: 'desc' },
-    });
-    if (persistedResults.length > 0) {
-      return persistedResults.map(mapResult);
-    }
-
+  async getLeagueResults(leagueId: string): Promise<ContestHistoryResult[]> {
     return this.buildFallbackResults({ leagueId });
   }
 
   /** Returns roster history snapshot for an entry. */
   async getRosterHistory(contestId: string, entryId: string) {
-    return this.prisma.teamRosterHistory.findUnique({
-      where: { contestId_entryId: { contestId, entryId } },
+    const entry = await this.prisma.contestEntry.findFirst({
+      where: { id: entryId, contestId },
+      include: {
+        rosterPicks: {
+          include: {
+            sportEventParticipant: {
+              include: {
+                participant: true,
+                sourceData: {
+                  orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
+                },
+              },
+            },
+          },
+          orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
+        },
+      },
     });
+    if (!entry) {
+      return null;
+    }
+
+    return {
+      contestId,
+      entryId,
+      entryName: entry.name,
+      rosterPicks: entry.rosterPicks.map((pick) => ({
+        rosterPickId: pick.id,
+        sportEventParticipantId: pick.sportEventParticipantId,
+        participantId: pick.sportEventParticipant.participantId,
+        participantName: pick.sportEventParticipant.participant.name,
+        position: pick.sportEventParticipant.participant.position,
+        teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation,
+        pickedAt: pick.pickedAt,
+        draftRound: pick.draftRound ?? undefined,
+        draftPickNumber: pick.draftPickNumber ?? undefined,
+        autoPicked: pick.autoPicked,
+        latestPerformance:
+          pick.sportEventParticipant.sourceData[0]?.normalizedData ?? {},
+      })),
+    };
   }
 
   /** Returns payout history for a contest. */
-  async getContestPayouts(contestId: string): Promise<PayoutHistoryRecord[]> {
-    const payouts = await this.prisma.payoutHistory.findMany({
-      where: { contestId },
-      orderBy: { prizeRank: 'asc' },
-    });
-    if (payouts.length > 0) {
-      return payouts.map(mapPayout);
-    }
-
+  async getContestPayouts(contestId: string): Promise<ContestHistoryPayout[]> {
     const awards = await this.prisma.contestEntryPrizeAward.findMany({
       where: { entry: { contestId } },
       include: {
@@ -160,15 +174,7 @@ export class HistoryService {
     }));
   }
 
-  private async getContestResultsForHistory(contestId: string): Promise<ContestResult[]> {
-    const persistedResults = await this.prisma.contestResult.findMany({
-      where: { contestId },
-      orderBy: { finalRank: 'asc' },
-    });
-    if (persistedResults.length > 0) {
-      return persistedResults.map(mapResult);
-    }
-
+  private async getContestResultsForHistory(contestId: string): Promise<ContestHistoryResult[]> {
     return this.buildFallbackResults({ contestId });
   }
 
@@ -176,7 +182,7 @@ export class HistoryService {
     contestId?: string;
     leagueId?: string;
     userId?: string;
-  }): Promise<ContestResult[]> {
+  }): Promise<ContestHistoryResult[]> {
     const contests = await this.prisma.contest.findMany({
       where: {
         ...(filters.contestId && { id: filters.contestId }),
@@ -286,7 +292,7 @@ export class HistoryService {
             closedAt: contest.endsAt ?? contest.endDate ?? undefined,
             createdAt: entry.createdAt,
             updatedAt: entry.updatedAt,
-          } satisfies ContestResult;
+          } satisfies ContestHistoryResult;
         });
     });
   }
@@ -328,101 +334,5 @@ function buildHighlights(
     },
     closestFinish: closestMargin < Infinity ? { margin: closestMargin } : undefined,
     winnerMargin,
-  };
-}
-
-function mapResult(row: {
-  id: string;
-  contestId: string;
-  entryId: string;
-  finalRank: number;
-  totalScore: number;
-  prizeAmount: number | null;
-  leagueId: string | null;
-  seasonId: string | null;
-  leagueMembershipId: string | null;
-  contestName: string | null;
-  contestType: string | null;
-  sport: string | null;
-  numEntries: number | null;
-  startedAt: Date | null;
-  endedAt: Date | null;
-  isWinner: boolean;
-  isPaidPosition: boolean;
-  entryFeePaid: number | null;
-  prizeLabel: string | null;
-  netResult: number | null;
-  percentileRank: number | null;
-  pointsBehindWinner: number | null;
-  pointsBehindNext: number | null;
-  draftPosition: number | null;
-  rosterSnapshotId: string | null;
-  closedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}): ContestResult {
-  return {
-    id: row.id,
-    contestId: row.contestId,
-    entryId: row.entryId,
-    finalRank: row.finalRank,
-    totalScore: row.totalScore,
-    prizeAmount: row.prizeAmount ?? undefined,
-    leagueId: row.leagueId ?? undefined,
-    seasonId: row.seasonId ?? undefined,
-    leagueMembershipId: row.leagueMembershipId ?? undefined,
-    contestName: row.contestName ?? undefined,
-    contestType: row.contestType ?? undefined,
-    sport: row.sport ?? undefined,
-    numEntries: row.numEntries ?? undefined,
-    startedAt: row.startedAt ?? undefined,
-    endedAt: row.endedAt ?? undefined,
-    isWinner: row.isWinner,
-    isPaidPosition: row.isPaidPosition,
-    entryFeePaid: row.entryFeePaid ?? undefined,
-    prizeLabel: row.prizeLabel ?? undefined,
-    netResult: row.netResult ?? undefined,
-    percentileRank: row.percentileRank ?? undefined,
-    pointsBehindWinner: row.pointsBehindWinner ?? undefined,
-    pointsBehindNext: row.pointsBehindNext ?? undefined,
-    draftPosition: row.draftPosition ?? undefined,
-    rosterSnapshotId: row.rosterSnapshotId ?? undefined,
-    closedAt: row.closedAt ?? undefined,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function mapPayout(row: {
-  id: string;
-  contestId: string;
-  leagueId: string;
-  entryId: string;
-  leagueMembershipId: string;
-  prizeType: string;
-  prizeLabel: string;
-  prizeRank: number | null;
-  amount: number;
-  isCash: boolean;
-  nonCashDescription: string | null;
-  paidAt: Date | null;
-  acknowledgedByMember: boolean;
-  createdAt: Date;
-}): PayoutHistoryRecord {
-  return {
-    id: row.id,
-    contestId: row.contestId,
-    leagueId: row.leagueId,
-    entryId: row.entryId,
-    leagueMembershipId: row.leagueMembershipId,
-    prizeType: row.prizeType as PayoutHistoryRecord['prizeType'],
-    prizeLabel: row.prizeLabel,
-    prizeRank: row.prizeRank ?? undefined,
-    amount: row.amount,
-    isCash: row.isCash,
-    nonCashDescription: row.nonCashDescription ?? undefined,
-    paidAt: row.paidAt ?? undefined,
-    acknowledgedByMember: row.acknowledgedByMember,
-    createdAt: row.createdAt,
   };
 }
