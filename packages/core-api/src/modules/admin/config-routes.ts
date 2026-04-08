@@ -11,13 +11,9 @@
 
 import type { FastifyInstance } from 'fastify';
 import {
-  SelectionTemplateListResponseSchema,
-  SelectionTemplateResponseSchema,
   SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
-import { TemplateConfigService } from './template-config-service';
-import { createTemplateConfigHandlers } from './template-config-handler';
 import { NotificationConfigService } from './notification-config-service';
 import { createNotificationConfigHandlers } from './notification-config-handler';
 import { PushTriggerConfigService } from './push-trigger-config-service';
@@ -27,95 +23,14 @@ import { createRateLimitConfigHandlers } from './rate-limit-config-handler';
 
 export async function configRoutes(fastify: FastifyInstance): Promise<void> {
   // --- Services ---
-  const templateConfigService = new TemplateConfigService();
   const notificationConfigService = new NotificationConfigService();
   const pushTriggerConfigService = new PushTriggerConfigService();
   const rateLimitConfigService = new RateLimitConfigService();
 
   // --- Handlers ---
-  const templateConfig = createTemplateConfigHandlers(templateConfigService);
   const notificationConfig = createNotificationConfigHandlers(notificationConfigService);
   const pushTriggerConfig = createPushTriggerConfigHandlers(pushTriggerConfigService);
   const rateLimitConfig = createRateLimitConfigHandlers(rateLimitConfigService);
-
-  // -----------------------------------------------------------------------
-  // Selection Template Routes
-  // Permission: config.selection_templates
-  // -----------------------------------------------------------------------
-
-  fastify.get('/config/selection-templates', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List selection templates',
-      operationId: 'adminListSelectionTemplatesConfig',
-      response: { 200: zodToJsonSchema(SelectionTemplateListResponseSchema) },
-    },
-    handler: templateConfig.listSelectionTemplates,
-  });
-
-  fastify.get('/config/selection-templates/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get selection template by ID',
-      operationId: 'adminGetSelectionTemplateConfig',
-      response: { 200: zodToJsonSchema(SelectionTemplateResponseSchema) },
-    },
-    handler: templateConfig.getSelectionTemplate,
-  });
-
-  fastify.post('/config/selection-templates', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Create a selection template',
-      operationId: 'adminCreateSelectionTemplate',
-      response: { 201: zodToJsonSchema(SelectionTemplateResponseSchema) },
-      body: {
-        type: 'object',
-        required: ['id', 'name', 'description', 'sport', 'contestType', 'selectionType', 'config'],
-        properties: {
-          id: { type: 'string', minLength: 1 },
-          name: { type: 'string', minLength: 1 },
-          description: { type: 'string', minLength: 1 },
-          sport: { type: 'string', minLength: 1 },
-          contestType: { type: 'string', minLength: 1 },
-          selectionType: { type: 'string', minLength: 1 },
-          config: { type: 'object' },
-        },
-      },
-    },
-    handler: templateConfig.createSelectionTemplate,
-  });
-
-  fastify.put('/config/selection-templates/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Update a selection template',
-      operationId: 'adminUpdateSelectionTemplate',
-      response: { 200: zodToJsonSchema(SelectionTemplateResponseSchema) },
-      body: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', minLength: 1 },
-          description: { type: 'string', minLength: 1 },
-          sport: { type: 'string', minLength: 1 },
-          contestType: { type: 'string', minLength: 1 },
-          selectionType: { type: 'string', minLength: 1 },
-          config: { type: 'object' },
-        },
-      },
-    },
-    handler: templateConfig.updateSelectionTemplate,
-  });
-
-  fastify.delete('/config/selection-templates/:id', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Delete a selection template',
-      operationId: 'adminDeleteSelectionTemplate',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: templateConfig.deleteSelectionTemplate,
-  });
 
   // -----------------------------------------------------------------------
   // Notification Template Routes

@@ -136,16 +136,6 @@ export const DraftStateDtoSchema = z.object({
 });
 export type DraftStateDto = z.infer<typeof DraftStateDtoSchema>;
 
-export const SelectionTemplateDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  sport: z.string(),
-  contestType: z.string(),
-  selectionType: z.string(),
-  config: z.record(z.unknown()),
-});
-
 // --- Responses ---
 
 export const DraftStateResponseSchema = z.object({
@@ -203,7 +193,3 @@ export const DraftPickResponseSchema = z.object({
   bracketMatchups: z.array(DraftBracketMatchupDtoSchema).optional(),
 });
 export type DraftPickResponse = z.infer<typeof DraftPickResponseSchema>;
-
-export const SelectionTemplateListResponseSchema = z.array(SelectionTemplateDtoSchema);
-
-export const SelectionTemplateResponseSchema = SelectionTemplateDtoSchema;

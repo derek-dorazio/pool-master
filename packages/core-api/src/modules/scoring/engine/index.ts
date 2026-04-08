@@ -34,14 +34,6 @@ export {
 } from './stat-schemas';
 export type { StatValidationError } from './stat-schemas';
 
-export { scoreBracket } from './bracket-scoring';
-export type {
-  BracketEntryResult,
-  BracketMatchResult,
-  BracketPickResult,
-  BracketPredictionInput,
-} from './bracket-scoring';
-
 export { scoreRotisserie } from './rotisserie-scoring';
 export type {
   RotisserieConfig,

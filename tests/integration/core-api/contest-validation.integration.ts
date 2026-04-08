@@ -52,7 +52,7 @@ describe('Contest Validation Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           tierAssignmentMethod: 'ODDS',
           rounds: 6,
         },

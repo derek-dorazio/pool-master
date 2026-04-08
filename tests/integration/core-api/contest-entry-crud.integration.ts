@@ -67,7 +67,7 @@ describe('Contest Entry CRUD Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 6,
           tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [

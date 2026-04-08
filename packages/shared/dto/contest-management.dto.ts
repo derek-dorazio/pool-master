@@ -64,7 +64,6 @@ export const ContestConfigurationRequestSchema = z.object({
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
     SelectionType.BUDGET_PICK,
-    SelectionType.OPEN_SELECTION,
   ]),
   rounds: z.number().int().min(1).optional(),
   timePerPickSeconds: z.number().int().min(10).optional(),

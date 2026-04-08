@@ -22,14 +22,11 @@ import type {
   MappingConfidence,
   ParticipantStatus,
   ParticipantType,
-  PricingMethod,
   ScoringEngine,
   SelectionType,
   Sport,
   SquadMembershipStatus,
   SquadStatus,
-  SurvivorStyle,
-  TierAssignmentMethod,
   WeekDay,
 } from './enums';
 
@@ -245,9 +242,6 @@ export interface Contest extends DomainEntity {
   // Scoring behaviour
   scoringStopsOnElimination: boolean;
   scoringRules: ScoringRulesConfig;
-
-  // Links
-  selectionConfigId?: string;
 }
 
 /**
@@ -283,54 +277,6 @@ export interface ScoringRulesConfig {
 
   // Tiebreaker
   tiebreakerRule?: string;
-}
-
-// --- Selection Configuration ---
-
-/**
- * How participants make their picks for a contest.
- * Replaces the old DraftConfiguration — covers drafts, tiered picks, budget picks,
- * survivor picks, and bracket predictions.
- */
-export interface SelectionConfig extends DomainEntity {
-  contestId: string;
-  selectionType: SelectionType;
-
-  // --- Snake Draft config ---
-  draftMode?: DraftMode;
-  rounds?: number;
-  timePerPickSeconds?: number;
-  autoPickPolicy?: string;
-
-  // --- Tiered Pick config ---
-  tierConfig?: TierDefinition[];
-  tierAssignmentMethod?: TierAssignmentMethod;
-
-  // --- Budget Pick config ---
-  budget?: number;
-  pricingMethod?: PricingMethod;
-  rosterSize?: number;
-
-  // --- Open Selection config ---
-  pickCount?: number;                          // "Pick 8" — how many from the full field
-
-  // --- Survivor config ---
-  survivorStyle?: SurvivorStyle;
-  picksPerPeriod?: number;                     // typically 1; 2 = Double Pick
-  oneEntityPerSeason?: boolean;                // each team/player usable only once
-  strikesBeforeElimination?: number;            // 0 = instant elimination
-  buybacksAllowed?: boolean;
-
-  // --- Bracket / Pick'em config ---
-  roundValues?: number[];                      // bracket: points per correct pick per round
-  startRound?: string;                         // e.g. "SWEET_16", "QUARTERFINALS"
-
-  // --- Shared ---
-  isExclusive: boolean;
-  bestBallN?: number;                          // golf: use best N of submitted picks
-  missedCutPenalty?: number;
-  captainSlot?: boolean;                       // optional 2x multiplier on one pick
-  captainMultiplier?: number;
 }
 
 export interface TierDefinition {
@@ -377,25 +323,6 @@ export interface TierConfig {
   tiers: TierDefinition[];
 }
 
-/**
- * A contest-owned matchup or bracket slot that entries can predict.
- * Used by pick'em and bracket contests to define the actual prediction surface.
- */
-export interface ContestMatchup extends DomainEntity {
-  contestId: string;
-  eventId?: string;
-  period: number;                             // week / round / slate number
-  matchupIndex: number;                       // stable order within the period
-  roundNumber?: number;                       // bracket round, if applicable
-  matchNumber?: number;                       // bracket match number, if applicable
-  label?: string;                             // "Week 5 Game 3", "Sweet 16 - Midwest 1"
-  homeParticipantId?: string;
-  awayParticipantId?: string;
-  startsAt?: Date;
-  lockAt?: Date;
-  metadata: Record<string, unknown>;
-}
-
 // --- Entry & Picks ---
 
 /**
@@ -425,45 +352,6 @@ export interface RosterPick extends DomainEntity {
   draftPickNumber?: number;
   pickedAt: Date;
   autoPicked: boolean;
-}
-
-/**
- * A single pick within a survivor or pick'em contest.
- * Pick'em contests may have multiple matchup picks per entry per period.
- */
-export interface ContestPick extends DomainEntity {
-  entryId: string;
-  contestId: string;
-  participantId: string;
-  eventId?: string;                           // optional linked sport event for matchup-based contests
-  period: number;
-  matchupIndex: number;                       // 1..N within the period; survivor/live-pick usually uses 1
-  periodLabel?: string;                        // "Week 5", "Round 2", "Quarterfinals"
-  pickedAt: Date;
-  isCorrect?: boolean;                         // resolved after period ends
-  confidenceWeight?: number;                   // for confidence-weighted pick'em
-  multiplier?: number;                         // for multiplier survivor (NCAAF-5)
-  isReplacement?: boolean;                     // for buyback/hold'em replacement picks
-}
-
-/**
- * A bracket prediction — all round predictions submitted at once.
- */
-export interface BracketPrediction extends DomainEntity {
-  entryId: string;
-  contestId: string;
-  predictions: BracketMatchPrediction[];
-  submittedAt: Date;
-  tiebreakerValue?: number;                    // e.g. predicted total score of final
-}
-
-export interface BracketMatchPrediction {
-  roundNumber: number;
-  matchNumber: number;
-  predictedWinnerId: string;
-  predictedSeriesLength?: number;              // for NHL/NBA series
-  predictedScore?: string;                     // for soccer exact score
-  isCorrect?: boolean;
 }
 
 // --- Draft Session (Snake Draft only) ---

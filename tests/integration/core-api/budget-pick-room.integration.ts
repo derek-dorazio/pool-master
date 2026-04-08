@@ -73,7 +73,7 @@ describe('Budget Pick Room Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rosterSize: 1,
           budget: 8000,
           pricingMethod: 'WORLD_RANKING',

@@ -90,7 +90,7 @@ describe('Contest Entry Negative Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
@@ -118,7 +118,7 @@ describe('Contest Entry Negative Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
@@ -183,7 +183,7 @@ describe('Contest Entry Negative Integration', () => {
       data: { sportEventId: sportEvent.id },
     });
 
-    await prisma.selectionConfig.update({
+    await prisma.contestConfiguration.update({
       where: { contestId: openContestId },
       data: {
         tierConfig: [

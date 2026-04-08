@@ -102,10 +102,10 @@ describe('League Dashboard Read Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        startsAt: '2026-04-06T12:00:00.000Z',
-        lockAt: '2026-04-06T13:00:00.000Z',
-        endsAt: '2026-04-06T18:00:00.000Z',
-        selectionConfig: {
+        startsAt: '2026-05-06T12:00:00.000Z',
+        lockAt: '2026-05-06T13:00:00.000Z',
+        endsAt: '2026-05-06T18:00:00.000Z',
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [

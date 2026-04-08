@@ -4,11 +4,11 @@ import {
   ContestOperationError,
 } from '../../../packages/core-api/src/modules/contests/service';
 import type {
+  ContestConfigurationRepository,
   ContestRepository,
   ContestEntryRepository,
   LeagueMembershipRepository,
   LeagueRepository,
-  SelectionConfigRepository,
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
@@ -41,10 +41,11 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
   };
 }
 
-function createMockSelectionConfigRepo(
-  overrides: Partial<SelectionConfigRepository> = {},
-): SelectionConfigRepository {
+function createMockContestConfigurationRepo(
+  overrides: Partial<ContestConfigurationRepository> = {},
+): ContestConfigurationRepository {
   return {
+    findById: jest.fn().mockResolvedValue(null),
     findByContest: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
@@ -213,10 +214,10 @@ describe('ContestService', () => {
   describe('createContest', () => {
     it('creates a contest and selection config', async () => {
       const contestRepo = createMockContestRepo();
-      const selectionConfigRepo = createMockSelectionConfigRepo();
+      const contestConfigurationRepo = createMockContestConfigurationRepo();
       const service = new ContestService(
         contestRepo,
-        selectionConfigRepo,
+        contestConfigurationRepo,
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -228,21 +229,21 @@ describe('ContestService', () => {
         sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
-        selectionConfig: { rounds: 5, timePerPickSeconds: 60 },
+        contestConfiguration: { rounds: 5, timePerPickSeconds: 60 },
         scoringEngine: ScoringEngine.STROKE_PLAY,
         scoringRules: { missedCutPenalty: 80 },
       });
       expect(contestRepo.create).toHaveBeenCalledTimes(1);
-      expect(selectionConfigRepo.create).toHaveBeenCalledTimes(1);
+      expect(contestConfigurationRepo.create).toHaveBeenCalledTimes(1);
       expect(result.contest.id).toBe('new-contest-id');
-      expect(result.selectionConfig.id).toBe('new-config-id');
+      expect(result.contestConfiguration.id).toBe('new-config-id');
     });
 
     it('creates contest with status DRAFT', async () => {
       const contestRepo = createMockContestRepo();
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -254,7 +255,7 @@ describe('ContestService', () => {
         sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
-        selectionConfig: {},
+        contestConfiguration: {},
         scoringEngine: ScoringEngine.CUMULATIVE,
       });
       const createArg = (contestRepo.create as jest.Mock).mock.calls[0][0];
@@ -267,7 +268,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         createMockContestRepo(),
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         leagueRepo,
       );
@@ -280,7 +281,7 @@ describe('ContestService', () => {
           sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
-          selectionConfig: {},
+          contestConfiguration: {},
           scoringEngine: ScoringEngine.CUMULATIVE,
         }),
       ).rejects.toThrow(ContestOperationError);
@@ -289,7 +290,7 @@ describe('ContestService', () => {
     it('validates payout config — rejects duplicate ranks', async () => {
       const service = new ContestService(
         createMockContestRepo(),
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -302,7 +303,7 @@ describe('ContestService', () => {
           sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
-          selectionConfig: {},
+          contestConfiguration: {},
           scoringEngine: ScoringEngine.CUMULATIVE,
           payoutConfig: {
             payoutStructure: [
@@ -318,7 +319,7 @@ describe('ContestService', () => {
     it('validates payout config — rejects percentages over 100', async () => {
       const service = new ContestService(
         createMockContestRepo(),
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -331,7 +332,7 @@ describe('ContestService', () => {
           sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
-          selectionConfig: {},
+          contestConfiguration: {},
           scoringEngine: ScoringEngine.CUMULATIVE,
           payoutConfig: {
             payoutStructure: [
@@ -353,7 +354,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -368,7 +369,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -380,7 +381,7 @@ describe('ContestService', () => {
     it('throws ContestNotFoundError for missing contest', async () => {
       const service = new ContestService(
         createMockContestRepo(),
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -398,7 +399,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -413,7 +414,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -431,7 +432,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -446,7 +447,7 @@ describe('ContestService', () => {
       const contestRepo = createMockContestRepo({
         findById: jest.fn().mockResolvedValue(contest),
       });
-      const configRepo = createMockSelectionConfigRepo({
+      const configRepo = createMockContestConfigurationRepo({
         findByContest: jest.fn().mockResolvedValue({ id: 'cfg-1', contestId: 'c-1' }),
       });
       const service = new ContestService(
@@ -458,13 +459,13 @@ describe('ContestService', () => {
       const result = await service.getContest('c-1', 'tenant-1');
       expect(result).not.toBeNull();
       expect(result!.contest.id).toBe('c-1');
-      expect(result!.selectionConfig).toBeDefined();
+      expect(result!.contestConfiguration).toBeDefined();
     });
 
     it('returns null for missing contest', async () => {
       const service = new ContestService(
         createMockContestRepo(),
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -489,7 +490,7 @@ describe('ContestService', () => {
       const prisma = createMockPrisma();
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         membershipRepo,
         createMockLeagueRepo(),
         createMockSquadRepo(),
@@ -520,7 +521,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         membershipRepo,
         createMockLeagueRepo(),
         createMockSquadRepo(),
@@ -578,7 +579,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         membershipRepo,
         createMockLeagueRepo(),
         createMockSquadRepo(),

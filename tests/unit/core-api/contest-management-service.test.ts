@@ -288,7 +288,7 @@ describe('ContestManagementService', () => {
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestType: 'SINGLE_EVENT',
           configuration: {
-            selectionType: 'OPEN_SELECTION',
+            selectionType: 'BUDGET_PICK',
             participantScoringRules: [
               {
                 participantScoringDefinitionId: 'TEAM_WIN_POINTS',

@@ -7,19 +7,19 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type {
+  ContestConfigurationRepository,
   ContestRepository,
   ContestEntryRepository,
   LeagueMembershipRepository,
   LeagueRepository,
-  SelectionConfigRepository,
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
 import type {
   Contest,
   ContestEntry,
+  ContestConfiguration,
   PayoutConfig,
-  SelectionConfig,
   ScoringRulesConfig,
   Sport,
 } from '@poolmaster/shared/domain';
@@ -44,7 +44,7 @@ export interface CreateContestInput {
   sport: Sport;
   contestType: ContestType;
   selectionType: SelectionType;
-  selectionConfig: Partial<Omit<SelectionConfig, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
+  contestConfiguration: Partial<Omit<ContestConfiguration, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
   scoringEngine: ScoringEngine;
   scoringRules?: Record<string, unknown>;
   payoutConfig?: PayoutConfig;
@@ -68,7 +68,7 @@ export interface UpdateContestInput {
 export class ContestService {
   constructor(
     private readonly contestRepo: ContestRepository,
-    private readonly selectionConfigRepo: SelectionConfigRepository,
+    private readonly contestConfigurationRepo: ContestConfigurationRepository,
     private readonly membershipRepo: LeagueMembershipRepository,
     private readonly leagueRepo: LeagueRepository,
     private readonly squadRepo?: SquadRepository,
@@ -80,7 +80,7 @@ export class ContestService {
   /** Creates a contest and its selection configuration atomically. */
   async createContest(
     input: CreateContestInput,
-  ): Promise<{ contest: Contest; selectionConfig: SelectionConfig }> {
+  ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration }> {
     const league = await this.leagueRepo.findById(input.leagueId, input.tenantId);
     if (!league) {
       throw new ContestOperationError('League not found');
@@ -105,49 +105,28 @@ export class ContestService {
       endsAt: input.endsAt,
       lockAt: input.lockAt,
     } as Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>);
-    const selectionConfig = await this.selectionConfigRepo.create({
+    const contestConfiguration = await this.contestConfigurationRepo.create({
       contestId: contest.id,
       selectionType: input.selectionType,
-      isExclusive: input.isExclusive ?? false,
-      ...input.selectionConfig,
-    } as Omit<SelectionConfig, 'id' | 'createdAt' | 'updatedAt'>);
-    await this.requirePrisma().contestConfiguration.create({
-      data: {
-        contestId: contest.id,
-        selectionType: input.selectionType,
-        rounds: input.selectionConfig.rounds,
-        timePerPickSeconds: input.selectionConfig.timePerPickSeconds,
-        autoPickPolicy: input.selectionConfig.autoPickPolicy,
-        tierConfig: input.selectionConfig.tierConfig as object[] | undefined,
-        budget: input.selectionConfig.budget,
-        pricingMethod: input.selectionConfig.pricingMethod,
-        pickCount: input.selectionConfig.pickCount,
-        isExclusive:
-          input.selectionConfig.isExclusive
+      isExclusive:
+        input.contestConfiguration.isExclusive
           ?? input.isExclusive
           ?? false,
-        picksPerPeriod: input.selectionConfig.picksPerPeriod,
-        roundValues: input.selectionConfig.roundValues as number[] | undefined,
-        startRound: input.selectionConfig.startRound,
-        rosterSize:
-          input.selectionConfig.rosterSize
-          ?? input.selectionConfig.pickCount
-          ?? input.selectionConfig.rounds,
-      },
-    });
-    return { contest, selectionConfig };
+      ...input.contestConfiguration,
+    } as Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>);
+    return { contest, contestConfiguration };
   }
 
   async getContest(
     contestId: string,
     tenantId: string,
-  ): Promise<{ contest: Contest; selectionConfig: SelectionConfig | null } | null> {
+  ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration | null } | null> {
     const contest = await this.contestRepo.findById(contestId, tenantId);
     if (!contest) {
       return null;
     }
-    const selectionConfig = await this.selectionConfigRepo.findByContest(contestId);
-    return { contest, selectionConfig };
+    const contestConfiguration = await this.contestConfigurationRepo.findByContest(contestId);
+    return { contest, contestConfiguration };
   }
 
   async listByLeague(leagueId: string): Promise<Contest[]> {
@@ -183,13 +162,6 @@ export class ContestService {
       throw new ContestOperationError('Contest can only be deleted in DRAFT status');
     }
     await this.contestRepo.delete(contestId);
-  }
-
-  async updateSelectionConfig(
-    selectionConfigId: string,
-    updates: Partial<SelectionConfig>,
-  ): Promise<SelectionConfig> {
-    return this.selectionConfigRepo.update(selectionConfigId, updates);
   }
 
   async listEntries(
@@ -389,13 +361,11 @@ export class ContestService {
 
   private async entryHasSelections(entryId: string): Promise<boolean> {
     const prisma = this.requirePrisma();
-    const [rosterPickCount, contestPickCount, bracketCount, draftPickHistoryCount] = await Promise.all([
+    const [rosterPickCount, draftPickHistoryCount] = await Promise.all([
       prisma.rosterPick.count({ where: { entryId } }),
-      prisma.contestPick.count({ where: { entryId } }),
-      prisma.bracketPrediction.count({ where: { entryId } }),
       prisma.draftPickHistory.count({ where: { entryId } }),
     ]);
-    return rosterPickCount + contestPickCount + bracketCount + draftPickHistoryCount > 0;
+    return rosterPickCount + draftPickHistoryCount > 0;
   }
 
   private async resolveOrCreateSquadForEntry(

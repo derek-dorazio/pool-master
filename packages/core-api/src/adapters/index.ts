@@ -4,12 +4,10 @@ export { PrismaLeagueInvitationRepository } from './prisma-league-invitation-rep
 export { PrismaSquadRepository } from './prisma-squad-repository';
 export { PrismaSquadMembershipRepository } from './prisma-squad-membership-repository';
 export { PrismaContestRepository } from './prisma-contest-repository';
-export { PrismaSelectionConfigRepository } from './prisma-selection-config-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantSeasonRecordRepository } from './prisma-participant-season-record-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
 export { PrismaActionItemRepository } from './prisma-action-item-repository';
-export { PrismaContestMatchupRepository } from './prisma-contest-matchup-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
 export { PrismaDraftSessionRepository } from './prisma-draft-session-repository';
 export {

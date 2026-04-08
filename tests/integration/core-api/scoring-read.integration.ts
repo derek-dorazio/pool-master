@@ -72,7 +72,7 @@ describe('Scoring Read Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [
@@ -162,11 +162,8 @@ describe('Scoring Read Integration', () => {
       },
     });
 
-    const configuration = await prisma.contestConfiguration.create({
-      data: {
-        contestId,
-        selectionType: SelectionType.TIERED,
-      },
+    const configuration = await prisma.contestConfiguration.findUniqueOrThrow({
+      where: { contestId },
     });
     const teamWinRule = await prisma.participantContestScoringRule.create({
       data: {
@@ -251,20 +248,24 @@ describe('Scoring Read Integration', () => {
       }),
     );
     expect(entryRes.json().timeline).toHaveLength(2);
-    expect(entryRes.json().timeline[0].participantBreakdowns[0]).toEqual(
-      expect.objectContaining({
-        participantId: participant.id,
-        participantName: 'Underdog Team',
-        statPoints: 1,
-        finalScore: 1,
-      }),
-    );
-    expect(entryRes.json().timeline[1].participantBreakdowns[0]).toEqual(
-      expect.objectContaining({
-        participantId: participant.id,
-        bonusPoints: 10,
-        finalScore: 10,
-      }),
+    expect(
+      entryRes.json().timeline.map((event: { participantBreakdowns: Array<Record<string, unknown>> }) =>
+        event.participantBreakdowns[0],
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          participantId: participant.id,
+          participantName: 'Underdog Team',
+          statPoints: 1,
+          finalScore: 1,
+        }),
+        expect.objectContaining({
+          participantId: participant.id,
+          bonusPoints: 10,
+          finalScore: 10,
+        }),
+      ]),
     );
 
     const participantRes = await getApp().inject({

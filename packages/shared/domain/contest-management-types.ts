@@ -1,4 +1,4 @@
-import type { ContestStatus, SelectionType } from './enums';
+import type { ContestStatus, SelectionType, ScoringEngine } from './enums';
 import type { AggregationDefinitionId, ParticipantScoringDefinitionId } from './contest-scoring';
 import type { DomainEntity } from './types';
 
@@ -110,4 +110,6 @@ export interface ContestCoreSummary extends DomainEntity {
   sportEventId: string;
   name: string;
   status: ContestStatus;
+  selectionType: SelectionType;
+  scoringEngine: ScoringEngine;
 }

@@ -13,10 +13,7 @@ export type {
 } from './contest-management-ports';
 export type {
   ActionItemRepository,
-  BracketPredictionRepository,
   ContestEntryRepository,
-  ContestMatchupRepository,
-  ContestPickRepository,
   ContestRepository,
   DraftSessionRepository,
   LeagueInvitationRepository,
@@ -28,7 +25,6 @@ export type {
   ParticipantSeasonRecordRepository,
   RosterPickRepository,
   SeasonRepository,
-  SelectionConfigRepository,
   SportRepository,
   SquadMembershipRepository,
   SquadRepository,

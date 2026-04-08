@@ -39,7 +39,7 @@ const TierDefinitionBodySchema = zod.object({
   participantIds: zod.array(zod.string()),
 });
 
-const SelectionConfigBodySchema = zod.object({
+const ContestConfigurationBodySchema = zod.object({
   draftMode: zod.string().optional(),
   rounds: zod.number().int().optional(),
   timePerPickSeconds: zod.number().int().optional(),
@@ -50,11 +50,7 @@ const SelectionConfigBodySchema = zod.object({
   pricingMethod: zod.string().optional(),
   rosterSize: zod.number().int().optional(),
   pickCount: zod.number().int().optional(),
-  survivorStyle: zod.string().optional(),
   picksPerPeriod: zod.number().int().optional(),
-  oneEntityPerSeason: zod.boolean().optional(),
-  strikesBeforeElimination: zod.number().int().optional(),
-  buybacksAllowed: zod.boolean().optional(),
   roundValues: zod.array(zod.number()).optional(),
   startRound: zod.string().optional(),
   isExclusive: zod.boolean().optional(),
@@ -91,7 +87,7 @@ const CreateContestBodySchema = zod.object({
     SelectionType.TIERED,
     SelectionType.BUDGET_PICK,
   ]),
-  selectionConfig: SelectionConfigBodySchema.optional(),
+  contestConfiguration: ContestConfigurationBodySchema.optional(),
   scoringEngine: zod.enum([
     ScoringEngine.ADVANCEMENT,
     ScoringEngine.STAT_ACCUMULATION,
@@ -157,7 +153,7 @@ export function createContestHandlers(contestService: ContestService) {
         sport: body.sport as Sport,
         contestType: body.contestType,
         selectionType: body.selectionType,
-        selectionConfig: mapSelectionConfig(body.selectionConfig),
+        contestConfiguration: mapContestConfiguration(body.contestConfiguration),
         scoringEngine: body.scoringEngine,
         scoringRules: body.scoringRules,
         payoutConfig: body.payoutConfig,
@@ -168,7 +164,7 @@ export function createContestHandlers(contestService: ContestService) {
         scoringStopsOnElimination: body.scoringStopsOnElimination,
       });
 
-      return reply.status(201).send(toContestResponse(result.contest, result.selectionConfig));
+      return reply.status(201).send(toContestResponse(result.contest, result.contestConfiguration));
     } catch (err) {
       if (err instanceof ContestOperationError) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
@@ -194,7 +190,7 @@ export function createContestHandlers(contestService: ContestService) {
     if (!result) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'Contest not found' });
     }
-    return reply.send(toContestResponse(result.contest, result.selectionConfig));
+    return reply.send(toContestResponse(result.contest, result.contestConfiguration));
   }
 
   async function listEntries(
@@ -345,26 +341,26 @@ export function createContestHandlers(contestService: ContestService) {
 
 function validateCreateContestBody(body: z.infer<typeof CreateContestBodySchema>): void {
   if (body.selectionType === SelectionType.TIERED) {
-    const tiers = body.selectionConfig?.tierConfig;
+    const tiers = body.contestConfiguration?.tierConfig;
     if (!tiers || tiers.length === 0) {
       throw new ContestOperationError('Tiered contests require tier configuration');
     }
   }
 }
 
-function mapSelectionConfig(
-  selectionConfig: z.infer<typeof SelectionConfigBodySchema> | undefined,
-): CreateContestInput['selectionConfig'] {
-  if (!selectionConfig) {
+function mapContestConfiguration(
+  contestConfiguration: z.infer<typeof ContestConfigurationBodySchema> | undefined,
+): CreateContestInput['contestConfiguration'] {
+  if (!contestConfiguration) {
     return {};
   }
 
   return {
-    ...selectionConfig,
-    tierConfig: selectionConfig.tierConfig?.map((tier) => ({
+    ...contestConfiguration,
+    tierConfig: contestConfiguration.tierConfig?.map((tier) => ({
       ...tier,
       rankingRange: tier.rankingRange ? [tier.rankingRange[0], tier.rankingRange[1]] as [number, number] : undefined,
       priceRange: tier.priceRange ? [tier.priceRange[0], tier.priceRange[1]] as [number, number] : undefined,
     })),
-  } as CreateContestInput['selectionConfig'];
+  } as CreateContestInput['contestConfiguration'];
 }

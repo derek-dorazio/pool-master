@@ -410,7 +410,6 @@ export class TenantService {
         const contestIds = contests.map((c) => c.id);
 
         if (contestIds.length > 0) {
-          await tx.contestPick.deleteMany({ where: { contestId: { in: contestIds } } });
           await tx.contestEntry.deleteMany({ where: { contestId: { in: contestIds } } });
           await tx.contest.deleteMany({ where: { id: { in: contestIds } } });
         }

@@ -21,7 +21,7 @@ export const TierDefinitionRequestSchema = z.object({
   participantIds: z.array(z.string()),
 });
 
-export const SelectionConfigRequestSchema = z.object({
+export const ContestCrudConfigurationRequestSchema = z.object({
   draftMode: z.string().optional(),
   rounds: z.number().int().optional(),
   timePerPickSeconds: z.number().int().optional(),
@@ -32,11 +32,7 @@ export const SelectionConfigRequestSchema = z.object({
   pricingMethod: z.string().optional(),
   rosterSize: z.number().int().optional(),
   pickCount: z.number().int().optional(),
-  survivorStyle: z.string().optional(),
   picksPerPeriod: z.number().int().optional(),
-  oneEntityPerSeason: z.boolean().optional(),
-  strikesBeforeElimination: z.number().int().optional(),
-  buybacksAllowed: z.boolean().optional(),
   roundValues: z.array(z.number()).optional(),
   startRound: z.string().optional(),
   isExclusive: z.boolean().optional(),
@@ -77,7 +73,7 @@ export const CreateContestRequestSchema = z.object({
     SelectionType.TIERED,
     SelectionType.BUDGET_PICK,
   ]),
-  selectionConfig: SelectionConfigRequestSchema.optional(),
+  contestConfiguration: ContestCrudConfigurationRequestSchema.optional(),
   scoringEngine: z.enum([
     ScoringEngine.ADVANCEMENT,
     ScoringEngine.STAT_ACCUMULATION,
@@ -155,7 +151,7 @@ export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
 
 export const ContestResponseSchema = z.object({
   contest: ContestDetailDtoSchema,
-  selectionConfig: z.record(z.unknown()).nullable().optional(),
+  contestConfiguration: z.record(z.unknown()).nullable().optional(),
 });
 export type ContestResponse = z.infer<typeof ContestResponseSchema>;
 

@@ -11,7 +11,7 @@ import type {
   ContestEntryResponse,
   MyContestEntryResponse,
 } from '@poolmaster/shared/dto';
-import type { SelectionConfig } from '@poolmaster/shared/domain';
+import type { ContestConfiguration } from '@poolmaster/shared/domain';
 
 interface ContestRow {
   id: string;
@@ -70,7 +70,7 @@ export function toContestSummaryDto(
 
 export function toContestDetailDto(
   contest: ContestRow,
-  _selectionConfig?: SelectionConfig | null,
+  _contestConfiguration?: ContestConfiguration | null,
 ): ContestDetailDto {
   return {
     ...toContestSummaryDto(contest),
@@ -83,12 +83,12 @@ export function toContestDetailDto(
 
 export function toContestResponse(
   contest: ContestRow,
-  selectionConfig?: SelectionConfig | null,
+  contestConfiguration?: ContestConfiguration | null,
 ): ContestResponse {
   return {
-    contest: toContestDetailDto(contest, selectionConfig),
-    selectionConfig: selectionConfig
-      ? (selectionConfig as unknown as Record<string, unknown>)
+    contest: toContestDetailDto(contest, contestConfiguration),
+    contestConfiguration: contestConfiguration
+      ? (contestConfiguration as unknown as Record<string, unknown>)
       : null,
   };
 }

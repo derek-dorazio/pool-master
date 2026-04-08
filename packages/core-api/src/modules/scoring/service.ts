@@ -4,7 +4,6 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import { SelectionType } from '@poolmaster/shared/domain';
 import type { RollupResult, StandingsRollup } from './rollup/standings-rollup';
 import { assignRanks } from './rollup/standings-rollup';
 
@@ -171,156 +170,10 @@ export class ScoringService {
   }
 
   private async getBreakdownContext(
-    contestId: string,
-    entryId: string,
+    _contestId: string,
+    _entryId: string,
   ): Promise<Map<string, BreakdownContext>> {
-    const contest = await this.prisma.contest.findUnique({
-      where: { id: contestId },
-      select: { selectionType: true },
-    });
-    if (!contest) {
-      return new Map();
-    }
-
-    switch (contest.selectionType) {
-      case SelectionType.PICK_EM:
-        return this.getPickEmBreakdownContext(contestId, entryId);
-      case SelectionType.BRACKET_PICK_EM:
-        return this.getBracketBreakdownContext(contestId, entryId);
-      default:
-        return new Map();
-    }
-  }
-
-  private async getPickEmBreakdownContext(
-    contestId: string,
-    entryId: string,
-  ): Promise<Map<string, BreakdownContext>> {
-    const [contestPicks, contestMatchups] = await Promise.all([
-      this.prisma.contestPick.findMany({
-        where: { contestId, entryId },
-        select: {
-          participantId: true,
-          period: true,
-          matchupIndex: true,
-          periodLabel: true,
-          eventId: true,
-        },
-      }),
-      this.prisma.contestMatchup.findMany({
-        where: { contestId },
-        select: {
-          eventId: true,
-          period: true,
-          matchupIndex: true,
-          label: true,
-        },
-      }),
-    ]);
-
-    const matchupByPeriod = new Map(
-      contestMatchups.map((matchup) => [`${matchup.period}:${matchup.matchupIndex}`, matchup]),
-    );
-    const matchupByEventId = new Map(
-      contestMatchups
-        .filter((matchup) => matchup.eventId)
-        .map((matchup) => [matchup.eventId!, matchup]),
-    );
-    const picksByParticipantId = new Map<string, typeof contestPicks>();
-
-    for (const pick of contestPicks) {
-      const existing = picksByParticipantId.get(pick.participantId) ?? [];
-      existing.push(pick);
-      picksByParticipantId.set(pick.participantId, existing);
-    }
-
-    const contextByParticipantId = new Map<string, BreakdownContext>();
-    for (const [participantId, picks] of picksByParticipantId.entries()) {
-      if (picks.length !== 1) {
-        continue;
-      }
-
-      const pick = picks[0];
-      const matchup = pick.eventId
-        ? matchupByEventId.get(pick.eventId) ??
-          matchupByPeriod.get(`${pick.period}:${pick.matchupIndex}`)
-        : matchupByPeriod.get(`${pick.period}:${pick.matchupIndex}`);
-      const contextLabel =
-        matchup?.label ??
-        (pick.periodLabel
-          ? `${pick.periodLabel} Matchup ${pick.matchupIndex}`
-          : `Period ${pick.period} Matchup ${pick.matchupIndex}`);
-
-      contextByParticipantId.set(participantId, { contextLabel });
-    }
-
-    return contextByParticipantId;
-  }
-
-  private async getBracketBreakdownContext(
-    contestId: string,
-    entryId: string,
-  ): Promise<Map<string, BreakdownContext>> {
-    const [prediction, contestMatchups] = await Promise.all([
-      this.prisma.bracketPrediction.findUnique({
-        where: { entryId },
-        select: { predictions: true },
-      }),
-      this.prisma.contestMatchup.findMany({
-        where: { contestId },
-        select: {
-          roundNumber: true,
-          matchNumber: true,
-          label: true,
-        },
-      }),
-    ]);
-
-    const predictionRows = Array.isArray(prediction?.predictions)
-      ? (prediction.predictions as Array<Record<string, unknown>>)
-      : [];
-    const matchupByRound = new Map(
-      contestMatchups.map((matchup) => [
-        `${matchup.roundNumber ?? 0}:${matchup.matchNumber ?? 0}`,
-        matchup,
-      ]),
-    );
-    const predictionsByParticipantId = new Map<
-      string,
-      Array<{ roundNumber: number; matchNumber: number }>
-    >();
-
-    for (const row of predictionRows) {
-      const predictedWinnerId =
-        typeof row.predictedWinnerId === 'string' ? row.predictedWinnerId : null;
-      const roundNumber = typeof row.roundNumber === 'number' ? row.roundNumber : null;
-      const matchNumber = typeof row.matchNumber === 'number' ? row.matchNumber : null;
-      if (!predictedWinnerId || roundNumber === null || matchNumber === null) {
-        continue;
-      }
-
-      const existing = predictionsByParticipantId.get(predictedWinnerId) ?? [];
-      existing.push({ roundNumber, matchNumber });
-      predictionsByParticipantId.set(predictedWinnerId, existing);
-    }
-
-    const contextByParticipantId = new Map<string, BreakdownContext>();
-    for (const [participantId, predictions] of predictionsByParticipantId.entries()) {
-      if (predictions.length !== 1) {
-        continue;
-      }
-
-      const predictionItem = predictions[0];
-      const matchup = matchupByRound.get(
-        `${predictionItem.roundNumber}:${predictionItem.matchNumber}`,
-      );
-      const contextLabel =
-        matchup?.label ??
-        `Round ${predictionItem.roundNumber} Match ${predictionItem.matchNumber}`;
-      contextByParticipantId.set(participantId, { contextLabel });
-    }
-
-    return contextByParticipantId;
+    return new Map();
   }
 
   async getParticipantScoreHistory(

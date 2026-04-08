@@ -302,8 +302,7 @@ model Participant {
   photoLastUpdated DateTime? @map("photo_last_updated") @db.Timestamptz
   externalIds     Json     @default("{}") @map("external_ids")
 
-  sport            Sport                    @relation(fields: [sportId], references: [id])
-  contestPicks     ContestPick[]
+  sport            Sport                       @relation(fields: [sportId], references: [id])
   seasonRecords    ParticipantSeasonRecord[]
   providerMappings ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
@@ -393,10 +392,7 @@ model Contest {
   season          Season?                 @relation(fields: [seasonId], references: [id])
   sportEvent      SportEvent?             @relation(fields: [sportEventId], references: [id])
   configuration   ContestConfiguration?
-  selectionConfig SelectionConfig?
   entries         ContestEntry[]
-  picks           ContestPick[]
-  brackets        BracketPrediction[]
   draftSession    DraftSession?
 
   @@index([leagueId])
@@ -491,83 +487,6 @@ model ContestPrizeDefinition {
 }
 
 // =============================================================================
-// Selection Configuration
-// =============================================================================
-
-model SelectionConfig {
-  id                       String   @id @default(uuid()) @db.Uuid
-  contestId                String   @unique @map("contest_id") @db.Uuid
-  selectionType            String   @map("selection_type")
-
-  // Snake Draft
-  draftMode                String?  @map("draft_mode")
-  rounds                   Int?
-  timePerPickSeconds       Int?     @map("time_per_pick_seconds")
-  autoPickPolicy           String?  @map("auto_pick_policy")
-
-  // Tiered Pick
-  tierConfig               Json?    @map("tier_config")
-  tierAssignmentMethod     String?  @map("tier_assignment_method")
-
-  // Budget Pick
-  budget                   Int?
-  pricingMethod            String?  @map("pricing_method")
-  rosterSize               Int?     @map("roster_size")
-
-  // Open Selection
-  pickCount                Int?     @map("pick_count")
-
-  // Survivor
-  survivorStyle            String?  @map("survivor_style")
-  picksPerPeriod           Int?     @map("picks_per_period")
-  oneEntityPerSeason       Boolean? @map("one_entity_per_season")
-  strikesBeforeElimination Int?     @map("strikes_before_elimination")
-  buybacksAllowed          Boolean? @map("buybacks_allowed")
-
-  // Bracket / Pick'em
-  roundValues              Json?    @map("round_values")
-  startRound               String?  @map("start_round")
-
-  // Shared
-  isExclusive              Boolean  @default(false) @map("is_exclusive")
-  bestBallN                Int?     @map("best_ball_n")
-  missedCutPenalty         Int?     @map("missed_cut_penalty")
-  captainSlot              Boolean? @map("captain_slot")
-  captainMultiplier        Float?   @map("captain_multiplier")
-
-  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  contest Contest @relation(fields: [contestId], references: [id])
-
-  @@map("selection_configs")
-}
-
-/// A contest-owned matchup or bracket slot for prediction contests.
-model ContestMatchup {
-  id                String    @id @default(uuid()) @db.Uuid
-  contestId         String    @map("contest_id") @db.Uuid
-  eventId           String?   @map("event_id") @db.Uuid
-  period            Int
-  matchupIndex      Int       @default(1) @map("matchup_index")
-  roundNumber       Int?      @map("round_number")
-  matchNumber       Int?      @map("match_number")
-  label             String?   @db.VarChar(255)
-  homeParticipantId String?   @map("home_participant_id") @db.Uuid
-  awayParticipantId String?   @map("away_participant_id") @db.Uuid
-  startsAt          DateTime? @map("starts_at") @db.Timestamptz
-  lockAt            DateTime? @map("lock_at") @db.Timestamptz
-  metadata          Json      @default("{}")
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@unique([contestId, period, matchupIndex])
-  @@index([contestId, period])
-  @@index([eventId])
-  @@map("contest_matchups")
-}
-
-// =============================================================================
 // Entry & Picks
 // =============================================================================
 
@@ -588,8 +507,6 @@ model ContestEntry {
   squad   Squad   @relation(fields: [squadId], references: [id])
 
   rosterPicks RosterPick[]
-  contestPicks ContestPick[]
-  bracket      BracketPrediction?
   draftPickHistories DraftPickHistory[]
   participantScores ContestEntryParticipantScore[]
   prizeAwards ContestEntryPrizeAward[]
@@ -674,51 +591,6 @@ model ContestEntryPrizeAward {
   @@index([entryId])
   @@index([contestPrizeDefinitionId])
   @@map("contest_entry_prize_awards")
-}
-
-/// A single pick in a survivor or pick'em contest — one per entry per period.
-model ContestPick {
-  id               String    @id @default(uuid()) @db.Uuid
-  entryId          String    @map("entry_id") @db.Uuid
-  contestId        String    @map("contest_id") @db.Uuid
-  participantId    String    @map("participant_id") @db.Uuid
-  eventId          String?   @map("event_id") @db.Uuid
-  period           Int
-  matchupIndex     Int       @default(1) @map("matchup_index")
-  periodLabel      String?   @map("period_label")
-  pickedAt         DateTime  @default(now()) @map("picked_at") @db.Timestamptz
-  isCorrect        Boolean?  @map("is_correct")
-  confidenceWeight Int?      @map("confidence_weight")
-  multiplier       Float?
-  isReplacement    Boolean   @default(false) @map("is_replacement")
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  entry       ContestEntry @relation(fields: [entryId], references: [id])
-  contest     Contest      @relation(fields: [contestId], references: [id])
-  participant Participant  @relation(fields: [participantId], references: [id])
-
-  @@unique([entryId, contestId, period, matchupIndex])
-  @@index([contestId, period])
-  @@index([eventId])
-  @@map("contest_picks")
-}
-
-/// All bracket predictions submitted at once for a bracket pick'em contest.
-model BracketPrediction {
-  id              String   @id @default(uuid()) @db.Uuid
-  entryId         String   @unique @map("entry_id") @db.Uuid
-  contestId       String   @map("contest_id") @db.Uuid
-  predictions     Json     @default("[]")
-  submittedAt     DateTime @default(now()) @map("submitted_at") @db.Timestamptz
-  tiebreakerValue Int?     @map("tiebreaker_value")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  entry   ContestEntry @relation(fields: [entryId], references: [id])
-  contest Contest      @relation(fields: [contestId], references: [id])
-  @@index([contestId])
-  @@map("bracket_predictions")
 }
 
 // =============================================================================

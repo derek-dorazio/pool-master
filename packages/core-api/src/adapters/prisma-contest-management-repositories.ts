@@ -52,8 +52,8 @@ export class PrismaContestCoreRepository implements ContestCoreRepository {
         name: contest.name,
         status: contest.status,
         contestType: 'SINGLE_EVENT',
-        selectionType: 'OPEN_SELECTION',
-        scoringEngine: 'MANUAL',
+        selectionType: contest.selectionType,
+        scoringEngine: contest.scoringEngine,
       },
     });
     return mapContest(row);
@@ -715,6 +715,8 @@ function mapContest(row: {
   sportEventId: string | null;
   name: string;
   status: string;
+  selectionType: string;
+  scoringEngine: string;
   createdAt: Date;
   updatedAt: Date;
 }): ContestCoreSummary {
@@ -724,6 +726,8 @@ function mapContest(row: {
     sportEventId: row.sportEventId ?? '',
     name: row.name,
     status: row.status as ContestCoreSummary['status'],
+    selectionType: row.selectionType as ContestCoreSummary['selectionType'],
+    scoringEngine: row.scoringEngine as ContestCoreSummary['scoringEngine'],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

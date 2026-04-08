@@ -64,7 +64,7 @@ const contestConfigurationRequestSchema = {
   properties: {
     selectionType: {
       type: 'string',
-      enum: ['SNAKE_DRAFT', 'TIERED', 'BUDGET_PICK', 'OPEN_SELECTION'],
+      enum: ['SNAKE_DRAFT', 'TIERED', 'BUDGET_PICK'],
     },
     rounds: { type: 'integer', minimum: 1 },
     timePerPickSeconds: { type: 'integer', minimum: 10 },

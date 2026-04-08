@@ -2177,43 +2177,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/config/selection-templates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List selection templates */
-        get: operations["adminListSelectionTemplatesConfig"];
-        put?: never;
-        /** Create a selection template */
-        post: operations["adminCreateSelectionTemplate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/selection-templates/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get selection template by ID */
-        get: operations["adminGetSelectionTemplateConfig"];
-        /** Update a selection template */
-        put: operations["adminUpdateSelectionTemplate"];
-        post?: never;
-        /** Delete a selection template */
-        delete: operations["adminDeleteSelectionTemplate"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/config/notification-templates": {
         parameters: {
             query?: never;
@@ -2595,40 +2558,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/drafts/templates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List selection templates */
-        get: operations["listSelectionTemplates"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/drafts/templates/{templateId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a selection template by ID */
-        get: operations["getSelectionTemplate"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/drafts/{contestId}": {
         parameters: {
             query?: never;
@@ -2674,40 +2603,6 @@ export interface paths {
         put?: never;
         /** Submit a draft pick */
         post: operations["submitDraftPick"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/drafts/{contestId}/bracket": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Reset the current user bracket submission */
-        delete: operations["resetBracketSubmission"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/drafts/{contestId}/bracket/auto-fill": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Auto-fill the current user bracket submission */
-        post: operations["autoFillBracketSubmission"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4632,7 +4527,7 @@ export interface operations {
                     contestType: "SINGLE_EVENT";
                     /** @enum {string} */
                     selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-                    selectionConfig?: {
+                    contestConfiguration?: {
                         draftMode?: string;
                         rounds?: number;
                         timePerPickSeconds?: number;
@@ -4658,11 +4553,7 @@ export interface operations {
                         pricingMethod?: string;
                         rosterSize?: number;
                         pickCount?: number;
-                        survivorStyle?: string;
                         picksPerPeriod?: number;
-                        oneEntityPerSeason?: boolean;
-                        strikesBeforeElimination?: number;
-                        buybacksAllowed?: boolean;
                         roundValues?: number[];
                         startRound?: string;
                         isExclusive?: boolean;
@@ -4735,7 +4626,7 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -4762,7 +4653,7 @@ export interface operations {
                     contestType: "SINGLE_EVENT";
                     configuration: {
                         /** @enum {string} */
-                        selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                        selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
                         rounds?: number;
                         timePerPickSeconds?: number;
                         autoPickPolicy?: string;
@@ -4842,7 +4733,7 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             configuration: {
                                 /** @enum {string} */
-                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
                                 rounds?: number;
                                 timePerPickSeconds?: number;
                                 autoPickPolicy?: string;
@@ -4946,7 +4837,7 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             configuration: {
                                 /** @enum {string} */
-                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
                                 rounds?: number;
                                 timePerPickSeconds?: number;
                                 autoPickPolicy?: string;
@@ -5036,7 +4927,7 @@ export interface operations {
             content: {
                 "application/json": {
                     /** @enum {string} */
-                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
                     rounds?: number;
                     timePerPickSeconds?: number;
                     autoPickPolicy?: string;
@@ -5115,7 +5006,7 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             configuration: {
                                 /** @enum {string} */
-                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION";
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
                                 rounds?: number;
                                 timePerPickSeconds?: number;
                                 autoPickPolicy?: string;
@@ -5234,7 +5125,7 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -5316,7 +5207,7 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -5764,7 +5655,7 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -5821,7 +5712,7 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -5880,7 +5771,7 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -5939,7 +5830,7 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -9265,178 +9156,6 @@ export interface operations {
             };
         };
     };
-    adminListSelectionTemplatesConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        sport: string;
-                        contestType: string;
-                        selectionType: string;
-                        config: {
-                            [key: string]: unknown;
-                        };
-                    }[];
-                };
-            };
-        };
-    };
-    adminCreateSelectionTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    id: string;
-                    name: string;
-                    description: string;
-                    sport: string;
-                    contestType: string;
-                    selectionType: string;
-                    config: Record<string, never>;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        sport: string;
-                        contestType: string;
-                        selectionType: string;
-                        config: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetSelectionTemplateConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        sport: string;
-                        contestType: string;
-                        selectionType: string;
-                        config: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateSelectionTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name?: string;
-                    description?: string;
-                    sport?: string;
-                    contestType?: string;
-                    selectionType?: string;
-                    config?: Record<string, never>;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        sport: string;
-                        contestType: string;
-                        selectionType: string;
-                        config: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteSelectionTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
     adminListNotificationTemplates: {
         parameters: {
             query?: never;
@@ -10550,71 +10269,6 @@ export interface operations {
             };
         };
     };
-    listSelectionTemplates: {
-        parameters: {
-            query?: {
-                sport?: string;
-                contestType?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        sport: string;
-                        contestType: string;
-                        selectionType: string;
-                        config: {
-                            [key: string]: unknown;
-                        };
-                    }[];
-                };
-            };
-        };
-    };
-    getSelectionTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                templateId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        sport: string;
-                        contestType: string;
-                        selectionType: string;
-                        config: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
     getDraftState: {
         parameters: {
             query?: never;
@@ -10884,258 +10538,9 @@ export interface operations {
                     entryId: string;
                     /** Format: uuid */
                     participantId: string;
-                    /** Format: uuid */
-                    eventId?: string;
-                    period?: number;
-                    matchupIndex?: number;
-                    roundNumber?: number;
-                    matchNumber?: number;
-                    confidenceWeight?: number;
                 };
             };
         };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        contestId: string;
-                        contestName: string;
-                        selectionType: string;
-                        isTurnBased: boolean;
-                        isCommissioner?: boolean;
-                        rosterSize: number;
-                        contestConfiguration?: {
-                            isExclusive: boolean;
-                            rounds?: number;
-                            pickCount?: number;
-                            rosterSize?: number;
-                            budget?: number;
-                            pricingMethod?: string;
-                            timePerPickSeconds?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            tierConfig?: {
-                                tierId: string;
-                                tierName: string;
-                                tierNumber: number;
-                                picksFromTier: number;
-                            }[];
-                        } | null;
-                        status: string;
-                        currentPickNumber: number;
-                        currentRound: number;
-                        totalPicks: number;
-                        totalRounds: number;
-                        currentEntryId: string | null;
-                        currentEntryName: string | null;
-                        myEntryId: string | null;
-                        isMyPick: boolean;
-                        timePerPickSeconds: number;
-                        /** Format: date-time */
-                        currentTurnStartedAt: string | null;
-                        entries: {
-                            id: string;
-                            userId: string;
-                            name: string;
-                            isOnClock: boolean;
-                        }[];
-                        draftPickHistories: {
-                            pickNumber: number;
-                            round: number;
-                            pickInRound: number;
-                            entryId: string;
-                            entryName: string;
-                            participantId: string | null;
-                            participantName: string | null;
-                            position?: string;
-                            team?: string;
-                            price?: number;
-                            tierId?: string;
-                            tierName?: string;
-                            autoPicked: boolean;
-                            isSkipped?: boolean;
-                            /** Format: date-time */
-                            pickedAt: string;
-                        }[];
-                        availableParticipantIds: string[];
-                        isComplete: boolean;
-                        pickEmEvents?: {
-                            id: string;
-                            eventId: string | null;
-                            period: number;
-                            matchupIndex: number;
-                            homeParticipantId: string | null;
-                            homeParticipantName: string | null;
-                            awayParticipantId: string | null;
-                            awayParticipantName: string | null;
-                            /** Format: date-time */
-                            eventTime: string | null;
-                            /** Format: date-time */
-                            deadline: string | null;
-                            isLocked: boolean;
-                            myPickParticipantId: string | null;
-                            confidenceWeight: number | null;
-                            label: string | null;
-                        }[];
-                        bracketMatchups?: {
-                            id: string;
-                            roundNumber: number;
-                            matchNumber: number;
-                            label: string | null;
-                            isLocked: boolean;
-                            topTeam: {
-                                id: string;
-                                name: string;
-                                seed: number | null;
-                            } | null;
-                            bottomTeam: ({
-                                id: string;
-                                name: string;
-                                seed: number | null;
-                            } | null) | null;
-                            winnerId: string | null;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    resetBracketSubmission: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        contestId: string;
-                        contestName: string;
-                        selectionType: string;
-                        isTurnBased: boolean;
-                        isCommissioner?: boolean;
-                        rosterSize: number;
-                        contestConfiguration?: {
-                            isExclusive: boolean;
-                            rounds?: number;
-                            pickCount?: number;
-                            rosterSize?: number;
-                            budget?: number;
-                            pricingMethod?: string;
-                            timePerPickSeconds?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            tierConfig?: {
-                                tierId: string;
-                                tierName: string;
-                                tierNumber: number;
-                                picksFromTier: number;
-                            }[];
-                        } | null;
-                        status: string;
-                        currentPickNumber: number;
-                        currentRound: number;
-                        totalPicks: number;
-                        totalRounds: number;
-                        currentEntryId: string | null;
-                        currentEntryName: string | null;
-                        myEntryId: string | null;
-                        isMyPick: boolean;
-                        timePerPickSeconds: number;
-                        /** Format: date-time */
-                        currentTurnStartedAt: string | null;
-                        entries: {
-                            id: string;
-                            userId: string;
-                            name: string;
-                            isOnClock: boolean;
-                        }[];
-                        draftPickHistories: {
-                            pickNumber: number;
-                            round: number;
-                            pickInRound: number;
-                            entryId: string;
-                            entryName: string;
-                            participantId: string | null;
-                            participantName: string | null;
-                            position?: string;
-                            team?: string;
-                            price?: number;
-                            tierId?: string;
-                            tierName?: string;
-                            autoPicked: boolean;
-                            isSkipped?: boolean;
-                            /** Format: date-time */
-                            pickedAt: string;
-                        }[];
-                        availableParticipantIds: string[];
-                        isComplete: boolean;
-                        pickEmEvents?: {
-                            id: string;
-                            eventId: string | null;
-                            period: number;
-                            matchupIndex: number;
-                            homeParticipantId: string | null;
-                            homeParticipantName: string | null;
-                            awayParticipantId: string | null;
-                            awayParticipantName: string | null;
-                            /** Format: date-time */
-                            eventTime: string | null;
-                            /** Format: date-time */
-                            deadline: string | null;
-                            isLocked: boolean;
-                            myPickParticipantId: string | null;
-                            confidenceWeight: number | null;
-                            label: string | null;
-                        }[];
-                        bracketMatchups?: {
-                            id: string;
-                            roundNumber: number;
-                            matchNumber: number;
-                            label: string | null;
-                            isLocked: boolean;
-                            topTeam: {
-                                id: string;
-                                name: string;
-                                seed: number | null;
-                            } | null;
-                            bottomTeam: ({
-                                id: string;
-                                name: string;
-                                seed: number | null;
-                            } | null) | null;
-                            winnerId: string | null;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    autoFillBracketSubmission: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
         responses: {
             /** @description Default Response */
             200: {

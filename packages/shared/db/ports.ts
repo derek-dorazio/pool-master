@@ -7,11 +7,8 @@
 
 import type {
   ActionItem,
-  BracketPrediction,
   Contest,
   ContestEntry,
-  ContestMatchup,
-  ContestPick,
   DraftPickHistory,
   DraftSession,
   League,
@@ -22,7 +19,6 @@ import type {
   ParticipantSeasonRecord,
   RosterPick,
   Season,
-  SelectionConfig,
   SportConfig,
   Squad,
   SquadMembership,
@@ -154,21 +150,6 @@ export interface ContestRepository {
   delete(id: string): Promise<void>;
 }
 
-export interface SelectionConfigRepository {
-  findByContest(contestId: string): Promise<SelectionConfig | null>;
-  create(config: Omit<SelectionConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<SelectionConfig>;
-  update(id: string, updates: Partial<SelectionConfig>): Promise<SelectionConfig>;
-}
-
-export interface ContestMatchupRepository {
-  findByContest(contestId: string): Promise<ContestMatchup[]>;
-  findByPeriod(contestId: string, period: number): Promise<ContestMatchup[]>;
-  create(matchup: Omit<ContestMatchup, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestMatchup>;
-  createMany(matchups: Omit<ContestMatchup, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
-  update(id: string, updates: Partial<ContestMatchup>): Promise<ContestMatchup>;
-  deleteByContest(contestId: string): Promise<number>;
-}
-
 // --- Entries & Picks ---
 
 export interface ContestEntryRepository {
@@ -183,21 +164,6 @@ export interface ContestEntryRepository {
 export interface RosterPickRepository {
   findByEntry(entryId: string): Promise<RosterPick[]>;
   create(pick: Omit<RosterPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<RosterPick>;
-}
-
-export interface ContestPickRepository {
-  findByEntry(entryId: string): Promise<ContestPick[]>;
-  findByPeriod(contestId: string, period: number): Promise<ContestPick[]>;
-  create(pick: Omit<ContestPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestPick>;
-  update(id: string, updates: Partial<ContestPick>): Promise<ContestPick>;
-  markCorrect(id: string, isCorrect: boolean): Promise<void>;
-}
-
-export interface BracketPredictionRepository {
-  findByEntry(entryId: string): Promise<BracketPrediction | null>;
-  findByContest(contestId: string): Promise<BracketPrediction[]>;
-  create(prediction: Omit<BracketPrediction, 'id' | 'createdAt' | 'updatedAt'>): Promise<BracketPrediction>;
-  update(id: string, updates: Partial<BracketPrediction>): Promise<BracketPrediction>;
 }
 
 // --- Draft Session (Snake Draft only) ---

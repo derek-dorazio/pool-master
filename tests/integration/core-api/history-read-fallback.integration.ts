@@ -75,7 +75,7 @@ describe('History Read Fallback Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [
@@ -138,11 +138,8 @@ describe('History Read Fallback Integration', () => {
       },
     });
 
-    const configuration = await prisma.contestConfiguration.create({
-      data: {
-        contestId,
-        selectionType: SelectionType.TIERED,
-      },
+    const configuration = await prisma.contestConfiguration.findUniqueOrThrow({
+      where: { contestId },
     });
     const prizeDefinition = await prisma.contestPrizeDefinition.create({
       data: {

@@ -13,7 +13,7 @@ import type {
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
 import type { ContestConfigurationTier } from '@poolmaster/shared/domain';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, ScoringEngine } from '@poolmaster/shared/domain';
 
 interface CreateContestManagementContext {
   leagueId: string;
@@ -40,6 +40,8 @@ export class ContestManagementService {
       sportEventId: input.sportEventId,
       name: input.name,
       status: ContestStatus.DRAFT,
+      selectionType: input.configuration.selectionType,
+      scoringEngine: ScoringEngine.CUMULATIVE,
     });
 
     const configuration = await this.contestConfigurationRepo.create({

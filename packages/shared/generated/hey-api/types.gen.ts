@@ -1025,7 +1025,7 @@ export type CreateContestData = {
         seasonId?: string;
         contestType: 'SINGLE_EVENT';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
-        selectionConfig?: {
+        contestConfiguration?: {
             draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
@@ -1121,7 +1121,7 @@ export type CreateContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1135,7 +1135,24 @@ export type CreateManagedContestData = {
         sportEventId: string;
         contestType: 'SINGLE_EVENT';
         configuration: {
-            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+                participantIds: Array<string>;
+            }>;
+            budget?: number;
+            pricingMethod?: string;
+            pickCount?: number;
+            isExclusive?: boolean;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
             locksAt?: string;
             minimumEntries?: number;
             maxEntriesPerSquad?: number;
@@ -1189,7 +1206,24 @@ export type CreateManagedContestResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             configuration: {
-                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: Array<{
+                    tierId: string;
+                    tierName: string;
+                    tierNumber: number;
+                    picksFromTier: number;
+                    participantIds: Array<string>;
+                }>;
+                budget?: number;
+                pricingMethod?: string;
+                pickCount?: number;
+                isExclusive?: boolean;
+                picksPerPeriod?: number;
+                roundValues?: Array<number>;
+                startRound?: string;
                 locksAt?: string;
                 minimumEntries?: number;
                 maxEntriesPerSquad?: number;
@@ -1258,7 +1292,24 @@ export type GetManagedContestResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             configuration: {
-                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: Array<{
+                    tierId: string;
+                    tierName: string;
+                    tierNumber: number;
+                    picksFromTier: number;
+                    participantIds: Array<string>;
+                }>;
+                budget?: number;
+                pricingMethod?: string;
+                pickCount?: number;
+                isExclusive?: boolean;
+                picksPerPeriod?: number;
+                roundValues?: Array<number>;
+                startRound?: string;
                 locksAt?: string;
                 minimumEntries?: number;
                 maxEntriesPerSquad?: number;
@@ -1307,7 +1358,24 @@ export type GetManagedContestResponse = GetManagedContestResponses[keyof GetMana
 
 export type UpdateManagedContestConfigurationData = {
     body: {
-        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+        rounds?: number;
+        timePerPickSeconds?: number;
+        autoPickPolicy?: string;
+        tierConfig?: Array<{
+            tierId: string;
+            tierName: string;
+            tierNumber: number;
+            picksFromTier: number;
+            participantIds: Array<string>;
+        }>;
+        budget?: number;
+        pricingMethod?: string;
+        pickCount?: number;
+        isExclusive?: boolean;
+        picksPerPeriod?: number;
+        roundValues?: Array<number>;
+        startRound?: string;
         locksAt?: string;
         minimumEntries?: number;
         maxEntriesPerSquad?: number;
@@ -1361,7 +1429,24 @@ export type UpdateManagedContestConfigurationResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             configuration: {
-                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION';
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: Array<{
+                    tierId: string;
+                    tierName: string;
+                    tierNumber: number;
+                    picksFromTier: number;
+                    participantIds: Array<string>;
+                }>;
+                budget?: number;
+                pricingMethod?: string;
+                pickCount?: number;
+                isExclusive?: boolean;
+                picksPerPeriod?: number;
+                roundValues?: Array<number>;
+                startRound?: string;
                 locksAt?: string;
                 minimumEntries?: number;
                 maxEntriesPerSquad?: number;
@@ -1462,7 +1547,7 @@ export type GetContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1528,7 +1613,7 @@ export type UpdateContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1859,7 +1944,7 @@ export type ReopenContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1903,7 +1988,7 @@ export type CloseContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1948,7 +2033,7 @@ export type ExtendContestDeadlineResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1993,7 +2078,7 @@ export type UpdateContestLockTimeResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -4694,152 +4779,6 @@ export type AdminResetChannelConfigResponses = {
 
 export type AdminResetChannelConfigResponse = AdminResetChannelConfigResponses[keyof AdminResetChannelConfigResponses];
 
-export type AdminListSelectionTemplatesConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates';
-};
-
-export type AdminListSelectionTemplatesConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    }>;
-};
-
-export type AdminListSelectionTemplatesConfigResponse = AdminListSelectionTemplatesConfigResponses[keyof AdminListSelectionTemplatesConfigResponses];
-
-export type AdminCreateSelectionTemplateData = {
-    body: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates';
-};
-
-export type AdminCreateSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type AdminCreateSelectionTemplateResponse = AdminCreateSelectionTemplateResponses[keyof AdminCreateSelectionTemplateResponses];
-
-export type AdminDeleteSelectionTemplateData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates/{id}';
-};
-
-export type AdminDeleteSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDeleteSelectionTemplateResponse = AdminDeleteSelectionTemplateResponses[keyof AdminDeleteSelectionTemplateResponses];
-
-export type AdminGetSelectionTemplateConfigData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates/{id}';
-};
-
-export type AdminGetSelectionTemplateConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type AdminGetSelectionTemplateConfigResponse = AdminGetSelectionTemplateConfigResponses[keyof AdminGetSelectionTemplateConfigResponses];
-
-export type AdminUpdateSelectionTemplateData = {
-    body: {
-        name?: string;
-        description?: string;
-        sport?: string;
-        contestType?: string;
-        selectionType?: string;
-        config?: {
-            [key: string]: unknown;
-        };
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates/{id}';
-};
-
-export type AdminUpdateSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type AdminUpdateSelectionTemplateResponse = AdminUpdateSelectionTemplateResponses[keyof AdminUpdateSelectionTemplateResponses];
 
 export type AdminListNotificationTemplatesData = {
     body?: never;
@@ -5749,62 +5688,6 @@ export type GetLeagueRecapResponses = {
 
 export type GetLeagueRecapResponse = GetLeagueRecapResponses[keyof GetLeagueRecapResponses];
 
-export type ListSelectionTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        sport?: string;
-        contestType?: string;
-    };
-    url: '/api/v1/drafts/templates';
-};
-
-export type ListSelectionTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    }>;
-};
-
-export type ListSelectionTemplatesResponse = ListSelectionTemplatesResponses[keyof ListSelectionTemplatesResponses];
-
-export type GetSelectionTemplateData = {
-    body?: never;
-    path: {
-        templateId: string;
-    };
-    query?: never;
-    url: '/api/v1/drafts/templates/{templateId}';
-};
-
-export type GetSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type GetSelectionTemplateResponse = GetSelectionTemplateResponses[keyof GetSelectionTemplateResponses];
 
 export type GetDraftStateData = {
     body?: never;
@@ -5826,7 +5709,7 @@ export type GetDraftStateResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -5945,7 +5828,7 @@ export type StartDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -6042,12 +5925,6 @@ export type SubmitDraftPickData = {
     body: {
         entryId: string;
         participantId: string;
-        eventId?: string;
-        period?: number;
-        matchupIndex?: number;
-        roundNumber?: number;
-        matchNumber?: number;
-        confidenceWeight?: number;
     };
     path: {
         contestId: string;
@@ -6067,7 +5944,7 @@ export type SubmitDraftPickResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -6160,232 +6037,6 @@ export type SubmitDraftPickResponses = {
 
 export type SubmitDraftPickResponse = SubmitDraftPickResponses[keyof SubmitDraftPickResponses];
 
-export type ResetBracketSubmissionData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/drafts/{contestId}/bracket';
-};
-
-export type ResetBracketSubmissionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        contestId: string;
-        contestName: string;
-        selectionType: string;
-        isTurnBased: boolean;
-        isCommissioner?: boolean;
-        rosterSize: number;
-        selectionConfig?: {
-            isExclusive: boolean;
-            rounds?: number;
-            pickCount?: number;
-            rosterSize?: number;
-            budget?: number;
-            pricingMethod?: string;
-            timePerPickSeconds?: number;
-            picksPerPeriod?: number;
-            roundValues?: Array<number>;
-            startRound?: string;
-            tierConfig?: Array<{
-                tierId: string;
-                tierName: string;
-                tierNumber: number;
-                picksFromTier: number;
-            }>;
-        };
-        status: string;
-        currentPickNumber: number;
-        currentRound: number;
-        totalPicks: number;
-        totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
-        isMyPick: boolean;
-        timePerPickSeconds: number;
-        currentTurnStartedAt: string;
-        entries: Array<{
-            id: string;
-            userId: string;
-            name: string;
-            isOnClock: boolean;
-        }>;
-        draftPickHistories: Array<{
-            pickNumber: number;
-            round: number;
-            pickInRound: number;
-            entryId: string;
-            entryName: string;
-            participantId: string;
-            participantName: string;
-            position?: string;
-            team?: string;
-            price?: number;
-            tierId?: string;
-            tierName?: string;
-            autoPicked: boolean;
-            isSkipped?: boolean;
-            pickedAt: string;
-        }>;
-        availableParticipantIds: Array<string>;
-        isComplete: boolean;
-        pickEmEvents?: Array<{
-            id: string;
-            eventId: string;
-            period: number;
-            matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
-            isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
-            label: string;
-        }>;
-        bracketMatchups?: Array<{
-            id: string;
-            roundNumber: number;
-            matchNumber: number;
-            label: string;
-            isLocked: boolean;
-            topTeam: {
-                id: string;
-                name: string;
-                seed: number;
-            };
-            bottomTeam: {
-                id: string;
-                name: string;
-                seed: number;
-            };
-            winnerId: string;
-        }>;
-    };
-};
-
-export type ResetBracketSubmissionResponse = ResetBracketSubmissionResponses[keyof ResetBracketSubmissionResponses];
-
-export type AutoFillBracketSubmissionData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/drafts/{contestId}/bracket/auto-fill';
-};
-
-export type AutoFillBracketSubmissionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        contestId: string;
-        contestName: string;
-        selectionType: string;
-        isTurnBased: boolean;
-        isCommissioner?: boolean;
-        rosterSize: number;
-        selectionConfig?: {
-            isExclusive: boolean;
-            rounds?: number;
-            pickCount?: number;
-            rosterSize?: number;
-            budget?: number;
-            pricingMethod?: string;
-            timePerPickSeconds?: number;
-            picksPerPeriod?: number;
-            roundValues?: Array<number>;
-            startRound?: string;
-            tierConfig?: Array<{
-                tierId: string;
-                tierName: string;
-                tierNumber: number;
-                picksFromTier: number;
-            }>;
-        };
-        status: string;
-        currentPickNumber: number;
-        currentRound: number;
-        totalPicks: number;
-        totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
-        isMyPick: boolean;
-        timePerPickSeconds: number;
-        currentTurnStartedAt: string;
-        entries: Array<{
-            id: string;
-            userId: string;
-            name: string;
-            isOnClock: boolean;
-        }>;
-        draftPickHistories: Array<{
-            pickNumber: number;
-            round: number;
-            pickInRound: number;
-            entryId: string;
-            entryName: string;
-            participantId: string;
-            participantName: string;
-            position?: string;
-            team?: string;
-            price?: number;
-            tierId?: string;
-            tierName?: string;
-            autoPicked: boolean;
-            isSkipped?: boolean;
-            pickedAt: string;
-        }>;
-        availableParticipantIds: Array<string>;
-        isComplete: boolean;
-        pickEmEvents?: Array<{
-            id: string;
-            eventId: string;
-            period: number;
-            matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
-            isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
-            label: string;
-        }>;
-        bracketMatchups?: Array<{
-            id: string;
-            roundNumber: number;
-            matchNumber: number;
-            label: string;
-            isLocked: boolean;
-            topTeam: {
-                id: string;
-                name: string;
-                seed: number;
-            };
-            bottomTeam: {
-                id: string;
-                name: string;
-                seed: number;
-            };
-            winnerId: string;
-        }>;
-    };
-};
-
-export type AutoFillBracketSubmissionResponse = AutoFillBracketSubmissionResponses[keyof AutoFillBracketSubmissionResponses];
-
 export type PauseDraftData = {
     body?: never;
     path: {
@@ -6406,7 +6057,7 @@ export type PauseDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -6519,7 +6170,7 @@ export type ResumeDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -6634,7 +6285,7 @@ export type ExtendCurrentTurnResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -6747,7 +6398,7 @@ export type UndoLiveDraftPickResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -6860,7 +6511,7 @@ export type SkipLiveDraftPickResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;

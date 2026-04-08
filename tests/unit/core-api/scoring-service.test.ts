@@ -1,7 +1,7 @@
 import { ScoringService } from '../../../packages/core-api/src/modules/scoring/service';
 
 describe('ScoringService', () => {
-  it('reads persisted entry scoring events and enriches pickem context', async () => {
+  it('reads persisted entry scoring events from the participant score ledger', async () => {
     const standingsRollup = {
       rollupContest: jest.fn(),
       isRunning: jest.fn().mockReturnValue(false),
@@ -39,35 +39,6 @@ describe('ScoringService', () => {
           },
         ]),
       },
-      contest: {
-        findUnique: jest.fn().mockResolvedValue({
-          selectionType: 'PICK_EM',
-        }),
-      },
-      contestPick: {
-        findMany: jest.fn().mockResolvedValue([
-          {
-            participantId: 'participant-1',
-            period: 5,
-            matchupIndex: 3,
-            periodLabel: 'Week 5',
-            eventId: 'event-1',
-          },
-        ]),
-      },
-      contestMatchup: {
-        findMany: jest.fn().mockResolvedValue([
-          {
-            eventId: 'event-1',
-            period: 5,
-            matchupIndex: 3,
-            label: 'Week 5 Game 3',
-          },
-        ]),
-      },
-      bracketPrediction: {
-        findUnique: jest.fn(),
-      },
     } as any;
 
     const service = new ScoringService({
@@ -88,7 +59,7 @@ describe('ScoringService', () => {
     expect(result.timeline[0]?.participantBreakdowns[0]).toMatchObject({
       participantId: 'participant-1',
       participantName: 'Scottie Scheffler',
-      contextLabel: 'Week 5 Game 3',
+      contextLabel: null,
       finalScore: 12,
       statPoints: 12,
     });

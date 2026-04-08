@@ -20,7 +20,7 @@ import {
 } from '@poolmaster/shared/dto';
 import {
   PrismaContestRepository,
-  PrismaSelectionConfigRepository,
+  PrismaContestConfigurationRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaContestEntryRepository,
@@ -38,7 +38,7 @@ import { createOverrideHandlers } from './override-handler';
 export async function contestsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const contestRepo = new PrismaContestRepository(prisma);
-  const selectionConfigRepo = new PrismaSelectionConfigRepository(prisma);
+  const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
@@ -46,7 +46,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
 
   const contestService = new ContestService(
     contestRepo,
-    selectionConfigRepo,
+    contestConfigurationRepo,
     membershipRepo,
     leagueRepo,
     squadRepo,
@@ -89,7 +89,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
 export async function contestsByIdModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const contestRepo = new PrismaContestRepository(prisma);
-  const selectionConfigRepo = new PrismaSelectionConfigRepository(prisma);
+  const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
@@ -99,7 +99,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
 
   const contestService = new ContestService(
     contestRepo,
-    selectionConfigRepo,
+    contestConfigurationRepo,
     membershipRepo,
     leagueRepo,
     squadRepo,
