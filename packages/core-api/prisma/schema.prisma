@@ -442,6 +442,7 @@ model ParticipantContestScoringRule {
   updatedAt                      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   contestConfiguration ContestConfiguration @relation(fields: [contestConfigurationId], references: [id])
+  scoreEvents ContestEntryParticipantScoreEvent[]
 
   @@unique([contestConfigurationId, sortOrder])
   @@index([contestConfigurationId])
@@ -477,6 +478,7 @@ model ContestPrizeDefinition {
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   contestConfiguration ContestConfiguration @relation(fields: [contestConfigurationId], references: [id])
+  prizeAwards          ContestEntryPrizeAward[]
 
   @@unique([contestConfigurationId, sortOrder])
   @@index([contestConfigurationId])
@@ -631,6 +633,8 @@ model ContestEntry {
   contestPicks ContestPick[]
   bracket      BracketPrediction?
   draftPicks   DraftPick[]
+  participantScores ContestEntryParticipantScore[]
+  prizeAwards ContestEntryPrizeAward[]
 
   @@unique([contestId, squadId, entryNumber])
   @@index([contestId, standingsPosition])
@@ -651,10 +655,66 @@ model RosterPick {
 
   entry       ContestEntry @relation(fields: [entryId], references: [id])
   sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
+  participantScores ContestEntryParticipantScore[]
 
   @@index([entryId])
   @@unique([entryId, sportEventParticipantId])
   @@map("roster_picks")
+}
+
+model ContestEntryParticipantScore {
+  id           String   @id @default(uuid()) @db.Uuid
+  entryId       String   @map("entry_id") @db.Uuid
+  rosterPickId  String   @map("roster_pick_id") @db.Uuid
+  pointsEarned  Float    @default(0) @map("points_earned")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  entry      ContestEntry @relation(fields: [entryId], references: [id])
+  rosterPick RosterPick   @relation(fields: [rosterPickId], references: [id])
+  events     ContestEntryParticipantScoreEvent[]
+
+  @@unique([entryId, rosterPickId])
+  @@index([entryId])
+  @@index([rosterPickId])
+  @@map("contest_entry_participant_scores")
+}
+
+model ContestEntryParticipantScoreEvent {
+  id                             String   @id @default(uuid()) @db.Uuid
+  contestEntryParticipantScoreId String   @map("contest_entry_participant_score_id") @db.Uuid
+  participantContestScoringRuleId String  @map("participant_contest_scoring_rule_id") @db.Uuid
+  points                         Float    @default(0)
+  detailsJson                    Json     @default("{}") @map("details_json")
+  createdAt                      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  participantScore ContestEntryParticipantScore @relation(fields: [contestEntryParticipantScoreId], references: [id])
+  participantContestScoringRule ParticipantContestScoringRule @relation(fields: [participantContestScoringRuleId], references: [id])
+
+  @@index([contestEntryParticipantScoreId])
+  @@index([participantContestScoringRuleId])
+  @@map("contest_entry_participant_score_events")
+}
+
+model ContestEntryPrizeAward {
+  id                     String   @id @default(uuid()) @db.Uuid
+  entryId                String   @map("entry_id") @db.Uuid
+  contestPrizeDefinitionId String @map("contest_prize_definition_id") @db.Uuid
+  prizeDefinitionId      String?  @map("prize_definition_id") @db.VarChar(100)
+  displayName            String   @map("display_name") @db.VarChar(100)
+  amount                 Float?
+  percentage             Float?
+  awardedAt              DateTime @map("awarded_at") @db.Timestamptz
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  entry                 ContestEntry         @relation(fields: [entryId], references: [id])
+  contestPrizeDefinition ContestPrizeDefinition @relation(fields: [contestPrizeDefinitionId], references: [id])
+
+  @@index([entryId])
+  @@index([contestPrizeDefinitionId])
+  @@map("contest_entry_prize_awards")
 }
 
 /// A single pick in a survivor or pick'em contest — one per entry per period.

@@ -137,6 +137,7 @@ export interface ContestEntryParticipantScoreRepository {
     id: string,
     updates: Partial<ContestEntryParticipantScore>,
   ): Promise<ContestEntryParticipantScore>;
+  deleteByEntry(entryId: string): Promise<number>;
 }
 
 export interface ContestEntryParticipantScoreEventRepository {

@@ -227,6 +227,7 @@ export async function cleanupTestData(): Promise<void> {
   const tid = TEST_TENANT_ID;
   // Tables that reference contests
   const contestChildTables = [
+    'contest_entry_participant_score_events', 'contest_entry_participant_scores', 'contest_entry_prize_awards',
     'contest_entries', 'contest_standings', 'contest_results', 'scoring_checkpoints',
     'draft_sessions', 'draft_picks', 'selection_configs', 'bracket_predictions',
     'contest_participant_pool', 'contest_pools', 'contest_matchups', 'roster_picks', 'contest_picks', 'payout_history',
@@ -250,6 +251,19 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.$executeRawUnsafe(
     'DELETE FROM contests WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1::uuid)',
     tid,
+  ).catch(() => {});
+
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM sport_event_participant_source_data WHERE sport_event_participant_id IN (SELECT id FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test'))",
+  ).catch(() => {});
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM sport_event_participant_valuations WHERE sport_event_participant_id IN (SELECT id FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test'))",
+  ).catch(() => {});
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test')",
+  ).catch(() => {});
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM sport_events WHERE provider_id = 'integration-test'",
   ).catch(() => {});
 
   for (const table of leagueChildTables) {

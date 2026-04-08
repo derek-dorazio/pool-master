@@ -3,6 +3,9 @@ import type {
   ContestConfigurationRepository,
   ContestCoreRepository,
   ContestEntryAggregationRuleRepository,
+  ContestEntryParticipantScoreEventRepository,
+  ContestEntryParticipantScoreRepository,
+  ContestEntryPrizeAwardRepository,
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
@@ -13,6 +16,9 @@ import type {
   ContestConfiguration,
   ContestCoreSummary,
   ContestEntryAggregationRule,
+  ContestEntryParticipantScore,
+  ContestEntryParticipantScoreEvent,
+  ContestEntryPrizeAward,
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
   SportEventParticipant,
@@ -493,6 +499,178 @@ export class PrismaContestPrizeDefinitionRepository
   }
 }
 
+export class PrismaContestEntryParticipantScoreRepository
+  implements ContestEntryParticipantScoreRepository
+{
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findById(id: string): Promise<ContestEntryParticipantScore | null> {
+    const row = await this.prisma.contestEntryParticipantScore.findUnique({
+      where: { id },
+    });
+    return row ? mapParticipantScore(row) : null;
+  }
+
+  async findByEntry(entryId: string): Promise<ContestEntryParticipantScore[]> {
+    const rows = await this.prisma.contestEntryParticipantScore.findMany({
+      where: { entryId },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(mapParticipantScore);
+  }
+
+  async create(
+    score: Omit<ContestEntryParticipantScore, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<ContestEntryParticipantScore> {
+    const row = await this.prisma.contestEntryParticipantScore.create({
+      data: {
+        entryId: score.entryId,
+        rosterPickId: score.rosterPickId,
+        pointsEarned: score.pointsEarned,
+      },
+    });
+    return mapParticipantScore(row);
+  }
+
+  async update(
+    id: string,
+    updates: Partial<ContestEntryParticipantScore>,
+  ): Promise<ContestEntryParticipantScore> {
+    const row = await this.prisma.contestEntryParticipantScore.update({
+      where: { id },
+      data: {
+        ...(updates.pointsEarned !== undefined && {
+          pointsEarned: updates.pointsEarned,
+        }),
+      },
+    });
+    return mapParticipantScore(row);
+  }
+
+  async deleteByEntry(entryId: string): Promise<number> {
+    const result = await this.prisma.contestEntryParticipantScore.deleteMany({
+      where: { entryId },
+    });
+    return result.count;
+  }
+}
+
+export class PrismaContestEntryParticipantScoreEventRepository
+  implements ContestEntryParticipantScoreEventRepository
+{
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findById(id: string): Promise<ContestEntryParticipantScoreEvent | null> {
+    const row = await this.prisma.contestEntryParticipantScoreEvent.findUnique({
+      where: { id },
+    });
+    return row ? mapParticipantScoreEvent(row) : null;
+  }
+
+  async findByParticipantScore(
+    contestEntryParticipantScoreId: string,
+  ): Promise<ContestEntryParticipantScoreEvent[]> {
+    const rows = await this.prisma.contestEntryParticipantScoreEvent.findMany({
+      where: { contestEntryParticipantScoreId },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(mapParticipantScoreEvent);
+  }
+
+  async create(
+    event: Omit<
+      ContestEntryParticipantScoreEvent,
+      'id' | 'createdAt' | 'updatedAt'
+    >,
+  ): Promise<ContestEntryParticipantScoreEvent> {
+    const row = await this.prisma.contestEntryParticipantScoreEvent.create({
+      data: {
+        contestEntryParticipantScoreId: event.contestEntryParticipantScoreId,
+        participantContestScoringRuleId: event.participantContestScoringRuleId,
+        points: event.points,
+        detailsJson: event.detailsJson as object,
+      },
+    });
+    return mapParticipantScoreEvent(row);
+  }
+
+  async createMany(
+    events: Omit<
+      ContestEntryParticipantScoreEvent,
+      'id' | 'createdAt' | 'updatedAt'
+    >[],
+  ): Promise<number> {
+    if (events.length === 0) {
+      return 0;
+    }
+
+    const result = await this.prisma.contestEntryParticipantScoreEvent.createMany({
+      data: events.map((event) => ({
+        contestEntryParticipantScoreId: event.contestEntryParticipantScoreId,
+        participantContestScoringRuleId: event.participantContestScoringRuleId,
+        points: event.points,
+        detailsJson: event.detailsJson as object,
+      })),
+    });
+
+    return result.count;
+  }
+
+  async deleteByParticipantScore(
+    contestEntryParticipantScoreId: string,
+  ): Promise<number> {
+    const result = await this.prisma.contestEntryParticipantScoreEvent.deleteMany({
+      where: { contestEntryParticipantScoreId },
+    });
+    return result.count;
+  }
+}
+
+export class PrismaContestEntryPrizeAwardRepository
+  implements ContestEntryPrizeAwardRepository
+{
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findById(id: string): Promise<ContestEntryPrizeAward | null> {
+    const row = await this.prisma.contestEntryPrizeAward.findUnique({
+      where: { id },
+    });
+    return row ? mapPrizeAward(row) : null;
+  }
+
+  async findByEntry(entryId: string): Promise<ContestEntryPrizeAward[]> {
+    const rows = await this.prisma.contestEntryPrizeAward.findMany({
+      where: { entryId },
+      orderBy: [{ awardedAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(mapPrizeAward);
+  }
+
+  async create(
+    award: Omit<ContestEntryPrizeAward, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<ContestEntryPrizeAward> {
+    const row = await this.prisma.contestEntryPrizeAward.create({
+      data: {
+        entryId: award.entryId,
+        contestPrizeDefinitionId: award.contestPrizeDefinitionId,
+        prizeDefinitionId: award.prizeDefinitionId,
+        displayName: award.displayName,
+        amount: award.amount,
+        percentage: award.percentage,
+        awardedAt: award.awardedAt,
+      },
+    });
+    return mapPrizeAward(row);
+  }
+
+  async deleteByEntry(entryId: string): Promise<number> {
+    const result = await this.prisma.contestEntryPrizeAward.deleteMany({
+      where: { entryId },
+    });
+    return result.count;
+  }
+}
+
 function mapContest(row: {
   id: string;
   leagueId: string;
@@ -674,6 +852,70 @@ function mapPrizeDefinition(row: {
     amount: row.amount ?? undefined,
     percentage: row.percentage ?? undefined,
     active: row.active,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function mapParticipantScore(row: {
+  id: string;
+  entryId: string;
+  rosterPickId: string;
+  pointsEarned: number;
+  createdAt: Date;
+  updatedAt: Date;
+}): ContestEntryParticipantScore {
+  return {
+    id: row.id,
+    entryId: row.entryId,
+    rosterPickId: row.rosterPickId,
+    pointsEarned: row.pointsEarned,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function mapParticipantScoreEvent(row: {
+  id: string;
+  contestEntryParticipantScoreId: string;
+  participantContestScoringRuleId: string;
+  points: number;
+  detailsJson: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}): ContestEntryParticipantScoreEvent {
+  return {
+    id: row.id,
+    contestEntryParticipantScoreId: row.contestEntryParticipantScoreId,
+    participantContestScoringRuleId: row.participantContestScoringRuleId,
+    points: row.points,
+    detailsJson: (row.detailsJson ?? {}) as Record<string, unknown>,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function mapPrizeAward(row: {
+  id: string;
+  entryId: string;
+  contestPrizeDefinitionId: string;
+  prizeDefinitionId: string | null;
+  displayName: string;
+  amount: number | null;
+  percentage: number | null;
+  awardedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}): ContestEntryPrizeAward {
+  return {
+    id: row.id,
+    entryId: row.entryId,
+    contestPrizeDefinitionId: row.contestPrizeDefinitionId,
+    prizeDefinitionId: row.prizeDefinitionId ?? undefined,
+    displayName: row.displayName,
+    amount: row.amount ?? undefined,
+    percentage: row.percentage ?? undefined,
+    awardedAt: row.awardedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
