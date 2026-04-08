@@ -594,10 +594,7 @@ export class ProviderService {
       data: { sport: detail.sport },
     });
 
-    await this.ingestionPersistence.persistEvents([detail]);
-    if (detail.participants.length > 0) {
-      await this.ingestionPersistence.persistParticipants(detail.participants);
-    }
+    await this.ingestionPersistence.persistEventDetail(detail);
 
     await this.prisma.ingestionJob.update({
       where: { id: job.id },

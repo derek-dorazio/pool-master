@@ -337,7 +337,7 @@ export class ContestPoolService {
     }
 
     if (detail.participants.length > 0 && this.ingestionPersistence) {
-      await this.ingestionPersistence.persistParticipants(detail.participants);
+      await this.ingestionPersistence.persistEventDetail(detail);
     }
 
     await this.prisma.sportEvent.update({
