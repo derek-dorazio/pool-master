@@ -29,6 +29,31 @@ export type RegisterUserData = {
     url: '/api/v1/auth/register';
 };
 
+export type RegisterUserErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    409: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type RegisterUserError = RegisterUserErrors[keyof RegisterUserErrors];
+
 export type RegisterUserResponses = {
     /**
      * Default Response
@@ -65,6 +90,21 @@ export type LoginUserData = {
     url: '/api/v1/auth/login';
 };
 
+export type LoginUserErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type LoginUserError = LoginUserErrors[keyof LoginUserErrors];
+
 export type LoginUserResponses = {
     /**
      * Default Response
@@ -100,6 +140,21 @@ export type RefreshTokenData = {
     url: '/api/v1/auth/refresh';
 };
 
+export type RefreshTokenErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type RefreshTokenError = RefreshTokenErrors[keyof RefreshTokenErrors];
+
 export type RefreshTokenResponses = {
     /**
      * Default Response
@@ -121,6 +176,21 @@ export type LogoutUserData = {
     query?: never;
     url: '/api/v1/auth/logout';
 };
+
+export type LogoutUserErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type LogoutUserError = LogoutUserErrors[keyof LogoutUserErrors];
 
 export type LogoutUserResponses = {
     /**
@@ -168,9 +238,11 @@ export type OauthCallbackErrors = {
      * Default Response
      */
     501: {
-        error: string;
-        message: string;
-        details?: unknown;
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
     };
 };
 
@@ -182,6 +254,21 @@ export type GetCurrentUserData = {
     query?: never;
     url: '/api/v1/auth/me';
 };
+
+export type GetCurrentUserErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserErrors];
 
 export type GetCurrentUserResponses = {
     /**
@@ -1620,25 +1707,31 @@ export type AcceptInvitationErrors = {
      * Default Response
      */
     400: {
-        error: string;
-        message: string;
-        details?: unknown;
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
     };
     /**
      * Default Response
      */
     401: {
-        error: string;
-        message: string;
-        details?: unknown;
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
     };
     /**
      * Default Response
      */
     404: {
-        error: string;
-        message: string;
-        details?: unknown;
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
     };
 };
 

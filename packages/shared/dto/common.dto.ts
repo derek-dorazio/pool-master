@@ -2,6 +2,7 @@
  * Common DTO schemas shared across all API endpoints.
  */
 import { z } from 'zod';
+import { ErrorEnvelopeSchema } from './errors.dto';
 
 // --- Primitives ---
 
@@ -11,12 +12,8 @@ export const JsonObjectSchema = z.record(z.unknown());
 export const StringRecordSchema = z.record(z.string());
 
 // --- Error Envelope ---
-
-export const ApiErrorSchema = z.object({
-  error: z.string(),
-  message: z.string(),
-  details: z.unknown().optional(),
-});
+// Compatibility alias for older imports. New code should prefer ErrorEnvelopeSchema directly.
+export const ApiErrorSchema = ErrorEnvelopeSchema;
 export type ApiError = z.infer<typeof ApiErrorSchema>;
 
 // --- Pagination ---

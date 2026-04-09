@@ -3,6 +3,7 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { sendError } from '../../core/error-handler';
 import type { AuthService } from './auth-service';
 import { AuthError } from './auth-service';
 
@@ -29,7 +30,7 @@ export function createAuthHandlers(authService: AuthService) {
       return reply.status(201).send(result);
     } catch (err) {
       if (err instanceof AuthError) {
-        return reply.status(err.statusCode).send({ error: err.code, message: err.message });
+        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }
@@ -47,7 +48,7 @@ export function createAuthHandlers(authService: AuthService) {
       return reply.send(result);
     } catch (err) {
       if (err instanceof AuthError) {
-        return reply.status(err.statusCode).send({ error: err.code, message: err.message });
+        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }
@@ -65,7 +66,7 @@ export function createAuthHandlers(authService: AuthService) {
       return reply.send(tokens);
     } catch (err) {
       if (err instanceof AuthError) {
-        return reply.status(err.statusCode).send({ error: err.code, message: err.message });
+        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }
@@ -99,10 +100,12 @@ export function createAuthHandlers(authService: AuthService) {
     reply: FastifyReply,
   ): Promise<void> {
     // Placeholder for Auth0/Cognito OAuth callback
-    return reply.status(501).send({
-      error: 'NOT_IMPLEMENTED',
-      message: 'OAuth callback not yet configured. Use email/password registration.',
-    });
+    return sendError(
+      reply,
+      501,
+      'NOT_IMPLEMENTED',
+      'OAuth callback not yet configured. Use email/password registration.',
+    );
   }
 
   async function handleMe(
@@ -111,7 +114,7 @@ export function createAuthHandlers(authService: AuthService) {
   ): Promise<void> {
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing authorization header' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing authorization header');
     }
 
     try {
@@ -119,14 +122,14 @@ export function createAuthHandlers(authService: AuthService) {
       const payload = authService.verifyAccessToken(token);
 
       if (!payload.sub) {
-        return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Token missing required sub claim' });
+        return sendError(reply, 401, 'UNAUTHORIZED', 'Token missing required sub claim');
       }
 
       const profile = await authService.getProfile(payload.sub);
       return reply.send({ user: profile });
     } catch (err) {
       if (err instanceof AuthError) {
-        return reply.status(err.statusCode).send({ error: err.code, message: err.message });
+        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }

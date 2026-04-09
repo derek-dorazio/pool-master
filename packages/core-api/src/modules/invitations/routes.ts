@@ -7,7 +7,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { ApiErrorSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
 import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto/leagues.dto';
 import {
   PrismaLeagueRepository,
@@ -33,9 +33,9 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
       operationId: 'acceptInvitation',
       response: {
         201: zodToJsonSchema(LeagueMembershipResponseSchema),
-        400: zodToJsonSchema(ApiErrorSchema),
-        401: zodToJsonSchema(ApiErrorSchema),
-        404: zodToJsonSchema(ApiErrorSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
       body: {
         type: 'object',

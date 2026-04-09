@@ -2318,6 +2318,36 @@ export interface operations {
                     };
                 };
             };
+            /** @description Default Response */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Default Response */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
     loginUser: {
@@ -2365,6 +2395,21 @@ export interface operations {
                     };
                 };
             };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
     refreshToken: {
@@ -2395,6 +2440,21 @@ export interface operations {
                     };
                 };
             };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
     logoutUser: {
@@ -2421,6 +2481,21 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
+                    };
+                };
+            };
+            /** @description Default Response */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
                     };
                 };
             };
@@ -2478,9 +2553,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        error: string;
-                        message: string;
-                        details?: unknown;
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
                     };
                 };
             };
@@ -2514,6 +2591,21 @@ export interface operations {
                             avatarUrl?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
+                        };
+                    };
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
                         };
                     };
                 };
@@ -4337,9 +4429,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        error: string;
-                        message: string;
-                        details?: unknown;
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
                     };
                 };
             };
@@ -4350,9 +4444,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        error: string;
-                        message: string;
-                        details?: unknown;
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
                     };
                 };
             };
@@ -4363,9 +4459,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        error: string;
-                        message: string;
-                        details?: unknown;
+                        error: {
+                            code: string;
+                            message: string;
+                            details?: unknown;
+                        };
                     };
                 };
             };

@@ -35,6 +35,28 @@ afterAll(async () => {
 });
 
 describe('API contracts (web)', () => {
+  it('auth routes expose the shared error envelope on negative responses', async () => {
+    const loginRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.auth.login,
+      payload: {
+        email: 'missing-user@integration.test',
+        password: 'WrongPassword123',
+      },
+    });
+
+    expect(loginRes.statusCode).toBe(401);
+    expect(ErrorEnvelopeSchema.safeParse(loginRes.json()).success).toBe(true);
+
+    const meRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.auth.me,
+    });
+
+    expect(meRes.statusCode).toBe(401);
+    expect(ErrorEnvelopeSchema.safeParse(meRes.json()).success).toBe(true);
+  });
+
   it('POST /api/v1/leagues matches LeagueResponseSchema', async () => {
     const owner = await createTestUser({ displayName: 'Contract League Owner' });
 

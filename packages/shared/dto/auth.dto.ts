@@ -2,7 +2,8 @@
  * Auth DTOs — request/response schemas for authentication endpoints.
  */
 import { z } from 'zod';
-import { ApiErrorSchema, SuccessSchema } from './common.dto';
+import { SuccessSchema } from './common.dto';
+import { ErrorEnvelopeSchema } from './errors.dto';
 
 // --- Requests ---
 
@@ -86,5 +87,5 @@ export const ForgotPasswordResponseSchema = z.object({
 });
 export type ForgotPasswordResponse = z.infer<typeof ForgotPasswordResponseSchema>;
 
-export const OAuthCallbackResponseSchema = ApiErrorSchema;
+export const OAuthCallbackResponseSchema = ErrorEnvelopeSchema;
 export type OAuthCallbackResponse = z.infer<typeof OAuthCallbackResponseSchema>;

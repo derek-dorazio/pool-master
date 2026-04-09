@@ -13,7 +13,6 @@
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
 import { AuthService } from './auth-service';
 import { createAuthHandlers } from './handler';
 import {
@@ -25,22 +24,13 @@ import {
   AuthResponseSchema,
   TokenRefreshResponseSchema,
   MeResponseSchema,
-  ApiErrorSchema,
+  ErrorEnvelopeSchema,
   SuccessSchema,
+  ForgotPasswordRequestSchema,
+  ForgotPasswordResponseSchema,
+  OAuthCallbackRequestSchema,
+  OAuthCallbackResponseSchema,
 } from '@poolmaster/shared/dto';
-
-const forgotPasswordRequestSchema = z.object({
-  email: z.string().email(),
-});
-
-const forgotPasswordResponseSchema = z.object({
-  message: z.string(),
-});
-
-const oauthCallbackRequestSchema = z.object({
-  code: z.string(),
-  state: z.string(),
-});
 
 export async function authModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -54,7 +44,11 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Register a new user account',
       operationId: 'registerUser',
       body: zodToJsonSchema(RegisterRequestSchema),
-      response: { 201: zodToJsonSchema(AuthResponseSchema) },
+      response: {
+        201: zodToJsonSchema(AuthResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.register,
   });
@@ -66,7 +60,10 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Authenticate with email and password',
       operationId: 'loginUser',
       body: zodToJsonSchema(LoginRequestSchema),
-      response: { 200: zodToJsonSchema(AuthResponseSchema) },
+      response: {
+        200: zodToJsonSchema(AuthResponseSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.login,
   });
@@ -78,7 +75,10 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Exchange refresh token for new access token',
       operationId: 'refreshToken',
       body: zodToJsonSchema(RefreshRequestSchema),
-      response: { 200: zodToJsonSchema(TokenRefreshResponseSchema) },
+      response: {
+        200: zodToJsonSchema(TokenRefreshResponseSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.refresh,
   });
@@ -90,7 +90,10 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Revoke refresh token',
       operationId: 'logoutUser',
       body: zodToJsonSchema(LogoutRequestSchema),
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.logout,
   });
@@ -101,8 +104,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Auth'],
       summary: 'Request password reset email',
       operationId: 'forgotPassword',
-      body: zodToJsonSchema(forgotPasswordRequestSchema),
-      response: { 200: zodToJsonSchema(forgotPasswordResponseSchema) },
+      body: zodToJsonSchema(ForgotPasswordRequestSchema),
+      response: { 200: zodToJsonSchema(ForgotPasswordResponseSchema) },
     },
     handler: handlers.forgotPassword,
   });
@@ -113,8 +116,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Auth'],
       summary: 'OAuth provider callback',
       operationId: 'oauthCallback',
-      body: zodToJsonSchema(oauthCallbackRequestSchema),
-      response: { 501: zodToJsonSchema(ApiErrorSchema) },
+      body: zodToJsonSchema(OAuthCallbackRequestSchema),
+      response: { 501: zodToJsonSchema(OAuthCallbackResponseSchema) },
     },
     handler: handlers.oauthCallback,
   });
@@ -125,7 +128,10 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Auth'],
       summary: 'Get current user profile from JWT',
       operationId: 'getCurrentUser',
-      response: { 200: zodToJsonSchema(MeResponseSchema) },
+      response: {
+        200: zodToJsonSchema(MeResponseSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.me,
   });

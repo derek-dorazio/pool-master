@@ -176,15 +176,15 @@ All error responses must follow a consistent envelope so frontend clients can ha
 ```
 
 **Rules:**
-- New routes and materially changed routes must use this envelope.
-- Existing untouched routes should migrate to this envelope when they are next materially changed.
+- Backend routes must use this envelope for error responses unless the route intentionally returns a domain-specific validation/result DTO instead of a generic error payload.
+- The currently documented exception is scoring configuration validation, which returns a validation-result DTO on `400` instead of the generic envelope.
 - Validation errors (400) should include `details` with per-field errors when available.
 - Not-found errors (404) should use domain-specific codes (e.g., `CONTEST_NOT_FOUND`, not generic `NOT_FOUND`).
 - Permission errors (403) should use codes that distinguish the denial reason (e.g., `INSUFFICIENT_PERMISSION`, `NOT_LEAGUE_MEMBER`).
 - Define a shared DTO/schema for the standard error envelope in `packages/shared/dto/`.
 - Fastify's global error handler should format unhandled errors into this envelope where practical, and new route work should not bypass that standard.
-- When a route is touched, declare error response shapes for the most relevant statuses such as `400`, `401`, `403`, and `404`.
-- Smoke and contract tests should validate error response shapes, not just success paths.
+- Route schemas must declare error response shapes for the most relevant statuses such as `400`, `401`, `403`, and `404`.
+- Functional, contract, or integration tests must validate representative error response shapes, not just success paths.
 
 ---
 

@@ -68,13 +68,13 @@ This should be treated as an intentional contract cleanup and coordinated with f
 | Done | Inventory active backend routes that do not yet use a consistent error envelope | Major categories: mixed flat `{ error, message }` responses in route handlers, bespoke `{ success: false }`/raw 400s in draft and contest override flows, `SuccessSchema`/generic success responses on route files that return domain data, and raw Fastify default-ish responses in admin/permissions helpers. Plan 63-owned auth routes were left untouched for now. |
 | Done | Add shared backend error DTO/schema package support | Added `packages/shared/dto/errors.dto.ts` with the standard nested envelope Zod schema and exported it from the shared DTO index. |
 | Done | Normalize global Fastify error formatting | `globalErrorHandler` now produces the shared nested envelope, is registered in the app build, and the integration harness uses the same handler. |
-| In Progress | Standardize domain error translation in high-traffic modules | Completed for leagues, contest CRUD, contest overrides, contest management, standings, participants, history reads, draft route helpers, auth guard, permission guards, squads, and active root-admin handlers. Remaining queue is intentionally narrow: auth-module internals owned by Plan 63 coordination, plus the scoring validation endpoint's intentional non-envelope `400` response. |
-| In Progress | Declare route-level error response schemas for active product routes | Added shared error schemas across active league, contest, contest-management, standings, history, participant, squad, draft, scoring, ingestion, and root-admin routes. Remaining exception is auth-module internals that still need Plan 63 coordination. |
-| In Progress | Replace bespoke inline error bodies on touched routes | Active league/contest/contest-management/standings/history/participant/squad/root-admin flows now use the shared helper, and draft routes normalize legacy literals through the shared envelope helper. Remaining bespoke payloads are concentrated in Plan 63-owned auth handlers and the intentional scoring validation response body. |
-| In Progress | Add functional/integration coverage for error envelopes | Functional helper now understands the shared nested envelope, and integration contract coverage asserts the envelope on representative negative web, draft, contest-management, squad, and root-admin routes. |
-| In Progress | Add negative integration coverage for critical flows | Added unauthorized/not-found/permission/configuration envelope assertions for active web-facing, draft, contest-management, squad, and root-admin routes; auth-route error coverage still belongs to the coordinated Plan 63 follow-up. |
+| Done | Standardize domain error translation in high-traffic modules | Completed for leagues, contest CRUD, contest overrides, contest management, standings, participants, history reads, draft route helpers, auth routes, auth guard, permission guards, squads, invitations, and active root-admin handlers. The scoring validation endpoint remains an intentional non-envelope `400` exception because it returns a validation-result DTO. |
+| Done | Declare route-level error response schemas for active product routes | Added shared error schemas across active league, contest, contest-management, standings, history, participant, squad, draft, scoring, ingestion, invitations, auth, and root-admin routes. |
+| Done | Replace bespoke inline error bodies on touched routes | Active league/contest/contest-management/standings/history/participant/squad/root-admin/auth flows now use the shared helper, and draft routes normalize legacy literals through the shared envelope helper. The scoring validation response body remains intentionally domain-specific. |
+| Done | Add functional/integration coverage for error envelopes | Functional helper now understands the shared nested envelope, and integration contract coverage asserts the envelope on representative negative web, auth, draft, contest-management, squad, and root-admin routes. |
+| Done | Add negative integration coverage for critical flows | Added unauthorized/not-found/permission/configuration envelope assertions for active web-facing, auth, draft, contest-management, squad, and root-admin routes. |
 | Done | Document remaining non-conforming routes and defer if needed | Remaining non-conforming groups are now tracked explicitly below so the stricter rule can be adopted incrementally without rediscovering the tail each time. |
-| Pending | Tighten service rules after implementation reaches the route-compliance gate | Flip `rules/service-rules.md` to the stricter universal standard only after all active product routes use the standard envelope and representative negative-path tests are in place |
+| Done | Tighten service rules after implementation reaches the route-compliance gate | `rules/service-rules.md` now treats the shared nested envelope as the backend standard, with the scoring configuration validation endpoint called out as the intentional exception. |
 
 ## Suggested Execution Order
 
@@ -85,9 +85,8 @@ This should be treated as an intentional contract cleanup and coordinated with f
 
 ## Remaining Route Groups
 
-The highest-priority remaining non-conforming or intentionally deferred groups after the current pass are:
+The only intentionally non-standard active route after the current pass is:
 
-- auth-module internals that should be coordinated with Plan 63 before broader route-contract cleanup
 - the scoring configuration validation endpoint, which intentionally returns a validation-result DTO on `400` instead of the generic error envelope
 
 ## Validation
