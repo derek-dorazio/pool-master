@@ -211,33 +211,85 @@ Before deleting an existing test suite for architecture/strategy reasons, confir
 
 ## 6. Smoke and Browser E2E Rules
 
-### API Smoke
+Smoke and E2E tests must be **use-case driven**. Each test file must walk a documented user journey from the plan use-case companions — not just poke endpoints or assert page loads. The test name, file-level comment, or describe block must reference the use case it proves.
 
-- Lives under `tests/api/functional/*.smoke.ts` and related health smoke files.
-- Treat smoke tests as black-box environment validation against deployed services.
-- In CI/CD, smoke runs after the deployment pipeline completes migration and seed successfully; treat that sequencing as part of the contract when debugging failures or updating test strategy.
-- Application seed flows are never a place for test fixtures. No agent, including test-building or QA-focused agents, may add QA data, smoke-test data, E2E data, manual-test data, fake contests, fake contestant pools, fake odds, fake rankings, or fake results to `prisma/seed.ts` or any other application seed path. Keep seed data limited to production-required bootstrap records and default configuration; put non-production contest/odds/results fixture catalogs behind dedicated test infrastructure such as `mock-contest-feed-provider`.
+### Use-Case Traceability
+
+Smoke and E2E tests should be use-case driven and traceable to documented product behavior:
+
+- Reference the plan companion and use-case ID in a comment at the top of the test file or in the `describe` block name (e.g., `// Proves: Plan 38 UC-003 — Member creates contest entry`).
+- If a test covers behavior not yet documented and the behavior is product-significant, document the use case before expanding that suite further.
+- When a use-case companion changes, update the corresponding smoke/E2E tests in the same work.
+
+### Seed Data Rules (Applies to Both Smoke and E2E)
+
+- Application seed flows are never a place for test fixtures. No agent may add QA data, smoke-test data, E2E data, fake contests, fake odds, or fake results to `prisma/seed.ts` or any other application seed path.
+- Keep seed data limited to production-required bootstrap records and default configuration.
+- Non-production fixture catalogs belong behind dedicated test infrastructure such as `mock-contest-feed-provider`.
+
+### API Smoke Tests
+
+- Lives under `tests/api/functional/*.smoke.ts`.
+- Treat smoke tests as black-box use-case validation against deployed services.
+- In CI/CD, smoke runs after the deployment pipeline completes migration and seed successfully.
+
+**Data strategy:**
+- Smoke tests must create all the data they need through real deployed API routes.
+- Do not rely on seed data, ambient discovery data, fake UUIDs, or preexisting state.
+- Each smoke test file should set up its own isolated context (register user, create league, etc.) at the start of the suite.
+- Clean up is not required (deployed environments reset between CI runs), but tests must not depend on data from other test files.
+
+**Assertion rules:**
+- Assertions must be strong and intentional. Do not accept broad fallback status ranges like `200 | 400 | 500`.
+- Assert on response body shape using DTO schemas where practical (`schema.safeParse(body)`).
 - Use shared route constants from `@poolmaster/shared/api-routes`.
-- Keep smoke flows aligned with real critical-path behavior.
+- Use shared domain enums from `@poolmaster/shared/domain` for status values, sport types, etc.
 - When endpoint contracts change, smoke tests must change with them.
-- Smoke tests must not rely on seed data, ambient discovery data, fake UUIDs, or preexisting contest/pool state.
-- Smoke tests should create the minimum live data they need through real deployed routes whenever the product supports it.
-- Smoke assertions should be strong and intentional; do not accept broad fallback status ranges like `200 | 400 | 500` on critical-path checks.
-- Keep API smoke coverage small and MVP-focused: health, auth, league/invite flow, one supported contest creation flow, one supported selection flow, and one standings/results read flow.
 
-### Browser Smoke / E2E
+Smoke suites should prioritize a small set of durable critical-path journeys covering:
 
-- Lives under `clients/web/e2e/`.
+- auth
+- league membership and invitation
+- commissioner contest setup
+- member entry creation
+- selection/draft flow
+- scoring and standings read paths
+- history reads
+- consent and account essentials
+
+The exact set of required flows may evolve with the active product scope and should follow the current plans.
+
+### Browser E2E Tests (Playwright)
+
+- Web E2E lives under `clients/web/e2e/`.
+- Admin E2E lives under `clients/admin/e2e/`.
 - Uses Playwright against a running local app or deployed environment.
-- In CI/CD, browser E2E runs only after migrate -> seed -> smoke succeed; keep the suite scoped to a few durable MVP flows so it remains a true post-deploy confidence layer rather than a broad regression matrix.
-- Focus on high-value user journeys and runtime error detection.
-- Remove or update browser tests when they reference retired UI paths or dead buttons.
-- Browser smoke/E2E should prove the narrowed MVP path, not just public-page rendering.
-- Avoid tests that inject fake app state or bypass core product setup unless that is the explicit subject under test.
-- Prefer one or two durable end-to-end flows over a wide set of shallow page-load checks.
-- Browser automation must prefer stable machine selectors (`data-testid`, stable `id`) over human-readable copy.
-- Do not anchor deploy-gate browser tests to marketing headings, button labels, or translated strings unless the explicit purpose of the test is to validate that copy.
-- If a browser flow needs to click or read an element repeatedly, add a stable selector in the product code rather than teaching the test to depend on visible text.
+- In CI/CD, browser E2E runs only after migrate → seed → API smoke succeed.
+
+**Use-case-driven E2E:**
+
+E2E tests must prove complete user journeys, not page loads. Each test walks the UI flow that a real user would follow for a documented use case.
+
+- **Do not** write tests that only navigate to a page and assert a heading is visible.
+- **Do** write tests that perform the full action: fill forms, click buttons, verify state changes, navigate to result pages.
+- **Do** assert observable outcomes: "entry appears in list," "standings show updated score," "invite link is copyable."
+
+**Data strategy:**
+- E2E tests must create their own data through real UI flows whenever possible (register → create league → invite → etc.).
+- Do not hardcode seed data IDs (e.g., `00000000-0000-0000-0000-000000000001`). If a test needs pre-existing data, create it through the UI or API in a `beforeAll` hook.
+- Seeded admin credentials are acceptable for admin E2E tests since admin users are production bootstrap data.
+
+**Selector rules:**
+- Prefer stable machine selectors (`data-testid`, stable `id`) over human-readable copy.
+- Do not anchor deploy-gate tests to marketing headings, button labels, or translated strings unless the explicit purpose is to validate that copy.
+- If a browser flow needs to click or read an element repeatedly, add a stable `data-testid` selector in the product code.
+- Interactive controls: `data-testid`
+- Form inputs: semantic `id`
+- Page landmarks: `data-testid` with domain-oriented kebab-case naming (e.g., `league-create-submit`, `contest-entry-list`)
+
+**Error detection:**
+- Every E2E test must assert no uncaught exceptions, no console errors (excluding known benign patterns), and no error boundary fallback UI.
+- Use the shared fixtures pattern (`fixtures.ts`) that captures `console.error`, `pageerror`, and 5xx responses.
 
 ### React Testing Library Selector Rule
 
@@ -247,7 +299,95 @@ Before deleting an existing test suite for architecture/strategy reasons, confir
 
 ---
 
-## 7. Integration Test Depth Requirement
+## 7. Test Data Builders
+
+Integration and smoke tests must create complex object graphs (league → membership → squad → contest → entry → roster picks). To avoid duplicating setup logic across every test file, use shared builder/factory functions.
+
+### Builder Pattern
+
+- Shared test builders live in `tests/helpers/builders.ts` (or a `tests/helpers/builders/` directory for larger sets).
+- Each builder creates a valid domain object through real service calls or Prisma, not by inserting raw SQL.
+- Builders return the created object (with ID) so tests can reference it.
+- Builders accept optional overrides for fields the test cares about; use sensible defaults for everything else.
+
+**Example:**
+
+```typescript
+// tests/helpers/builders.ts
+export async function buildLeagueWithOwner(
+  app: FastifyInstance,
+  overrides?: { leagueName?: string }
+): Promise<{ user: AuthUser; league: League; token: string }> {
+  const { user, token } = await buildAuthenticatedUser(app);
+  const league = await createLeague(app, token, {
+    name: overrides?.leagueName ?? `Test League ${Date.now()}`,
+    visibility: 'PRIVATE',
+  });
+  return { user, league, token };
+}
+
+export async function buildContestWithEntries(
+  app: FastifyInstance,
+  opts: { entryCount: number; sportEventId: string }
+): Promise<{ contest: Contest; entries: ContestEntry[] }> { ... }
+```
+
+### Rules
+
+- When integration or smoke tests repeatedly create the same complex object graphs, prefer shared builders/helpers over copy-pasted setup.
+- Builders must create data through the application layer (Fastify inject or service calls), not raw Prisma inserts, unless testing the persistence layer itself.
+- Builders must not leave orphaned data. If a test needs cleanup, the builder should return enough context for the test to clean up in `afterAll`.
+- Builders must use unique identifiers (e.g., `Date.now()` suffix on emails, names) to avoid collisions when tests run against a shared database.
+
+---
+
+## 8. Domain Event Testing
+
+The in-process event bus is a critical architectural seam. Services emit domain events and subscribers react to them. This behavior must be tested.
+
+### What Must Be Tested
+
+- **Event emission:** When a service performs a state change, verify the correct event is emitted with the expected payload. Use a test spy or listener on the event bus.
+- **Subscriber behavior:** When an event is received, verify the subscriber performs the expected side effect (e.g., contest status update, scoring recalculation trigger, notification creation).
+- **Event contract:** Event payloads must match the typed event interfaces in `packages/shared/events/`. Add a contract-style assertion when the payload shape changes.
+
+### How To Test
+
+**Unit tests** for event emission:
+
+```typescript
+it('emits ContestStatusChangedEvent when contest transitions to LOCKED', async () => {
+  const events: DomainEvent[] = [];
+  eventBus.subscribe('ContestStatusChangedEvent', (e) => events.push(e));
+
+  await contestService.lockContest(contestId);
+
+  expect(events).toHaveLength(1);
+  expect(events[0].payload).toMatchObject({ contestId, newStatus: 'LOCKED' });
+});
+```
+
+**Integration tests** for subscriber side effects:
+
+```typescript
+it('updates contest status when SportEventStatusChanged is received', async () => {
+  // Setup: contest linked to sport event
+  eventBus.emit('SportEventStatusChangedEvent', { sportEventId, newStatus: 'COMPLETED' });
+
+  // Verify: contest transitioned
+  const contest = await contestRepo.findById(contestId);
+  expect(contest.status).toBe('COMPLETED');
+});
+```
+
+### Rules
+
+- When a slice adds or materially changes domain-event behavior, add tests that cover the relevant event emission and subscriber side effects.
+- Do not test event bus internals (delivery ordering, retry). Test the observable behavior: "when X happens, Y should result."
+
+---
+
+## 9. Integration Test Depth Requirement
 
 Integration test files must not be single-case stubs. Each integration test file for a domain should include at minimum:
 
@@ -260,16 +400,48 @@ A single `it()` block per integration file is a sign the test is incomplete. Aim
 
 ---
 
-## 8. What Must Be Tested
+## 9A. Integration Test Isolation and Cleanup
+
+Integration tests share a single Postgres database and run serially (`maxWorkers: 1`). This works only if each test cleans up after itself.
+
+### Rules
+
+- Prefer shared cleanup helpers or other reliable isolation patterns appropriate to the test harness.
+- Tests must not depend on data created by other test files. Each file is self-contained.
+- Tests must not depend on execution order. If test B fails when test A is skipped, test B has a hidden dependency.
+- Use unique identifiers (timestamps, UUIDs) for all created records to avoid collisions.
+- Use explicit cleanup, unique identifiers, or transaction-based isolation as appropriate for the slice.
+
+### Cleanup Pattern
+
+```typescript
+afterAll(async () => {
+  const prisma = getPrisma();
+  // Delete in reverse dependency order
+  await prisma.rosterPick.deleteMany({ where: { entryId: { in: createdEntryIds } } });
+  await prisma.contestEntry.deleteMany({ where: { id: { in: createdEntryIds } } });
+  await prisma.contest.deleteMany({ where: { id: { in: createdContestIds } } });
+  await prisma.leagueMembership.deleteMany({ where: { leagueId: { in: createdLeagueIds } } });
+  await prisma.league.deleteMany({ where: { id: { in: createdLeagueIds } } });
+});
+```
+
+Do not rely on `prisma migrate reset` between test runs. Tests must be idempotent against a persistent database.
+
+---
+
+## 10. What Must Be Tested
 
 ### Backend
 
 - Authentication and authorization behavior
 - Route validation behavior
-- DTO contract compliance
+- DTO contract compliance (via contract test suites)
+- Error response shape compliance (consistent error envelope)
 - Persistence for changed model fields
-- Tenant isolation
-- Critical business flows
+- League isolation (formerly tenant isolation)
+- Domain event emission and subscriber behavior
+- Critical business flows as documented in use-case companions
 
 ### Frontend
 
@@ -278,10 +450,23 @@ A single `it()` block per integration file is a sign the test is incomplete. Aim
 - Navigation to critical product pages
 - Mutations that change server state
 - Critical authenticated flows
+- Error handling for the important backend error states exposed by the flows under test, especially authentication, authorization, validation, and not-found cases
+
+### Smoke (API)
+
+- Critical-path deployed checks aligned with the active product scope
+- Error paths for authentication (expired token, missing token)
+- Error paths for authorization (wrong role, wrong league)
+
+### E2E (Playwright)
+
+- High-value end-to-end user journeys aligned with the active product scope
+- Error boundary absence on all tested pages
+- Console error absence on all tested pages
 
 ---
 
-## 9. What Not To Do
+## 11. What Not To Do
 
 - Do not keep around tests that verify bad architecture.
 - Do not preserve tests for no-op UI.
@@ -291,7 +476,7 @@ A single `it()` block per integration file is a sign the test is incomplete. Aim
 
 ---
 
-## 10. Documentation Drift Rules
+## 12. Documentation Drift Rules
 
 If test strategy changes materially, update this file in the same work.
 

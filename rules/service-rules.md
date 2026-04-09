@@ -159,6 +159,33 @@ Every route must include:
 - Prefer clear typed/domain errors over ambiguous generic errors where practical.
 - Let global Fastify error handling deal with unhandled failures.
 
+### Error Response Shape Consistency
+
+All error responses must follow a consistent envelope so frontend clients can handle errors uniformly without per-endpoint parsing logic.
+
+**Standard error envelope:**
+
+```typescript
+{
+  error: {
+    code: string;         // machine-readable error code (e.g., "LEAGUE_NOT_FOUND", "VALIDATION_ERROR")
+    message: string;      // human-readable description
+    details?: unknown;    // optional structured details (validation field errors, etc.)
+  }
+}
+```
+
+**Rules:**
+- New routes and materially changed routes must use this envelope.
+- Existing untouched routes should migrate to this envelope when they are next materially changed.
+- Validation errors (400) should include `details` with per-field errors when available.
+- Not-found errors (404) should use domain-specific codes (e.g., `CONTEST_NOT_FOUND`, not generic `NOT_FOUND`).
+- Permission errors (403) should use codes that distinguish the denial reason (e.g., `INSUFFICIENT_PERMISSION`, `NOT_LEAGUE_MEMBER`).
+- Define a shared DTO/schema for the standard error envelope in `packages/shared/dto/`.
+- Fastify's global error handler should format unhandled errors into this envelope where practical, and new route work should not bypass that standard.
+- When a route is touched, declare error response shapes for the most relevant statuses such as `400`, `401`, `403`, and `404`.
+- Smoke and contract tests should validate error response shapes, not just success paths.
+
 ---
 
 ## 8. Testing Expectations for Backend Work

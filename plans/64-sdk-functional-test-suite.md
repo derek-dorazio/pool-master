@@ -233,6 +233,49 @@ export async function buildLeagueWithOwner(overrides?: {
 
 Each test file maps to documented use cases from plan companions. Tests walk complete user journeys through the SDK.
 
+## Pilot Slice To Vet The Framework
+
+Before building the full suite, prove the harness on a very small slice covering 1-2 stable API controllers and 1-3 high-signal tests.
+
+### Recommended Pilot Controllers
+
+1. `auth`
+- good for proving unauthenticated client setup, authenticated client creation, token handling, and SDK request/response typing
+
+2. `account-consent`
+- good for proving a small authenticated CRUD-style flow with persisted data and typed response assertions
+
+### Recommended Pilot Tests
+
+1. `auth.functional.ts`
+- `register -> login -> fetch profile succeeds through the SDK`
+
+2. `consent.functional.ts`
+- `authenticated user records consent with age affirmation and can read it back`
+
+3. `consent.functional.ts`
+- `unauthenticated consent read/write is rejected with the expected status and error shape`
+
+### What The Pilot Must Prove
+
+- Fastify can be started on a random localhost port for the suite
+- the generated SDK can target the ephemeral server successfully
+- authenticated and unauthenticated SDK clients work correctly
+- real HTTP serialization/deserialization is exercised, not `app.inject()`
+- persisted state can be verified through follow-up SDK/API reads
+- coverage merges correctly with the backend report
+- the suite is reliable enough to run in local and CI flows
+
+### Exit Criteria For Expanding Beyond The Pilot
+
+Do not expand into the broader functional API suite until the pilot proves:
+
+- stable app lifecycle setup/teardown
+- stable database cleanup/isolation
+- a workable authenticated-client helper pattern
+- clear assertion style for success and error responses
+- successful local and CI execution
+
 ### Example: `league-lifecycle.functional.ts`
 
 ```typescript

@@ -146,7 +146,17 @@ All backend services are TypeScript services with explicit module boundaries.
 - Route handlers do not return raw Prisma models.
 - Database access stays behind service/repository boundaries.
 - Cross-service/module communication uses shared events and typed contracts.
-- Multi-tenancy must remain explicit in request context and persistence boundaries.
+- League isolation must remain explicit in request context and persistence boundaries.
+
+### Domain Event Bus
+
+The in-process event bus (`packages/shared/events/event-bus.ts`) is the primary mechanism for cross-module communication. It is an architectural seam, not an implementation detail.
+
+- Every domain event type must be defined as a typed interface in `packages/shared/events/`.
+- Services emit events after successful state changes, not before.
+- Subscribers must not assume emission order or delivery guarantees beyond "at least once, in process."
+- Event payloads must be serializable (no Prisma models, no class instances, no functions).
+- When adding a new event type, update the event type registry and add appropriate tests for emission and affected subscriber behavior (see [Testing Rules §8](testing-rules.md)).
 
 ---
 
