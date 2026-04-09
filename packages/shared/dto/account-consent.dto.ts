@@ -26,3 +26,6 @@ export const ConsentRecordRequestSchema = z.object({
   ageAffirmed: z.boolean().nullable().optional(),
 });
 
+export const ConsentRecordResponseSchema = z.object({
+  success: z.literal(true),
+});

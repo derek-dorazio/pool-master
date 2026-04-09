@@ -9,6 +9,7 @@ import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   zodToJsonSchema,
   CreateContestRequestSchema,
+  ContestAuditLogResponseSchema,
   ContestEntryListResponseSchema,
   ContestEntryResponseSchema,
   ContestListResponseSchema,
@@ -309,7 +310,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Get the audit log for a contest',
       operationId: 'getContestAuditLog',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ContestAuditLogResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };

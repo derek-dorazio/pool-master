@@ -1,6 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { ConsentHistoryResponseSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
+import {
+  ConsentHistoryResponseSchema,
+  ConsentRecordResponseSchema,
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
 import { mapConsentRecordToDto } from '../../mappers';
 import { AccountConsentService } from './account-consent-service';
 
@@ -15,7 +19,7 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
         tags: ['Account'],
         summary: 'Record user consent for a policy type',
         operationId: 'recordConsent',
-        response: { 201: { type: 'object', properties: { success: { type: 'boolean' } }, required: ['success'] } },
+        response: { 201: zodToJsonSchema(ConsentRecordResponseSchema) },
         body: {
           type: 'object',
           required: ['consentType', 'granted', 'version'],

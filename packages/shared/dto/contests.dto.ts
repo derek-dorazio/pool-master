@@ -176,3 +176,24 @@ export const ContestStandingsRecalculationResponseSchema = z.object({
     }),
   ),
 });
+
+export const ContestAuditLogEntryDtoSchema = z.object({
+  id: z.string(),
+  leagueId: z.string(),
+  contestId: z.string().nullable().optional(),
+  actorId: z.string(),
+  action: z.string(),
+  category: z.string(),
+  description: z.string(),
+  beforeState: z.record(z.unknown()).nullable().optional(),
+  afterState: z.record(z.unknown()).nullable().optional(),
+  reason: z.string().nullable().optional(),
+  ipAddress: z.string().nullable().optional(),
+  createdAt: z.string().datetime(),
+});
+export type ContestAuditLogEntryDto = z.infer<typeof ContestAuditLogEntryDtoSchema>;
+
+export const ContestAuditLogResponseSchema = z.object({
+  entries: z.array(ContestAuditLogEntryDtoSchema),
+});
+export type ContestAuditLogResponse = z.infer<typeof ContestAuditLogResponseSchema>;
