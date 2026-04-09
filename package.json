@@ -27,7 +27,7 @@
     "test:integration": "jest --config tests/integration/jest.config.js --forceExit",
     "test:service:unit": "npm run test:unit",
     "test:service:integration": "npm run test:integration",
-    "test:service:functional-api": "jest --config tests/functional/jest.config.js --forceExit",
+    "test:service:functional-api": "npm run build --workspace @poolmaster/shared && jest --config tests/functional/jest.config.js --forceExit",
     "test:poolmaster:unit": "npm run test --workspace @poolmaster/poolmaster",
     "test:coverage:service:unit": "jest --config tests/jest.config.js --coverage --coverageDirectory coverage/service-unit --coverageReporters=json-summary --coverageReporters=json --coverageReporters=lcovonly --coverageReporters=clover --coverageReporters=text-summary --forceExit",
     "test:coverage:service:integration": "jest --config tests/integration/jest.config.js --coverage --coverageDirectory coverage/service-integration --coverageReporters=json-summary --coverageReporters=json --coverageReporters=lcovonly --coverageReporters=clover --coverageReporters=text-summary --forceExit",
