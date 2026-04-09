@@ -4,8 +4,15 @@ import {
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
 } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import {
+  cleanupTestData,
+  getApp,
+  setupIntegrationTests,
+  teardownIntegrationTests,
+} from '../helpers';
 import type {
   ProviderEventResult,
   ProviderHealthStatus,
@@ -41,6 +48,15 @@ class ContractProvider implements SportDataProvider {
 }
 
 describe('API contracts (root admin)', () => {
+  beforeAll(async () => {
+    await setupIntegrationTests();
+  });
+
+  afterAll(async () => {
+    await cleanupTestData();
+    await teardownIntegrationTests();
+  });
+
   it('ingestion root-admin routes match their DTOs', async () => {
     const app = Fastify({ logger: false });
     const registry = new ProviderRegistry();
@@ -130,5 +146,15 @@ describe('API contracts (root admin)', () => {
     expect(IngestSportOddsResponseSchema.safeParse(oddsRes.json()).success).toBe(true);
 
     await app.close();
+  });
+
+  it('admin routes reject missing root-admin identity with ErrorEnvelopeSchema', async () => {
+    const res = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/users',
+    });
+
+    expect(res.statusCode).toBe(401);
+    expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
   });
 });

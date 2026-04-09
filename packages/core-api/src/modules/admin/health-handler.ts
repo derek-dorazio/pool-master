@@ -8,6 +8,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { HealthService } from './health-service';
 import { ErrorLogEntryNotFoundError, AlertRuleNotFoundError } from './health-service';
+import { sendError } from '../../core/error-handler';
 
 // ---------------------------------------------------------------------------
 // Duration helpers
@@ -134,7 +135,7 @@ export function createHealthHandlers(healthService: HealthService) {
       });
     } catch (err) {
       if (err instanceof ErrorLogEntryNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -193,7 +194,7 @@ export function createHealthHandlers(healthService: HealthService) {
       });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -213,10 +214,12 @@ export function createHealthHandlers(healthService: HealthService) {
     const minutes = DURATION_MINUTES[duration];
 
     if (minutes === undefined) {
-      return reply.status(400).send({
-        error: 'INVALID_DURATION',
-        message: `Invalid duration "${duration}". Must be one of: 1h, 4h, 24h, indefinite`,
-      });
+      return sendError(
+        reply,
+        400,
+        'INVALID_DURATION',
+        `Invalid duration "${duration}". Must be one of: 1h, 4h, 24h, indefinite`,
+      );
     }
 
     try {
@@ -230,7 +233,7 @@ export function createHealthHandlers(healthService: HealthService) {
       });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -257,7 +260,7 @@ export function createHealthHandlers(healthService: HealthService) {
       });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }

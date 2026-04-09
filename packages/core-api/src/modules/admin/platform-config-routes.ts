@@ -7,6 +7,7 @@
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
 
@@ -47,7 +48,10 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get poll interval configuration',
       operationId: 'adminGetPollIntervals',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: async () => {
       return pollConfig.getConfig();
@@ -59,7 +63,10 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update poll interval configuration',
       operationId: 'adminUpdatePollIntervals',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
       body: {
         type: 'object',
         properties: {
@@ -92,7 +99,10 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Reset poll intervals to defaults',
       operationId: 'adminResetPollIntervals',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: async (request: FastifyRequest) => {
       const { adminUserId, adminUserEmail } = extractAdminContext(request);
@@ -109,7 +119,10 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get ingestion schedule configuration',
       operationId: 'adminGetIngestionSchedule',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: async () => {
       return ingestionConfig.getConfig();
@@ -121,7 +134,10 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update ingestion schedule configuration',
       operationId: 'adminUpdateIngestionSchedule',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
       body: {
         type: 'object',
         properties: {
@@ -154,7 +170,10 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Set per-sport ingestion schedule override',
       operationId: 'adminSetSportIngestionOverride',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
       body: {
         type: 'object',
         properties: {

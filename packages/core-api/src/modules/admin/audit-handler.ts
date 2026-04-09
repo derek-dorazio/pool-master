@@ -3,6 +3,7 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { sendError } from '../../core/error-handler';
 import {
   queryAuditLog,
   getAuditEntryById,
@@ -66,7 +67,7 @@ export async function getAuditEntry(
 ): Promise<void> {
   const entry = await getAuditEntryById(request.params.entryId);
   if (!entry) {
-    return reply.status(404).send({ error: 'Audit entry not found' });
+    return sendError(reply, 404, 'NOT_FOUND', 'Audit entry not found');
   }
   return reply.send({
     entry: {

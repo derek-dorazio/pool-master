@@ -6,6 +6,7 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { sendError } from './error-handler';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -146,14 +147,10 @@ export function requireAdminPermission(
   ): Promise<void> {
     const ctx = request.adminContext;
     if (!ctx) {
-      return reply
-        .status(401)
-        .send({ error: 'UNAUTHORIZED', message: 'Admin authentication required' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Admin authentication required');
     }
     if (!hasAdminPermission(ctx.adminUser.role, permission, ctx.adminUser.permissions)) {
-      return reply
-        .status(403)
-        .send({ error: 'FORBIDDEN', message: `Missing admin permission: ${permission}` });
+      return sendError(reply, 403, 'FORBIDDEN', `Missing admin permission: ${permission}`);
     }
   };
 }

@@ -16,6 +16,7 @@ import {
   zodToJsonSchema,
   DraftStateResponseSchema,
   DraftPickResponseSchema,
+  ErrorEnvelopeSchema,
   ExtendCurrentTurnRequestSchema,
   StartDraftRequestSchema,
   SubmitPickRequestSchema,
@@ -107,6 +108,12 @@ function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknow
     );
   }
   return reply.status(statusCode).send(payload);
+}
+
+function draftErrorResponses(...statuses: number[]) {
+  return Object.fromEntries(
+    statuses.map((status) => [status, zodToJsonSchema(ErrorEnvelopeSchema)]),
+  );
 }
 
 function isCommissionerRole(role: unknown): boolean {
@@ -686,7 +693,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: {
+        200: zodToJsonSchema(DraftStateResponseSchema),
+        ...draftErrorResponses(404, 501),
+      },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -710,7 +720,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
       body: zodToJsonSchema(StartDraftRequestSchema),
-      response: { 201: zodToJsonSchema(DraftStateResponseSchema) },
+      response: {
+        201: zodToJsonSchema(DraftStateResponseSchema),
+        ...draftErrorResponses(404, 409),
+      },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -786,7 +799,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
       body: zodToJsonSchema(SubmitPickRequestSchema),
-      response: { 200: zodToJsonSchema(DraftPickResponseSchema) },
+      response: {
+        200: zodToJsonSchema(DraftPickResponseSchema),
+        ...draftErrorResponses(400, 401, 403, 404, 501),
+      },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -1035,7 +1051,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: {
+        200: zodToJsonSchema(DraftStateResponseSchema),
+        ...draftErrorResponses(400, 401, 403, 404),
+      },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -1084,7 +1103,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: {
+        200: zodToJsonSchema(DraftStateResponseSchema),
+        ...draftErrorResponses(400, 401, 403, 404),
+      },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -1134,7 +1156,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
       body: zodToJsonSchema(ExtendCurrentTurnRequestSchema),
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: {
+        200: zodToJsonSchema(DraftStateResponseSchema),
+        ...draftErrorResponses(400, 401, 403, 404),
+      },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -1182,7 +1207,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: {
+        200: zodToJsonSchema(DraftStateResponseSchema),
+        ...draftErrorResponses(400, 401, 403, 404),
+      },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
@@ -1242,7 +1270,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
+      response: {
+        200: zodToJsonSchema(DraftStateResponseSchema),
+        ...draftErrorResponses(400, 401, 403, 404),
+      },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };

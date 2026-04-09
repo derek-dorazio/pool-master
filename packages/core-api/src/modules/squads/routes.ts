@@ -8,6 +8,7 @@ import {
   UpdateSquadRequestSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { CreateSquadRequestSchema } from '@poolmaster/shared/dto/squads.dto';
 import {
   PrismaLeagueMembershipRepository,
@@ -30,7 +31,12 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'List squads in a league',
       operationId: 'listLeagueSquads',
-      response: { 200: zodToJsonSchema(SquadListResponseSchema) },
+      response: {
+        200: zodToJsonSchema(SquadListResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handler.listSquads,
   });
@@ -41,7 +47,12 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Create a squad in a league',
       operationId: 'createLeagueSquad',
       body: zodToJsonSchema(CreateSquadRequestSchema),
-      response: { 201: zodToJsonSchema(SquadResponseSchema) },
+      response: {
+        201: zodToJsonSchema(SquadResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handler.createSquad,
   });
@@ -51,7 +62,12 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Get squad details',
       operationId: 'getLeagueSquad',
-      response: { 200: zodToJsonSchema(SquadResponseSchema) },
+      response: {
+        200: zodToJsonSchema(SquadResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handler.getSquad,
   });
@@ -62,7 +78,12 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Update squad details',
       operationId: 'updateLeagueSquad',
       body: zodToJsonSchema(UpdateSquadRequestSchema),
-      response: { 200: zodToJsonSchema(SquadResponseSchema) },
+      response: {
+        200: zodToJsonSchema(SquadResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handler.updateSquad,
   });
@@ -73,7 +94,12 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Add or reactivate a squad co-manager',
       operationId: 'addSquadCoManager',
       body: zodToJsonSchema(AddSquadMemberRequestSchema),
-      response: { 201: zodToJsonSchema(SquadMembershipResponseSchema) },
+      response: {
+        201: zodToJsonSchema(SquadMembershipResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handler.addCoManager,
   });
@@ -83,7 +109,12 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Remove a squad co-manager',
       operationId: 'removeSquadCoManager',
-      response: { 200: zodToJsonSchema(SquadMembershipResponseSchema) },
+      response: {
+        200: zodToJsonSchema(SquadMembershipResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handler.removeCoManager,
   });

@@ -7,6 +7,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   ContestStatus,
   LeagueVisibility,
@@ -247,9 +248,11 @@ describe('Contest management integration', () => {
     });
 
     expect(createRes.statusCode).toBe(422);
-    expect(createRes.json()).toMatchObject({
-      error: 'CONTEST_CONFIGURATION_INVALID',
-      message: 'Participant scoring rules must have unique sortOrder values',
-    });
+    const body = createRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
+    expect(body.error.code).toBe('CONTEST_CONFIGURATION_INVALID');
+    expect(body.error.message).toBe(
+      'Participant scoring rules must have unique sortOrder values',
+    );
   });
 });

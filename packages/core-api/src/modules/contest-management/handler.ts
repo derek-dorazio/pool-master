@@ -3,6 +3,7 @@ import type {
   CreateContestManagementRequest,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
+import { sendError } from '../../core/error-handler';
 import {
   ContestManagementError,
   ContestManagementService,
@@ -32,10 +33,7 @@ export function createContestManagementHandlers(
       return reply.status(201).send({ contest });
     } catch (error) {
       if (error instanceof ContestManagementError) {
-        return reply.status(422).send({
-          error: 'CONTEST_CONFIGURATION_INVALID',
-          message: error.message,
-        });
+        return sendError(reply, 422, 'CONTEST_CONFIGURATION_INVALID', error.message);
       }
       throw error;
     }
@@ -52,10 +50,7 @@ export function createContestManagementHandlers(
       return reply.send({ contest });
     } catch (error) {
       if (error instanceof ContestManagementError) {
-        return reply.status(404).send({
-          error: 'CONTEST_NOT_FOUND',
-          message: error.message,
-        });
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', error.message);
       }
       throw error;
     }
@@ -77,12 +72,12 @@ export function createContestManagementHandlers(
     } catch (error) {
       if (error instanceof ContestManagementError) {
         const isNotFound = error.message.includes('not found');
-        return reply.status(isNotFound ? 404 : 422).send({
-          error: isNotFound
-            ? 'CONTEST_NOT_FOUND'
-            : 'CONTEST_CONFIGURATION_INVALID',
-          message: error.message,
-        });
+        return sendError(
+          reply,
+          isNotFound ? 404 : 422,
+          isNotFound ? 'CONTEST_NOT_FOUND' : 'CONTEST_CONFIGURATION_INVALID',
+          error.message,
+        );
       }
       throw error;
     }

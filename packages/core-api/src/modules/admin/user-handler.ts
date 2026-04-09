@@ -8,6 +8,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { UserService } from './user-service';
 import { UserNotFoundError } from './user-service';
+import { sendError } from '../../core/error-handler';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -107,7 +108,7 @@ export function createUserHandlers(userService: UserService) {
       });
     } catch (err) {
       if (err instanceof UserNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -127,7 +128,7 @@ export function createUserHandlers(userService: UserService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -151,7 +152,7 @@ export function createUserHandlers(userService: UserService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -171,7 +172,7 @@ export function createUserHandlers(userService: UserService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }

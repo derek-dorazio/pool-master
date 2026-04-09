@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddSquadCoManagerData, AddSquadCoManagerResponses, AdjustScoreData, AdjustScoreResponses, AdminCancelMigrationRunData, AdminCancelMigrationRunResponses, AdminDisableUserData, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogResponses, AdminForceCloseContestData, AdminForceCloseContestResponses, AdminForceLogoutData, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsResponses, AdminGetContestDetailData, AdminGetContestDetailResponses, AdminGetErrorDetailData, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleResponses, AdminGetMigrationRunDetailData, AdminGetMigrationRunDetailResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailResponses, AdminListAuditLogData, AdminListAuditLogResponses, AdminListContestsData, AdminListContestsResponses, AdminListMigrationsData, AdminListMigrationsResponses, AdminListProvidersData, AdminListProvidersResponses, AdminListUsersData, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantResponses, AdminMergeUsersData, AdminMergeUsersResponses, AdminMuteAlertData, AdminMuteAlertResponses, AdminOverrideScoreData, AdminOverrideScoreResponses, AdminRecalculatePayoutsData, AdminRecalculatePayoutsResponses, AdminRecalculateStandingsData, AdminRecalculateStandingsResponses, AdminReIngestEventData, AdminReIngestEventResponses, AdminReIngestScoringData, AdminReIngestScoringResponses, AdminReopenContestData, AdminReopenContestResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsResponses, AdminSearchErrorsData, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideResponses, AdminStartMigrationRunData, AdminStartMigrationRunResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, ForgotPasswordData, ForgotPasswordResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestErrors, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryErrors, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserResponses, GetDraftStateData, GetDraftStateResponses, GetEntryScoreData, GetEntryScoreResponses, GetHealthData, GetHealthResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryErrors, GetMyStandingsEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreResponses, GetParticipantSeasonRecordData, GetParticipantSeasonRecordErrors, GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordsData, GetParticipantSeasonRecordsResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRosterHistoryData, GetRosterHistoryErrors, GetRosterHistoryResponses, GetScoringHealthData, GetScoringHealthResponses, GetStandingsData, GetStandingsErrors, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryErrors, GetStandingsSummaryResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, IngestEventResultsData, IngestEventResultsResponses, IngestEventScoresData, IngestEventScoresResponses, IngestSportOddsData, IngestSportOddsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListIngestionProvidersData, ListIngestionProvidersResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsResponses, ListLeaguesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, LoginUserData, LoginUserResponses, LogoutUserData, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, OauthCallbackData, OauthCallbackErrors, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenResponses, RegisterUserData, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadCoManagerData, RemoveSquadCoManagerResponses, ReopenContestData, ReopenContestResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionResponses, SyncSportDataData, SyncSportDataResponses, TransferOwnershipData, TransferOwnershipErrors, TransferOwnershipResponses, TriggerStandingsRollupData, TriggerStandingsRollupResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionResponses, UpdateContestData, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueSettingsData, UpdateLeagueSettingsErrors, UpdateLeagueSettingsResponses, UpdateLeagueSquadData, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses } from './types.gen.js';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddSquadCoManagerData, AddSquadCoManagerErrors, AddSquadCoManagerResponses, AdjustScoreData, AdjustScoreResponses, AdminCancelMigrationRunData, AdminCancelMigrationRunErrors, AdminCancelMigrationRunResponses, AdminDisableUserData, AdminDisableUserErrors, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserErrors, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogErrors, AdminExportAuditLogResponses, AdminForceCloseContestData, AdminForceCloseContestErrors, AdminForceCloseContestResponses, AdminForceLogoutData, AdminForceLogoutErrors, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesErrors, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryErrors, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsErrors, AdminGetBusinessMetricsResponses, AdminGetContestDetailData, AdminGetContestDetailErrors, AdminGetContestDetailResponses, AdminGetErrorDetailData, AdminGetErrorDetailErrors, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsErrors, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardErrors, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleErrors, AdminGetIngestionScheduleResponses, AdminGetMigrationRunDetailData, AdminGetMigrationRunDetailErrors, AdminGetMigrationRunDetailResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsErrors, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailErrors, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthErrors, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsErrors, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailErrors, AdminGetUserDetailResponses, AdminListAuditLogData, AdminListAuditLogErrors, AdminListAuditLogResponses, AdminListContestsData, AdminListContestsErrors, AdminListContestsResponses, AdminListMigrationsData, AdminListMigrationsErrors, AdminListMigrationsResponses, AdminListProvidersData, AdminListProvidersErrors, AdminListProvidersResponses, AdminListUsersData, AdminListUsersErrors, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantErrors, AdminMapParticipantResponses, AdminMergeUsersData, AdminMergeUsersErrors, AdminMergeUsersResponses, AdminMuteAlertData, AdminMuteAlertErrors, AdminMuteAlertResponses, AdminOverrideScoreData, AdminOverrideScoreErrors, AdminOverrideScoreResponses, AdminRecalculatePayoutsData, AdminRecalculatePayoutsErrors, AdminRecalculatePayoutsResponses, AdminRecalculateStandingsData, AdminRecalculateStandingsErrors, AdminRecalculateStandingsResponses, AdminReIngestEventData, AdminReIngestEventErrors, AdminReIngestEventResponses, AdminReIngestScoringData, AdminReIngestScoringErrors, AdminReIngestScoringResponses, AdminReopenContestData, AdminReopenContestErrors, AdminReopenContestResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsErrors, AdminResetPollIntervalsResponses, AdminSearchErrorsData, AdminSearchErrorsErrors, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideErrors, AdminSetSportIngestionOverrideResponses, AdminStartMigrationRunData, AdminStartMigrationRunErrors, AdminStartMigrationRunResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckErrors, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertErrors, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleErrors, AdminUpdateAlertRuleResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleErrors, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsErrors, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigErrors, AdminUpdateProviderConfigResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnErrors, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, ForgotPasswordData, ForgotPasswordResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestErrors, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryErrors, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardErrors, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetEntryScoreData, GetEntryScoreErrors, GetEntryScoreResponses, GetHealthData, GetHealthResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryErrors, GetMyStandingsEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreErrors, GetParticipantScoreResponses, GetParticipantSeasonRecordData, GetParticipantSeasonRecordErrors, GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordsData, GetParticipantSeasonRecordsResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRosterHistoryData, GetRosterHistoryErrors, GetRosterHistoryResponses, GetScoringHealthData, GetScoringHealthErrors, GetScoringHealthResponses, GetStandingsData, GetStandingsErrors, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryErrors, GetStandingsSummaryResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, IngestEventResultsData, IngestEventResultsErrors, IngestEventResultsResponses, IngestEventScoresData, IngestEventScoresErrors, IngestEventScoresResponses, IngestSportOddsData, IngestSportOddsErrors, IngestSportOddsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListIngestionProvidersData, ListIngestionProvidersErrors, ListIngestionProvidersResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, LoginUserData, LoginUserResponses, LogoutUserData, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, OauthCallbackData, OauthCallbackErrors, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftErrors, PauseDraftResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenResponses, RegisterUserData, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadCoManagerData, RemoveSquadCoManagerErrors, RemoveSquadCoManagerResponses, ReopenContestData, ReopenContestResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftErrors, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnErrors, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftErrors, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, SyncSportDataData, SyncSportDataErrors, SyncSportDataResponses, TransferOwnershipData, TransferOwnershipErrors, TransferOwnershipResponses, TriggerStandingsRollupData, TriggerStandingsRollupErrors, TriggerStandingsRollupResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionErrors, UndoSnakeDraftSelectionResponses, UpdateContestData, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueSettingsData, UpdateLeagueSettingsErrors, UpdateLeagueSettingsResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -308,7 +308,7 @@ export const importMembers = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * List squads in a league
  */
-export const listLeagueSquads = <ThrowOnError extends boolean = false>(options: Options<ListLeagueSquadsData, ThrowOnError>) => (options.client ?? client).get<ListLeagueSquadsResponses, unknown, ThrowOnError>({
+export const listLeagueSquads = <ThrowOnError extends boolean = false>(options: Options<ListLeagueSquadsData, ThrowOnError>) => (options.client ?? client).get<ListLeagueSquadsResponses, ListLeagueSquadsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/squads/',
     ...options
@@ -317,7 +317,7 @@ export const listLeagueSquads = <ThrowOnError extends boolean = false>(options: 
 /**
  * Create a squad in a league
  */
-export const createLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<CreateLeagueSquadData, ThrowOnError>) => (options.client ?? client).post<CreateLeagueSquadResponses, unknown, ThrowOnError>({
+export const createLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<CreateLeagueSquadData, ThrowOnError>) => (options.client ?? client).post<CreateLeagueSquadResponses, CreateLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/squads/',
     ...options,
@@ -330,7 +330,7 @@ export const createLeagueSquad = <ThrowOnError extends boolean = false>(options:
 /**
  * Get squad details
  */
-export const getLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<GetLeagueSquadData, ThrowOnError>) => (options.client ?? client).get<GetLeagueSquadResponses, unknown, ThrowOnError>({
+export const getLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<GetLeagueSquadData, ThrowOnError>) => (options.client ?? client).get<GetLeagueSquadResponses, GetLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/squads/{squadId}',
     ...options
@@ -339,7 +339,7 @@ export const getLeagueSquad = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Update squad details
  */
-export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueSquadData, ThrowOnError>) => (options.client ?? client).patch<UpdateLeagueSquadResponses, unknown, ThrowOnError>({
+export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueSquadData, ThrowOnError>) => (options.client ?? client).patch<UpdateLeagueSquadResponses, UpdateLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/squads/{squadId}',
     ...options,
@@ -352,7 +352,7 @@ export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options:
 /**
  * Add or reactivate a squad co-manager
  */
-export const addSquadCoManager = <ThrowOnError extends boolean = false>(options: Options<AddSquadCoManagerData, ThrowOnError>) => (options.client ?? client).post<AddSquadCoManagerResponses, unknown, ThrowOnError>({
+export const addSquadCoManager = <ThrowOnError extends boolean = false>(options: Options<AddSquadCoManagerData, ThrowOnError>) => (options.client ?? client).post<AddSquadCoManagerResponses, AddSquadCoManagerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/squads/{squadId}/members',
     ...options,
@@ -365,7 +365,7 @@ export const addSquadCoManager = <ThrowOnError extends boolean = false>(options:
 /**
  * Remove a squad co-manager
  */
-export const removeSquadCoManager = <ThrowOnError extends boolean = false>(options: Options<RemoveSquadCoManagerData, ThrowOnError>) => (options.client ?? client).delete<RemoveSquadCoManagerResponses, unknown, ThrowOnError>({
+export const removeSquadCoManager = <ThrowOnError extends boolean = false>(options: Options<RemoveSquadCoManagerData, ThrowOnError>) => (options.client ?? client).delete<RemoveSquadCoManagerResponses, RemoveSquadCoManagerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/squads/{squadId}/members/{userId}',
     ...options
@@ -409,7 +409,7 @@ export const createContest = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Create a commissioner-managed contest with configuration
  */
-export const createManagedContest = <ThrowOnError extends boolean = false>(options: Options<CreateManagedContestData, ThrowOnError>) => (options.client ?? client).post<CreateManagedContestResponses, unknown, ThrowOnError>({
+export const createManagedContest = <ThrowOnError extends boolean = false>(options: Options<CreateManagedContestData, ThrowOnError>) => (options.client ?? client).post<CreateManagedContestResponses, CreateManagedContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/contest-management/contests/',
     ...options,
@@ -422,7 +422,7 @@ export const createManagedContest = <ThrowOnError extends boolean = false>(optio
 /**
  * Get commissioner contest-management detail
  */
-export const getManagedContest = <ThrowOnError extends boolean = false>(options: Options<GetManagedContestData, ThrowOnError>) => (options.client ?? client).get<GetManagedContestResponses, unknown, ThrowOnError>({
+export const getManagedContest = <ThrowOnError extends boolean = false>(options: Options<GetManagedContestData, ThrowOnError>) => (options.client ?? client).get<GetManagedContestResponses, GetManagedContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}',
     ...options
@@ -431,7 +431,7 @@ export const getManagedContest = <ThrowOnError extends boolean = false>(options:
 /**
  * Update commissioner contest configuration
  */
-export const updateManagedContestConfiguration = <ThrowOnError extends boolean = false>(options: Options<UpdateManagedContestConfigurationData, ThrowOnError>) => (options.client ?? client).put<UpdateManagedContestConfigurationResponses, unknown, ThrowOnError>({
+export const updateManagedContestConfiguration = <ThrowOnError extends boolean = false>(options: Options<UpdateManagedContestConfigurationData, ThrowOnError>) => (options.client ?? client).put<UpdateManagedContestConfigurationResponses, UpdateManagedContestConfigurationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration',
     ...options,
@@ -816,7 +816,7 @@ export const recordConsent = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * List users with filters
  */
-export const adminListUsers = <ThrowOnError extends boolean = false>(options?: Options<AdminListUsersData, ThrowOnError>) => (options?.client ?? client).get<AdminListUsersResponses, unknown, ThrowOnError>({
+export const adminListUsers = <ThrowOnError extends boolean = false>(options?: Options<AdminListUsersData, ThrowOnError>) => (options?.client ?? client).get<AdminListUsersResponses, AdminListUsersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users',
     ...options
@@ -825,7 +825,7 @@ export const adminListUsers = <ThrowOnError extends boolean = false>(options?: O
 /**
  * Merge duplicate user accounts
  */
-export const adminMergeUsers = <ThrowOnError extends boolean = false>(options: Options<AdminMergeUsersData, ThrowOnError>) => (options.client ?? client).post<AdminMergeUsersResponses, unknown, ThrowOnError>({
+export const adminMergeUsers = <ThrowOnError extends boolean = false>(options: Options<AdminMergeUsersData, ThrowOnError>) => (options.client ?? client).post<AdminMergeUsersResponses, AdminMergeUsersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users/merge',
     ...options,
@@ -838,7 +838,7 @@ export const adminMergeUsers = <ThrowOnError extends boolean = false>(options: O
 /**
  * Get user detail
  */
-export const adminGetUserDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetUserDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetUserDetailResponses, unknown, ThrowOnError>({
+export const adminGetUserDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetUserDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetUserDetailResponses, AdminGetUserDetailErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users/{userId}',
     ...options
@@ -847,7 +847,7 @@ export const adminGetUserDetail = <ThrowOnError extends boolean = false>(options
 /**
  * Force logout a user from all sessions
  */
-export const adminForceLogout = <ThrowOnError extends boolean = false>(options: Options<AdminForceLogoutData, ThrowOnError>) => (options.client ?? client).post<AdminForceLogoutResponses, unknown, ThrowOnError>({
+export const adminForceLogout = <ThrowOnError extends boolean = false>(options: Options<AdminForceLogoutData, ThrowOnError>) => (options.client ?? client).post<AdminForceLogoutResponses, AdminForceLogoutErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users/{userId}/force-logout',
     ...options
@@ -856,7 +856,7 @@ export const adminForceLogout = <ThrowOnError extends boolean = false>(options: 
 /**
  * Disable a user account
  */
-export const adminDisableUser = <ThrowOnError extends boolean = false>(options: Options<AdminDisableUserData, ThrowOnError>) => (options.client ?? client).post<AdminDisableUserResponses, unknown, ThrowOnError>({
+export const adminDisableUser = <ThrowOnError extends boolean = false>(options: Options<AdminDisableUserData, ThrowOnError>) => (options.client ?? client).post<AdminDisableUserResponses, AdminDisableUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users/{userId}/disable',
     ...options,
@@ -869,7 +869,7 @@ export const adminDisableUser = <ThrowOnError extends boolean = false>(options: 
 /**
  * Re-enable a disabled user account
  */
-export const adminEnableUser = <ThrowOnError extends boolean = false>(options: Options<AdminEnableUserData, ThrowOnError>) => (options.client ?? client).post<AdminEnableUserResponses, unknown, ThrowOnError>({
+export const adminEnableUser = <ThrowOnError extends boolean = false>(options: Options<AdminEnableUserData, ThrowOnError>) => (options.client ?? client).post<AdminEnableUserResponses, AdminEnableUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users/{userId}/enable',
     ...options
@@ -878,7 +878,7 @@ export const adminEnableUser = <ThrowOnError extends boolean = false>(options: O
 /**
  * List contests with filters
  */
-export const adminListContests = <ThrowOnError extends boolean = false>(options?: Options<AdminListContestsData, ThrowOnError>) => (options?.client ?? client).get<AdminListContestsResponses, unknown, ThrowOnError>({
+export const adminListContests = <ThrowOnError extends boolean = false>(options?: Options<AdminListContestsData, ThrowOnError>) => (options?.client ?? client).get<AdminListContestsResponses, AdminListContestsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/contests',
     ...options
@@ -887,7 +887,7 @@ export const adminListContests = <ThrowOnError extends boolean = false>(options?
 /**
  * Get contest detail
  */
-export const adminGetContestDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetContestDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetContestDetailResponses, unknown, ThrowOnError>({
+export const adminGetContestDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetContestDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetContestDetailResponses, AdminGetContestDetailErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/contests/{contestId}',
     ...options
@@ -896,7 +896,7 @@ export const adminGetContestDetail = <ThrowOnError extends boolean = false>(opti
 /**
  * Force-close a contest
  */
-export const adminForceCloseContest = <ThrowOnError extends boolean = false>(options: Options<AdminForceCloseContestData, ThrowOnError>) => (options.client ?? client).post<AdminForceCloseContestResponses, unknown, ThrowOnError>({
+export const adminForceCloseContest = <ThrowOnError extends boolean = false>(options: Options<AdminForceCloseContestData, ThrowOnError>) => (options.client ?? client).post<AdminForceCloseContestResponses, AdminForceCloseContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/contests/{contestId}/force-close',
     ...options,
@@ -909,7 +909,7 @@ export const adminForceCloseContest = <ThrowOnError extends boolean = false>(opt
 /**
  * Reopen a closed contest
  */
-export const adminReopenContest = <ThrowOnError extends boolean = false>(options: Options<AdminReopenContestData, ThrowOnError>) => (options.client ?? client).post<AdminReopenContestResponses, unknown, ThrowOnError>({
+export const adminReopenContest = <ThrowOnError extends boolean = false>(options: Options<AdminReopenContestData, ThrowOnError>) => (options.client ?? client).post<AdminReopenContestResponses, AdminReopenContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/contests/{contestId}/reopen',
     ...options,
@@ -922,7 +922,7 @@ export const adminReopenContest = <ThrowOnError extends boolean = false>(options
 /**
  * Override an entry score in a contest
  */
-export const adminOverrideScore = <ThrowOnError extends boolean = false>(options: Options<AdminOverrideScoreData, ThrowOnError>) => (options.client ?? client).post<AdminOverrideScoreResponses, unknown, ThrowOnError>({
+export const adminOverrideScore = <ThrowOnError extends boolean = false>(options: Options<AdminOverrideScoreData, ThrowOnError>) => (options.client ?? client).post<AdminOverrideScoreResponses, AdminOverrideScoreErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/contests/{contestId}/override-score',
     ...options,
@@ -935,7 +935,7 @@ export const adminOverrideScore = <ThrowOnError extends boolean = false>(options
 /**
  * Recalculate contest standings
  */
-export const adminRecalculateStandings = <ThrowOnError extends boolean = false>(options: Options<AdminRecalculateStandingsData, ThrowOnError>) => (options.client ?? client).post<AdminRecalculateStandingsResponses, unknown, ThrowOnError>({
+export const adminRecalculateStandings = <ThrowOnError extends boolean = false>(options: Options<AdminRecalculateStandingsData, ThrowOnError>) => (options.client ?? client).post<AdminRecalculateStandingsResponses, AdminRecalculateStandingsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/contests/{contestId}/recalculate-standings',
     ...options
@@ -944,7 +944,7 @@ export const adminRecalculateStandings = <ThrowOnError extends boolean = false>(
 /**
  * Recalculate contest payouts
  */
-export const adminRecalculatePayouts = <ThrowOnError extends boolean = false>(options: Options<AdminRecalculatePayoutsData, ThrowOnError>) => (options.client ?? client).post<AdminRecalculatePayoutsResponses, unknown, ThrowOnError>({
+export const adminRecalculatePayouts = <ThrowOnError extends boolean = false>(options: Options<AdminRecalculatePayoutsData, ThrowOnError>) => (options.client ?? client).post<AdminRecalculatePayoutsResponses, AdminRecalculatePayoutsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/contests/{contestId}/recalculate-payouts',
     ...options
@@ -953,7 +953,7 @@ export const adminRecalculatePayouts = <ThrowOnError extends boolean = false>(op
 /**
  * Re-ingest scoring data for an event
  */
-export const adminReIngestScoring = <ThrowOnError extends boolean = false>(options: Options<AdminReIngestScoringData, ThrowOnError>) => (options.client ?? client).post<AdminReIngestScoringResponses, unknown, ThrowOnError>({
+export const adminReIngestScoring = <ThrowOnError extends boolean = false>(options: Options<AdminReIngestScoringData, ThrowOnError>) => (options.client ?? client).post<AdminReIngestScoringResponses, AdminReIngestScoringErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/contests/{contestId}/re-ingest',
     ...options,
@@ -966,7 +966,7 @@ export const adminReIngestScoring = <ThrowOnError extends boolean = false>(optio
 /**
  * List sports data providers and health status
  */
-export const adminListProviders = <ThrowOnError extends boolean = false>(options?: Options<AdminListProvidersData, ThrowOnError>) => (options?.client ?? client).get<AdminListProvidersResponses, unknown, ThrowOnError>({
+export const adminListProviders = <ThrowOnError extends boolean = false>(options?: Options<AdminListProvidersData, ThrowOnError>) => (options?.client ?? client).get<AdminListProvidersResponses, AdminListProvidersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/providers/health',
     ...options
@@ -975,7 +975,7 @@ export const adminListProviders = <ThrowOnError extends boolean = false>(options
 /**
  * Get ingestion dashboard metrics
  */
-export const adminGetIngestionDashboard = <ThrowOnError extends boolean = false>(options?: Options<AdminGetIngestionDashboardData, ThrowOnError>) => (options?.client ?? client).get<AdminGetIngestionDashboardResponses, unknown, ThrowOnError>({
+export const adminGetIngestionDashboard = <ThrowOnError extends boolean = false>(options?: Options<AdminGetIngestionDashboardData, ThrowOnError>) => (options?.client ?? client).get<AdminGetIngestionDashboardResponses, AdminGetIngestionDashboardErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/providers/ingestion',
     ...options
@@ -984,7 +984,7 @@ export const adminGetIngestionDashboard = <ThrowOnError extends boolean = false>
 /**
  * List unmapped participants from providers
  */
-export const adminGetUnmappedParticipants = <ThrowOnError extends boolean = false>(options?: Options<AdminGetUnmappedParticipantsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetUnmappedParticipantsResponses, unknown, ThrowOnError>({
+export const adminGetUnmappedParticipants = <ThrowOnError extends boolean = false>(options?: Options<AdminGetUnmappedParticipantsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetUnmappedParticipantsResponses, AdminGetUnmappedParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/providers/unmapped-participants',
     ...options
@@ -993,7 +993,7 @@ export const adminGetUnmappedParticipants = <ThrowOnError extends boolean = fals
 /**
  * Map an external participant to an internal ID
  */
-export const adminMapParticipant = <ThrowOnError extends boolean = false>(options: Options<AdminMapParticipantData, ThrowOnError>) => (options.client ?? client).post<AdminMapParticipantResponses, unknown, ThrowOnError>({
+export const adminMapParticipant = <ThrowOnError extends boolean = false>(options: Options<AdminMapParticipantData, ThrowOnError>) => (options.client ?? client).post<AdminMapParticipantResponses, AdminMapParticipantErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/providers/map-participant',
     ...options,
@@ -1006,7 +1006,7 @@ export const adminMapParticipant = <ThrowOnError extends boolean = false>(option
 /**
  * Get provider detail and configuration
  */
-export const adminGetProviderDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetProviderDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetProviderDetailResponses, unknown, ThrowOnError>({
+export const adminGetProviderDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetProviderDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetProviderDetailResponses, AdminGetProviderDetailErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/providers/{providerId}',
     ...options
@@ -1015,7 +1015,7 @@ export const adminGetProviderDetail = <ThrowOnError extends boolean = false>(opt
 /**
  * Update provider configuration
  */
-export const adminUpdateProviderConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateProviderConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateProviderConfigResponses, unknown, ThrowOnError>({
+export const adminUpdateProviderConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateProviderConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateProviderConfigResponses, AdminUpdateProviderConfigErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/providers/{providerId}/config',
     ...options,
@@ -1028,7 +1028,7 @@ export const adminUpdateProviderConfig = <ThrowOnError extends boolean = false>(
 /**
  * Trigger manual health check for a provider
  */
-export const adminTriggerHealthCheck = <ThrowOnError extends boolean = false>(options: Options<AdminTriggerHealthCheckData, ThrowOnError>) => (options.client ?? client).post<AdminTriggerHealthCheckResponses, unknown, ThrowOnError>({
+export const adminTriggerHealthCheck = <ThrowOnError extends boolean = false>(options: Options<AdminTriggerHealthCheckData, ThrowOnError>) => (options.client ?? client).post<AdminTriggerHealthCheckResponses, AdminTriggerHealthCheckErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/providers/{providerId}/health-check',
     ...options
@@ -1037,7 +1037,7 @@ export const adminTriggerHealthCheck = <ThrowOnError extends boolean = false>(op
 /**
  * Re-ingest event data from a provider
  */
-export const adminReIngestEvent = <ThrowOnError extends boolean = false>(options: Options<AdminReIngestEventData, ThrowOnError>) => (options.client ?? client).post<AdminReIngestEventResponses, unknown, ThrowOnError>({
+export const adminReIngestEvent = <ThrowOnError extends boolean = false>(options: Options<AdminReIngestEventData, ThrowOnError>) => (options.client ?? client).post<AdminReIngestEventResponses, AdminReIngestEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/providers/{providerId}/re-ingest/{eventId}',
     ...options
@@ -1046,7 +1046,7 @@ export const adminReIngestEvent = <ThrowOnError extends boolean = false>(options
 /**
  * Get service health status
  */
-export const adminGetServiceHealth = <ThrowOnError extends boolean = false>(options?: Options<AdminGetServiceHealthData, ThrowOnError>) => (options?.client ?? client).get<AdminGetServiceHealthResponses, unknown, ThrowOnError>({
+export const adminGetServiceHealth = <ThrowOnError extends boolean = false>(options?: Options<AdminGetServiceHealthData, ThrowOnError>) => (options?.client ?? client).get<AdminGetServiceHealthResponses, AdminGetServiceHealthErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/services',
     ...options
@@ -1055,7 +1055,7 @@ export const adminGetServiceHealth = <ThrowOnError extends boolean = false>(opti
 /**
  * Get infrastructure metrics
  */
-export const adminGetInfrastructureMetrics = <ThrowOnError extends boolean = false>(options?: Options<AdminGetInfrastructureMetricsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetInfrastructureMetricsResponses, unknown, ThrowOnError>({
+export const adminGetInfrastructureMetrics = <ThrowOnError extends boolean = false>(options?: Options<AdminGetInfrastructureMetricsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetInfrastructureMetricsResponses, AdminGetInfrastructureMetricsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/infrastructure',
     ...options
@@ -1064,7 +1064,7 @@ export const adminGetInfrastructureMetrics = <ThrowOnError extends boolean = fal
 /**
  * Get business metrics
  */
-export const adminGetBusinessMetrics = <ThrowOnError extends boolean = false>(options?: Options<AdminGetBusinessMetricsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetBusinessMetricsResponses, unknown, ThrowOnError>({
+export const adminGetBusinessMetrics = <ThrowOnError extends boolean = false>(options?: Options<AdminGetBusinessMetricsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetBusinessMetricsResponses, AdminGetBusinessMetricsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/metrics',
     ...options
@@ -1073,7 +1073,7 @@ export const adminGetBusinessMetrics = <ThrowOnError extends boolean = false>(op
 /**
  * Search platform errors
  */
-export const adminSearchErrors = <ThrowOnError extends boolean = false>(options?: Options<AdminSearchErrorsData, ThrowOnError>) => (options?.client ?? client).get<AdminSearchErrorsResponses, unknown, ThrowOnError>({
+export const adminSearchErrors = <ThrowOnError extends boolean = false>(options?: Options<AdminSearchErrorsData, ThrowOnError>) => (options?.client ?? client).get<AdminSearchErrorsResponses, AdminSearchErrorsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/errors',
     ...options
@@ -1082,7 +1082,7 @@ export const adminSearchErrors = <ThrowOnError extends boolean = false>(options?
 /**
  * Get error detail
  */
-export const adminGetErrorDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetErrorDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetErrorDetailResponses, unknown, ThrowOnError>({
+export const adminGetErrorDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetErrorDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetErrorDetailResponses, AdminGetErrorDetailErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/errors/{errorId}',
     ...options
@@ -1091,7 +1091,7 @@ export const adminGetErrorDetail = <ThrowOnError extends boolean = false>(option
 /**
  * Get alert rules
  */
-export const adminGetAlertRules = <ThrowOnError extends boolean = false>(options?: Options<AdminGetAlertRulesData, ThrowOnError>) => (options?.client ?? client).get<AdminGetAlertRulesResponses, unknown, ThrowOnError>({
+export const adminGetAlertRules = <ThrowOnError extends boolean = false>(options?: Options<AdminGetAlertRulesData, ThrowOnError>) => (options?.client ?? client).get<AdminGetAlertRulesResponses, AdminGetAlertRulesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/alerts',
     ...options
@@ -1100,7 +1100,7 @@ export const adminGetAlertRules = <ThrowOnError extends boolean = false>(options
 /**
  * Update an alert rule
  */
-export const adminUpdateAlertRule = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateAlertRuleData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateAlertRuleResponses, unknown, ThrowOnError>({
+export const adminUpdateAlertRule = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateAlertRuleData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateAlertRuleResponses, AdminUpdateAlertRuleErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/alerts/{alertId}',
     ...options,
@@ -1113,7 +1113,7 @@ export const adminUpdateAlertRule = <ThrowOnError extends boolean = false>(optio
 /**
  * Mute an alert for a duration
  */
-export const adminMuteAlert = <ThrowOnError extends boolean = false>(options: Options<AdminMuteAlertData, ThrowOnError>) => (options.client ?? client).post<AdminMuteAlertResponses, unknown, ThrowOnError>({
+export const adminMuteAlert = <ThrowOnError extends boolean = false>(options: Options<AdminMuteAlertData, ThrowOnError>) => (options.client ?? client).post<AdminMuteAlertResponses, AdminMuteAlertErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/alerts/{alertId}/mute',
     ...options,
@@ -1126,7 +1126,7 @@ export const adminMuteAlert = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Unmute an alert
  */
-export const adminUnmuteAlert = <ThrowOnError extends boolean = false>(options: Options<AdminUnmuteAlertData, ThrowOnError>) => (options.client ?? client).post<AdminUnmuteAlertResponses, unknown, ThrowOnError>({
+export const adminUnmuteAlert = <ThrowOnError extends boolean = false>(options: Options<AdminUnmuteAlertData, ThrowOnError>) => (options.client ?? client).post<AdminUnmuteAlertResponses, AdminUnmuteAlertErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/health/alerts/{alertId}/unmute',
     ...options
@@ -1135,7 +1135,7 @@ export const adminUnmuteAlert = <ThrowOnError extends boolean = false>(options: 
 /**
  * List available data migrations
  */
-export const adminListMigrations = <ThrowOnError extends boolean = false>(options?: Options<AdminListMigrationsData, ThrowOnError>) => (options?.client ?? client).get<AdminListMigrationsResponses, unknown, ThrowOnError>({
+export const adminListMigrations = <ThrowOnError extends boolean = false>(options?: Options<AdminListMigrationsData, ThrowOnError>) => (options?.client ?? client).get<AdminListMigrationsResponses, AdminListMigrationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/migrations',
     ...options
@@ -1144,7 +1144,7 @@ export const adminListMigrations = <ThrowOnError extends boolean = false>(option
 /**
  * Start a data migration run
  */
-export const adminStartMigrationRun = <ThrowOnError extends boolean = false>(options: Options<AdminStartMigrationRunData, ThrowOnError>) => (options.client ?? client).post<AdminStartMigrationRunResponses, unknown, ThrowOnError>({
+export const adminStartMigrationRun = <ThrowOnError extends boolean = false>(options: Options<AdminStartMigrationRunData, ThrowOnError>) => (options.client ?? client).post<AdminStartMigrationRunResponses, AdminStartMigrationRunErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/migrations/run',
     ...options,
@@ -1157,7 +1157,7 @@ export const adminStartMigrationRun = <ThrowOnError extends boolean = false>(opt
 /**
  * Get migration run detail
  */
-export const adminGetMigrationRunDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetMigrationRunDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetMigrationRunDetailResponses, unknown, ThrowOnError>({
+export const adminGetMigrationRunDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetMigrationRunDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetMigrationRunDetailResponses, AdminGetMigrationRunDetailErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/migrations/runs/{runId}',
     ...options
@@ -1166,7 +1166,7 @@ export const adminGetMigrationRunDetail = <ThrowOnError extends boolean = false>
 /**
  * Cancel a migration run
  */
-export const adminCancelMigrationRun = <ThrowOnError extends boolean = false>(options: Options<AdminCancelMigrationRunData, ThrowOnError>) => (options.client ?? client).post<AdminCancelMigrationRunResponses, unknown, ThrowOnError>({
+export const adminCancelMigrationRun = <ThrowOnError extends boolean = false>(options: Options<AdminCancelMigrationRunData, ThrowOnError>) => (options.client ?? client).post<AdminCancelMigrationRunResponses, AdminCancelMigrationRunErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/migrations/runs/{runId}/cancel',
     ...options
@@ -1175,7 +1175,7 @@ export const adminCancelMigrationRun = <ThrowOnError extends boolean = false>(op
 /**
  * Export audit log entries
  */
-export const adminExportAuditLog = <ThrowOnError extends boolean = false>(options?: Options<AdminExportAuditLogData, ThrowOnError>) => (options?.client ?? client).get<AdminExportAuditLogResponses, unknown, ThrowOnError>({
+export const adminExportAuditLog = <ThrowOnError extends boolean = false>(options?: Options<AdminExportAuditLogData, ThrowOnError>) => (options?.client ?? client).get<AdminExportAuditLogResponses, AdminExportAuditLogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/audit-log/export',
     ...options
@@ -1184,7 +1184,7 @@ export const adminExportAuditLog = <ThrowOnError extends boolean = false>(option
 /**
  * List audit log entries
  */
-export const adminListAuditLog = <ThrowOnError extends boolean = false>(options?: Options<AdminListAuditLogData, ThrowOnError>) => (options?.client ?? client).get<AdminListAuditLogResponses, unknown, ThrowOnError>({
+export const adminListAuditLog = <ThrowOnError extends boolean = false>(options?: Options<AdminListAuditLogData, ThrowOnError>) => (options?.client ?? client).get<AdminListAuditLogResponses, AdminListAuditLogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/audit-log',
     ...options
@@ -1193,7 +1193,7 @@ export const adminListAuditLog = <ThrowOnError extends boolean = false>(options?
 /**
  * Get audit log entry detail
  */
-export const adminGetAuditEntry = <ThrowOnError extends boolean = false>(options: Options<AdminGetAuditEntryData, ThrowOnError>) => (options.client ?? client).get<AdminGetAuditEntryResponses, unknown, ThrowOnError>({
+export const adminGetAuditEntry = <ThrowOnError extends boolean = false>(options: Options<AdminGetAuditEntryData, ThrowOnError>) => (options.client ?? client).get<AdminGetAuditEntryResponses, AdminGetAuditEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/audit-log/{entryId}',
     ...options
@@ -1202,7 +1202,7 @@ export const adminGetAuditEntry = <ThrowOnError extends boolean = false>(options
 /**
  * Get poll interval configuration
  */
-export const adminGetPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<AdminGetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetPollIntervalsResponses, unknown, ThrowOnError>({
+export const adminGetPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<AdminGetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetPollIntervalsResponses, AdminGetPollIntervalsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/config/poll-intervals',
     ...options
@@ -1211,7 +1211,7 @@ export const adminGetPollIntervals = <ThrowOnError extends boolean = false>(opti
 /**
  * Update poll interval configuration
  */
-export const adminUpdatePollIntervals = <ThrowOnError extends boolean = false>(options: Options<AdminUpdatePollIntervalsData, ThrowOnError>) => (options.client ?? client).put<AdminUpdatePollIntervalsResponses, unknown, ThrowOnError>({
+export const adminUpdatePollIntervals = <ThrowOnError extends boolean = false>(options: Options<AdminUpdatePollIntervalsData, ThrowOnError>) => (options.client ?? client).put<AdminUpdatePollIntervalsResponses, AdminUpdatePollIntervalsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/config/poll-intervals',
     ...options,
@@ -1224,7 +1224,7 @@ export const adminUpdatePollIntervals = <ThrowOnError extends boolean = false>(o
 /**
  * Reset poll intervals to defaults
  */
-export const adminResetPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<AdminResetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).post<AdminResetPollIntervalsResponses, unknown, ThrowOnError>({
+export const adminResetPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<AdminResetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).post<AdminResetPollIntervalsResponses, AdminResetPollIntervalsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/config/poll-intervals/reset',
     ...options
@@ -1233,7 +1233,7 @@ export const adminResetPollIntervals = <ThrowOnError extends boolean = false>(op
 /**
  * Get ingestion schedule configuration
  */
-export const adminGetIngestionSchedule = <ThrowOnError extends boolean = false>(options?: Options<AdminGetIngestionScheduleData, ThrowOnError>) => (options?.client ?? client).get<AdminGetIngestionScheduleResponses, unknown, ThrowOnError>({
+export const adminGetIngestionSchedule = <ThrowOnError extends boolean = false>(options?: Options<AdminGetIngestionScheduleData, ThrowOnError>) => (options?.client ?? client).get<AdminGetIngestionScheduleResponses, AdminGetIngestionScheduleErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/config/ingestion-schedule',
     ...options
@@ -1242,7 +1242,7 @@ export const adminGetIngestionSchedule = <ThrowOnError extends boolean = false>(
 /**
  * Update ingestion schedule configuration
  */
-export const adminUpdateIngestionSchedule = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateIngestionScheduleData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateIngestionScheduleResponses, unknown, ThrowOnError>({
+export const adminUpdateIngestionSchedule = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateIngestionScheduleData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateIngestionScheduleResponses, AdminUpdateIngestionScheduleErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/config/ingestion-schedule',
     ...options,
@@ -1255,7 +1255,7 @@ export const adminUpdateIngestionSchedule = <ThrowOnError extends boolean = fals
 /**
  * Set per-sport ingestion schedule override
  */
-export const adminSetSportIngestionOverride = <ThrowOnError extends boolean = false>(options: Options<AdminSetSportIngestionOverrideData, ThrowOnError>) => (options.client ?? client).put<AdminSetSportIngestionOverrideResponses, unknown, ThrowOnError>({
+export const adminSetSportIngestionOverride = <ThrowOnError extends boolean = false>(options: Options<AdminSetSportIngestionOverrideData, ThrowOnError>) => (options.client ?? client).put<AdminSetSportIngestionOverrideResponses, AdminSetSportIngestionOverrideErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/config/ingestion-schedule/{sport}',
     ...options,
@@ -1286,7 +1286,7 @@ export const getPollIntervals = <ThrowOnError extends boolean = false>(options?:
 /**
  * Get current draft state for a contest
  */
-export const getDraftState = <ThrowOnError extends boolean = false>(options: Options<GetDraftStateData, ThrowOnError>) => (options.client ?? client).get<GetDraftStateResponses, unknown, ThrowOnError>({
+export const getDraftState = <ThrowOnError extends boolean = false>(options: Options<GetDraftStateData, ThrowOnError>) => (options.client ?? client).get<GetDraftStateResponses, GetDraftStateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}',
     ...options
@@ -1295,7 +1295,7 @@ export const getDraftState = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Start a new draft session
  */
-export const startDraft = <ThrowOnError extends boolean = false>(options: Options<StartDraftData, ThrowOnError>) => (options.client ?? client).post<StartDraftResponses, unknown, ThrowOnError>({
+export const startDraft = <ThrowOnError extends boolean = false>(options: Options<StartDraftData, ThrowOnError>) => (options.client ?? client).post<StartDraftResponses, StartDraftErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/start',
     ...options,
@@ -1308,7 +1308,7 @@ export const startDraft = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Submit a draft pick
  */
-export const submitContestSelection = <ThrowOnError extends boolean = false>(options: Options<SubmitContestSelectionData, ThrowOnError>) => (options.client ?? client).post<SubmitContestSelectionResponses, unknown, ThrowOnError>({
+export const submitContestSelection = <ThrowOnError extends boolean = false>(options: Options<SubmitContestSelectionData, ThrowOnError>) => (options.client ?? client).post<SubmitContestSelectionResponses, SubmitContestSelectionErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/pick',
     ...options,
@@ -1321,7 +1321,7 @@ export const submitContestSelection = <ThrowOnError extends boolean = false>(opt
 /**
  * Pause an active draft
  */
-export const pauseDraft = <ThrowOnError extends boolean = false>(options: Options<PauseDraftData, ThrowOnError>) => (options.client ?? client).post<PauseDraftResponses, unknown, ThrowOnError>({
+export const pauseDraft = <ThrowOnError extends boolean = false>(options: Options<PauseDraftData, ThrowOnError>) => (options.client ?? client).post<PauseDraftResponses, PauseDraftErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/pause',
     ...options
@@ -1330,7 +1330,7 @@ export const pauseDraft = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Resume a paused draft
  */
-export const resumeDraft = <ThrowOnError extends boolean = false>(options: Options<ResumeDraftData, ThrowOnError>) => (options.client ?? client).post<ResumeDraftResponses, unknown, ThrowOnError>({
+export const resumeDraft = <ThrowOnError extends boolean = false>(options: Options<ResumeDraftData, ThrowOnError>) => (options.client ?? client).post<ResumeDraftResponses, ResumeDraftErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/resume',
     ...options
@@ -1339,7 +1339,7 @@ export const resumeDraft = <ThrowOnError extends boolean = false>(options: Optio
 /**
  * Shift the current turn start time
  */
-export const extendCurrentTurn = <ThrowOnError extends boolean = false>(options: Options<ExtendCurrentTurnData, ThrowOnError>) => (options.client ?? client).post<ExtendCurrentTurnResponses, unknown, ThrowOnError>({
+export const extendCurrentTurn = <ThrowOnError extends boolean = false>(options: Options<ExtendCurrentTurnData, ThrowOnError>) => (options.client ?? client).post<ExtendCurrentTurnResponses, ExtendCurrentTurnErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/extend',
     ...options,
@@ -1352,7 +1352,7 @@ export const extendCurrentTurn = <ThrowOnError extends boolean = false>(options:
 /**
  * Undo the most recent snake draft pick
  */
-export const undoSnakeDraftSelection = <ThrowOnError extends boolean = false>(options: Options<UndoSnakeDraftSelectionData, ThrowOnError>) => (options.client ?? client).post<UndoSnakeDraftSelectionResponses, unknown, ThrowOnError>({
+export const undoSnakeDraftSelection = <ThrowOnError extends boolean = false>(options: Options<UndoSnakeDraftSelectionData, ThrowOnError>) => (options.client ?? client).post<UndoSnakeDraftSelectionResponses, UndoSnakeDraftSelectionErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/undo',
     ...options
@@ -1361,7 +1361,7 @@ export const undoSnakeDraftSelection = <ThrowOnError extends boolean = false>(op
 /**
  * Skip the current snake draft pick
  */
-export const skipSnakeDraftTurn = <ThrowOnError extends boolean = false>(options: Options<SkipSnakeDraftTurnData, ThrowOnError>) => (options.client ?? client).post<SkipSnakeDraftTurnResponses, unknown, ThrowOnError>({
+export const skipSnakeDraftTurn = <ThrowOnError extends boolean = false>(options: Options<SkipSnakeDraftTurnData, ThrowOnError>) => (options.client ?? client).post<SkipSnakeDraftTurnResponses, SkipSnakeDraftTurnErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/skip',
     ...options
@@ -1383,7 +1383,7 @@ export const validateScoringConfig = <ThrowOnError extends boolean = false>(opti
 /**
  * Get contest leaderboard
  */
-export const getContestLeaderboard = <ThrowOnError extends boolean = false>(options: Options<GetContestLeaderboardData, ThrowOnError>) => (options.client ?? client).get<GetContestLeaderboardResponses, unknown, ThrowOnError>({
+export const getContestLeaderboard = <ThrowOnError extends boolean = false>(options: Options<GetContestLeaderboardData, ThrowOnError>) => (options.client ?? client).get<GetContestLeaderboardResponses, GetContestLeaderboardErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/scoring/contests/{contestId}/leaderboard',
     ...options
@@ -1392,7 +1392,7 @@ export const getContestLeaderboard = <ThrowOnError extends boolean = false>(opti
 /**
  * Get entry score breakdown
  */
-export const getEntryScore = <ThrowOnError extends boolean = false>(options: Options<GetEntryScoreData, ThrowOnError>) => (options.client ?? client).get<GetEntryScoreResponses, unknown, ThrowOnError>({
+export const getEntryScore = <ThrowOnError extends boolean = false>(options: Options<GetEntryScoreData, ThrowOnError>) => (options.client ?? client).get<GetEntryScoreResponses, GetEntryScoreErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/scoring/contests/{contestId}/entry/{entryId}',
     ...options
@@ -1401,7 +1401,7 @@ export const getEntryScore = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Get participant score history in a contest
  */
-export const getParticipantScore = <ThrowOnError extends boolean = false>(options: Options<GetParticipantScoreData, ThrowOnError>) => (options.client ?? client).get<GetParticipantScoreResponses, unknown, ThrowOnError>({
+export const getParticipantScore = <ThrowOnError extends boolean = false>(options: Options<GetParticipantScoreData, ThrowOnError>) => (options.client ?? client).get<GetParticipantScoreResponses, GetParticipantScoreErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/scoring/contests/{contestId}/participant/{participantId}',
     ...options
@@ -1410,7 +1410,7 @@ export const getParticipantScore = <ThrowOnError extends boolean = false>(option
 /**
  * Trigger manual standings rollup
  */
-export const triggerStandingsRollup = <ThrowOnError extends boolean = false>(options: Options<TriggerStandingsRollupData, ThrowOnError>) => (options.client ?? client).post<TriggerStandingsRollupResponses, unknown, ThrowOnError>({
+export const triggerStandingsRollup = <ThrowOnError extends boolean = false>(options: Options<TriggerStandingsRollupData, ThrowOnError>) => (options.client ?? client).post<TriggerStandingsRollupResponses, TriggerStandingsRollupErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/scoring/contests/{contestId}/rollup',
     ...options
@@ -1419,7 +1419,7 @@ export const triggerStandingsRollup = <ThrowOnError extends boolean = false>(opt
 /**
  * Get scoring service health
  */
-export const getScoringHealth = <ThrowOnError extends boolean = false>(options?: Options<GetScoringHealthData, ThrowOnError>) => (options?.client ?? client).get<GetScoringHealthResponses, unknown, ThrowOnError>({
+export const getScoringHealth = <ThrowOnError extends boolean = false>(options?: Options<GetScoringHealthData, ThrowOnError>) => (options?.client ?? client).get<GetScoringHealthResponses, GetScoringHealthErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/scoring/health',
     ...options
@@ -1473,7 +1473,7 @@ export const dismissNotification = <ThrowOnError extends boolean = false>(option
 /**
  * List data ingestion providers
  */
-export const listIngestionProviders = <ThrowOnError extends boolean = false>(options?: Options<ListIngestionProvidersData, ThrowOnError>) => (options?.client ?? client).get<ListIngestionProvidersResponses, unknown, ThrowOnError>({
+export const listIngestionProviders = <ThrowOnError extends boolean = false>(options?: Options<ListIngestionProvidersData, ThrowOnError>) => (options?.client ?? client).get<ListIngestionProvidersResponses, ListIngestionProvidersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/ingestion/providers',
     ...options
@@ -1482,7 +1482,7 @@ export const listIngestionProviders = <ThrowOnError extends boolean = false>(opt
 /**
  * Trigger data sync for a sport
  */
-export const syncSportData = <ThrowOnError extends boolean = false>(options: Options<SyncSportDataData, ThrowOnError>) => (options.client ?? client).post<SyncSportDataResponses, unknown, ThrowOnError>({
+export const syncSportData = <ThrowOnError extends boolean = false>(options: Options<SyncSportDataData, ThrowOnError>) => (options.client ?? client).post<SyncSportDataResponses, SyncSportDataErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/ingestion/sync/{sport}',
     ...options
@@ -1491,7 +1491,7 @@ export const syncSportData = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Ingest scores for a sport event
  */
-export const ingestEventScores = <ThrowOnError extends boolean = false>(options: Options<IngestEventScoresData, ThrowOnError>) => (options.client ?? client).post<IngestEventScoresResponses, unknown, ThrowOnError>({
+export const ingestEventScores = <ThrowOnError extends boolean = false>(options: Options<IngestEventScoresData, ThrowOnError>) => (options.client ?? client).post<IngestEventScoresResponses, IngestEventScoresErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/ingestion/scores/{sport}/{eventId}',
     ...options
@@ -1500,7 +1500,7 @@ export const ingestEventScores = <ThrowOnError extends boolean = false>(options:
 /**
  * Ingest results for a sport event
  */
-export const ingestEventResults = <ThrowOnError extends boolean = false>(options: Options<IngestEventResultsData, ThrowOnError>) => (options.client ?? client).post<IngestEventResultsResponses, unknown, ThrowOnError>({
+export const ingestEventResults = <ThrowOnError extends boolean = false>(options: Options<IngestEventResultsData, ThrowOnError>) => (options.client ?? client).post<IngestEventResultsResponses, IngestEventResultsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/ingestion/results/{sport}/{eventId}',
     ...options
@@ -1509,7 +1509,7 @@ export const ingestEventResults = <ThrowOnError extends boolean = false>(options
 /**
  * Ingest odds for a sport
  */
-export const ingestSportOdds = <ThrowOnError extends boolean = false>(options: Options<IngestSportOddsData, ThrowOnError>) => (options.client ?? client).post<IngestSportOddsResponses, unknown, ThrowOnError>({
+export const ingestSportOdds = <ThrowOnError extends boolean = false>(options: Options<IngestSportOddsData, ThrowOnError>) => (options.client ?? client).post<IngestSportOddsResponses, IngestSportOddsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/ingestion/odds/{sport}',
     ...options

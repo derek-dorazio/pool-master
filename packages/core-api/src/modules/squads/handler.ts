@@ -4,6 +4,7 @@ import {
   SquadOperationError,
   SquadService,
 } from './service';
+import { sendError } from '../../core/error-handler';
 
 export function createSquadHandlers(service: SquadService) {
   return {
@@ -115,10 +116,10 @@ export function createSquadHandlers(service: SquadService) {
 
 function handleSquadError(reply: FastifyReply, error: unknown) {
   if (error instanceof SquadNotFoundError) {
-    return reply.code(404).send({ error: error.message });
+    return sendError(reply, 404, 'NOT_FOUND', error.message);
   }
   if (error instanceof SquadOperationError) {
-    return reply.code(400).send({ error: error.message });
+    return sendError(reply, 400, 'BAD_REQUEST', error.message);
   }
   throw error;
 }

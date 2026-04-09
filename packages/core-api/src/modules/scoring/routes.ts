@@ -7,6 +7,7 @@ import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
 import {
   zodToJsonSchema,
   EntryScoreDetailResponseSchema,
+  ErrorEnvelopeSchema,
   ParticipantScoreHistoryResponseSchema,
   RollupResultResponseSchema,
   ScoringConfigValidationResponseSchema,
@@ -84,6 +85,7 @@ export async function scoringRoutes(
       response: {
         200: zodToJsonSchema(ScoringConfigValidationResponseSchema),
         400: zodToJsonSchema(ScoringConfigValidationResponseSchema),
+        500: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: async (request, reply) => {
@@ -116,7 +118,10 @@ export async function scoringRoutes(
         tags: ['Scoring'],
         summary: 'Get contest leaderboard',
         operationId: 'getContestLeaderboard',
-        response: { 200: zodToJsonSchema(ScoringLeaderboardResponseSchema) },
+        response: {
+          200: zodToJsonSchema(ScoringLeaderboardResponseSchema),
+          500: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
       },
     },
     createGetLeaderboardHandler(handlerDeps),
@@ -130,7 +135,10 @@ export async function scoringRoutes(
         tags: ['Scoring'],
         summary: 'Get entry score breakdown',
         operationId: 'getEntryScore',
-        response: { 200: zodToJsonSchema(EntryScoreDetailResponseSchema) },
+        response: {
+          200: zodToJsonSchema(EntryScoreDetailResponseSchema),
+          500: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
       },
     },
     createGetEntryScoreHandler(handlerDeps),
@@ -144,7 +152,10 @@ export async function scoringRoutes(
         tags: ['Scoring'],
         summary: 'Get participant score history in a contest',
         operationId: 'getParticipantScore',
-        response: { 200: zodToJsonSchema(ParticipantScoreHistoryResponseSchema) },
+        response: {
+          200: zodToJsonSchema(ParticipantScoreHistoryResponseSchema),
+          500: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
       },
     },
     createGetParticipantScoreHandler(handlerDeps),
@@ -158,7 +169,10 @@ export async function scoringRoutes(
         tags: ['Scoring'],
         summary: 'Trigger manual standings rollup',
         operationId: 'triggerStandingsRollup',
-        response: { 200: zodToJsonSchema(RollupResultResponseSchema) },
+        response: {
+          200: zodToJsonSchema(RollupResultResponseSchema),
+          500: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
       },
     },
     createTriggerRollupHandler(handlerDeps),
@@ -170,7 +184,10 @@ export async function scoringRoutes(
       tags: ['Scoring'],
       summary: 'Get scoring service health',
       operationId: 'getScoringHealth',
-      response: { 200: zodToJsonSchema(ScoringHealthResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ScoringHealthResponseSchema),
+        500: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
   }, createGetHealthHandler(handlerDeps));
 }

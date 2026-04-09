@@ -17,6 +17,7 @@ import {
   MigrationRunNotFoundError,
   MigrationAlreadyRunningError,
 } from './migration-service';
+import { sendError } from '../../core/error-handler';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -68,13 +69,13 @@ export function createMigrationHandlers(service: MigrationService) {
       return reply.status(201).send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       if (err instanceof MigrationAlreadyRunningError) {
-        return reply.status(409).send({ error: 'ALREADY_RUNNING', message: err.message });
+        return sendError(reply, 409, 'ALREADY_RUNNING', err.message);
       }
       if (err instanceof AdminUserNotFoundError) {
-        return reply.status(403).send({ error: 'FORBIDDEN', message: err.message });
+        return sendError(reply, 403, 'FORBIDDEN', err.message);
       }
       throw err;
     }
@@ -91,7 +92,7 @@ export function createMigrationHandlers(service: MigrationService) {
       return reply.send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationRunNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -114,10 +115,10 @@ export function createMigrationHandlers(service: MigrationService) {
       return reply.send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationRunNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       if (err instanceof AdminUserNotFoundError) {
-        return reply.status(403).send({ error: 'FORBIDDEN', message: err.message });
+        return sendError(reply, 403, 'FORBIDDEN', err.message);
       }
       throw err;
     }

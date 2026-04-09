@@ -5,6 +5,7 @@ import {
   ContestConfigurationRequestSchema,
   ContestManagementResponseSchema,
   CreateContestManagementRequestSchema,
+  ErrorEnvelopeSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import {
@@ -39,7 +40,13 @@ export async function contestManagementModule(
       summary: 'Create a commissioner-managed contest with configuration',
       operationId: 'createManagedContest',
       body: zodToJsonSchema(CreateContestManagementRequestSchema),
-      response: { 201: zodToJsonSchema(ContestManagementResponseSchema) },
+      response: {
+        201: zodToJsonSchema(ContestManagementResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        422: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     preHandler: requirePermission(
       membershipRepo,
@@ -53,7 +60,13 @@ export async function contestManagementModule(
       tags: ['Contest Management'],
       summary: 'Get commissioner contest-management detail',
       operationId: 'getManagedContest',
-      response: { 200: zodToJsonSchema(ContestManagementResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ContestManagementResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     preHandler: requirePermission(
       membershipRepo,
@@ -68,7 +81,14 @@ export async function contestManagementModule(
       summary: 'Update commissioner contest configuration',
       operationId: 'updateManagedContestConfiguration',
       body: zodToJsonSchema(ContestConfigurationRequestSchema),
-      response: { 200: zodToJsonSchema(ContestManagementResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ContestManagementResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        422: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     preHandler: requirePermission(
       membershipRepo,

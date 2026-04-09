@@ -8,6 +8,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   ContestType,
   DraftStatus,
@@ -208,9 +209,9 @@ describe('Draft session CRUD integration', () => {
     });
 
     expect(startAgainRes.statusCode).toBe(409);
-    expect(startAgainRes.json()).toMatchObject({
-      error: 'DRAFT_EXISTS',
-    });
+    const duplicateBody = startAgainRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(duplicateBody).success).toBe(true);
+    expect(duplicateBody.error.code).toBe('DRAFT_EXISTS');
   });
 
   it('enforces entry ownership and returns not-found for unknown contest state', async () => {
@@ -244,8 +245,8 @@ describe('Draft session CRUD integration', () => {
       headers: ownerHeaders,
     });
     expect(missingStateRes.statusCode).toBe(404);
-    expect(missingStateRes.json()).toMatchObject({
-      error: 'CONTEST_NOT_FOUND',
-    });
+    const missingBody = missingStateRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(missingBody).success).toBe(true);
+    expect(missingBody.error.code).toBe('CONTEST_NOT_FOUND');
   });
 });

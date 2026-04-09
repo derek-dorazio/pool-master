@@ -47,6 +47,8 @@ import {
   SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import { sendError } from '../../core/error-handler';
 
 // ---------------------------------------------------------------------------
 // Admin auth preHandler (placeholder — will be replaced with real SSO check)
@@ -55,12 +57,22 @@ import {
 async function adminAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const adminUserId = request.headers['x-admin-user-id'] as string | undefined;
   if (!adminUserId) {
-    return reply.status(401).send({
-      error: 'UNAUTHORIZED',
-      message: 'Admin authentication required',
-    });
+    return sendError(reply, 401, 'UNAUTHORIZED', 'Admin authentication required');
   }
   // TODO: Verify admin JWT / SSO session and load admin user + permissions
+}
+
+function withAdminErrorResponses(
+  successResponses: Record<number, unknown>,
+  extraErrorStatuses: number[] = [],
+): Record<number, unknown> {
+  return {
+    ...successResponses,
+    401: zodToJsonSchema(ErrorEnvelopeSchema),
+    ...Object.fromEntries(
+      extraErrorStatuses.map((status) => [status, zodToJsonSchema(ErrorEnvelopeSchema)]),
+    ),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -103,7 +115,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List users with filters',
       operationId: 'adminListUsers',
-      response: { 200: zodToJsonSchema(UserListResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(UserListResponseSchema) }),
       querystring: {
         type: 'object',
         properties: {
@@ -123,7 +135,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Merge duplicate user accounts',
       operationId: 'adminMergeUsers',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }),
       body: {
         type: 'object',
         required: ['primaryId', 'duplicateId'],
@@ -141,7 +153,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get user detail',
       operationId: 'adminGetUserDetail',
-      response: { 200: zodToJsonSchema(UserDetailResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(UserDetailResponseSchema) }, [404]),
     },
     handler: user.getUserDetail,
   });
@@ -151,7 +163,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Force logout a user from all sessions',
       operationId: 'adminForceLogout',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
     },
     handler: user.forceLogout,
   });
@@ -161,7 +173,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Disable a user account',
       operationId: 'adminDisableUser',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
       body: {
         type: 'object',
         required: ['reason'],
@@ -178,7 +190,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Re-enable a disabled user account',
       operationId: 'adminEnableUser',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
     },
     handler: user.enableUser,
   });
@@ -190,7 +202,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List contests with filters',
       operationId: 'adminListContests',
-      response: { 200: zodToJsonSchema(AdminContestListResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminContestListResponseSchema) }),
       querystring: {
         type: 'object',
         properties: {
@@ -213,7 +225,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get contest detail',
       operationId: 'adminGetContestDetail',
-      response: { 200: zodToJsonSchema(ContestAdminDetailResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ContestAdminDetailResponseSchema) }, [404]),
     },
     handler: contest.getContestDetail,
   });
@@ -223,7 +235,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Force-close a contest',
       operationId: 'adminForceCloseContest',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
       body: {
         type: 'object',
         required: ['reason'],
@@ -240,7 +252,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Reopen a closed contest',
       operationId: 'adminReopenContest',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
       body: {
         type: 'object',
         required: ['reason'],
@@ -257,7 +269,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Override an entry score in a contest',
       operationId: 'adminOverrideScore',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
       body: {
         type: 'object',
         required: ['entryId', 'newScore', 'reason'],
@@ -276,7 +288,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Recalculate contest standings',
       operationId: 'adminRecalculateStandings',
-      response: { 200: zodToJsonSchema(ContestRecalculationResultDtoSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ContestRecalculationResultDtoSchema) }, [404]),
     },
     handler: contest.recalculateStandings,
   });
@@ -286,7 +298,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Recalculate contest payouts',
       operationId: 'adminRecalculatePayouts',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
     },
     handler: contest.recalculatePayouts,
   });
@@ -296,7 +308,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Re-ingest scoring data for an event',
       operationId: 'adminReIngestScoring',
-      response: { 200: zodToJsonSchema(ContestRecalculationResultDtoSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ContestRecalculationResultDtoSchema) }, [404]),
       body: {
         type: 'object',
         required: ['eventId'],
@@ -316,7 +328,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List sports data providers and health status',
       operationId: 'adminListProviders',
-      response: { 200: zodToJsonSchema(ProviderListResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ProviderListResponseSchema) }),
     },
     handler: provider.listProviders,
   });
@@ -326,7 +338,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get ingestion dashboard metrics',
       operationId: 'adminGetIngestionDashboard',
-      response: { 200: zodToJsonSchema(ProviderIngestionDashboardResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ProviderIngestionDashboardResponseSchema) }),
     },
     handler: provider.getIngestionDashboard,
   });
@@ -336,7 +348,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List unmapped participants from providers',
       operationId: 'adminGetUnmappedParticipants',
-      response: { 200: zodToJsonSchema(ProviderUnmappedParticipantListResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ProviderUnmappedParticipantListResponseSchema) }),
     },
     handler: provider.getUnmappedParticipants,
   });
@@ -346,7 +358,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Map an external participant to an internal ID',
       operationId: 'adminMapParticipant',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }),
       body: {
         type: 'object',
         required: ['providerId', 'externalId', 'internalId'],
@@ -365,7 +377,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get provider detail and configuration',
       operationId: 'adminGetProviderDetail',
-      response: { 200: zodToJsonSchema(ProviderDetailResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ProviderDetailResponseSchema) }, [404]),
     },
     handler: provider.getProviderDetail,
   });
@@ -375,7 +387,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update provider configuration',
       operationId: 'adminUpdateProviderConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404, 501]),
       body: {
         type: 'object',
         properties: {
@@ -400,7 +412,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Trigger manual health check for a provider',
       operationId: 'adminTriggerHealthCheck',
-      response: { 200: zodToJsonSchema(ProviderHealthCheckDtoSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ProviderHealthCheckDtoSchema) }, [404]),
     },
     handler: provider.triggerHealthCheck,
   });
@@ -410,7 +422,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Re-ingest event data from a provider',
       operationId: 'adminReIngestEvent',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
     },
     handler: provider.reIngestEvent,
   });
@@ -423,7 +435,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get service health status',
       operationId: 'adminGetServiceHealth',
-      response: { 200: zodToJsonSchema(ServiceHealthListResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ServiceHealthListResponseSchema) }),
     },
     handler: health.getServiceHealth,
   });
@@ -433,7 +445,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get infrastructure metrics',
       operationId: 'adminGetInfrastructureMetrics',
-      response: { 200: zodToJsonSchema(InfrastructureMetricsResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(InfrastructureMetricsResponseSchema) }),
     },
     handler: health.getInfrastructureMetrics,
   });
@@ -443,7 +455,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get business metrics',
       operationId: 'adminGetBusinessMetrics',
-      response: { 200: zodToJsonSchema(BusinessMetricsResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(BusinessMetricsResponseSchema) }),
     },
     handler: health.getBusinessMetrics,
   });
@@ -453,7 +465,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Search platform errors',
       operationId: 'adminSearchErrors',
-      response: { 200: zodToJsonSchema(ErrorLogListResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ErrorLogListResponseSchema) }),
       querystring: {
         type: 'object',
         properties: {
@@ -475,7 +487,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get error detail',
       operationId: 'adminGetErrorDetail',
-      response: { 200: zodToJsonSchema(ErrorLogDetailResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ErrorLogDetailResponseSchema) }, [404]),
     },
     handler: health.getErrorDetail,
   });
@@ -485,7 +497,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get alert rules',
       operationId: 'adminGetAlertRules',
-      response: { 200: zodToJsonSchema(AlertRulesResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AlertRulesResponseSchema) }),
     },
     handler: health.getAlertRules,
   });
@@ -495,7 +507,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Update an alert rule',
       operationId: 'adminUpdateAlertRule',
-      response: { 200: zodToJsonSchema(AlertRuleDtoSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AlertRuleDtoSchema) }, [404]),
       body: {
         type: 'object',
         properties: {
@@ -518,7 +530,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Mute an alert for a duration',
       operationId: 'adminMuteAlert',
-      response: { 200: zodToJsonSchema(AlertRuleDtoSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AlertRuleDtoSchema) }, [400, 404]),
       body: {
         type: 'object',
         required: ['duration'],
@@ -535,7 +547,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Unmute an alert',
       operationId: 'adminUnmuteAlert',
-      response: { 200: zodToJsonSchema(AlertRuleDtoSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AlertRuleDtoSchema) }, [404]),
     },
     handler: health.unmuteAlert,
   });
@@ -548,7 +560,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'List available data migrations',
       operationId: 'adminListMigrations',
-      response: { 200: zodToJsonSchema(MigrationListResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(MigrationListResponseSchema) }),
     },
     handler: migration.listMigrations,
   });
@@ -558,7 +570,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Start a data migration run',
       operationId: 'adminStartMigrationRun',
-      response: { 201: zodToJsonSchema(MigrationRunResponseSchema) },
+      response: withAdminErrorResponses({ 201: zodToJsonSchema(MigrationRunResponseSchema) }, [403, 404, 409]),
       body: zodToJsonSchema(StartMigrationRunRequestSchema),
     },
     handler: migration.startRun,
@@ -569,7 +581,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Get migration run detail',
       operationId: 'adminGetMigrationRunDetail',
-      response: { 200: zodToJsonSchema(MigrationRunResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(MigrationRunResponseSchema) }, [404]),
     },
     handler: migration.getRunDetail,
   });
@@ -579,7 +591,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Admin'],
       summary: 'Cancel a migration run',
       operationId: 'adminCancelMigrationRun',
-      response: { 200: zodToJsonSchema(MigrationRunResponseSchema) },
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(MigrationRunResponseSchema) }, [403, 404]),
     },
     handler: migration.cancelRun,
   });

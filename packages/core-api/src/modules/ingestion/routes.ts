@@ -2,6 +2,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import {
+  ErrorEnvelopeSchema,
   IngestionJobResponseSchema,
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
@@ -28,7 +29,10 @@ export async function ingestionModule(
       tags: ['Admin'],
       summary: 'List data ingestion providers',
       operationId: 'listIngestionProviders',
-      response: { 200: zodToJsonSchema(IngestionProvidersResponseSchema) },
+      response: {
+        200: zodToJsonSchema(IngestionProvidersResponseSchema),
+        500: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
   }, async () => {
     return {
@@ -45,7 +49,10 @@ export async function ingestionModule(
       tags: ['Admin'],
       summary: 'Trigger data sync for a sport',
       operationId: 'syncSportData',
-      response: { 200: zodToJsonSchema(IngestionJobResponseSchema) },
+      response: {
+        200: zodToJsonSchema(IngestionJobResponseSchema),
+        500: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
   }, async (request) => {
     const sport = request.params.sport as Sport;
@@ -60,7 +67,10 @@ export async function ingestionModule(
         tags: ['Admin'],
         summary: 'Ingest scores for a sport event',
         operationId: 'ingestEventScores',
-        response: { 200: zodToJsonSchema(IngestionJobResponseSchema) },
+        response: {
+          200: zodToJsonSchema(IngestionJobResponseSchema),
+          500: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
       },
     },
     async (request) => {
@@ -79,7 +89,10 @@ export async function ingestionModule(
         tags: ['Admin'],
         summary: 'Ingest results for a sport event',
         operationId: 'ingestEventResults',
-        response: { 200: zodToJsonSchema(IngestionJobResponseSchema) },
+        response: {
+          200: zodToJsonSchema(IngestionJobResponseSchema),
+          500: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
       },
     },
     async (request) => {
@@ -96,7 +109,10 @@ export async function ingestionModule(
       tags: ['Admin'],
       summary: 'Ingest odds for a sport',
       operationId: 'ingestSportOdds',
-      response: { 200: zodToJsonSchema(IngestSportOddsResponseSchema) },
+      response: {
+        200: zodToJsonSchema(IngestSportOddsResponseSchema),
+        500: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
   }, async (request) => {
     const sport = request.params.sport as Sport;

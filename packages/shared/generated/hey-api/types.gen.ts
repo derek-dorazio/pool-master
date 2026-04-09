@@ -1168,6 +1168,41 @@ export type ListLeagueSquadsData = {
     url: '/api/v1/leagues/{id}/squads/';
 };
 
+export type ListLeagueSquadsErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ListLeagueSquadsError = ListLeagueSquadsErrors[keyof ListLeagueSquadsErrors];
+
 export type ListLeagueSquadsResponses = {
     /**
      * Default Response
@@ -1212,6 +1247,41 @@ export type CreateLeagueSquadData = {
     url: '/api/v1/leagues/{id}/squads/';
 };
 
+export type CreateLeagueSquadErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type CreateLeagueSquadError = CreateLeagueSquadErrors[keyof CreateLeagueSquadErrors];
+
 export type CreateLeagueSquadResponses = {
     /**
      * Default Response
@@ -1253,6 +1323,41 @@ export type GetLeagueSquadData = {
     query?: never;
     url: '/api/v1/leagues/{id}/squads/{squadId}';
 };
+
+export type GetLeagueSquadErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetLeagueSquadError = GetLeagueSquadErrors[keyof GetLeagueSquadErrors];
 
 export type GetLeagueSquadResponses = {
     /**
@@ -1299,6 +1404,41 @@ export type UpdateLeagueSquadData = {
     url: '/api/v1/leagues/{id}/squads/{squadId}';
 };
 
+export type UpdateLeagueSquadErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateLeagueSquadError = UpdateLeagueSquadErrors[keyof UpdateLeagueSquadErrors];
+
 export type UpdateLeagueSquadResponses = {
     /**
      * Default Response
@@ -1343,6 +1483,41 @@ export type AddSquadCoManagerData = {
     url: '/api/v1/leagues/{id}/squads/{squadId}/members';
 };
 
+export type AddSquadCoManagerErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AddSquadCoManagerError = AddSquadCoManagerErrors[keyof AddSquadCoManagerErrors];
+
 export type AddSquadCoManagerResponses = {
     /**
      * Default Response
@@ -1374,6 +1549,41 @@ export type RemoveSquadCoManagerData = {
     query?: never;
     url: '/api/v1/leagues/{id}/squads/{squadId}/members/{userId}';
 };
+
+export type RemoveSquadCoManagerErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type RemoveSquadCoManagerError = RemoveSquadCoManagerErrors[keyof RemoveSquadCoManagerErrors];
 
 export type RemoveSquadCoManagerResponses = {
     /**
@@ -1666,6 +1876,51 @@ export type CreateManagedContestData = {
     url: '/api/v1/leagues/{id}/contest-management/contests/';
 };
 
+export type CreateManagedContestErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    422: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type CreateManagedContestError = CreateManagedContestErrors[keyof CreateManagedContestErrors];
+
 export type CreateManagedContestResponses = {
     /**
      * Default Response
@@ -1751,6 +2006,51 @@ export type GetManagedContestData = {
     query?: never;
     url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}';
 };
+
+export type GetManagedContestErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetManagedContestError = GetManagedContestErrors[keyof GetManagedContestErrors];
 
 export type GetManagedContestResponses = {
     /**
@@ -1888,6 +2188,61 @@ export type UpdateManagedContestConfigurationData = {
     query?: never;
     url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration';
 };
+
+export type UpdateManagedContestConfigurationErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    422: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateManagedContestConfigurationError = UpdateManagedContestConfigurationErrors[keyof UpdateManagedContestConfigurationErrors];
 
 export type UpdateManagedContestConfigurationResponses = {
     /**
@@ -3576,6 +3931,21 @@ export type AdminListUsersData = {
     url: '/api/v1/admin/users';
 };
 
+export type AdminListUsersErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListUsersError = AdminListUsersErrors[keyof AdminListUsersErrors];
+
 export type AdminListUsersResponses = {
     /**
      * Default Response
@@ -3613,6 +3983,21 @@ export type AdminMergeUsersData = {
     url: '/api/v1/admin/users/merge';
 };
 
+export type AdminMergeUsersErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminMergeUsersError = AdminMergeUsersErrors[keyof AdminMergeUsersErrors];
+
 export type AdminMergeUsersResponses = {
     /**
      * Default Response
@@ -3632,6 +4017,31 @@ export type AdminGetUserDetailData = {
     query?: never;
     url: '/api/v1/admin/users/{userId}';
 };
+
+export type AdminGetUserDetailErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetUserDetailError = AdminGetUserDetailErrors[keyof AdminGetUserDetailErrors];
 
 export type AdminGetUserDetailResponses = {
     /**
@@ -3692,6 +4102,31 @@ export type AdminForceLogoutData = {
     url: '/api/v1/admin/users/{userId}/force-logout';
 };
 
+export type AdminForceLogoutErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminForceLogoutError = AdminForceLogoutErrors[keyof AdminForceLogoutErrors];
+
 export type AdminForceLogoutResponses = {
     /**
      * Default Response
@@ -3714,6 +4149,31 @@ export type AdminDisableUserData = {
     url: '/api/v1/admin/users/{userId}/disable';
 };
 
+export type AdminDisableUserErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminDisableUserError = AdminDisableUserErrors[keyof AdminDisableUserErrors];
+
 export type AdminDisableUserResponses = {
     /**
      * Default Response
@@ -3733,6 +4193,31 @@ export type AdminEnableUserData = {
     query?: never;
     url: '/api/v1/admin/users/{userId}/enable';
 };
+
+export type AdminEnableUserErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminEnableUserError = AdminEnableUserErrors[keyof AdminEnableUserErrors];
 
 export type AdminEnableUserResponses = {
     /**
@@ -3760,6 +4245,21 @@ export type AdminListContestsData = {
     };
     url: '/api/v1/admin/contests';
 };
+
+export type AdminListContestsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListContestsError = AdminListContestsErrors[keyof AdminListContestsErrors];
 
 export type AdminListContestsResponses = {
     /**
@@ -3792,6 +4292,31 @@ export type AdminGetContestDetailData = {
     query?: never;
     url: '/api/v1/admin/contests/{contestId}';
 };
+
+export type AdminGetContestDetailErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetContestDetailError = AdminGetContestDetailErrors[keyof AdminGetContestDetailErrors];
 
 export type AdminGetContestDetailResponses = {
     /**
@@ -3867,6 +4392,31 @@ export type AdminForceCloseContestData = {
     url: '/api/v1/admin/contests/{contestId}/force-close';
 };
 
+export type AdminForceCloseContestErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminForceCloseContestError = AdminForceCloseContestErrors[keyof AdminForceCloseContestErrors];
+
 export type AdminForceCloseContestResponses = {
     /**
      * Default Response
@@ -3888,6 +4438,31 @@ export type AdminReopenContestData = {
     query?: never;
     url: '/api/v1/admin/contests/{contestId}/reopen';
 };
+
+export type AdminReopenContestErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminReopenContestError = AdminReopenContestErrors[keyof AdminReopenContestErrors];
 
 export type AdminReopenContestResponses = {
     /**
@@ -3913,6 +4488,31 @@ export type AdminOverrideScoreData = {
     url: '/api/v1/admin/contests/{contestId}/override-score';
 };
 
+export type AdminOverrideScoreErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminOverrideScoreError = AdminOverrideScoreErrors[keyof AdminOverrideScoreErrors];
+
 export type AdminOverrideScoreResponses = {
     /**
      * Default Response
@@ -3932,6 +4532,31 @@ export type AdminRecalculateStandingsData = {
     query?: never;
     url: '/api/v1/admin/contests/{contestId}/recalculate-standings';
 };
+
+export type AdminRecalculateStandingsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminRecalculateStandingsError = AdminRecalculateStandingsErrors[keyof AdminRecalculateStandingsErrors];
 
 export type AdminRecalculateStandingsResponses = {
     /**
@@ -3960,6 +4585,31 @@ export type AdminRecalculatePayoutsData = {
     url: '/api/v1/admin/contests/{contestId}/recalculate-payouts';
 };
 
+export type AdminRecalculatePayoutsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminRecalculatePayoutsError = AdminRecalculatePayoutsErrors[keyof AdminRecalculatePayoutsErrors];
+
 export type AdminRecalculatePayoutsResponses = {
     /**
      * Default Response
@@ -3981,6 +4631,31 @@ export type AdminReIngestScoringData = {
     query?: never;
     url: '/api/v1/admin/contests/{contestId}/re-ingest';
 };
+
+export type AdminReIngestScoringErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminReIngestScoringError = AdminReIngestScoringErrors[keyof AdminReIngestScoringErrors];
 
 export type AdminReIngestScoringResponses = {
     /**
@@ -4006,6 +4681,21 @@ export type AdminListProvidersData = {
     query?: never;
     url: '/api/v1/admin/providers/health';
 };
+
+export type AdminListProvidersErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListProvidersError = AdminListProvidersErrors[keyof AdminListProvidersErrors];
 
 export type AdminListProvidersResponses = {
     /**
@@ -4033,6 +4723,21 @@ export type AdminGetIngestionDashboardData = {
     query?: never;
     url: '/api/v1/admin/providers/ingestion';
 };
+
+export type AdminGetIngestionDashboardErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetIngestionDashboardError = AdminGetIngestionDashboardErrors[keyof AdminGetIngestionDashboardErrors];
 
 export type AdminGetIngestionDashboardResponses = {
     /**
@@ -4091,6 +4796,21 @@ export type AdminGetUnmappedParticipantsData = {
     url: '/api/v1/admin/providers/unmapped-participants';
 };
 
+export type AdminGetUnmappedParticipantsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetUnmappedParticipantsError = AdminGetUnmappedParticipantsErrors[keyof AdminGetUnmappedParticipantsErrors];
+
 export type AdminGetUnmappedParticipantsResponses = {
     /**
      * Default Response
@@ -4117,6 +4837,21 @@ export type AdminMapParticipantData = {
     url: '/api/v1/admin/providers/map-participant';
 };
 
+export type AdminMapParticipantErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminMapParticipantError = AdminMapParticipantErrors[keyof AdminMapParticipantErrors];
+
 export type AdminMapParticipantResponses = {
     /**
      * Default Response
@@ -4136,6 +4871,31 @@ export type AdminGetProviderDetailData = {
     query?: never;
     url: '/api/v1/admin/providers/{providerId}';
 };
+
+export type AdminGetProviderDetailErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetProviderDetailError = AdminGetProviderDetailErrors[keyof AdminGetProviderDetailErrors];
 
 export type AdminGetProviderDetailResponses = {
     /**
@@ -4220,6 +4980,41 @@ export type AdminUpdateProviderConfigData = {
     url: '/api/v1/admin/providers/{providerId}/config';
 };
 
+export type AdminUpdateProviderConfigErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    501: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUpdateProviderConfigError = AdminUpdateProviderConfigErrors[keyof AdminUpdateProviderConfigErrors];
+
 export type AdminUpdateProviderConfigResponses = {
     /**
      * Default Response
@@ -4239,6 +5034,31 @@ export type AdminTriggerHealthCheckData = {
     query?: never;
     url: '/api/v1/admin/providers/{providerId}/health-check';
 };
+
+export type AdminTriggerHealthCheckErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminTriggerHealthCheckError = AdminTriggerHealthCheckErrors[keyof AdminTriggerHealthCheckErrors];
 
 export type AdminTriggerHealthCheckResponses = {
     /**
@@ -4267,6 +5087,31 @@ export type AdminReIngestEventData = {
     url: '/api/v1/admin/providers/{providerId}/re-ingest/{eventId}';
 };
 
+export type AdminReIngestEventErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminReIngestEventError = AdminReIngestEventErrors[keyof AdminReIngestEventErrors];
+
 export type AdminReIngestEventResponses = {
     /**
      * Default Response
@@ -4284,6 +5129,21 @@ export type AdminGetServiceHealthData = {
     query?: never;
     url: '/api/v1/admin/health/services';
 };
+
+export type AdminGetServiceHealthErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetServiceHealthError = AdminGetServiceHealthErrors[keyof AdminGetServiceHealthErrors];
 
 export type AdminGetServiceHealthResponses = {
     /**
@@ -4316,6 +5176,21 @@ export type AdminGetInfrastructureMetricsData = {
     query?: never;
     url: '/api/v1/admin/health/infrastructure';
 };
+
+export type AdminGetInfrastructureMetricsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetInfrastructureMetricsError = AdminGetInfrastructureMetricsErrors[keyof AdminGetInfrastructureMetricsErrors];
 
 export type AdminGetInfrastructureMetricsResponses = {
     /**
@@ -4359,6 +5234,21 @@ export type AdminGetBusinessMetricsData = {
     url: '/api/v1/admin/health/metrics';
 };
 
+export type AdminGetBusinessMetricsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetBusinessMetricsError = AdminGetBusinessMetricsErrors[keyof AdminGetBusinessMetricsErrors];
+
 export type AdminGetBusinessMetricsResponses = {
     /**
      * Default Response
@@ -4392,6 +5282,21 @@ export type AdminSearchErrorsData = {
     };
     url: '/api/v1/admin/health/errors';
 };
+
+export type AdminSearchErrorsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminSearchErrorsError = AdminSearchErrorsErrors[keyof AdminSearchErrorsErrors];
 
 export type AdminSearchErrorsResponses = {
     /**
@@ -4430,6 +5335,31 @@ export type AdminGetErrorDetailData = {
     query?: never;
     url: '/api/v1/admin/health/errors/{errorId}';
 };
+
+export type AdminGetErrorDetailErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetErrorDetailError = AdminGetErrorDetailErrors[keyof AdminGetErrorDetailErrors];
 
 export type AdminGetErrorDetailResponses = {
     /**
@@ -4472,6 +5402,21 @@ export type AdminGetAlertRulesData = {
     query?: never;
     url: '/api/v1/admin/health/alerts';
 };
+
+export type AdminGetAlertRulesErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetAlertRulesError = AdminGetAlertRulesErrors[keyof AdminGetAlertRulesErrors];
 
 export type AdminGetAlertRulesResponses = {
     /**
@@ -4518,6 +5463,31 @@ export type AdminUpdateAlertRuleData = {
     url: '/api/v1/admin/health/alerts/{alertId}';
 };
 
+export type AdminUpdateAlertRuleErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUpdateAlertRuleError = AdminUpdateAlertRuleErrors[keyof AdminUpdateAlertRuleErrors];
+
 export type AdminUpdateAlertRuleResponses = {
     /**
      * Default Response
@@ -4555,6 +5525,41 @@ export type AdminMuteAlertData = {
     url: '/api/v1/admin/health/alerts/{alertId}/mute';
 };
 
+export type AdminMuteAlertErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminMuteAlertError = AdminMuteAlertErrors[keyof AdminMuteAlertErrors];
+
 export type AdminMuteAlertResponses = {
     /**
      * Default Response
@@ -4590,6 +5595,31 @@ export type AdminUnmuteAlertData = {
     url: '/api/v1/admin/health/alerts/{alertId}/unmute';
 };
 
+export type AdminUnmuteAlertErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUnmuteAlertError = AdminUnmuteAlertErrors[keyof AdminUnmuteAlertErrors];
+
 export type AdminUnmuteAlertResponses = {
     /**
      * Default Response
@@ -4622,6 +5652,21 @@ export type AdminListMigrationsData = {
     query?: never;
     url: '/api/v1/admin/migrations';
 };
+
+export type AdminListMigrationsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListMigrationsError = AdminListMigrationsErrors[keyof AdminListMigrationsErrors];
 
 export type AdminListMigrationsResponses = {
     /**
@@ -4705,6 +5750,51 @@ export type AdminStartMigrationRunData = {
     url: '/api/v1/admin/migrations/run';
 };
 
+export type AdminStartMigrationRunErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    409: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminStartMigrationRunError = AdminStartMigrationRunErrors[keyof AdminStartMigrationRunErrors];
+
 export type AdminStartMigrationRunResponses = {
     /**
      * Default Response
@@ -4750,6 +5840,31 @@ export type AdminGetMigrationRunDetailData = {
     url: '/api/v1/admin/migrations/runs/{runId}';
 };
 
+export type AdminGetMigrationRunDetailErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetMigrationRunDetailError = AdminGetMigrationRunDetailErrors[keyof AdminGetMigrationRunDetailErrors];
+
 export type AdminGetMigrationRunDetailResponses = {
     /**
      * Default Response
@@ -4794,6 +5909,41 @@ export type AdminCancelMigrationRunData = {
     query?: never;
     url: '/api/v1/admin/migrations/runs/{runId}/cancel';
 };
+
+export type AdminCancelMigrationRunErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminCancelMigrationRunError = AdminCancelMigrationRunErrors[keyof AdminCancelMigrationRunErrors];
 
 export type AdminCancelMigrationRunResponses = {
     /**
@@ -4848,6 +5998,21 @@ export type AdminExportAuditLogData = {
     url: '/api/v1/admin/audit-log/export';
 };
 
+export type AdminExportAuditLogErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminExportAuditLogError = AdminExportAuditLogErrors[keyof AdminExportAuditLogErrors];
+
 export type AdminExportAuditLogResponses = {
     /**
      * Default Response
@@ -4875,6 +6040,21 @@ export type AdminListAuditLogData = {
     };
     url: '/api/v1/admin/audit-log';
 };
+
+export type AdminListAuditLogErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListAuditLogError = AdminListAuditLogErrors[keyof AdminListAuditLogErrors];
 
 export type AdminListAuditLogResponses = {
     /**
@@ -4911,6 +6091,31 @@ export type AdminGetAuditEntryData = {
     url: '/api/v1/admin/audit-log/{entryId}';
 };
 
+export type AdminGetAuditEntryErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetAuditEntryError = AdminGetAuditEntryErrors[keyof AdminGetAuditEntryErrors];
+
 export type AdminGetAuditEntryResponses = {
     /**
      * Default Response
@@ -4941,6 +6146,21 @@ export type AdminGetPollIntervalsData = {
     url: '/api/v1/admin/config/poll-intervals';
 };
 
+export type AdminGetPollIntervalsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetPollIntervalsError = AdminGetPollIntervalsErrors[keyof AdminGetPollIntervalsErrors];
+
 export type AdminGetPollIntervalsResponses = {
     /**
      * Default Response
@@ -4965,6 +6185,21 @@ export type AdminUpdatePollIntervalsData = {
     url: '/api/v1/admin/config/poll-intervals';
 };
 
+export type AdminUpdatePollIntervalsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUpdatePollIntervalsError = AdminUpdatePollIntervalsErrors[keyof AdminUpdatePollIntervalsErrors];
+
 export type AdminUpdatePollIntervalsResponses = {
     /**
      * Default Response
@@ -4983,6 +6218,21 @@ export type AdminResetPollIntervalsData = {
     url: '/api/v1/admin/config/poll-intervals/reset';
 };
 
+export type AdminResetPollIntervalsErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminResetPollIntervalsError = AdminResetPollIntervalsErrors[keyof AdminResetPollIntervalsErrors];
+
 export type AdminResetPollIntervalsResponses = {
     /**
      * Default Response
@@ -5000,6 +6250,21 @@ export type AdminGetIngestionScheduleData = {
     query?: never;
     url: '/api/v1/admin/config/ingestion-schedule';
 };
+
+export type AdminGetIngestionScheduleErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetIngestionScheduleError = AdminGetIngestionScheduleErrors[keyof AdminGetIngestionScheduleErrors];
 
 export type AdminGetIngestionScheduleResponses = {
     /**
@@ -5024,6 +6289,21 @@ export type AdminUpdateIngestionScheduleData = {
     query?: never;
     url: '/api/v1/admin/config/ingestion-schedule';
 };
+
+export type AdminUpdateIngestionScheduleErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUpdateIngestionScheduleError = AdminUpdateIngestionScheduleErrors[keyof AdminUpdateIngestionScheduleErrors];
 
 export type AdminUpdateIngestionScheduleResponses = {
     /**
@@ -5050,6 +6330,21 @@ export type AdminSetSportIngestionOverrideData = {
     query?: never;
     url: '/api/v1/admin/config/ingestion-schedule/{sport}';
 };
+
+export type AdminSetSportIngestionOverrideErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminSetSportIngestionOverrideError = AdminSetSportIngestionOverrideErrors[keyof AdminSetSportIngestionOverrideErrors];
 
 export type AdminSetSportIngestionOverrideResponses = {
     /**
@@ -5114,6 +6409,31 @@ export type GetDraftStateData = {
     query?: never;
     url: '/api/v1/drafts/{contestId}';
 };
+
+export type GetDraftStateErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    501: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetDraftStateError = GetDraftStateErrors[keyof GetDraftStateErrors];
 
 export type GetDraftStateResponses = {
     /**
@@ -5234,6 +6554,31 @@ export type StartDraftData = {
     url: '/api/v1/drafts/{contestId}/start';
 };
 
+export type StartDraftErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    409: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type StartDraftError = StartDraftErrors[keyof StartDraftErrors];
+
 export type StartDraftResponses = {
     /**
      * Default Response
@@ -5350,6 +6695,61 @@ export type SubmitContestSelectionData = {
     url: '/api/v1/drafts/{contestId}/pick';
 };
 
+export type SubmitContestSelectionErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    501: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type SubmitContestSelectionError = SubmitContestSelectionErrors[keyof SubmitContestSelectionErrors];
+
 export type SubmitContestSelectionResponses = {
     /**
      * Default Response
@@ -5463,6 +6863,51 @@ export type PauseDraftData = {
     url: '/api/v1/drafts/{contestId}/pause';
 };
 
+export type PauseDraftErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type PauseDraftError = PauseDraftErrors[keyof PauseDraftErrors];
+
 export type PauseDraftResponses = {
     /**
      * Default Response
@@ -5575,6 +7020,51 @@ export type ResumeDraftData = {
     query?: never;
     url: '/api/v1/drafts/{contestId}/resume';
 };
+
+export type ResumeDraftErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ResumeDraftError = ResumeDraftErrors[keyof ResumeDraftErrors];
 
 export type ResumeDraftResponses = {
     /**
@@ -5691,6 +7181,51 @@ export type ExtendCurrentTurnData = {
     url: '/api/v1/drafts/{contestId}/extend';
 };
 
+export type ExtendCurrentTurnErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ExtendCurrentTurnError = ExtendCurrentTurnErrors[keyof ExtendCurrentTurnErrors];
+
 export type ExtendCurrentTurnResponses = {
     /**
      * Default Response
@@ -5804,6 +7339,51 @@ export type UndoSnakeDraftSelectionData = {
     url: '/api/v1/drafts/{contestId}/undo';
 };
 
+export type UndoSnakeDraftSelectionErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type UndoSnakeDraftSelectionError = UndoSnakeDraftSelectionErrors[keyof UndoSnakeDraftSelectionErrors];
+
 export type UndoSnakeDraftSelectionResponses = {
     /**
      * Default Response
@@ -5916,6 +7496,51 @@ export type SkipSnakeDraftTurnData = {
     query?: never;
     url: '/api/v1/drafts/{contestId}/skip';
 };
+
+export type SkipSnakeDraftTurnErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type SkipSnakeDraftTurnError = SkipSnakeDraftTurnErrors[keyof SkipSnakeDraftTurnErrors];
 
 export type SkipSnakeDraftTurnResponses = {
     /**
@@ -6078,6 +7703,16 @@ export type ValidateScoringConfigErrors = {
         warnings?: Array<string>;
         errors?: Array<unknown>;
     };
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
 };
 
 export type ValidateScoringConfigError = ValidateScoringConfigErrors[keyof ValidateScoringConfigErrors];
@@ -6107,6 +7742,21 @@ export type GetContestLeaderboardData = {
     url: '/api/v1/scoring/contests/{contestId}/leaderboard';
 };
 
+export type GetContestLeaderboardErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetContestLeaderboardError = GetContestLeaderboardErrors[keyof GetContestLeaderboardErrors];
+
 export type GetContestLeaderboardResponses = {
     /**
      * Default Response
@@ -6133,6 +7783,21 @@ export type GetEntryScoreData = {
     query?: never;
     url: '/api/v1/scoring/contests/{contestId}/entry/{entryId}';
 };
+
+export type GetEntryScoreErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetEntryScoreError = GetEntryScoreErrors[keyof GetEntryScoreErrors];
 
 export type GetEntryScoreResponses = {
     /**
@@ -6175,6 +7840,21 @@ export type GetParticipantScoreData = {
     query?: never;
     url: '/api/v1/scoring/contests/{contestId}/participant/{participantId}';
 };
+
+export type GetParticipantScoreErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetParticipantScoreError = GetParticipantScoreErrors[keyof GetParticipantScoreErrors];
 
 export type GetParticipantScoreResponses = {
     /**
@@ -6219,6 +7899,21 @@ export type TriggerStandingsRollupData = {
     url: '/api/v1/scoring/contests/{contestId}/rollup';
 };
 
+export type TriggerStandingsRollupErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type TriggerStandingsRollupError = TriggerStandingsRollupErrors[keyof TriggerStandingsRollupErrors];
+
 export type TriggerStandingsRollupResponses = {
     /**
      * Default Response
@@ -6239,6 +7934,21 @@ export type GetScoringHealthData = {
     query?: never;
     url: '/api/v1/scoring/health';
 };
+
+export type GetScoringHealthErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetScoringHealthError = GetScoringHealthErrors[keyof GetScoringHealthErrors];
 
 export type GetScoringHealthResponses = {
     /**
@@ -6373,6 +8083,21 @@ export type ListIngestionProvidersData = {
     url: '/api/v1/ingestion/providers';
 };
 
+export type ListIngestionProvidersErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ListIngestionProvidersError = ListIngestionProvidersErrors[keyof ListIngestionProvidersErrors];
+
 export type ListIngestionProvidersResponses = {
     /**
      * Default Response
@@ -6396,6 +8121,21 @@ export type SyncSportDataData = {
     query?: never;
     url: '/api/v1/ingestion/sync/{sport}';
 };
+
+export type SyncSportDataErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type SyncSportDataError = SyncSportDataErrors[keyof SyncSportDataErrors];
 
 export type SyncSportDataResponses = {
     /**
@@ -6431,6 +8171,21 @@ export type IngestEventScoresData = {
     url: '/api/v1/ingestion/scores/{sport}/{eventId}';
 };
 
+export type IngestEventScoresErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type IngestEventScoresError = IngestEventScoresErrors[keyof IngestEventScoresErrors];
+
 export type IngestEventScoresResponses = {
     /**
      * Default Response
@@ -6465,6 +8220,21 @@ export type IngestEventResultsData = {
     url: '/api/v1/ingestion/results/{sport}/{eventId}';
 };
 
+export type IngestEventResultsErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type IngestEventResultsError = IngestEventResultsErrors[keyof IngestEventResultsErrors];
+
 export type IngestEventResultsResponses = {
     /**
      * Default Response
@@ -6497,6 +8267,21 @@ export type IngestSportOddsData = {
     query?: never;
     url: '/api/v1/ingestion/odds/{sport}';
 };
+
+export type IngestSportOddsErrors = {
+    /**
+     * Default Response
+     */
+    500: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type IngestSportOddsError = IngestSportOddsErrors[keyof IngestSportOddsErrors];
 
 export type IngestSportOddsResponses = {
     /**

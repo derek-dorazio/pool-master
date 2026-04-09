@@ -14,6 +14,7 @@ import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
 import type { AdminRole, AdminPermission } from '../core/admin-permissions';
+import { sendError } from '../core/error-handler';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
 
@@ -52,16 +53,12 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
   fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return reply
-        .status(401)
-        .send({ error: 'UNAUTHORIZED', message: 'Missing or malformed Authorization header' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing or malformed Authorization header');
     }
 
     const token = authHeader.slice(7);
     if (!token) {
-      return reply
-        .status(401)
-        .send({ error: 'UNAUTHORIZED', message: 'Empty bearer token' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Empty bearer token');
     }
 
     // Verify JWT token and extract admin user ID
@@ -73,9 +70,7 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
         throw new Error('Missing user ID in token payload');
       }
     } catch {
-      return reply
-        .status(401)
-        .send({ error: 'UNAUTHORIZED', message: 'Invalid or expired admin token' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired admin token');
     }
 
     // Look up admin user
@@ -85,15 +80,11 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
     });
 
     if (!adminUser) {
-      return reply
-        .status(401)
-        .send({ error: 'UNAUTHORIZED', message: 'Admin user not found' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Admin user not found');
     }
 
     if (!adminUser.isActive) {
-      return reply
-        .status(403)
-        .send({ error: 'FORBIDDEN', message: 'Admin account is inactive' });
+      return sendError(reply, 403, 'FORBIDDEN', 'Admin account is inactive');
     }
 
     // Attach admin context to request

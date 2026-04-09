@@ -9,6 +9,7 @@ import {
   SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { listAuditLog, getAuditEntry, exportAuditLog } from './audit-handler';
 
 export async function auditRoutes(app: FastifyInstance): Promise<void> {
@@ -34,7 +35,10 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
       tags: ['Admin'] as const,
       summary: 'Export audit log entries',
       operationId: 'adminExportAuditLog',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
       ...querySchema,
     },
   }, exportAuditLog);
@@ -43,7 +47,10 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
       tags: ['Admin'] as const,
       summary: 'List audit log entries',
       operationId: 'adminListAuditLog',
-      response: { 200: zodToJsonSchema(AuditListResponseSchema) },
+      response: {
+        200: zodToJsonSchema(AuditListResponseSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
       ...querySchema,
     },
   }, listAuditLog);
@@ -52,7 +59,11 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
       tags: ['Admin'] as const,
       summary: 'Get audit log entry detail',
       operationId: 'adminGetAuditEntry',
-      response: { 200: zodToJsonSchema(AuditEntryResponseSchema) },
+      response: {
+        200: zodToJsonSchema(AuditEntryResponseSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
       params: {
         type: 'object' as const,
         required: ['entryId'] as const,

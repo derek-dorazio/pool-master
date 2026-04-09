@@ -7,6 +7,7 @@ import {
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
 } from '../helpers';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 
 describe('squad management integration', () => {
   beforeAll(async () => {
@@ -177,6 +178,8 @@ describe('squad management integration', () => {
     });
 
     expect(secondSquadRes.statusCode).toBe(400);
-    expect(secondSquadRes.json().error).toContain('already belongs to a squad');
+    const body = secondSquadRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
+    expect(body.error.message).toContain('already belongs to a squad');
   });
 });
