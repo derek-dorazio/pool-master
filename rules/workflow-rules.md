@@ -46,6 +46,55 @@ When finishing work:
 - Update plan rows only for the exact slice being worked. Do not mark unrelated queue items `In Progress` or `Done`.
 - Mark a slice `Done` only when the exact scoped work is complete and validated. Partial work stays `In Progress`.
 
+### Slice Completion Checklist (Required Before Marking Done)
+
+Before marking any backend slice task `Done`, run through this checklist for every domain object or endpoint touched by the slice. This checklist enforces the layer-completeness requirements from `rules/model-change-rules.md` and `rules/service-rules.md` as execution gates, not just reference material.
+
+**Schema & Domain:**
+- [ ] Prisma schema updated (if model changed)
+- [ ] Migration generated (if schema changed)
+- [ ] Shared domain types/enums updated in `packages/shared/domain/`
+
+**DTOs & Mappers:**
+- [ ] Zod request DTO exists in `packages/shared/dto/<module>.dto.ts` for every request body
+- [ ] Zod response DTO exists in `packages/shared/dto/<module>.dto.ts` for every response
+- [ ] Mapper file exists at `packages/core-api/src/mappers/<module>.mapper.ts` with named export functions
+- [ ] Handlers call mapper functions — no inline `.map()` transformations in route or handler files
+
+**Route Schemas:**
+- [ ] Every route uses `zodToJsonSchema()` for request and response schemas — no inline `{ type: 'object', properties: ... }` JSON objects
+- [ ] No route uses `SuccessSchema` or `passthroughResponseSchema` for endpoints returning domain data
+- [ ] Every route has `operationId`, `summary`, and `tags`
+
+**Tests:**
+- [ ] Unit test exists for service logic
+- [ ] DB integration test covers create, read, update, delete/inactivate, findById for new/changed domain objects
+- [ ] Contract test case added to `api-contracts-web.integration.ts` or `api-contracts-admin.integration.ts` for every new/changed endpoint
+- [ ] Coverage on changed files ≥ 80% statements
+
+**OpenAPI:**
+- [ ] `npm run api:refresh` succeeds
+- [ ] `npm run api:validate` succeeds
+
+A slice that lands the schema and service logic correctly but skips DTOs, mappers, or tests is `In Progress`, not `Done`.
+
+### Slice Deliverables
+
+When plans break work into slices (e.g., Plan 59's A–I slices), each slice should be tracked at layer granularity, not as a single monolithic task. Either expand the plan's task table to include per-layer rows:
+
+```markdown
+| D.1 | Schema + migration | Done |
+| D.2 | Service + repository | Done |
+| D.3 | DTOs (request + response Zod schemas) | Not Started |
+| D.4 | Mappers | Not Started |
+| D.5 | Route schemas (zodToJsonSchema, operationId, tags) | Not Started |
+| D.6 | Unit tests | In Progress |
+| D.7 | Integration tests (CRUD + negative paths) | Not Started |
+| D.8 | Contract tests | Not Started |
+```
+
+Or confirm all layers pass the Slice Completion Checklist above before marking the slice `Done`. A slice is only complete when all applicable layers are done — not when the "hard part" (schema + service) lands.
+
 ### Plan Closeout And Archiving
 
 - Plans are execution tools, not long-lived policy documents. Durable rules belong in `rules/`, not in active plans.
@@ -126,6 +175,9 @@ Backend-first refactor lane exception:
   4. DB-backed integration tests
   5. merged backend coverage via `npm run test:coverage:backend`
   6. OpenAPI export/validation when API shapes change
+  7. coverage on changed files ≥ 80% statements (verify with `--collectCoverageFrom`)
+  8. contract test exists for every new/changed endpoint (in `api-contracts-web` or `api-contracts-admin`)
+  9. no route in changed modules uses `SuccessSchema` or `passthroughResponseSchema` for domain responses
 - Web/admin test, coverage, smoke, and browser E2E suites are not required
   pre-push gates on that branch.
 - This exception is branch-specific only. `main` and ordinary feature branches

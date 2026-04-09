@@ -132,7 +132,7 @@ Backend-first refactor testing rules on `codex-backend-refactor-lane`:
 
 ## 4. Contract Testing Rules
 
-PoolMaster treats API contracts as first-class test surfaces.
+PoolMaster treats API contracts as first-class test surfaces. Contract test existence is an **execution gate**, not a follow-up task.
 
 - Contract tests must validate live responses against DTO Zod schemas using `.safeParse()`.
 - New or changed endpoints must update:
@@ -141,6 +141,25 @@ PoolMaster treats API contracts as first-class test surfaces.
   - or a clearly equivalent contract suite
 - If response shape changes, update the contract test in the same change.
 - Do not rely on TypeScript alone to prove runtime payload shape correctness.
+
+### Contract Test Gate
+
+A backend slice that adds or changes an API endpoint is **not complete** until a contract test case exists for that endpoint. This applies equally on `codex-backend-refactor-lane` and `main`.
+
+If the contract test suite files do not yet exist, the first slice that adds or changes an endpoint must create them. Subsequent slices add cases to the existing suites.
+
+**Minimum contract test per endpoint:**
+
+```typescript
+it('GET /api/v1/<resource> matches <Resource>ResponseSchema', async () => {
+  const res = await app.inject({ method: 'GET', url: '/api/v1/<resource>', headers: authHeaders });
+  expect(res.statusCode).toBe(200);
+  const parsed = <Resource>ResponseSchema.safeParse(JSON.parse(res.payload));
+  expect(parsed.success).toBe(true);
+});
+```
+
+Do not defer contract tests to a "testing cleanup slice." They are part of the slice that changes the contract.
 
 ---
 
@@ -228,7 +247,20 @@ Before deleting an existing test suite for architecture/strategy reasons, confir
 
 ---
 
-## 7. What Must Be Tested
+## 7. Integration Test Depth Requirement
+
+Integration test files must not be single-case stubs. Each integration test file for a domain should include at minimum:
+
+- **Happy path:** The primary use case succeeds with valid inputs.
+- **Validation/negative path:** The endpoint rejects invalid input with the correct status code and error shape.
+- **Permission/authorization path:** The endpoint returns 401 or 403 for unauthorized callers (where applicable).
+- **Not-found path:** The endpoint returns 404 for non-existent resources (where applicable).
+
+A single `it()` block per integration file is a sign the test is incomplete. Aim for 3–5 test cases per domain integration file covering the paths above.
+
+---
+
+## 8. What Must Be Tested
 
 ### Backend
 
@@ -249,7 +281,7 @@ Before deleting an existing test suite for architecture/strategy reasons, confir
 
 ---
 
-## 8. What Not To Do
+## 9. What Not To Do
 
 - Do not keep around tests that verify bad architecture.
 - Do not preserve tests for no-op UI.
@@ -259,7 +291,7 @@ Before deleting an existing test suite for architecture/strategy reasons, confir
 
 ---
 
-## 9. Documentation Drift Rules
+## 10. Documentation Drift Rules
 
 If test strategy changes materially, update this file in the same work.
 
