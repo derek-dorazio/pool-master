@@ -45,10 +45,10 @@ This app becomes the single go-forward web frontend for PoolMaster.
 | In Progress | Scaffold `clients/poolmaster` shell and base stack (69-A) | React, Vite, TypeScript, Tailwind, React Router, TanStack Query, generated SDK re-export, and initial app shell scaffolded; shadcn/component primitives still to be added |
 | In Progress | Build auth/session, configured SDK client, query provider, and router shell (69-B) | Session store, auth provider, explicit generated-SDK token wiring, and protected member routing are now scaffolded |
 | In Progress | Build layout primitives and role-aware navigation (69-C) | App shell now hides protected routes while signed out and reflects current session state; commissioner/root-admin navigation remains placeholder-only for now |
-| In Progress | Build the first product flow slice (69-D) | Auth entry flow, generated-SDK-backed member league list, league detail, invitation acceptance, commissioner invite send/generation, and first contest list/detail routes are now in place; standings, entry creation, and history reads are the next high-value seams |
-| Pending | Wire the new app into local build/test commands | Include dev, build, lint, unit test, coverage, and future frontend functional test commands |
-| Pending | Wire the new app into CI | Replace legacy web/admin frontend gates with PoolMaster app gates as the app becomes active |
-| Pending | Build the first core product flows | auth, league list/detail, invitation acceptance, contest list/detail, entry creation, standings/history reads |
+| In Progress | Build the first product flow slice (69-D) | Basic auth/landing foundation, member league list/detail, invitation acceptance, commissioner invite send/generation, and first contest list/detail routes are now in place; deeper product flows are intentionally paused pending additional discovery and design alignment |
+| Done | Wire the new app into local build/test commands | Root build, lint, typecheck, and active frontend test commands now target PoolMaster rather than the retired web/admin apps |
+| Done | Wire the new app into CI | CI frontend gates, coverage summary, and QA web deployment now target PoolMaster only |
+| In Progress | Build the first core product flows | Auth, landing, league list/detail, invitation acceptance, and contest list/detail foundation are in place; entry creation, standings/history reads, and broader commissioner/root-admin flows are deferred pending the next planning phase |
 | Pending | Add PoolMaster-specific frontend tests | unit + frontend-layer functional tests aligned with the new rules |
 | Pending | Update docs/rules/README references | Make PoolMaster the single active web app in repo guidance |
 

@@ -6,10 +6,9 @@ When a field or API-facing model changes, update every affected layer. Skipping 
 
 ## Checklist
 
-## Definition Of Done For Backend Refactor Slices
+## Definition Of Done For Backend Model Slices
 
-On `codex-backend-refactor-lane`, a backend slice that changes the domain model
-is not done until all applicable layers for that slice are updated together:
+A backend slice that changes the domain model is not done until all applicable layers for that slice are updated together:
 
 - schema
 - migration
@@ -44,20 +43,14 @@ intentionally stale.
 
 ### 3. Generated Client Consumers
 
-- [ ] Update web/admin app code to match the regenerated `hey-api` contract.
+- [ ] Update PoolMaster app code to match the regenerated `hey-api` contract.
 - [ ] Remove any local API-shape interfaces or casts that the generated contract now makes unnecessary.
 - [ ] Do not patch generated-client issues with local fake types if the backend contract is wrong.
-
-Backend-first refactor branch exception:
-
-- On `codex-backend-refactor-lane`, do not update web/admin consumers just to keep them aligned during the backend redesign unless the user explicitly asks for that phase of work.
-- On that branch, the required output is a clean regenerated backend contract that downstream app rebuild work can consume later.
-- Do not add endpoint aliases unless backward compatibility is explicitly requested.
 
 ### 4. Frontend Surfaces
 
 - [ ] Update React hooks/pages/components that read or write the changed field.
-- [ ] Update admin hooks/pages if relevant.
+- [ ] Update any active root-admin UI inside PoolMaster if relevant.
 - [ ] Ensure loading/error/empty states still behave correctly.
 - [ ] Remove dead UI for removed endpoints or fields.
 
@@ -65,34 +58,32 @@ Backend-first refactor branch exception:
 
 - [ ] Update backend unit/integration tests.
 - [ ] Update contract tests.
-- [ ] Update smoke tests if the changed field/shape is on a critical path.
-- [ ] Update browser E2E or MSW handlers if request/response shape changed.
+- [ ] Update functional tests if the changed field/shape is on a critical path.
+- [ ] Update browser E2E or MSW handlers if request/response shape changed and those layers are active for the affected flow.
 - [ ] Remove or replace stale tests that were enforcing old architecture.
 - [ ] Add DB-backed CRUD coverage for new or materially redesigned domain objects, including `findById`.
 - [ ] Add use-case-driven tests that prove the backend supports the documented workflows for the changed domain area.
 
 ---
 
-## Migration Rules For The Backend-First Refactor
+## Migration Rules For Backend Model Cleanup
 
 - Prefer a clean target schema over preserving obsolete table structures.
-- When the branch is intentionally rebuilding the domain model from first principles, do not contort the schema to preserve legacy naming or associations.
-- A schema reset / fresh baseline migration is acceptable for this refactor lane when it simplifies the new model and no real legacy-data preservation requirement has been established.
+- Do not contort the schema to preserve legacy naming or associations when the product model has clearly changed.
 - Keep migration files, ORM models, DTOs, and route contracts consistent with the new domain model names in the same slice.
 
 ---
 
-## Seed Data Rules For The Backend-First Refactor
+## Seed Data Rules
 
-- Do not preserve broad application seed catalogs during this refactor.
 - The only acceptable baseline seed target is the minimal bootstrap required to operate the system, currently the root admin user.
-- Integration, smoke, and E2E tests must create and destroy the data they need rather than relying on ambient seeded contest/member/provider state.
+- Integration, functional, and E2E tests must create and destroy the data they need rather than relying on ambient seeded contest/member/provider state.
 
 ---
 
 ## Frontend-Specific Rules
 
-For web/admin:
+For PoolMaster web:
 
 - Prefer generated `hey-api` types/functions from `@/lib/api`.
 - Do not introduce new local interfaces just because the generated type changed.

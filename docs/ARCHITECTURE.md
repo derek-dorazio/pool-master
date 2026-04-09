@@ -1,5 +1,7 @@
 # PoolMaster Architecture Overview
 
+> Frontend note: this document still contains historical detail from the pre-cutover frontend topology. The active web target is now `clients/poolmaster`; `clients/admin` has been retired and `clients/_archived/web` is reference-only.
+
 ## System Diagram
 
 ```

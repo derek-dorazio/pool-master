@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, codex-backend-refactor-lane]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -25,19 +25,9 @@ jobs:
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
       - name: Lint full repo
-        if: github.ref_name != 'codex-backend-refactor-lane' && github.head_ref != 'codex-backend-refactor-lane'
-        run: npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0
-      - name: Lint backend-first slice
-        if: github.ref_name == 'codex-backend-refactor-lane' || github.head_ref == 'codex-backend-refactor-lane'
-        run: npx eslint 'packages/*/src/**/*.ts' --max-warnings 0
+        run: npm run lint
       - name: Typecheck full repo
-        if: github.ref_name != 'codex-backend-refactor-lane' && github.head_ref != 'codex-backend-refactor-lane'
-        run: npx turbo typecheck
-      - name: Typecheck backend-first slice
-        if: github.ref_name == 'codex-backend-refactor-lane' || github.head_ref == 'codex-backend-refactor-lane'
-        run: |
-          npm run typecheck --workspace @poolmaster/shared
-          npm run typecheck --workspace @poolmaster/core-api
+        run: npm run typecheck
 
   # =========================================================================
   # Backend Unit Tests + Coverage
@@ -144,10 +134,9 @@ jobs:
           if-no-files-found: warn
 
   # =========================================================================
-  # Webapp Unit Tests + Coverage (Vitest)
+  # PoolMaster Webapp Unit Tests + Coverage (Vitest)
   # =========================================================================
-  test-webapp:
-    if: github.ref_name != 'codex-backend-refactor-lane' && github.head_ref != 'codex-backend-refactor-lane'
+  test-poolmaster:
     runs-on: ubuntu-latest
     needs: lint-typecheck
     steps:
@@ -157,22 +146,22 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npx turbo build --filter=@poolmaster/shared
+      - run: npm run build --workspace @poolmaster/shared
 
-      - name: Run webapp tests with coverage
-        run: cd clients/web && npx vitest run --coverage
+      - name: Run PoolMaster webapp tests with coverage
+        run: cd clients/poolmaster && npx vitest run --coverage
 
-      - name: Webapp coverage summary
+      - name: PoolMaster webapp coverage summary
         if: always()
         run: |
           node <<'NODE'
           const fs = require('fs');
-          const path = 'clients/web/coverage/coverage-summary.json';
+          const path = 'clients/poolmaster/coverage/coverage-summary.json';
           const summary = process.env.GITHUB_STEP_SUMMARY;
 
           if (!fs.existsSync(path)) {
-            console.log('Webapp coverage data not available');
-            fs.appendFileSync(summary, '### Webapp Test Coverage\n\nCoverage data not available\n');
+            console.log('PoolMaster coverage data not available');
+            fs.appendFileSync(summary, '### PoolMaster Webapp Test Coverage\n\nCoverage data not available\n');
             process.exit(0);
           }
 
@@ -185,13 +174,13 @@ jobs:
             `Lines: ${t.lines.pct}%`,
           ];
 
-          console.log('Webapp coverage totals');
+          console.log('PoolMaster webapp coverage totals');
           for (const line of lines) console.log(line);
 
           fs.appendFileSync(
             summary,
             [
-              '### Webapp Test Coverage',
+              '### PoolMaster Webapp Test Coverage',
               '',
               '| Metric | Coverage |',
               '|---|---:|',
@@ -204,95 +193,22 @@ jobs:
           );
           NODE
 
-      - name: Upload webapp coverage artifact
+      - name: Upload PoolMaster webapp coverage artifact
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: webapp-coverage
+          name: poolmaster-coverage
           path: |
-            clients/web/coverage/coverage-summary.json
-            clients/web/coverage/lcov.info
-            clients/web/coverage/clover.xml
-            clients/web/coverage/coverage-final.json
-          if-no-files-found: warn
-
-  # =========================================================================
-  # Admin Unit Tests + Coverage (Vitest)
-  # =========================================================================
-  test-admin:
-    if: github.ref_name != 'codex-backend-refactor-lane' && github.head_ref != 'codex-backend-refactor-lane'
-    runs-on: ubuntu-latest
-    needs: lint-typecheck
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx turbo build --filter=@poolmaster/shared
-
-      - name: Run admin tests with coverage
-        run: cd clients/admin && npx vitest run --coverage
-
-      - name: Admin coverage summary
-        if: always()
-        run: |
-          node <<'NODE'
-          const fs = require('fs');
-          const path = 'clients/admin/coverage/coverage-summary.json';
-          const summary = process.env.GITHUB_STEP_SUMMARY;
-
-          if (!fs.existsSync(path)) {
-            console.log('Admin coverage data not available');
-            fs.appendFileSync(summary, '### Admin Test Coverage\n\nCoverage data not available\n');
-            process.exit(0);
-          }
-
-          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
-          const t = data.total;
-          const lines = [
-            `Statements: ${t.statements.pct}%`,
-            `Branches: ${t.branches.pct}%`,
-            `Functions: ${t.functions.pct}%`,
-            `Lines: ${t.lines.pct}%`,
-          ];
-
-          console.log('Admin coverage totals');
-          for (const line of lines) console.log(line);
-
-          fs.appendFileSync(
-            summary,
-            [
-              '### Admin Test Coverage',
-              '',
-              '| Metric | Coverage |',
-              '|---|---:|',
-              `| Statements | ${t.statements.pct}% |`,
-              `| Branches | ${t.branches.pct}% |`,
-              `| Functions | ${t.functions.pct}% |`,
-              `| Lines | ${t.lines.pct}% |`,
-              '',
-            ].join('\n'),
-          );
-          NODE
-
-      - name: Upload admin coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: admin-coverage
-          path: |
-            clients/admin/coverage/coverage-summary.json
-            clients/admin/coverage/lcov.info
-            clients/admin/coverage/clover.xml
-            clients/admin/coverage/coverage-final.json
+            clients/poolmaster/coverage/coverage-summary.json
+            clients/poolmaster/coverage/lcov.info
+            clients/poolmaster/coverage/clover.xml
+            clients/poolmaster/coverage/coverage-final.json
           if-no-files-found: warn
 
   coverage-summary:
     runs-on: ubuntu-latest
-    needs: [test, test-webapp, test-admin]
-    if: always() && github.ref_name != 'codex-backend-refactor-lane' && github.head_ref != 'codex-backend-refactor-lane'
+    needs: [test, test-poolmaster]
+    if: always()
     steps:
       - name: Download backend coverage artifact
         continue-on-error: true
@@ -301,19 +217,12 @@ jobs:
           name: backend-coverage
           path: coverage-artifacts/backend
 
-      - name: Download webapp coverage artifact
+      - name: Download PoolMaster coverage artifact
         continue-on-error: true
         uses: actions/download-artifact@v5
         with:
-          name: webapp-coverage
-          path: coverage-artifacts/webapp
-
-      - name: Download admin coverage artifact
-        continue-on-error: true
-        uses: actions/download-artifact@v5
-        with:
-          name: admin-coverage
-          path: coverage-artifacts/admin
+          name: poolmaster-coverage
+          path: coverage-artifacts/poolmaster
 
       - name: Consolidated coverage summary
         if: always()
@@ -323,8 +232,7 @@ jobs:
           const summary = process.env.GITHUB_STEP_SUMMARY;
           const reports = [
             ['Backend', 'coverage-artifacts/backend/coverage-summary.json'],
-            ['Webapp', 'coverage-artifacts/webapp/coverage-summary.json'],
-            ['Admin', 'coverage-artifacts/admin/coverage-summary.json'],
+            ['PoolMaster', 'coverage-artifacts/poolmaster/coverage-summary.json'],
           ];
 
           const rows = reports.map(([name, path]) => {
@@ -364,14 +272,14 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-      - run: npx turbo build
+      - run: npm run build
 
   # =========================================================================
   # Publish Images + Deploy to QA
   # =========================================================================
   publish-images:
     runs-on: ubuntu-latest
-    needs: [test, test-webapp, test-admin, build]
+    needs: [test, test-poolmaster, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
@@ -501,59 +409,31 @@ jobs:
 
       # --- Web Clients -> S3 + CloudFront ---
 
-      - name: Build webapp
+      - name: Build PoolMaster webapp
         run: |
           npm ci
           npx prisma generate --schema=packages/core-api/prisma/schema.prisma
           WEB_RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
-          cd clients/web
+          cd clients/poolmaster
           APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" npx vite build
           grep -q "/${WEB_RELEASE_PREFIX}/" dist/index.html
 
-      - name: Deploy webapp to S3 + invalidate CloudFront
+      - name: Deploy PoolMaster webapp to S3 + invalidate CloudFront
         id: deploy-webapp
         run: |
           BUCKET="poolmaster-qa-webapp"
           RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
           CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='poolmaster-qa webapp'].Id" --output text 2>/dev/null)
           if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
-            aws s3 sync clients/web/dist/ "s3://${BUCKET}/${RELEASE_PREFIX}/" --delete
-            aws s3 cp clients/web/dist/index.html "s3://${BUCKET}/index.html" --cache-control "no-store, no-cache, max-age=0, must-revalidate" --content-type "text/html"
+            aws s3 sync clients/poolmaster/dist/ "s3://${BUCKET}/${RELEASE_PREFIX}/" --delete
+            aws s3 cp clients/poolmaster/dist/index.html "s3://${BUCKET}/index.html" --cache-control "no-store, no-cache, max-age=0, must-revalidate" --content-type "text/html"
             aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
             aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
             if [ -n "$CF_ID" ]; then
               aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
             fi
             echo "release_prefix=${RELEASE_PREFIX}" >> $GITHUB_OUTPUT
-            echo "Webapp deployed to S3 release ${RELEASE_PREFIX} and root index updated"
-          else
-            echo "::error::S3 bucket ${BUCKET} not found — run terraform apply first"
-            exit 1
-          fi
-
-      - name: Build admin app
-        run: |
-          ADMIN_RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
-          cd clients/admin
-          APP_ASSET_BASE="/${ADMIN_RELEASE_PREFIX}/" npx vite build
-          grep -q "/${ADMIN_RELEASE_PREFIX}/" dist/index.html
-
-      - name: Deploy admin to S3 + invalidate CloudFront
-        id: deploy-admin
-        run: |
-          BUCKET="poolmaster-qa-admin"
-          RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
-          CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='poolmaster-qa admin'].Id" --output text 2>/dev/null)
-          if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
-            aws s3 sync clients/admin/dist/ "s3://${BUCKET}/${RELEASE_PREFIX}/" --delete
-            aws s3 cp clients/admin/dist/index.html "s3://${BUCKET}/index.html" --cache-control "no-store, no-cache, max-age=0, must-revalidate" --content-type "text/html"
-            aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
-            aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
-            if [ -n "$CF_ID" ]; then
-              aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
-            fi
-            echo "release_prefix=${RELEASE_PREFIX}" >> $GITHUB_OUTPUT
-            echo "Admin deployed to S3 release ${RELEASE_PREFIX} and root index updated"
+            echo "PoolMaster webapp deployed to S3 release ${RELEASE_PREFIX} and root index updated"
           else
             echo "::error::S3 bucket ${BUCKET} not found — run terraform apply first"
             exit 1
@@ -591,9 +471,8 @@ jobs:
           echo "| QA core-api task definition | \`${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| QA migrate task definition | \`${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| QA webapp release prefix | \`${{ steps.deploy-webapp.outputs.release_prefix }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| QA admin release prefix | \`${{ steps.deploy-admin.outputs.release_prefix }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Web clients** deployed to immutable S3 release prefixes with root index promotion" >> $GITHUB_STEP_SUMMARY
+          echo "**PoolMaster webapp** deployed to immutable S3 release prefixes with root index promotion" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
   # QA Database Migrations — apply schema changes before smoke tests
@@ -967,77 +846,3 @@ jobs:
       - name: Warm-up delay after ECS stabilization
         if: steps.ecs-stabilize.outputs.stable == 'true'
         run: sleep 20
-
-  # =========================================================================
-  # API Smoke Tests — run against live QA after deploy + migrate
-  # =========================================================================
-  smoke-test:
-    runs-on: ubuntu-latest
-    needs: migrate-qa
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-
-      - name: Run smoke tests against QA
-        id: smoke
-        env:
-          BASE_URL: https://qa.ultimateofficepoolmanager.com
-        run: npx jest --config tests/api/jest.config.ts --forceExit --ci
-
-      - name: Smoke test summary
-        if: always()
-        run: |
-          echo "### API Smoke Tests" >> $GITHUB_STEP_SUMMARY
-          echo "Target: \`https://qa.ultimateofficepoolmanager.com\`" >> $GITHUB_STEP_SUMMARY
-
-  # =========================================================================
-  # Playwright E2E Tests — run against live QA after smoke tests pass
-  # =========================================================================
-  e2e-test:
-    runs-on: ubuntu-latest
-    needs: smoke-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run web E2E tests against QA
-        env:
-          PLAYWRIGHT_BASE_URL: https://qa.ultimateofficepoolmanager.com
-        run: cd clients/web && npx playwright test
-
-      - name: Run admin E2E tests against QA
-        env:
-          PLAYWRIGHT_BASE_URL: https://qa-admin.ultimateofficepoolmanager.com
-        run: cd clients/admin && npx playwright test
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: playwright-report
-          path: |
-            clients/web/playwright-report/
-            clients/web/test-results/
-            clients/admin/playwright-report/
-            clients/admin/test-results/
-          retention-days: 7
-
-      - name: E2E summary
-        if: always()
-        run: |
-          echo "### E2E Tests (Playwright)" >> $GITHUB_STEP_SUMMARY
-          echo "Targets: \`https://qa.ultimateofficepoolmanager.com\`, \`https://qa-admin.ultimateofficepoolmanager.com\`" >> $GITHUB_STEP_SUMMARY
-          echo "Report: download \`playwright-report\` artifact" >> $GITHUB_STEP_SUMMARY

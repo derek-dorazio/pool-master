@@ -1,19 +1,14 @@
 ## Objective
 
-Retire the current deployed smoke-test suite as the primary acceptance gate now that the functional API suite will provide stronger, faster pre-merge service-stack verification.
+Retire the current deployed smoke-test suite as the acceptance gate now that the functional API suite provides stronger, faster pre-merge service-stack verification.
 
 The old smoke suite should no longer be the place where detailed backend use-case validation lives.
 
 ## Direction
 
 - Move backend CRUD/use-case/service validation into the local + CI functional API suite.
-- Keep only a very thin deployed verification layer rather than the current broad smoke suite.
-
-Recommended retained minimum:
-
-- `deployment-health.smoke.ts`
-  - health endpoint returns 200
-  - one authenticated round-trip proves the deployed stack is wired
+- Do not keep the old smoke suite alive as a temporary parallel gate.
+- A future thin deployment-health check may be reintroduced later in a dedicated slice, but it is not part of the active baseline now.
 
 This plan is blocked until Plan 66 has established functional coverage for the backend flows that currently justify the smoke suite.
 
@@ -21,16 +16,16 @@ This plan is blocked until Plan 66 has established functional coverage for the b
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Inventory the current smoke-test suite and CI jobs | Identify scripts, workflow jobs, docs, and routes currently covered by `tests/api/functional/*.smoke.ts` |
-| Pending | Map each current smoke test to its replacement functional coverage | Do not delete a smoke flow until its corresponding functional suite coverage exists |
-| Pending | Lock the retained deployed verification minimum | Keep only the thin deployment sanity layer, not use-case coverage |
-| Pending | Remove smoke tests that duplicate functional API suite coverage | Delete or archive flows once equivalent functional coverage exists |
-| Pending | Remove smoke-test gate expectations from local and CI flows | Update package scripts, workflow docs, AGENTS/rules references, and CI job dependencies, including the old browser-E2E dependency chain |
-| Pending | Update workflow/testing docs to reflect the new strategy | Functional API suite becomes the backend gate; smoke is reduced or retired |
+| Done | Inventory the current smoke-test suite and CI jobs | The retired suite consisted of `tests/api/functional/mvp-baseline.smoke.ts`, `tests/api/functional/contest-lifecycle.smoke.ts`, `tests/api/jest.config.ts`, root smoke scripts, and the QA `smoke-test` workflow job. |
+| Done | Map each current smoke test to its replacement functional coverage | The replacement direction now runs through the backend functional API suite from Plans 64 and 66 rather than keeping a parallel smoke acceptance layer. |
+| Removed | Lock the retained deployed verification minimum | Deferred until a later deployment-health slice is explicitly planned; this cleanup pass removes the old smoke suite first. |
+| Done | Remove smoke tests that duplicate functional API suite coverage | Deleted the old `tests/api` smoke suite and removed the active smoke scripts. |
+| Done | Remove smoke-test gate expectations from local and CI flows | Root scripts, CI smoke job, AGENTS guidance, and rules/docs no longer treat smoke as an active gate. |
+| Done | Update workflow/testing docs to reflect the new strategy | Functional API coverage is now the active backend gate in repo guidance. |
 | Pending | Archive or delete stale smoke planning docs if they no longer apply | Keep only intentional, active guidance |
 
 ## Validation
 
 - Functional API suite is green and wired into CI before smoke removal is finalized
-- CI passes with the reduced deployment smoke layer
+- CI passes without the old smoke suite
 - Documentation and rules no longer refer to retired smoke behavior as an active quality gate

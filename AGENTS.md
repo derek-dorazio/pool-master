@@ -34,8 +34,8 @@ All agents working in this repo should:
 - `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
 - `rules/poolmaster-webapp-rules.md`: single-webapp product rules, role-based behavior, archived-app policy, and functional expectations for the go-forward PoolMaster web app.
 - `rules/service-rules.md`: backend Fastify, Prisma, DTO, mapper, and OpenAPI requirements.
-- `rules/react-ui-rules.md`: web/admin React conventions, generated-client usage, and prohibited frontend patterns.
-- `rules/testing-rules.md`: unit, integration, MSW, Playwright, smoke-test, and CI expectations.
+- `rules/react-ui-rules.md`: PoolMaster React conventions, generated-client usage, and prohibited frontend patterns.
+- `rules/testing-rules.md`: unit, integration, functional API, frontend-layer, and CI expectations.
 - `rules/model-change-rules.md`: required checklist for schema/model changes across persistence, DTOs, services, routes, clients, and tests.
 - `rules/swift-rules.md`: iOS guidance.
 - `rules/android-rules.md`: Android guidance.
@@ -58,28 +58,18 @@ Run and pass:
 - `npx turbo typecheck --force`
 - `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
 - `npx jest --config tests/jest.config.js --forceExit`
-- `cd clients/web && npx vitest run`
-- `cd clients/admin && npx vitest run`
-
-Backend-refactor lane exception:
-
-- On the dedicated backend-first refactor branch `codex-backend-refactor-lane`,
-  use the narrower backend-first gate set from
-  [plans/43-backend-first-refactor-execution-strategy.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/43-backend-first-refactor-execution-strategy.md)
-  and [rules/workflow-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/workflow-rules.md)
-  instead of requiring web/admin test gates before each push.
+- `npm run test:functional`
+- `cd clients/poolmaster && npx vitest run`
 
 CI-only follow-up signals:
 
-- `tests/api/functional/` smoke tests
-- deployed Playwright E2E
 - image/publish workflows
 
 ## Repo Map
 
 - `packages/`: backend services and shared packages
-- `clients/`: web, admin, and mobile clients
-- `tests/`: unit, integration, and smoke coverage
+- `clients/`: PoolMaster web app and mobile clients
+- `tests/`: unit, integration, and functional coverage
 - `plans/`: tracked implementation plans
 - `rules/`: detailed policy and architecture guidance
 - `infrastructure/`: deployment and environment assets

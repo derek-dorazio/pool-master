@@ -1,5 +1,7 @@
 # Authentication And Authorization
 
+> Frontend transition note: legacy references in this document to `clients/web` and `clients/admin` are historical. The active web implementation target is `clients/poolmaster`, and future root-admin UI should be rebuilt there rather than inferred from retired frontend code.
+
 This document describes how authentication and authorization currently work in PoolMaster for:
 
 - the member-facing web app

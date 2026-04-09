@@ -1,8 +1,8 @@
 # PoolMaster — Testing Rules
 
-All services and clients must follow these testing standards. This document defines the testing strategy, contract validation rules, smoke/E2E expectations, and when old tests should be removed rather than preserved.
+All services and clients must follow these testing standards. This document defines the testing strategy, contract validation rules, functional test expectations, and when old tests should be removed rather than preserved.
 
-> **Architecture dependency:** This document assumes the stack in [architecture-rules.md](architecture-rules.md): Fastify + TypeScript backend, React web/admin clients, native iOS/Android clients, DTO-driven OpenAPI, and shared generated `hey-api` clients for web/admin.
+> **Architecture dependency:** This document assumes the stack in [architecture-rules.md](architecture-rules.md): Fastify + TypeScript backend, the single React PoolMaster web client, native iOS/Android clients, DTO-driven OpenAPI, and shared generated `hey-api` clients.
 
 ---
 
@@ -17,14 +17,14 @@ All services and clients must follow these testing standards. This document defi
 | Prisma test DB / local infra | persistence-backed integration tests |
 | `nock` / service mocks | external dependency isolation where needed |
 
-### Frontend — Web/Admin
+### Frontend — PoolMaster Web
 
 | Tool | Purpose |
 |---|---|
 | Vitest | unit and integration-style test runner |
 | React Testing Library | user-focused component and page tests |
 | MSW | request-level API mocking |
-| Playwright | browser smoke/E2E tests |
+| Playwright | future post-deploy browser E2E tests for the rebuilt PoolMaster web app |
 
 ### Mobile
 
@@ -44,7 +44,7 @@ All services and clients must follow these testing standards. This document defi
 | Unit | function/service behavior | no | mock dependencies intentionally |
 | Integration | Fastify + services + persistence | yes | validates real behavior; if the test needs a local Postgres instance that is not reachable from the sandbox/container, run it outside the sandbox with explicit user permission |
 | Contract | response/request shape vs DTO schema | yes | catches drift |
-| Smoke | deployed API black-box flow | deployed env | post-build/post-deploy confidence |
+| Functional | full service-stack verification through the generated SDK | yes | active backend acceptance gate |
 
 ### Frontend
 
@@ -63,8 +63,8 @@ These are the default required checks before commit:
 1. `npx turbo typecheck --force`
 2. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
 3. `npx jest --config tests/jest.config.js --forceExit`
-4. `cd clients/web && npx vitest run`
-5. `cd clients/admin && npx vitest run`
+4. `npm run test:functional`
+5. `cd clients/poolmaster && npx vitest run`
 6. `npm run test:coverage:backend`
 
 Contract-specific commands:
@@ -77,56 +77,6 @@ Notes:
 - DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
 - In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
 - If a DB-backed integration command fails with a local connection error in the sandbox but local database commands such as `prisma migrate deploy` or `psql` succeed, retry the exact test command outside the sandbox before assuming the failure is in application code.
-
-Backend-first refactor branch exception:
-
-- On the dedicated branch `codex-backend-refactor-lane`, use a backend-first
-  validation set while the backend contract is intentionally unstable.
-- Required on that branch:
-  - backend/shared typecheck
-  - backend/shared lint
-  - backend unit tests
-  - DB integration tests
-  - merged backend coverage from unit + integration suites
-  - `npm run api:refresh` and `npm run api:validate` when API schemas change
-- Not required on that branch:
-  - web Vitest
-  - admin Vitest
-  - frontend coverage gates
-  - smoke tests
-  - browser E2E
-- This exception does not apply to `main`.
-
-Backend-first refactor testing rules on `codex-backend-refactor-lane`:
-
-- Treat the active use-case documents as required test inputs, not just design notes.
-- New backend slices should prefer test-driven development when it helps clarify the behavior:
-  - write the use-case-oriented unit or integration test first
-  - implement until the test turns green
-- Coverage is not only a percentage target. New backend code on this branch should aim for:
-  - 80% or greater coverage on the newly added or materially rewritten backend code
-  - plus explicit test cases for the identified use cases that code is intended to support
-- Backend coverage on this branch should be measured from the merged backend report:
-  - unit coverage output
-  - DB integration coverage output
-  - merged into one backend coverage summary via `npm run test:coverage:backend`
-- For every new or materially redesigned domain object, add DB-backed integration coverage for at least:
-  - create
-  - update
-  - delete or inactivate, as appropriate
-  - `findById`
-- For service slices driven by commissioner/member workflows, add tests that prove the backend supports the use cases documented in the corresponding plan companion.
-- Do not spend effort fixing web/admin tests on this branch unless the user explicitly asks for frontend work.
-- Frontend failures caused by intentional backend-contract redesign should not drive backend design compromises on this branch.
-- Do not add fake seed data or fixture catalogs to application seed paths in order to satisfy tests. Tests must create and clean up their own data or use dedicated mock-provider infrastructure.
-- Never add mock or fake behavior to application code in order to satisfy a test.
-- Never replace real backend behavior with a fake response, fake fallback, or hardcoded success path just to turn a test green.
-- If a test fails, determine whether it exposed a real application defect:
-  - if yes, fix the production code with a real implementation
-  - if no, correct the test
-- Do not “fix” a legitimate application defect by weakening the test or mocking around the defect.
-- Before committing a backend slice on this branch, make sure the required unit tests and DB integration tests for that slice pass and the slice meets the branch coverage expectation.
-- When DTO/Zod schemas produce invalid Fastify or OpenAPI validation output, it is acceptable to keep the DTO schema for typing/parsing and use explicit JSON route schemas in the route module instead of forcing the route to use `zodToJsonSchema`.
 
 ---
 
@@ -144,7 +94,7 @@ PoolMaster treats API contracts as first-class test surfaces. Contract test exis
 
 ### Contract Test Gate
 
-A backend slice that adds or changes an API endpoint is **not complete** until a contract test case exists for that endpoint. This applies equally on `codex-backend-refactor-lane` and `main`.
+A backend slice that adds or changes an API endpoint is **not complete** until a contract test case exists for that endpoint.
 
 If the contract test suite files do not yet exist, the first slice that adds or changes an endpoint must create them. Subsequent slices add cases to the existing suites.
 
@@ -209,9 +159,9 @@ Before deleting an existing test suite for architecture/strategy reasons, confir
 
 ---
 
-## 6. Smoke and Browser E2E Rules
+## 6. Functional and Browser E2E Rules
 
-Smoke and E2E tests must be **use-case driven**. Each test file must walk a documented user journey from the plan use-case companions — not just poke endpoints or assert page loads. The test name, file-level comment, or describe block must reference the use case it proves.
+Backend functional tests and any future browser E2E tests must be **use-case driven**. Each test file must walk a documented user journey from the plan use-case companions rather than poking endpoints or asserting page loads.
 
 ### Use-Case Traceability
 
@@ -219,34 +169,33 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
 
 - Reference the plan companion and use-case ID in a comment at the top of the test file or in the `describe` block name (e.g., `// Proves: Plan 38 UC-003 — Member creates contest entry`).
 - If a test covers behavior not yet documented and the behavior is product-significant, document the use case before expanding that suite further.
-- When a use-case companion changes, update the corresponding smoke/E2E tests in the same work.
+- When a use-case companion changes, update the corresponding functional or E2E tests in the same work.
 
-### Seed Data Rules (Applies to Both Smoke and E2E)
+### Seed Data Rules (Applies to Functional and E2E)
 
-- Application seed flows are never a place for test fixtures. No agent may add QA data, smoke-test data, E2E data, fake contests, fake odds, or fake results to `prisma/seed.ts` or any other application seed path.
+- Application seed flows are never a place for test fixtures. No agent may add QA data, functional-test data, E2E data, fake contests, fake odds, or fake results to `prisma/seed.ts` or any other application seed path.
 - Keep seed data limited to production-required bootstrap records and default configuration.
 - Non-production fixture catalogs belong behind dedicated test infrastructure such as `mock-contest-feed-provider`.
 
-### API Smoke Tests
+### Backend Functional API Tests
 
-- Lives under `tests/api/functional/*.smoke.ts`.
-- Treat smoke tests as black-box use-case validation against deployed services.
-- In CI/CD, smoke runs after the deployment pipeline completes migration and seed successfully.
+- Lives under `tests/functional/*.functional.ts`.
+- Treat functional tests as full service-stack validation through the generated SDK and real backend behavior.
+- Functional tests are part of the required local and CI backend gate.
 
 **Data strategy:**
-- Smoke tests must create all the data they need through real deployed API routes.
+- Functional tests must create all the data they need through real routes or approved test builders.
 - Do not rely on seed data, ambient discovery data, fake UUIDs, or preexisting state.
-- Each smoke test file should set up its own isolated context (register user, create league, etc.) at the start of the suite.
-- Clean up is not required (deployed environments reset between CI runs), but tests must not depend on data from other test files.
+- Each functional test file should use isolated setup and must not depend on data from other test files.
 
 **Assertion rules:**
 - Assertions must be strong and intentional. Do not accept broad fallback status ranges like `200 | 400 | 500`.
 - Assert on response body shape using DTO schemas where practical (`schema.safeParse(body)`).
 - Use shared route constants from `@poolmaster/shared/api-routes`.
 - Use shared domain enums from `@poolmaster/shared/domain` for status values, sport types, etc.
-- When endpoint contracts change, smoke tests must change with them.
+- When endpoint contracts change, functional tests must change with them.
 
-Smoke suites should prioritize a small set of durable critical-path journeys covering:
+Functional suites should prioritize durable critical-path journeys covering:
 
 - auth
 - league membership and invitation
@@ -261,10 +210,8 @@ The exact set of required flows may evolve with the active product scope and sho
 
 ### Browser E2E Tests (Playwright)
 
-- Web E2E lives under `clients/web/e2e/`.
-- Admin E2E lives under `clients/admin/e2e/`.
-- Uses Playwright against a running local app or deployed environment.
-- In CI/CD, browser E2E runs only after migrate → seed → API smoke succeed.
+- Browser E2E is currently reset and should not block the active delivery pipeline until the rebuilt PoolMaster browser suite is reintroduced.
+- When browser E2E returns, it should target only the PoolMaster web app.
 
 **Use-case-driven E2E:**
 
@@ -277,8 +224,6 @@ E2E tests must prove complete user journeys, not page loads. Each test walks the
 **Data strategy:**
 - E2E tests must create their own data through real UI flows whenever possible (register → create league → invite → etc.).
 - Do not hardcode seed data IDs (e.g., `00000000-0000-0000-0000-000000000001`). If a test needs pre-existing data, create it through the UI or API in a `beforeAll` hook.
-- Seeded admin credentials are acceptable for admin E2E tests since admin users are production bootstrap data.
-
 **Selector rules:**
 - Prefer stable machine selectors (`data-testid`, stable `id`) over human-readable copy.
 - Do not anchor deploy-gate tests to marketing headings, button labels, or translated strings unless the explicit purpose is to validate that copy.
@@ -301,7 +246,7 @@ E2E tests must prove complete user journeys, not page loads. Each test walks the
 
 ## 7. Test Data Builders
 
-Integration and smoke tests must create complex object graphs (league → membership → squad → contest → entry → roster picks). To avoid duplicating setup logic across every test file, use shared builder/factory functions.
+Integration and functional tests must create complex object graphs (league → membership → squad → contest → entry → roster picks). To avoid duplicating setup logic across every test file, use shared builder/factory functions.
 
 ### Builder Pattern
 
@@ -334,7 +279,7 @@ export async function buildContestWithEntries(
 
 ### Rules
 
-- When integration or smoke tests repeatedly create the same complex object graphs, prefer shared builders/helpers over copy-pasted setup.
+- When integration or functional tests repeatedly create the same complex object graphs, prefer shared builders/helpers over copy-pasted setup.
 - Builders must create data through the application layer (Fastify inject or service calls), not raw Prisma inserts, unless testing the persistence layer itself.
 - Builders must not leave orphaned data. If a test needs cleanup, the builder should return enough context for the test to clean up in `afterAll`.
 - Builders must use unique identifiers (e.g., `Date.now()` suffix on emails, names) to avoid collisions when tests run against a shared database.

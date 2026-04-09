@@ -48,11 +48,11 @@ When rebuilt, carry forward the useful parts of the old Playwright support patte
 | Status | Task | Notes |
 | --- | --- | --- |
 | Done | Inventory current browser E2E suites and workflow hooks | Current browser refs are concentrated in `package.json` smoke scripts (`test:smoke:e2e:web`, `test:smoke:e2e:admin`, `test:smoke:e2e`, `test:smoke`) and `.github/workflows/ci.yml` jobs that run `clients/web && npx playwright test`, `clients/admin && npx playwright test`, install Playwright browsers, upload `playwright-report`/`test-results`, and include browser coverage/deploy dependencies. Web suite files: `clients/web/playwright.config.ts`, `clients/web/e2e/fixtures.ts`, `clients/web/e2e/mvp-browser.smoke.ts`. Admin suite files: `clients/admin/playwright.config.ts`, `clients/admin/e2e/fixtures.ts`, `clients/admin/e2e/mvp-admin.smoke.ts`. Reusable pattern worth preserving later: the shared runtime error tracker in both fixture files plus `assertNoErrorBoundary` in the web suite. Plan 70 now owns admin-app removal and Plan 71 owns legacy web archival, so this plan stays focused on browser-suite reset rather than app removal itself. |
-| Pending | Remove admin Playwright suite | Admin app is being retired |
-| Pending | Remove stale web Playwright suite | Existing flows target pre-refactor UI assumptions |
-| Pending | Remove Playwright browser gating from active CI/local quality gates | Update package scripts, workflow jobs, and rules/docs accordingly |
-| Pending | Coordinate admin test removal with Plan 70 | Do not leave `clients/admin` Playwright/Vitest or other frontend test gates active after the app is retired |
-| Pending | Update testing strategy docs | State that browser E2E is intentionally reset until the new web app exists |
+| Done | Remove admin Playwright suite | `clients/admin` was removed from the repo, including its Playwright fixtures and tests. |
+| Done | Remove stale web Playwright suite | Removed the archived legacy web Playwright config and stale browser smoke files so the future browser suite starts clean. |
+| Done | Remove Playwright browser gating from active CI/local quality gates | Root scripts, CI jobs, and active rule/docs guidance no longer run or require Playwright. |
+| Done | Coordinate admin test removal with Plan 70 | Admin frontend test gates were removed alongside app retirement. |
+| Done | Update testing strategy docs | Repo guidance now states browser E2E is intentionally reset until the new PoolMaster suite is rebuilt. |
 | Pending | Create a deferred rebuild note for future browser E2E reintroduction | Tie reintroduction to the PoolMaster webapp rebuild milestone and keep the future suite intentionally small and use-case driven |
 
 ## Validation

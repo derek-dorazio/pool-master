@@ -127,10 +127,10 @@ This will:
 2. Start Docker containers (PostgreSQL, DynamoDB, Mailpit)
 3. Run Prisma migrations
 4. Seed the database (users, leagues, sports, plan tiers)
-5. Launch all backend services + webapp via Turborepo
+5. Launch the backend and active PoolMaster web app via Turborepo
 
 After startup you'll have:
-- **Webapp** at http://localhost:5173
+- **PoolMaster web app** at http://localhost:5173
 - **Mailpit (email viewer)** at http://localhost:8025
 - **Core API** at http://localhost:3000
 - **Prisma Studio** (optional) at `npm run db:studio`
@@ -188,8 +188,8 @@ npm run test:unit
 # Integration tests only
 npm run test:integration
 
-# API tests only
-npm run test:api
+# Backend functional API suite
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:functional
 
 # Specific test file
 npx jest tests/unit/core-api/permissions.test.ts
@@ -197,43 +197,22 @@ npx jest tests/unit/core-api/permissions.test.ts
 
 Tests use **Jest** with **ts-jest**. All tests live in the top-level `tests/` directory (separate from application code). The `@poolmaster/shared/*` module alias is configured in `tests/jest.config.ts`.
 
-### Smoke Tests (End-to-End)
+### Active Test Strategy
 
-Smoke tests verify the full stack is working. They require all services to be running first:
+The active local gate now centers on:
 
 ```bash
-# Start everything
-npm run dev:start
+# Backend unit/integration coverage
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:coverage:backend
 
-# Then in another terminal:
-npm run test:smoke:api   # API smoke tests — hits health endpoint + key routes
-npm run test:smoke:e2e   # E2E browser tests — Playwright against web + admin
-npm run test:smoke       # Run both suites
+# Backend functional API suite
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:functional
+
+# PoolMaster web app tests
+cd clients/poolmaster && npx vitest run
 ```
 
-**API smoke tests** (`tests/api/`) check:
-- Health endpoint
-- Leagues, participants, and other currently active MVP flows
-- notification preferences and other currently active account/config paths
-
-**E2E smoke tests** (`clients/web/e2e/`, `clients/admin/e2e/`) check:
-- Landing page loads with CTA
-- Legal pages render (privacy, terms, cookies, responsible gaming)
-- Auth pages load with forms
-- Discovery pages load with search
-- Cookie banner appears and dismisses
-
-The API test setup automatically verifies all services are healthy before running. If a service is down, you'll get a clear error:
-
-```
-Core API is not running at http://localhost:3000/health.
-  Run "npm run dev:start" to start all services before running API tests.
-```
-
-To install Playwright browsers (first time only):
-```bash
-cd clients/web && npx playwright install
-```
+Legacy smoke tests and browser E2E suites were intentionally removed from the active flow during the PoolMaster cutover. Browser E2E will be rebuilt later for the new app from scratch.
 
 ---
 

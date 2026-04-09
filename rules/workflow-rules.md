@@ -134,19 +134,11 @@ The go-forward web frontend is the single role-based PoolMaster app.
 
 ---
 
-## 2A. Source-Of-Truth Priority During The Backend Refactor
-
-On `codex-backend-refactor-lane`:
+## 2A. Source-Of-Truth Priority
 
 - `rules/` and active `plans/` / use-case companions are the authoritative implementation guidance.
-- Treat `docs/` as reference material only.
-- Do not use `docs/` as source-of-truth implementation guidance unless:
-  - the user explicitly directs you to use a specific doc, or
-  - an active rule or active plan explicitly points to that doc as current authoritative guidance.
+- Treat `docs/` as reference material only unless an active rule or active plan explicitly promotes a doc as current source of truth.
 - If `docs/` conflicts with active plans or rules, follow the active plans/rules and treat the doc as stale.
-
-This exists because many docs in `docs/` were generated for review and may
-reflect older model decisions.
 
 ---
 
@@ -159,72 +151,18 @@ Required local pre-push commands:
 1. `npx turbo typecheck --force`
 2. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
 3. `npx jest --config tests/jest.config.js --forceExit`
-4. `cd clients/web && npx vitest run`
-5. `cd clients/admin && npx vitest run`
-6. `npx jest --config tests/jest.config.js --coverage --forceExit`
-7. `cd clients/web && npm run test:coverage`
-8. `cd clients/admin && npm run test:coverage`
+4. `npm run test:functional`
+5. `cd clients/poolmaster && npx vitest run`
+6. `npm run test:coverage:backend`
+7. `cd clients/poolmaster && npm run test:coverage`
 
 Rules:
 
 - Treat these as pre-push gates, not optional follow-up checks.
 - Do not rely on GitHub CI to discover basic lint, unit, or integration failures that could have been caught locally.
 - Treat coverage threshold enforcement as part of the required local gate once thresholds are configured; do not defer coverage regressions to GitHub CI.
-- Smoke tests and deployed browser E2E remain CI/deployment signals unless explicitly run locally as part of the task.
+- Retired smoke suites and browser E2E must not be reintroduced into the active gate set unless an active plan explicitly restores them.
 - If a gate is blocked by local environment constraints, state that clearly before pushing.
-
-Backend-first refactor lane exception:
-
-- On the dedicated backend-first refactor branch `codex-backend-refactor-lane`,
-  the required local gates are intentionally narrowed to backend/service-side
-  validation while the API contract is being redesigned.
-- Required gates on that branch are:
-  1. backend/shared typecheck
-  2. backend/shared lint
-  3. backend unit tests
-  4. DB-backed integration tests
-  5. merged backend coverage via `npm run test:coverage:backend`
-  6. OpenAPI export/validation when API shapes change
-  7. coverage on changed files ≥ 80% statements (verify with `--collectCoverageFrom`)
-  8. contract test exists for every new/changed endpoint (in `api-contracts-web` or `api-contracts-admin`)
-  9. no route in changed modules uses `SuccessSchema` or `passthroughResponseSchema` for domain responses
-- Web/admin test, coverage, smoke, and browser E2E suites are not required
-  pre-push gates on that branch.
-- This exception is branch-specific only. `main` and ordinary feature branches
-  still use the full default validation set.
-
-Backend-first refactor execution rules on `codex-backend-refactor-lane`:
-
-- Focus implementation on the backend service stack only:
-  - database schema
-  - migrations
-  - ORM mappings
-  - domain entities
-  - repositories/services
-  - DTOs
-  - mappers
-  - API endpoints
-  - generated service-side contracts
-- Do not update web/admin application code just to keep it compiling during this branch.
-- It is expected that web/admin may be temporarily out of sync while the backend contract is being redesigned.
-- Do not preserve old filenames, function names, object names, or DTO names when the domain model has been renamed.
-- Do not hide a new domain concept inside a legacy function or file name just to reduce diff size.
-- Do not let existing service code or old model naming override the decisions already captured in active plans and use-case documents.
-- Prefer replacing old backend slices outright over building compatibility shims around retired domain concepts.
-- If a legacy endpoint or model shape is being replaced, implement the new contract cleanly rather than keeping a parallel alias unless the user explicitly asks for backward compatibility.
-- Use the active plans and use-case companions as the implementation source of truth for how the application should behave.
-- Do not mix old and new domain terminology within the same execution slice.
-- If an implementation slice needs behavior that is not covered by an active use-case document, stop and document that use case before inventing the behavior from old code.
-- If use cases are unclear or ambiguous, ask for clarification instead of inventing product behavior.
-- Prefer incremental target-shaped slices:
-  - it is acceptable to introduce new target-model tables, repositories, DTOs, and APIs in a narrow slice before every old consumer is removed
-  - but the slice must use the new domain names directly
-  - and it must not add compatibility shims, aliases, or legacy wrappers just to bridge old and new models
-- Finish and commit ancillary cleanup that touches shared schema files before beginning the next core schema/model slice.
-- Keep runtime/model commits separate from docs-only terminology cleanup when practical so validation, rollback, and review stay clear.
-- Plan-row updates are part of the slice itself, not a follow-up task:
-  - every implementation slice must update the relevant plan rows before commit
-  - do not leave slice status changes for a later cleanup pass
 
 ---
 
@@ -253,7 +191,6 @@ Use the table below for active plan ranges still expected to receive execution u
 | 36-xxx | `plans/36-authentication-and-authorization-unification.md` | Authentication and authorization unification |
 | 37-xxx | `plans/37-league-top-level-domain-and-data-simplification.md` | League-first domain and data simplification |
 | 38-xxx | `plans/38-contest-entry-and-squad-alignment-review.md` | Contest, entry, and squad alignment review |
-| ST-xxx | `plans/testing/smoke-tests.md` | Smoke test suites |
 
 Archived/deferred and not active execution guidance:
 

@@ -211,7 +211,7 @@ UI surfaces that participate in automation must expose stable machine-oriented s
 - React Testing Library tests should also prefer stable selectors for automation-critical UI paths.
 - Only assert visible text when the test is explicitly about copy, localization, accessibility wording, or user-facing content.
 - Do not use headings, button text, or link text as the primary selector for automation-critical navigation if a stable machine selector can be provided.
-- Treat stable selectors as part of the UI contract for both `clients/web` and `clients/admin`.
+- Treat stable selectors as part of the UI contract for the active PoolMaster web app.
 
 ### Exceptions
 

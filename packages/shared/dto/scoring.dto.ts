@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
+import { ScoringConfigSchema } from '../domain/scoring-config';
 
 export const ScoringConfigValidationRequestSchema = ScoringConfigSchema;
 export type ScoringConfigValidationRequest = z.infer<typeof ScoringConfigValidationRequestSchema>;

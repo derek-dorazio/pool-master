@@ -1,5 +1,7 @@
 # Honest Contract Remediation Guide
 
+> Frontend transition note: any references in this guide to `clients/web` or `clients/admin` describe historical remediation context. Active frontend implementation work belongs in `clients/poolmaster`.
+
 This document captures the recurring production defects uncovered during the cleanup pass and the standard remediation approach we should apply everywhere else in the codebase.
 
 It is meant to be used alongside:

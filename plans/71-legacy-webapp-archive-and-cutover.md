@@ -1,12 +1,12 @@
 ## Objective
 
-Archive the legacy `clients/web` app so it no longer participates in active build, test, coverage, smoke, or CI workflows once `clients/poolmaster` becomes the go-forward app.
+Archive the legacy `clients/web` app so it no longer participates in active build, test, coverage, smoke, or CI workflows now that `clients/poolmaster` is the go-forward app.
 
 The archived app may remain as reference material for planning only.
 
 ## Dependencies
 
-- Blocked until [plans/69-poolmaster-webapp-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/69-poolmaster-webapp-rebuild.md) has reached the first active-frontend cutover milestone.
+- The immediate cleanup pivot allows this archive work to proceed before the full PoolMaster rebuild is complete, as long as PoolMaster is the only active frontend target in build/test/CI.
 - Should coordinate with [plans/68-browser-e2e-reset-for-web-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/68-browser-e2e-reset-for-web-rebuild.md) and [plans/70-admin-webapp-removal.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/70-admin-webapp-removal.md) so test and CI references are removed cleanly.
 
 ## Direction
@@ -19,7 +19,7 @@ The archived app may remain as reference material for planning only.
 
 ## Inventory
 
-Current active references that still point at `clients/web` or treat it as an active frontend target:
+Historical inventory of the references that originally kept `clients/web` active:
 
 - Build and local workflow:
   - [package.json](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/package.json) still exposes `test:smoke:e2e:web`, `test:smoke:e2e`, and `test:smoke`, all of which assume the legacy web app remains runnable.
@@ -48,28 +48,25 @@ Current active references that still point at `clients/web` or treat it as an ac
 
 ## Cutover Criteria
 
-The legacy web app should not be archived until the new PoolMaster app is capable of serving as the active frontend target.
+The legacy web app should stay archived and out of the active path as long as the new PoolMaster app remains the only frontend target in local and CI flows.
 
-Minimum cutover criteria:
+Current cutover baseline:
 
-- new app handles auth
-- new app handles league list/detail and invitation acceptance
-- new app handles contest list/detail
-- new app handles entry creation
-- new app handles standings/history reads
+- new app handles basic auth and landing/shell
 - new app is wired into active local build/test/CI flow
-- new app is ready to become the primary deployed frontend target
+- new app is the only active deployed frontend target
+- deeper feature rebuilding is intentionally paused pending the next discovery/planning phase
 
 ## Task List
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Define and confirm the cutover point from `clients/web` to `clients/poolmaster` | Use the explicit cutover criteria in this plan rather than an ad hoc judgment |
+| Done | Define and confirm the cutover point from `clients/web` to `clients/poolmaster` | The immediate cleanup pivot now treats PoolMaster as the sole active frontend target once auth/shell plus active build/test/CI wiring are in place. |
 | Done | Inventory all active references to `clients/web` | Root scripts, web app package/config files, CI build/test/deploy jobs, coverage artifacts, and docs/README files still reference the legacy app; this inventory now lists the concrete cutover targets. |
-| Pending | Remove legacy web app from active build/test/coverage commands | once PoolMaster app has replaced those gates, including legacy Vitest/coverage references |
-| Pending | Remove legacy web app from smoke/browser/CI references | no active deployment/test workflow should target it |
-| Pending | Archive `clients/web` as reference-only material | move to an explicitly archived location with a README/DEPRECATED note for agents |
-| Pending | Update rules, AGENTS guidance, and docs to mark it as archived | make the distinction explicit for agents |
+| Done | Remove legacy web app from active build/test/coverage commands | Root scripts, lint/typecheck/build flow, and frontend test gates now target PoolMaster rather than the legacy web app. |
+| Done | Remove legacy web app from smoke/browser/CI references | Legacy web Playwright/coverage/build references were removed from the active CI path. |
+| Done | Archive `clients/web` as reference-only material | Moved to `clients/_archived/web` and added an archive warning for agents. |
+| In Progress | Update rules, AGENTS guidance, and docs to mark it as archived | Active rules, AGENTS, README, and setup guidance now describe the archived legacy web app; a few historical docs still need follow-up cleanup. |
 | Pending | Inventory the future of `clients/shared` during cutover | Decide whether it remains useful or should be simplified/absorbed as the single-app architecture lands |
 
 ## Validation

@@ -1,6 +1,6 @@
 # PoolMaster
 
-Multi-tenant fantasy sports pool management platform. Create leagues, configure contests across any sport, draft squads, and compete on live leaderboards.
+Fantasy sports pool management platform. Create leagues, configure contests across any sport, draft squads, and compete on live leaderboards.
 
 Sport-agnostic by design -- golf, NFL, F1, NCAA brackets, horse racing, tennis, and more are all first-class citizens configured through a flexible domain model rather than hard-coded sport logic.
 
@@ -14,11 +14,11 @@ npm install
 npm run dev:start
 ```
 
-This starts Docker (Postgres, DynamoDB, and Mailpit), runs migrations, seeds test data, and launches all services.
+This starts Docker (Postgres, DynamoDB, and Mailpit), runs migrations, seeds test data, and launches the active backend and PoolMaster web app.
 
 | What | URL | Purpose |
 |------|-----|---------|
-| **Webapp** | http://localhost:5173 | React frontend |
+| **PoolMaster Web** | http://localhost:5173 | Active React frontend |
 | **Core API** | http://localhost:3000 | REST API (health: `GET /health`) |
 | **Mailpit** | http://localhost:8025 | View all sent emails |
 | **Push Mock** | http://localhost:3099/push-log | View push notifications |
@@ -31,13 +31,14 @@ See [docs/DEVELOPER-SETUP.md](docs/DEVELOPER-SETUP.md) for full setup instructio
 ## Testing
 
 ```bash
-# Unit tests
-npm run test:unit
+# Backend unit tests
+npx jest --config tests/jest.config.js --forceExit
 
-# Smoke tests (requires npm run dev:start first)
-npm run test:smoke:api   # API smoke tests
-npm run test:smoke:e2e   # E2E browser tests — Playwright for web + admin
-npm run test:smoke       # Both
+# Backend functional API suite
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:functional
+
+# PoolMaster webapp tests
+cd clients/poolmaster && npx vitest run
 ```
 
 ---
@@ -57,7 +58,7 @@ npm run test:smoke       # Both
               │ Scoring Engines     │
               │ Notifications       │
               │ Ingestion Workers   │
-              │ Admin & Billing     │
+              │ Root Admin          │
               └─────────────────────┘
 ```
 
@@ -69,9 +70,8 @@ Fastify + TypeScript modular monolith. All modules run in a single process on po
 | **drafts** | Draft engines -- snake, tiered, budget, survivor, pick'em, bracket |
 | **scoring** | Score calculation -- 7 engines, 16 templates across 9 sports |
 | **ingestion** | Sports data polling from external providers (ESPN, OpenF1, PGA Tour) |
-| **social** | League feed, contest chat, direct messages, recaps, share cards |
-| **notifications** | Push, email, in-app notifications with preferences and scheduling |
-| **admin, billing** | Platform admin, subscription management |
+| **notifications** | In-app notification reads and preferences |
+| **admin** | Root-admin backend surfaces retained in the service |
 
 ---
 
@@ -83,31 +83,22 @@ Fastify + TypeScript modular monolith. All modules run in a single process on po
 - Role hierarchy: Owner > Commissioner > Manager > Viewer
 - 25 granular commissioner permissions
 
-### Social & Communication
-- League activity feed, threaded replies, commissioner pinning, and moderation
-- Contest chat, direct messages, weekly recaps, and share-card surfaces
-- Compliance/settings flows for consent, data export, and self-exclusion now use the live backend contract
-- Admin, billing, compliance, and social surfaces are contract-aligned, but any persistence follow-up remains tracked explicitly in the relevant plans
+### Account & Communication
+- Consent/account essentials use the live backend contract
+- In-app notification reads and preference management remain active
+- Legacy social, billing, and separate admin frontend surfaces have been removed or deferred
 
 ### Contests
-- Multi-step contest wizard (sport, draft config, scoring, payouts, schedule)
-- 6 selection types: snake draft, tiered pick, budget pick, open selection, pick'em, bracket
-- 7 scoring engines with 16 pre-built templates across 9 sports
-- Payout structure configuration with validation
-- Contest templates for quick-create from saved configs
+- Commissioner-managed contest configuration backed by live backend contracts
+- Squad-owned entries, roster picks, live standings, and persisted scoring results
+- Configurable participant scoring rules, aggregation rules, and prize definitions
 
 ### Commissioner Tools
 - Dashboard with action items, contest summaries, member activity, upcoming events
 - Draft overrides: undo pick, pause/resume, extend clock
 - Scoring overrides: adjust scores, force recalculate standings
 - Contest lifecycle: reopen, close, extend deadline
-- Payout confirmation
 - Full audit trail with commissioner and member views
-
-### Bulk Operations
-- Season bulk setup (create multiple contests from template)
-- Copy last season
-- CSV member import
 
 ---
 
@@ -148,7 +139,7 @@ poolmaster/
 ├── packages/           # Backend + shared types
 │   ├── core-api/       # Modular monolith (all backend modules)
 │   └── shared/         # Domain types, DB ports, events
-├── clients/            # Web (React), iOS (Swift), Android (Kotlin)
+├── clients/            # PoolMaster web, iOS (Swift), Android (Kotlin), archived legacy web
 ├── tests/              # All tests (separate from app code)
 ├── infrastructure/     # Docker, K8s, Terraform
 ├── plans/              # Feature plans with task tracking
@@ -161,7 +152,7 @@ poolmaster/
 
 ### Guides
 - [Architecture Overview](docs/ARCHITECTURE.md) — Components, dependencies, data flow
-- [Authentication & Authorization](docs/AUTHENTICATION-AUTHORIZATION.md) — Current web/admin auth flows, token handling, and authorization enforcement
+- [Authentication & Authorization](docs/AUTHENTICATION-AUTHORIZATION.md) — Current backend auth model and frontend transition notes
 - [Standard Auth Model](docs/STANDARD-AUTH-MODEL.md) — Recommended conventional local-auth + Google OIDC + cookie-session target for PoolMaster
 - [Database Schema](docs/DATABASE-SCHEMA.md) — ERDs and a practical data dictionary for PostgreSQL tables and app ownership
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
@@ -170,7 +161,7 @@ poolmaster/
 
 ### Code READMEs
 - [Backend Services](packages/README.md) — Monolith modules, shared package, API routes, engines
-- [Web App](clients/web/README.md) — React app features, pages, components, architecture
+- [PoolMaster Web App](clients/poolmaster/README.md) — Active React app features, pages, and architecture
 
 ### Rules
 - [Architecture Rules](rules/architecture-rules.md) — System design, tech stack, security, deployment, local dev infra
@@ -199,10 +190,10 @@ See [Terraform Workflow](infrastructure/terraform/README.md) for the remote-stat
 | Component | Technology | Notes |
 |-----------|-----------|-------|
 | **Backend** | ECS Fargate (1 service) | core-api monolith (all modules in one process) |
-| **Webapp + Admin** | S3 + CloudFront CDN | Global edge caching, SPA routing, API proxying via /api/* |
+| **PoolMaster Web** | S3 + CloudFront CDN | Global edge caching, SPA routing, API proxying via /api/* |
 | **Database** | RDS PostgreSQL 16 | Private subnet, db.t3.micro (QA) |
 | **Load Balancer** | ALB | Path-based routing to ECS services |
-| **DNS** | Route 53 | `qa.ultimateofficepoolmanager.com`, `qa-admin.ultimateofficepoolmanager.com` |
+| **DNS** | Route 53 | `qa.ultimateofficepoolmanager.com` |
 | **SSL** | ACM | Auto-validated wildcard cert for CloudFront (us-east-1) + ALB (us-east-2) |
 | **CI/CD** | GitHub Actions | Lint → Test → Build → ECR push → S3 sync → ECS deploy |
 | **IaC** | Terraform | Per-environment state (qa/staging/prod) |

@@ -49,12 +49,12 @@ Concrete removal map for later slices:
 | Status | Task | Notes |
 | --- | --- | --- |
 | Done | Inventory all `clients/admin` build/test/CI references | Active refs now mapped across package scripts, CI workflow, admin source/tests, and rules/docs; see inventory snapshot above |
-| Pending | Remove admin app from local quality gates | typecheck, lint, test, coverage commands |
-| Pending | Remove admin app from CI workflows | build/test/package/deploy/browser references, coverage artifacts, and summaries |
+| Done | Remove admin app from local quality gates | Root typecheck, lint, test, and coverage commands now target backend + PoolMaster only. |
+| Done | Remove admin app from CI workflows | Admin build/test/coverage/deploy/browser references were removed from CI. |
 | Pending | Remove admin-specific contract and browser test references | Clean up any admin-only contract or browser test wiring that should not survive the app retirement |
-| Pending | Remove or archive `clients/admin` source so it is no longer an active or discoverable implementation target | If archived for history, mark it clearly as non-authoritative and non-reference material for agents |
+| Done | Remove or archive `clients/admin` source so it is no longer an active or discoverable implementation target | `clients/admin` was removed from the repo instead of being preserved as a transition target. |
 | Pending | Review and document deployed admin infrastructure impact | Note S3/CloudFront/DNS or other deployment targets that should be retired or deprecated |
-| Pending | Update docs and rules | ensure the repo no longer describes admin as an active separate app |
+| In Progress | Update docs and rules | Active rules, AGENTS, README, and setup guidance now point at the single-app direction; longer historical docs still need a cleanup pass. |
 | Pending | Add follow-up note for root-admin UI rebuild | point future admin-facing work at the single PoolMaster app built from scratch |
 
 ## Validation
