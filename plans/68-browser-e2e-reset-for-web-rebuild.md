@@ -47,7 +47,7 @@ When rebuilt, carry forward the useful parts of the old Playwright support patte
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Inventory current browser E2E suites and workflow hooks | Web + admin Playwright tests, scripts, CI jobs, docs |
+| Done | Inventory current browser E2E suites and workflow hooks | Current browser refs are concentrated in `package.json` smoke scripts (`test:smoke:e2e:web`, `test:smoke:e2e:admin`, `test:smoke:e2e`, `test:smoke`) and `.github/workflows/ci.yml` jobs that run `clients/web && npx playwright test`, `clients/admin && npx playwright test`, install Playwright browsers, upload `playwright-report`/`test-results`, and include browser coverage/deploy dependencies. Web suite files: `clients/web/playwright.config.ts`, `clients/web/e2e/fixtures.ts`, `clients/web/e2e/mvp-browser.smoke.ts`. Admin suite files: `clients/admin/playwright.config.ts`, `clients/admin/e2e/fixtures.ts`, `clients/admin/e2e/mvp-admin.smoke.ts`. Reusable pattern worth preserving later: the shared runtime error tracker in both fixture files plus `assertNoErrorBoundary` in the web suite. Plan 70 now owns admin-app removal and Plan 71 owns legacy web archival, so this plan stays focused on browser-suite reset rather than app removal itself. |
 | Pending | Remove admin Playwright suite | Admin app is being retired |
 | Pending | Remove stale web Playwright suite | Existing flows target pre-refactor UI assumptions |
 | Pending | Remove Playwright browser gating from active CI/local quality gates | Update package scripts, workflow jobs, and rules/docs accordingly |
