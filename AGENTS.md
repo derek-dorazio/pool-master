@@ -58,8 +58,8 @@ Run and pass:
 - `npx turbo typecheck --force`
 - `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
 - `npx jest --config tests/jest.config.js --forceExit`
-- `npm run test:functional`
-- `cd clients/poolmaster && npx vitest run`
+- `npm run test:service:functional-api`
+- `npm run test:poolmaster:unit`
 
 CI-only follow-up signals:
 

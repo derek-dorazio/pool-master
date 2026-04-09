@@ -11,7 +11,7 @@ export interface FunctionalServerState {
 export const functionalStateFilePath = path.join(
   process.cwd(),
   'coverage',
-  'functional',
+  'service-functional-api',
   'server-state.json',
 );
 

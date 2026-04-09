@@ -11,9 +11,10 @@ const reports = istanbulReports;
 
 const rootDir = process.cwd();
 const coverageRoot = path.join(rootDir, 'coverage');
-const unitDir = path.join(coverageRoot, 'unit');
-const integrationDir = path.join(coverageRoot, 'integration');
-const functionalDir = path.join(coverageRoot, 'functional');
+const serviceUnitDir = path.join(coverageRoot, 'service-unit');
+const serviceIntegrationDir = path.join(coverageRoot, 'service-integration');
+const serviceFunctionalApiDir = path.join(coverageRoot, 'service-functional-api');
+const serviceMergedDir = path.join(coverageRoot, 'service-merged');
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -53,29 +54,36 @@ function readCoverageJson(filePath) {
   return readJson(filePath);
 }
 
-removeDir(coverageRoot);
+removeDir(serviceUnitDir);
+removeDir(serviceIntegrationDir);
+removeDir(serviceFunctionalApiDir);
+removeDir(serviceMergedDir);
 fs.mkdirSync(coverageRoot, { recursive: true });
 
-run('npm', ['run', 'test:coverage:unit']);
-run('npm', ['run', 'test:coverage:integration']);
-run('npm', ['run', 'test:functional:coverage']);
+console.log('Running service unit tests with coverage...');
+run('npm', ['run', 'test:coverage:service:unit']);
+console.log('Running service integration tests with coverage...');
+run('npm', ['run', 'test:coverage:service:integration']);
+console.log('Running service functional API tests with coverage...');
+run('npm', ['run', 'test:coverage:service:functional-api']);
 
-printSummary('Unit', path.join(unitDir, 'coverage-summary.json'));
-printSummary('Integration', path.join(integrationDir, 'coverage-summary.json'));
-printSummary('Functional', path.join(functionalDir, 'coverage-summary.json'));
+printSummary('Service unit', path.join(serviceUnitDir, 'coverage-summary.json'));
+printSummary('Service integration', path.join(serviceIntegrationDir, 'coverage-summary.json'));
+printSummary('Service functional API', path.join(serviceFunctionalApiDir, 'coverage-summary.json'));
 
 const coverageMap = createCoverageMap({});
-coverageMap.merge(readCoverageJson(path.join(unitDir, 'coverage-final.json')));
-coverageMap.merge(readCoverageJson(path.join(integrationDir, 'coverage-final.json')));
-coverageMap.merge(readCoverageJson(path.join(functionalDir, 'coverage-final.json')));
+coverageMap.merge(readCoverageJson(path.join(serviceUnitDir, 'coverage-final.json')));
+coverageMap.merge(readCoverageJson(path.join(serviceIntegrationDir, 'coverage-final.json')));
+coverageMap.merge(readCoverageJson(path.join(serviceFunctionalApiDir, 'coverage-final.json')));
 
+fs.mkdirSync(serviceMergedDir, { recursive: true });
 fs.writeFileSync(
-  path.join(coverageRoot, 'coverage-final.json'),
+  path.join(serviceMergedDir, 'coverage-final.json'),
   JSON.stringify(coverageMap.toJSON()),
 );
 
 const context = createContext({
-  dir: coverageRoot,
+  dir: serviceMergedDir,
   coverageMap,
 });
 
@@ -85,7 +93,7 @@ reports.create('clover', { file: 'clover.xml' }).execute(context);
 reports.create('html', { subdir: 'lcov-report' }).execute(context);
 reports.create('text-summary').execute(context);
 
-printSummary('Merged backend', path.join(coverageRoot, 'coverage-summary.json'));
+printSummary('Merged service', path.join(serviceMergedDir, 'coverage-summary.json'));
 
 console.log('');
-console.log(`Merged backend coverage written to ${coverageRoot}`);
+console.log(`Merged service coverage written to ${serviceMergedDir}`);

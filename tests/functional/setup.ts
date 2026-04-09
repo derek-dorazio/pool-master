@@ -16,7 +16,12 @@ export interface FunctionalErrorExpectation {
   code: string;
 }
 
-const stateFilePath = path.join(process.cwd(), 'coverage', 'functional', 'server-state.json');
+const stateFilePath = path.join(
+  process.cwd(),
+  'coverage',
+  'service-functional-api',
+  'server-state.json',
+);
 
 let prisma: PrismaClient | undefined;
 

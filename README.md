@@ -31,14 +31,14 @@ See [docs/DEVELOPER-SETUP.md](docs/DEVELOPER-SETUP.md) for full setup instructio
 ## Testing
 
 ```bash
-# Backend unit tests
+# Service unit tests
 npx jest --config tests/jest.config.js --forceExit
 
-# Backend functional API suite
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:functional
+# Service functional API tests
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:functional-api
 
-# PoolMaster webapp tests
-cd clients/poolmaster && npx vitest run
+# PoolMaster unit tests
+npm run test:poolmaster:unit
 ```
 
 ---

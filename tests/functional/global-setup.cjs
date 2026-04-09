@@ -4,7 +4,12 @@ const { randomUUID } = require('node:crypto');
 const { spawn } = require('node:child_process');
 
 const rootDir = path.join(process.cwd());
-const stateFilePath = path.join(rootDir, 'coverage', 'functional', 'server-state.json');
+const stateFilePath = path.join(
+  rootDir,
+  'coverage',
+  'service-functional-api',
+  'server-state.json',
+);
 const serverEntry = path.join(rootDir, 'tests', 'functional', 'server.ts');
 const tsConfigPath = path.join(rootDir, 'tests', 'tsconfig.json');
 

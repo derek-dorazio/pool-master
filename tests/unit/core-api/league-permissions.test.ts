@@ -46,6 +46,19 @@ function createReply() {
   return reply;
 }
 
+function expectReplyError(
+  reply: ReturnType<typeof createReply>,
+  code: string,
+  message: string,
+) {
+  expect(reply.payload).toEqual({
+    error: {
+      code,
+      message,
+    },
+  });
+}
+
 describe('league permissions', () => {
   it('allows any member through requireLeagueMembership', async () => {
     const membership = buildMembership({ role: LeagueRole.MEMBER });
@@ -83,10 +96,7 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
-    expect(reply.payload).toEqual({
-      error: 'FORBIDDEN',
-      message: 'You are not a member of this league',
-    });
+    expectReplyError(reply, 'FORBIDDEN', 'You are not a member of this league');
   });
 
   it('rejects inactive memberships on requireLeagueMembership', async () => {
@@ -107,10 +117,7 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
-    expect(reply.payload).toEqual({
-      error: 'FORBIDDEN',
-      message: 'Your membership in this league is inactive',
-    });
+    expectReplyError(reply, 'FORBIDDEN', 'Your membership in this league is inactive');
   });
 
   it('rejects requests without a user identity on requireLeagueMembership', async () => {
@@ -127,10 +134,7 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(401);
-    expect(reply.payload).toEqual({
-      error: 'UNAUTHORIZED',
-      message: 'Missing user identity',
-    });
+    expectReplyError(reply, 'UNAUTHORIZED', 'Missing user identity');
   });
 
   it('rejects requests without a league id on requireCommissionerOrOwner', async () => {
@@ -147,10 +151,7 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(400);
-    expect(reply.payload).toEqual({
-      error: 'BAD_REQUEST',
-      message: 'Missing league id',
-    });
+    expectReplyError(reply, 'BAD_REQUEST', 'Missing league id');
   });
 
   it('allows owners and commissioners through requireCommissionerOrOwner', async () => {
@@ -193,9 +194,6 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
-    expect(reply.payload).toEqual({
-      error: 'FORBIDDEN',
-      message: 'You do not have permission for this action',
-    });
+    expectReplyError(reply, 'FORBIDDEN', 'You do not have permission for this action');
   });
 });

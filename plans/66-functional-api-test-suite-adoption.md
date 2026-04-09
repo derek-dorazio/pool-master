@@ -41,7 +41,7 @@ The direction in [plans/64-sdk-functional-test-suite.md](/Users/DDorazio/Library
 - use-case journeys aligned with the active plan companions
 - authorization, validation, not-found, and conflict-path testing
 - structured error-envelope assertions
-- merged coverage integration with existing backend coverage reporting
+- merged coverage integration with the existing service coverage reporting
 - local and CI execution wiring
 
 ### Out of Scope
@@ -93,12 +93,12 @@ The functional API suite should cover, at minimum:
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Finalize the functional-suite naming and scope | Use “functional API test suite” consistently in scripts, docs, and CI |
+| Done | Finalize the functional-suite naming and scope | Service-facing scripts, coverage directories, CI jobs, artifact names, and docs now use the `service-*` / `poolmaster-*` naming consistently. |
 | Pending | Adopt Plan 64 Slice 64-A as the required pilot gate | Do not expand into domain coverage until the pilot harness is green locally and in CI |
 | Pending | Execute the domain coverage slices from Plan 64 | Track implementation progress in Plan 64 task rows rather than duplicating per-domain slice rows here |
-| Pending | Integrate functional suite into local build/test flow | Add package scripts and document expected local gate usage |
-| Pending | Integrate functional suite into CI | Include in backend quality gates and coverage merge flow |
-| Pending | Own cross-rule/docs updates for the new test strategy | Testing rules, workflow references, AGENTS/README where appropriate |
+| Done | Integrate functional suite into local build/test flow | Root scripts now expose `test:service:functional-api` and `test:coverage:service:merged`, and active setup docs use those names. |
+| Done | Integrate functional suite into CI | CI now reports `service-coverage-report` and `poolmaster-unit-tests` with the renamed service coverage buckets and artifacts. |
+| Done | Own cross-rule/docs updates for the new test strategy | Updated workflow/testing rules, AGENTS, README, developer setup, and Plan 64 naming references. |
 | Pending | Define and execute redundant-test pruning after coverage is in place | Remove integration/contract tests only when the functional suite clearly replaces their signal |
 
 ## Relationship To Plan 64

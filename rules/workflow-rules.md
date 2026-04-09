@@ -151,10 +151,10 @@ Required local pre-push commands:
 1. `npx turbo typecheck --force`
 2. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
 3. `npx jest --config tests/jest.config.js --forceExit`
-4. `npm run test:functional`
-5. `cd clients/poolmaster && npx vitest run`
-6. `npm run test:coverage:backend`
-7. `cd clients/poolmaster && npm run test:coverage`
+4. `npm run test:service:functional-api`
+5. `npm run test:poolmaster:unit`
+6. `npm run test:coverage:service:merged`
+7. `npm run test:coverage:poolmaster:unit`
 
 Rules:
 

@@ -188,8 +188,8 @@ npm run test:unit
 # Integration tests only
 npm run test:integration
 
-# Backend functional API suite
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:functional
+# Service functional API tests
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:functional-api
 
 # Specific test file
 npx jest tests/unit/core-api/permissions.test.ts
@@ -202,14 +202,14 @@ Tests use **Jest** with **ts-jest**. All tests live in the top-level `tests/` di
 The active local gate now centers on:
 
 ```bash
-# Backend unit/integration coverage
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:coverage:backend
+# Merged service coverage
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:coverage:service:merged
 
-# Backend functional API suite
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:functional
+# Service functional API tests
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:functional-api
 
-# PoolMaster web app tests
-cd clients/poolmaster && npx vitest run
+# PoolMaster unit tests
+npm run test:poolmaster:unit
 ```
 
 Legacy smoke tests and browser E2E suites were intentionally removed from the active flow during the PoolMaster cutover. Browser E2E will be rebuilt later for the new app from scratch.

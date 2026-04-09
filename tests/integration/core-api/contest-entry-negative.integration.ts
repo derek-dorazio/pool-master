@@ -17,6 +17,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   ContestStatus,
   ContestType,
@@ -257,7 +258,9 @@ describe('Contest Entry Negative Integration', () => {
     });
 
     expect(closedContestEnterRes.statusCode).toBe(400);
-    expect(closedContestEnterRes.json().message).toContain('before the contest starts');
+    const closedEnterBody = closedContestEnterRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(closedEnterBody).success).toBe(true);
+    expect(closedEnterBody.error.message).toContain('before the contest starts');
 
     const leaveRes = await getApp().inject({
       method: 'DELETE',
@@ -266,6 +269,8 @@ describe('Contest Entry Negative Integration', () => {
     });
 
     expect(leaveRes.statusCode).toBe(400);
-    expect(leaveRes.json().message).toContain('after making picks');
+    const leaveBody = leaveRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(leaveBody).success).toBe(true);
+    expect(leaveBody.error.message).toContain('after making picks');
   });
 });

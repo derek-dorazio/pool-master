@@ -2,7 +2,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const rootDir = path.join(process.cwd());
-const stateFilePath = path.join(rootDir, 'coverage', 'functional', 'server-state.json');
+const stateFilePath = path.join(
+  rootDir,
+  'coverage',
+  'service-functional-api',
+  'server-state.json',
+);
 
 function readState() {
   if (!fs.existsSync(stateFilePath)) {

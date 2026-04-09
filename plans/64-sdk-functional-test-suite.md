@@ -563,9 +563,9 @@ Add to root `package.json`:
 
 ```json
 {
-  "test:functional": "jest --config tests/functional/jest.config.js --forceExit",
-  "test:functional:coverage": "jest --config tests/functional/jest.config.js --forceExit --coverage --coverageReporters json-summary json lcovonly text-summary",
-  "test:coverage:backend": "node scripts/run-backend-coverage.mjs"
+  "test:service:functional-api": "jest --config tests/functional/jest.config.js --forceExit",
+  "test:coverage:service:functional-api": "jest --config tests/functional/jest.config.js --forceExit --coverage --coverageReporters json-summary json lcovonly text-summary",
+  "test:coverage:service:merged": "node scripts/run-backend-coverage.mjs"
 }
 ```
 
@@ -588,11 +588,11 @@ Add the functional test suite to the existing `test` job (which already has a Po
   env:
     DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
     JWT_SECRET: poolmaster-dev-secret-change-in-production
-  run: npm run test:functional:coverage
+  run: npm run test:coverage:service:functional-api
 
 # Update coverage merge step to include functional coverage
-- name: Merge backend coverage
-  run: npm run test:coverage:backend
+- name: Build merged service coverage
+  run: npm run test:coverage:service:merged
 ```
 
 The functional tests run **pre-push** (same as unit and integration), not post-deploy like smoke tests.
@@ -611,8 +611,8 @@ Required gates on that branch are:
   2. backend/shared lint
   3. backend unit tests
   4. DB-backed integration tests
-  5. SDK functional tests                    ← NEW
-  6. merged backend coverage via npm run test:coverage:backend
+  5. service functional API tests             ← NEW
+  6. merged service coverage via npm run test:coverage:service:merged
   7. OpenAPI export/validation when API shapes change
   ...
 ```
@@ -620,14 +620,14 @@ Required gates on that branch are:
 ### Developer Commands
 
 ```bash
-# Run just functional tests
-npm run test:functional
+# Run just service functional API tests
+npm run test:service:functional-api
 
-# Run functional tests with coverage
-npm run test:functional:coverage
+# Run service functional API tests with coverage
+npm run test:coverage:service:functional-api
 
-# Run all backend tests (unit + integration + functional)
-npm run test:coverage:backend
+# Run merged service coverage (unit + integration + functional API)
+npm run test:coverage:service:merged
 
 # Run a single functional test file
 npx jest --config tests/functional/jest.config.js tests/functional/league-lifecycle.functional.ts
@@ -758,8 +758,8 @@ This pilot is intentionally small. The broader league-lifecycle proof-of-concept
 **Step 5: Add npm scripts** — update root `package.json`
 
 ```json
-"test:functional": "jest --config tests/functional/jest.config.js --forceExit",
-"test:functional:coverage": "jest --config tests/functional/jest.config.js --forceExit --coverage --coverageReporters json-summary json lcovonly text-summary"
+"test:service:functional-api": "jest --config tests/functional/jest.config.js --forceExit",
+"test:coverage:service:functional-api": "jest --config tests/functional/jest.config.js --forceExit --coverage --coverageReporters json-summary json lcovonly text-summary"
 ```
 
 **Step 6: Update coverage merge from day one**
@@ -770,7 +770,7 @@ Update `scripts/run-backend-coverage.mjs` during the pilot slice so functional c
 
 ```bash
 # Requires Postgres running (docker-compose.dev.yml or local)
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npm run test:functional
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npm run test:service:functional-api
 ```
 
 **Success criteria for Slice 64-A:**
@@ -833,9 +833,9 @@ Cross-rule/docs adoption is coordinated in Plan 66.
 | 64-A01 | A | Create `tests/functional/jest.config.js` | Done | Added shared functional Jest config with `.js` extension remapping and dedicated functional tsconfig using DOM libs for generated hey-api types. |
 | 64-A02 | A | Create `tests/functional/setup.ts` — shared app lifecycle, `listen({ port: 0 })`, SDK client factory | Done | Added shared server boot/teardown, SDK client helpers, deterministic email generation, and cleanup helpers keyed to functional test run ids. |
 | 64-A03 | A | Create `tests/functional/builders.ts` — `buildRegisteredUser`, `buildLeagueWithOwner` | Done | Added builder helpers that use generated SDK operations and throw descriptive setup failures instead of null dereferences. |
-| 64-A04 | A | Add `test:functional` and `test:functional:coverage` npm scripts | Done | Root `package.json` now exposes functional test and coverage entry points. |
+| 64-A04 | A | Add `test:service:functional-api` and `test:coverage:service:functional-api` npm scripts | Done | Root `package.json` now exposes the service functional API test and coverage entry points. |
 | 64-A05 | A | Create pilot `auth.functional.ts` and `consent.functional.ts` | Done | Pilot covers register-login-profile, consent write/read, and unauthenticated consent error paths through the generated SDK. |
-| 64-A06 | A | Update `scripts/run-backend-coverage.mjs` to merge functional coverage from day one | In Progress | Functional suite is now part of the merged backend coverage run and reported in output, but child-process Fastify boot currently yields a `0%` functional bucket until coverage instrumentation for the shared server process is added. |
+| 64-A06 | A | Update `scripts/run-backend-coverage.mjs` to merge functional coverage from day one | In Progress | Functional suite is now part of the merged service coverage run and reported in output, but child-process Fastify boot currently yields a `0%` service functional API bucket until coverage instrumentation for the shared server process is added. |
 | 64-A07 | A | Verify pilot tests pass against local Postgres and CI | In Progress | Local Postgres pilot passes. CI integration for the functional suite remains part of later adoption work in Slice `64-E02`. |
 | 64-B01 | B | Expand `auth.functional.ts` — full auth CRUD + token refresh + error paths | Not Started | |
 | 64-B02 | B | Create `league-lifecycle.functional.ts` — league CRUD + invitation + member lifecycle | Not Started | Broader workflow moved here from the original proof-of-concept |

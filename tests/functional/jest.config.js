@@ -15,7 +15,7 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   testTimeout: 30000,
   maxWorkers: 1,
-  coverageDirectory: '<rootDir>/coverage/functional',
+  coverageDirectory: '<rootDir>/coverage/service-functional-api',
   collectCoverageFrom: [
     'packages/core-api/src/**/*.ts',
     'packages/shared/**/*.ts',

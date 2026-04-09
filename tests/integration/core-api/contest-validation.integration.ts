@@ -6,6 +6,7 @@ import {
   cleanupTestData,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   ContestType,
   LeagueVisibility,
@@ -59,12 +60,10 @@ describe('Contest Validation Integration', () => {
     });
 
     expect(createRes.statusCode).toBe(400);
-    expect(createRes.json()).toEqual(
-      expect.objectContaining({
-        error: 'BAD_REQUEST',
-        message: 'Tiered contests require tier configuration',
-      }),
-    );
+    const body = createRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
+    expect(body.error.code).toBe('BAD_REQUEST');
+    expect(body.error.message).toBe('Tiered contests require tier configuration');
 
     const listRes = await getApp().inject({
       method: 'GET',

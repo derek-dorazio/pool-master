@@ -15,6 +15,7 @@ env:
 
 jobs:
   lint-typecheck:
+    name: lint-and-typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -32,7 +33,8 @@ jobs:
   # =========================================================================
   # Backend Unit Tests + Coverage
   # =========================================================================
-  test:
+  service-coverage-report:
+    name: service-coverage-report
     runs-on: ubuntu-latest
     needs: lint-typecheck
     services:
@@ -63,22 +65,23 @@ jobs:
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
-      - name: Run merged backend coverage
-        run: npm run test:coverage:backend
+      - name: Run merged service coverage
+        run: npm run test:coverage:service:merged
 
-      - name: Backend coverage summary
+      - name: Service coverage summary
         if: always()
         run: |
           node <<'NODE'
           const fs = require('fs');
           const summary = process.env.GITHUB_STEP_SUMMARY;
           const sections = [
-            ['Unit Backend Coverage', 'coverage/unit/coverage-summary.json'],
-            ['Integration Backend Coverage', 'coverage/integration/coverage-summary.json'],
-            ['Merged Backend Coverage', 'coverage/coverage-summary.json'],
+            ['Service Unit Coverage', 'coverage/service-unit/coverage-summary.json'],
+            ['Service Integration Coverage', 'coverage/service-integration/coverage-summary.json'],
+            ['Service Functional API Coverage', 'coverage/service-functional-api/coverage-summary.json'],
+            ['Merged Service Coverage', 'coverage/service-merged/coverage-summary.json'],
           ];
 
-          const markdown = ['### Backend Coverage'];
+          const markdown = ['### Service Coverage'];
           let foundAny = false;
 
           for (const [label, filePath] of sections) {
@@ -118,25 +121,27 @@ jobs:
           fs.appendFileSync(summary, markdown.join('\n') + '\n');
           NODE
 
-      - name: Upload backend coverage artifact
+      - name: Upload service coverage artifact
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: backend-coverage
+          name: coverage-service-report
           path: |
-            coverage/coverage-summary.json
-            coverage/lcov.info
-            coverage/clover.xml
-            coverage/coverage-final.json
-            coverage/lcov-report/**
-            coverage/unit/**
-            coverage/integration/**
+            coverage/service-merged/coverage-summary.json
+            coverage/service-merged/lcov.info
+            coverage/service-merged/clover.xml
+            coverage/service-merged/coverage-final.json
+            coverage/service-merged/lcov-report/**
+            coverage/service-unit/**
+            coverage/service-integration/**
+            coverage/service-functional-api/**
           if-no-files-found: warn
 
   # =========================================================================
   # PoolMaster Webapp Unit Tests + Coverage (Vitest)
   # =========================================================================
-  test-poolmaster:
+  poolmaster-unit-tests:
+    name: poolmaster-unit-tests
     runs-on: ubuntu-latest
     needs: lint-typecheck
     steps:
@@ -148,10 +153,10 @@ jobs:
       - run: npm ci
       - run: npm run build --workspace @poolmaster/shared
 
-      - name: Run PoolMaster webapp tests with coverage
-        run: cd clients/poolmaster && npx vitest run --coverage
+      - name: Run PoolMaster unit tests with coverage
+        run: npm run test:coverage:poolmaster:unit
 
-      - name: PoolMaster webapp coverage summary
+      - name: PoolMaster unit coverage summary
         if: always()
         run: |
           node <<'NODE'
@@ -161,7 +166,7 @@ jobs:
 
           if (!fs.existsSync(path)) {
             console.log('PoolMaster coverage data not available');
-            fs.appendFileSync(summary, '### PoolMaster Webapp Test Coverage\n\nCoverage data not available\n');
+            fs.appendFileSync(summary, '### PoolMaster Unit Coverage\n\nCoverage data not available\n');
             process.exit(0);
           }
 
@@ -174,13 +179,13 @@ jobs:
             `Lines: ${t.lines.pct}%`,
           ];
 
-          console.log('PoolMaster webapp coverage totals');
+          console.log('PoolMaster unit coverage totals');
           for (const line of lines) console.log(line);
 
           fs.appendFileSync(
             summary,
-            [
-              '### PoolMaster Webapp Test Coverage',
+              [
+              '### PoolMaster Unit Coverage',
               '',
               '| Metric | Coverage |',
               '|---|---:|',
@@ -193,11 +198,11 @@ jobs:
           );
           NODE
 
-      - name: Upload PoolMaster webapp coverage artifact
+      - name: Upload PoolMaster unit coverage artifact
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: poolmaster-coverage
+          name: coverage-poolmaster-unit
           path: |
             clients/poolmaster/coverage/coverage-summary.json
             clients/poolmaster/coverage/lcov.info
@@ -206,22 +211,23 @@ jobs:
           if-no-files-found: warn
 
   coverage-summary:
+    name: coverage-summary
     runs-on: ubuntu-latest
-    needs: [test, test-poolmaster]
+    needs: [service-coverage-report, poolmaster-unit-tests]
     if: always()
     steps:
-      - name: Download backend coverage artifact
+      - name: Download service coverage artifact
         continue-on-error: true
         uses: actions/download-artifact@v5
         with:
-          name: backend-coverage
-          path: coverage-artifacts/backend
+          name: coverage-service-report
+          path: coverage-artifacts/service
 
-      - name: Download PoolMaster coverage artifact
+      - name: Download PoolMaster unit coverage artifact
         continue-on-error: true
         uses: actions/download-artifact@v5
         with:
-          name: poolmaster-coverage
+          name: coverage-poolmaster-unit
           path: coverage-artifacts/poolmaster
 
       - name: Consolidated coverage summary
@@ -231,8 +237,8 @@ jobs:
           const fs = require('fs');
           const summary = process.env.GITHUB_STEP_SUMMARY;
           const reports = [
-            ['Backend', 'coverage-artifacts/backend/coverage-summary.json'],
-            ['PoolMaster', 'coverage-artifacts/poolmaster/coverage-summary.json'],
+            ['Service', 'coverage-artifacts/service/service-merged/coverage-summary.json'],
+            ['PoolMaster Unit', 'coverage-artifacts/poolmaster/coverage-summary.json'],
           ];
 
           const rows = reports.map(([name, path]) => {
@@ -261,7 +267,8 @@ jobs:
           );
           NODE
 
-  build:
+  service-build:
+    name: service-build
     runs-on: ubuntu-latest
     needs: lint-typecheck
     steps:
@@ -271,15 +278,27 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-      - run: npm run build
+      - run: npm run build:service
+
+  poolmaster-build:
+    name: poolmaster-build
+    runs-on: ubuntu-latest
+    needs: lint-typecheck
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build:poolmaster
 
   # =========================================================================
   # Publish Images + Deploy to QA
   # =========================================================================
   publish-images:
     runs-on: ubuntu-latest
-    needs: [test, test-poolmaster, build]
+    needs: [service-coverage-report, poolmaster-unit-tests, service-build, poolmaster-build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
