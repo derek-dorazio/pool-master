@@ -22,7 +22,7 @@ This plan is blocked until Plan 66 has established functional coverage for the b
 | Done | Remove smoke tests that duplicate functional API suite coverage | Deleted the old `tests/api` smoke suite and removed the active smoke scripts. |
 | Done | Remove smoke-test gate expectations from local and CI flows | Root scripts, CI smoke job, AGENTS guidance, and rules/docs no longer treat smoke as an active gate. |
 | Done | Update workflow/testing docs to reflect the new strategy | Functional API coverage is now the active backend gate in repo guidance. |
-| Pending | Archive or delete stale smoke planning docs if they no longer apply | Keep only intentional, active guidance |
+| Done | Archive or delete stale smoke planning docs if they no longer apply | Removed the obsolete smoke planning docs that described the retired smoke suite and its expansion roadmap. |
 
 ## Validation
 

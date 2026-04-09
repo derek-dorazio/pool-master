@@ -1,14 +1,14 @@
 # Browser E2E High-Value Rebuild
 
-> **Planning Note (2026-04-04):** Re-analyze the deployed QA behavior, auth flow, and available stable test data before implementing this plan. Do not reintroduce brittle multi-step browser journeys into the CI deploy gate until they are proven stable outside that gate.
+> **Planning Note (2026-04-09):** This is the deferred browser-E2E rebuild note for the new `clients/poolmaster` app. Re-analyze the deployed QA behavior, auth flow, and available stable test data before implementing this plan. Do not reintroduce brittle multi-step browser journeys into the CI deploy gate until they are proven stable outside that gate.
 
 ## Purpose
 
-Rebuild a higher-value browser E2E suite that covers real MVP journeys, but keep it separate from the minimal deploy-gate browser smoke until the environment and data setup are stable enough.
+Rebuild a higher-value browser E2E suite that covers real MVP journeys in the new PoolMaster web app, but keep it separate from the minimal deploy-gate browser smoke until the environment and data setup are stable enough.
 
 ## Why This Is Deferred
 
-The previous MVP browser journey suite was removed from the deploy gate because it was too brittle relative to the signal it provided. The environment now has stronger smoke and integration coverage, so the next browser phase should be built more deliberately rather than patched in CI.
+The previous MVP browser journey suite was removed from the deploy gate because it was too brittle relative to the signal it provided. The environment now has stronger backend functional coverage and a fresh PoolMaster frontend baseline, so the next browser phase should be built more deliberately rather than patched in CI.
 
 ## Target Journeys
 
@@ -70,4 +70,5 @@ The previous MVP browser journey suite was removed from the deploy gate because 
 
 ## Follow-Up
 
-- See [smoke-and-e2e-strategic-expansion.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/smoke-and-e2e-strategic-expansion.md) for the combined smoke-plus-E2E execution roadmap, including parallelizable journey slices.
+- This file is the deferred richer suite for the rebuilt PoolMaster web app.
+- Use [plans/69-poolmaster-webapp-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/69-poolmaster-webapp-rebuild.md) as the product-side prerequisite for when this suite should be resumed.

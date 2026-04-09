@@ -53,7 +53,7 @@ When rebuilt, carry forward the useful parts of the old Playwright support patte
 | Done | Remove Playwright browser gating from active CI/local quality gates | Root scripts, CI jobs, and active rule/docs guidance no longer run or require Playwright. |
 | Done | Coordinate admin test removal with Plan 70 | Admin frontend test gates were removed alongside app retirement. |
 | Done | Update testing strategy docs | Repo guidance now states browser E2E is intentionally reset until the new PoolMaster suite is rebuilt. |
-| Pending | Create a deferred rebuild note for future browser E2E reintroduction | Tie reintroduction to the PoolMaster webapp rebuild milestone and keep the future suite intentionally small and use-case driven |
+| Done | Create a deferred rebuild note for future browser E2E reintroduction | [plans/testing/browser-e2e-high-value.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/testing/browser-e2e-high-value.md) now captures the deferred high-value browser suite for the rebuilt PoolMaster app. |
 
 ## Validation
 
