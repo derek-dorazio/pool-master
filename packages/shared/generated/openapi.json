@@ -640,10 +640,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "visibility"
-                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -657,8 +653,9 @@
                   "visibility": {
                     "type": "string",
                     "enum": [
+                      "PUBLIC",
                       "PRIVATE",
-                      "PUBLIC"
+                      "UNLISTED"
                     ]
                   },
                   "maxMembers": {
@@ -666,10 +663,19 @@
                     "minimum": 2,
                     "maximum": 1000
                   },
+                  "sport": {
+                    "type": "string"
+                  },
                   "settings": {
-                    "type": "object"
+                    "type": "object",
+                    "additionalProperties": {}
                   }
-                }
+                },
+                "required": [
+                  "name",
+                  "visibility"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -881,7 +887,8 @@
                   "currency": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -978,9 +985,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "emails"
-                ],
                 "properties": {
                   "emails": {
                     "type": "array",
@@ -995,7 +999,11 @@
                     "type": "string",
                     "maxLength": 500
                   }
-                }
+                },
+                "required": [
+                  "emails"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -1011,13 +1019,110 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "properties": {
+                    "sent": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "leagueId": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "inviteCode": {
+                            "type": "string"
+                          },
+                          "inviteType": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "maxUses": {
+                            "type": "integer"
+                          },
+                          "currentUses": {
+                            "type": "integer"
+                          },
+                          "invitedBy": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "acceptedAt": {
+                            "allOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            ],
+                            "nullable": true
+                          },
+                          "acceptedBy": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "inviteCode",
+                          "inviteType",
+                          "status",
+                          "maxUses",
+                          "currentUses",
+                          "invitedBy",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "skippedMembers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "skippedDuplicates": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "sent",
+                    "skippedMembers",
+                    "skippedDuplicates"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -1048,7 +1153,8 @@
                     "type": "integer",
                     "minimum": 0
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -1064,13 +1170,93 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "properties": {
+                    "invitation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "leagueId": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "inviteCode": {
+                          "type": "string"
+                        },
+                        "inviteType": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "maxUses": {
+                          "type": "integer"
+                        },
+                        "currentUses": {
+                          "type": "integer"
+                        },
+                        "invitedBy": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "acceptedAt": {
+                          "allOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            }
+                          ],
+                          "nullable": true
+                        },
+                        "acceptedBy": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "inviteCode",
+                        "inviteType",
+                        "status",
+                        "maxUses",
+                        "currentUses",
+                        "invitedBy",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "invitation"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -1104,16 +1290,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
+          "204": {
+            "description": "Default Response"
           }
         }
       }
@@ -1199,9 +1377,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "role"
-                ],
                 "properties": {
                   "role": {
                     "type": "string",
@@ -1216,7 +1391,11 @@
                       "type": "string"
                     }
                   }
-                }
+                },
+                "required": [
+                  "role"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -1416,15 +1595,16 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "newOwnerId"
-                ],
                 "properties": {
                   "newOwnerId": {
                     "type": "string",
                     "minLength": 1
                   }
-                }
+                },
+                "required": [
+                  "newOwnerId"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -1584,7 +1764,153 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "properties": {
+                    "league": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "actionItems": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "leagueId": {
+                            "type": "string"
+                          },
+                          "contestId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "priority": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "actionUrl": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "resolved": {
+                            "type": "boolean"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "type",
+                          "priority",
+                          "title",
+                          "description",
+                          "resolved",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "contests": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    },
+                    "memberCount": {
+                      "type": "integer"
+                    },
+                    "pendingInvites": {
+                      "type": "integer"
+                    },
+                    "recentMemberActivity": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "userId": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "userId",
+                          "displayName",
+                          "action",
+                          "timestamp"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "upcomingEvents": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "contestId": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "eventType": {
+                            "type": "string",
+                            "enum": [
+                              "DRAFT_START",
+                              "CONTEST_START",
+                              "CONTEST_END",
+                              "LOCK_TIME"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "date",
+                          "eventType"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "league",
+                    "actionItems",
+                    "contests",
+                    "memberCount",
+                    "pendingInvites",
+                    "recentMemberActivity",
+                    "upcomingEvents"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -1624,7 +1950,66 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "properties": {
+                    "actionItem": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "leagueId": {
+                          "type": "string"
+                        },
+                        "contestId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "priority": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "actionUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resolved": {
+                          "type": "boolean"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "type",
+                        "priority",
+                        "title",
+                        "description",
+                        "resolved",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "actionItem"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -1656,7 +2041,19 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "properties": {
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    }
+                  },
+                  "required": [
+                    "entries"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -1721,9 +2118,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "sourceContestIds"
-                ],
                 "properties": {
                   "sourceContestIds": {
                     "type": "array",
@@ -1732,7 +2126,11 @@
                     },
                     "minItems": 1
                   }
-                }
+                },
+                "required": [
+                  "sourceContestIds"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -1775,17 +2173,11 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "rows"
-                ],
                 "properties": {
                   "rows": {
                     "type": "array",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "email"
-                      ],
                       "properties": {
                         "email": {
                           "type": "string"
@@ -1796,12 +2188,20 @@
                         "role": {
                           "type": "string"
                         }
-                      }
+                      },
+                      "required": [
+                        "email"
+                      ],
+                      "additionalProperties": false
                     },
                     "minItems": 1,
                     "maxItems": 500
                   }
-                }
+                },
+                "required": [
+                  "rows"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -3299,12 +3699,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "sportEventId",
-                  "contestType",
-                  "configuration"
-                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -3319,16 +3713,11 @@
                     "type": "string",
                     "enum": [
                       "SINGLE_EVENT"
-                    ]
+                    ],
+                    "default": "SINGLE_EVENT"
                   },
                   "configuration": {
                     "type": "object",
-                    "required": [
-                      "selectionType",
-                      "participantScoringRules",
-                      "entryAggregationRule",
-                      "prizeDefinitions"
-                    ],
                     "properties": {
                       "selectionType": {
                         "type": "string",
@@ -3354,13 +3743,6 @@
                         "type": "array",
                         "items": {
                           "type": "object",
-                          "required": [
-                            "tierId",
-                            "tierName",
-                            "tierNumber",
-                            "picksFromTier",
-                            "participantIds"
-                          ],
                           "properties": {
                             "tierId": {
                               "type": "string",
@@ -3385,7 +3767,15 @@
                                 "minLength": 1
                               }
                             }
-                          }
+                          },
+                          "required": [
+                            "tierId",
+                            "tierName",
+                            "tierNumber",
+                            "picksFromTier",
+                            "participantIds"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "budget": {
@@ -3443,16 +3833,15 @@
                         "type": "array",
                         "items": {
                           "type": "object",
-                          "required": [
-                            "participantScoringDefinitionId",
-                            "sortOrder",
-                            "config",
-                            "active"
-                          ],
                           "properties": {
                             "participantScoringDefinitionId": {
                               "type": "string",
-                              "minLength": 1
+                              "enum": [
+                                "GOLF_RELATIVE_TO_PAR_TOTAL",
+                                "TEAM_WIN_POINTS",
+                                "ROUND_MULTIPLIER",
+                                "SEED_DIFFERENTIAL_BONUS"
+                              ]
                             },
                             "sortOrder": {
                               "type": "integer",
@@ -3460,50 +3849,50 @@
                             },
                             "config": {
                               "type": "object",
-                              "additionalProperties": true,
+                              "additionalProperties": {},
                               "default": {}
                             },
                             "active": {
                               "type": "boolean",
                               "default": true
                             }
-                          }
+                          },
+                          "required": [
+                            "participantScoringDefinitionId",
+                            "sortOrder"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "entryAggregationRule": {
                         "type": "object",
-                        "required": [
-                          "aggregationDefinitionId",
-                          "config",
-                          "active"
-                        ],
                         "properties": {
                           "aggregationDefinitionId": {
                             "type": "string",
-                            "minLength": 1
+                            "enum": [
+                              "SUM_ALL_ENTRIES",
+                              "SUM_TOP_N_ENTRIES"
+                            ]
                           },
                           "config": {
                             "type": "object",
-                            "additionalProperties": true,
+                            "additionalProperties": {},
                             "default": {}
                           },
                           "active": {
                             "type": "boolean",
                             "default": true
                           }
-                        }
+                        },
+                        "required": [
+                          "aggregationDefinitionId"
+                        ],
+                        "additionalProperties": false
                       },
                       "prizeDefinitions": {
                         "type": "array",
                         "items": {
                           "type": "object",
-                          "required": [
-                            "prizeDefinitionId",
-                            "displayName",
-                            "sortOrder",
-                            "ruleConfig",
-                            "active"
-                          ],
                           "properties": {
                             "prizeDefinitionId": {
                               "type": "string",
@@ -3520,7 +3909,7 @@
                             },
                             "ruleConfig": {
                               "type": "object",
-                              "additionalProperties": true,
+                              "additionalProperties": {},
                               "default": {}
                             },
                             "payoutType": {
@@ -3543,13 +3932,31 @@
                               "type": "boolean",
                               "default": true
                             }
-                          }
+                          },
+                          "required": [
+                            "prizeDefinitionId",
+                            "displayName",
+                            "sortOrder"
+                          ],
+                          "additionalProperties": false
                         },
                         "default": []
                       }
-                    }
+                    },
+                    "required": [
+                      "selectionType",
+                      "participantScoringRules",
+                      "entryAggregationRule"
+                    ],
+                    "additionalProperties": false
                   }
-                }
+                },
+                "required": [
+                  "name",
+                  "sportEventId",
+                  "configuration"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -3723,8 +4130,7 @@
                                       "GOLF_RELATIVE_TO_PAR_TOTAL",
                                       "TEAM_WIN_POINTS",
                                       "ROUND_MULTIPLIER",
-                                      "SEED_DIFFERENTIAL_BONUS",
-                                      "PREDICTION"
+                                      "SEED_DIFFERENTIAL_BONUS"
                                     ]
                                   },
                                   "sortOrder": {
@@ -4071,8 +4477,7 @@
                                       "GOLF_RELATIVE_TO_PAR_TOTAL",
                                       "TEAM_WIN_POINTS",
                                       "ROUND_MULTIPLIER",
-                                      "SEED_DIFFERENTIAL_BONUS",
-                                      "PREDICTION"
+                                      "SEED_DIFFERENTIAL_BONUS"
                                     ]
                                   },
                                   "sortOrder": {
@@ -4248,12 +4653,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "selectionType",
-                  "participantScoringRules",
-                  "entryAggregationRule",
-                  "prizeDefinitions"
-                ],
                 "properties": {
                   "selectionType": {
                     "type": "string",
@@ -4279,13 +4678,6 @@
                     "type": "array",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "tierId",
-                        "tierName",
-                        "tierNumber",
-                        "picksFromTier",
-                        "participantIds"
-                      ],
                       "properties": {
                         "tierId": {
                           "type": "string",
@@ -4310,7 +4702,15 @@
                             "minLength": 1
                           }
                         }
-                      }
+                      },
+                      "required": [
+                        "tierId",
+                        "tierName",
+                        "tierNumber",
+                        "picksFromTier",
+                        "participantIds"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "budget": {
@@ -4368,16 +4768,15 @@
                     "type": "array",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "participantScoringDefinitionId",
-                        "sortOrder",
-                        "config",
-                        "active"
-                      ],
                       "properties": {
                         "participantScoringDefinitionId": {
                           "type": "string",
-                          "minLength": 1
+                          "enum": [
+                            "GOLF_RELATIVE_TO_PAR_TOTAL",
+                            "TEAM_WIN_POINTS",
+                            "ROUND_MULTIPLIER",
+                            "SEED_DIFFERENTIAL_BONUS"
+                          ]
                         },
                         "sortOrder": {
                           "type": "integer",
@@ -4385,50 +4784,50 @@
                         },
                         "config": {
                           "type": "object",
-                          "additionalProperties": true,
+                          "additionalProperties": {},
                           "default": {}
                         },
                         "active": {
                           "type": "boolean",
                           "default": true
                         }
-                      }
+                      },
+                      "required": [
+                        "participantScoringDefinitionId",
+                        "sortOrder"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "entryAggregationRule": {
                     "type": "object",
-                    "required": [
-                      "aggregationDefinitionId",
-                      "config",
-                      "active"
-                    ],
                     "properties": {
                       "aggregationDefinitionId": {
                         "type": "string",
-                        "minLength": 1
+                        "enum": [
+                          "SUM_ALL_ENTRIES",
+                          "SUM_TOP_N_ENTRIES"
+                        ]
                       },
                       "config": {
                         "type": "object",
-                        "additionalProperties": true,
+                        "additionalProperties": {},
                         "default": {}
                       },
                       "active": {
                         "type": "boolean",
                         "default": true
                       }
-                    }
+                    },
+                    "required": [
+                      "aggregationDefinitionId"
+                    ],
+                    "additionalProperties": false
                   },
                   "prizeDefinitions": {
                     "type": "array",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "prizeDefinitionId",
-                        "displayName",
-                        "sortOrder",
-                        "ruleConfig",
-                        "active"
-                      ],
                       "properties": {
                         "prizeDefinitionId": {
                           "type": "string",
@@ -4445,7 +4844,7 @@
                         },
                         "ruleConfig": {
                           "type": "object",
-                          "additionalProperties": true,
+                          "additionalProperties": {},
                           "default": {}
                         },
                         "payoutType": {
@@ -4468,11 +4867,23 @@
                           "type": "boolean",
                           "default": true
                         }
-                      }
+                      },
+                      "required": [
+                        "prizeDefinitionId",
+                        "displayName",
+                        "sortOrder"
+                      ],
+                      "additionalProperties": false
                     },
                     "default": []
                   }
-                }
+                },
+                "required": [
+                  "selectionType",
+                  "participantScoringRules",
+                  "entryAggregationRule"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -4654,8 +5065,7 @@
                                       "GOLF_RELATIVE_TO_PAR_TOTAL",
                                       "TEAM_WIN_POINTS",
                                       "ROUND_MULTIPLIER",
-                                      "SEED_DIFFERENTIAL_BONUS",
-                                      "PREDICTION"
+                                      "SEED_DIFFERENTIAL_BONUS"
                                     ]
                                   },
                                   "sortOrder": {
@@ -5558,10 +5968,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "contestId",
-                    "deleted"
-                  ],
                   "properties": {
                     "contestId": {
                       "type": "string"
@@ -5572,7 +5978,12 @@
                         true
                       ]
                     }
-                  }
+                  },
+                  "required": [
+                    "contestId",
+                    "deleted"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -5593,10 +6004,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "pickId",
-                  "reason"
-                ],
                 "properties": {
                   "pickId": {
                     "type": "string"
@@ -5604,7 +6011,12 @@
                   "reason": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "pickId",
+                  "reason"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -5658,14 +6070,15 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "reason"
-                ],
                 "properties": {
                   "reason": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "reason"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -5762,15 +6175,16 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "additionalSeconds"
-                ],
                 "properties": {
                   "additionalSeconds": {
                     "type": "integer",
                     "minimum": 1
                   }
-                }
+                },
+                "required": [
+                  "additionalSeconds"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -5824,11 +6238,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "entryId",
-                  "adjustment",
-                  "reason"
-                ],
                 "properties": {
                   "entryId": {
                     "type": "string"
@@ -5839,7 +6248,13 @@
                   "reason": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "entryId",
+                  "adjustment",
+                  "reason"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -5973,14 +6388,15 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "reason"
-                ],
                 "properties": {
                   "reason": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "reason"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -6106,14 +6522,15 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "reason"
-                ],
                 "properties": {
                   "reason": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "reason"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -6239,10 +6656,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "newEnd",
-                  "reason"
-                ],
                 "properties": {
                   "newEnd": {
                     "type": "string",
@@ -6251,7 +6664,12 @@
                   "reason": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "newEnd",
+                  "reason"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -6377,10 +6795,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "newLock",
-                  "reason"
-                ],
                 "properties": {
                   "newLock": {
                     "type": "string",
@@ -6389,7 +6803,12 @@
                   "reason": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "newLock",
+                  "reason"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -8412,11 +8831,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "consentType",
-                  "granted",
-                  "version"
-                ],
                 "properties": {
                   "consentType": {
                     "type": "string"
@@ -8430,12 +8844,20 @@
                   "minimumAgeThreshold": {
                     "type": "integer",
                     "minimum": 13,
-                    "maximum": 18
+                    "maximum": 18,
+                    "nullable": true
                   },
                   "ageAffirmed": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "nullable": true
                   }
-                }
+                },
+                "required": [
+                  "consentType",
+                  "granted",
+                  "version"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -8448,15 +8870,58 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "consent": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "userId": {
+                          "type": "string"
+                        },
+                        "consentType": {
+                          "type": "string"
+                        },
+                        "granted": {
+                          "type": "boolean"
+                        },
+                        "version": {
+                          "type": "string"
+                        },
+                        "minimumAgeThreshold": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "ageAffirmed": {
+                          "type": "boolean",
+                          "nullable": true
+                        },
+                        "ipAddress": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "userAgent": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "userId",
+                        "consentType",
+                        "granted",
+                        "version",
+                        "createdAt"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
-                    "success"
+                    "consent"
                   ],
                   "additionalProperties": false
                 }
@@ -14072,26 +14537,24 @@
                   "entryIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     },
                     "minItems": 2
                   },
                   "rounds": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1,
                     "maximum": 30
                   },
                   "timePerPickSeconds": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 10,
                     "maximum": 86400
                   },
                   "availableParticipantIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     },
                     "minItems": 1
                   },
@@ -14103,7 +14566,11 @@
                       "RANDOM"
                     ]
                   }
-                }
+                },
+                "required": [
+                  "entryIds"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -14568,20 +15035,19 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "properties": {
+                  "entryId": {
+                    "type": "string"
+                  },
+                  "participantId": {
+                    "type": "string"
+                  }
+                },
                 "required": [
                   "entryId",
                   "participantId"
                 ],
-                "properties": {
-                  "entryId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "participantId": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
+                "additionalProperties": false
               }
             }
           }
@@ -15954,16 +16420,17 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "additionalSeconds"
-                ],
                 "properties": {
                   "additionalSeconds": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1,
                     "maximum": 3600
                   }
-                }
+                },
+                "required": [
+                  "additionalSeconds"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -17330,6 +17797,137 @@
         "tags": [
           "Scoring"
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sport",
+                  "scoring_type"
+                ],
+                "properties": {
+                  "contest_id": {
+                    "type": "string"
+                  },
+                  "sport": {
+                    "type": "string"
+                  },
+                  "scoring_type": {
+                    "type": "string",
+                    "enum": [
+                      "CUMULATIVE",
+                      "KNOCKOUT",
+                      "BRACKET",
+                      "STROKE_PLAY",
+                      "POSITION"
+                    ]
+                  },
+                  "stat_rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "position_rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "bonus_rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "penalty_rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "multiplier_rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "bracket_round_rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "upset_bonus_config": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    ]
+                  },
+                  "special_slots": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "tiebreaker_config": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "missed_event_score": {
+                    "type": "number"
+                  },
+                  "missed_event_points": {
+                    "type": "number"
+                  },
+                  "dnf_handling": {
+                    "type": "string",
+                    "enum": [
+                      "ZERO",
+                      "EXCLUDE",
+                      "LAST_PLACE",
+                      "PENALTY",
+                      "MISSED_CUT_SCORE"
+                    ]
+                  },
+                  "counting_method": {
+                    "type": "string",
+                    "enum": [
+                      "ALL",
+                      "BEST_N",
+                      "DROP_LOWEST_N"
+                    ]
+                  },
+                  "best_n": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "drop_lowest_n": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "lower_is_better": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -18105,15 +18703,35 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "providers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "providerId": {
+                            "type": "string"
+                          },
+                          "providerName": {
+                            "type": "string"
+                          },
+                          "sportsCovered": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "providerId",
+                          "providerName",
+                          "sportsCovered"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
-                    "success"
+                    "providers"
                   ],
                   "additionalProperties": false
                 }
@@ -18148,15 +18766,74 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "jobType": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULE_SYNC",
+                            "PARTICIPANT_SYNC",
+                            "RANKING_SYNC",
+                            "LIVE_SCORES",
+                            "EVENT_RESULTS",
+                            "HEALTH_CHECK"
+                          ]
+                        },
+                        "providerId": {
+                          "type": "string"
+                        },
+                        "sport": {
+                          "type": "string"
+                        },
+                        "eventExternalId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "RUNNING",
+                            "COMPLETED",
+                            "FAILED"
+                          ]
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "recordsProcessed": {
+                          "type": "number"
+                        },
+                        "errors": {
+                          "type": "number"
+                        },
+                        "errorLog": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        }
+                      },
+                      "required": [
+                        "jobType",
+                        "providerId",
+                        "sport",
+                        "status",
+                        "recordsProcessed",
+                        "errors",
+                        "errorLog"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
-                    "success"
+                    "job"
                   ],
                   "additionalProperties": false
                 }
@@ -18199,15 +18876,74 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "jobType": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULE_SYNC",
+                            "PARTICIPANT_SYNC",
+                            "RANKING_SYNC",
+                            "LIVE_SCORES",
+                            "EVENT_RESULTS",
+                            "HEALTH_CHECK"
+                          ]
+                        },
+                        "providerId": {
+                          "type": "string"
+                        },
+                        "sport": {
+                          "type": "string"
+                        },
+                        "eventExternalId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "RUNNING",
+                            "COMPLETED",
+                            "FAILED"
+                          ]
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "recordsProcessed": {
+                          "type": "number"
+                        },
+                        "errors": {
+                          "type": "number"
+                        },
+                        "errorLog": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        }
+                      },
+                      "required": [
+                        "jobType",
+                        "providerId",
+                        "sport",
+                        "status",
+                        "recordsProcessed",
+                        "errors",
+                        "errorLog"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
-                    "success"
+                    "job"
                   ],
                   "additionalProperties": false
                 }
@@ -18250,15 +18986,74 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "jobType": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULE_SYNC",
+                            "PARTICIPANT_SYNC",
+                            "RANKING_SYNC",
+                            "LIVE_SCORES",
+                            "EVENT_RESULTS",
+                            "HEALTH_CHECK"
+                          ]
+                        },
+                        "providerId": {
+                          "type": "string"
+                        },
+                        "sport": {
+                          "type": "string"
+                        },
+                        "eventExternalId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "RUNNING",
+                            "COMPLETED",
+                            "FAILED"
+                          ]
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "recordsProcessed": {
+                          "type": "number"
+                        },
+                        "errors": {
+                          "type": "number"
+                        },
+                        "errorLog": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        }
+                      },
+                      "required": [
+                        "jobType",
+                        "providerId",
+                        "sport",
+                        "status",
+                        "recordsProcessed",
+                        "errors",
+                        "errorLog"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
-                    "success"
+                    "job"
                   ],
                   "additionalProperties": false
                 }
@@ -18293,15 +19088,24 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                    "sport": {
+                      "type": "string"
+                    },
+                    "eventsWithOdds": {
+                      "type": "integer"
+                    },
+                    "odds": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
                     }
                   },
                   "required": [
-                    "success"
+                    "sport",
+                    "eventsWithOdds",
+                    "odds"
                   ],
                   "additionalProperties": false
                 }

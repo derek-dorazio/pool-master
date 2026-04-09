@@ -235,8 +235,9 @@ export type CreateLeagueData = {
     body: {
         name: string;
         description?: string;
-        visibility: 'PRIVATE' | 'PUBLIC';
+        visibility: 'PUBLIC' | 'PRIVATE' | 'UNLISTED';
         maxMembers?: number;
+        sport?: string;
         settings?: {
             [key: string]: unknown;
         };
@@ -364,8 +365,25 @@ export type SendLeagueInvitationsResponses = {
     /**
      * Default Response
      */
-    200: {
-        [key: string]: unknown;
+    201: {
+        sent: Array<{
+            id: string;
+            leagueId: string;
+            email?: string;
+            inviteCode: string;
+            inviteType: string;
+            status: string;
+            maxUses: number;
+            currentUses: number;
+            invitedBy: string;
+            expiresAt?: string;
+            acceptedAt?: string;
+            acceptedBy?: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        skippedMembers: Array<string>;
+        skippedDuplicates: Array<string>;
     };
 };
 
@@ -387,8 +405,23 @@ export type GenerateInviteLinkResponses = {
     /**
      * Default Response
      */
-    200: {
-        [key: string]: unknown;
+    201: {
+        invitation: {
+            id: string;
+            leagueId: string;
+            email?: string;
+            inviteCode: string;
+            inviteType: string;
+            status: string;
+            maxUses: number;
+            currentUses: number;
+            invitedBy: string;
+            expiresAt?: string;
+            acceptedAt?: string;
+            acceptedBy?: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -408,9 +441,7 @@ export type RevokeInviteLinkResponses = {
     /**
      * Default Response
      */
-    200: {
-        [key: string]: unknown;
-    };
+    204: void;
 };
 
 export type RevokeInviteLinkResponse = RevokeInviteLinkResponses[keyof RevokeInviteLinkResponses];
@@ -573,7 +604,39 @@ export type GetLeagueDashboardResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        league: {
+            [key: string]: unknown;
+        };
+        actionItems: Array<{
+            id: string;
+            leagueId: string;
+            contestId?: string;
+            type: string;
+            priority: string;
+            title: string;
+            description: string;
+            actionUrl?: string;
+            resolved: boolean;
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        contests: Array<{
+            [key: string]: unknown;
+        }>;
+        memberCount: number;
+        pendingInvites: number;
+        recentMemberActivity: Array<{
+            userId: string;
+            displayName: string;
+            action: string;
+            timestamp: string;
+        }>;
+        upcomingEvents: Array<{
+            contestId?: string;
+            title: string;
+            date: string;
+            eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
+        }>;
     };
 };
 
@@ -594,7 +657,19 @@ export type ResolveActionItemResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        actionItem: {
+            id: string;
+            leagueId: string;
+            contestId?: string;
+            type: string;
+            priority: string;
+            title: string;
+            description: string;
+            actionUrl?: string;
+            resolved: boolean;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -614,7 +689,9 @@ export type GetLeagueAuditLogResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        entries: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -1111,7 +1188,7 @@ export type CreateManagedContestData = {
     body: {
         name: string;
         sportEventId: string;
-        contestType: 'SINGLE_EVENT';
+        contestType?: 'SINGLE_EVENT';
         configuration: {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
             rounds?: number;
@@ -1137,31 +1214,31 @@ export type CreateManagedContestData = {
             rosterSize?: number;
             totalPrizePoolAmount?: number;
             participantScoringRules: Array<{
-                participantScoringDefinitionId: string;
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
                 sortOrder: number;
-                config: {
+                config?: {
                     [key: string]: unknown;
                 };
-                active: boolean;
+                active?: boolean;
             }>;
             entryAggregationRule: {
-                aggregationDefinitionId: string;
-                config: {
+                aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                config?: {
                     [key: string]: unknown;
                 };
-                active: boolean;
+                active?: boolean;
             };
-            prizeDefinitions: Array<{
+            prizeDefinitions?: Array<{
                 prizeDefinitionId: string;
                 displayName: string;
                 sortOrder: number;
-                ruleConfig: {
+                ruleConfig?: {
                     [key: string]: unknown;
                 };
                 payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
                 amount?: number;
                 percentage?: number;
-                active: boolean;
+                active?: boolean;
             }>;
         };
     };
@@ -1208,7 +1285,7 @@ export type CreateManagedContestResponses = {
                 rosterSize?: number;
                 totalPrizePoolAmount?: number;
                 participantScoringRules: Array<{
-                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS' | 'PREDICTION';
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
                     sortOrder: number;
                     config?: {
                         [key: string]: unknown;
@@ -1294,7 +1371,7 @@ export type GetManagedContestResponses = {
                 rosterSize?: number;
                 totalPrizePoolAmount?: number;
                 participantScoringRules: Array<{
-                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS' | 'PREDICTION';
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
                     sortOrder: number;
                     config?: {
                         [key: string]: unknown;
@@ -1360,31 +1437,31 @@ export type UpdateManagedContestConfigurationData = {
         rosterSize?: number;
         totalPrizePoolAmount?: number;
         participantScoringRules: Array<{
-            participantScoringDefinitionId: string;
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
             sortOrder: number;
-            config: {
+            config?: {
                 [key: string]: unknown;
             };
-            active: boolean;
+            active?: boolean;
         }>;
         entryAggregationRule: {
-            aggregationDefinitionId: string;
-            config: {
+            aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+            config?: {
                 [key: string]: unknown;
             };
-            active: boolean;
+            active?: boolean;
         };
-        prizeDefinitions: Array<{
+        prizeDefinitions?: Array<{
             prizeDefinitionId: string;
             displayName: string;
             sortOrder: number;
-            ruleConfig: {
+            ruleConfig?: {
                 [key: string]: unknown;
             };
             payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
             amount?: number;
             percentage?: number;
-            active: boolean;
+            active?: boolean;
         }>;
     };
     path: {
@@ -1431,7 +1508,7 @@ export type UpdateManagedContestConfigurationResponses = {
                 rosterSize?: number;
                 totalPrizePoolAmount?: number;
                 participantScoringRules: Array<{
-                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS' | 'PREDICTION';
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
                     sortOrder: number;
                     config?: {
                         [key: string]: unknown;
@@ -2727,201 +2804,22 @@ export type RecordConsentResponses = {
      * Default Response
      */
     201: {
-        success: true;
+        consent: {
+            id: string;
+            userId: string;
+            consentType: string;
+            granted: boolean;
+            version: string;
+            minimumAgeThreshold?: number;
+            ageAffirmed?: boolean;
+            ipAddress?: string;
+            userAgent?: string;
+            createdAt: string;
+        };
     };
 };
 
 export type RecordConsentResponse = RecordConsentResponses[keyof RecordConsentResponses];
-
-export type AdminListTenantsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        search?: string;
-        status?: 'active' | 'suspended' | 'trial';
-        sortBy?: 'name' | 'created' | 'members' | 'lastActive';
-        sortDir?: 'asc' | 'desc';
-        page?: number;
-        pageSize?: number;
-    };
-    url: '/api/v1/admin/tenants';
-};
-
-export type AdminListTenantsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        items: Array<{
-            id: string;
-            name: string;
-            slug: string;
-            memberCount: number;
-            contestCount: number;
-            leagueCount: number;
-            status: 'active' | 'suspended' | 'trial';
-            lastActiveAt?: string;
-            createdAt: string;
-        }>;
-        total: number;
-        page: number;
-        pageSize: number;
-        totalPages: number;
-    };
-};
-
-export type AdminListTenantsResponse = AdminListTenantsResponses[keyof AdminListTenantsResponses];
-
-export type AdminDeleteTenantData = {
-    body: {
-        confirmation: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}';
-};
-
-export type AdminDeleteTenantResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDeleteTenantResponse = AdminDeleteTenantResponses[keyof AdminDeleteTenantResponses];
-
-export type AdminGetTenantDetailData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}';
-};
-
-export type AdminGetTenantDetailResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        tenant: {
-            id: string;
-            name: string;
-            slug: string;
-            settings: {
-                [key: string]: unknown;
-            };
-            createdAt: string;
-            updatedAt: string;
-        };
-        memberCount: number;
-        leagueCount: number;
-        contestCount: number;
-        activeContestCount: number;
-        status: 'active' | 'suspended' | 'trial';
-        lastActiveAt?: string;
-        recentMembers: Array<{
-            id: string;
-            email: string;
-            displayName: string;
-            createdAt: string;
-        }>;
-    };
-};
-
-export type AdminGetTenantDetailResponse = AdminGetTenantDetailResponses[keyof AdminGetTenantDetailResponses];
-
-export type AdminSuspendTenantData = {
-    body: {
-        reason: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/suspend';
-};
-
-export type AdminSuspendTenantResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminSuspendTenantResponse = AdminSuspendTenantResponses[keyof AdminSuspendTenantResponses];
-
-export type AdminUnsuspendTenantData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/unsuspend';
-};
-
-export type AdminUnsuspendTenantResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUnsuspendTenantResponse = AdminUnsuspendTenantResponses[keyof AdminUnsuspendTenantResponses];
-
-export type AdminApplyCreditData = {
-    body: {
-        amount: number;
-        reason: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/credit';
-};
-
-export type AdminApplyCreditResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminApplyCreditResponse = AdminApplyCreditResponses[keyof AdminApplyCreditResponses];
-
-export type AdminExtendTrialData = {
-    body: {
-        days: number;
-        reason: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/extend-trial';
-};
-
-export type AdminExtendTrialResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminExtendTrialResponse = AdminExtendTrialResponses[keyof AdminExtendTrialResponses];
 
 export type AdminListUsersData = {
     body?: never;
@@ -3043,26 +2941,6 @@ export type AdminGetUserDetailResponses = {
 
 export type AdminGetUserDetailResponse = AdminGetUserDetailResponses[keyof AdminGetUserDetailResponses];
 
-export type AdminResetPasswordData = {
-    body?: never;
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/reset-password';
-};
-
-export type AdminResetPasswordResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetPasswordResponse = AdminResetPasswordResponses[keyof AdminResetPasswordResponses];
-
 export type AdminForceLogoutData = {
     body?: never;
     path: {
@@ -3124,29 +3002,6 @@ export type AdminEnableUserResponses = {
 };
 
 export type AdminEnableUserResponse = AdminEnableUserResponses[keyof AdminEnableUserResponses];
-
-export type AdminSendEmailData = {
-    body: {
-        subject: string;
-        body: string;
-    };
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/email';
-};
-
-export type AdminSendEmailResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminSendEmailResponse = AdminSendEmailResponses[keyof AdminSendEmailResponses];
 
 export type AdminListContestsData = {
     body?: never;
@@ -4019,62 +3874,6 @@ export type AdminUnmuteAlertResponses = {
 
 export type AdminUnmuteAlertResponse = AdminUnmuteAlertResponses[keyof AdminUnmuteAlertResponses];
 
-export type AdminStartImpersonationData = {
-    body: {
-        tenantId: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/impersonation/start';
-};
-
-export type AdminStartImpersonationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminStartImpersonationResponse = AdminStartImpersonationResponses[keyof AdminStartImpersonationResponses];
-
-export type AdminEndImpersonationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/impersonation/end';
-};
-
-export type AdminEndImpersonationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminEndImpersonationResponse = AdminEndImpersonationResponses[keyof AdminEndImpersonationResponses];
-
-export type AdminGetActiveImpersonationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/impersonation/active';
-};
-
-export type AdminGetActiveImpersonationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetActiveImpersonationResponse = AdminGetActiveImpersonationResponses[keyof AdminGetActiveImpersonationResponses];
-
 export type AdminListMigrationsData = {
     body?: never;
     path?: never;
@@ -4289,66 +4088,6 @@ export type AdminCancelMigrationRunResponses = {
 };
 
 export type AdminCancelMigrationRunResponse = AdminCancelMigrationRunResponses[keyof AdminCancelMigrationRunResponses];
-
-export type AdminStartTenantExportData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/export';
-};
-
-export type AdminStartTenantExportResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminStartTenantExportResponse = AdminStartTenantExportResponses[keyof AdminStartTenantExportResponses];
-
-export type AdminGetExportStatusData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/export/status';
-};
-
-export type AdminGetExportStatusResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetExportStatusResponse = AdminGetExportStatusResponses[keyof AdminGetExportStatusResponses];
-
-export type AdminDownloadExportData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/export/download';
-};
-
-export type AdminDownloadExportResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDownloadExportResponse = AdminDownloadExportResponses[keyof AdminDownloadExportResponses];
 
 export type AdminExportAuditLogData = {
     body?: never;
@@ -4599,385 +4338,6 @@ export type AdminResetIngestionScheduleResponses = {
 
 export type AdminResetIngestionScheduleResponse = AdminResetIngestionScheduleResponses[keyof AdminResetIngestionScheduleResponses];
 
-export type AdminGetDunningConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/dunning';
-};
-
-export type AdminGetDunningConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetDunningConfigResponse = AdminGetDunningConfigResponses[keyof AdminGetDunningConfigResponses];
-
-export type AdminUpdateDunningConfigData = {
-    body: {
-        retryAttempts?: Array<{
-            daysAfterFailure: number;
-            action: string;
-        }>;
-        gracePeriodDays?: number;
-        degradedPeriodDays?: number;
-        cancellationDays?: number;
-        notifyOnRetry?: boolean;
-        notifyOnGracePeriodStart?: boolean;
-        notifyOnDegradation?: boolean;
-        notifyBeforeCancellation?: boolean;
-        notifyBeforeCancellationDays?: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/dunning';
-};
-
-export type AdminUpdateDunningConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateDunningConfigResponse = AdminUpdateDunningConfigResponses[keyof AdminUpdateDunningConfigResponses];
-
-export type AdminResetDunningConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/dunning/reset';
-};
-
-export type AdminResetDunningConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetDunningConfigResponse = AdminResetDunningConfigResponses[keyof AdminResetDunningConfigResponses];
-
-export type AdminGetChannelConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/notification-channels';
-};
-
-export type AdminGetChannelConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetChannelConfigResponse = AdminGetChannelConfigResponses[keyof AdminGetChannelConfigResponses];
-
-export type AdminUpdateChannelConfigData = {
-    body: {
-        channels: Array<'PUSH' | 'EMAIL' | 'IN_APP' | 'SMS'>;
-    };
-    path: {
-        category: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/notification-channels/{category}';
-};
-
-export type AdminUpdateChannelConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateChannelConfigResponse = AdminUpdateChannelConfigResponses[keyof AdminUpdateChannelConfigResponses];
-
-export type AdminResetChannelConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/notification-channels/reset';
-};
-
-export type AdminResetChannelConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetChannelConfigResponse = AdminResetChannelConfigResponses[keyof AdminResetChannelConfigResponses];
-
-export type AdminListNotificationTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/notification-templates';
-};
-
-export type AdminListNotificationTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminListNotificationTemplatesResponse = AdminListNotificationTemplatesResponses[keyof AdminListNotificationTemplatesResponses];
-
-export type AdminGetNotificationTemplateData = {
-    body?: never;
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/notification-templates/{eventType}';
-};
-
-export type AdminGetNotificationTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetNotificationTemplateResponse = AdminGetNotificationTemplateResponses[keyof AdminGetNotificationTemplateResponses];
-
-export type AdminUpdateNotificationTemplateData = {
-    body: {
-        pushTitle?: string;
-        pushBody?: string;
-        emailSubject?: string;
-        emailText?: string;
-        inAppTitle?: string;
-        inAppBody?: string;
-        inAppIcon?: string;
-        smsBody?: string;
-    };
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/notification-templates/{eventType}';
-};
-
-export type AdminUpdateNotificationTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateNotificationTemplateResponse = AdminUpdateNotificationTemplateResponses[keyof AdminUpdateNotificationTemplateResponses];
-
-export type AdminResetNotificationTemplateData = {
-    body?: never;
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/notification-templates/reset/{eventType}';
-};
-
-export type AdminResetNotificationTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetNotificationTemplateResponse = AdminResetNotificationTemplateResponses[keyof AdminResetNotificationTemplateResponses];
-
-export type AdminListPushTriggersData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers';
-};
-
-export type AdminListPushTriggersResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminListPushTriggersResponse = AdminListPushTriggersResponses[keyof AdminListPushTriggersResponses];
-
-export type AdminUpdatePushTriggerData = {
-    body: {
-        enabled?: boolean;
-        title?: string;
-        body?: string;
-        sound?: string;
-        priority?: 'high' | 'normal';
-        category?: string;
-    };
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers/{eventType}';
-};
-
-export type AdminUpdatePushTriggerResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdatePushTriggerResponse = AdminUpdatePushTriggerResponses[keyof AdminUpdatePushTriggerResponses];
-
-export type AdminEnablePushTriggerData = {
-    body?: never;
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers/{eventType}/enable';
-};
-
-export type AdminEnablePushTriggerResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminEnablePushTriggerResponse = AdminEnablePushTriggerResponses[keyof AdminEnablePushTriggerResponses];
-
-export type AdminDisablePushTriggerData = {
-    body?: never;
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers/{eventType}/disable';
-};
-
-export type AdminDisablePushTriggerResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDisablePushTriggerResponse = AdminDisablePushTriggerResponses[keyof AdminDisablePushTriggerResponses];
-
-export type AdminResetPushTriggersData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers/reset';
-};
-
-export type AdminResetPushTriggersResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetPushTriggersResponse = AdminResetPushTriggersResponses[keyof AdminResetPushTriggersResponses];
-
-export type AdminGetRateLimitConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/rate-limits';
-};
-
-export type AdminGetRateLimitConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetRateLimitConfigResponse = AdminGetRateLimitConfigResponses[keyof AdminGetRateLimitConfigResponses];
-
-export type AdminUpdateRateLimitConfigData = {
-    body: {
-        pushPerHour?: number;
-        emailPerDay?: number;
-        smsPerDay?: number;
-        collapseRules?: Array<{
-            eventType: string;
-            maxPerHour: number;
-            windowMinutes: number;
-        }>;
-        dedupWindowSeconds?: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/rate-limits';
-};
-
-export type AdminUpdateRateLimitConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateRateLimitConfigResponse = AdminUpdateRateLimitConfigResponses[keyof AdminUpdateRateLimitConfigResponses];
-
-export type AdminResetRateLimitConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/rate-limits/reset';
-};
-
-export type AdminResetRateLimitConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetRateLimitConfigResponse = AdminResetRateLimitConfigResponses[keyof AdminResetRateLimitConfigResponses];
-
 export type GetPollIntervalsData = {
     body?: never;
     path?: never;
@@ -5003,642 +4363,6 @@ export type GetPollIntervalsResponses = {
 };
 
 export type GetPollIntervalsResponse = GetPollIntervalsResponses[keyof GetPollIntervalsResponses];
-
-export type GetLeagueFeedData = {
-    body?: never;
-    path: {
-        leagueId: string;
-    };
-    query?: {
-        cursor?: string;
-        limit?: string;
-    };
-    url: '/api/v1/leagues/{leagueId}/feed';
-};
-
-export type GetLeagueFeedResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        posts: Array<{
-            id: string;
-            leagueId: string;
-            authorId: string;
-            type: string;
-            authorName: string;
-            content: string;
-            isPinned: boolean;
-            reactions: {
-                [key: string]: Array<string>;
-            };
-            replyCount: number;
-            parentId?: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        nextCursor?: string;
-    };
-};
-
-export type GetLeagueFeedResponse = GetLeagueFeedResponses[keyof GetLeagueFeedResponses];
-
-export type CreateFeedPostData = {
-    body: {
-        content: string;
-        type?: 'POST' | 'ANNOUNCEMENT' | 'SYSTEM';
-    };
-    path: {
-        leagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed';
-};
-
-export type CreateFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        leagueId: string;
-        authorId: string;
-        type: string;
-        authorName: string;
-        content: string;
-        isPinned: boolean;
-        reactions: {
-            [key: string]: Array<string>;
-        };
-        replyCount: number;
-        parentId?: string;
-        createdAt: string;
-        updatedAt: string;
-        replies?: Array<{
-            id: string;
-            leagueId: string;
-            authorId: string;
-            type: string;
-            authorName: string;
-            content: string;
-            isPinned: boolean;
-            reactions: {
-                [key: string]: Array<string>;
-            };
-            replyCount: number;
-            parentId?: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-    };
-};
-
-export type CreateFeedPostResponse = CreateFeedPostResponses[keyof CreateFeedPostResponses];
-
-export type DeleteFeedPostData = {
-    body?: never;
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}';
-};
-
-export type DeleteFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type DeleteFeedPostResponse = DeleteFeedPostResponses[keyof DeleteFeedPostResponses];
-
-export type GetFeedPostData = {
-    body?: never;
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}';
-};
-
-export type GetFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        leagueId: string;
-        authorId: string;
-        type: string;
-        authorName: string;
-        content: string;
-        isPinned: boolean;
-        reactions: {
-            [key: string]: Array<string>;
-        };
-        replyCount: number;
-        parentId?: string;
-        createdAt: string;
-        updatedAt: string;
-        replies?: Array<{
-            id: string;
-            leagueId: string;
-            authorId: string;
-            type: string;
-            authorName: string;
-            content: string;
-            isPinned: boolean;
-            reactions: {
-                [key: string]: Array<string>;
-            };
-            replyCount: number;
-            parentId?: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-    };
-};
-
-export type GetFeedPostResponse = GetFeedPostResponses[keyof GetFeedPostResponses];
-
-export type AddFeedReplyData = {
-    body: {
-        content: string;
-    };
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/replies';
-};
-
-export type AddFeedReplyResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        leagueId: string;
-        authorId: string;
-        type: string;
-        authorName: string;
-        content: string;
-        isPinned: boolean;
-        reactions: {
-            [key: string]: Array<string>;
-        };
-        replyCount: number;
-        parentId?: string;
-        createdAt: string;
-        updatedAt: string;
-        replies?: Array<{
-            id: string;
-            leagueId: string;
-            authorId: string;
-            type: string;
-            authorName: string;
-            content: string;
-            isPinned: boolean;
-            reactions: {
-                [key: string]: Array<string>;
-            };
-            replyCount: number;
-            parentId?: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-    };
-};
-
-export type AddFeedReplyResponse = AddFeedReplyResponses[keyof AddFeedReplyResponses];
-
-export type AddFeedReactionData = {
-    body: {
-        emoji: string;
-    };
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/reactions';
-};
-
-export type AddFeedReactionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        added: boolean;
-    };
-};
-
-export type AddFeedReactionResponse = AddFeedReactionResponses[keyof AddFeedReactionResponses];
-
-export type UnpinFeedPostData = {
-    body?: never;
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/pin';
-};
-
-export type UnpinFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type UnpinFeedPostResponse = UnpinFeedPostResponses[keyof UnpinFeedPostResponses];
-
-export type PinFeedPostData = {
-    body?: never;
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/pin';
-};
-
-export type PinFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type PinFeedPostResponse = PinFeedPostResponses[keyof PinFeedPostResponses];
-
-export type ListSocialConversationsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/social/messages/conversations';
-};
-
-export type ListSocialConversationsErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type ListSocialConversationsError = ListSocialConversationsErrors[keyof ListSocialConversationsErrors];
-
-export type ListSocialConversationsResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        participantName: string;
-        participantInitials: string;
-        participantAvatarUrl: string;
-        lastMessage: string;
-        lastMessageAt: string;
-        unreadCount: number;
-    }>;
-};
-
-export type ListSocialConversationsResponse = ListSocialConversationsResponses[keyof ListSocialConversationsResponses];
-
-export type GetSocialConversationMessagesData = {
-    body?: never;
-    path: {
-        conversationId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/messages/conversations/{conversationId}';
-};
-
-export type GetSocialConversationMessagesErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetSocialConversationMessagesError = GetSocialConversationMessagesErrors[keyof GetSocialConversationMessagesErrors];
-
-export type GetSocialConversationMessagesResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        senderId: string;
-        senderName: string;
-        content: string;
-        createdAt: string;
-        isOwn: boolean;
-        delivered: boolean;
-        read: boolean;
-    }>;
-};
-
-export type GetSocialConversationMessagesResponse = GetSocialConversationMessagesResponses[keyof GetSocialConversationMessagesResponses];
-
-export type SendSocialConversationMessageData = {
-    body: {
-        content: string;
-    };
-    path: {
-        conversationId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/messages/conversations/{conversationId}';
-};
-
-export type SendSocialConversationMessageErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type SendSocialConversationMessageError = SendSocialConversationMessageErrors[keyof SendSocialConversationMessageErrors];
-
-export type SendSocialConversationMessageResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        senderId: string;
-        senderName: string;
-        content: string;
-        createdAt: string;
-        isOwn: boolean;
-        delivered: boolean;
-        read: boolean;
-    };
-};
-
-export type SendSocialConversationMessageResponse = SendSocialConversationMessageResponses[keyof SendSocialConversationMessageResponses];
-
-export type MarkSocialConversationReadData = {
-    body?: never;
-    path: {
-        conversationId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/messages/conversations/{conversationId}/read';
-};
-
-export type MarkSocialConversationReadErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type MarkSocialConversationReadError = MarkSocialConversationReadErrors[keyof MarkSocialConversationReadErrors];
-
-export type MarkSocialConversationReadResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type MarkSocialConversationReadResponse = MarkSocialConversationReadResponses[keyof MarkSocialConversationReadResponses];
-
-export type GetContestChatData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/contests/{contestId}/chat';
-};
-
-export type GetContestChatErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetContestChatError = GetContestChatErrors[keyof GetContestChatErrors];
-
-export type GetContestChatResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        type: 'user' | 'system';
-        authorName: string;
-        authorInitials: string;
-        content: string;
-        createdAt: string;
-        isOwn: boolean;
-    }>;
-};
-
-export type GetContestChatResponse = GetContestChatResponses[keyof GetContestChatResponses];
-
-export type SendContestChatMessageData = {
-    body: {
-        content: string;
-    };
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/contests/{contestId}/chat';
-};
-
-export type SendContestChatMessageErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type SendContestChatMessageError = SendContestChatMessageErrors[keyof SendContestChatMessageErrors];
-
-export type SendContestChatMessageResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        type: 'user' | 'system';
-        authorName: string;
-        authorInitials: string;
-        content: string;
-        createdAt: string;
-        isOwn: boolean;
-    };
-};
-
-export type SendContestChatMessageResponse = SendContestChatMessageResponses[keyof SendContestChatMessageResponses];
-
-export type GetShareCardData = {
-    body?: never;
-    path: {
-        shareId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/shares/{shareId}';
-};
-
-export type GetShareCardErrors = {
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetShareCardError = GetShareCardErrors[keyof GetShareCardErrors];
-
-export type GetShareCardResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        type: 'contest_result' | 'season_champion' | 'achievement';
-        title: string;
-        sport: string;
-        sportIcon: string;
-        winnerName: string;
-        winnerAvatarUrl: string;
-        winnerScore: string;
-        leaderboard: Array<{
-            rank: number;
-            name: string;
-            score: string;
-        }>;
-        dateRange: string;
-        imageUrl: string;
-        ogTitle: string;
-        ogDescription: string;
-    };
-};
-
-export type GetShareCardResponse = GetShareCardResponses[keyof GetShareCardResponses];
-
-export type GetLeagueRecapData = {
-    body?: never;
-    path: {
-        leagueId: string;
-    };
-    query?: {
-        week?: string;
-    };
-    url: '/api/v1/social/leagues/{leagueId}/recap';
-};
-
-export type GetLeagueRecapErrors = {
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetLeagueRecapError = GetLeagueRecapErrors[keyof GetLeagueRecapErrors];
-
-export type GetLeagueRecapResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        weekLabel: string;
-        standings: Array<{
-            rank: number;
-            name: string;
-            initials: string;
-            points: number;
-            change: number;
-        }>;
-        highlights: Array<{
-            icon: string;
-            title: string;
-            detail: string;
-        }>;
-        upcoming: Array<{
-            name: string;
-            dateTime: string;
-            daysUntil: number;
-        }>;
-    };
-};
-
-export type GetLeagueRecapResponse = GetLeagueRecapResponses[keyof GetLeagueRecapResponses];
 
 export type GetDraftStateData = {
     body?: never;
@@ -5755,7 +4479,7 @@ export type GetDraftStateResponse = GetDraftStateResponses[keyof GetDraftStateRe
 
 export type StartDraftData = {
     body: {
-        entryIds?: Array<string>;
+        entryIds: Array<string>;
         rounds?: number;
         timePerPickSeconds?: number;
         availableParticipantIds?: Array<string>;
@@ -6556,7 +5280,45 @@ export type SkipSnakeDraftTurnResponses = {
 export type SkipSnakeDraftTurnResponse = SkipSnakeDraftTurnResponses[keyof SkipSnakeDraftTurnResponses];
 
 export type ValidateScoringConfigData = {
-    body?: never;
+    body: {
+        contest_id?: string;
+        sport: string;
+        scoring_type: 'CUMULATIVE' | 'KNOCKOUT' | 'BRACKET' | 'STROKE_PLAY' | 'POSITION';
+        stat_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        position_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        bonus_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        penalty_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        multiplier_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        bracket_round_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        upset_bonus_config?: null | {
+            [key: string]: unknown;
+        };
+        special_slots?: Array<{
+            [key: string]: unknown;
+        }>;
+        tiebreaker_config?: {
+            [key: string]: unknown;
+        };
+        missed_event_score?: number;
+        missed_event_points?: number;
+        dnf_handling?: 'ZERO' | 'EXCLUDE' | 'LAST_PLACE' | 'PENALTY' | 'MISSED_CUT_SCORE';
+        counting_method?: 'ALL' | 'BEST_N' | 'DROP_LOWEST_N';
+        best_n?: number;
+        drop_lowest_n?: number;
+        lower_is_better?: boolean;
+    };
     path?: never;
     query?: never;
     url: '/api/v1/scoring/config/validate';
@@ -6862,335 +5624,6 @@ export type DismissNotificationResponses = {
 
 export type DismissNotificationResponse = DismissNotificationResponses[keyof DismissNotificationResponses];
 
-export type GetNotificationPreferencesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/preferences';
-};
-
-export type GetNotificationPreferencesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        preferences: {
-            doNotDisturb: boolean;
-            dndSchedule?: {
-                [key: string]: unknown;
-            };
-            categories: {
-                [key: string]: unknown;
-            };
-        };
-    };
-};
-
-export type GetNotificationPreferencesResponse = GetNotificationPreferencesResponses[keyof GetNotificationPreferencesResponses];
-
-export type UpdateNotificationPreferencesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/preferences';
-};
-
-export type UpdateNotificationPreferencesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        preferences: {
-            doNotDisturb: boolean;
-            dndSchedule?: {
-                [key: string]: unknown;
-            };
-            categories: {
-                [key: string]: unknown;
-            };
-        };
-    };
-};
-
-export type UpdateNotificationPreferencesResponse = UpdateNotificationPreferencesResponses[keyof UpdateNotificationPreferencesResponses];
-
-export type UnsubscribeNotificationCategoryData = {
-    body?: never;
-    path: {
-        category: string;
-    };
-    query?: never;
-    url: '/api/v1/notifications/unsubscribe/{category}';
-};
-
-export type UnsubscribeNotificationCategoryResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-        category: string;
-        enabled: false;
-    };
-};
-
-export type UnsubscribeNotificationCategoryResponse = UnsubscribeNotificationCategoryResponses[keyof UnsubscribeNotificationCategoryResponses];
-
-export type ListDevicesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/devices';
-};
-
-export type ListDevicesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        devices: Array<{
-            id: string;
-            userId: string;
-            platform: string;
-            token: string;
-            appVersion?: string;
-            osVersion?: string;
-            deviceModel?: string;
-            isActive: boolean;
-            registeredAt: string;
-            lastActiveAt: string;
-        }>;
-    };
-};
-
-export type ListDevicesResponse = ListDevicesResponses[keyof ListDevicesResponses];
-
-export type RegisterDeviceData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/devices';
-};
-
-export type RegisterDeviceResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        device: {
-            id: string;
-            userId: string;
-            platform: string;
-            token: string;
-            appVersion?: string;
-            osVersion?: string;
-            deviceModel?: string;
-            isActive: boolean;
-            registeredAt: string;
-            lastActiveAt: string;
-        };
-    };
-};
-
-export type RegisterDeviceResponse = RegisterDeviceResponses[keyof RegisterDeviceResponses];
-
-export type RegisterDeviceAliasData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/devices/register';
-};
-
-export type RegisterDeviceAliasResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        device: {
-            id: string;
-            userId: string;
-            platform: string;
-            token: string;
-            appVersion?: string;
-            osVersion?: string;
-            deviceModel?: string;
-            isActive: boolean;
-            registeredAt: string;
-            lastActiveAt: string;
-        };
-    };
-};
-
-export type RegisterDeviceAliasResponse = RegisterDeviceAliasResponses[keyof RegisterDeviceAliasResponses];
-
-export type DeactivateDeviceData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/devices/{id}';
-};
-
-export type DeactivateDeviceResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type DeactivateDeviceResponse = DeactivateDeviceResponses[keyof DeactivateDeviceResponses];
-
-export type DispatchNotificationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/dispatch';
-};
-
-export type DispatchNotificationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type DispatchNotificationResponse = DispatchNotificationResponses[keyof DispatchNotificationResponses];
-
-export type SendAnnouncementData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/announce';
-};
-
-export type SendAnnouncementResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type SendAnnouncementResponse = SendAnnouncementResponses[keyof SendAnnouncementResponses];
-
-export type ScheduleNotificationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/schedule';
-};
-
-export type ScheduleNotificationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        scheduled: boolean;
-        id: string;
-    };
-};
-
-export type ScheduleNotificationResponse = ScheduleNotificationResponses[keyof ScheduleNotificationResponses];
-
-export type CancelScheduledNotificationsData = {
-    body?: never;
-    path: {
-        sourceType: string;
-        sourceId: string;
-    };
-    query?: never;
-    url: '/api/v1/notifications/schedule/{sourceType}/{sourceId}';
-};
-
-export type CancelScheduledNotificationsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        cancelled: number;
-    };
-};
-
-export type CancelScheduledNotificationsResponse = CancelScheduledNotificationsResponses[keyof CancelScheduledNotificationsResponses];
-
-export type GetNotificationAnalyticsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/analytics';
-};
-
-export type GetNotificationAnalyticsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        period: {
-            days: number;
-            since: string;
-        };
-        total: number;
-        deliveryRate: number;
-        sent: number;
-        suppressed: number;
-        failed: number;
-        byChannel: {
-            [key: string]: {
-                sent: number;
-                suppressed: number;
-                failed: number;
-            };
-        };
-        suppressionReasons: {
-            [key: string]: number;
-        };
-    };
-};
-
-export type GetNotificationAnalyticsResponse = GetNotificationAnalyticsResponses[keyof GetNotificationAnalyticsResponses];
-
-export type SendTestEmailData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/test/email';
-};
-
-export type SendTestEmailResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type SendTestEmailResponse = SendTestEmailResponses[keyof SendTestEmailResponses];
-
-export type SendTestPushData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/test/push';
-};
-
-export type SendTestPushResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type SendTestPushResponse = SendTestPushResponses[keyof SendTestPushResponses];
-
 export type ListIngestionProvidersData = {
     body?: never;
     path?: never;
@@ -7203,7 +5636,11 @@ export type ListIngestionProvidersResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        providers: Array<{
+            providerId: string;
+            providerName: string;
+            sportsCovered: Array<string>;
+        }>;
     };
 };
 
@@ -7223,7 +5660,20 @@ export type SyncSportDataResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        job: {
+            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            providerId: string;
+            sport: string;
+            eventExternalId?: string;
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt?: string;
+            completedAt?: string;
+            recordsProcessed: number;
+            errors: number;
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        };
     };
 };
 
@@ -7244,7 +5694,20 @@ export type IngestEventScoresResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        job: {
+            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            providerId: string;
+            sport: string;
+            eventExternalId?: string;
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt?: string;
+            completedAt?: string;
+            recordsProcessed: number;
+            errors: number;
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        };
     };
 };
 
@@ -7265,7 +5728,20 @@ export type IngestEventResultsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        job: {
+            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            providerId: string;
+            sport: string;
+            eventExternalId?: string;
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt?: string;
+            completedAt?: string;
+            recordsProcessed: number;
+            errors: number;
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        };
     };
 };
 
@@ -7285,7 +5761,11 @@ export type IngestSportOddsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        sport: string;
+        eventsWithOdds: number;
+        odds: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 

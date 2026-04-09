@@ -12,8 +12,8 @@ export class AccountConsentService {
     ageAffirmed?: boolean | null;
     ipAddress?: string;
     userAgent?: string;
-  }): Promise<void> {
-    await this.prisma.consentRecord.create({
+  }) {
+    return this.prisma.consentRecord.create({
       data: {
         userId: params.userId,
         consentType: params.consentType,

@@ -14,4 +14,5 @@ export * from './config.dto';
 export * from './account-consent.dto';
 export * from './history.dto';
 export * from './events.dto';
+export * from './ingestion.dto';
 export { zodToJsonSchema } from './json-schema';

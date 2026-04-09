@@ -78,6 +78,51 @@ export const UpdateContestRequestSchema = z.object({
 });
 export type UpdateContestRequest = z.infer<typeof UpdateContestRequestSchema>;
 
+export const UndoContestDraftSelectionRequestSchema = z.object({
+  pickId: z.string(),
+  reason: z.string(),
+});
+export type UndoContestDraftSelectionRequest = z.infer<typeof UndoContestDraftSelectionRequestSchema>;
+
+export const PauseContestDraftRequestSchema = z.object({
+  reason: z.string(),
+});
+export type PauseContestDraftRequest = z.infer<typeof PauseContestDraftRequestSchema>;
+
+export const ExtendPickClockRequestSchema = z.object({
+  additionalSeconds: z.number().int().min(1),
+});
+export type ExtendPickClockRequest = z.infer<typeof ExtendPickClockRequestSchema>;
+
+export const AdjustContestScoreRequestSchema = z.object({
+  entryId: z.string(),
+  adjustment: z.number(),
+  reason: z.string(),
+});
+export type AdjustContestScoreRequest = z.infer<typeof AdjustContestScoreRequestSchema>;
+
+export const ReopenContestRequestSchema = z.object({
+  reason: z.string(),
+});
+export type ReopenContestRequest = z.infer<typeof ReopenContestRequestSchema>;
+
+export const CloseContestRequestSchema = z.object({
+  reason: z.string(),
+});
+export type CloseContestRequest = z.infer<typeof CloseContestRequestSchema>;
+
+export const ExtendContestDeadlineRequestSchema = z.object({
+  newEnd: z.string().datetime(),
+  reason: z.string(),
+});
+export type ExtendContestDeadlineRequest = z.infer<typeof ExtendContestDeadlineRequestSchema>;
+
+export const UpdateContestLockTimeRequestSchema = z.object({
+  newLock: z.string().datetime(),
+  reason: z.string(),
+});
+export type UpdateContestLockTimeRequest = z.infer<typeof UpdateContestLockTimeRequestSchema>;
+
 // --- Response Sub-schemas ---
 
 export const ContestSummaryDtoSchema = z.object({
@@ -162,7 +207,7 @@ export const ContestEntryDeletionResponseSchema = z.object({
 });
 export type ContestEntryDeletionResponse = z.infer<typeof ContestEntryDeletionResponseSchema>;
 
-export const ContestStandingsRecalculationResponseSchema = z.object({
+export const ContestRecalculationResponseSchema = z.object({
   contestId: z.string(),
   teamsAffected: z.number(),
   standingsChanged: z.boolean(),
@@ -176,6 +221,10 @@ export const ContestStandingsRecalculationResponseSchema = z.object({
     }),
   ),
 });
+export type ContestRecalculationResponse = z.infer<typeof ContestRecalculationResponseSchema>;
+
+export const ContestStandingsRecalculationResponseSchema =
+  ContestRecalculationResponseSchema;
 
 export const ContestAuditLogEntryDtoSchema = z.object({
   id: z.string(),

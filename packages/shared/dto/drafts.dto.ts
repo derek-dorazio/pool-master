@@ -20,6 +20,11 @@ export const SubmitPickRequestSchema = z.object({
 });
 export type SubmitPickRequest = z.infer<typeof SubmitPickRequestSchema>;
 
+export const ExtendCurrentTurnRequestSchema = z.object({
+  additionalSeconds: z.number().int().min(1).max(3600),
+});
+export type ExtendCurrentTurnRequest = z.infer<typeof ExtendCurrentTurnRequestSchema>;
+
 // --- Response Sub-schemas ---
 
 export const DraftPickHistoryDtoSchema = z.object({

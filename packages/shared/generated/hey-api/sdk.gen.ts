@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddFeedReactionData, AddFeedReactionResponses, AddFeedReplyData, AddFeedReplyResponses, AddSquadCoManagerData, AddSquadCoManagerResponses, AdjustScoreData, AdjustScoreResponses, AdminApplyCreditData, AdminApplyCreditResponses, AdminCancelMigrationRunData, AdminCancelMigrationRunResponses, AdminDeleteTenantData, AdminDeleteTenantResponses, AdminDisablePushTriggerData, AdminDisablePushTriggerResponses, AdminDisableUserData, AdminDisableUserResponses, AdminDownloadExportData, AdminDownloadExportResponses, AdminEnablePushTriggerData, AdminEnablePushTriggerResponses, AdminEnableUserData, AdminEnableUserResponses, AdminEndImpersonationData, AdminEndImpersonationResponses, AdminExportAuditLogData, AdminExportAuditLogResponses, AdminExtendTrialData, AdminExtendTrialResponses, AdminForceCloseContestData, AdminForceCloseContestResponses, AdminForceLogoutData, AdminForceLogoutResponses, AdminGetActiveImpersonationData, AdminGetActiveImpersonationResponses, AdminGetAlertRulesData, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsResponses, AdminGetChannelConfigData, AdminGetChannelConfigResponses, AdminGetContestDetailData, AdminGetContestDetailResponses, AdminGetDunningConfigData, AdminGetDunningConfigResponses, AdminGetErrorDetailData, AdminGetErrorDetailResponses, AdminGetExportStatusData, AdminGetExportStatusResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleResponses, AdminGetMigrationRunDetailData, AdminGetMigrationRunDetailResponses, AdminGetNotificationTemplateData, AdminGetNotificationTemplateResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailResponses, AdminGetRateLimitConfigData, AdminGetRateLimitConfigResponses, AdminGetServiceHealthData, AdminGetServiceHealthResponses, AdminGetTenantDetailData, AdminGetTenantDetailResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailResponses, AdminListAuditLogData, AdminListAuditLogResponses, AdminListContestsData, AdminListContestsResponses, AdminListMigrationsData, AdminListMigrationsResponses, AdminListNotificationTemplatesData, AdminListNotificationTemplatesResponses, AdminListProvidersData, AdminListProvidersResponses, AdminListPushTriggersData, AdminListPushTriggersResponses, AdminListTenantsData, AdminListTenantsResponses, AdminListUsersData, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantResponses, AdminMergeUsersData, AdminMergeUsersResponses, AdminMuteAlertData, AdminMuteAlertResponses, AdminOverrideScoreData, AdminOverrideScoreResponses, AdminRecalculatePayoutsData, AdminRecalculatePayoutsResponses, AdminRecalculateStandingsData, AdminRecalculateStandingsResponses, AdminReIngestEventData, AdminReIngestEventResponses, AdminReIngestScoringData, AdminReIngestScoringResponses, AdminReopenContestData, AdminReopenContestResponses, AdminResetChannelConfigData, AdminResetChannelConfigResponses, AdminResetDunningConfigData, AdminResetDunningConfigResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetNotificationTemplateData, AdminResetNotificationTemplateResponses, AdminResetPasswordData, AdminResetPasswordResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsResponses, AdminResetPushTriggersData, AdminResetPushTriggersResponses, AdminResetRateLimitConfigData, AdminResetRateLimitConfigResponses, AdminSearchErrorsData, AdminSearchErrorsResponses, AdminSendEmailData, AdminSendEmailResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideResponses, AdminStartImpersonationData, AdminStartImpersonationResponses, AdminStartMigrationRunData, AdminStartMigrationRunResponses, AdminStartTenantExportData, AdminStartTenantExportResponses, AdminSuspendTenantData, AdminSuspendTenantResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertResponses, AdminUnsuspendTenantData, AdminUnsuspendTenantResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleResponses, AdminUpdateChannelConfigData, AdminUpdateChannelConfigResponses, AdminUpdateDunningConfigData, AdminUpdateDunningConfigResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleResponses, AdminUpdateNotificationTemplateData, AdminUpdateNotificationTemplateResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigResponses, AdminUpdatePushTriggerData, AdminUpdatePushTriggerResponses, AdminUpdateRateLimitConfigData, AdminUpdateRateLimitConfigResponses, CancelScheduledNotificationsData, CancelScheduledNotificationsResponses, ChangeMemberRoleData, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonResponses, CreateContestData, CreateContestResponses, CreateFeedPostData, CreateFeedPostResponses, CreateLeagueData, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, DeactivateDeviceData, DeactivateDeviceResponses, DeleteContestData, DeleteContestResponses, DeleteFeedPostData, DeleteFeedPostResponses, DismissNotificationData, DismissNotificationResponses, DispatchNotificationData, DispatchNotificationResponses, EnterContestData, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, ForgotPasswordData, ForgotPasswordResponses, GenerateInviteLinkData, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestChatData, GetContestChatErrors, GetContestChatResponses, GetContestData, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserResponses, GetDraftStateData, GetDraftStateResponses, GetEntryScoreData, GetEntryScoreResponses, GetFeedPostData, GetFeedPostResponses, GetHealthData, GetHealthResponses, GetLeagueAuditLogData, GetLeagueAuditLogResponses, GetLeagueDashboardData, GetLeagueDashboardResponses, GetLeagueData, GetLeagueFeedData, GetLeagueFeedResponses, GetLeagueRecapData, GetLeagueRecapErrors, GetLeagueRecapResponses, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryResponses, GetNotificationAnalyticsData, GetNotificationAnalyticsResponses, GetNotificationPreferencesData, GetNotificationPreferencesResponses, GetParticipantData, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreResponses, GetParticipantSeasonRecordData, GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordsData, GetParticipantSeasonRecordsResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRosterHistoryData, GetRosterHistoryResponses, GetScoringHealthData, GetScoringHealthResponses, GetShareCardData, GetShareCardErrors, GetShareCardResponses, GetSocialConversationMessagesData, GetSocialConversationMessagesErrors, GetSocialConversationMessagesResponses, GetStandingsData, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, ImportMembersData, ImportMembersResponses, IngestEventResultsData, IngestEventResultsResponses, IngestEventScoresData, IngestEventScoresResponses, IngestSportOddsData, IngestSportOddsResponses, LeaveContestData, LeaveContestResponses, LeaveLeagueData, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListDevicesData, ListDevicesResponses, ListEventsData, ListEventsResponses, ListIngestionProvidersData, ListIngestionProvidersResponses, ListLeagueMembersData, ListLeagueMembersResponses, ListLeaguesData, ListLeagueSquadsData, ListLeagueSquadsResponses, ListLeaguesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, ListSocialConversationsData, ListSocialConversationsErrors, ListSocialConversationsResponses, LoginUserData, LoginUserResponses, LogoutUserData, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, MarkSocialConversationReadData, MarkSocialConversationReadErrors, MarkSocialConversationReadResponses, OauthCallbackData, OauthCallbackErrors, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftResponses, PinFeedPostData, PinFeedPostResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenResponses, RegisterDeviceAliasData, RegisterDeviceAliasResponses, RegisterDeviceData, RegisterDeviceResponses, RegisterUserData, RegisterUserResponses, RemoveMemberData, RemoveMemberResponses, RemoveSquadCoManagerData, RemoveSquadCoManagerResponses, ReopenContestData, ReopenContestResponses, ResolveActionItemData, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkResponses, ScheduleNotificationData, ScheduleNotificationResponses, SendAnnouncementData, SendAnnouncementResponses, SendContestChatMessageData, SendContestChatMessageErrors, SendContestChatMessageResponses, SendLeagueInvitationsData, SendLeagueInvitationsResponses, SendSocialConversationMessageData, SendSocialConversationMessageErrors, SendSocialConversationMessageResponses, SendTestEmailData, SendTestEmailResponses, SendTestPushData, SendTestPushResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionResponses, SyncSportDataData, SyncSportDataResponses, TransferOwnershipData, TransferOwnershipResponses, TriggerStandingsRollupData, TriggerStandingsRollupResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionResponses, UnpinFeedPostData, UnpinFeedPostResponses, UnsubscribeNotificationCategoryData, UnsubscribeNotificationCategoryResponses, UpdateContestData, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueSettingsData, UpdateLeagueSettingsResponses, UpdateLeagueSquadData, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationResponses, UpdateNotificationPreferencesData, UpdateNotificationPreferencesResponses, UpdateParticipantData, UpdateParticipantResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses } from './types.gen.js';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddSquadCoManagerData, AddSquadCoManagerResponses, AdjustScoreData, AdjustScoreResponses, AdminCancelMigrationRunData, AdminCancelMigrationRunResponses, AdminDisableUserData, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogResponses, AdminForceCloseContestData, AdminForceCloseContestResponses, AdminForceLogoutData, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsResponses, AdminGetContestDetailData, AdminGetContestDetailResponses, AdminGetErrorDetailData, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleResponses, AdminGetMigrationRunDetailData, AdminGetMigrationRunDetailResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailResponses, AdminListAuditLogData, AdminListAuditLogResponses, AdminListContestsData, AdminListContestsResponses, AdminListMigrationsData, AdminListMigrationsResponses, AdminListProvidersData, AdminListProvidersResponses, AdminListUsersData, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantResponses, AdminMergeUsersData, AdminMergeUsersResponses, AdminMuteAlertData, AdminMuteAlertResponses, AdminOverrideScoreData, AdminOverrideScoreResponses, AdminRecalculatePayoutsData, AdminRecalculatePayoutsResponses, AdminRecalculateStandingsData, AdminRecalculateStandingsResponses, AdminReIngestEventData, AdminReIngestEventResponses, AdminReIngestScoringData, AdminReIngestScoringResponses, AdminReopenContestData, AdminReopenContestResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsResponses, AdminSearchErrorsData, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideResponses, AdminStartMigrationRunData, AdminStartMigrationRunResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigResponses, ChangeMemberRoleData, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonResponses, CreateContestData, CreateContestResponses, CreateLeagueData, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, DeleteContestData, DeleteContestResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, ForgotPasswordData, ForgotPasswordResponses, GenerateInviteLinkData, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserResponses, GetDraftStateData, GetDraftStateResponses, GetEntryScoreData, GetEntryScoreResponses, GetHealthData, GetHealthResponses, GetLeagueAuditLogData, GetLeagueAuditLogResponses, GetLeagueDashboardData, GetLeagueDashboardResponses, GetLeagueData, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryResponses, GetParticipantData, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreResponses, GetParticipantSeasonRecordData, GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordsData, GetParticipantSeasonRecordsResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRosterHistoryData, GetRosterHistoryResponses, GetScoringHealthData, GetScoringHealthResponses, GetStandingsData, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, ImportMembersData, ImportMembersResponses, IngestEventResultsData, IngestEventResultsResponses, IngestEventScoresData, IngestEventScoresResponses, IngestSportOddsData, IngestSportOddsResponses, LeaveContestData, LeaveContestResponses, LeaveLeagueData, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListIngestionProvidersData, ListIngestionProvidersResponses, ListLeagueMembersData, ListLeagueMembersResponses, ListLeaguesData, ListLeagueSquadsData, ListLeagueSquadsResponses, ListLeaguesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, LoginUserData, LoginUserResponses, LogoutUserData, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, OauthCallbackData, OauthCallbackErrors, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenResponses, RegisterUserData, RegisterUserResponses, RemoveMemberData, RemoveMemberResponses, RemoveSquadCoManagerData, RemoveSquadCoManagerResponses, ReopenContestData, ReopenContestResponses, ResolveActionItemData, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkResponses, SendLeagueInvitationsData, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionResponses, SyncSportDataData, SyncSportDataResponses, TransferOwnershipData, TransferOwnershipResponses, TriggerStandingsRollupData, TriggerStandingsRollupResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionResponses, UpdateContestData, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueSettingsData, UpdateLeagueSettingsResponses, UpdateLeagueSquadData, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -814,85 +814,6 @@ export const recordConsent = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 /**
- * List all tenants with filters
- */
-export const adminListTenants = <ThrowOnError extends boolean = false>(options?: Options<AdminListTenantsData, ThrowOnError>) => (options?.client ?? client).get<AdminListTenantsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants',
-    ...options
-});
-
-/**
- * Delete a tenant permanently
- */
-export const adminDeleteTenant = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteTenantData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteTenantResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get tenant detail
- */
-export const adminGetTenantDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetTenantDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetTenantDetailResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}',
-    ...options
-});
-
-/**
- * Suspend a tenant
- */
-export const adminSuspendTenant = <ThrowOnError extends boolean = false>(options: Options<AdminSuspendTenantData, ThrowOnError>) => (options.client ?? client).post<AdminSuspendTenantResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/suspend',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Unsuspend a tenant
- */
-export const adminUnsuspendTenant = <ThrowOnError extends boolean = false>(options: Options<AdminUnsuspendTenantData, ThrowOnError>) => (options.client ?? client).post<AdminUnsuspendTenantResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/unsuspend',
-    ...options
-});
-
-/**
- * Apply credit to a tenant account
- */
-export const adminApplyCredit = <ThrowOnError extends boolean = false>(options: Options<AdminApplyCreditData, ThrowOnError>) => (options.client ?? client).post<AdminApplyCreditResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/credit',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Extend tenant trial period
- */
-export const adminExtendTrial = <ThrowOnError extends boolean = false>(options: Options<AdminExtendTrialData, ThrowOnError>) => (options.client ?? client).post<AdminExtendTrialResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/extend-trial',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * List users with filters
  */
 export const adminListUsers = <ThrowOnError extends boolean = false>(options?: Options<AdminListUsersData, ThrowOnError>) => (options?.client ?? client).get<AdminListUsersResponses, unknown, ThrowOnError>({
@@ -920,15 +841,6 @@ export const adminMergeUsers = <ThrowOnError extends boolean = false>(options: O
 export const adminGetUserDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetUserDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetUserDetailResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users/{userId}',
-    ...options
-});
-
-/**
- * Reset user password
- */
-export const adminResetPassword = <ThrowOnError extends boolean = false>(options: Options<AdminResetPasswordData, ThrowOnError>) => (options.client ?? client).post<AdminResetPasswordResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/reset-password',
     ...options
 });
 
@@ -961,19 +873,6 @@ export const adminEnableUser = <ThrowOnError extends boolean = false>(options: O
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users/{userId}/enable',
     ...options
-});
-
-/**
- * Send administrative email to user
- */
-export const adminSendEmail = <ThrowOnError extends boolean = false>(options: Options<AdminSendEmailData, ThrowOnError>) => (options.client ?? client).post<AdminSendEmailResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/email',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
 });
 
 /**
@@ -1234,37 +1133,6 @@ export const adminUnmuteAlert = <ThrowOnError extends boolean = false>(options: 
 });
 
 /**
- * Start tenant impersonation session
- */
-export const adminStartImpersonation = <ThrowOnError extends boolean = false>(options: Options<AdminStartImpersonationData, ThrowOnError>) => (options.client ?? client).post<AdminStartImpersonationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/impersonation/start',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * End tenant impersonation session
- */
-export const adminEndImpersonation = <ThrowOnError extends boolean = false>(options?: Options<AdminEndImpersonationData, ThrowOnError>) => (options?.client ?? client).post<AdminEndImpersonationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/impersonation/end',
-    ...options
-});
-
-/**
- * Get active impersonation session
- */
-export const adminGetActiveImpersonation = <ThrowOnError extends boolean = false>(options?: Options<AdminGetActiveImpersonationData, ThrowOnError>) => (options?.client ?? client).get<AdminGetActiveImpersonationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/impersonation/active',
-    ...options
-});
-
-/**
  * List available data migrations
  */
 export const adminListMigrations = <ThrowOnError extends boolean = false>(options?: Options<AdminListMigrationsData, ThrowOnError>) => (options?.client ?? client).get<AdminListMigrationsResponses, unknown, ThrowOnError>({
@@ -1301,33 +1169,6 @@ export const adminGetMigrationRunDetail = <ThrowOnError extends boolean = false>
 export const adminCancelMigrationRun = <ThrowOnError extends boolean = false>(options: Options<AdminCancelMigrationRunData, ThrowOnError>) => (options.client ?? client).post<AdminCancelMigrationRunResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/migrations/runs/{runId}/cancel',
-    ...options
-});
-
-/**
- * Start tenant data export
- */
-export const adminStartTenantExport = <ThrowOnError extends boolean = false>(options: Options<AdminStartTenantExportData, ThrowOnError>) => (options.client ?? client).post<AdminStartTenantExportResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/export',
-    ...options
-});
-
-/**
- * Get tenant export status
- */
-export const adminGetExportStatus = <ThrowOnError extends boolean = false>(options: Options<AdminGetExportStatusData, ThrowOnError>) => (options.client ?? client).get<AdminGetExportStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/export/status',
-    ...options
-});
-
-/**
- * Download tenant export
- */
-export const adminDownloadExport = <ThrowOnError extends boolean = false>(options: Options<AdminDownloadExportData, ThrowOnError>) => (options.client ?? client).get<AdminDownloadExportResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/export/download',
     ...options
 });
 
@@ -1434,357 +1275,11 @@ export const adminResetIngestionSchedule = <ThrowOnError extends boolean = false
 });
 
 /**
- * Get dunning schedule configuration
- */
-export const adminGetDunningConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminGetDunningConfigData, ThrowOnError>) => (options?.client ?? client).get<AdminGetDunningConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/dunning',
-    ...options
-});
-
-/**
- * Update dunning schedule configuration
- */
-export const adminUpdateDunningConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateDunningConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateDunningConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/dunning',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset dunning configuration to defaults
- */
-export const adminResetDunningConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminResetDunningConfigData, ThrowOnError>) => (options?.client ?? client).post<AdminResetDunningConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/dunning/reset',
-    ...options
-});
-
-/**
- * Get notification channel defaults
- */
-export const adminGetChannelConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminGetChannelConfigData, ThrowOnError>) => (options?.client ?? client).get<AdminGetChannelConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-channels',
-    ...options
-});
-
-/**
- * Update notification channel defaults for a category
- */
-export const adminUpdateChannelConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateChannelConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateChannelConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-channels/{category}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset notification channel defaults
- */
-export const adminResetChannelConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminResetChannelConfigData, ThrowOnError>) => (options?.client ?? client).post<AdminResetChannelConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-channels/reset',
-    ...options
-});
-
-/**
- * List notification templates
- */
-export const adminListNotificationTemplates = <ThrowOnError extends boolean = false>(options?: Options<AdminListNotificationTemplatesData, ThrowOnError>) => (options?.client ?? client).get<AdminListNotificationTemplatesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-templates',
-    ...options
-});
-
-/**
- * Get notification template by event type
- */
-export const adminGetNotificationTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminGetNotificationTemplateData, ThrowOnError>) => (options.client ?? client).get<AdminGetNotificationTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-templates/{eventType}',
-    ...options
-});
-
-/**
- * Update a notification template
- */
-export const adminUpdateNotificationTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateNotificationTemplateData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateNotificationTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-templates/{eventType}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset a notification template to defaults
- */
-export const adminResetNotificationTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminResetNotificationTemplateData, ThrowOnError>) => (options.client ?? client).post<AdminResetNotificationTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-templates/reset/{eventType}',
-    ...options
-});
-
-/**
- * List push trigger configurations
- */
-export const adminListPushTriggers = <ThrowOnError extends boolean = false>(options?: Options<AdminListPushTriggersData, ThrowOnError>) => (options?.client ?? client).get<AdminListPushTriggersResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers',
-    ...options
-});
-
-/**
- * Update a push trigger configuration
- */
-export const adminUpdatePushTrigger = <ThrowOnError extends boolean = false>(options: Options<AdminUpdatePushTriggerData, ThrowOnError>) => (options.client ?? client).put<AdminUpdatePushTriggerResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers/{eventType}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Enable a push trigger
- */
-export const adminEnablePushTrigger = <ThrowOnError extends boolean = false>(options: Options<AdminEnablePushTriggerData, ThrowOnError>) => (options.client ?? client).post<AdminEnablePushTriggerResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers/{eventType}/enable',
-    ...options
-});
-
-/**
- * Disable a push trigger
- */
-export const adminDisablePushTrigger = <ThrowOnError extends boolean = false>(options: Options<AdminDisablePushTriggerData, ThrowOnError>) => (options.client ?? client).post<AdminDisablePushTriggerResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers/{eventType}/disable',
-    ...options
-});
-
-/**
- * Reset all push triggers to defaults
- */
-export const adminResetPushTriggers = <ThrowOnError extends boolean = false>(options?: Options<AdminResetPushTriggersData, ThrowOnError>) => (options?.client ?? client).post<AdminResetPushTriggersResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers/reset',
-    ...options
-});
-
-/**
- * Get rate limit configuration
- */
-export const adminGetRateLimitConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminGetRateLimitConfigData, ThrowOnError>) => (options?.client ?? client).get<AdminGetRateLimitConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/rate-limits',
-    ...options
-});
-
-/**
- * Update rate limit configuration
- */
-export const adminUpdateRateLimitConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateRateLimitConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateRateLimitConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/rate-limits',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset rate limits to defaults
- */
-export const adminResetRateLimitConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminResetRateLimitConfigData, ThrowOnError>) => (options?.client ?? client).post<AdminResetRateLimitConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/rate-limits/reset',
-    ...options
-});
-
-/**
  * Get recommended poll intervals for clients
  */
 export const getPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<GetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).get<GetPollIntervalsResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/config/poll-intervals',
-    ...options
-});
-
-/**
- * Get league activity feed
- */
-export const getLeagueFeed = <ThrowOnError extends boolean = false>(options: Options<GetLeagueFeedData, ThrowOnError>) => (options.client ?? client).get<GetLeagueFeedResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed',
-    ...options
-});
-
-/**
- * Create a feed post
- */
-export const createFeedPost = <ThrowOnError extends boolean = false>(options: Options<CreateFeedPostData, ThrowOnError>) => (options.client ?? client).post<CreateFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a feed post
- */
-export const deleteFeedPost = <ThrowOnError extends boolean = false>(options: Options<DeleteFeedPostData, ThrowOnError>) => (options.client ?? client).delete<DeleteFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}',
-    ...options
-});
-
-/**
- * Get a single feed post
- */
-export const getFeedPost = <ThrowOnError extends boolean = false>(options: Options<GetFeedPostData, ThrowOnError>) => (options.client ?? client).get<GetFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}',
-    ...options
-});
-
-/**
- * Reply to a feed post
- */
-export const addFeedReply = <ThrowOnError extends boolean = false>(options: Options<AddFeedReplyData, ThrowOnError>) => (options.client ?? client).post<AddFeedReplyResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/replies',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Add a reaction to a post
- */
-export const addFeedReaction = <ThrowOnError extends boolean = false>(options: Options<AddFeedReactionData, ThrowOnError>) => (options.client ?? client).post<AddFeedReactionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/reactions',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Unpin a feed post
- */
-export const unpinFeedPost = <ThrowOnError extends boolean = false>(options: Options<UnpinFeedPostData, ThrowOnError>) => (options.client ?? client).delete<UnpinFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/pin',
-    ...options
-});
-
-/**
- * Pin a feed post
- */
-export const pinFeedPost = <ThrowOnError extends boolean = false>(options: Options<PinFeedPostData, ThrowOnError>) => (options.client ?? client).post<PinFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/pin',
-    ...options
-});
-
-/**
- * List direct message conversations
- */
-export const listSocialConversations = <ThrowOnError extends boolean = false>(options?: Options<ListSocialConversationsData, ThrowOnError>) => (options?.client ?? client).get<ListSocialConversationsResponses, ListSocialConversationsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/messages/conversations',
-    ...options
-});
-
-/**
- * Get messages in a direct message conversation
- */
-export const getSocialConversationMessages = <ThrowOnError extends boolean = false>(options: Options<GetSocialConversationMessagesData, ThrowOnError>) => (options.client ?? client).get<GetSocialConversationMessagesResponses, GetSocialConversationMessagesErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/messages/conversations/{conversationId}',
-    ...options
-});
-
-/**
- * Send a direct message
- */
-export const sendSocialConversationMessage = <ThrowOnError extends boolean = false>(options: Options<SendSocialConversationMessageData, ThrowOnError>) => (options.client ?? client).post<SendSocialConversationMessageResponses, SendSocialConversationMessageErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/messages/conversations/{conversationId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Mark a direct message conversation as read
- */
-export const markSocialConversationRead = <ThrowOnError extends boolean = false>(options: Options<MarkSocialConversationReadData, ThrowOnError>) => (options.client ?? client).patch<MarkSocialConversationReadResponses, MarkSocialConversationReadErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/messages/conversations/{conversationId}/read',
-    ...options
-});
-
-/**
- * Get contest chat messages
- */
-export const getContestChat = <ThrowOnError extends boolean = false>(options: Options<GetContestChatData, ThrowOnError>) => (options.client ?? client).get<GetContestChatResponses, GetContestChatErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/contests/{contestId}/chat',
-    ...options
-});
-
-/**
- * Send a contest chat message
- */
-export const sendContestChatMessage = <ThrowOnError extends boolean = false>(options: Options<SendContestChatMessageData, ThrowOnError>) => (options.client ?? client).post<SendContestChatMessageResponses, SendContestChatMessageErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/contests/{contestId}/chat',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get share card details
- */
-export const getShareCard = <ThrowOnError extends boolean = false>(options: Options<GetShareCardData, ThrowOnError>) => (options.client ?? client).get<GetShareCardResponses, GetShareCardErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/shares/{shareId}',
-    ...options
-});
-
-/**
- * Get league recap
- */
-export const getLeagueRecap = <ThrowOnError extends boolean = false>(options: Options<GetLeagueRecapData, ThrowOnError>) => (options.client ?? client).get<GetLeagueRecapResponses, GetLeagueRecapErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/leagues/{leagueId}/recap',
     ...options
 });
 
@@ -1875,10 +1370,14 @@ export const skipSnakeDraftTurn = <ThrowOnError extends boolean = false>(options
 /**
  * Validate a scoring configuration
  */
-export const validateScoringConfig = <ThrowOnError extends boolean = false>(options?: Options<ValidateScoringConfigData, ThrowOnError>) => (options?.client ?? client).post<ValidateScoringConfigResponses, ValidateScoringConfigErrors, ThrowOnError>({
+export const validateScoringConfig = <ThrowOnError extends boolean = false>(options: Options<ValidateScoringConfigData, ThrowOnError>) => (options.client ?? client).post<ValidateScoringConfigResponses, ValidateScoringConfigErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/scoring/config/validate',
-    ...options
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**
@@ -1968,132 +1467,6 @@ export const markAllNotificationsRead = <ThrowOnError extends boolean = false>(o
 export const dismissNotification = <ThrowOnError extends boolean = false>(options: Options<DismissNotificationData, ThrowOnError>) => (options.client ?? client).delete<DismissNotificationResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/notifications/{id}',
-    ...options
-});
-
-/**
- * Get notification preferences for current user
- */
-export const getNotificationPreferences = <ThrowOnError extends boolean = false>(options?: Options<GetNotificationPreferencesData, ThrowOnError>) => (options?.client ?? client).get<GetNotificationPreferencesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/preferences',
-    ...options
-});
-
-/**
- * Update notification preferences
- */
-export const updateNotificationPreferences = <ThrowOnError extends boolean = false>(options?: Options<UpdateNotificationPreferencesData, ThrowOnError>) => (options?.client ?? client).put<UpdateNotificationPreferencesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/preferences',
-    ...options
-});
-
-/**
- * Unsubscribe from a notification category
- */
-export const unsubscribeNotificationCategory = <ThrowOnError extends boolean = false>(options: Options<UnsubscribeNotificationCategoryData, ThrowOnError>) => (options.client ?? client).post<UnsubscribeNotificationCategoryResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/unsubscribe/{category}',
-    ...options
-});
-
-/**
- * List registered devices for current user
- */
-export const listDevices = <ThrowOnError extends boolean = false>(options?: Options<ListDevicesData, ThrowOnError>) => (options?.client ?? client).get<ListDevicesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/devices',
-    ...options
-});
-
-/**
- * Register a device for push notifications
- */
-export const registerDevice = <ThrowOnError extends boolean = false>(options?: Options<RegisterDeviceData, ThrowOnError>) => (options?.client ?? client).post<RegisterDeviceResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/devices',
-    ...options
-});
-
-/**
- * Register a device for push notifications (alias)
- */
-export const registerDeviceAlias = <ThrowOnError extends boolean = false>(options?: Options<RegisterDeviceAliasData, ThrowOnError>) => (options?.client ?? client).post<RegisterDeviceAliasResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/devices/register',
-    ...options
-});
-
-/**
- * Deactivate a registered device
- */
-export const deactivateDevice = <ThrowOnError extends boolean = false>(options: Options<DeactivateDeviceData, ThrowOnError>) => (options.client ?? client).delete<DeactivateDeviceResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/devices/{id}',
-    ...options
-});
-
-/**
- * Dispatch a notification event
- */
-export const dispatchNotification = <ThrowOnError extends boolean = false>(options?: Options<DispatchNotificationData, ThrowOnError>) => (options?.client ?? client).post<DispatchNotificationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/dispatch',
-    ...options
-});
-
-/**
- * Send commissioner announcement to a league
- */
-export const sendAnnouncement = <ThrowOnError extends boolean = false>(options?: Options<SendAnnouncementData, ThrowOnError>) => (options?.client ?? client).post<SendAnnouncementResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/announce',
-    ...options
-});
-
-/**
- * Schedule a notification for future delivery
- */
-export const scheduleNotification = <ThrowOnError extends boolean = false>(options?: Options<ScheduleNotificationData, ThrowOnError>) => (options?.client ?? client).post<ScheduleNotificationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/schedule',
-    ...options
-});
-
-/**
- * Cancel scheduled notifications for a source
- */
-export const cancelScheduledNotifications = <ThrowOnError extends boolean = false>(options: Options<CancelScheduledNotificationsData, ThrowOnError>) => (options.client ?? client).delete<CancelScheduledNotificationsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/schedule/{sourceType}/{sourceId}',
-    ...options
-});
-
-/**
- * Get notification delivery analytics
- */
-export const getNotificationAnalytics = <ThrowOnError extends boolean = false>(options?: Options<GetNotificationAnalyticsData, ThrowOnError>) => (options?.client ?? client).get<GetNotificationAnalyticsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/analytics',
-    ...options
-});
-
-/**
- * Send a test email
- */
-export const sendTestEmail = <ThrowOnError extends boolean = false>(options?: Options<SendTestEmailData, ThrowOnError>) => (options?.client ?? client).post<SendTestEmailResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/test/email',
-    ...options
-});
-
-/**
- * Send a test push notification
- */
-export const sendTestPush = <ThrowOnError extends boolean = false>(options?: Options<SendTestPushData, ThrowOnError>) => (options?.client ?? client).post<SendTestPushResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/test/push',
     ...options
 });
 

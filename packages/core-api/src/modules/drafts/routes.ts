@@ -16,6 +16,9 @@ import {
   zodToJsonSchema,
   DraftStateResponseSchema,
   DraftPickResponseSchema,
+  ExtendCurrentTurnRequestSchema,
+  StartDraftRequestSchema,
+  SubmitPickRequestSchema,
 } from '@poolmaster/shared/dto';
 import {
   PrismaContestEntryRepository,
@@ -692,16 +695,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      body: {
-        type: 'object',
-        properties: {
-          entryIds: { type: 'array', items: { type: 'string', format: 'uuid' }, minItems: 2 },
-          rounds: { type: 'number', minimum: 1, maximum: 30 },
-          timePerPickSeconds: { type: 'number', minimum: 10, maximum: 86400 },
-          availableParticipantIds: { type: 'array', items: { type: 'string', format: 'uuid' }, minItems: 1 },
-          autoPickPolicy: { type: 'string', enum: ['QUEUE_THEN_BEST', 'BEST_AVAILABLE', 'RANDOM'] },
-        },
-      },
+      body: zodToJsonSchema(StartDraftRequestSchema),
       response: { 201: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {
@@ -777,14 +771,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      body: {
-        type: 'object',
-        required: ['entryId', 'participantId'],
-        properties: {
-          entryId: { type: 'string', format: 'uuid' },
-          participantId: { type: 'string', format: 'uuid' },
-        },
-      },
+      body: zodToJsonSchema(SubmitPickRequestSchema),
       response: { 200: zodToJsonSchema(DraftPickResponseSchema) },
     },
     handler: async (request, reply) => {
@@ -1132,13 +1119,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      body: {
-        type: 'object',
-        required: ['additionalSeconds'],
-        properties: {
-          additionalSeconds: { type: 'number', minimum: 1, maximum: 3600 },
-        },
-      },
+      body: zodToJsonSchema(ExtendCurrentTurnRequestSchema),
       response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {

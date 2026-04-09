@@ -1,7 +1,12 @@
 // Ingestion routes — extracted from ingestion-worker/src/index.ts
 import type { FastifyInstance } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
-import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
+import {
+  IngestionJobResponseSchema,
+  IngestionProvidersResponseSchema,
+  IngestSportOddsResponseSchema,
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { IngestionScheduler } from './core/ingestion-scheduler';
 import type { OddsApiAdapter } from './adapters/odds-api-adapter';
@@ -23,7 +28,7 @@ export async function ingestionModule(
       tags: ['Admin'],
       summary: 'List data ingestion providers',
       operationId: 'listIngestionProviders',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(IngestionProvidersResponseSchema) },
     },
   }, async () => {
     return {
@@ -40,7 +45,7 @@ export async function ingestionModule(
       tags: ['Admin'],
       summary: 'Trigger data sync for a sport',
       operationId: 'syncSportData',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(IngestionJobResponseSchema) },
     },
   }, async (request) => {
     const sport = request.params.sport as Sport;
@@ -55,7 +60,7 @@ export async function ingestionModule(
         tags: ['Admin'],
         summary: 'Ingest scores for a sport event',
         operationId: 'ingestEventScores',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(IngestionJobResponseSchema) },
       },
     },
     async (request) => {
@@ -74,7 +79,7 @@ export async function ingestionModule(
         tags: ['Admin'],
         summary: 'Ingest results for a sport event',
         operationId: 'ingestEventResults',
-        response: { 200: zodToJsonSchema(SuccessSchema) },
+        response: { 200: zodToJsonSchema(IngestionJobResponseSchema) },
       },
     },
     async (request) => {
@@ -91,7 +96,7 @@ export async function ingestionModule(
       tags: ['Admin'],
       summary: 'Ingest odds for a sport',
       operationId: 'ingestSportOdds',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(IngestSportOddsResponseSchema) },
     },
   }, async (request) => {
     const sport = request.params.sport as Sport;

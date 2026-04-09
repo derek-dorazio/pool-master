@@ -6,18 +6,28 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
-  zodToJsonSchema,
-  LeagueListResponseSchema,
-  LeagueResponseSchema,
-  SuccessSchema,
-} from '@poolmaster/shared/dto';
-import {
-  LeagueMembersResponseSchema,
-  LeagueMembershipResponseSchema,
-  TransferOwnershipResponseSchema,
+  CreateLeagueRequestSchema,
   LeagueAuditEntriesResponseSchema,
   LeagueBulkOperationResponseSchema,
-} from '@poolmaster/shared/dto/leagues.dto';
+  LeagueDashboardResponseSchema,
+  zodToJsonSchema,
+  GenerateInviteLinkRequestSchema,
+  GenerateInviteLinkResponseSchema,
+  ImportLeagueMembersRequestSchema,
+  LeagueListResponseSchema,
+  LeagueMembershipResponseSchema,
+  LeagueResponseSchema,
+  ResolveActionItemResponseSchema,
+  SendLeagueInvitationsRequestSchema,
+  SendLeagueInvitationsResponseSchema,
+  SuccessSchema,
+  ChangeLeagueMemberRoleRequestSchema,
+  CopySeasonRequestSchema,
+  LeagueMembersResponseSchema,
+  TransferOwnershipResponseSchema,
+  TransferOwnershipRequestSchema,
+  UpdateLeagueSettingsRequestSchema,
+} from '@poolmaster/shared/dto';
 import {
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
@@ -42,10 +52,6 @@ import { createAuditHandlers } from './audit-handler';
 import { createBulkHandlers } from './bulk-handler';
 
 export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
-  const passthroughResponseSchema = {
-    type: 'object',
-    additionalProperties: true,
-  } as const;
   const prisma = new PrismaClient();
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
@@ -96,17 +102,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Create a new league',
       operationId: 'createLeague',
-      body: {
-        type: 'object',
-        required: ['name', 'visibility'],
-        properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          description: { type: 'string', maxLength: 500 },
-          visibility: { type: 'string', enum: ['PRIVATE', 'PUBLIC'] },
-          maxMembers: { type: 'integer', minimum: 2, maximum: 1000 },
-          settings: { type: 'object' },
-        },
-      },
+      body: zodToJsonSchema(CreateLeagueRequestSchema),
       response: { 201: zodToJsonSchema(LeagueResponseSchema) },
     },
     handler: league.createLeague,
@@ -127,22 +123,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Update league settings',
       operationId: 'updateLeagueSettings',
-      body: {
-        type: 'object',
-        properties: {
-          invitePolicy: { type: 'string', enum: ['COMMISSIONER_ONLY', 'LINK_INVITE', 'OPEN'] },
-          allowMidSeasonJoin: { type: 'boolean' },
-          requireApproval: { type: 'boolean' },
-          activityFeedEnabled: { type: 'boolean' },
-          weeklyRecapEnabled: { type: 'boolean' },
-          weeklyRecapDay: {
-            type: 'string',
-            enum: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'],
-          },
-          timezone: { type: 'string' },
-          currency: { type: 'string' },
-        },
-      },
+      body: zodToJsonSchema(UpdateLeagueSettingsRequestSchema),
       response: { 200: zodToJsonSchema(LeagueResponseSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_SETTINGS_EDIT),
@@ -156,20 +137,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Send email invitations to join a league',
       operationId: 'sendLeagueInvitations',
-      body: {
-        type: 'object',
-        required: ['emails'],
-        properties: {
-          emails: {
-            type: 'array',
-            items: { type: 'string', format: 'email' },
-            minItems: 1,
-            maxItems: 50,
-          },
-          message: { type: 'string', maxLength: 500 },
-        },
-      },
-      response: { 200: passthroughResponseSchema },
+      body: zodToJsonSchema(SendLeagueInvitationsRequestSchema),
+      response: { 201: zodToJsonSchema(SendLeagueInvitationsResponseSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
     handler: invitation.sendInvitations,
@@ -180,14 +149,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Generate a shareable invite link',
       operationId: 'generateInviteLink',
-      body: {
-        type: 'object',
-        properties: {
-          expiresInDays: { type: 'integer', minimum: 1, maximum: 90 },
-          maxUses: { type: 'integer', minimum: 0 },
-        },
-      },
-      response: { 200: passthroughResponseSchema },
+      body: zodToJsonSchema(GenerateInviteLinkRequestSchema),
+      response: { 201: zodToJsonSchema(GenerateInviteLinkResponseSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
     handler: invitation.generateInviteLink,
@@ -198,7 +161,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Revoke an invite link',
       operationId: 'revokeInviteLink',
-      response: { 200: passthroughResponseSchema },
+      response: { 204: { type: 'null' } },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
     handler: invitation.revokeInviteLink,
@@ -222,14 +185,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Change a member role and permissions',
       operationId: 'changeMemberRole',
-      body: {
-        type: 'object',
-        required: ['role'],
-        properties: {
-          role: { type: 'string', enum: ['COMMISSIONER', 'MEMBER'] },
-          permissions: { type: 'array', items: { type: 'string' } },
-        },
-      },
+      body: zodToJsonSchema(ChangeLeagueMemberRoleRequestSchema),
       response: { 200: zodToJsonSchema(LeagueMembershipResponseSchema) },
     },
     preHandler: requirePermission(
@@ -265,13 +221,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Transfer league ownership to another member',
       operationId: 'transferOwnership',
-      body: {
-        type: 'object',
-        required: ['newOwnerId'],
-        properties: {
-          newOwnerId: { type: 'string', minLength: 1 },
-        },
-      },
+      body: zodToJsonSchema(TransferOwnershipRequestSchema),
       response: { 200: zodToJsonSchema(TransferOwnershipResponseSchema) },
     },
     preHandler: requireOwner(membershipRepo),
@@ -285,7 +235,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get commissioner dashboard for a league',
       operationId: 'getLeagueDashboard',
-      response: { 200: passthroughResponseSchema },
+      response: { 200: zodToJsonSchema(LeagueDashboardResponseSchema) },
     },
     preHandler: requireCommissionerOrOwner(membershipRepo),
     handler: dashboard.getDashboard,
@@ -296,7 +246,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Resolve a commissioner action item',
       operationId: 'resolveActionItem',
-      response: { 200: passthroughResponseSchema },
+      response: { 200: zodToJsonSchema(ResolveActionItemResponseSchema) },
     },
     preHandler: requireCommissionerOrOwner(membershipRepo),
     handler: dashboard.resolveActionItem,
@@ -309,7 +259,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get audit log for a league',
       operationId: 'getLeagueAuditLog',
-      response: { 200: passthroughResponseSchema },
+      response: { 200: zodToJsonSchema(LeagueAuditEntriesResponseSchema) },
     },
     preHandler: requireCommissionerOrOwner(membershipRepo),
     handler: audit.getLeagueAuditLog,
@@ -333,13 +283,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Copy contests from a previous season',
       operationId: 'copySeason',
-      body: {
-        type: 'object',
-        required: ['sourceContestIds'],
-        properties: {
-          sourceContestIds: { type: 'array', items: { type: 'string' }, minItems: 1 },
-        },
-      },
+      body: zodToJsonSchema(CopySeasonRequestSchema),
       response: { 201: zodToJsonSchema(LeagueBulkOperationResponseSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
@@ -351,26 +295,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Bulk-import members via CSV rows',
       operationId: 'importMembers',
-      body: {
-        type: 'object',
-        required: ['rows'],
-        properties: {
-          rows: {
-            type: 'array',
-            items: {
-              type: 'object',
-              required: ['email'],
-              properties: {
-                email: { type: 'string' },
-                displayName: { type: 'string' },
-                role: { type: 'string' },
-              },
-            },
-            minItems: 1,
-            maxItems: 500,
-          },
-        },
-      },
+      body: zodToJsonSchema(ImportLeagueMembersRequestSchema),
       response: { 201: zodToJsonSchema(LeagueBulkOperationResponseSchema) },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),

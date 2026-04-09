@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import {
   ConsentHistoryResponseSchema,
+  ConsentRecordRequestSchema,
   ConsentRecordResponseSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
@@ -20,22 +21,12 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
         summary: 'Record user consent for a policy type',
         operationId: 'recordConsent',
         response: { 201: zodToJsonSchema(ConsentRecordResponseSchema) },
-        body: {
-          type: 'object',
-          required: ['consentType', 'granted', 'version'],
-          properties: {
-            consentType: { type: 'string' },
-            granted: { type: 'boolean' },
-            version: { type: 'string' },
-            minimumAgeThreshold: { type: 'integer', minimum: 13, maximum: 18 },
-            ageAffirmed: { type: 'boolean' },
-          },
-        },
+        body: zodToJsonSchema(ConsentRecordRequestSchema),
       },
     },
     async (request, reply) => {
       const userId = request.headers['x-user-id'] as string;
-      await consentService.recordConsent({
+      const consent = await consentService.recordConsent({
         userId,
         consentType: request.body.consentType,
         granted: request.body.granted,
@@ -45,7 +36,9 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
         ipAddress: request.ip,
         userAgent: request.headers['user-agent'],
       });
-      return reply.status(201).send({ success: true });
+      return reply.status(201).send({
+        consent: mapConsentRecordToDto(consent as Record<string, unknown>),
+      });
     },
   );
 

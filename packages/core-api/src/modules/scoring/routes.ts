@@ -31,6 +31,43 @@ function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknow
   return reply.status(statusCode).send(payload);
 }
 
+const scoringConfigValidationBodySchema = {
+  type: 'object',
+  required: ['sport', 'scoring_type'],
+  properties: {
+    contest_id: { type: 'string' },
+    sport: { type: 'string' },
+    scoring_type: {
+      type: 'string',
+      enum: ['CUMULATIVE', 'KNOCKOUT', 'BRACKET', 'STROKE_PLAY', 'POSITION'],
+    },
+    stat_rules: { type: 'array', items: { type: 'object', additionalProperties: true } },
+    position_rules: { type: 'array', items: { type: 'object', additionalProperties: true } },
+    bonus_rules: { type: 'array', items: { type: 'object', additionalProperties: true } },
+    penalty_rules: { type: 'array', items: { type: 'object', additionalProperties: true } },
+    multiplier_rules: { type: 'array', items: { type: 'object', additionalProperties: true } },
+    bracket_round_rules: { type: 'array', items: { type: 'object', additionalProperties: true } },
+    upset_bonus_config: {
+      anyOf: [{ type: 'null' }, { type: 'object', additionalProperties: true }],
+    },
+    special_slots: { type: 'array', items: { type: 'object', additionalProperties: true } },
+    tiebreaker_config: { type: 'object', additionalProperties: true },
+    missed_event_score: { type: 'number' },
+    missed_event_points: { type: 'number' },
+    dnf_handling: {
+      type: 'string',
+      enum: ['ZERO', 'EXCLUDE', 'LAST_PLACE', 'PENALTY', 'MISSED_CUT_SCORE'],
+    },
+    counting_method: {
+      type: 'string',
+      enum: ['ALL', 'BEST_N', 'DROP_LOWEST_N'],
+    },
+    best_n: { type: 'integer', minimum: 1 },
+    drop_lowest_n: { type: 'integer', minimum: 1 },
+    lower_is_better: { type: 'boolean' },
+  },
+} as const;
+
 export async function scoringRoutes(
   app: FastifyInstance,
   options: ScoringRoutesOptions,
@@ -43,6 +80,7 @@ export async function scoringRoutes(
       tags: ['Scoring'],
       summary: 'Validate a scoring configuration',
       operationId: 'validateScoringConfig',
+      body: scoringConfigValidationBodySchema,
       response: {
         200: zodToJsonSchema(ScoringConfigValidationResponseSchema),
         400: zodToJsonSchema(ScoringConfigValidationResponseSchema),

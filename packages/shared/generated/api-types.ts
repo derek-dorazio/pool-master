@@ -2565,9 +2565,12 @@ export interface operations {
                     name: string;
                     description?: string;
                     /** @enum {string} */
-                    visibility: "PRIVATE" | "PUBLIC";
+                    visibility: "PUBLIC" | "PRIVATE" | "UNLISTED";
                     maxMembers?: number;
-                    settings?: Record<string, never>;
+                    sport?: string;
+                    settings?: {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -2712,13 +2715,33 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        sent: {
+                            id: string;
+                            leagueId: string;
+                            email?: string | null;
+                            inviteCode: string;
+                            inviteType: string;
+                            status: string;
+                            maxUses: number;
+                            currentUses: number;
+                            invitedBy: string;
+                            /** Format: date-time */
+                            expiresAt?: string | null;
+                            acceptedAt?: (string | null) | null;
+                            acceptedBy?: string | null;
+                            /** Format: date-time */
+                            createdAt: string | null;
+                            /** Format: date-time */
+                            updatedAt: string | null;
+                        }[];
+                        skippedMembers: string[];
+                        skippedDuplicates: string[];
                     };
                 };
             };
@@ -2743,13 +2766,31 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        invitation: {
+                            id: string;
+                            leagueId: string;
+                            email?: string | null;
+                            inviteCode: string;
+                            inviteType: string;
+                            status: string;
+                            maxUses: number;
+                            currentUses: number;
+                            invitedBy: string;
+                            /** Format: date-time */
+                            expiresAt?: string | null;
+                            acceptedAt?: (string | null) | null;
+                            acceptedBy?: string | null;
+                            /** Format: date-time */
+                            createdAt: string | null;
+                            /** Format: date-time */
+                            updatedAt: string | null;
+                        };
                     };
                 };
             };
@@ -2768,15 +2809,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Default Response */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
+                content?: never;
             };
         };
     };
@@ -2983,7 +3020,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        league: {
+                            [key: string]: unknown;
+                        };
+                        actionItems: {
+                            id: string;
+                            leagueId: string;
+                            contestId?: string | null;
+                            type: string;
+                            priority: string;
+                            title: string;
+                            description: string;
+                            actionUrl?: string | null;
+                            resolved: boolean;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
+                        contests: {
+                            [key: string]: unknown;
+                        }[];
+                        memberCount: number;
+                        pendingInvites: number;
+                        recentMemberActivity: {
+                            userId: string;
+                            displayName: string;
+                            action: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        }[];
+                        upcomingEvents: {
+                            contestId?: string;
+                            title: string;
+                            /** Format: date-time */
+                            date: string;
+                            /** @enum {string} */
+                            eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
+                        }[];
                     };
                 };
             };
@@ -3008,7 +3082,21 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        actionItem: {
+                            id: string;
+                            leagueId: string;
+                            contestId?: string | null;
+                            type: string;
+                            priority: string;
+                            title: string;
+                            description: string;
+                            actionUrl?: string | null;
+                            resolved: boolean;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -3032,7 +3120,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        entries: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -3719,8 +3809,11 @@ export interface operations {
                     name: string;
                     /** Format: uuid */
                     sportEventId: string;
-                    /** @enum {string} */
-                    contestType: "SINGLE_EVENT";
+                    /**
+                     * @default SINGLE_EVENT
+                     * @enum {string}
+                     */
+                    contestType?: "SINGLE_EVENT";
                     configuration: {
                         /** @enum {string} */
                         selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
@@ -3748,31 +3841,33 @@ export interface operations {
                         rosterSize?: number;
                         totalPrizePoolAmount?: number | null;
                         participantScoringRules: {
-                            participantScoringDefinitionId: string;
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
                             sortOrder: number;
                             /** @default {} */
-                            config: {
+                            config?: {
                                 [key: string]: unknown;
                             };
                             /** @default true */
-                            active: boolean;
+                            active?: boolean;
                         }[];
                         entryAggregationRule: {
-                            aggregationDefinitionId: string;
+                            /** @enum {string} */
+                            aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
                             /** @default {} */
-                            config: {
+                            config?: {
                                 [key: string]: unknown;
                             };
                             /** @default true */
-                            active: boolean;
+                            active?: boolean;
                         };
                         /** @default [] */
-                        prizeDefinitions: {
+                        prizeDefinitions?: {
                             prizeDefinitionId: string;
                             displayName: string;
                             sortOrder: number;
                             /** @default {} */
-                            ruleConfig: {
+                            ruleConfig?: {
                                 [key: string]: unknown;
                             };
                             /** @enum {string} */
@@ -3780,7 +3875,7 @@ export interface operations {
                             amount?: number;
                             percentage?: number;
                             /** @default true */
-                            active: boolean;
+                            active?: boolean;
                         }[];
                     };
                 };
@@ -3829,7 +3924,7 @@ export interface operations {
                                 totalPrizePoolAmount?: number | null;
                                 participantScoringRules: {
                                     /** @enum {string} */
-                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS" | "PREDICTION";
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
                                     sortOrder: number;
                                     /** @default {} */
                                     config: {
@@ -3933,7 +4028,7 @@ export interface operations {
                                 totalPrizePoolAmount?: number | null;
                                 participantScoringRules: {
                                     /** @enum {string} */
-                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS" | "PREDICTION";
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
                                     sortOrder: number;
                                     /** @default {} */
                                     config: {
@@ -4022,31 +4117,33 @@ export interface operations {
                     rosterSize?: number;
                     totalPrizePoolAmount?: number | null;
                     participantScoringRules: {
-                        participantScoringDefinitionId: string;
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
                         sortOrder: number;
                         /** @default {} */
-                        config: {
+                        config?: {
                             [key: string]: unknown;
                         };
                         /** @default true */
-                        active: boolean;
+                        active?: boolean;
                     }[];
                     entryAggregationRule: {
-                        aggregationDefinitionId: string;
+                        /** @enum {string} */
+                        aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
                         /** @default {} */
-                        config: {
+                        config?: {
                             [key: string]: unknown;
                         };
                         /** @default true */
-                        active: boolean;
+                        active?: boolean;
                     };
                     /** @default [] */
-                    prizeDefinitions: {
+                    prizeDefinitions?: {
                         prizeDefinitionId: string;
                         displayName: string;
                         sortOrder: number;
                         /** @default {} */
-                        ruleConfig: {
+                        ruleConfig?: {
                             [key: string]: unknown;
                         };
                         /** @enum {string} */
@@ -4054,7 +4151,7 @@ export interface operations {
                         amount?: number;
                         percentage?: number;
                         /** @default true */
-                        active: boolean;
+                        active?: boolean;
                     }[];
                 };
             };
@@ -4102,7 +4199,7 @@ export interface operations {
                                 totalPrizePoolAmount?: number | null;
                                 participantScoringRules: {
                                     /** @enum {string} */
-                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS" | "PREDICTION";
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
                                     sortOrder: number;
                                     /** @default {} */
                                     config: {
@@ -5677,8 +5774,8 @@ export interface operations {
                     consentType: string;
                     granted: boolean;
                     version: string;
-                    minimumAgeThreshold?: number;
-                    ageAffirmed?: boolean;
+                    minimumAgeThreshold?: number | null;
+                    ageAffirmed?: boolean | null;
                 };
             };
         };
@@ -5690,8 +5787,19 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        consent: {
+                            id: string;
+                            userId: string;
+                            consentType: string;
+                            granted: boolean;
+                            version: string;
+                            minimumAgeThreshold?: number | null;
+                            ageAffirmed?: boolean | null;
+                            ipAddress?: string | null;
+                            userAgent?: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        };
                     };
                 };
             };
@@ -7735,7 +7843,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    entryIds?: string[];
+                    entryIds: string[];
                     rounds?: number;
                     timePerPickSeconds?: number;
                     availableParticipantIds?: string[];
@@ -7867,9 +7975,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** Format: uuid */
                     entryId: string;
-                    /** Format: uuid */
                     participantId: string;
                 };
             };
@@ -8603,7 +8709,52 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    contest_id?: string;
+                    sport: string;
+                    /** @enum {string} */
+                    scoring_type: "CUMULATIVE" | "KNOCKOUT" | "BRACKET" | "STROKE_PLAY" | "POSITION";
+                    stat_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    position_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    bonus_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    penalty_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    multiplier_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    bracket_round_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    upset_bonus_config?: null | {
+                        [key: string]: unknown;
+                    };
+                    special_slots?: {
+                        [key: string]: unknown;
+                    }[];
+                    tiebreaker_config?: {
+                        [key: string]: unknown;
+                    };
+                    missed_event_score?: number;
+                    missed_event_points?: number;
+                    /** @enum {string} */
+                    dnf_handling?: "ZERO" | "EXCLUDE" | "LAST_PLACE" | "PENALTY" | "MISSED_CUT_SCORE";
+                    /** @enum {string} */
+                    counting_method?: "ALL" | "BEST_N" | "DROP_LOWEST_N";
+                    best_n?: number;
+                    drop_lowest_n?: number;
+                    lower_is_better?: boolean;
+                };
+            };
+        };
         responses: {
             /** @description Default Response */
             200: {
@@ -8970,8 +9121,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        providers: {
+                            providerId: string;
+                            providerName: string;
+                            sportsCovered: string[];
+                        }[];
                     };
                 };
             };
@@ -8995,8 +9149,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        job: {
+                            /** @enum {string} */
+                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            providerId: string;
+                            sport: string;
+                            eventExternalId?: string;
+                            /** @enum {string} */
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt?: string;
+                            /** Format: date-time */
+                            completedAt?: string;
+                            recordsProcessed: number;
+                            errors: number;
+                            errorLog: {
+                                [key: string]: unknown;
+                            }[];
+                        };
                     };
                 };
             };
@@ -9021,8 +9191,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        job: {
+                            /** @enum {string} */
+                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            providerId: string;
+                            sport: string;
+                            eventExternalId?: string;
+                            /** @enum {string} */
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt?: string;
+                            /** Format: date-time */
+                            completedAt?: string;
+                            recordsProcessed: number;
+                            errors: number;
+                            errorLog: {
+                                [key: string]: unknown;
+                            }[];
+                        };
                     };
                 };
             };
@@ -9047,8 +9233,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        job: {
+                            /** @enum {string} */
+                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            providerId: string;
+                            sport: string;
+                            eventExternalId?: string;
+                            /** @enum {string} */
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt?: string;
+                            /** Format: date-time */
+                            completedAt?: string;
+                            recordsProcessed: number;
+                            errors: number;
+                            errorLog: {
+                                [key: string]: unknown;
+                            }[];
+                        };
                     };
                 };
             };
@@ -9072,8 +9274,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        sport: string;
+                        eventsWithOdds: number;
+                        odds: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };

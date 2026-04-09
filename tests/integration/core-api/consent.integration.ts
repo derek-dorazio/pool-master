@@ -31,7 +31,16 @@ describe('Consent integration', () => {
     });
 
     expect(recordRes.statusCode).toBe(201);
-    expect(recordRes.json()).toEqual({ success: true });
+    expect(recordRes.json()).toMatchObject({
+      consent: {
+        userId: user.user.id,
+        consentType: 'terms_of_service',
+        granted: true,
+        version: '2026-04',
+        minimumAgeThreshold: 18,
+        ageAffirmed: true,
+      },
+    });
 
     const historyRes = await getApp().inject({
       method: 'GET',

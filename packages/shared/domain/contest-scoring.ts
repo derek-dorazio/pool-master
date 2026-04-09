@@ -5,7 +5,6 @@ export const ParticipantScoringDefinitionIdSchema = z.enum([
   'TEAM_WIN_POINTS',
   'ROUND_MULTIPLIER',
   'SEED_DIFFERENTIAL_BONUS',
-  'PREDICTION',
 ]);
 export type ParticipantScoringDefinitionId = z.infer<
   typeof ParticipantScoringDefinitionIdSchema

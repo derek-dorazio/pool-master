@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import { EventListResponseSchema } from '@poolmaster/shared/dto/events.dto';
+import { toEventListResponse } from '../../mappers';
 
 export async function eventsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -32,20 +33,7 @@ export async function eventsModule(fastify: FastifyInstance): Promise<void> {
         take: query.limit ?? 25,
       });
 
-      return {
-        events: events.map((event) => ({
-          id: event.id,
-          sport: event.sport,
-          name: event.name,
-          venue: event.venue ?? null,
-          location: event.location ?? null,
-          status: event.status,
-          startDate: event.startDate.toISOString(),
-          endDate: event.endDate?.toISOString() ?? null,
-          participantCount: event.participantCount ?? null,
-          fieldLocked: event.fieldLocked,
-        })),
-      };
+      return toEventListResponse(events);
     },
   });
 }

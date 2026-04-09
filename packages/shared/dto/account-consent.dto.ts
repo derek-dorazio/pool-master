@@ -27,5 +27,5 @@ export const ConsentRecordRequestSchema = z.object({
 });
 
 export const ConsentRecordResponseSchema = z.object({
-  success: z.literal(true),
+  consent: ConsentRecordDtoSchema,
 });

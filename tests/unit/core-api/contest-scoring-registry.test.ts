@@ -166,21 +166,4 @@ describe('contest-scoring registries', () => {
     ]);
     expect(result.totalScore).toBe(-5);
   });
-
-  it('throws for unsupported participant scoring definitions', () => {
-    const context = createBaseContext({
-      scoringRules: [
-        createScoringRule(
-          'rule-unknown',
-          'PREDICTION',
-          1,
-          {},
-        ),
-      ],
-    });
-
-    expect(() => scoreContestEntry(context)).toThrow(
-      'Unsupported participant scoring definition: PREDICTION',
-    );
-  });
 });

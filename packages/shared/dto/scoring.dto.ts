@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
+
+export const ScoringConfigValidationRequestSchema = ScoringConfigSchema;
+export type ScoringConfigValidationRequest = z.infer<typeof ScoringConfigValidationRequestSchema>;
 
 export const ScoringConfigValidationResponseSchema = z.object({
   valid: z.boolean(),
