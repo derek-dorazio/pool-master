@@ -2,6 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
+import { JoinLeaguePage } from '@/features/leagues/join-league-page';
+import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { LeaguesPage } from '@/features/leagues/leagues-page';
 import { MemberRouteGuard } from './route-guards';
 
@@ -15,11 +17,19 @@ export const router = createBrowserRouter([
         element: <AuthHomePage />,
       },
       {
+        path: 'join/:inviteCode',
+        element: <JoinLeaguePage />,
+      },
+      {
         element: <MemberRouteGuard />,
         children: [
           {
             path: 'leagues',
             element: <LeaguesPage />,
+          },
+          {
+            path: 'leagues/:leagueId',
+            element: <LeagueDetailPage />,
           },
         ],
       },
