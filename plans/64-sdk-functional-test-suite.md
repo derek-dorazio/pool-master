@@ -830,13 +830,13 @@ Cross-rule/docs adoption is coordinated in Plan 66.
 
 | ID | Slice | Task | Status | Notes |
 |---|---|---|---|---|
-| 64-A01 | A | Create `tests/functional/jest.config.js` | Not Started | hey-api .js extension handling, moduleNameMapper |
-| 64-A02 | A | Create `tests/functional/setup.ts` — shared app lifecycle, `listen({ port: 0 })`, SDK client factory | Not Started | Shared boot, tenant-free cleanup design |
-| 64-A03 | A | Create `tests/functional/builders.ts` — `buildRegisteredUser`, `buildLeagueWithOwner` | Not Started | Builders use SDK ops, not Prisma |
-| 64-A04 | A | Add `test:functional` and `test:functional:coverage` npm scripts | Not Started | Root package.json |
-| 64-A05 | A | Create pilot `auth.functional.ts` and `consent.functional.ts` | Not Started | Auth success path, consent write/read, unauthenticated error path |
-| 64-A06 | A | Update `scripts/run-backend-coverage.mjs` to merge functional coverage from day one | Not Started | |
-| 64-A07 | A | Verify pilot tests pass against local Postgres and CI | Not Started | Success criteria gate |
+| 64-A01 | A | Create `tests/functional/jest.config.js` | Done | Added shared functional Jest config with `.js` extension remapping and dedicated functional tsconfig using DOM libs for generated hey-api types. |
+| 64-A02 | A | Create `tests/functional/setup.ts` — shared app lifecycle, `listen({ port: 0 })`, SDK client factory | Done | Added shared server boot/teardown, SDK client helpers, deterministic email generation, and cleanup helpers keyed to functional test run ids. |
+| 64-A03 | A | Create `tests/functional/builders.ts` — `buildRegisteredUser`, `buildLeagueWithOwner` | Done | Added builder helpers that use generated SDK operations and throw descriptive setup failures instead of null dereferences. |
+| 64-A04 | A | Add `test:functional` and `test:functional:coverage` npm scripts | Done | Root `package.json` now exposes functional test and coverage entry points. |
+| 64-A05 | A | Create pilot `auth.functional.ts` and `consent.functional.ts` | Done | Pilot covers register-login-profile, consent write/read, and unauthenticated consent error paths through the generated SDK. |
+| 64-A06 | A | Update `scripts/run-backend-coverage.mjs` to merge functional coverage from day one | In Progress | Functional suite is now part of the merged backend coverage run and reported in output, but child-process Fastify boot currently yields a `0%` functional bucket until coverage instrumentation for the shared server process is added. |
+| 64-A07 | A | Verify pilot tests pass against local Postgres and CI | In Progress | Local Postgres pilot passes. CI integration for the functional suite remains part of later adoption work in Slice `64-E02`. |
 | 64-B01 | B | Expand `auth.functional.ts` — full auth CRUD + token refresh + error paths | Not Started | |
 | 64-B02 | B | Create `league-lifecycle.functional.ts` — league CRUD + invitation + member lifecycle | Not Started | Broader workflow moved here from the original proof-of-concept |
 | 64-B03 | B | Create `squad-management.functional.ts` — CRUD + co-manager + one-per-league | Not Started | |

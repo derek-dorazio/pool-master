@@ -13,6 +13,7 @@ const rootDir = process.cwd();
 const coverageRoot = path.join(rootDir, 'coverage');
 const unitDir = path.join(coverageRoot, 'unit');
 const integrationDir = path.join(coverageRoot, 'integration');
+const functionalDir = path.join(coverageRoot, 'functional');
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -57,13 +58,16 @@ fs.mkdirSync(coverageRoot, { recursive: true });
 
 run('npm', ['run', 'test:coverage:unit']);
 run('npm', ['run', 'test:coverage:integration']);
+run('npm', ['run', 'test:functional:coverage']);
 
 printSummary('Unit', path.join(unitDir, 'coverage-summary.json'));
 printSummary('Integration', path.join(integrationDir, 'coverage-summary.json'));
+printSummary('Functional', path.join(functionalDir, 'coverage-summary.json'));
 
 const coverageMap = createCoverageMap({});
 coverageMap.merge(readCoverageJson(path.join(unitDir, 'coverage-final.json')));
 coverageMap.merge(readCoverageJson(path.join(integrationDir, 'coverage-final.json')));
+coverageMap.merge(readCoverageJson(path.join(functionalDir, 'coverage-final.json')));
 
 fs.writeFileSync(
   path.join(coverageRoot, 'coverage-final.json'),
