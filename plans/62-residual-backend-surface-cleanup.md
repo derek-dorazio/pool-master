@@ -168,6 +168,10 @@ Those areas are already in place and should remain the foundation.
 
 ### Slice A: Tenant Architecture Removal Or Constrainment
 
+Execution owner:
+
+- main thread
+
 Goal:
 
 - decide whether `Tenant` should be fully removed now or constrained so it is
@@ -185,6 +189,10 @@ Likely work:
 This is the highest-value cleanup.
 
 ### Slice B: Admin Platform/Tenant Surface Simplification
+
+Execution owner:
+
+- main thread
 
 Goal:
 
@@ -209,6 +217,10 @@ Likely keepers:
 
 ### Slice C: Communication Simplification
 
+Execution owner:
+
+- main thread after tenant/admin boundary decisions are locked
+
 Goal:
 
 - make runtime communication match Plan 48
@@ -224,6 +236,10 @@ Likely work:
 
 ### Slice D: Contract Hygiene Cleanup
 
+Execution owner:
+
+- worker-safe after route ownership is assigned
+
 Goal:
 
 - make active backend contracts comply with the repo service rules
@@ -237,6 +253,10 @@ Likely work:
   inline
 
 ### Slice E: Testing And Coverage Cleanup
+
+Execution owner:
+
+- worker-safe
 
 Goal:
 
@@ -253,6 +273,10 @@ Likely work:
 - revisit global coverage thresholds after residual dead surface is removed
 
 ### Slice F: Shared Contract And Type Cleanup
+
+Execution owner:
+
+- worker-safe after the related route/runtime cleanup lands
 
 Goal:
 
@@ -303,3 +327,42 @@ Start with:
 1. tenant architecture decision
 2. admin tenant/platform cleanup
 3. communication simplification
+
+## Worker Dispatch Guidance
+
+### Keep On Main Thread
+
+- Slice A: Tenant Architecture Removal Or Constrainment
+- Slice B: Admin Platform/Tenant Surface Simplification
+- Slice C: Communication Simplification
+
+Why:
+
+- they are cross-cutting
+- they affect auth, request context, shared contracts, and route boundaries
+- they require product/architecture decisions before implementation details are
+  safe to parallelize
+
+### Safe To Delegate
+
+- Slice D: Contract Hygiene Cleanup
+- Slice E: Testing And Coverage Cleanup
+- Slice F: Shared Contract And Type Cleanup
+
+Suggested worker decomposition:
+
+1. worker 1
+   - replace inline JSON schemas with shared Zod DTOs
+   - replace `SuccessSchema` misuse on structured responses
+   - add missing mapper-backed route flows where straightforward
+
+2. worker 2
+   - add contract-focused API tests
+   - add negative/error-path integration tests
+   - add dedicated CRUD integration tests for redesigned models such as
+     `RosterPick`
+
+3. worker 3
+   - rebuild/clean `packages/shared/dist`
+   - remove stale DTO/domain exports after route cleanup
+   - tighten deferred enum/catalog documentation
