@@ -18,11 +18,37 @@ The long-term product direction is one role-based web app, not a separate admin 
 - Any root-admin functionality needed later should be rebuilt from scratch inside the single PoolMaster web app.
 - Archive only if needed for historical source retention; do not treat archived admin code as planning or implementation guidance.
 
+## Inventory Snapshot
+
+Active admin references still present in the repo fall into these buckets:
+
+| Bucket | Examples | Notes |
+| --- | --- | --- |
+| Root package scripts | `package.json` `test:smoke:e2e:admin`, `test:smoke:e2e`, `test:smoke` | Current local smoke command chain still dispatches admin Playwright |
+| CI web/admin build and deploy | `.github/workflows/ci.yml` web/admin Vitest jobs, coverage upload, S3 deploy, QA summary | Both apps still participate in build/test/publish/QA deployment |
+| Browser E2E | `clients/admin/e2e/` plus CI Playwright job | Admin browser suite still runs against `qa-admin.ultimateofficepoolmanager.com` |
+| Admin app source | `clients/admin/` package and source files | Active app code, Vitest, Playwright, MSW, and UI remain in place |
+| Rules/docs references | `rules/architecture-rules.md`, `rules/workflow-rules.md`, `rules/react-ui-rules.md`, `rules/poolmaster-webapp-rules.md`, `plans/71-legacy-webapp-archive-and-cutover.md` | These now need later cleanup to stop treating admin as active guidance |
+| Tests and helpers | `tests/integration/core-api/api-contracts-admin.integration.ts`, `tests/unit/core-api/admin-contest-service.test.ts`, `tests/api/jest.config.ts` | Admin contract/smoke-style coverage remains present |
+
+Concrete removal map for later slices:
+
+| Area | Planned removal target | Suggested order |
+| --- | --- | --- |
+| Local scripts | `package.json` admin smoke scripts | Remove after Plan 69 begins replacing the active web surface |
+| CI unit/coverage | `.github/workflows/ci.yml` admin Vitest job, admin coverage upload, admin coverage summary | Remove with the admin-app gate cleanup slice |
+| CI deploy | `.github/workflows/ci.yml` admin S3/CloudFront deploy steps and admin QA target references | Remove once the admin app is no longer an active deployment target |
+| Browser E2E | `clients/admin/e2e/` and Playwright job wiring | Remove as part of the browser reset slice |
+| Admin app source | `clients/admin/**` | Remove or archive only after the repo no longer needs it as active implementation guidance |
+| Admin contract tests | `tests/integration/core-api/api-contracts-admin.integration.ts` | Remove once the new functional API suite owns the relevant contract/error coverage |
+| Admin unit tests | `tests/unit/core-api/admin-contest-service.test.ts` and other admin-targeted unit suites | Remove or archive as the admin app is retired |
+| Docs/rules | active references in `rules/*`, `AGENTS.md`, and plan docs | Update after the code/build references are removed so the guidance matches the repo state |
+
 ## Task List
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Inventory all `clients/admin` build/test/CI references | package scripts, turbo config, CI jobs, docs, rules, README files |
+| Done | Inventory all `clients/admin` build/test/CI references | Active refs now mapped across package scripts, CI workflow, admin source/tests, and rules/docs; see inventory snapshot above |
 | Pending | Remove admin app from local quality gates | typecheck, lint, test, coverage commands |
 | Pending | Remove admin app from CI workflows | build/test/package/deploy/browser references, coverage artifacts, and summaries |
 | Pending | Remove admin-specific contract and browser test references | Clean up any admin-only contract or browser test wiring that should not survive the app retirement |
