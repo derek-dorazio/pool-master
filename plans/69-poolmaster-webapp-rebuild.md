@@ -7,8 +7,8 @@ This app becomes the single go-forward web frontend for PoolMaster.
 ## Dependencies
 
 - Can start independently.
-- Benefits from [plans/65-error-envelope-and-route-contract-cleanup.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/65-error-envelope-and-route-contract-cleanup.md), but is not blocked by it.
-- Will become the primary dependency for [plans/70-admin-webapp-removal.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/70-admin-webapp-removal.md) and [plans/71-legacy-webapp-archive-and-cutover.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/71-legacy-webapp-archive-and-cutover.md).
+- Benefits from archived [plans/archive/2026-04-service-and-frontend-baseline/65-error-envelope-and-route-contract-cleanup.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-service-and-frontend-baseline/65-error-envelope-and-route-contract-cleanup.md), but is not blocked by it.
+- Depends on the historical cleanup recorded in [plans/archive/2026-04-service-and-frontend-baseline/70-admin-webapp-removal.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-service-and-frontend-baseline/70-admin-webapp-removal.md) and [plans/archive/2026-04-service-and-frontend-baseline/71-legacy-webapp-archive-and-cutover.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-service-and-frontend-baseline/71-legacy-webapp-archive-and-cutover.md).
 
 ## Direction
 

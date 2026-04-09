@@ -1,3 +1,7 @@
+# Plan 71: Legacy WebApp Archive And Cutover
+
+> Archived on 2026-04-09 after the legacy web app was moved to `clients/_archived/web` and removed from active build, test, coverage, smoke, and CI paths. Use this file only as historical cleanup context.
+
 ## Objective
 
 Archive the legacy `clients/web` app so it no longer participates in active build, test, coverage, smoke, or CI workflows now that `clients/poolmaster` is the go-forward app.
@@ -7,7 +11,7 @@ The archived app may remain as reference material for planning only.
 ## Dependencies
 
 - The immediate cleanup pivot allows this archive work to proceed before the full PoolMaster rebuild is complete, as long as PoolMaster is the only active frontend target in build/test/CI.
-- Should coordinate with [plans/68-browser-e2e-reset-for-web-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/68-browser-e2e-reset-for-web-rebuild.md) and [plans/70-admin-webapp-removal.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/70-admin-webapp-removal.md) so test and CI references are removed cleanly.
+- Should coordinate with [plans/archive/2026-04-service-and-frontend-baseline/68-browser-e2e-reset-for-web-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-service-and-frontend-baseline/68-browser-e2e-reset-for-web-rebuild.md) and [plans/archive/2026-04-service-and-frontend-baseline/70-admin-webapp-removal.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-service-and-frontend-baseline/70-admin-webapp-removal.md) so test and CI references are removed cleanly.
 
 ## Direction
 

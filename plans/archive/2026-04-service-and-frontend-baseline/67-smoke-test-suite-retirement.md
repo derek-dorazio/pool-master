@@ -1,3 +1,7 @@
+# Plan 67: Smoke Test Suite Retirement
+
+> Archived on 2026-04-09 after the retired smoke suite was removed from the active build, test, and CI baseline. Use this file only as historical cleanup context.
+
 ## Objective
 
 Retire the current deployed smoke-test suite as the acceptance gate now that the functional API suite provides stronger, faster pre-merge service-stack verification.

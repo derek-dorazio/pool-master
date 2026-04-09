@@ -1,3 +1,7 @@
+# Plan 68: Browser E2E Reset For Web Rebuild
+
+> Archived on 2026-04-09 after the stale browser E2E suites and legacy Playwright gating were removed from the active baseline. Use this file only as historical cleanup context.
+
 ## Objective
 
 Clear out the current browser E2E suites so they do not preserve stale web/admin behavior after the backend refactor.
@@ -7,8 +11,8 @@ The admin app is being retired, and the web app will be rebuilt against the new 
 This direction is also captured in:
 
 - [plans/69-poolmaster-webapp-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/69-poolmaster-webapp-rebuild.md)
-- [plans/70-admin-webapp-removal.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/70-admin-webapp-removal.md)
-- [plans/71-legacy-webapp-archive-and-cutover.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/71-legacy-webapp-archive-and-cutover.md)
+- [plans/archive/2026-04-service-and-frontend-baseline/70-admin-webapp-removal.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-service-and-frontend-baseline/70-admin-webapp-removal.md)
+- [plans/archive/2026-04-service-and-frontend-baseline/71-legacy-webapp-archive-and-cutover.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-service-and-frontend-baseline/71-legacy-webapp-archive-and-cutover.md)
 
 ## Direction
 

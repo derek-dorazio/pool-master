@@ -20,7 +20,7 @@ This plan is the adoption and coordination companion to Plan 64.
 
 ## Review Outcome For Plan 64
 
-The direction in [plans/64-sdk-functional-test-suite.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/64-sdk-functional-test-suite.md) is strong and should be adopted with these clarifications:
+The direction in archived [plans/archive/2026-04-service-and-frontend-baseline/64-sdk-functional-test-suite.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-service-and-frontend-baseline/64-sdk-functional-test-suite.md) is strong and should be adopted with these clarifications:
 
 - Treat this as a **functional API suite**, not just contract testing.
 - Keep the focus on **CRUD, use-case journeys, and backend business logic**.

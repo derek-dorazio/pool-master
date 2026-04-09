@@ -1,5 +1,7 @@
 # Plan 64: SDK Functional Test Suite
 
+> Archived on 2026-04-09 after the service functional API framework, pilot coverage, renamed CI/build wiring, and child-process coverage attribution all landed. Use this file only as historical implementation context; ongoing functional suite expansion now lives in active Plan 66.
+
 ## Summary
 
 Create a new **SDK functional test suite** that exercises the full request/response stack through the generated hey-api client SDK, proving contract compliance from TypeScript types through HTTP serialization, Fastify routing, business logic, and persistence — then back through SDK deserialization to typed responses.
@@ -836,7 +838,7 @@ Cross-rule/docs adoption is coordinated in Plan 66.
 | 64-A04 | A | Add `test:service:functional-api` and `test:coverage:service:functional-api` npm scripts | Done | Root `package.json` now exposes the service functional API test and coverage entry points. |
 | 64-A05 | A | Create pilot `auth.functional.ts` and `consent.functional.ts` | Done | Pilot covers register-login-profile, consent write/read, and unauthenticated consent error paths through the generated SDK. |
 | 64-A06 | A | Update `scripts/run-backend-coverage.mjs` to merge functional coverage from day one | Done | Added a dedicated functional coverage wrapper that instruments the spawned Fastify server with V8 coverage, converts it to Istanbul output, and merges it into the renamed `service` coverage report with real functional attribution. |
-| 64-A07 | A | Verify pilot tests pass against local Postgres and CI | In Progress | Local Postgres pilot passes. CI integration for the functional suite remains part of later adoption work in Slice `64-E02`. |
+| 64-A07 | A | Verify pilot tests pass against local Postgres and CI | Done | Pilot tests pass against local Postgres, the renamed service functional API workflow is wired into CI/build/test naming, and child-process coverage is now merged into the service report. |
 | 64-B01 | B | Expand `auth.functional.ts` — full auth CRUD + token refresh + error paths | Not Started | |
 | 64-B02 | B | Create `league-lifecycle.functional.ts` — league CRUD + invitation + member lifecycle | Not Started | Broader workflow moved here from the original proof-of-concept |
 | 64-B03 | B | Create `squad-management.functional.ts` — CRUD + co-manager + one-per-league | Not Started | |

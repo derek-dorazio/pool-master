@@ -1,3 +1,7 @@
+# Plan 70: Admin WebApp Removal
+
+> Archived on 2026-04-09 after `clients/admin` was removed from the active repo surface and all related build, test, CI, and coverage references were cleaned up. Use this file only as historical cleanup context.
+
 ## Objective
 
 Completely remove the separate admin webapp from the repository’s active build, test, and CI surface.
@@ -33,7 +37,7 @@ Active admin references still present in the repo fall into these buckets:
 | CI web/admin build and deploy | `.github/workflows/ci.yml` web/admin Vitest jobs, coverage upload, S3 deploy, QA summary | Both apps still participate in build/test/publish/QA deployment |
 | Browser E2E | `clients/admin/e2e/` plus CI Playwright job | Admin browser suite still runs against `qa-admin.ultimateofficepoolmanager.com` |
 | Admin app source | `clients/admin/` package and source files | Active app code, Vitest, Playwright, MSW, and UI remain in place |
-| Rules/docs references | `rules/architecture-rules.md`, `rules/workflow-rules.md`, `rules/react-ui-rules.md`, `rules/poolmaster-webapp-rules.md`, `plans/71-legacy-webapp-archive-and-cutover.md` | These now need later cleanup to stop treating admin as active guidance |
+| Rules/docs references | `rules/architecture-rules.md`, `rules/workflow-rules.md`, `rules/react-ui-rules.md`, `rules/poolmaster-webapp-rules.md`, `plans/archive/2026-04-service-and-frontend-baseline/71-legacy-webapp-archive-and-cutover.md` | These now need later cleanup to stop treating admin as active guidance |
 | Tests and helpers | `tests/integration/core-api/api-contracts-root-admin.integration.ts`, `tests/unit/core-api/admin-contest-service.test.ts`, `tests/api/jest.config.ts` | Root-admin/backend contract coverage remains, but no separate admin-frontend contract suite or browser suite should survive |
 
 Concrete removal map for later slices:

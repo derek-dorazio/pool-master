@@ -1,3 +1,7 @@
+# Plan 65: Error Envelope And Route Contract Cleanup
+
+> Archived on 2026-04-09 after the shared nested error envelope, route-level error schema cleanup, and negative-path contract coverage all landed. Use this file only as historical cleanup context.
+
 ## Objective
 
 Proactively standardize backend error handling and route error contracts so the repo can later enforce a stricter universal error-envelope rule without putting the whole codebase into immediate violation.
