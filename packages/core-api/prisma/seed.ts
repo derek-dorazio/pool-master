@@ -187,7 +187,6 @@ async function main(): Promise<void> {
     create: {
       name: 'PoolMaster Dev',
       slug: 'poolmaster-dev',
-      planTier: 'free',
       settings: {},
     },
   });
@@ -369,15 +368,15 @@ async function main(): Promise<void> {
   const allMembers = [
     // Masters Pool — Commish One is OWNER
     { leagueId: mastersLeague.id, userId: commish1.id, role: 'OWNER' },
-    { leagueId: mastersLeague.id, userId: derek.id, role: 'MANAGER' },
-    { leagueId: mastersLeague.id, userId: jackson.id, role: 'MANAGER' },
-    ...testUsers.map((u) => ({ leagueId: mastersLeague.id, userId: u.id, role: 'MANAGER' })),
+    { leagueId: mastersLeague.id, userId: derek.id, role: 'MEMBER' },
+    { leagueId: mastersLeague.id, userId: jackson.id, role: 'MEMBER' },
+    ...testUsers.map((u) => ({ leagueId: mastersLeague.id, userId: u.id, role: 'MEMBER' })),
 
     // NFL Survivor — Commish Two is OWNER
     { leagueId: nflLeague.id, userId: commish2.id, role: 'OWNER' },
-    { leagueId: nflLeague.id, userId: derek.id, role: 'MANAGER' },
-    { leagueId: nflLeague.id, userId: jackson.id, role: 'MANAGER' },
-    ...testUsers.map((u) => ({ leagueId: nflLeague.id, userId: u.id, role: 'MANAGER' })),
+    { leagueId: nflLeague.id, userId: derek.id, role: 'MEMBER' },
+    { leagueId: nflLeague.id, userId: jackson.id, role: 'MEMBER' },
+    ...testUsers.map((u) => ({ leagueId: nflLeague.id, userId: u.id, role: 'MEMBER' })),
   ];
 
   for (const membership of allMembers) {
