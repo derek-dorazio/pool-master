@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '@/features/auth/auth-provider';
 import { routeMap } from '@/routes/route-map';
 
 function roleLabel(role: string) {
@@ -7,6 +8,22 @@ function roleLabel(role: string) {
 
 export function AppShell() {
   const location = useLocation();
+  const auth = useAuth();
+  const visibleRoutes = routeMap.filter((item) => {
+    if (item.role === 'PUBLIC') {
+      return true;
+    }
+
+    if (!auth.isAuthenticated) {
+      return false;
+    }
+
+    if (item.role === 'ROOT_ADMIN') {
+      return auth.isRootAdmin;
+    }
+
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -24,7 +41,15 @@ export function AppShell() {
             </div>
           </div>
           <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-            Current route: <span className="font-medium text-foreground">{location.pathname}</span>
+            <div>
+              Session:{' '}
+              <span className="font-medium text-foreground">
+                {auth.user ? auth.user.displayName : 'Signed out'}
+              </span>
+            </div>
+            <div className="mt-1">
+              Current route: <span className="font-medium text-foreground">{location.pathname}</span>
+            </div>
           </div>
         </div>
       </header>
@@ -36,7 +61,7 @@ export function AppShell() {
               Route Map
             </h2>
             <nav className="mt-4 space-y-3">
-              {routeMap.map((item) => {
+              {visibleRoutes.map((item) => {
                 const active = item.path === location.pathname;
                 return (
                   <Link

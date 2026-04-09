@@ -1,6 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
+import { LeaguesPage } from '@/features/leagues/leagues-page';
+import { MemberRouteGuard } from './route-guards';
 
 export const router = createBrowserRouter([
   {
@@ -9,23 +12,16 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: (
-          <PlaceholderPage
-            description="This scaffold is the foundation for the single go-forward frontend for members, commissioners, and root admins."
-            eyebrow="PoolMaster"
-            title="The new role-based PoolMaster web app starts here."
-          />
-        ),
+        element: <AuthHomePage />,
       },
       {
-        path: 'leagues',
-        element: (
-          <PlaceholderPage
-            description="League browsing, invitation acceptance, dashboards, and squad-aware workflows will live here first."
-            eyebrow="Member"
-            title="League routes"
-          />
-        ),
+        element: <MemberRouteGuard />,
+        children: [
+          {
+            path: 'leagues',
+            element: <LeaguesPage />,
+          },
+        ],
       },
       {
         path: 'contests',

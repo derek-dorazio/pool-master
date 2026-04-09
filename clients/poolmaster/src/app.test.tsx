@@ -2,21 +2,13 @@ import { render, screen } from '@testing-library/react';
 import { App } from './app';
 
 describe('App', () => {
-  it('renders the PoolMaster scaffold home page', () => {
+  it('renders the PoolMaster auth entry point', () => {
     render(<App />);
 
     expect(
-      screen.getByRole('heading', {
-        name: /the new role-based poolmaster web app starts here/i,
-      }),
+      screen.getByText(/one web app for members, commissioners, and future root admins/i),
     ).toBeInTheDocument();
-  });
-
-  it('renders the route-map navigation shell', () => {
-    render(<App />);
-
-    expect(screen.getByRole('link', { name: /leagues/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /commissioner/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /root admin/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });
 });
