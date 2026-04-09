@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { getLeague, listLeagueMembers } from '@/lib/api';
+import { useState } from 'react';
+import { generateInviteLink, getLeague, listLeagueMembers, sendLeagueInvitations } from '@/lib/api';
 import { useSessionStore } from '@/features/auth/session-store';
 
 type LeagueDetail = {
@@ -35,6 +36,8 @@ function formatRole(role: string | undefined) {
 export function LeagueDetailPage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
   const tokens = useSessionStore((state) => state.tokens);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
 
   const leagueQuery = useQuery({
     queryKey: ['poolmaster', 'league', leagueId, tokens?.accessToken],
@@ -79,6 +82,79 @@ export function LeagueDetailPage() {
     enabled: Boolean(leagueId && tokens?.accessToken),
     retry: false,
   });
+
+  const inviteLinkMutation = useMutation({
+    mutationFn: async (): Promise<string> => {
+      const response = await generateInviteLink({
+        path: { id: leagueId },
+        body: {},
+        headers: tokens?.accessToken
+          ? {
+              Authorization: `Bearer ${tokens.accessToken}`,
+            }
+          : undefined,
+      });
+
+      const inviteCode = response.data?.invitation?.inviteCode;
+      if (!inviteCode) {
+        throw response.error ?? new Error('Invite link generation did not return an invite code.');
+      }
+
+      return `${window.location.origin}/join/${inviteCode}`;
+    },
+  });
+
+  const sendInviteMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await sendLeagueInvitations({
+        path: { id: leagueId },
+        body: {
+          emails: [email],
+        },
+        headers: tokens?.accessToken
+          ? {
+              Authorization: `Bearer ${tokens.accessToken}`,
+            }
+          : undefined,
+      });
+
+      if (!response.data) {
+        throw response.error ?? new Error('Invitation send response is missing data.');
+      }
+
+      return response.data;
+    },
+  });
+
+  const isCommissioner =
+    leagueQuery.data?.role === 'OWNER' || leagueQuery.data?.role === 'COMMISSIONER';
+
+  async function handleGenerateInviteLink() {
+    const nextLink = await inviteLinkMutation.mutateAsync();
+    setInviteLink(nextLink);
+  }
+
+  async function handleCopyInviteLink() {
+    if (!inviteLink) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+    } catch {
+      // Keep the link visible for manual copy when clipboard access is unavailable.
+    }
+  }
+
+  async function handleSendInvite() {
+    const email = inviteEmail.trim();
+    if (!email) {
+      return;
+    }
+
+    await sendInviteMutation.mutateAsync(email);
+    setInviteEmail('');
+  }
 
   if (leagueQuery.isLoading) {
     return (
@@ -196,6 +272,82 @@ export function LeagueDetailPage() {
               <li>Invite acceptance already routes through the same member-session model.</li>
             </ul>
           </div>
+
+          {isCommissioner ? (
+            <div className="rounded-[2rem] border border-border bg-card p-6">
+              <h3 className="text-xl font-semibold">Commissioner invitations</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Generate a shareable invite link or send an invitation email through the current
+                backend invitation flow.
+              </p>
+
+              <div className="mt-5 space-y-4">
+                <div className="rounded-2xl border border-border bg-background p-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                      disabled={inviteLinkMutation.isPending}
+                      onClick={() => void handleGenerateInviteLink()}
+                      type="button"
+                    >
+                      {inviteLinkMutation.isPending ? 'Generating...' : 'Generate invite link'}
+                    </button>
+                    <button
+                      className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+                      disabled={!inviteLink}
+                      onClick={() => void handleCopyInviteLink()}
+                      type="button"
+                    >
+                      Copy link
+                    </button>
+                  </div>
+                  <input
+                    className="mt-3 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm"
+                    readOnly
+                    value={inviteLink}
+                  />
+                  {inviteLinkMutation.isError ? (
+                    <p className="mt-2 text-sm text-destructive">
+                      We couldn&apos;t generate an invite link right now.
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="rounded-2xl border border-border bg-background p-4">
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium">Invite by email</span>
+                    <div className="flex gap-3">
+                      <input
+                        className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm"
+                        onChange={(event) => setInviteEmail(event.target.value)}
+                        placeholder="member@example.com"
+                        type="email"
+                        value={inviteEmail}
+                      />
+                      <button
+                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                        disabled={sendInviteMutation.isPending || !inviteEmail.trim()}
+                        onClick={() => void handleSendInvite()}
+                        type="button"
+                      >
+                        {sendInviteMutation.isPending ? 'Sending...' : 'Send'}
+                      </button>
+                    </div>
+                  </label>
+                  {sendInviteMutation.isSuccess ? (
+                    <p className="mt-2 text-sm text-emerald-700">
+                      Invitation sent successfully.
+                    </p>
+                  ) : null}
+                  {sendInviteMutation.isError ? (
+                    <p className="mt-2 text-sm text-destructive">
+                      We couldn&apos;t send that invitation right now.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
