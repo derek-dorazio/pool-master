@@ -9,6 +9,7 @@
 import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { sendError } from '../core/error-handler';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,10 +57,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
 
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return reply.status(401).send({
-        error: 'UNAUTHORIZED',
-        message: 'Missing or malformed authorization header',
-      });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing or malformed authorization header');
     }
 
     const token = authHeader.slice(7);
@@ -79,10 +77,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
       // Also set x-user-id header for backward compatibility with existing handlers
       (request.headers as Record<string, string>)['x-user-id'] = payload.sub;
     } catch {
-      return reply.status(401).send({
-        error: 'UNAUTHORIZED',
-        message: 'Invalid or expired access token',
-      });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired access token');
     }
   });
 }

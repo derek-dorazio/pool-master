@@ -4,6 +4,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { DashboardService } from './dashboard-service';
+import { sendError } from '../../core/error-handler';
 
 export function createDashboardHandlers(dashboardService: DashboardService) {
   return {
@@ -17,7 +18,7 @@ export function createDashboardHandlers(dashboardService: DashboardService) {
   ): Promise<void> {
     const dashboard = await dashboardService.getDashboard(request.params.id, '');
     if (!dashboard) {
-      return reply.status(404).send({ error: 'NOT_FOUND', message: 'League not found' });
+      return sendError(reply, 404, 'NOT_FOUND', 'League not found');
     }
     return reply.send(dashboard);
   }

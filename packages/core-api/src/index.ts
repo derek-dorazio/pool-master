@@ -9,6 +9,7 @@ import { swaggerPlugin } from './plugins/swagger';
 import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
 import { pollConfigPlugin } from './plugins/poll-config';
+import { globalErrorHandler } from './core/error-handler';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
@@ -78,6 +79,7 @@ export function buildApp() {
   app.register(etagPlugin);
   app.register(pollConfigPlugin);
   app.register(authGuard);
+  app.setErrorHandler(globalErrorHandler);
 
   // =========================================================================
   // Auth (public routes — no JWT required)

@@ -21,6 +21,7 @@ import bcrypt from 'bcryptjs';
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
 import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
+import { globalErrorHandler } from '../../packages/core-api/src/core/error-handler';
 import { authModule } from '../../packages/core-api/src/modules/auth/routes';
 import { leaguesModule } from '../../packages/core-api/src/modules/leagues/routes';
 import { squadsModule } from '../../packages/core-api/src/modules/squads/routes';
@@ -69,6 +70,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   // Core plugins
   testApp.register(healthPlugin);
   testApp.register(authGuard);
+  testApp.setErrorHandler(globalErrorHandler);
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth' });

@@ -7,6 +7,7 @@ import type { MemberService } from './member-service';
 import type { MemberDirectoryService } from './member-directory-service';
 import { MemberNotFoundError, MemberOperationError } from './member-service';
 import { mapLeagueMembershipToDto } from '../../mappers';
+import { sendError } from '../../core/error-handler';
 
 export function createMemberHandlers(
   memberService: MemberService,
@@ -45,10 +46,10 @@ export function createMemberHandlers(
       return reply.send({ membership: mapLeagueMembershipToDto(membership) });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       if (err instanceof MemberOperationError) {
-        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+        return sendError(reply, 400, 'BAD_REQUEST', err.message);
       }
       throw err;
     }
@@ -63,10 +64,10 @@ export function createMemberHandlers(
       return reply.send({ success: true });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       if (err instanceof MemberOperationError) {
-        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+        return sendError(reply, 400, 'BAD_REQUEST', err.message);
       }
       throw err;
     }
@@ -78,7 +79,7 @@ export function createMemberHandlers(
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string | undefined;
     if (!userId) {
-      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
 
     try {
@@ -86,10 +87,10 @@ export function createMemberHandlers(
       return reply.send({ success: true });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       if (err instanceof MemberOperationError) {
-        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+        return sendError(reply, 400, 'BAD_REQUEST', err.message);
       }
       throw err;
     }
@@ -104,7 +105,7 @@ export function createMemberHandlers(
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string;
     if (!userId) {
-      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
     try {
       const result = await memberService.transferOwnership(
@@ -118,10 +119,10 @@ export function createMemberHandlers(
       });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       if (err instanceof MemberOperationError) {
-        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+        return sendError(reply, 400, 'BAD_REQUEST', err.message);
       }
       throw err;
     }

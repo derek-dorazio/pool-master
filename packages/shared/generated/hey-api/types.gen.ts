@@ -211,6 +211,21 @@ export type ListLeaguesData = {
     url: '/api/v1/leagues/';
 };
 
+export type ListLeaguesErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ListLeaguesError = ListLeaguesErrors[keyof ListLeaguesErrors];
+
 export type ListLeaguesResponses = {
     /**
      * Default Response
@@ -247,6 +262,21 @@ export type CreateLeagueData = {
     url: '/api/v1/leagues/';
 };
 
+export type CreateLeagueErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type CreateLeagueError = CreateLeagueErrors[keyof CreateLeagueErrors];
+
 export type CreateLeagueResponses = {
     /**
      * Default Response
@@ -280,6 +310,21 @@ export type GetLeagueData = {
     query?: never;
     url: '/api/v1/leagues/{id}';
 };
+
+export type GetLeagueErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetLeagueError = GetLeagueErrors[keyof GetLeagueErrors];
 
 export type GetLeagueResponses = {
     /**
@@ -324,6 +369,21 @@ export type UpdateLeagueSettingsData = {
     url: '/api/v1/leagues/{id}/settings';
 };
 
+export type UpdateLeagueSettingsErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateLeagueSettingsError = UpdateLeagueSettingsErrors[keyof UpdateLeagueSettingsErrors];
+
 export type UpdateLeagueSettingsResponses = {
     /**
      * Default Response
@@ -360,6 +420,21 @@ export type SendLeagueInvitationsData = {
     query?: never;
     url: '/api/v1/leagues/{id}/invitations';
 };
+
+export type SendLeagueInvitationsErrors = {
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type SendLeagueInvitationsError = SendLeagueInvitationsErrors[keyof SendLeagueInvitationsErrors];
 
 export type SendLeagueInvitationsResponses = {
     /**
@@ -401,6 +476,21 @@ export type GenerateInviteLinkData = {
     url: '/api/v1/leagues/{id}/invite-link';
 };
 
+export type GenerateInviteLinkErrors = {
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GenerateInviteLinkError = GenerateInviteLinkErrors[keyof GenerateInviteLinkErrors];
+
 export type GenerateInviteLinkResponses = {
     /**
      * Default Response
@@ -437,11 +527,38 @@ export type RevokeInviteLinkData = {
     url: '/api/v1/leagues/{id}/invite-link/{code}';
 };
 
+export type RevokeInviteLinkErrors = {
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type RevokeInviteLinkError = RevokeInviteLinkErrors[keyof RevokeInviteLinkErrors];
+
 export type RevokeInviteLinkResponses = {
     /**
      * Default Response
      */
-    204: void;
+    200: {
+        success: true;
+    };
 };
 
 export type RevokeInviteLinkResponse = RevokeInviteLinkResponses[keyof RevokeInviteLinkResponses];
@@ -454,6 +571,31 @@ export type ListLeagueMembersData = {
     query?: never;
     url: '/api/v1/leagues/{id}/members';
 };
+
+export type ListLeagueMembersErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ListLeagueMembersError = ListLeagueMembersErrors[keyof ListLeagueMembersErrors];
 
 export type ListLeagueMembersResponses = {
     /**
@@ -484,6 +626,41 @@ export type ChangeMemberRoleData = {
     query?: never;
     url: '/api/v1/leagues/{id}/members/{uid}/role';
 };
+
+export type ChangeMemberRoleErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ChangeMemberRoleError = ChangeMemberRoleErrors[keyof ChangeMemberRoleErrors];
 
 export type ChangeMemberRoleResponses = {
     /**
@@ -516,6 +693,41 @@ export type RemoveMemberData = {
     url: '/api/v1/leagues/{id}/members/{uid}';
 };
 
+export type RemoveMemberErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type RemoveMemberError = RemoveMemberErrors[keyof RemoveMemberErrors];
+
 export type RemoveMemberResponses = {
     /**
      * Default Response
@@ -535,6 +747,41 @@ export type LeaveLeagueData = {
     query?: never;
     url: '/api/v1/leagues/{id}/members/me';
 };
+
+export type LeaveLeagueErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type LeaveLeagueError = LeaveLeagueErrors[keyof LeaveLeagueErrors];
 
 export type LeaveLeagueResponses = {
     /**
@@ -557,6 +804,31 @@ export type TransferOwnershipData = {
     query?: never;
     url: '/api/v1/leagues/{id}/transfer-ownership';
 };
+
+export type TransferOwnershipErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type TransferOwnershipError = TransferOwnershipErrors[keyof TransferOwnershipErrors];
 
 export type TransferOwnershipResponses = {
     /**
@@ -598,6 +870,31 @@ export type GetLeagueDashboardData = {
     query?: never;
     url: '/api/v1/leagues/{id}/dashboard';
 };
+
+export type GetLeagueDashboardErrors = {
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetLeagueDashboardError = GetLeagueDashboardErrors[keyof GetLeagueDashboardErrors];
 
 export type GetLeagueDashboardResponses = {
     /**
@@ -652,6 +949,21 @@ export type ResolveActionItemData = {
     url: '/api/v1/leagues/{id}/action-items/{itemId}/resolve';
 };
 
+export type ResolveActionItemErrors = {
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ResolveActionItemError = ResolveActionItemErrors[keyof ResolveActionItemErrors];
+
 export type ResolveActionItemResponses = {
     /**
      * Default Response
@@ -684,6 +996,21 @@ export type GetLeagueAuditLogData = {
     url: '/api/v1/leagues/{id}/audit-log';
 };
 
+export type GetLeagueAuditLogErrors = {
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetLeagueAuditLogError = GetLeagueAuditLogErrors[keyof GetLeagueAuditLogErrors];
+
 export type GetLeagueAuditLogResponses = {
     /**
      * Default Response
@@ -705,6 +1032,31 @@ export type GetMemberAuditLogData = {
     query?: never;
     url: '/api/v1/leagues/{id}/audit-log/member';
 };
+
+export type GetMemberAuditLogErrors = {
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetMemberAuditLogError = GetMemberAuditLogErrors[keyof GetMemberAuditLogErrors];
 
 export type GetMemberAuditLogResponses = {
     /**
@@ -729,6 +1081,21 @@ export type CopySeasonData = {
     query?: never;
     url: '/api/v1/leagues/{id}/contests/copy-season';
 };
+
+export type CopySeasonErrors = {
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type CopySeasonError = CopySeasonErrors[keyof CopySeasonErrors];
 
 export type CopySeasonResponses = {
     /**
@@ -755,6 +1122,31 @@ export type ImportMembersData = {
     query?: never;
     url: '/api/v1/leagues/{id}/members/import';
 };
+
+export type ImportMembersErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    403: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ImportMembersError = ImportMembersErrors[keyof ImportMembersErrors];
 
 export type ImportMembersResponses = {
     /**
@@ -1152,6 +1544,31 @@ export type CreateContestData = {
     query?: never;
     url: '/api/v1/leagues/{id}/contests/';
 };
+
+export type CreateContestErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type CreateContestError = CreateContestErrors[keyof CreateContestErrors];
 
 export type CreateContestResponses = {
     /**
@@ -1557,6 +1974,31 @@ export type DeleteContestData = {
     url: '/api/v1/contests/{contestId}';
 };
 
+export type DeleteContestErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type DeleteContestError = DeleteContestErrors[keyof DeleteContestErrors];
+
 export type DeleteContestResponses = {
     /**
      * Default Response
@@ -1576,6 +2018,21 @@ export type GetContestData = {
     query?: never;
     url: '/api/v1/contests/{contestId}';
 };
+
+export type GetContestErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetContestError = GetContestErrors[keyof GetContestErrors];
 
 export type GetContestResponses = {
     /**
@@ -1623,6 +2080,31 @@ export type UpdateContestData = {
     url: '/api/v1/contests/{contestId}';
 };
 
+export type UpdateContestErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateContestError = UpdateContestErrors[keyof UpdateContestErrors];
+
 export type UpdateContestResponses = {
     /**
      * Default Response
@@ -1663,6 +2145,31 @@ export type ListContestEntriesData = {
     url: '/api/v1/contests/{contestId}/entries';
 };
 
+export type ListContestEntriesErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type ListContestEntriesError = ListContestEntriesErrors[keyof ListContestEntriesErrors];
+
 export type ListContestEntriesResponses = {
     /**
      * Default Response
@@ -1701,6 +2208,31 @@ export type LeaveContestData = {
     url: '/api/v1/contests/{contestId}/entries/me';
 };
 
+export type LeaveContestErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type LeaveContestError = LeaveContestErrors[keyof LeaveContestErrors];
+
 export type LeaveContestResponses = {
     /**
      * Default Response
@@ -1721,6 +2253,31 @@ export type GetMyContestEntryData = {
     query?: never;
     url: '/api/v1/contests/{contestId}/entries/me';
 };
+
+export type GetMyContestEntryErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetMyContestEntryError = GetMyContestEntryErrors[keyof GetMyContestEntryErrors];
 
 export type GetMyContestEntryResponses = {
     /**
@@ -1755,6 +2312,31 @@ export type EnterContestData = {
     query?: never;
     url: '/api/v1/contests/{contestId}/entries/me';
 };
+
+export type EnterContestErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type EnterContestError = EnterContestErrors[keyof EnterContestErrors];
 
 export type EnterContestResponses = {
     /**
@@ -2313,6 +2895,21 @@ export type GetParticipantData = {
     url: '/api/v1/participants/{id}';
 };
 
+export type GetParticipantErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetParticipantError = GetParticipantErrors[keyof GetParticipantErrors];
+
 export type GetParticipantResponses = {
     /**
      * Default Response
@@ -2381,6 +2978,21 @@ export type UpdateParticipantData = {
     query?: never;
     url: '/api/v1/participants/{id}';
 };
+
+export type UpdateParticipantErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateParticipantError = UpdateParticipantErrors[keyof UpdateParticipantErrors];
 
 export type UpdateParticipantResponses = {
     /**
@@ -2481,6 +3093,21 @@ export type GetParticipantSeasonRecordData = {
     url: '/api/v1/participants/{id}/seasons/{season}';
 };
 
+export type GetParticipantSeasonRecordErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetParticipantSeasonRecordError = GetParticipantSeasonRecordErrors[keyof GetParticipantSeasonRecordErrors];
+
 export type GetParticipantSeasonRecordResponses = {
     /**
      * Default Response
@@ -2533,6 +3160,31 @@ export type GetStandingsData = {
     url: '/api/v1/contests/{contestId}/standings/';
 };
 
+export type GetStandingsErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetStandingsError = GetStandingsErrors[keyof GetStandingsErrors];
+
 export type GetStandingsResponses = {
     /**
      * Default Response
@@ -2570,6 +3222,31 @@ export type GetStandingsSummaryData = {
     url: '/api/v1/contests/{contestId}/standings/summary';
 };
 
+export type GetStandingsSummaryErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetStandingsSummaryError = GetStandingsSummaryErrors[keyof GetStandingsSummaryErrors];
+
 export type GetStandingsSummaryResponses = {
     /**
      * Default Response
@@ -2603,6 +3280,41 @@ export type GetMyStandingsEntryData = {
     url: '/api/v1/contests/{contestId}/standings/my-entry';
 };
 
+export type GetMyStandingsEntryErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    401: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetMyStandingsEntryError = GetMyStandingsEntryErrors[keyof GetMyStandingsEntryErrors];
+
 export type GetMyStandingsEntryResponses = {
     /**
      * Default Response
@@ -2635,6 +3347,21 @@ export type GetContestHistorySummaryData = {
     query?: never;
     url: '/api/v1/contests/{id}/history/summary';
 };
+
+export type GetContestHistorySummaryErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetContestHistorySummaryError = GetContestHistorySummaryErrors[keyof GetContestHistorySummaryErrors];
 
 export type GetContestHistorySummaryResponses = {
     /**
@@ -2678,6 +3405,21 @@ export type GetRosterHistoryData = {
     query?: never;
     url: '/api/v1/contests/{id}/history/roster/{entryId}';
 };
+
+export type GetRosterHistoryErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetRosterHistoryError = GetRosterHistoryErrors[keyof GetRosterHistoryErrors];
 
 export type GetRosterHistoryResponses = {
     /**

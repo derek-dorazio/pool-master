@@ -6,6 +6,7 @@ import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastif
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import { isCommissionerOrOwner } from '../../core/permissions';
+import { sendError } from '../../core/error-handler';
 
 function extractLeagueContext(request: FastifyRequest): { userId?: string; leagueId?: string } {
   const userId = request.headers['x-user-id'] as string | undefined;
@@ -20,24 +21,20 @@ async function loadMembership(
 ) {
   const { userId, leagueId } = extractLeagueContext(request);
   if (!userId) {
-    await reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+    await sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     return null;
   }
   if (!leagueId) {
-    await reply.status(400).send({ error: 'BAD_REQUEST', message: 'Missing league id' });
+    await sendError(reply, 400, 'BAD_REQUEST', 'Missing league id');
     return null;
   }
   const membership = await membershipRepo.findByLeagueAndUser(leagueId, userId);
   if (!membership) {
-    await reply
-      .status(403)
-      .send({ error: 'FORBIDDEN', message: 'You are not a member of this league' });
+    await sendError(reply, 403, 'FORBIDDEN', 'You are not a member of this league');
     return null;
   }
   if (membership.status !== LeagueMembershipStatus.ACTIVE) {
-    await reply
-      .status(403)
-      .send({ error: 'FORBIDDEN', message: 'Your membership in this league is inactive' });
+    await sendError(reply, 403, 'FORBIDDEN', 'Your membership in this league is inactive');
     return null;
   }
   return membership;
@@ -62,9 +59,7 @@ export function requireCommissionerOrOwner(
       return;
     }
     if (!isCommissionerOrOwner(membership)) {
-      return reply
-        .status(403)
-        .send({ error: 'FORBIDDEN', message: 'You do not have permission for this action' });
+      return sendError(reply, 403, 'FORBIDDEN', 'You do not have permission for this action');
     }
   };
 }

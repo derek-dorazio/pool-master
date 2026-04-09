@@ -25,6 +25,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -140,6 +141,7 @@ describe('Permission Negative Integration', () => {
       },
     });
     expect(inviteAsMemberRes.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(inviteAsMemberRes.json()).success).toBe(true);
 
     const changeRoleRes = await getApp().inject({
       method: 'PUT',
@@ -150,6 +152,7 @@ describe('Permission Negative Integration', () => {
       },
     });
     expect(changeRoleRes.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(changeRoleRes.json()).success).toBe(true);
 
     const removeOwnerRes = await getApp().inject({
       method: 'DELETE',
@@ -157,6 +160,7 @@ describe('Permission Negative Integration', () => {
       headers: withoutJsonBodyHeaders(memberHeaders),
     });
     expect(removeOwnerRes.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(removeOwnerRes.json()).success).toBe(true);
 
     const memberDashboardRes = await getApp().inject({
       method: 'GET',
@@ -164,6 +168,7 @@ describe('Permission Negative Integration', () => {
       headers: memberHeaders,
     });
     expect(memberDashboardRes.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(memberDashboardRes.json()).success).toBe(true);
 
     const memberResolveRes = await getApp().inject({
       method: 'POST',
@@ -171,6 +176,7 @@ describe('Permission Negative Integration', () => {
       headers: withoutJsonBodyHeaders(memberHeaders),
     });
     expect(memberResolveRes.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(memberResolveRes.json()).success).toBe(true);
 
     const outsiderMembersRes = await getApp().inject({
       method: 'GET',
@@ -178,6 +184,7 @@ describe('Permission Negative Integration', () => {
       headers: outsiderHeaders,
     });
     expect(outsiderMembersRes.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(outsiderMembersRes.json()).success).toBe(true);
 
     const outsiderEnterRes = await getApp().inject({
       method: 'POST',
@@ -185,6 +192,8 @@ describe('Permission Negative Integration', () => {
       headers: withoutJsonBodyHeaders(outsiderHeaders),
     });
     expect(outsiderEnterRes.statusCode).toBe(400);
-    expect(outsiderEnterRes.json().message).toContain('league member');
+    const outsiderEntryBody = outsiderEnterRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(outsiderEntryBody).success).toBe(true);
+    expect(outsiderEntryBody.error.message).toContain('league member');
   });
 });

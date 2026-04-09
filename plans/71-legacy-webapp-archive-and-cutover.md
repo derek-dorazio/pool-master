@@ -67,7 +67,7 @@ Current cutover baseline:
 | Done | Remove legacy web app from smoke/browser/CI references | Legacy web Playwright/coverage/build references were removed from the active CI path. |
 | Done | Archive `clients/web` as reference-only material | Moved to `clients/_archived/web` and added an archive warning for agents. |
 | In Progress | Update rules, AGENTS guidance, and docs to mark it as archived | Active rules, AGENTS, README, and setup guidance now describe the archived legacy web app; a few historical docs still need follow-up cleanup. |
-| Pending | Inventory the future of `clients/shared` during cutover | Decide whether it remains useful or should be simplified/absorbed as the single-app architecture lands |
+| Done | Inventory the future of `clients/shared` during cutover | `clients/shared` currently contains only placeholder directories (`api-client/`, `types/`, `validation/`) with no implementation files. Recommendation: remove the empty shell unless a new explicit shared frontend utility package is needed for `clients/poolmaster`; if any helper code is still required, move it into the active app or a clearly named shared package with a single consumer. |
 
 ## Validation
 

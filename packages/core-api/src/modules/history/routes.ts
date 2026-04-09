@@ -11,7 +11,9 @@ import {
   HistoryResultsResponseSchema,
   HistoryStandingsResponseSchema,
 } from '@poolmaster/shared/dto/history.dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { HistoryService } from './history-service';
+import { sendError } from '../../core/error-handler';
 
 export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
@@ -24,13 +26,16 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get contest history summary',
         operationId: 'getContestHistorySummary',
-        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
+        response: {
+          200: zodToJsonSchema(HistoryObjectSchema),
+          404: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
       },
     },
     async (request, reply) => {
       const summary = await historyService.getContestSummary(request.params.id);
       if (!summary) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: 'No history for this contest' });
+        return sendError(reply, 404, 'NOT_FOUND', 'No history for this contest');
       }
       return reply.send(summary);
     },
@@ -59,7 +64,10 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         tags: ['History'],
         summary: 'Get roster history for an entry',
         operationId: 'getRosterHistory',
-        response: { 200: zodToJsonSchema(HistoryObjectSchema) },
+        response: {
+          200: zodToJsonSchema(HistoryObjectSchema),
+          404: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
       },
     },
     async (request, reply) => {
@@ -68,7 +76,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         request.params.entryId,
       );
       if (!roster) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: 'Roster history not found' });
+        return sendError(reply, 404, 'NOT_FOUND', 'Roster history not found');
       }
       return reply.send({ rosterHistory: roster });
     },

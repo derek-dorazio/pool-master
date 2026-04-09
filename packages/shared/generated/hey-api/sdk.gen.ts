@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddSquadCoManagerData, AddSquadCoManagerResponses, AdjustScoreData, AdjustScoreResponses, AdminCancelMigrationRunData, AdminCancelMigrationRunResponses, AdminDisableUserData, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogResponses, AdminForceCloseContestData, AdminForceCloseContestResponses, AdminForceLogoutData, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsResponses, AdminGetContestDetailData, AdminGetContestDetailResponses, AdminGetErrorDetailData, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleResponses, AdminGetMigrationRunDetailData, AdminGetMigrationRunDetailResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailResponses, AdminListAuditLogData, AdminListAuditLogResponses, AdminListContestsData, AdminListContestsResponses, AdminListMigrationsData, AdminListMigrationsResponses, AdminListProvidersData, AdminListProvidersResponses, AdminListUsersData, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantResponses, AdminMergeUsersData, AdminMergeUsersResponses, AdminMuteAlertData, AdminMuteAlertResponses, AdminOverrideScoreData, AdminOverrideScoreResponses, AdminRecalculatePayoutsData, AdminRecalculatePayoutsResponses, AdminRecalculateStandingsData, AdminRecalculateStandingsResponses, AdminReIngestEventData, AdminReIngestEventResponses, AdminReIngestScoringData, AdminReIngestScoringResponses, AdminReopenContestData, AdminReopenContestResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsResponses, AdminSearchErrorsData, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideResponses, AdminStartMigrationRunData, AdminStartMigrationRunResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigResponses, ChangeMemberRoleData, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonResponses, CreateContestData, CreateContestResponses, CreateLeagueData, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, DeleteContestData, DeleteContestResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, ForgotPasswordData, ForgotPasswordResponses, GenerateInviteLinkData, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserResponses, GetDraftStateData, GetDraftStateResponses, GetEntryScoreData, GetEntryScoreResponses, GetHealthData, GetHealthResponses, GetLeagueAuditLogData, GetLeagueAuditLogResponses, GetLeagueDashboardData, GetLeagueDashboardResponses, GetLeagueData, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryResponses, GetParticipantData, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreResponses, GetParticipantSeasonRecordData, GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordsData, GetParticipantSeasonRecordsResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRosterHistoryData, GetRosterHistoryResponses, GetScoringHealthData, GetScoringHealthResponses, GetStandingsData, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, ImportMembersData, ImportMembersResponses, IngestEventResultsData, IngestEventResultsResponses, IngestEventScoresData, IngestEventScoresResponses, IngestSportOddsData, IngestSportOddsResponses, LeaveContestData, LeaveContestResponses, LeaveLeagueData, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListIngestionProvidersData, ListIngestionProvidersResponses, ListLeagueMembersData, ListLeagueMembersResponses, ListLeaguesData, ListLeagueSquadsData, ListLeagueSquadsResponses, ListLeaguesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, LoginUserData, LoginUserResponses, LogoutUserData, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, OauthCallbackData, OauthCallbackErrors, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenResponses, RegisterUserData, RegisterUserResponses, RemoveMemberData, RemoveMemberResponses, RemoveSquadCoManagerData, RemoveSquadCoManagerResponses, ReopenContestData, ReopenContestResponses, ResolveActionItemData, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkResponses, SendLeagueInvitationsData, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionResponses, SyncSportDataData, SyncSportDataResponses, TransferOwnershipData, TransferOwnershipResponses, TriggerStandingsRollupData, TriggerStandingsRollupResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionResponses, UpdateContestData, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueSettingsData, UpdateLeagueSettingsResponses, UpdateLeagueSquadData, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses } from './types.gen.js';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddSquadCoManagerData, AddSquadCoManagerResponses, AdjustScoreData, AdjustScoreResponses, AdminCancelMigrationRunData, AdminCancelMigrationRunResponses, AdminDisableUserData, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogResponses, AdminForceCloseContestData, AdminForceCloseContestResponses, AdminForceLogoutData, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsResponses, AdminGetContestDetailData, AdminGetContestDetailResponses, AdminGetErrorDetailData, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleResponses, AdminGetMigrationRunDetailData, AdminGetMigrationRunDetailResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailResponses, AdminListAuditLogData, AdminListAuditLogResponses, AdminListContestsData, AdminListContestsResponses, AdminListMigrationsData, AdminListMigrationsResponses, AdminListProvidersData, AdminListProvidersResponses, AdminListUsersData, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantResponses, AdminMergeUsersData, AdminMergeUsersResponses, AdminMuteAlertData, AdminMuteAlertResponses, AdminOverrideScoreData, AdminOverrideScoreResponses, AdminRecalculatePayoutsData, AdminRecalculatePayoutsResponses, AdminRecalculateStandingsData, AdminRecalculateStandingsResponses, AdminReIngestEventData, AdminReIngestEventResponses, AdminReIngestScoringData, AdminReIngestScoringResponses, AdminReopenContestData, AdminReopenContestResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsResponses, AdminSearchErrorsData, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideResponses, AdminStartMigrationRunData, AdminStartMigrationRunResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, ForgotPasswordData, ForgotPasswordResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestErrors, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryErrors, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserResponses, GetDraftStateData, GetDraftStateResponses, GetEntryScoreData, GetEntryScoreResponses, GetHealthData, GetHealthResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryErrors, GetMyStandingsEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreResponses, GetParticipantSeasonRecordData, GetParticipantSeasonRecordErrors, GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordsData, GetParticipantSeasonRecordsResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRosterHistoryData, GetRosterHistoryErrors, GetRosterHistoryResponses, GetScoringHealthData, GetScoringHealthResponses, GetStandingsData, GetStandingsErrors, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryErrors, GetStandingsSummaryResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, IngestEventResultsData, IngestEventResultsResponses, IngestEventScoresData, IngestEventScoresResponses, IngestSportOddsData, IngestSportOddsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListIngestionProvidersData, ListIngestionProvidersResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsResponses, ListLeaguesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, LoginUserData, LoginUserResponses, LogoutUserData, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, OauthCallbackData, OauthCallbackErrors, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenResponses, RegisterUserData, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadCoManagerData, RemoveSquadCoManagerResponses, ReopenContestData, ReopenContestResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionResponses, SyncSportDataData, SyncSportDataResponses, TransferOwnershipData, TransferOwnershipErrors, TransferOwnershipResponses, TriggerStandingsRollupData, TriggerStandingsRollupResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionResponses, UpdateContestData, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueSettingsData, UpdateLeagueSettingsErrors, UpdateLeagueSettingsResponses, UpdateLeagueSquadData, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -114,7 +114,7 @@ export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: O
 /**
  * List leagues for the current user
  */
-export const listLeagues = <ThrowOnError extends boolean = false>(options?: Options<ListLeaguesData, ThrowOnError>) => (options?.client ?? client).get<ListLeaguesResponses, unknown, ThrowOnError>({
+export const listLeagues = <ThrowOnError extends boolean = false>(options?: Options<ListLeaguesData, ThrowOnError>) => (options?.client ?? client).get<ListLeaguesResponses, ListLeaguesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/',
     ...options
@@ -123,7 +123,7 @@ export const listLeagues = <ThrowOnError extends boolean = false>(options?: Opti
 /**
  * Create a new league
  */
-export const createLeague = <ThrowOnError extends boolean = false>(options: Options<CreateLeagueData, ThrowOnError>) => (options.client ?? client).post<CreateLeagueResponses, unknown, ThrowOnError>({
+export const createLeague = <ThrowOnError extends boolean = false>(options: Options<CreateLeagueData, ThrowOnError>) => (options.client ?? client).post<CreateLeagueResponses, CreateLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/',
     ...options,
@@ -136,7 +136,7 @@ export const createLeague = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Get league details by ID
  */
-export const getLeague = <ThrowOnError extends boolean = false>(options: Options<GetLeagueData, ThrowOnError>) => (options.client ?? client).get<GetLeagueResponses, unknown, ThrowOnError>({
+export const getLeague = <ThrowOnError extends boolean = false>(options: Options<GetLeagueData, ThrowOnError>) => (options.client ?? client).get<GetLeagueResponses, GetLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}',
     ...options
@@ -145,7 +145,7 @@ export const getLeague = <ThrowOnError extends boolean = false>(options: Options
 /**
  * Update league settings
  */
-export const updateLeagueSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueSettingsData, ThrowOnError>) => (options.client ?? client).put<UpdateLeagueSettingsResponses, unknown, ThrowOnError>({
+export const updateLeagueSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueSettingsData, ThrowOnError>) => (options.client ?? client).put<UpdateLeagueSettingsResponses, UpdateLeagueSettingsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/settings',
     ...options,
@@ -158,7 +158,7 @@ export const updateLeagueSettings = <ThrowOnError extends boolean = false>(optio
 /**
  * Send email invitations to join a league
  */
-export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(options: Options<SendLeagueInvitationsData, ThrowOnError>) => (options.client ?? client).post<SendLeagueInvitationsResponses, unknown, ThrowOnError>({
+export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(options: Options<SendLeagueInvitationsData, ThrowOnError>) => (options.client ?? client).post<SendLeagueInvitationsResponses, SendLeagueInvitationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/invitations',
     ...options,
@@ -171,7 +171,7 @@ export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(opti
 /**
  * Generate a shareable invite link
  */
-export const generateInviteLink = <ThrowOnError extends boolean = false>(options: Options<GenerateInviteLinkData, ThrowOnError>) => (options.client ?? client).post<GenerateInviteLinkResponses, unknown, ThrowOnError>({
+export const generateInviteLink = <ThrowOnError extends boolean = false>(options: Options<GenerateInviteLinkData, ThrowOnError>) => (options.client ?? client).post<GenerateInviteLinkResponses, GenerateInviteLinkErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/invite-link',
     ...options,
@@ -184,7 +184,7 @@ export const generateInviteLink = <ThrowOnError extends boolean = false>(options
 /**
  * Revoke an invite link
  */
-export const revokeInviteLink = <ThrowOnError extends boolean = false>(options: Options<RevokeInviteLinkData, ThrowOnError>) => (options.client ?? client).delete<RevokeInviteLinkResponses, unknown, ThrowOnError>({
+export const revokeInviteLink = <ThrowOnError extends boolean = false>(options: Options<RevokeInviteLinkData, ThrowOnError>) => (options.client ?? client).delete<RevokeInviteLinkResponses, RevokeInviteLinkErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/invite-link/{code}',
     ...options
@@ -193,7 +193,7 @@ export const revokeInviteLink = <ThrowOnError extends boolean = false>(options: 
 /**
  * List league members
  */
-export const listLeagueMembers = <ThrowOnError extends boolean = false>(options: Options<ListLeagueMembersData, ThrowOnError>) => (options.client ?? client).get<ListLeagueMembersResponses, unknown, ThrowOnError>({
+export const listLeagueMembers = <ThrowOnError extends boolean = false>(options: Options<ListLeagueMembersData, ThrowOnError>) => (options.client ?? client).get<ListLeagueMembersResponses, ListLeagueMembersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/members',
     ...options
@@ -202,7 +202,7 @@ export const listLeagueMembers = <ThrowOnError extends boolean = false>(options:
 /**
  * Change a member role and permissions
  */
-export const changeMemberRole = <ThrowOnError extends boolean = false>(options: Options<ChangeMemberRoleData, ThrowOnError>) => (options.client ?? client).put<ChangeMemberRoleResponses, unknown, ThrowOnError>({
+export const changeMemberRole = <ThrowOnError extends boolean = false>(options: Options<ChangeMemberRoleData, ThrowOnError>) => (options.client ?? client).put<ChangeMemberRoleResponses, ChangeMemberRoleErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/members/{uid}/role',
     ...options,
@@ -215,7 +215,7 @@ export const changeMemberRole = <ThrowOnError extends boolean = false>(options: 
 /**
  * Remove a member from the league
  */
-export const removeMember = <ThrowOnError extends boolean = false>(options: Options<RemoveMemberData, ThrowOnError>) => (options.client ?? client).delete<RemoveMemberResponses, unknown, ThrowOnError>({
+export const removeMember = <ThrowOnError extends boolean = false>(options: Options<RemoveMemberData, ThrowOnError>) => (options.client ?? client).delete<RemoveMemberResponses, RemoveMemberErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/members/{uid}',
     ...options
@@ -224,7 +224,7 @@ export const removeMember = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Leave a league as the current member
  */
-export const leaveLeague = <ThrowOnError extends boolean = false>(options: Options<LeaveLeagueData, ThrowOnError>) => (options.client ?? client).delete<LeaveLeagueResponses, unknown, ThrowOnError>({
+export const leaveLeague = <ThrowOnError extends boolean = false>(options: Options<LeaveLeagueData, ThrowOnError>) => (options.client ?? client).delete<LeaveLeagueResponses, LeaveLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/members/me',
     ...options
@@ -233,7 +233,7 @@ export const leaveLeague = <ThrowOnError extends boolean = false>(options: Optio
 /**
  * Transfer league ownership to another member
  */
-export const transferOwnership = <ThrowOnError extends boolean = false>(options: Options<TransferOwnershipData, ThrowOnError>) => (options.client ?? client).post<TransferOwnershipResponses, unknown, ThrowOnError>({
+export const transferOwnership = <ThrowOnError extends boolean = false>(options: Options<TransferOwnershipData, ThrowOnError>) => (options.client ?? client).post<TransferOwnershipResponses, TransferOwnershipErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/transfer-ownership',
     ...options,
@@ -246,7 +246,7 @@ export const transferOwnership = <ThrowOnError extends boolean = false>(options:
 /**
  * Get commissioner dashboard for a league
  */
-export const getLeagueDashboard = <ThrowOnError extends boolean = false>(options: Options<GetLeagueDashboardData, ThrowOnError>) => (options.client ?? client).get<GetLeagueDashboardResponses, unknown, ThrowOnError>({
+export const getLeagueDashboard = <ThrowOnError extends boolean = false>(options: Options<GetLeagueDashboardData, ThrowOnError>) => (options.client ?? client).get<GetLeagueDashboardResponses, GetLeagueDashboardErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/dashboard',
     ...options
@@ -255,7 +255,7 @@ export const getLeagueDashboard = <ThrowOnError extends boolean = false>(options
 /**
  * Resolve a commissioner action item
  */
-export const resolveActionItem = <ThrowOnError extends boolean = false>(options: Options<ResolveActionItemData, ThrowOnError>) => (options.client ?? client).post<ResolveActionItemResponses, unknown, ThrowOnError>({
+export const resolveActionItem = <ThrowOnError extends boolean = false>(options: Options<ResolveActionItemData, ThrowOnError>) => (options.client ?? client).post<ResolveActionItemResponses, ResolveActionItemErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/action-items/{itemId}/resolve',
     ...options
@@ -264,7 +264,7 @@ export const resolveActionItem = <ThrowOnError extends boolean = false>(options:
 /**
  * Get audit log for a league
  */
-export const getLeagueAuditLog = <ThrowOnError extends boolean = false>(options: Options<GetLeagueAuditLogData, ThrowOnError>) => (options.client ?? client).get<GetLeagueAuditLogResponses, unknown, ThrowOnError>({
+export const getLeagueAuditLog = <ThrowOnError extends boolean = false>(options: Options<GetLeagueAuditLogData, ThrowOnError>) => (options.client ?? client).get<GetLeagueAuditLogResponses, GetLeagueAuditLogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/audit-log',
     ...options
@@ -273,7 +273,7 @@ export const getLeagueAuditLog = <ThrowOnError extends boolean = false>(options:
 /**
  * Get audit log for a specific member
  */
-export const getMemberAuditLog = <ThrowOnError extends boolean = false>(options: Options<GetMemberAuditLogData, ThrowOnError>) => (options.client ?? client).get<GetMemberAuditLogResponses, unknown, ThrowOnError>({
+export const getMemberAuditLog = <ThrowOnError extends boolean = false>(options: Options<GetMemberAuditLogData, ThrowOnError>) => (options.client ?? client).get<GetMemberAuditLogResponses, GetMemberAuditLogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/audit-log/member',
     ...options
@@ -282,7 +282,7 @@ export const getMemberAuditLog = <ThrowOnError extends boolean = false>(options:
 /**
  * Copy contests from a previous season
  */
-export const copySeason = <ThrowOnError extends boolean = false>(options: Options<CopySeasonData, ThrowOnError>) => (options.client ?? client).post<CopySeasonResponses, unknown, ThrowOnError>({
+export const copySeason = <ThrowOnError extends boolean = false>(options: Options<CopySeasonData, ThrowOnError>) => (options.client ?? client).post<CopySeasonResponses, CopySeasonErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/contests/copy-season',
     ...options,
@@ -295,7 +295,7 @@ export const copySeason = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Bulk-import members via CSV rows
  */
-export const importMembers = <ThrowOnError extends boolean = false>(options: Options<ImportMembersData, ThrowOnError>) => (options.client ?? client).post<ImportMembersResponses, unknown, ThrowOnError>({
+export const importMembers = <ThrowOnError extends boolean = false>(options: Options<ImportMembersData, ThrowOnError>) => (options.client ?? client).post<ImportMembersResponses, ImportMembersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/members/import',
     ...options,
@@ -396,7 +396,7 @@ export const listContests = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Create a new contest in a league
  */
-export const createContest = <ThrowOnError extends boolean = false>(options: Options<CreateContestData, ThrowOnError>) => (options.client ?? client).post<CreateContestResponses, unknown, ThrowOnError>({
+export const createContest = <ThrowOnError extends boolean = false>(options: Options<CreateContestData, ThrowOnError>) => (options.client ?? client).post<CreateContestResponses, CreateContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/contests/',
     ...options,
@@ -444,7 +444,7 @@ export const updateManagedContestConfiguration = <ThrowOnError extends boolean =
 /**
  * Delete a contest
  */
-export const deleteContest = <ThrowOnError extends boolean = false>(options: Options<DeleteContestData, ThrowOnError>) => (options.client ?? client).delete<DeleteContestResponses, unknown, ThrowOnError>({
+export const deleteContest = <ThrowOnError extends boolean = false>(options: Options<DeleteContestData, ThrowOnError>) => (options.client ?? client).delete<DeleteContestResponses, DeleteContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}',
     ...options
@@ -453,7 +453,7 @@ export const deleteContest = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Get a contest by ID
  */
-export const getContest = <ThrowOnError extends boolean = false>(options: Options<GetContestData, ThrowOnError>) => (options.client ?? client).get<GetContestResponses, unknown, ThrowOnError>({
+export const getContest = <ThrowOnError extends boolean = false>(options: Options<GetContestData, ThrowOnError>) => (options.client ?? client).get<GetContestResponses, GetContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}',
     ...options
@@ -462,7 +462,7 @@ export const getContest = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Update a contest
  */
-export const updateContest = <ThrowOnError extends boolean = false>(options: Options<UpdateContestData, ThrowOnError>) => (options.client ?? client).put<UpdateContestResponses, unknown, ThrowOnError>({
+export const updateContest = <ThrowOnError extends boolean = false>(options: Options<UpdateContestData, ThrowOnError>) => (options.client ?? client).put<UpdateContestResponses, UpdateContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}',
     ...options,
@@ -475,7 +475,7 @@ export const updateContest = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * List contest entries
  */
-export const listContestEntries = <ThrowOnError extends boolean = false>(options: Options<ListContestEntriesData, ThrowOnError>) => (options.client ?? client).get<ListContestEntriesResponses, unknown, ThrowOnError>({
+export const listContestEntries = <ThrowOnError extends boolean = false>(options: Options<ListContestEntriesData, ThrowOnError>) => (options.client ?? client).get<ListContestEntriesResponses, ListContestEntriesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/entries',
     ...options
@@ -484,7 +484,7 @@ export const listContestEntries = <ThrowOnError extends boolean = false>(options
 /**
  * Delete the current user contest entry
  */
-export const leaveContest = <ThrowOnError extends boolean = false>(options: Options<LeaveContestData, ThrowOnError>) => (options.client ?? client).delete<LeaveContestResponses, unknown, ThrowOnError>({
+export const leaveContest = <ThrowOnError extends boolean = false>(options: Options<LeaveContestData, ThrowOnError>) => (options.client ?? client).delete<LeaveContestResponses, LeaveContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/entries/me',
     ...options
@@ -493,7 +493,7 @@ export const leaveContest = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Get the current user contest entry
  */
-export const getMyContestEntry = <ThrowOnError extends boolean = false>(options: Options<GetMyContestEntryData, ThrowOnError>) => (options.client ?? client).get<GetMyContestEntryResponses, unknown, ThrowOnError>({
+export const getMyContestEntry = <ThrowOnError extends boolean = false>(options: Options<GetMyContestEntryData, ThrowOnError>) => (options.client ?? client).get<GetMyContestEntryResponses, GetMyContestEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/entries/me',
     ...options
@@ -502,7 +502,7 @@ export const getMyContestEntry = <ThrowOnError extends boolean = false>(options:
 /**
  * Create or return the current user contest entry
  */
-export const enterContest = <ThrowOnError extends boolean = false>(options: Options<EnterContestData, ThrowOnError>) => (options.client ?? client).post<EnterContestResponses, unknown, ThrowOnError>({
+export const enterContest = <ThrowOnError extends boolean = false>(options: Options<EnterContestData, ThrowOnError>) => (options.client ?? client).post<EnterContestResponses, EnterContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/entries/me',
     ...options
@@ -673,7 +673,7 @@ export const createParticipant = <ThrowOnError extends boolean = false>(options:
 /**
  * Get a participant by ID
  */
-export const getParticipant = <ThrowOnError extends boolean = false>(options: Options<GetParticipantData, ThrowOnError>) => (options.client ?? client).get<GetParticipantResponses, unknown, ThrowOnError>({
+export const getParticipant = <ThrowOnError extends boolean = false>(options: Options<GetParticipantData, ThrowOnError>) => (options.client ?? client).get<GetParticipantResponses, GetParticipantErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/participants/{id}',
     ...options
@@ -682,7 +682,7 @@ export const getParticipant = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Update a participant
  */
-export const updateParticipant = <ThrowOnError extends boolean = false>(options: Options<UpdateParticipantData, ThrowOnError>) => (options.client ?? client).patch<UpdateParticipantResponses, unknown, ThrowOnError>({
+export const updateParticipant = <ThrowOnError extends boolean = false>(options: Options<UpdateParticipantData, ThrowOnError>) => (options.client ?? client).patch<UpdateParticipantResponses, UpdateParticipantErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/participants/{id}',
     ...options,
@@ -704,7 +704,7 @@ export const getParticipantSeasonRecords = <ThrowOnError extends boolean = false
 /**
  * Get a specific season record for a participant
  */
-export const getParticipantSeasonRecord = <ThrowOnError extends boolean = false>(options: Options<GetParticipantSeasonRecordData, ThrowOnError>) => (options.client ?? client).get<GetParticipantSeasonRecordResponses, unknown, ThrowOnError>({
+export const getParticipantSeasonRecord = <ThrowOnError extends boolean = false>(options: Options<GetParticipantSeasonRecordData, ThrowOnError>) => (options.client ?? client).get<GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/participants/{id}/seasons/{season}',
     ...options
@@ -713,7 +713,7 @@ export const getParticipantSeasonRecord = <ThrowOnError extends boolean = false>
 /**
  * Get the full paginated leaderboard
  */
-export const getStandings = <ThrowOnError extends boolean = false>(options: Options<GetStandingsData, ThrowOnError>) => (options.client ?? client).get<GetStandingsResponses, unknown, ThrowOnError>({
+export const getStandings = <ThrowOnError extends boolean = false>(options: Options<GetStandingsData, ThrowOnError>) => (options.client ?? client).get<GetStandingsResponses, GetStandingsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/standings/',
     ...options
@@ -722,7 +722,7 @@ export const getStandings = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Get top N standings summary for dashboard widgets
  */
-export const getStandingsSummary = <ThrowOnError extends boolean = false>(options: Options<GetStandingsSummaryData, ThrowOnError>) => (options.client ?? client).get<GetStandingsSummaryResponses, unknown, ThrowOnError>({
+export const getStandingsSummary = <ThrowOnError extends boolean = false>(options: Options<GetStandingsSummaryData, ThrowOnError>) => (options.client ?? client).get<GetStandingsSummaryResponses, GetStandingsSummaryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/standings/summary',
     ...options
@@ -731,7 +731,7 @@ export const getStandingsSummary = <ThrowOnError extends boolean = false>(option
 /**
  * Get the current user's entry with rank context
  */
-export const getMyStandingsEntry = <ThrowOnError extends boolean = false>(options: Options<GetMyStandingsEntryData, ThrowOnError>) => (options.client ?? client).get<GetMyStandingsEntryResponses, unknown, ThrowOnError>({
+export const getMyStandingsEntry = <ThrowOnError extends boolean = false>(options: Options<GetMyStandingsEntryData, ThrowOnError>) => (options.client ?? client).get<GetMyStandingsEntryResponses, GetMyStandingsEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/standings/my-entry',
     ...options
@@ -740,7 +740,7 @@ export const getMyStandingsEntry = <ThrowOnError extends boolean = false>(option
 /**
  * Get contest history summary
  */
-export const getContestHistorySummary = <ThrowOnError extends boolean = false>(options: Options<GetContestHistorySummaryData, ThrowOnError>) => (options.client ?? client).get<GetContestHistorySummaryResponses, unknown, ThrowOnError>({
+export const getContestHistorySummary = <ThrowOnError extends boolean = false>(options: Options<GetContestHistorySummaryData, ThrowOnError>) => (options.client ?? client).get<GetContestHistorySummaryResponses, GetContestHistorySummaryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{id}/history/summary',
     ...options
@@ -758,7 +758,7 @@ export const getContestHistoryStandings = <ThrowOnError extends boolean = false>
 /**
  * Get roster history for an entry
  */
-export const getRosterHistory = <ThrowOnError extends boolean = false>(options: Options<GetRosterHistoryData, ThrowOnError>) => (options.client ?? client).get<GetRosterHistoryResponses, unknown, ThrowOnError>({
+export const getRosterHistory = <ThrowOnError extends boolean = false>(options: Options<GetRosterHistoryData, ThrowOnError>) => (options.client ?? client).get<GetRosterHistoryResponses, GetRosterHistoryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{id}/history/roster/{entryId}',
     ...options

@@ -7,6 +7,7 @@ import {
   toLeagueDetailDto,
   toLeagueListResponse,
 } from '../../mappers/leagues.mapper';
+import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueService } from './service';
 import { LeagueNotFoundError } from './service';
 
@@ -24,7 +25,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
   ): Promise<{ leagues: unknown[] }> {
     const userId = request.headers['x-user-id'] as string | undefined;
     if (!userId) {
-      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
     const leagues = await leagueService.findByUser(userId);
     return toLeagueListResponse(leagues);
@@ -44,7 +45,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string;
     if (!userId) {
-      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
     const body = request.body;
     const input: CreateLeagueInput = {
@@ -73,7 +74,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       ?? request.headers['x-user-id']) as string | undefined;
     const result = await leagueService.getLeagueWithMembers(request.params.id, '');
     if (!result) {
-      return reply.status(404).send({ error: 'NOT_FOUND', message: 'League not found' });
+      return sendError(reply, 404, 'NOT_FOUND', 'League not found');
     }
     const membership = userId
       ? result.members.find((member) => member.userId === userId)
@@ -105,7 +106,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }

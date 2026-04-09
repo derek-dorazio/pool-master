@@ -18,6 +18,11 @@ The long-term product direction is one role-based web app, not a separate admin 
 - Any root-admin functionality needed later should be rebuilt from scratch inside the single PoolMaster web app.
 - Archive only if needed for historical source retention; do not treat archived admin code as planning or implementation guidance.
 
+## Follow-Up Note
+
+- Future root-admin browser workflows should be planned as new PoolMaster features, not as a continuation of the retired admin app.
+- The retired admin frontend is intentionally not a transition target, so no implementation work should depend on it for design references or parity tracking.
+
 ## Inventory Snapshot
 
 Active admin references still present in the repo fall into these buckets:
@@ -53,9 +58,9 @@ Concrete removal map for later slices:
 | Done | Remove admin app from CI workflows | Admin build/test/coverage/deploy/browser references were removed from CI. |
 | Pending | Remove admin-specific contract and browser test references | Clean up any admin-only contract or browser test wiring that should not survive the app retirement |
 | Done | Remove or archive `clients/admin` source so it is no longer an active or discoverable implementation target | `clients/admin` was removed from the repo instead of being preserved as a transition target. |
-| Pending | Review and document deployed admin infrastructure impact | Note S3/CloudFront/DNS or other deployment targets that should be retired or deprecated |
+| Done | Review and document deployed admin infrastructure impact | The retired admin deployment surface should be treated as deprecated infrastructure: QA/admin deploy targets, S3/CloudFront hooks, and any DNS/URL references should be removed or explicitly flagged as inactive in the deployment docs. |
 | In Progress | Update docs and rules | Active rules, AGENTS, README, and setup guidance now point at the single-app direction; longer historical docs still need a cleanup pass. |
-| Pending | Add follow-up note for root-admin UI rebuild | point future admin-facing work at the single PoolMaster app built from scratch |
+| Done | Add follow-up note for root-admin UI rebuild | Future root-admin browser workflows should be rebuilt from scratch in the single PoolMaster web app, not ported from the retired admin app. |
 
 ## Validation
 

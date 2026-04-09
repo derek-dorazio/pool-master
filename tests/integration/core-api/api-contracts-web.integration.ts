@@ -12,6 +12,7 @@ import {
   ContestManagementResponseSchema,
   ConsentRecordResponseSchema,
   DraftStateResponseSchema,
+  ErrorEnvelopeSchema,
   GenerateInviteLinkResponseSchema,
   LeagueDashboardResponseSchema,
   LeagueResponseSchema,
@@ -263,5 +264,35 @@ describe('API contracts (web)', () => {
 
     expect(stateRes.statusCode).toBe(200);
     expect(DraftStateResponseSchema.safeParse(stateRes.json()).success).toBe(true);
+  });
+
+  it('active negative routes match ErrorEnvelopeSchema', async () => {
+    const owner = await createTestUser({ displayName: 'Contract Error Owner' });
+
+    const unauthorizedLeaguesRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.list,
+    });
+    expect(unauthorizedLeaguesRes.statusCode).toBe(401);
+    expect(ErrorEnvelopeSchema.safeParse(unauthorizedLeaguesRes.json()).success).toBe(true);
+
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: owner.headers,
+      payload: {
+        name: 'Contract Error League',
+        visibility: LeagueVisibility.PRIVATE,
+      },
+    });
+    const leagueId = leagueRes.json().league.id as string;
+
+    const missingInviteRes = await getApp().inject({
+      method: 'DELETE',
+      url: `/api/v1/leagues/${leagueId}/invite-link/missing-code`,
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    expect(missingInviteRes.statusCode).toBe(404);
+    expect(ErrorEnvelopeSchema.safeParse(missingInviteRes.json()).success).toBe(true);
   });
 });

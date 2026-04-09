@@ -67,12 +67,12 @@ This should be treated as an intentional contract cleanup and coordinated with f
 | --- | --- | --- |
 | Done | Inventory active backend routes that do not yet use a consistent error envelope | Major categories: mixed flat `{ error, message }` responses in route handlers, bespoke `{ success: false }`/raw 400s in draft and contest override flows, `SuccessSchema`/generic success responses on route files that return domain data, and raw Fastify default-ish responses in admin/permissions helpers. Plan 63-owned auth routes were left untouched for now. |
 | Done | Add shared backend error DTO/schema package support | Added `packages/shared/dto/errors.dto.ts` with the standard nested envelope Zod schema and exported it from the shared DTO index. |
-| Pending | Normalize global Fastify error formatting | Ensure unhandled and translated domain errors flow through one consistent formatter where practical |
-| Pending | Standardize domain error translation in high-traffic modules | Prioritize leagues, squads, contests, draft, scoring, history, ingestion, and consent routes first; coordinate auth work with Plan 63 to avoid double-touching |
-| Pending | Declare route-level error response schemas for active product routes | Add `400`, `401`, `403`, `404` response schemas where they are relevant and realistic |
-| Pending | Replace bespoke inline error bodies on touched routes | Remove one-off `{ message }`, `{ success: false }`, or raw Fastify-style error responses where route work already touches that surface |
-| Pending | Add functional/integration coverage for error envelopes | Prefer shared error-envelope assertions in functional and integration suites rather than relying on standalone contract suites |
-| Pending | Add negative integration coverage for critical flows | Assert status code plus error-envelope shape for validation, auth, permission, and not-found scenarios |
+| Done | Normalize global Fastify error formatting | `globalErrorHandler` now produces the shared nested envelope, is registered in the app build, and the integration harness uses the same handler. |
+| In Progress | Standardize domain error translation in high-traffic modules | Completed for leagues, contest CRUD, contest overrides, standings, participants, history reads, draft route helpers, auth guard, and permission guards. Remaining queue: auth-module internals owned by Plan 63 coordination, plus long-tail squads/scoring/ingestion/admin surfaces. |
+| In Progress | Declare route-level error response schemas for active product routes | Added shared error schemas across active league, contest, standings, history, and participant routes; remaining route groups should be filled in as they are touched. |
+| In Progress | Replace bespoke inline error bodies on touched routes | Active league/contest/standings/history/participant flows now use the shared helper. Remaining bespoke payloads are mostly on deferred or lower-priority route groups. |
+| In Progress | Add functional/integration coverage for error envelopes | Functional helper now understands the shared nested envelope, and integration contract coverage asserts the envelope on representative negative routes. |
+| In Progress | Add negative integration coverage for critical flows | Added unauthorized/not-found/permission envelope assertions for active web-facing routes; broader validation/permission edge coverage still remains. |
 | Pending | Document remaining non-conforming routes and defer if needed | Keep a short tracked list of routes intentionally left for later so the stricter rule can be adopted incrementally |
 | Pending | Tighten service rules after implementation reaches the route-compliance gate | Flip `rules/service-rules.md` to the stricter universal standard only after all active product routes use the standard envelope and representative negative-path tests are in place |
 
@@ -82,6 +82,14 @@ This should be treated as an intentional contract cleanup and coordinated with f
 2. Route inventory and high-traffic module cleanup
 3. Functional and integration error-shape coverage
 4. Residual-route inventory and stricter rule adoption
+
+## Remaining Route Groups
+
+The highest-priority remaining non-conforming or partially conforming groups after the current pass are:
+
+- auth-module internals that should be coordinated with Plan 63 before broader route-contract cleanup
+- squad, scoring, and ingestion routes that still need route-level error schema normalization
+- lower-priority admin/runtime-support routes that are not on the active member/commissioner product path
 
 ## Validation
 

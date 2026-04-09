@@ -1,15 +1,96 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
+import type { ErrorEnvelope } from '@poolmaster/shared/dto/errors.dto';
+
+type ErrorLike = Error & {
+  code?: string;
+  statusCode?: number;
+  validation?: unknown;
+};
+
+function inferStatusCode(error: ErrorLike): number {
+  if (typeof error.statusCode === 'number') {
+    return error.statusCode;
+  }
+
+  switch (error.name) {
+    case 'ContestNotFoundError':
+    case 'ContestEntryNotFoundError':
+    case 'LeagueNotFoundError':
+    case 'ParticipantNotFoundError':
+    case 'InvitationNotFoundError':
+    case 'MemberNotFoundError':
+    case 'SquadNotFoundError':
+      return 404;
+    default:
+      return 500;
+  }
+}
+
+function inferErrorCode(error: ErrorLike, statusCode: number): string {
+  if (typeof error.code === 'string' && error.code.length > 0) {
+    return error.code;
+  }
+
+  switch (error.name) {
+    case 'ContestNotFoundError':
+    case 'ContestEntryNotFoundError':
+    case 'LeagueNotFoundError':
+    case 'ParticipantNotFoundError':
+    case 'InvitationNotFoundError':
+    case 'MemberNotFoundError':
+    case 'SquadNotFoundError':
+      return 'NOT_FOUND';
+    case 'ContestOperationError':
+    case 'ContestEntryOperationError':
+    case 'InvitationInvalidError':
+    case 'MemberOperationError':
+    case 'SquadOperationError':
+    case 'ContestManagementError':
+      return 'BAD_REQUEST';
+    default:
+      return statusCode >= 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST';
+  }
+}
+
+export function createErrorEnvelope(
+  code: string,
+  message: string,
+  details?: unknown,
+): ErrorEnvelope {
+  return {
+    error: {
+      code,
+      message,
+      ...(details !== undefined ? { details } : {}),
+    },
+  };
+}
+
+export function createErrorEnvelopeFromError(error: ErrorLike): ErrorEnvelope {
+  const statusCode = inferStatusCode(error);
+  const details = statusCode === 400 ? error.validation : undefined;
+  return createErrorEnvelope(
+    inferErrorCode(error, statusCode),
+    error.message,
+    details,
+  );
+}
+
+export function sendError(
+  reply: FastifyReply,
+  statusCode: number,
+  code: string,
+  message: string,
+  details?: unknown,
+) {
+  return reply.status(statusCode).send(createErrorEnvelope(code, message, details));
+}
 
 export function globalErrorHandler(
   error: FastifyError,
   _request: FastifyRequest,
   reply: FastifyReply,
 ): void {
-  const statusCode = error.statusCode ?? 500;
-
-  reply.status(statusCode).send({
-    error: error.code ?? 'INTERNAL_ERROR',
-    message: error.message,
-    details: statusCode === 400 ? error.validation : undefined,
-  });
+  const statusCode = inferStatusCode(error);
+  reply.status(statusCode).send(createErrorEnvelopeFromError(error));
 }

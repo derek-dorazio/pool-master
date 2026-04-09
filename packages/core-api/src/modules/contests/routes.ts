@@ -28,6 +28,7 @@ import {
   UpdateContestRequestSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   PrismaContestRepository,
   PrismaContestConfigurationRepository,
@@ -85,7 +86,11 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Create a new contest in a league',
       operationId: 'createContest',
       body: zodToJsonSchema(CreateContestRequestSchema),
-      response: { 201: zodToJsonSchema(ContestResponseSchema) },
+      response: {
+        201: zodToJsonSchema(ContestResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
     handler: handlers.createContest,
@@ -132,7 +137,10 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Get a contest by ID',
       operationId: 'getContest',
-      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ContestResponseSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.getContest,
   });
@@ -142,7 +150,11 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'List contest entries',
       operationId: 'listContestEntries',
-      response: { 200: zodToJsonSchema(ContestEntryListResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ContestEntryListResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.listEntries,
   });
@@ -152,7 +164,11 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Get the current user contest entry',
       operationId: 'getMyContestEntry',
-      response: { 200: zodToJsonSchema(MyContestEntryResponseSchema) },
+      response: {
+        200: zodToJsonSchema(MyContestEntryResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.getMyEntry,
   });
@@ -165,6 +181,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       response: {
         200: zodToJsonSchema(ContestEntryResponseSchema),
         201: zodToJsonSchema(ContestEntryResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: handlers.createMyEntry,
@@ -177,6 +195,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       operationId: 'leaveContest',
       response: {
         200: zodToJsonSchema(ContestEntryDeletionResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: handlers.deleteMyEntry,
@@ -188,7 +208,11 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Update a contest',
       operationId: 'updateContest',
       body: zodToJsonSchema(UpdateContestRequestSchema),
-      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ContestResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.updateContest,
   });
@@ -198,7 +222,11 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Delete a contest',
       operationId: 'deleteContest',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handlers.deleteContest,
   });

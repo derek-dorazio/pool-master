@@ -5,6 +5,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { InvitationService } from './invitation-service';
 import { InvitationInvalidError, InvitationNotFoundError } from './invitation-service';
+import { sendError } from '../../core/error-handler';
 
 export function createInvitationHandlers(invitationService: InvitationService) {
   return {
@@ -54,10 +55,10 @@ export function createInvitationHandlers(invitationService: InvitationService) {
   ): Promise<void> {
     try {
       await invitationService.revokeInviteLink(request.params.id, request.params.code);
-      return reply.status(204).send();
+      return reply.send({ success: true });
     } catch (err) {
       if (err instanceof InvitationNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -69,7 +70,7 @@ export function createInvitationHandlers(invitationService: InvitationService) {
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string;
     if (!userId) {
-      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
     try {
       const membership = await invitationService.acceptInvitation(
@@ -79,10 +80,10 @@ export function createInvitationHandlers(invitationService: InvitationService) {
       return reply.status(201).send({ membership });
     } catch (err) {
       if (err instanceof InvitationNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
+        return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
       if (err instanceof InvitationInvalidError) {
-        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+        return sendError(reply, 400, 'BAD_REQUEST', err.message);
       }
       throw err;
     }

@@ -6,6 +6,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { OverrideService } from './override-service';
 import { OverrideError } from './override-service';
 import { toContestResponse } from '../../mappers/contests.mapper';
+import { sendError } from '../../core/error-handler';
 
 export function createOverrideHandlers(overrideService: OverrideService) {
   return {
@@ -23,7 +24,7 @@ export function createOverrideHandlers(overrideService: OverrideService) {
 
   function handleOverrideError(err: unknown, reply: FastifyReply): void {
     if (err instanceof OverrideError) {
-      reply.status(400).send({ error: 'BAD_REQUEST', message: (err as Error).message });
+      sendError(reply, 400, 'BAD_REQUEST', err.message);
       return;
     }
     throw err;

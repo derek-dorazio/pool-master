@@ -156,12 +156,18 @@ export function expectFunctionalError(
   expect(result.response?.status).toBe(expected.status);
 
   const payload = result.error as Record<string, unknown> | undefined;
+  const nestedError =
+    payload?.error && typeof payload.error === 'object'
+      ? payload.error as Record<string, unknown>
+      : undefined;
   const actualCode =
-    typeof payload?.error === 'string'
-      ? payload.error
-      : typeof payload?.code === 'string'
-        ? payload.code
-        : undefined;
+    typeof nestedError?.code === 'string'
+      ? nestedError.code
+      : typeof payload?.error === 'string'
+        ? payload.error
+        : typeof payload?.code === 'string'
+          ? payload.code
+          : undefined;
 
   expect(actualCode).toBe(expected.code);
 }

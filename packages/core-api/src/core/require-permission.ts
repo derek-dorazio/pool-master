@@ -13,6 +13,7 @@ import type {
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
 import { hasPermission } from './permissions';
+import { sendError } from './error-handler';
 
 /**
  * Creates a preHandler hook that checks whether the requesting user has the
@@ -28,30 +29,24 @@ export function requirePermission(
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string | undefined;
     if (!userId) {
-      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
     const leagueId = (request.params as { id: string }).id;
     if (!leagueId) {
-      return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Missing league id' });
+      return sendError(reply, 400, 'BAD_REQUEST', 'Missing league id');
     }
     const membership: LeagueMembership | null = await membershipRepo.findByLeagueAndUser(
       leagueId,
       userId,
     );
     if (!membership) {
-      return reply
-        .status(403)
-        .send({ error: 'FORBIDDEN', message: 'You are not a member of this league' });
+      return sendError(reply, 403, 'FORBIDDEN', 'You are not a member of this league');
     }
     if (membership.status !== ('ACTIVE' satisfies LeagueMembershipStatus)) {
-      return reply
-        .status(403)
-        .send({ error: 'FORBIDDEN', message: 'Your membership in this league is inactive' });
+      return sendError(reply, 403, 'FORBIDDEN', 'Your membership in this league is inactive');
     }
     if (!hasPermission(membership, permission)) {
-      return reply
-        .status(403)
-        .send({ error: 'FORBIDDEN', message: 'You do not have permission for this action' });
+      return sendError(reply, 403, 'FORBIDDEN', 'You do not have permission for this action');
     }
   };
 }
@@ -69,14 +64,12 @@ export function requireOwner(
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string | undefined;
     if (!userId) {
-      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
     const leagueId = (request.params as { id: string }).id;
     const membership = await membershipRepo.findByLeagueAndUser(leagueId, userId);
     if (!membership || membership.status !== ('ACTIVE' satisfies LeagueMembershipStatus) || membership.role !== 'OWNER') {
-      return reply
-        .status(403)
-        .send({ error: 'FORBIDDEN', message: 'Only the league owner can perform this action' });
+      return sendError(reply, 403, 'FORBIDDEN', 'Only the league owner can perform this action');
     }
   };
 }

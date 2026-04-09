@@ -8,6 +8,7 @@ import {
   zodToJsonSchema,
   ParticipantListResponseSchema,
 } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   ParticipantResponseSchema,
   ParticipantSeasonRecordListResponseSchema,
@@ -55,7 +56,9 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           offset: { type: 'string' },
         },
       },
-      response: { 200: zodToJsonSchema(ParticipantListResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ParticipantListResponseSchema),
+      },
     },
     handler: handler.searchParticipants,
   });
@@ -67,7 +70,10 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Get a participant by ID',
       operationId: 'getParticipant',
-      response: { 200: zodToJsonSchema(ParticipantResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ParticipantResponseSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handler.getParticipant,
   });
@@ -95,7 +101,9 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           externalIds: { type: 'object' },
         },
       },
-      response: { 201: zodToJsonSchema(ParticipantResponseSchema) },
+      response: {
+        201: zodToJsonSchema(ParticipantResponseSchema),
+      },
     },
     handler: handler.createParticipant,
   });
@@ -105,7 +113,10 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Update a participant',
       operationId: 'updateParticipant',
-      response: { 200: zodToJsonSchema(ParticipantResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ParticipantResponseSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
       body: {
         type: 'object',
         properties: {
@@ -144,7 +155,10 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
       tags: ['Participants'],
       summary: 'Get a specific season record for a participant',
       operationId: 'getParticipantSeasonRecord',
-      response: { 200: zodToJsonSchema(ParticipantSeasonRecordResponseSchema) },
+      response: {
+        200: zodToJsonSchema(ParticipantSeasonRecordResponseSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: handler.getSeasonRecord,
   });

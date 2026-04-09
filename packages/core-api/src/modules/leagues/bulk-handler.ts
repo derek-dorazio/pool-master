@@ -5,6 +5,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { BulkService, CsvImportRow } from './bulk-service';
 import { BulkOperationError } from './bulk-service';
+import { sendError } from '../../core/error-handler';
 
 export function createBulkHandlers(bulkService: BulkService) {
   return {
@@ -46,7 +47,7 @@ export function createBulkHandlers(bulkService: BulkService) {
       return reply.status(201).send(result);
     } catch (err) {
       if (err instanceof BulkOperationError) {
-        return reply.status(400).send({ error: 'BAD_REQUEST', message: err.message });
+        return sendError(reply, 400, 'BAD_REQUEST', err.message);
       }
       throw err;
     }

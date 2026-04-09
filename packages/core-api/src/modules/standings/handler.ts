@@ -10,6 +10,7 @@ import {
   mapStandingsPageToDto,
   mapStandingsSummaryToDto,
 } from '../../mappers';
+import { sendError } from '../../core/error-handler';
 
 const STANDINGS_POLL_INTERVAL = 10000;
 
@@ -41,7 +42,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
       return reply.send(mapStandingsPageToDto(result));
     } catch (err) {
       if (err instanceof StandingsError) {
-        return reply.status(err.statusCode).send({ error: err.code, message: err.message });
+        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }
@@ -65,7 +66,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
       return reply.send(mapStandingsSummaryToDto(result));
     } catch (err) {
       if (err instanceof StandingsError) {
-        return reply.status(err.statusCode).send({ error: err.code, message: err.message });
+        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }
@@ -84,10 +85,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
       ?? request.headers['x-user-id']) as string | undefined;
 
     if (!userId) {
-      return reply.status(401).send({
-        error: 'UNAUTHORIZED',
-        message: 'Missing user identity',
-      });
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
 
     try {
@@ -97,7 +95,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
       return reply.send(mapMyEntryResultToDto(result));
     } catch (err) {
       if (err instanceof StandingsError) {
-        return reply.status(err.statusCode).send({ error: err.code, message: err.message });
+        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }

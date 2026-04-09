@@ -23,6 +23,7 @@ import {
 import {
   PrismaContestEntryRepository,
 } from '../../adapters';
+import { createErrorEnvelope } from '../../core/error-handler';
 import crypto from 'node:crypto';
 import { SnakeDraftEngine } from './engine/snake-draft-engine';
 import type { DraftState } from './engine/snake-draft-engine';
@@ -92,6 +93,19 @@ interface DraftTierConfig {
 }
 
 function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknown) {
+  if (
+    payload
+    && typeof payload === 'object'
+    && 'error' in payload
+    && typeof (payload as { error?: unknown }).error === 'string'
+    && 'message' in payload
+    && typeof (payload as { message?: unknown }).message === 'string'
+  ) {
+    const errorPayload = payload as { error: string; message: string; details?: unknown };
+    return reply.status(statusCode).send(
+      createErrorEnvelope(errorPayload.error, errorPayload.message, errorPayload.details),
+    );
+  }
   return reply.status(statusCode).send(payload);
 }
 
