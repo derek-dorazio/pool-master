@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
+import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { LeaguesPage } from '@/features/leagues/leagues-page';
@@ -30,6 +31,10 @@ export const router = createBrowserRouter([
           {
             path: 'leagues/:leagueId',
             element: <LeagueDetailPage />,
+          },
+          {
+            path: 'contests/:contestId',
+            element: <ContestDetailPage />,
           },
         ],
       },

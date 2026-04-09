@@ -1,7 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { generateInviteLink, getLeague, listLeagueMembers, sendLeagueInvitations } from '@/lib/api';
+import {
+  generateInviteLink,
+  getLeague,
+  listContests,
+  listLeagueMembers,
+  sendLeagueInvitations,
+} from '@/lib/api';
 import { useSessionStore } from '@/features/auth/session-store';
 
 type LeagueDetail = {
@@ -20,6 +26,15 @@ type LeagueMember = {
   userId: string;
   displayName: string;
   role: string;
+};
+
+type ContestSummary = {
+  id: string;
+  name: string;
+  status: string;
+  selectionType: string;
+  scoringEngine: string;
+  entryCount?: number;
 };
 
 function formatRole(role: string | undefined) {
@@ -78,6 +93,28 @@ export function LeagueDetailPage() {
       }
 
       return response.data.members as LeagueMember[];
+    },
+    enabled: Boolean(leagueId && tokens?.accessToken),
+    retry: false,
+  });
+
+  const contestsQuery = useQuery({
+    queryKey: ['poolmaster', 'league-contests', leagueId, tokens?.accessToken],
+    queryFn: async (): Promise<ContestSummary[]> => {
+      const response = await listContests({
+        path: { id: leagueId },
+        headers: tokens?.accessToken
+          ? {
+              Authorization: `Bearer ${tokens.accessToken}`,
+            }
+          : undefined,
+      });
+
+      if (!response.data?.contests) {
+        throw response.error ?? new Error('Contest list response is missing data.');
+      }
+
+      return response.data.contests as ContestSummary[];
     },
     enabled: Boolean(leagueId && tokens?.accessToken),
     retry: false,
@@ -344,9 +381,54 @@ export function LeagueDetailPage() {
                       We couldn&apos;t send that invitation right now.
                     </p>
                   ) : null}
-                </div>
-              </div>
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-border bg-card p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-semibold">Contests</h3>
+              <p className="text-sm text-muted-foreground">
+                League contests now route into the rebuilt contest detail surface instead of the
+                old frontend stack.
+              </p>
             </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {contestsQuery.isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading contests...</p>
+            ) : contestsQuery.isError ? (
+              <p className="text-sm text-muted-foreground">
+                We couldn&apos;t load contests for this league.
+              </p>
+            ) : contestsQuery.data?.length ? (
+              contestsQuery.data.map((contest) => (
+                <Link
+                  className="block rounded-2xl border border-border bg-background px-4 py-4 transition hover:border-primary/40"
+                  key={contest.id}
+                  to={`/contests/${contest.id}`}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="font-medium">{contest.name}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        {contest.selectionType} · {contest.scoringEngine}
+                      </div>
+                    </div>
+                    <div className="text-right text-sm text-muted-foreground">
+                      <div>{contest.status}</div>
+                      <div>{contest.entryCount ?? 0} entries</div>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No contests exist for this league yet.</p>
+            )}
+          </div>
+        </div>
+      </div>
           ) : null}
         </div>
       </div>
