@@ -4,7 +4,8 @@ All plan documents and implementation work must conform to these rules. This is 
 
 **For implementation-level rules, see:**
 - **[Service Rules](service-rules.md)** — backend TypeScript, Fastify, Prisma, OpenAPI, DTO, and mapper rules
-- **[React UI Rules](react-ui-rules.md)** — web/admin React apps, generated API client usage, TanStack Query, MSW
+- **[PoolMaster Webapp Rules](poolmaster-webapp-rules.md)** — single-webapp product behavior, role-based access expectations, and archived-app policy
+- **[React UI Rules](react-ui-rules.md)** — PoolMaster React app technology, generated API client usage, TanStack Query, and frontend testing patterns
 - **[Swift Rules](swift-rules.md)** — iOS SwiftUI client rules
 - **[Android Rules](android-rules.md)** — Android Kotlin + Jetpack Compose rules
 - **[Testing Rules](testing-rules.md)** — unit, integration, contract, smoke, and browser E2E rules
@@ -28,7 +29,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | Queue / async work | In-process event bus and service-local scheduling; add external queueing only when the architecture truly needs it | — |
 | Auth | App-issued JWT access + refresh tokens, with social auth callback support | [Service Rules](service-rules.md) |
 
-### Frontend — Web/Admin
+### Frontend — Web
 
 | Concern | Choice | Details In |
 |---|---|---|
@@ -40,6 +41,12 @@ All plan documents and implementation work must conform to these rules. This is 
 | Forms | React Hook Form | [React UI Rules](react-ui-rules.md) |
 | Routing | React Router | [React UI Rules](react-ui-rules.md) |
 | API access | Shared generated `hey-api` SDK from `packages/shared/generated/hey-api` | [React UI Rules](react-ui-rules.md) |
+
+The go-forward web frontend is a single role-based application: `clients/poolmaster`.
+
+- `clients/admin` is being retired and should not be treated as the future admin surface.
+- `clients/web` becomes archived reference material only once the new app is introduced.
+- New web implementation work should target the single PoolMaster app rather than splitting functionality across multiple React apps.
 
 ### Frontend — iOS
 
@@ -188,7 +195,7 @@ poolmaster/
 
 - Tests remain outside production `src/` folders unless there is a deliberate package-local test convention already in use.
 - Generated API artifacts live under `packages/shared/generated/`.
-- Web and admin apps both consume the same generated API package.
+- The PoolMaster web app consumes the shared generated API package.
 - Do not create parallel handwritten clients when the shared generated client can be extended with thin app-specific configuration.
 
 ---

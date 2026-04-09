@@ -1,8 +1,10 @@
 # PoolMaster — React UI Rules
 
-These rules govern `clients/web` and `clients/admin`.
+These rules govern the single go-forward React application: `clients/poolmaster`.
 
-The web/admin apps are React 18 + TypeScript applications using:
+`clients/web` is legacy reference material during the transition and should not be treated as the active implementation target for new frontend work. `clients/admin` is being retired rather than maintained as a separate app.
+
+The PoolMaster web app is a React 18 + TypeScript application using:
 
 - Vite
 - React Router
@@ -23,6 +25,7 @@ The web/admin apps are React 18 + TypeScript applications using:
 - Avoid `any`.
 - Prefer shared types and generated types over local copies.
 - Do not add comments unless they explain non-obvious behavior.
+- Treat `clients/poolmaster` as the only active webapp delivery target.
 
 ---
 
@@ -67,12 +70,15 @@ Examples:
   - base URL configuration
   - very small app-local convenience helpers if truly needed
 - If the generated contract is wrong, fix the backend DTO/route schema and regenerate. Do not invent local replacement contracts.
+- It is acceptable to derive UI-specific view data from generated/domain types when needed for presentation, sorting, grouping, or component ergonomics.
+- Do not create alternative API object shapes that drift from the exported contract just to make components easier to write.
 
 ### Banned Patterns
 
 - New manual `fetch()` wrappers for endpoints already covered by the generated client
 - New handwritten OpenAPI client adapters when `@/lib/api` already provides the operation
 - New local interfaces duplicating generated response types just because the generated contract is inconvenient
+- New local "frontend contract" types that restate backend DTOs under different names
 - `as any`, `as unknown as`, or manual shape rewriting to bypass generated types
 - Continuing to use legacy manual-client helpers when generated SDK operations now exist
 
@@ -130,19 +136,33 @@ The shared generated client is part of the architecture, not an optional helper.
 ## 7. Testing Rules for React Apps
 
 - Use Vitest + React Testing Library.
-- Use MSW for tests that should exercise request construction and network behavior.
+- Use MSW for tests that should exercise request construction and network behavior through the frontend layer.
 - Keep pure presentation tests simple and hook-free where possible.
 - Prefer behavior-oriented tests over implementation-detail tests.
+
+### Required Frontend Test Layers
+
+- Add unit tests for pure UI logic, hooks, selectors, and component behavior where local logic is the main subject under test.
+- Add rendered frontend-layer tests for important flows so the app is exercised through components, routing, forms, query state, and generated-client integration boundaries.
+- Do not rely on unit tests alone for important user-facing flows.
+- Browser E2E should remain a smaller post-deploy confidence layer once the rebuilt web app exists; do not push all frontend confidence into Playwright.
 
 ### Banned Test Patterns
 
 - `vi.mock('@/lib/api-client')` or equivalent module-level replacement of the runtime API client for new tests
+- direct mocking of generated SDK response objects in a way that invents shapes not present in exported types
 - assertions that only check copied path strings
 - low-value tests that lock in obsolete manual-client behavior
 
 ### Acceptable Cleanup
 
 It is acceptable to remove or replace tests when they enforce old architecture, as long as the resulting coverage is higher-signal and aligned with current patterns.
+
+### Frontend Test Data Rule
+
+- Do not place mock data, fake records, sample contests, or fake API payloads in application runtime code.
+- Test fixtures belong in test files and test helpers only.
+- Frontend tests must use exported contract shapes from the generated SDK/types. Do not invent alternative test object shapes that the application never really receives.
 
 ---
 
@@ -205,7 +225,7 @@ But those tests should still avoid using copy text as the only way to find criti
 
 ---
 
-## 10. Review Checklist for Web/Admin Changes
+## 10. Review Checklist for PoolMaster Web Changes
 
 Before finishing frontend work, verify:
 

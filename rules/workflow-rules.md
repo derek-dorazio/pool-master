@@ -122,6 +122,16 @@ Examples that require rule updates:
 - replacing manual-client tests with MSW
 - removing obsolete UI or endpoint patterns
 
+### Webapp Rebuild Direction
+
+The go-forward web frontend is the single role-based PoolMaster app.
+
+- New web implementation work should target `clients/poolmaster`.
+- Do not spend implementation effort keeping `clients/web` or `clients/admin` current with new plans once the rebuild plan is active.
+- `clients/web` may be used as reference material for planning, layout ideas, and feature discovery until it is archived, but implementation agents should not treat it as an active delivery target.
+- `clients/admin` is being removed rather than modernized into a separate long-lived app.
+- If a frontend plan or slice is intended for the new app, keep the work isolated to the PoolMaster app and update related build/test/CI wiring in the same effort.
+
 ---
 
 ## 2A. Source-Of-Truth Priority During The Backend Refactor

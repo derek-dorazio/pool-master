@@ -20,6 +20,7 @@ All agents working in this repo should:
 
 - `rules/workflow-rules.md`
 - `rules/architecture-rules.md`
+- `rules/poolmaster-webapp-rules.md`
 - `rules/service-rules.md`
 - `rules/react-ui-rules.md`
 - `rules/testing-rules.md`
@@ -31,6 +32,7 @@ All agents working in this repo should:
 
 - `rules/workflow-rules.md`: plan tracking, execution protocol, and how to update plan task status.
 - `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
+- `rules/poolmaster-webapp-rules.md`: single-webapp product rules, role-based behavior, archived-app policy, and functional expectations for the go-forward PoolMaster web app.
 - `rules/service-rules.md`: backend Fastify, Prisma, DTO, mapper, and OpenAPI requirements.
 - `rules/react-ui-rules.md`: web/admin React conventions, generated-client usage, and prohibited frontend patterns.
 - `rules/testing-rules.md`: unit, integration, MSW, Playwright, smoke-test, and CI expectations.
