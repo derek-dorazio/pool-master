@@ -10,6 +10,9 @@ const stateFilePath = path.join(
   'service-functional-api',
   'server-state.json',
 );
+const functionalServerV8CoverageDir =
+  process.env.FUNCTIONAL_SERVER_V8_COVERAGE_DIR
+  || path.join(rootDir, 'coverage', 'service-functional-api-v8');
 const serverEntry = path.join(rootDir, 'tests', 'functional', 'server.ts');
 const tsConfigPath = path.join(rootDir, 'tests', 'tsconfig.json');
 
@@ -56,7 +59,9 @@ module.exports = async () => {
       AUTO_START_SCHEDULER: 'false',
       FUNCTIONAL_RUN_ID: runId,
       FUNCTIONAL_SERVER_STATE_FILE: stateFilePath,
+      FUNCTIONAL_SERVER_V8_COVERAGE_DIR: functionalServerV8CoverageDir,
       JWT_SECRET: 'poolmaster-dev-secret-change-in-production',
+      NODE_V8_COVERAGE: functionalServerV8CoverageDir,
       OPENAPI_EXPORT: 'false',
       POOLMASTER_DISABLE_AUTO_START: 'true',
       TS_NODE_PROJECT: tsConfigPath,
