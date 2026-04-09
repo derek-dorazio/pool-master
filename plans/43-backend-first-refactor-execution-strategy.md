@@ -263,7 +263,7 @@ The following should not block backend-first implementation:
 | 43-002 | 1 | Run the domain/model review plans to completion before implementation starts | Pending | Plan 36, 37, 38, 42 should be stable enough to build against |
 | 43-003 | 2 | Create a backend-refactor CI lane focused on service-side validation only | Done | Added branch-specific rule exceptions and CI gating for `codex-backend-refactor-lane`; web/admin/coverage-summary are skipped there while backend checks remain required |
 | 43-004 | 2 | Adopt schema reset / fresh baseline migration strategy for the refactor target model | Pending | Dev and QA can be rebuilt from scratch |
-| 43-005 | 2 | Remove broad application seed data and reduce seed contract to root admin + essential bootstrap config only | Pending | Keep `derek.dorazio@gmail.com` root admin |
+| 43-005 | 2 | Remove broad application seed data and reduce seed contract to root admin + essential bootstrap config only | Done | Removed all demo/dev/bootstrap seed records and replaced the seed step with a no-op so migrate/seed pipeline paths still execute; root bootstrap user is deferred to Plan 63 after the tenant-free auth model lands. |
 | 43-006 | 2 | Move all non-production contest/event fixture needs behind mock-provider and test-owned data creation | Pending | Align with Plan 31 |
 | 43-007 | 3 | Rebuild Prisma schema, domain entities, repositories, and service logic against the new model | Pending | Backend only |
 | 43-008 | 3 | Rebuild DTOs, mappers, routes, OpenAPI, and generated client export | Pending | Backend contract becomes source of truth |
@@ -274,6 +274,6 @@ The following should not block backend-first implementation:
 
 - backend implementation can proceed without web/admin rebuild pressure
 - migration approach is explicitly chosen and documented
-- seed strategy is explicitly reduced to root admin + essential bootstrap only
+- seed strategy is explicitly reduced to no inserted data until the tenant-free auth/root bootstrap model is completed
 - backend CI gates focus on service-side correctness during refactor
 - frontend adaptation is explicitly sequenced after backend/API stabilization

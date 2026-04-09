@@ -191,10 +191,11 @@ This should likely be the final slice because it impacts clients most directly.
 | 63-001 | 1 | Lock the final tenant-free authenticated principal shape | Pending | Must align Plan 36 and Plan 37 before implementation |
 | 63-002 | 1 | Inventory every remaining `tenantId` field, JWT claim, DTO field, repository parameter, and Prisma relation still active in code | Pending | Use this to define exact migration scope |
 | 63-003 | 2 | Remove `Tenant` and tenant foreign keys from the Prisma schema and baseline migrations | Pending | Includes `User`, `League`, `Season`, and any admin/session leftovers |
-| 63-004 | 2 | Remove tenant-owned seed/bootstrap assumptions | Pending | Seed should remain minimal and tenant-free |
+| 63-004 | 2 | Remove tenant-owned seed/bootstrap assumptions | Pending | Demo/bootstrap seed data is now removed; this slice must finish the tenant-free bootstrap policy and any remaining schema/runtime cleanup. |
 | 63-005 | 3 | Rewrite repository ports and adapters to remove tenant-scoped lookup signatures | Pending | Avoid compatibility shims |
 | 63-006 | 3 | Remove tenant compatibility parameters from league/contest/auth services and handlers | Pending | Product services should be league/global only |
 | 63-007 | 4 | Remove `tenantId` from JWT/session issuance, validation, and `AuthUser` | Pending | Must include auth unit/integration coverage |
 | 63-008 | 4 | Update auth DTOs, mappers, `/auth/me`, and integration helpers to the tenant-free identity model | Pending | Generated clients must stay in sync |
 | 63-009 | 5 | Implement the unified cookie/session browser auth model from Plan 36 on top of the tenant-free identity boundary | Pending | Web/admin follow-through likely required |
 | 63-010 | 5 | Run full backend validation and regenerate OpenAPI/client artifacts for the tenant-free auth boundary | Pending | Include unit, integration, contract, and migration checks |
+| 63-011 | 5 | Add one tenant-free root bootstrap user only if still required after the final auth model is implemented | Pending | Do not reintroduce `AdminUser`; use the final unified identity model and keep bootstrap data minimal. |
