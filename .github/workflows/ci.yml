@@ -73,42 +73,44 @@ jobs:
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
-      - name: Run unit tests with coverage
-        run: npx jest --config tests/jest.config.js --forceExit --ci --coverage
-
-      - name: Run integration tests
-        run: npx jest --config tests/integration/jest.config.js --forceExit --ci
+      - name: Run merged backend coverage
+        run: npm run test:coverage:backend
 
       - name: Backend coverage summary
         if: always()
         run: |
           node <<'NODE'
           const fs = require('fs');
-          const path = 'coverage/coverage-summary.json';
           const summary = process.env.GITHUB_STEP_SUMMARY;
-
-          if (!fs.existsSync(path)) {
-            console.log('Backend coverage data not available');
-            fs.appendFileSync(summary, '### Backend Test Coverage\n\nCoverage data not available\n');
-            process.exit(0);
-          }
-
-          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
-          const t = data.total;
-          const lines = [
-            `Statements: ${t.statements.pct}%`,
-            `Branches: ${t.branches.pct}%`,
-            `Functions: ${t.functions.pct}%`,
-            `Lines: ${t.lines.pct}%`,
+          const sections = [
+            ['Unit Backend Coverage', 'coverage/unit/coverage-summary.json'],
+            ['Integration Backend Coverage', 'coverage/integration/coverage-summary.json'],
+            ['Merged Backend Coverage', 'coverage/coverage-summary.json'],
           ];
 
-          console.log('Backend coverage totals');
-          for (const line of lines) console.log(line);
+          const markdown = ['### Backend Coverage'];
+          let foundAny = false;
 
-          fs.appendFileSync(
-            summary,
-            [
-              '### Backend Test Coverage',
+          for (const [label, filePath] of sections) {
+            if (!fs.existsSync(filePath)) {
+              console.log(`${label}: coverage data not available`);
+              markdown.push('', `#### ${label}`, '', 'Coverage data not available');
+              continue;
+            }
+
+            foundAny = true;
+            const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            const t = data.total;
+
+            console.log(label);
+            console.log(`Statements: ${t.statements.pct}%`);
+            console.log(`Branches: ${t.branches.pct}%`);
+            console.log(`Functions: ${t.functions.pct}%`);
+            console.log(`Lines: ${t.lines.pct}%`);
+
+            markdown.push(
+              '',
+              `#### ${label}`,
               '',
               '| Metric | Coverage |',
               '|---|---:|',
@@ -116,9 +118,14 @@ jobs:
               `| Branches | ${t.branches.pct}% |`,
               `| Functions | ${t.functions.pct}% |`,
               `| Lines | ${t.lines.pct}% |`,
-              '',
-            ].join('\n'),
-          );
+            );
+          }
+
+          if (!foundAny) {
+            markdown.push('', 'Coverage data not available');
+          }
+
+          fs.appendFileSync(summary, markdown.join('\n') + '\n');
           NODE
 
       - name: Upload backend coverage artifact
@@ -131,6 +138,9 @@ jobs:
             coverage/lcov.info
             coverage/clover.xml
             coverage/coverage-final.json
+            coverage/lcov-report/**
+            coverage/unit/**
+            coverage/integration/**
           if-no-files-found: warn
 
   # =========================================================================

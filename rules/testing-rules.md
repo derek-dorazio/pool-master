@@ -65,11 +65,12 @@ These are the default required checks before commit:
 3. `npx jest --config tests/jest.config.js --forceExit`
 4. `cd clients/web && npx vitest run`
 5. `cd clients/admin && npx vitest run`
+6. `npm run test:coverage:backend`
 
 Contract-specific commands:
 
-6. `npm run api:refresh` when API schemas change
-7. `npm run api:validate` when OpenAPI output changes
+7. `npm run api:refresh` when API schemas change
+8. `npm run api:validate` when OpenAPI output changes
 
 Notes:
 
@@ -86,6 +87,7 @@ Backend-first refactor branch exception:
   - backend/shared lint
   - backend unit tests
   - DB integration tests
+  - merged backend coverage from unit + integration suites
   - `npm run api:refresh` and `npm run api:validate` when API schemas change
 - Not required on that branch:
   - web Vitest
@@ -104,6 +106,10 @@ Backend-first refactor testing rules on `codex-backend-refactor-lane`:
 - Coverage is not only a percentage target. New backend code on this branch should aim for:
   - 80% or greater coverage on the newly added or materially rewritten backend code
   - plus explicit test cases for the identified use cases that code is intended to support
+- Backend coverage on this branch should be measured from the merged backend report:
+  - unit coverage output
+  - DB integration coverage output
+  - merged into one backend coverage summary via `npm run test:coverage:backend`
 - For every new or materially redesigned domain object, add DB-backed integration coverage for at least:
   - create
   - update

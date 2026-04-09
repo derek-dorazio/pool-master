@@ -124,7 +124,8 @@ Backend-first refactor lane exception:
   2. backend/shared lint
   3. backend unit tests
   4. DB-backed integration tests
-  5. OpenAPI export/validation when API shapes change
+  5. merged backend coverage via `npm run test:coverage:backend`
+  6. OpenAPI export/validation when API shapes change
 - Web/admin test, coverage, smoke, and browser E2E suites are not required
   pre-push gates on that branch.
 - This exception is branch-specific only. `main` and ordinary feature branches
