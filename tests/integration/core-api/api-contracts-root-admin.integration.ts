@@ -23,29 +23,12 @@ class ContractProvider implements SportDataProvider {
   providerName = 'Contract Provider';
   sportsCovered: Sport[] = ['GOLF'];
 
-  async getUpcomingEvents(): Promise<SportEvent[]> {
-    return [];
-  }
-
-  async getEventDetails(): Promise<SportEventDetail | null> {
-    return null;
-  }
-
-  async getParticipants(): Promise<ProviderParticipant[]> {
-    return [];
-  }
-
-  async getRankings(): Promise<ProviderRanking[]> {
-    return [];
-  }
-
-  async getLiveScores(): Promise<ProviderStatEvent[]> {
-    return [];
-  }
-
-  async getEventResults(): Promise<ProviderEventResult | null> {
-    return null;
-  }
+  async getUpcomingEvents(): Promise<SportEvent[]> { return []; }
+  async getEventDetails(): Promise<SportEventDetail | null> { return null; }
+  async getParticipants(): Promise<ProviderParticipant[]> { return []; }
+  async getRankings(): Promise<ProviderRanking[]> { return []; }
+  async getLiveScores(): Promise<ProviderStatEvent[]> { return []; }
+  async getEventResults(): Promise<ProviderEventResult | null> { return null; }
 
   async healthCheck(): Promise<ProviderHealthStatus> {
     return {
@@ -57,8 +40,8 @@ class ContractProvider implements SportDataProvider {
   }
 }
 
-describe('API contracts (admin)', () => {
-  it('ingestion admin routes match their DTOs', async () => {
+describe('API contracts (root admin)', () => {
+  it('ingestion root-admin routes match their DTOs', async () => {
     const app = Fastify({ logger: false });
     const registry = new ProviderRegistry();
     registry.register('GOLF', new ContractProvider(), 'PRIMARY');
@@ -111,16 +94,14 @@ describe('API contracts (admin)', () => {
       } as any,
       oddsAdapter: {
         async getOdds() {
-          return [
-            {
-              eventId: 'event-1',
-              sport: 'GOLF',
-              homeTeam: 'Player A',
-              awayTeam: 'Player B',
-              commenceTime: new Date('2026-04-09T12:00:00.000Z'),
-              odds: [],
-            },
-          ];
+          return [{
+            eventId: 'event-1',
+            sport: 'GOLF',
+            homeTeam: 'Player A',
+            awayTeam: 'Player B',
+            commenceTime: new Date('2026-04-09T12:00:00.000Z'),
+            odds: [],
+          }];
         },
       } as any,
     });
@@ -132,9 +113,7 @@ describe('API contracts (admin)', () => {
       url: '/api/v1/admin/ingestion/providers',
     });
     expect(providersRes.statusCode).toBe(200);
-    expect(
-      IngestionProvidersResponseSchema.safeParse(providersRes.json()).success,
-    ).toBe(true);
+    expect(IngestionProvidersResponseSchema.safeParse(providersRes.json()).success).toBe(true);
 
     const syncRes = await app.inject({
       method: 'POST',

@@ -69,7 +69,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 **Tests:**
 - [ ] Unit test exists for service logic
 - [ ] DB integration test covers create, read, update, delete/inactivate, findById for new/changed domain objects
-- [ ] Contract test case added to `api-contracts-web.integration.ts` or `api-contracts-admin.integration.ts` for every new/changed endpoint
+- [ ] Contract test case added to `api-contracts-web.integration.ts`, `api-contracts-root-admin.integration.ts`, or an equivalent contract suite for every new/changed endpoint
 - [ ] Coverage on changed files ≥ 80% statements
 
 **OpenAPI:**

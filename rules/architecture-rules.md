@@ -45,7 +45,7 @@ All plan documents and implementation work must conform to these rules. This is 
 The go-forward web frontend is a single role-based application: `clients/poolmaster`.
 
 - `clients/admin` is being retired and should not be treated as the future admin surface.
-- `clients/web` becomes archived reference material only once the new app is introduced.
+- `clients/_archived/web` is archived reference material only.
 - New web implementation work should target the single PoolMaster app rather than splitting functionality across multiple React apps.
 
 ### Frontend — iOS

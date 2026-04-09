@@ -1,6 +1,6 @@
 # PoolMaster Architecture Overview
 
-> Frontend note: this document still contains historical detail from the pre-cutover frontend topology. The active web target is now `clients/poolmaster`; `clients/admin` has been retired and `clients/_archived/web` is reference-only.
+> Frontend note: the active web target is `clients/poolmaster`; `clients/admin` has been retired and `clients/_archived/web` is reference-only. Any remaining mentions of the old split frontend topology below are historical infrastructure context, not current implementation guidance.
 
 ## System Diagram
 
@@ -266,15 +266,14 @@ core-api
 └─────────────────────────────────────────────────────┘
 
 CloudFront (us-east-1):
-  qa.ultimateofficepoolmanager.com        → S3 webapp + ALB /api/*
-  qa-admin.ultimateofficepoolmanager.com  → S3 admin + ALB /api/*
+  qa.ultimateofficepoolmanager.com        → S3 PoolMaster app + ALB /api/*
 ```
 
 ### Environments
 
 | Environment | Deploy Trigger | Domain |
 |-------------|---------------|--------|
-| **QA** | Auto on push to `main` | `qa.ultimateofficepoolmanager.com` |
+| **QA** | Auto on push to `main` | `qa.ultimateofficepoolmanager.com` (PoolMaster app) |
 | **Staging** | Manual (workflow_dispatch) | `stage.ultimateofficepoolmanager.com` |
 | **Production** | Manual (workflow_dispatch) | `ultimateofficepoolmanager.com` |
 

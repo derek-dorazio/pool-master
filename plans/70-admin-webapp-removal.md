@@ -34,7 +34,7 @@ Active admin references still present in the repo fall into these buckets:
 | Browser E2E | `clients/admin/e2e/` plus CI Playwright job | Admin browser suite still runs against `qa-admin.ultimateofficepoolmanager.com` |
 | Admin app source | `clients/admin/` package and source files | Active app code, Vitest, Playwright, MSW, and UI remain in place |
 | Rules/docs references | `rules/architecture-rules.md`, `rules/workflow-rules.md`, `rules/react-ui-rules.md`, `rules/poolmaster-webapp-rules.md`, `plans/71-legacy-webapp-archive-and-cutover.md` | These now need later cleanup to stop treating admin as active guidance |
-| Tests and helpers | `tests/integration/core-api/api-contracts-admin.integration.ts`, `tests/unit/core-api/admin-contest-service.test.ts`, `tests/api/jest.config.ts` | Admin contract/smoke-style coverage remains present |
+| Tests and helpers | `tests/integration/core-api/api-contracts-root-admin.integration.ts`, `tests/unit/core-api/admin-contest-service.test.ts`, `tests/api/jest.config.ts` | Root-admin/backend contract coverage remains, but no separate admin-frontend contract suite or browser suite should survive |
 
 Concrete removal map for later slices:
 
@@ -45,7 +45,7 @@ Concrete removal map for later slices:
 | CI deploy | `.github/workflows/ci.yml` admin S3/CloudFront deploy steps and admin QA target references | Remove once the admin app is no longer an active deployment target |
 | Browser E2E | `clients/admin/e2e/` and Playwright job wiring | Remove as part of the browser reset slice |
 | Admin app source | `clients/admin/**` | Remove or archive only after the repo no longer needs it as active implementation guidance |
-| Admin contract tests | `tests/integration/core-api/api-contracts-admin.integration.ts` | Remove once the new functional API suite owns the relevant contract/error coverage |
+| Admin contract tests | `tests/integration/core-api/api-contracts-root-admin.integration.ts` | Keep only as backend/root-admin contract coverage rather than as a retired admin-frontend contract suite |
 | Admin unit tests | `tests/unit/core-api/admin-contest-service.test.ts` and other admin-targeted unit suites | Remove or archive as the admin app is retired |
 | Docs/rules | active references in `rules/*`, `AGENTS.md`, and plan docs | Update after the code/build references are removed so the guidance matches the repo state |
 
@@ -56,10 +56,10 @@ Concrete removal map for later slices:
 | Done | Inventory all `clients/admin` build/test/CI references | Active refs now mapped across package scripts, CI workflow, admin source/tests, and rules/docs; see inventory snapshot above |
 | Done | Remove admin app from local quality gates | Root typecheck, lint, test, and coverage commands now target backend + PoolMaster only. |
 | Done | Remove admin app from CI workflows | Admin build/test/coverage/deploy/browser references were removed from CI. |
-| Pending | Remove admin-specific contract and browser test references | Clean up any admin-only contract or browser test wiring that should not survive the app retirement |
+| Done | Remove admin-specific contract and browser test references | Browser suite references were removed, and the old `api-contracts-admin.integration.ts` naming was retired in favor of a neutral root-admin/backend contract suite name. |
 | Done | Remove or archive `clients/admin` source so it is no longer an active or discoverable implementation target | `clients/admin` was removed from the repo instead of being preserved as a transition target. |
 | Done | Review and document deployed admin infrastructure impact | The retired admin deployment surface should be treated as deprecated infrastructure: QA/admin deploy targets, S3/CloudFront hooks, and any DNS/URL references should be removed or explicitly flagged as inactive in the deployment docs. |
-| In Progress | Update docs and rules | Active rules, AGENTS, README, and setup guidance now point at the single-app direction; longer historical docs still need a cleanup pass. |
+| Done | Update docs and rules | Active rules and key architecture/auth guidance now point at the single-app direction and no longer treat the retired admin frontend as a maintained app. |
 | Done | Add follow-up note for root-admin UI rebuild | Future root-admin browser workflows should be rebuilt from scratch in the single PoolMaster web app, not ported from the retired admin app. |
 
 ## Validation

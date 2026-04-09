@@ -43,7 +43,7 @@ This is not a contract-only test suite. It is a **full behavioral test suite** t
 
 ### What This Subsumes
 
-- **Contract test suites** (`api-contracts-web.integration.ts`, `api-contracts-admin.integration.ts`) — if the SDK compiles and the typed response is correct, the contract is proven. Separate `.safeParse()` contract tests become redundant.
+- **Contract test suites** (`api-contracts-web.integration.ts`, `api-contracts-root-admin.integration.ts`) — if the SDK compiles and the typed response is correct, the contract is proven. Separate `.safeParse()` contract tests become redundant.
 - **Most API smoke tests** — the smoke suite can be reduced to a thin deployed-environment health check. The heavy use-case validation moves here where it runs faster and with stronger guarantees.
 
 Important clarification:
@@ -650,7 +650,7 @@ npx jest --config tests/functional/jest.config.js tests/functional/league-lifecy
 
 ### What Gets Removed/Reduced
 
-1. **Contract test suites** (`api-contracts-web.integration.ts`, `api-contracts-admin.integration.ts`) — no longer needed. The SDK functional tests prove the contract by using the SDK. If TypeScript compiles and the test passes, the contract is valid.
+1. **Contract test suites** (`api-contracts-web.integration.ts`, `api-contracts-root-admin.integration.ts`) — no longer needed. The SDK functional tests prove the contract by using the SDK. If TypeScript compiles and the test passes, the contract is valid.
 
 2. **API smoke tests** — reduce to a minimal deployed-environment health check:
    - `health.smoke.ts` — health endpoint returns 200

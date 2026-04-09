@@ -87,11 +87,11 @@ It resolves tenant identity in this order:
 
 If neither exists for a protected route, the request is rejected with `401`.
 
-## Web App Authentication
+## PoolMaster Web App Authentication
 
 ### Login flow
 
-The web login page lives at [clients/web/src/pages/auth/login.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/pages/auth/login.tsx).
+The active login page lives at [auth-home-page.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/auth/auth-home-page.tsx).
 
 It:
 
@@ -101,13 +101,13 @@ It:
 - stores the user in the Zustand auth store
 - navigates to `/dashboard` or the requested redirect target
 
-The web API client is configured in [clients/web/src/lib/api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/lib/api.ts).
+The active web API client is configured in [api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/lib/api.ts).
 
 It automatically attaches:
 
 - `Authorization: Bearer <access_token>`
 
-The web auth store is in [clients/web/src/stores/auth-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/stores/auth-store.ts).
+The active session store is in [session-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/auth/session-store.ts).
 
 It hydrates from:
 
@@ -264,42 +264,13 @@ sequenceDiagram
     API-->>Client: new access token + refresh token
 ```
 
-## Admin App Authentication
+## Retired Admin Frontend Note
 
-### Current implemented behavior
+The separate admin frontend has been retired. Future root-admin browser flows should be rebuilt in `clients/poolmaster` rather than inferred from the old admin app.
 
-The admin login page lives at [clients/admin/src/pages/login.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/login.tsx).
+Admin/backend authorization details below remain relevant for server-side root-admin route design, but old browser implementation details should be treated as historical context only.
 
-Current behavior:
-
-- email/password login calls the same generated `loginUser()` operation as the member-facing web app
-- the returned JWT is stored as `admin_access_token`
-- an `AdminUser` object is put into the admin Zustand store
-- the admin app then navigates to `/`
-
-The admin store is in [clients/admin/src/stores/admin-auth-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/stores/admin-auth-store.ts).
-
-The admin API client is in [clients/admin/src/lib/api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/lib/api.ts).
-
-It currently sends:
-
-- `Authorization: Bearer <admin_access_token>`
-- `x-admin-user-id`
-- `x-admin-user-email`
-
-### Important current-state caveat
-
-The admin login does **not** use a distinct admin auth endpoint today.
-
-Instead:
-
-- it uses the regular member login endpoint
-- it treats the returned user as an admin user in the UI
-- and it supplements the request with admin identity headers
-
-This works today only because the live backend admin routes still use a placeholder header-based gate.
-
-## Admin App Authorization
+## Root Admin Authorization
 
 ### Intended backend design
 
@@ -696,9 +667,6 @@ If you are reviewing this architecture, the most important questions are:
 
 ### Frontend
 
-- [clients/web/src/lib/api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/lib/api.ts)
-- [clients/web/src/stores/auth-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/stores/auth-store.ts)
-- [clients/web/src/pages/auth/login.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/src/pages/auth/login.tsx)
-- [clients/admin/src/lib/api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/lib/api.ts)
-- [clients/admin/src/stores/admin-auth-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/stores/admin-auth-store.ts)
-- [clients/admin/src/pages/login.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/src/pages/login.tsx)
+- [api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/lib/api.ts)
+- [session-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/auth/session-store.ts)
+- [auth-home-page.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/auth/auth-home-page.tsx)

@@ -66,7 +66,7 @@ Current cutover baseline:
 | Done | Remove legacy web app from active build/test/coverage commands | Root scripts, lint/typecheck/build flow, and frontend test gates now target PoolMaster rather than the legacy web app. |
 | Done | Remove legacy web app from smoke/browser/CI references | Legacy web Playwright/coverage/build references were removed from the active CI path. |
 | Done | Archive `clients/web` as reference-only material | Moved to `clients/_archived/web` and added an archive warning for agents. |
-| In Progress | Update rules, AGENTS guidance, and docs to mark it as archived | Active rules, AGENTS, README, and setup guidance now describe the archived legacy web app; a few historical docs still need follow-up cleanup. |
+| Done | Update rules, AGENTS guidance, and docs to mark it as archived | Active rules and key architecture/auth guidance now point at `clients/poolmaster` as the only active web target and treat `clients/_archived/web` as reference-only material. |
 | Done | Inventory the future of `clients/shared` during cutover | `clients/shared` currently contains only placeholder directories (`api-client/`, `types/`, `validation/`) with no implementation files. Recommendation: remove the empty shell unless a new explicit shared frontend utility package is needed for `clients/poolmaster`; if any helper code is still required, move it into the active app or a clearly named shared package with a single consumer. |
 
 ## Validation

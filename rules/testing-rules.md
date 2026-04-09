@@ -87,7 +87,7 @@ PoolMaster treats API contracts as first-class test surfaces. Contract test exis
 - Contract tests must validate live responses against DTO Zod schemas using `.safeParse()`.
 - New or changed endpoints must update:
   - `tests/integration/core-api/api-contracts-web.integration.ts`
-  - `tests/integration/core-api/api-contracts-admin.integration.ts`
+  - `tests/integration/core-api/api-contracts-root-admin.integration.ts`
   - or a clearly equivalent contract suite
 - If response shape changes, update the contract test in the same change.
 - Do not rely on TypeScript alone to prove runtime payload shape correctness.
