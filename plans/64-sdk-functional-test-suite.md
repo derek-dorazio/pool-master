@@ -1,0 +1,772 @@
+# Plan 64: SDK Functional Test Suite
+
+## Summary
+
+Create a new **SDK functional test suite** that exercises the full request/response stack through the generated hey-api client SDK, proving contract compliance from TypeScript types through HTTP serialization, Fastify routing, business logic, and persistence — then back through SDK deserialization to typed responses.
+
+This suite fills the gap between:
+- **Unit tests** (mock dependencies, test logic in isolation)
+- **DB integration tests** (use `app.inject()`, bypass HTTP and SDK layers)
+- **Smoke tests** (black-box against deployed environments, no SDK, no type checking)
+
+The SDK functional tests are **component tests** in microservice testing terminology — they test the **entire service** end-to-end: CRUD operations, multi-step use-case workflows, business rule enforcement, authorization behavior, error handling, and data integrity — all exercised through the same typed SDK that production clients use.
+
+### What This Tests (Not Just Contracts)
+
+This is not a contract-only test suite. It is a **full behavioral test suite** that happens to use the SDK as its interface. It tests:
+
+1. **CRUD operations**: Create, read, update, delete for every domain object (leagues, contests, entries, squads, roster picks, etc.) — verifying the data round-trips correctly through the entire stack to the database and back.
+2. **Use-case workflows**: Multi-step journeys that match documented plan use cases — e.g., "commissioner creates league → invites member → member joins → commissioner creates contest → member creates entry → draft runs → scoring calculates standings."
+3. **Business rules**: Validation logic, uniqueness constraints, ownership enforcement, lifecycle state transitions (e.g., contest cannot be edited after lock, entry number auto-increments, one squad per user per league).
+4. **Authorization**: Permission checks at every level — unauthenticated rejection, wrong-role rejection, wrong-league rejection, commissioner-only operations.
+5. **Error behavior**: Structured error responses for 400, 401, 403, 404, 409 scenarios with correct error codes and shapes.
+6. **Data integrity**: After a sequence of operations, query the results and verify the database state matches expectations — scores calculated correctly, standings positions assigned, prizes awarded, audit records created.
+
+### Why This Is Better Than Smoke Tests
+
+| Dimension | Current Smoke Tests | SDK Functional Tests |
+|-----------|-------------------|---------------------|
+| **Contract enforcement** | None — raw `fetch()` with manual assertions | TypeScript compiler enforces SDK types match API responses |
+| **Environment** | Requires deployed services | Runs locally against in-process Fastify (real Postgres) |
+| **Speed** | Slow (network, deployment pipeline) | Fast (localhost, same process) |
+| **CI position** | Post-deploy only | Pre-push gate (like unit/integration tests) |
+| **Failure signal** | "Something broke in production" | "This SDK operation doesn't match the API contract" |
+| **Data strategy** | Creates data via raw fetch | Creates data via typed SDK operations |
+| **Coverage** | No code coverage collection | Full coverage collection, merges with backend report |
+
+### What This Subsumes
+
+- **Contract test suites** (`api-contracts-web.integration.ts`, `api-contracts-admin.integration.ts`) — if the SDK compiles and the typed response is correct, the contract is proven. Separate `.safeParse()` contract tests become redundant.
+- **Most API smoke tests** — the smoke suite can be reduced to a thin deployed-environment health check. The heavy use-case validation moves here where it runs faster and with stronger guarantees.
+
+---
+
+## Architecture
+
+### Test Execution Model
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Test Runner (Jest)                                      │
+│                                                          │
+│  ┌──────────────┐    HTTP (localhost:0)    ┌──────���────┐│
+│  │  hey-api SDK  │ ◄─────────────────────► │  Fastify  ││
+│  │  (typed ops)  │    real fetch()          │  (listen) ���│
+│  └──────────────┘                          └─────┬─────┘│
+│        ▲                                         │      │
+│        │ TypeScript types                        │      │
+│        │ enforce contract                        ▼      │
+│                                            ┌───────────┐│
+│                                            │  Prisma   ││
+���                                            │  (real PG)││
+│                                            └───────────┘│
+└──────��─────────────────────────────��────────────────────┘
+```
+
+**Key difference from existing integration tests:** Instead of `app.inject()` (which bypasses HTTP serialization and the SDK), the test starts Fastify with `app.listen({ port: 0 })` to get a random available port, then configures the hey-api client to point at `http://localhost:{port}`.
+
+This means the test exercises:
+1. SDK operation function call with typed parameters
+2. hey-api client serialization (body, headers, query params)
+3. Real HTTP transport (localhost)
+4. Fastify request parsing, validation, routing
+5. Auth guard (real JWT validation)
+6. Handler → service → repository → Prisma → Postgres
+7. Response serialization through Fastify schema
+8. hey-api client response deserialization
+9. TypeScript type checking on the returned `data` object
+
+### File Layout
+
+```
+tests/
+├── functional/                          # NEW — SDK functional tests
+│   ├── jest.config.js                   # Jest config for functional suite
+│   ├── setup.ts                         # App lifecycle, SDK client setup, shared helpers
+│   ├── builders.ts                      # Test data builders using SDK operations
+│   ├── auth.functional.ts               # Auth use cases
+│   ├── league-lifecycle.functional.ts   # League + membership + invitation use cases
+│   ├── squad-management.functional.ts   # Squad creation + co-manager use cases
+│   ├── contest-lifecycle.functional.ts  # Contest creation + configuration use cases
+│   ├── entry-and-roster.functional.ts   # Entry creation + roster pick use cases
+���   ├── draft-flow.functional.ts         # Draft session + pick submission use cases
+│   ├── scoring.functional.ts            # Scoring recalculation + standings use cases
+│   ├── history.functional.ts            # Completed contest history use cases
+│   ├── consent.functional.ts            # Consent + age affirmation use cases
+│   ├── notifications.functional.ts      # In-app notification use cases
+│   └── admin.functional.ts             # Admin operations use cases
+├── integration/                         # EXISTING — Fastify inject + Prisma
+├── unit/                                # EXISTING — mocked unit tests
+└── api/                                 # EXISTING — deployed smoke tests (to be reduced)
+```
+
+### Test Naming Convention
+
+Files use `.functional.ts` suffix to distinguish from `.integration.ts` (inject-based) and `.test.ts` (unit) and `.smoke.ts` (deployed).
+
+---
+
+## Setup Infrastructure
+
+### `tests/functional/setup.ts`
+
+```typescript
+import Fastify, { FastifyInstance } from 'fastify';
+import { PrismaClient } from '@prisma/client';
+import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api';
+import type { Client } from '@hey-api/client-fetch';
+import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
+
+// Import all modules (same as integration helpers.ts)
+import { authModule } from '../../packages/core-api/src/modules/auth/routes';
+// ... all other module imports ...
+
+const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
+
+let app: FastifyInstance;
+let prisma: PrismaClient;
+let baseUrl: string;
+let sdkClient: Client;
+
+export function getApp(): FastifyInstance { return app; }
+export function getPrisma(): PrismaClient { return prisma; }
+export function getBaseUrl(): string { return baseUrl; }
+export function getSdkClient(): Client { return sdkClient; }
+
+/**
+ * Create an SDK client configured for the test server with auth token.
+ */
+export function createAuthenticatedClient(accessToken: string): Client {
+  const client = createClient(createConfig({
+    baseUrl,
+  }));
+  client.interceptors.request.use((request) => {
+    request.headers.set('Authorization', `Bearer ${accessToken}`);
+    return request;
+  });
+  return client;
+}
+
+/**
+ * Start Fastify on a random port and configure the SDK client.
+ */
+export async function setupFunctionalTests(): Promise<void> {
+  prisma = new PrismaClient();
+  await prisma.$connect();
+  await ensureTestTenant();
+
+  app = await buildTestApp(); // Same as integration helpers
+  await app.listen({ port: 0 }); // Random available port
+
+  const address = app.server.address();
+  const port = typeof address === 'object' ? address?.port : 0;
+  baseUrl = `http://localhost:${port}`;
+
+  // Default unauthenticated SDK client
+  sdkClient = createClient(createConfig({ baseUrl }));
+}
+
+export async function teardownFunctionalTests(): Promise<void> {
+  await cleanupTestData();
+  if (app) await app.close();
+  if (prisma) await prisma.$disconnect();
+}
+```
+
+### `tests/functional/builders.ts`
+
+Test data builders that use SDK operations to create data — proving the SDK works as part of setup.
+
+```typescript
+import { createAuthenticatedClient, getPrisma } from './setup';
+import {
+  register, loginWithCredentials, createLeague, generateInviteLink,
+  acceptInvitation, createContestManagement, createContestEntry,
+} from '@poolmaster/shared/generated/hey-api';
+
+export async function buildAuthenticatedUser(overrides?: {
+  email?: string; displayName?: string; password?: string;
+}): Promise<{ userId: string; email: string; token: string; client: Client }> {
+  const email = overrides?.email ?? `func-${Date.now()}-${Math.random().toString(36).slice(2)}@test.local`;
+  const password = overrides?.password ?? 'FuncTest123!';
+
+  // Register through SDK
+  const { data: regData } = await register({
+    client: getSdkClient(),
+    body: { email, password, displayName: overrides?.displayName ?? 'Func Test User' },
+  });
+
+  // Login through SDK
+  const { data: loginData } = await loginWithCredentials({
+    client: getSdkClient(),
+    body: { email, password },
+  });
+
+  const token = loginData!.accessToken;
+  const client = createAuthenticatedClient(token);
+
+  return { userId: regData!.user.id, email, token, client };
+}
+
+export async function buildLeagueWithOwner(overrides?: {
+  leagueName?: string;
+}): Promise<{ owner: AuthResult; league: LeagueResult; ownerClient: Client }> {
+  const owner = await buildAuthenticatedUser();
+  const { data } = await createLeague({
+    client: owner.client,
+    body: {
+      name: overrides?.leagueName ?? `Func League ${Date.now()}`,
+      visibility: 'PRIVATE',
+      settings: { invitePolicy: 'COMMISSIONER_ONLY' },
+    },
+  });
+  return { owner, league: data!.league, ownerClient: owner.client };
+}
+
+// Additional builders for: contest, entries, sport events, etc.
+```
+
+---
+
+## Test File Structure (Use-Case Driven)
+
+Each test file maps to documented use cases from plan companions. Tests walk complete user journeys through the SDK.
+
+### Example: `league-lifecycle.functional.ts`
+
+```typescript
+/**
+ * SDK Functional Tests: League Lifecycle
+ * Proves: Plan 37 — League as top-level boundary
+ * Proves: Plan 44 — Commissioner administration
+ */
+import {
+  createLeague, listLeagues, getLeague, updateLeagueSettings,
+  generateInviteLink, acceptInvitation, listLeagueMembers,
+  updateMemberRole, removeLeagueMember,
+} from '@poolmaster/shared/generated/hey-api';
+import { buildAuthenticatedUser, buildLeagueWithOwner } from './builders';
+
+describe('League Lifecycle', () => {
+  // Plan 37: Commissioner creates league
+  it('commissioner creates a private league and sees it in their league list', async () => {
+    const { client } = await buildAuthenticatedUser();
+    const { data: createData } = await createLeague({
+      client,
+      body: { name: 'Masters Pool 2026', visibility: 'PRIVATE', settings: { invitePolicy: 'COMMISSIONER_ONLY' } },
+    });
+
+    expect(createData?.league.id).toBeDefined();
+    expect(createData?.league.name).toBe('Masters Pool 2026');
+
+    // TypeScript enforces: createData.league has all LeagueDto fields
+    const { data: listData } = await listLeagues({ client });
+    expect(listData?.leagues).toContainEqual(
+      expect.objectContaining({ id: createData?.league.id }),
+    );
+  });
+
+  // Plan 37: Member joins via invitation
+  it('member accepts invite link and appears in league member list', async () => {
+    const { ownerClient, league } = await buildLeagueWithOwner();
+
+    // Commissioner generates invite link
+    const { data: linkData } = await generateInviteLink({
+      client: ownerClient,
+      path: { id: league.id },
+    });
+    expect(linkData?.inviteCode).toBeDefined();
+
+    // New user accepts invite
+    const member = await buildAuthenticatedUser();
+    const { data: acceptData } = await acceptInvitation({
+      client: member.client,
+      body: { inviteCode: linkData!.inviteCode },
+    });
+    expect(acceptData?.membership.role).toBe('MEMBER');
+
+    // Commissioner sees member in list
+    const { data: membersData } = await listLeagueMembers({
+      client: ownerClient,
+      path: { id: league.id },
+    });
+    expect(membersData?.members).toContainEqual(
+      expect.objectContaining({ userId: member.userId }),
+    );
+  });
+
+  // Plan 44: Commissioner promotes member
+  it('commissioner promotes member to COMMISSIONER role', async () => { ... });
+
+  // Negative: unauthorized user cannot create league
+  it('unauthenticated request returns 401', async () => {
+    const { error } = await createLeague({
+      client: getSdkClient(), // no auth
+      body: { name: 'Should Fail', visibility: 'PRIVATE', settings: { invitePolicy: 'COMMISSIONER_ONLY' } },
+    });
+    expect(error?.code).toBe('UNAUTHORIZED');
+  });
+});
+```
+
+---
+
+## Required Test Coverage
+
+Each file tests CRUD operations, use-case workflows, business rules, authorization, and error paths for its domain. The table below specifies minimum required test cases per file.
+
+### `auth.functional.ts` — Plan 36
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Register user, fetch profile, update profile |
+| **Use Case** | Register → login → fetch profile → refresh token → use new token |
+| **Business Rules** | Duplicate email rejected, weak password rejected, email format validated |
+| **Auth** | Expired token returns 401, missing token returns 401, refresh with revoked token fails |
+| **Error** | Login with wrong password returns structured error, register with existing email returns 409 |
+
+### `league-lifecycle.functional.ts` — Plans 37, 44
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Create league, list leagues, get league by ID, update league settings, delete league |
+| **Use Case: Invite Flow** | Create league → generate invite link → second user accepts → both see membership → commissioner sees member list |
+| **Use Case: Role Management** | Commissioner promotes member → member has new permissions → commissioner demotes → permissions revoked |
+| **Use Case: Member Removal** | Commissioner removes member → member no longer in list → removed member cannot access league |
+| **Business Rules** | Private league not visible to non-members, league name required, duplicate invite code rejected |
+| **Auth** | Non-member cannot access league, MEMBER cannot promote/demote, only OWNER can delete league |
+| **Error** | Get non-existent league returns 404, accept expired invite returns 400 |
+
+### `squad-management.functional.ts` — Plan 37
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Create squad, list squads in league, get squad detail, update squad name, deactivate squad |
+| **Use Case: Co-Manager** | Create squad → invite co-manager → co-manager joins → both see squad → co-manager leaves |
+| **Business Rules** | One squad per user per league enforced, squad name required, inactive squad cannot accept members |
+| **Auth** | Non-league-member cannot create squad, non-squad-member cannot modify squad |
+| **Error** | Second squad creation in same league returns 409, join non-existent squad returns 404 |
+
+### `contest-lifecycle.functional.ts` — Plans 38, 53
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Create contest, list contests in league, get contest detail, update contest, delete contest |
+| **Use Case: Full Config** | Create contest from sport event → add scoring rules → add aggregation rule → add prize definitions → set lock timing → verify full configuration round-trips |
+| **Use Case: Status Transitions** | Contest starts NOT_STARTED → transitions through lifecycle → reaches COMPLETED |
+| **Business Rules** | Contest requires sport event, scoring rules validated against registry, aggregation rule one-per-contest, lock time must be future |
+| **Auth** | MEMBER cannot create contest (COMMISSIONER required), non-league-member cannot view contest |
+| **Error** | Create contest with invalid sport event returns 404, duplicate scoring rule sort order returns 400 |
+
+### `entry-and-roster.functional.ts` — Plan 38
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Create entry, list entries for contest, get entry detail, delete entry, create roster pick, list roster picks, delete roster pick |
+| **Use Case: Entry Creation** | Member creates entry → auto-resolves squad → entry number assigned → entry appears in contest entry list |
+| **Use Case: Multiple Entries** | Same squad creates second entry → entry numbers are sequential → both entries visible |
+| **Use Case: Roster Building** | Create entry → add roster picks → verify picks reference sport event participants → verify unique constraint per entry |
+| **Business Rules** | Duplicate sport event participant per entry rejected, entry status defaults to ACTIVE, deleted entry returns 404 on subsequent fetch |
+| **Auth** | Non-squad-member cannot modify entry, non-league-member cannot create entry |
+| **Error** | Pick non-existent participant returns 404, create entry in locked contest returns 400 |
+
+### `draft-flow.functional.ts` — Plan 38
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Create draft session, get draft room state, submit pick, get draft pick history |
+| **Use Case: Snake Draft** | Start session → entries take turns → picks create roster picks + draft pick history → session completes when all picks made |
+| **Business Rules** | Pick out of turn rejected, duplicate participant pick rejected, auto-pick on timeout, session state transitions (PENDING → LIVE → COMPLETE) |
+| **Auth** | Only entry owner can submit picks for their entry |
+| **Error** | Pick after session complete returns 400, pick non-existent participant returns 404 |
+
+### `scoring.functional.ts` — Plan 51
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Read entry scores, read participant score events, read standings |
+| **Use Case: Recalculation** | Contest with entries and picks → trigger recalculation → verify totalScore updated on entries → verify standingsPosition assigned → verify participant scores match scoring rules |
+| **Use Case: Prize Awards** | Configure prizes → recalculate → verify prize awards created for qualifying entries |
+| **Business Rules** | Standings positions handle ties (same score = same rank), scores match configured scoring rules (GOLF_RELATIVE_TO_PAR, TEAM_WIN_POINTS, etc.), aggregation respects SUM_ALL vs SUM_TOP_N |
+| **Data Integrity** | After recalculation: query entries directly and verify totalScore, standingsPosition, and ContestEntryParticipantScore records match expectations |
+
+### `history.functional.ts` — Plans 41, 42
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Get contest history summary, get contest standings, get entry roster detail, get prize payouts, get league-level results, get member-level results |
+| **Use Case: Review Completed Contest** | Complete a contest → fetch summary → verify all entries with final standings → fetch roster detail → verify participant performance data |
+| **Business Rules** | History only available for COMPLETED contests, history reflects final state (not intermediate) |
+| **Auth** | League member can view history, non-member cannot |
+
+### `consent.functional.ts` — Plan 58
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | Record consent, fetch consent history |
+| **Use Case** | Register → record consent with age affirmation → verify consent in history → record updated consent version → verify both records in history |
+| **Business Rules** | Consent type validated, age threshold recorded |
+
+### `notifications.functional.ts`
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | List notifications, get unread count, mark notification read, mark all read, dismiss notification |
+| **Business Rules** | Unread count decrements after mark-read, dismissed notifications excluded from list |
+
+### `admin.functional.ts` — Plan 46
+
+| Category | Test Cases |
+|----------|-----------|
+| **CRUD** | List users, get user detail, list providers, get provider detail, list contests (admin view) |
+| **Use Case: Provider Operations** | Admin views provider health → triggers sync → verifies ingestion job created |
+| **Auth** | Non-admin token rejected, VIEWER role cannot trigger mutations, SUPER_ADMIN can do everything |
+| **Error** | Admin operations with user JWT (not admin JWT) return 401 |
+
+---
+
+## Jest Configuration
+
+### `tests/functional/jest.config.js`
+
+```javascript
+/** @type {import('jest').Config} */
+module.exports = {
+  testEnvironment: 'node',
+  rootDir: '../..',
+  testMatch: ['<rootDir>/tests/functional/**/*.functional.ts'],
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tests/tsconfig.json' }],
+  },
+  moduleNameMapper: {
+    '^@poolmaster/shared/(.*)$': '<rootDir>/packages/shared/$1',
+  },
+  setupFilesAfterFramework: [],
+  testTimeout: 30_000,
+  maxWorkers: 1, // Serial — shared database
+  collectCoverageFrom: [
+    '<rootDir>/packages/core-api/src/**/*.ts',
+    '<rootDir>/packages/shared/**/*.ts',
+    '!**/*.d.ts',
+    '!**/dist/**',
+    '!**/generated/**',
+    '!**/node_modules/**',
+  ],
+};
+```
+
+### Global Setup/Teardown
+
+Each test file calls setup/teardown in `beforeAll`/`afterAll`:
+
+```typescript
+import { setupFunctionalTests, teardownFunctionalTests } from './setup';
+
+beforeAll(async () => { await setupFunctionalTests(); });
+afterAll(async () => { await teardownFunctionalTests(); });
+```
+
+Or use Jest `globalSetup`/`globalTeardown` if a single app instance across all files is preferred (faster, but requires careful cleanup).
+
+---
+
+## npm Scripts
+
+Add to root `package.json`:
+
+```json
+{
+  "test:functional": "jest --config tests/functional/jest.config.js --forceExit",
+  "test:functional:coverage": "jest --config tests/functional/jest.config.js --forceExit --coverage --coverageReporters json-summary json lcovonly text-summary",
+  "test:coverage:backend": "node scripts/run-backend-coverage.mjs"
+}
+```
+
+Update `scripts/run-backend-coverage.mjs` to merge three sources:
+1. Unit test coverage
+2. DB integration test coverage
+3. **SDK functional test coverage** (NEW)
+
+---
+
+## CI Integration
+
+### Changes to `.github/workflows/ci.yml`
+
+Add the functional test suite to the existing `test` job (which already has a Postgres service container):
+
+```yaml
+# After existing unit + integration test steps:
+- name: Run SDK functional tests
+  env:
+    DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
+    JWT_SECRET: poolmaster-dev-secret-change-in-production
+  run: npm run test:functional:coverage
+
+# Update coverage merge step to include functional coverage
+- name: Merge backend coverage
+  run: npm run test:coverage:backend
+```
+
+The functional tests run **pre-push** (same as unit and integration), not post-deploy like smoke tests.
+
+---
+
+## Local Development Workflow
+
+### Required Gates on `codex-backend-refactor-lane`
+
+Update `rules/workflow-rules.md` backend-first gates to include:
+
+```
+Required gates on that branch are:
+  1. backend/shared typecheck
+  2. backend/shared lint
+  3. backend unit tests
+  4. DB-backed integration tests
+  5. SDK functional tests                    ← NEW
+  6. merged backend coverage via npm run test:coverage:backend
+  7. OpenAPI export/validation when API shapes change
+  ...
+```
+
+### Developer Commands
+
+```bash
+# Run just functional tests
+npm run test:functional
+
+# Run functional tests with coverage
+npm run test:functional:coverage
+
+# Run all backend tests (unit + integration + functional)
+npm run test:coverage:backend
+
+# Run a single functional test file
+npx jest --config tests/functional/jest.config.js tests/functional/league-lifecycle.functional.ts
+```
+
+---
+
+## Relationship to Existing Test Suites
+
+### What Changes
+
+| Suite | Before | After |
+|-------|--------|-------|
+| **Unit tests** | Unchanged | Unchanged — still test service logic with mocks |
+| **DB integration tests** | Primary API test surface | Narrowed to repository-level and persistence-edge-case coverage |
+| **SDK functional tests** | Does not exist | **Primary behavioral test surface** — CRUD, use-case workflows, business rules, auth, errors, data integrity |
+| **Contract tests** | Required but missing | **Subsumed** — SDK type checking proves the contract; functional tests prove the behavior |
+| **API smoke tests** | Use-case validation against deployed env | **Reduced** to thin deployment health check. Heavy use-case validation moves here. |
+| **Browser E2E** | Unchanged | Unchanged — still validates UI flows in browser |
+
+### What Gets Removed/Reduced
+
+1. **Contract test suites** (`api-contracts-web.integration.ts`, `api-contracts-admin.integration.ts`) — no longer needed. The SDK functional tests prove the contract by using the SDK. If TypeScript compiles and the test passes, the contract is valid.
+
+2. **API smoke tests** — reduce to a minimal deployed-environment health check:
+   - `health.smoke.ts` — health endpoint returns 200
+   - `auth-roundtrip.smoke.ts` — register + login + profile works on deployed env
+   - `league-create.smoke.ts` — one league creation proves the deployed stack is wired
+   - Remove `mvp-baseline.smoke.ts` and `contest-lifecycle.smoke.ts` (their coverage moves to functional suite)
+
+3. **Some DB integration tests** — tests that duplicate what the functional suite proves through the SDK can be removed. Keep integration tests that:
+   - Test repository methods directly (not through HTTP)
+   - Test edge cases in persistence logic
+   - Test database constraints and index behavior
+
+---
+
+## Implementation Slices
+
+### Slice 64-A: Framework + Proof-of-Concept (Do This First)
+
+Goal: Establish the test infrastructure and prove it works end-to-end with a single test file that exercises health, auth, and league CRUD through the SDK.
+
+**Step 1: Create Jest config** — `tests/functional/jest.config.js`
+
+```javascript
+/** @type {import('jest').Config} */
+module.exports = {
+  testEnvironment: 'node',
+  rootDir: '../..',
+  testMatch: ['<rootDir>/tests/functional/**/*.functional.ts'],
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: '<rootDir>/tests/tsconfig.json',
+      // hey-api uses .js extensions in imports; ts-jest needs this:
+      diagnostics: { ignoreDiagnostics: [2307] },
+    }],
+  },
+  moduleNameMapper: {
+    // Map @poolmaster/shared/* to source (not dist)
+    '^@poolmaster/shared/(.*)$': '<rootDir>/packages/shared/$1',
+    // Strip .js extensions from hey-api generated imports
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+  testTimeout: 30_000,
+  maxWorkers: 1,
+  collectCoverageFrom: [
+    '<rootDir>/packages/core-api/src/**/*.ts',
+    '<rootDir>/packages/shared/**/*.ts',
+    '!**/*.d.ts',
+    '!**/dist/**',
+    '!**/generated/**',
+    '!**/node_modules/**',
+  ],
+};
+```
+
+Key concerns:
+- hey-api generated code uses `.js` extensions in relative imports (`./client/index.js`). The `moduleNameMapper` strips these for ts-jest.
+- Node 23 has native `fetch` — no polyfill needed.
+- `maxWorkers: 1` because tests share the database.
+
+**Step 2: Create setup module** — `tests/functional/setup.ts`
+
+This module:
+1. Boots a real Fastify app with all modules (reuses the same `buildTestApp()` pattern from `tests/integration/helpers.ts`)
+2. Calls `app.listen({ port: 0 })` to bind to a random port (unlike integration tests which use `inject`)
+3. Creates a hey-api SDK client pointing at `http://localhost:{port}`
+4. Exposes helpers: `getApp()`, `getPrisma()`, `getBaseUrl()`, `getSdkClient()`, `createAuthenticatedClient(token)`
+5. Handles tenant setup (reuses `ensureTestTenant()`)
+6. Cleanup in `teardown` closes the server and cleans test data
+
+Key difference from integration helpers: the Fastify app **listens on a real port** so the SDK's `fetch()` can reach it over HTTP.
+
+**Step 3: Create builders module** — `tests/functional/builders.ts`
+
+Initial builders (just enough for the proof-of-concept):
+- `buildRegisteredUser(overrides?)` — calls `registerUser` SDK op, returns `{ userId, email, token, client }`
+- `buildLeagueWithOwner(overrides?)` — calls `buildRegisteredUser` + `createLeague`, returns `{ owner, league, ownerClient }`
+
+Builders use SDK operations (not Prisma) so they are themselves testing the create path.
+
+**Step 4: Create proof-of-concept test** — `tests/functional/league-lifecycle.functional.ts`
+
+This single file proves the entire framework works by testing:
+
+```
+describe('SDK Functional: League Lifecycle')
+  ├── it('health endpoint returns 200 through SDK')
+  │     → getHealth({ client }) — proves: SDK → HTTP → Fastify → response → SDK
+  │
+  ├── it('registers a user and fetches profile through SDK')
+  │     → registerUser → loginUser → getCurrentUser
+  │     → proves: auth flow works, JWT issued, profile returns typed data
+  │
+  ├── it('creates a league and lists it')
+  │     → createLeague → listLeagues → assert league in list
+  │     → proves: CRUD create + read, auth header forwarding, response typing
+  │
+  ├── it('updates league settings and reads back')
+  │     → createLeague → updateLeagueSettings → getLeague → assert changes persisted
+  │     → proves: CRUD update, data round-trips to DB and back
+  │
+  ├── it('commissioner invites member who joins and appears in member list')
+  │     → buildLeagueWithOwner → generateInviteLink → buildRegisteredUser
+  │     → acceptInvitation → listLeagueMembers → assert both users present
+  │     → proves: multi-user workflow, invitation lifecycle, membership creation
+  │
+  └── it('unauthenticated request returns 401')
+        → createLeague with unauthenticated client → assert error
+        → proves: auth guard works through SDK, error shape returned
+```
+
+This is ~6 test cases that exercise: health, auth CRUD, league CRUD, invitation workflow, and error handling.
+
+**Step 5: Add npm scripts** — update root `package.json`
+
+```json
+"test:functional": "jest --config tests/functional/jest.config.js --forceExit",
+"test:functional:coverage": "jest --config tests/functional/jest.config.js --forceExit --coverage --coverageReporters json-summary json lcovonly text-summary"
+```
+
+**Step 6: Verify it runs**
+
+```bash
+# Requires Postgres running (docker-compose.dev.yml or local)
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npm run test:functional
+```
+
+**Success criteria for Slice 64-A:**
+- [ ] Jest config compiles and discovers `.functional.ts` files
+- [ ] hey-api SDK imports resolve correctly (no `.js` extension errors)
+- [ ] Fastify boots and listens on random port
+- [ ] SDK client can reach the server via HTTP
+- [ ] `getHealth` returns typed response
+- [ ] `registerUser` + `loginUser` + `getCurrentUser` works through SDK
+- [ ] `createLeague` + `listLeagues` proves CRUD round-trip
+- [ ] `generateInviteLink` + `acceptInvitation` proves multi-user workflow
+- [ ] Unauthenticated request returns error (not crash)
+- [ ] Coverage collection works
+- [ ] All 6 tests pass
+
+---
+
+### Slice 64-B: Core Domain Tests
+- `auth.functional.ts` — full auth CRUD + error paths
+- `squad-management.functional.ts` — squad CRUD + co-manager workflow + one-per-league enforcement
+- `consent.functional.ts` — consent recording + history
+- Expand `league-lifecycle.functional.ts` with role management + member removal + business rules
+- Expand builders as needed
+
+### Slice 64-C: Contest Domain Tests
+- `contest-lifecycle.functional.ts` — contest CRUD + configuration + scoring rules + prizes
+- `entry-and-roster.functional.ts` — entry CRUD + roster picks + business rules
+- `draft-flow.functional.ts` — draft session lifecycle + pick submission
+
+### Slice 64-D: Scoring, History, Notifications
+- `scoring.functional.ts` — recalculation + standings + data integrity
+- `history.functional.ts` — completed contest queries
+- `notifications.functional.ts` — notification CRUD
+
+### Slice 64-E: Admin + Integration
+- `admin.functional.ts` — admin operations + auth boundaries
+- Update `scripts/run-backend-coverage.mjs` to merge functional coverage
+- Update CI workflow
+- Reduce smoke suite
+- Update rules
+
+---
+
+## Rule Updates Required
+
+When this plan is executed, update:
+
+1. **`rules/testing-rules.md`** §2 (Test Layers) — add SDK Functional row to the backend table
+2. **`rules/testing-rules.md`** §3 (Quality Gates) — add functional tests to required gates
+3. **`rules/testing-rules.md`** §4 (Contract Testing) — note that SDK functional tests subsume contract suites
+4. **`rules/testing-rules.md`** §6 (Smoke and E2E) — reduce smoke scope, reference functional suite for use-case coverage
+5. **`rules/workflow-rules.md`** — add functional tests to backend-first refactor gates
+6. **`rules/model-change-rules.md`** — update test checklist to reference functional tests
+
+---
+
+## Action Plan
+
+| ID | Slice | Task | Status | Notes |
+|---|---|---|---|---|
+| 64-A01 | A | Create `tests/functional/jest.config.js` | Not Started | hey-api .js extension handling, moduleNameMapper |
+| 64-A02 | A | Create `tests/functional/setup.ts` — app lifecycle, `listen({ port: 0 })`, SDK client factory | Not Started | Reuse module imports from integration helpers |
+| 64-A03 | A | Create `tests/functional/builders.ts` — `buildRegisteredUser`, `buildLeagueWithOwner` | Not Started | Builders use SDK ops, not Prisma |
+| 64-A04 | A | Add `test:functional` and `test:functional:coverage` npm scripts | Not Started | Root package.json |
+| 64-A05 | A | Create `tests/functional/league-lifecycle.functional.ts` — 6 proof-of-concept tests | Not Started | Health, auth, league CRUD, invite flow, 401 error |
+| 64-A06 | A | Verify all 6 tests pass against local Postgres | Not Started | Success criteria gate |
+| 64-B01 | B | Create `auth.functional.ts` — full auth CRUD + token refresh + error paths | Not Started | |
+| 64-B02 | B | Create `squad-management.functional.ts` — CRUD + co-manager + one-per-league | Not Started | |
+| 64-B03 | B | Create `consent.functional.ts` — record + history | Not Started | |
+| 64-B04 | B | Expand `league-lifecycle.functional.ts` — role mgmt, removal, business rules | Not Started | |
+| 64-C01 | C | Create `contest-lifecycle.functional.ts` — CRUD + config + scoring rules + prizes | Not Started | |
+| 64-C02 | C | Create `entry-and-roster.functional.ts` — entry CRUD + roster picks + rules | Not Started | |
+| 64-C03 | C | Create `draft-flow.functional.ts` — session lifecycle + pick submission | Not Started | |
+| 64-D01 | D | Create `scoring.functional.ts` — recalculation + standings + data integrity | Not Started | |
+| 64-D02 | D | Create `history.functional.ts` — completed contest queries | Not Started | |
+| 64-D03 | D | Create `notifications.functional.ts` — notification CRUD | Not Started | |
+| 64-E01 | E | Create `admin.functional.ts` — admin ops + auth boundaries | Not Started | |
+| 64-E02 | E | Update `scripts/run-backend-coverage.mjs` to merge functional coverage | Not Started | |
+| 64-E03 | E | Update CI workflow (`.github/workflows/ci.yml`) to run functional tests | Not Started | |
+| 64-E04 | E | Reduce API smoke suite to thin deployment health checks | Not Started | |
+| 64-E05 | E | Update rules (testing-rules, workflow-rules, model-change-rules) | Not Started | |
