@@ -6,6 +6,7 @@ export function mapLeagueMembershipToDto(membership: LeagueMembership) {
     leagueId: membership.leagueId,
     userId: membership.userId,
     role: membership.role,
+    status: membership.status,
     permissions: membership.permissions,
     joinedAt: membership.joinedAt.toISOString(),
     createdAt: membership.createdAt.toISOString(),

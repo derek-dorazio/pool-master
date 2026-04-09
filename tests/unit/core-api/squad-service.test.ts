@@ -1,4 +1,8 @@
-import { SquadMembershipStatus, SquadStatus } from '../../../packages/shared/domain';
+import {
+  LeagueMembershipStatus,
+  SquadMembershipStatus,
+  SquadStatus,
+} from '../../../packages/shared/domain';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
@@ -50,7 +54,8 @@ describe('SquadService', () => {
     id: 'league-membership-1',
     leagueId: 'league-1',
     userId: 'user-1',
-    role: 'MANAGER' as const,
+    role: 'MEMBER' as const,
+    status: LeagueMembershipStatus.ACTIVE,
     permissions: [],
     joinedAt: new Date('2026-04-07T00:00:00Z'),
     createdAt: new Date('2026-04-07T00:00:00Z'),

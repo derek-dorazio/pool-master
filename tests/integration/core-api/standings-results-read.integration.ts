@@ -95,7 +95,7 @@ describe('Standings and Results Read Integration', () => {
 
     expect(acceptInviteRes.statusCode).toBe(201);
     challengerMembershipId = acceptInviteRes.json().membership.id;
-    expect(acceptInviteRes.json().membership.role).toBe(LeagueRole.MANAGER);
+    expect(acceptInviteRes.json().membership.role).toBe(LeagueRole.MEMBER);
 
     const contestRes = await getApp().inject({
       method: 'POST',

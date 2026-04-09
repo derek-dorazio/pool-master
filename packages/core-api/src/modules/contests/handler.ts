@@ -10,7 +10,6 @@ import {
 } from '@poolmaster/shared/domain';
 import type { z } from 'zod';
 import { z as zod } from 'zod';
-import { extractTenantContext } from '../../core/tenant-context';
 import {
   toContestListResponse,
   toContestEntryListResponse,
@@ -113,7 +112,6 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     const userId = request.headers['x-user-id'] as string;
     if (!userId) {
       return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
@@ -123,7 +121,7 @@ export function createContestHandlers(contestService: ContestService) {
       validateCreateContestBody(body);
       const result = await contestService.createContest({
         leagueId: request.params.id,
-        tenantId,
+        tenantId: '',
         createdBy: userId,
         sportEventId: body.eventId,
         name: body.name,
@@ -159,8 +157,7 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
-    const result = await contestService.getContest(request.params.contestId, tenantId);
+    const result = await contestService.getContest(request.params.contestId, '');
     if (!result) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'Contest not found' });
     }
@@ -171,10 +168,9 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     const userId = request.headers['x-user-id'] as string;
     try {
-      const result = await contestService.listEntries(request.params.contestId, tenantId, userId);
+      const result = await contestService.listEntries(request.params.contestId, '', userId);
       return reply.send(toContestEntryListResponse({
         contestId: request.params.contestId,
         entries: result.entries,
@@ -197,10 +193,9 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     const userId = request.headers['x-user-id'] as string;
     try {
-      const entry = await contestService.getMyEntry(request.params.contestId, tenantId, userId);
+      const entry = await contestService.getMyEntry(request.params.contestId, '', userId);
       return reply.send(toMyContestEntryResponse(request.params.contestId, entry));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
@@ -217,10 +212,9 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     const userId = request.headers['x-user-id'] as string;
     try {
-      const result = await contestService.createEntry(request.params.contestId, tenantId, userId);
+      const result = await contestService.createEntry(request.params.contestId, '', userId);
       return reply.status(result.created ? 201 : 200).send(
         toContestEntryResponse(request.params.contestId, result.entry),
       );
@@ -239,10 +233,9 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     const userId = request.headers['x-user-id'] as string;
     try {
-      await contestService.deleteMyEntry(request.params.contestId, tenantId, userId);
+      await contestService.deleteMyEntry(request.params.contestId, '', userId);
       return reply.send({
         contestId: request.params.contestId,
         deleted: true as const,
@@ -265,12 +258,11 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     try {
       const body = UpdateContestBodySchema.parse(request.body);
       const contest = await contestService.updateContest(
         request.params.contestId,
-        tenantId,
+        '',
         {
           name: body.name,
           startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
@@ -295,9 +287,8 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     try {
-      await contestService.deleteContest(request.params.contestId, tenantId);
+      await contestService.deleteContest(request.params.contestId, '');
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {

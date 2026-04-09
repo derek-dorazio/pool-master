@@ -173,10 +173,16 @@ export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
 export const LeagueRole = {
   OWNER: 'OWNER',
   COMMISSIONER: 'COMMISSIONER',
-  MANAGER: 'MANAGER',
-  VIEWER: 'VIEWER',
+  MEMBER: 'MEMBER',
 } as const;
 export type LeagueRole = (typeof LeagueRole)[keyof typeof LeagueRole];
+
+export const LeagueMembershipStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+} as const;
+export type LeagueMembershipStatus =
+  (typeof LeagueMembershipStatus)[keyof typeof LeagueMembershipStatus];
 
 export const LeagueVisibility = {
   PRIVATE: 'PRIVATE',

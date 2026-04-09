@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { LeagueMemberDto } from '@poolmaster/shared/dto';
 
 export class MemberDirectoryService {
@@ -6,7 +7,7 @@ export class MemberDirectoryService {
 
   async listMembers(leagueId: string): Promise<LeagueMemberDto[]> {
     const rows = await this.prisma.leagueMembership.findMany({
-      where: { leagueId },
+      where: { leagueId, status: LeagueMembershipStatus.ACTIVE },
       include: {
         user: {
           select: {

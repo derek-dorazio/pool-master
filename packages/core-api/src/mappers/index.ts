@@ -4,7 +4,6 @@ export * from './contests.mapper';
 export * from './drafts.mapper';
 export * from './participants.mapper';
 export * from './standings.mapper';
-export * from './social.mapper';
 export * from './account-consent.mapper';
 export * from './notifications.mapper';
 export * from './leagues-extra.mapper';

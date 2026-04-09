@@ -236,10 +236,7 @@ export class HealthService {
     const [activeUsersLast24h, activeContests, liveDrafts] = await Promise.all([
       this.prisma.user.count({
         where: {
-          OR: [
-            { createdAt: { gte: since } },
-            { deviceRegistrations: { some: { lastActiveAt: { gte: since } } } },
-          ],
+          createdAt: { gte: since },
         },
       }),
       this.prisma.contest.count({

@@ -8,7 +8,12 @@ import type {
   LeagueMembershipRepository,
   LeagueRepository,
 } from '@poolmaster/shared/db';
-import { InvitationStatus, InviteType, LeagueRole } from '@poolmaster/shared/domain';
+import {
+  InvitationStatus,
+  InviteType,
+  LeagueMembershipStatus,
+  LeagueRole,
+} from '@poolmaster/shared/domain';
 import { buildInvitation, buildLeague, buildMembership } from '../../factories';
 
 function createMockInvitationRepo(
@@ -128,7 +133,7 @@ describe('InvitationService', () => {
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
-      const result = await service.generateInviteLink({
+      await service.generateInviteLink({
         leagueId: 'league-1',
         invitedBy: 'owner-1',
         maxUses: 10,
@@ -200,7 +205,7 @@ describe('InvitationService', () => {
   });
 
   describe('acceptInvitation', () => {
-    it('creates a MANAGER membership on valid invitation', async () => {
+    it('creates a MEMBER membership on valid invitation', async () => {
       const invitation = buildInvitation({
         leagueId: 'league-1',
         inviteCode: 'valid-code',
@@ -216,12 +221,50 @@ describe('InvitationService', () => {
         membershipRepo,
         createMockLeagueRepo(),
       );
-      const membership = await service.acceptInvitation('valid-code', 'new-user');
+      await service.acceptInvitation('valid-code', 'new-user');
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
       const createArg = (membershipRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.role).toBe(LeagueRole.MANAGER);
+      expect(createArg.role).toBe(LeagueRole.MEMBER);
       expect(createArg.userId).toBe('new-user');
       expect(invitationRepo.update).toHaveBeenCalled();
+    });
+
+    it('reactivates an inactive membership on valid invitation', async () => {
+      const invitation = buildInvitation({
+        leagueId: 'league-1',
+        inviteCode: 'valid-code',
+        status: InvitationStatus.PENDING,
+        expiresAt: new Date('2099-01-01'),
+      });
+      const invitationRepo = createMockInvitationRepo({
+        findByCode: jest.fn().mockResolvedValue(invitation),
+      });
+      const inactiveMembership = buildMembership({
+        id: 'membership-1',
+        leagueId: 'league-1',
+        userId: 'returning-user',
+        role: LeagueRole.MEMBER,
+        status: LeagueMembershipStatus.INACTIVE,
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(inactiveMembership),
+      });
+      const service = new InvitationService(
+        invitationRepo,
+        membershipRepo,
+        createMockLeagueRepo(),
+      );
+
+      await service.acceptInvitation('valid-code', 'returning-user');
+
+      expect(membershipRepo.create).not.toHaveBeenCalled();
+      expect(membershipRepo.update).toHaveBeenCalledWith(
+        inactiveMembership.id,
+        expect.objectContaining({
+          role: LeagueRole.MEMBER,
+          status: LeagueMembershipStatus.ACTIVE,
+        }),
+      );
     });
 
     it('throws InvitationNotFoundError for unknown code', async () => {

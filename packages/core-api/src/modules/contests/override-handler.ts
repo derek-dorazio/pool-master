@@ -3,7 +3,6 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { extractTenantContext } from '../../core/tenant-context';
 import type { OverrideService } from './override-service';
 import { OverrideError } from './override-service';
 import { toContestResponse } from '../../mappers/contests.mapper';
@@ -118,11 +117,10 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     try {
       const result = await overrideService.recalculateStandings(
         request.params.contestId,
-        tenantId,
+        '',
       );
       return reply.send(result);
     } catch (err) {
@@ -137,11 +135,10 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     try {
       const contest = await overrideService.reopenContest(
         request.params.contestId,
-        tenantId,
+        '',
         request.body.reason,
       );
       return reply.send(toContestResponse(contest, null));
@@ -157,11 +154,10 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     try {
       const contest = await overrideService.closeContest(
         request.params.contestId,
-        tenantId,
+        '',
         request.body.reason,
       );
       return reply.send(toContestResponse(contest, null));
@@ -177,11 +173,10 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     try {
       const contest = await overrideService.extendDeadline(
         request.params.contestId,
-        tenantId,
+        '',
         new Date(request.body.newEnd),
         request.body.reason,
       );
@@ -198,11 +193,10 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     try {
       const contest = await overrideService.updateLockTime(
         request.params.contestId,
-        tenantId,
+        '',
         new Date(request.body.newLock),
         request.body.reason,
       );

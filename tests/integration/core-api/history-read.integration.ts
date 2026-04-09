@@ -80,7 +80,7 @@ describe('History Read Integration', () => {
     });
     expect(acceptRes.statusCode).toBe(201);
     challengerMembershipId = acceptRes.json().membership.id;
-    expect(acceptRes.json().membership.role).toBe(LeagueRole.MANAGER);
+    expect(acceptRes.json().membership.role).toBe(LeagueRole.MEMBER);
 
     const contestRes = await getApp().inject({
       method: 'POST',

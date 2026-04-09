@@ -1,15 +1,12 @@
-// PoolMaster API — monolith entry point
-// Merges core-api + draft-service + scoring-service + notification-service + ingestion-worker
+// PoolMaster API entry point for the active backend-first product surface.
 
 import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import crypto from 'node:crypto';
 
 // Core plugins
 import { healthPlugin } from './plugins/health';
 import { swaggerPlugin } from './plugins/swagger';
 import { authGuard } from './plugins/auth-guard';
-import { tenantPlugin } from './core/tenant-context';
 import { etagPlugin } from './plugins/etag-support';
 import { pollConfigPlugin } from './plugins/poll-config';
 
@@ -31,9 +28,6 @@ import { configModule } from './modules/config/routes';
 // Draft module
 import { draftsModule } from './modules/drafts/routes';
 
-// Social module
-import { socialModule } from './modules/social/routes';
-
 // Scoring module
 import { eventBus } from '@poolmaster/shared/events/event-bus';
 import { subscribeStatEventConsumer, ContestLookup } from './modules/scoring/consumer/stat-event-consumer';
@@ -43,13 +37,6 @@ import { scoringRoutes } from './modules/scoring/routes';
 import { ContestScoringRecalculationService } from './modules/contest-scoring';
 
 // Notification module
-import { loadConfig as loadNotifConfig } from './modules/notifications/core/config';
-import { createChannels } from './modules/notifications/channels/channel-factory';
-import { NotificationDispatcher } from './modules/notifications/core/dispatcher';
-import { InMemoryRateLimiter } from './modules/notifications/core/rate-limiter';
-import { EventGrouper } from './modules/notifications/core/event-grouper';
-import { ScheduledRunner } from './modules/notifications/core/scheduled-runner';
-import { registerPushTriggers } from './modules/notifications/triggers/push-triggers';
 import { notificationsModule } from './modules/notifications/routes';
 
 // Ingestion module
@@ -91,7 +78,6 @@ export function buildApp() {
   app.register(etagPlugin);
   app.register(pollConfigPlugin);
   app.register(authGuard);
-  app.register(tenantPlugin);
 
   // =========================================================================
   // Auth (public routes — no JWT required)
@@ -118,11 +104,6 @@ export function buildApp() {
   app.register(configModule, { prefix: '/api/v1/config' });
 
   // =========================================================================
-  // Social module (from social/communication layer)
-  // =========================================================================
-  app.register(socialModule, { prefix: '/api/v1' });
-
-  // =========================================================================
   // Draft module (from draft-service)
   // =========================================================================
   app.register(draftsModule, { prefix: '/api/v1/drafts' });
@@ -145,20 +126,9 @@ export function buildApp() {
   // =========================================================================
   // Notification module (from notification-service)
   // =========================================================================
-  const notifConfig = loadNotifConfig();
-  const notifChannels = createChannels(notifConfig, prisma);
-  const rateLimiter = new InMemoryRateLimiter();
-  const dispatcher = new NotificationDispatcher(prisma, notifChannels, rateLimiter);
-  const eventGrouper = new EventGrouper();
-  const scheduledRunner = new ScheduledRunner(prisma, dispatcher);
   app.register(notificationsModule, {
     prefix: '/api/v1',
     prisma,
-    channels: notifChannels,
-    dispatcher,
-    rateLimiter,
-    eventGrouper,
-    scheduledRunner,
   });
 
   // =========================================================================
@@ -206,30 +176,6 @@ export function buildApp() {
       return;
     }
 
-    // Notifications
-    scheduledRunner.start();
-    app.log.info('Scheduled notification runner started');
-    registerPushTriggers(dispatcher);
-    app.log.info('Push notification triggers registered');
-
-    // Event grouper flush
-    setInterval(() => {
-      const grouped = eventGrouper.flushExpired();
-      for (const g of grouped) {
-        dispatcher.dispatch({
-          id: crypto.randomUUID(),
-          type: g.eventType,
-          sourceService: 'event-grouper',
-          timestamp: new Date().toISOString(),
-          tenantId: '',
-          recipientUserIds: [g.userId],
-          data: { ...g.latestData, count: g.count },
-          priority: 'NORMAL' as any,
-          action: { type: 'NAVIGATE', screen: 'home', params: {} },
-        });
-      }
-    }, 30_000);
-
     // Ingestion
     if (process.env.AUTO_START_SCHEDULER !== 'false') {
       ingestionScheduler.start();
@@ -239,7 +185,6 @@ export function buildApp() {
 
   app.addHook('onClose', async () => {
     standingsRollup.stopPeriodicRollup();
-    scheduledRunner.stop();
     ingestionScheduler.stop();
     eventBus.clear();
     await prisma.$disconnect();

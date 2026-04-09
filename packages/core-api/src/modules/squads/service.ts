@@ -4,7 +4,11 @@ import type {
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
-import { SquadMembershipStatus, SquadStatus } from '@poolmaster/shared/domain';
+import {
+  LeagueMembershipStatus,
+  SquadMembershipStatus,
+  SquadStatus,
+} from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
 
@@ -188,7 +192,7 @@ export class SquadService {
 
   private async requireActiveLeagueMembership(leagueId: string, userId: string) {
     const membership = await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, userId);
-    if (!membership) {
+    if (!membership || membership.status !== LeagueMembershipStatus.ACTIVE) {
       throw new SquadOperationError('You must be an active league member to manage squads');
     }
     return membership;

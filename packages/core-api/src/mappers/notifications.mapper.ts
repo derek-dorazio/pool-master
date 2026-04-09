@@ -21,30 +21,3 @@ export function mapNotificationToDto(notification: Record<string, unknown>) {
       : String(notification.createdAt),
   };
 }
-
-export function mapNotificationPreferenceToDto(preferences: {
-  doNotDisturb: boolean;
-  dndSchedule?: Record<string, unknown>;
-  categories: Record<string, unknown>;
-}) {
-  return preferences;
-}
-
-export function mapNotificationDeviceToDto(device: Record<string, unknown>) {
-  return {
-    id: String(device.id),
-    userId: String(device.userId),
-    platform: String(device.platform),
-    token: String(device.token),
-    appVersion: device.appVersion == null ? undefined : String(device.appVersion),
-    osVersion: device.osVersion == null ? undefined : String(device.osVersion),
-    deviceModel: device.deviceModel == null ? undefined : String(device.deviceModel),
-    isActive: Boolean(device.isActive),
-    registeredAt: device.registeredAt instanceof Date
-      ? device.registeredAt.toISOString()
-      : String(device.registeredAt),
-    lastActiveAt: device.lastActiveAt instanceof Date
-      ? device.lastActiveAt.toISOString()
-      : String(device.lastActiveAt),
-  };
-}

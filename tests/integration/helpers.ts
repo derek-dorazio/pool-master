@@ -21,7 +21,6 @@ import bcrypt from 'bcryptjs';
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
 import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
-import { tenantPlugin } from '../../packages/core-api/src/core/tenant-context';
 import { authModule } from '../../packages/core-api/src/modules/auth/routes';
 import { leaguesModule } from '../../packages/core-api/src/modules/leagues/routes';
 import { squadsModule } from '../../packages/core-api/src/modules/squads/routes';
@@ -38,14 +37,7 @@ import { configModule } from '../../packages/core-api/src/modules/config/routes'
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
-import { socialModule } from '../../packages/core-api/src/modules/social/routes';
 import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
-import { loadConfig as loadNotifConfig } from '../../packages/core-api/src/modules/notifications/core/config';
-import { createChannels } from '../../packages/core-api/src/modules/notifications/channels/channel-factory';
-import { NotificationDispatcher } from '../../packages/core-api/src/modules/notifications/core/dispatcher';
-import { InMemoryRateLimiter } from '../../packages/core-api/src/modules/notifications/core/rate-limiter';
-import { EventGrouper } from '../../packages/core-api/src/modules/notifications/core/event-grouper';
-import { ScheduledRunner } from '../../packages/core-api/src/modules/notifications/core/scheduled-runner';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const TEST_TENANT_ID = randomUUID();
@@ -77,7 +69,6 @@ async function buildTestApp(): Promise<FastifyInstance> {
   // Core plugins
   testApp.register(healthPlugin);
   testApp.register(authGuard);
-  testApp.register(tenantPlugin);
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth' });
@@ -107,19 +98,9 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
   testApp.register(historyModule, { prefix: '/api/v1' });
-  testApp.register(socialModule, { prefix: '/api/v1' });
-
-  // Notification module (for notification persistence tests)
-  const notifConfig = loadNotifConfig();
-  const notifChannels = createChannels(notifConfig, prisma);
-  const rateLimiter = new InMemoryRateLimiter();
-  const dispatcher = new NotificationDispatcher(prisma, notifChannels, rateLimiter);
-  const eventGrouper = new EventGrouper();
-  const scheduledRunner = new ScheduledRunner(prisma, dispatcher);
   testApp.register(notificationsModule, {
     prefix: '/api/v1',
-    prisma, channels: notifChannels, dispatcher, rateLimiter,
-    eventGrouper, scheduledRunner,
+    prisma,
   });
 
   await testApp.ready();

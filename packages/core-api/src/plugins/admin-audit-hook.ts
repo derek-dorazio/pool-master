@@ -25,9 +25,9 @@ const SKIP_ROUTES = new Set([
  * Derives the admin action name from the HTTP method and URL path.
  *
  * Examples:
- *   POST /api/v1/admin/tenants/:id/suspend  ->  "tenant.suspend"
- *   PUT  /api/v1/admin/providers/:id        ->  "providers.update"
- *   DELETE /api/v1/admin/users/:id          ->  "users.delete"
+ *   POST /api/v1/admin/providers/manual-ingestion -> "providers.manual-ingestion"
+ *   PUT  /api/v1/admin/config/poll-intervals      -> "config.poll-intervals"
+ *   DELETE /api/v1/admin/users/:id                -> "users.delete"
  */
 function deriveAction(method: string, url: string): string {
   const path = url.split('?')[0];
@@ -50,8 +50,8 @@ function deriveAction(method: string, url: string): string {
  * Extracts the resource type and ID from the URL path.
  *
  * Examples:
- *   /api/v1/admin/tenants/tnt-123/suspend  ->  { type: "TENANT", id: "tnt-123" }
- *   /api/v1/admin/users/usr-456            ->  { type: "USER", id: "usr-456" }
+ *   /api/v1/admin/providers/pga/manual-ingestion -> { type: "PROVIDERS", id: "pga" }
+ *   /api/v1/admin/users/usr-456                  -> { type: "USER", id: "usr-456" }
  */
 function deriveResource(url: string): { type: string; id: string } {
   const path = url.split('?')[0];

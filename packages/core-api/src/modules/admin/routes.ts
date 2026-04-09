@@ -9,8 +9,6 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryPrisma } from './audit-query-service';
-import { TenantService } from './tenant-service';
-import { createTenantHandlers } from './tenant-handler';
 import { UserService } from './user-service';
 import { createUserHandlers } from './user-handler';
 import { ContestService } from './contest-service';
@@ -19,22 +17,13 @@ import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
 import { createProviderHandlers } from './provider-handler';
-import { ImpersonationService } from './impersonation-service';
-import { createImpersonationHandlers } from './impersonation-handler';
 import { MigrationService } from './migration-service';
 import { createMigrationHandlers } from './migration-handler';
-import { ExportService } from './export-service';
-import { createExportHandlers } from './export-handler';
 import { PollConfigService } from './poll-config-service';
 import { IngestionConfigService } from './ingestion-config-service';
-import { DunningConfigService } from './dunning-config-service';
-import { ChannelConfigService } from './channel-config-service';
 import { registerPlatformConfigRoutes } from './platform-config-routes';
-import { configRoutes } from './config-routes';
 import { auditRoutes } from './audit-routes';
 import {
-  TenantListResponseSchema,
-  TenantDetailResponseSchema,
   UserListResponseSchema,
   UserDetailResponseSchema,
   ProviderListResponseSchema,
@@ -91,141 +80,20 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   setAuditQueryPrisma(prisma);
 
   // --- Services ---
-  const tenantService = new TenantService(prisma);
   const userService = new UserService(prisma);
   const contestService = new ContestService(prisma);
   const healthService = new HealthService(prisma);
   const providerService = new ProviderService(prisma);
-  const impersonationService = new ImpersonationService(prisma);
   const migrationService = new MigrationService(prisma);
-  const exportService = new ExportService(prisma);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
-  const dunningConfigService = new DunningConfigService();
-  const channelConfigService = new ChannelConfigService();
 
   // --- Handlers ---
-  const tenant = createTenantHandlers(tenantService);
   const user = createUserHandlers(userService);
   const contest = createContestHandlers(contestService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService);
-  const impersonation = createImpersonationHandlers(impersonationService);
   const migration = createMigrationHandlers(migrationService);
-  const tenantExport = createExportHandlers(exportService);
-
-  // --- Tenant Management Routes ---
-
-  fastify.get('/tenants', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List all tenants with filters',
-      operationId: 'adminListTenants',
-      response: { 200: zodToJsonSchema(TenantListResponseSchema) },
-      querystring: {
-        type: 'object',
-        properties: {
-          search: { type: 'string' },
-          status: { type: 'string', enum: ['active', 'suspended', 'trial'] },
-          sortBy: { type: 'string', enum: ['name', 'created', 'members', 'lastActive'] },
-          sortDir: { type: 'string', enum: ['asc', 'desc'] },
-          page: { type: 'integer', minimum: 1 },
-          pageSize: { type: 'integer', minimum: 1, maximum: 100 },
-        },
-      },
-    },
-    handler: tenant.listTenants,
-  });
-
-  fastify.get('/tenants/:tenantId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get tenant detail',
-      operationId: 'adminGetTenantDetail',
-      response: { 200: zodToJsonSchema(TenantDetailResponseSchema) },
-    },
-    handler: tenant.getTenantDetail,
-  });
-
-  fastify.post('/tenants/:tenantId/suspend', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Suspend a tenant',
-      operationId: 'adminSuspendTenant',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['reason'],
-        properties: {
-          reason: { type: 'string', minLength: 1, maxLength: 1000 },
-        },
-      },
-    },
-    handler: tenant.suspendTenant,
-  });
-
-  fastify.post('/tenants/:tenantId/unsuspend', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Unsuspend a tenant',
-      operationId: 'adminUnsuspendTenant',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: tenant.unsuspendTenant,
-  });
-
-  fastify.post('/tenants/:tenantId/credit', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Apply credit to a tenant account',
-      operationId: 'adminApplyCredit',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['amount', 'reason'],
-        properties: {
-          amount: { type: 'number', exclusiveMinimum: 0 },
-          reason: { type: 'string', minLength: 1, maxLength: 1000 },
-        },
-      },
-    },
-    handler: tenant.applyCredit,
-  });
-
-  fastify.post('/tenants/:tenantId/extend-trial', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Extend tenant trial period',
-      operationId: 'adminExtendTrial',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['days', 'reason'],
-        properties: {
-          days: { type: 'integer', minimum: 1, maximum: 365 },
-          reason: { type: 'string', minLength: 1, maxLength: 1000 },
-        },
-      },
-    },
-    handler: tenant.extendTrial,
-  });
-
-  fastify.delete('/tenants/:tenantId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Delete a tenant permanently',
-      operationId: 'adminDeleteTenant',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['confirmation'],
-        properties: {
-          confirmation: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: tenant.deleteTenant,
-  });
 
   // --- User Management Routes ---
   // NOTE: /users/merge is registered before /users/:userId to avoid route collision.
@@ -278,16 +146,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: user.getUserDetail,
   });
 
-  fastify.post('/users/:userId/reset-password', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Reset user password',
-      operationId: 'adminResetPassword',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: user.resetPassword,
-  });
-
   fastify.post('/users/:userId/force-logout', {
     schema: {
       tags: ['Admin'],
@@ -323,24 +181,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: user.enableUser,
-  });
-
-  fastify.post('/users/:userId/email', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Send administrative email to user',
-      operationId: 'adminSendEmail',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['subject', 'body'],
-        properties: {
-          subject: { type: 'string', minLength: 1, maxLength: 500 },
-          body: { type: 'string', minLength: 1, maxLength: 10000 },
-        },
-      },
-    },
-    handler: user.sendAdminEmail,
   });
 
   // --- Contest Management Routes ---
@@ -700,46 +540,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: health.unmuteAlert,
   });
 
-  // --- Impersonation Routes ---
-  // Permission: tenant.impersonate
-
-  fastify.post('/impersonation/start', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Start tenant impersonation session',
-      operationId: 'adminStartImpersonation',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['tenantId'],
-        properties: {
-          tenantId: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: impersonation.startSession,
-  });
-
-  fastify.post('/impersonation/end', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'End tenant impersonation session',
-      operationId: 'adminEndImpersonation',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: impersonation.endSession,
-  });
-
-  fastify.get('/impersonation/active', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get active impersonation session',
-      operationId: 'adminGetActiveImpersonation',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: impersonation.getActiveSession,
-  });
-
   // --- Migration Routes ---
   // Permission: platform.migrations
 
@@ -784,39 +584,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
     handler: migration.cancelRun,
   });
 
-  // --- Tenant Data Export Routes ---
-  // Permission: tenant.view
-
-  fastify.post('/tenants/:tenantId/export', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Start tenant data export',
-      operationId: 'adminStartTenantExport',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: tenantExport.startExport,
-  });
-
-  fastify.get('/tenants/:tenantId/export/status', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get tenant export status',
-      operationId: 'adminGetExportStatus',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: tenantExport.getExportStatus,
-  });
-
-  fastify.get('/tenants/:tenantId/export/download', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Download tenant export',
-      operationId: 'adminDownloadExport',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: tenantExport.downloadExport,
-  });
-
   // --- Platform Configuration Routes ---
   // Permission: platform.config
 
@@ -825,12 +592,5 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   registerPlatformConfigRoutes(fastify, {
     pollConfig: pollConfigService,
     ingestionConfig: ingestionConfigService,
-    dunningConfig: dunningConfigService,
-    channelConfig: channelConfigService,
   });
-
-  // --- Admin Config Routes (templates, push triggers, rate limits) ---
-  // Permission: config.*
-
-  await fastify.register(configRoutes);
 }

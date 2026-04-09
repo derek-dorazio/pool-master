@@ -55,14 +55,9 @@ describe('Commissioner Permissions', () => {
       expect(hasPermission(commissioner, CommissionerPermission.SCORING_OVERRIDE)).toBe(false);
     });
 
-    it('returns false for MANAGER', () => {
-      const manager = buildMembership({ role: LeagueRole.MANAGER });
-      expect(hasPermission(manager, CommissionerPermission.LEAGUE_SETTINGS_EDIT)).toBe(false);
-    });
-
-    it('returns false for VIEWER', () => {
-      const viewer = buildMembership({ role: LeagueRole.VIEWER });
-      expect(hasPermission(viewer, CommissionerPermission.CONTEST_CREATE)).toBe(false);
+    it('returns false for MEMBER', () => {
+      const member = buildMembership({ role: LeagueRole.MEMBER });
+      expect(hasPermission(member, CommissionerPermission.LEAGUE_SETTINGS_EDIT)).toBe(false);
     });
   });
 
@@ -100,12 +95,8 @@ describe('Commissioner Permissions', () => {
       expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.COMMISSIONER }))).toBe(true);
     });
 
-    it('returns false for MANAGER', () => {
-      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.MANAGER }))).toBe(false);
-    });
-
-    it('returns false for VIEWER', () => {
-      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.VIEWER }))).toBe(false);
+    it('returns false for MEMBER', () => {
+      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.MEMBER }))).toBe(false);
     });
   });
 

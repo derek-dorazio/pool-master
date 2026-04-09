@@ -433,30 +433,6 @@ async function main(): Promise<void> {
   });
   console.log('  ✓ Season: NFL 2025-2026');
 
-  // --- Notification Preferences (defaults for real users) ---
-  console.log('Seeding notification preferences...');
-  const defaultPrefs = {
-    DRAFT: { enabled: true, channels: { push: true, email: true, in_app: true, sms: false } },
-    SCORING: { enabled: true, channels: { push: true, email: false, in_app: true, sms: false } },
-    CONTEST: { enabled: true, channels: { push: true, email: true, in_app: true, sms: false } },
-    LEAGUE: { enabled: true, channels: { push: false, email: false, in_app: true, sms: false } },
-    SOCIAL: { enabled: true, channels: { push: true, email: false, in_app: true, sms: false } },
-    ACCOUNT: { enabled: true, channels: { push: false, email: true, in_app: true, sms: false } },
-  };
-
-  for (const user of [derek, jackson]) {
-    await prisma.notificationPreference.upsert({
-      where: { userId: user.id },
-      update: {},
-      create: {
-        userId: user.id,
-        doNotDisturb: false,
-        categoryPreferences: defaultPrefs,
-      },
-    });
-  }
-  console.log('  ✓ Notification preferences for Derek + Jackson');
-
   // --- Done ---
   console.log('');
   console.log('═══════════════════════════════════════════════════');

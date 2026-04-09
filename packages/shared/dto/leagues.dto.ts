@@ -58,6 +58,7 @@ export const LeagueMembershipDtoSchema = z.object({
   leagueId: z.string(),
   userId: z.string(),
   role: z.string(),
+  status: z.string(),
   permissions: z.array(z.string()),
   joinedAt: DateTimeSchema,
   createdAt: DateTimeSchema,

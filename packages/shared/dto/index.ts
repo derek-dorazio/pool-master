@@ -10,7 +10,6 @@ export * from './standings.dto';
 export * from './participants.dto';
 export * from './notifications.dto';
 export * from './admin.dto';
-export * from './social.dto';
 export * from './config.dto';
 export * from './account-consent.dto';
 export * from './history.dto';

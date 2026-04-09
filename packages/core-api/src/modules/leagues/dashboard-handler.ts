@@ -3,7 +3,6 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { extractTenantContext } from '../../core/tenant-context';
 import type { DashboardService } from './dashboard-service';
 
 export function createDashboardHandlers(dashboardService: DashboardService) {
@@ -16,8 +15,7 @@ export function createDashboardHandlers(dashboardService: DashboardService) {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
-    const dashboard = await dashboardService.getDashboard(request.params.id, tenantId);
+    const dashboard = await dashboardService.getDashboard(request.params.id, '');
     if (!dashboard) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'League not found' });
     }

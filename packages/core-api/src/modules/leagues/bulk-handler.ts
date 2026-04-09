@@ -20,10 +20,9 @@ export function createBulkHandlers(bulkService: BulkService) {
     reply: FastifyReply,
   ): Promise<void> {
     const userId = request.headers['x-user-id'] as string;
-    const tenantId = (request.headers['x-tenant-id'] as string) ?? '';
     const result = await bulkService.copyLastSeason({
       leagueId: request.params.id,
-      tenantId,
+      tenantId: '',
       createdBy: userId,
       sourceContestIds: request.body.sourceContestIds,
     });

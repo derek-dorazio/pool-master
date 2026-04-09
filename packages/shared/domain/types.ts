@@ -18,6 +18,7 @@ import type {
   InvitationStatus,
   InvitePolicy,
   InviteType,
+  LeagueMembershipStatus,
   LeagueRole,
   LeagueVisibility,
   MappingConfidence,
@@ -93,6 +94,7 @@ export interface LeagueMembership extends DomainEntity {
   leagueId: string;
   userId: string;
   role: LeagueRole;
+  status: LeagueMembershipStatus;
   permissions: CommissionerPermission[];
   joinedAt: Date;
 }

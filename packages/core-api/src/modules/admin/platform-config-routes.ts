@@ -1,6 +1,5 @@
 /**
- * Platform configuration admin routes — poll intervals, ingestion schedules,
- * dunning schedules, and notification channel defaults.
+ * Platform configuration admin routes — poll intervals and ingestion schedules.
  *
  * All routes are registered under the /config prefix within the admin module.
  * Permission: platform.config
@@ -10,8 +9,6 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
-import type { DunningConfigService } from './dunning-config-service';
-import type { ChannelConfigService } from './channel-config-service';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -37,16 +34,9 @@ export function registerPlatformConfigRoutes(
   services: {
     pollConfig: PollConfigService;
     ingestionConfig: IngestionConfigService;
-    dunningConfig: DunningConfigService;
-    channelConfig: ChannelConfigService;
   },
 ): void {
-  const {
-    pollConfig,
-    ingestionConfig,
-    dunningConfig,
-    channelConfig,
-  } = services;
+  const { pollConfig, ingestionConfig } = services;
 
   // -------------------------------------------------------------------------
   // Poll Interval Configuration
@@ -211,152 +201,4 @@ export function registerPlatformConfigRoutes(
       return ingestionConfig.resetDefaults(adminUserId, adminUserEmail);
     },
   });
-
-  // -------------------------------------------------------------------------
-  // Dunning Schedule Configuration
-  // -------------------------------------------------------------------------
-
-  fastify.get('/config/dunning', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get dunning schedule configuration',
-      operationId: 'adminGetDunningConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async () => {
-      return dunningConfig.getConfig();
-    },
-  });
-
-  fastify.put('/config/dunning', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Update dunning schedule configuration',
-      operationId: 'adminUpdateDunningConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        properties: {
-          retryAttempts: {
-            type: 'array',
-            items: {
-              type: 'object',
-              required: ['daysAfterFailure', 'action'],
-              properties: {
-                daysAfterFailure: { type: 'integer', minimum: 1 },
-                action: { type: 'string', minLength: 1 },
-              },
-            },
-          },
-          gracePeriodDays: { type: 'integer', minimum: 1 },
-          degradedPeriodDays: { type: 'integer', minimum: 1 },
-          cancellationDays: { type: 'integer', minimum: 1 },
-          notifyOnRetry: { type: 'boolean' },
-          notifyOnGracePeriodStart: { type: 'boolean' },
-          notifyOnDegradation: { type: 'boolean' },
-          notifyBeforeCancellation: { type: 'boolean' },
-          notifyBeforeCancellationDays: { type: 'integer', minimum: 1 },
-        },
-      },
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Body: {
-          retryAttempts?: { daysAfterFailure: number; action: string }[];
-          gracePeriodDays?: number;
-          degradedPeriodDays?: number;
-          cancellationDays?: number;
-          notifyOnRetry?: boolean;
-          notifyOnGracePeriodStart?: boolean;
-          notifyOnDegradation?: boolean;
-          notifyBeforeCancellation?: boolean;
-          notifyBeforeCancellationDays?: number;
-        };
-      }>,
-    ) => {
-      const { adminUserId, adminUserEmail } = extractAdminContext(request);
-      return dunningConfig.updateConfig(request.body, adminUserId, adminUserEmail);
-    },
-  });
-
-  fastify.post('/config/dunning/reset', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Reset dunning configuration to defaults',
-      operationId: 'adminResetDunningConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async (request: FastifyRequest) => {
-      const { adminUserId, adminUserEmail } = extractAdminContext(request);
-      return dunningConfig.resetDefaults(adminUserId, adminUserEmail);
-    },
-  });
-
-  // -------------------------------------------------------------------------
-  // Notification Channel Configuration
-  // -------------------------------------------------------------------------
-
-  fastify.get('/config/notification-channels', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get notification channel defaults',
-      operationId: 'adminGetChannelConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async () => {
-      return channelConfig.getConfig();
-    },
-  });
-
-  fastify.put('/config/notification-channels/:category', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Update notification channel defaults for a category',
-      operationId: 'adminUpdateChannelConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-      body: {
-        type: 'object',
-        required: ['channels'],
-        properties: {
-          channels: {
-            type: 'array',
-            items: {
-              type: 'string',
-              enum: ['PUSH', 'EMAIL', 'IN_APP', 'SMS'],
-            },
-            minItems: 1,
-          },
-        },
-      },
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Params: { category: string };
-        Body: { channels: string[] };
-      }>,
-    ) => {
-      const { adminUserId, adminUserEmail } = extractAdminContext(request);
-      const { category } = request.params;
-      return channelConfig.updateCategoryChannels(
-        category,
-        request.body.channels,
-        adminUserId,
-        adminUserEmail,
-      );
-    },
-  });
-
-  fastify.post('/config/notification-channels/reset', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Reset notification channel defaults',
-      operationId: 'adminResetChannelConfig',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: async (request: FastifyRequest) => {
-      const { adminUserId, adminUserEmail } = extractAdminContext(request);
-      return channelConfig.resetDefaults(adminUserId, adminUserEmail);
-    },
-  });
-
 }

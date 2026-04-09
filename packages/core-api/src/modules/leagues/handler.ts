@@ -3,7 +3,6 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { extractTenantContext } from '../../core/tenant-context';
 import {
   toLeagueDetailDto,
   toLeagueListResponse,
@@ -21,10 +20,13 @@ export function createLeagueHandlers(leagueService: LeagueService) {
 
   async function listLeagues(
     request: FastifyRequest,
-    _reply: FastifyReply,
+    reply: FastifyReply,
   ): Promise<{ leagues: unknown[] }> {
-    const { tenantId } = extractTenantContext(request);
-    const leagues = await leagueService.findByTenant(tenantId);
+    const userId = request.headers['x-user-id'] as string | undefined;
+    if (!userId) {
+      return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
+    }
+    const leagues = await leagueService.findByUser(userId);
     return toLeagueListResponse(leagues);
   }
 
@@ -40,14 +42,13 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     const userId = request.headers['x-user-id'] as string;
     if (!userId) {
       return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Missing user identity' });
     }
     const body = request.body;
     const input: CreateLeagueInput = {
-      tenantId,
+      tenantId: request.authUser?.tenantId ?? '',
       createdBy: userId,
       name: body.name,
       description: body.description,
@@ -68,10 +69,9 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     const userId = (request.authUser?.userId
       ?? request.headers['x-user-id']) as string | undefined;
-    const result = await leagueService.getLeagueWithMembers(request.params.id, tenantId);
+    const result = await leagueService.getLeagueWithMembers(request.params.id, '');
     if (!result) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'League not found' });
     }
@@ -94,11 +94,10 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { tenantId } = extractTenantContext(request);
     try {
       const league = await leagueService.updateSettings(
         request.params.id,
-        tenantId,
+        '',
         request.body as Parameters<LeagueService['updateSettings']>[2],
       );
       return reply.send({

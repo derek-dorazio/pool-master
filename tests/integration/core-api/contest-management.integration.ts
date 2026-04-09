@@ -197,4 +197,59 @@ describe('Contest management integration', () => {
     expect(configuration.prizeDefinitions).toHaveLength(1);
     expect(configuration.prizeDefinitions[0]?.displayName).toBe('Champion');
   });
+
+  it('rejects duplicate participant scoring sort order values', async () => {
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contestManagement(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Invalid Masters Pick 6',
+        sportEventId,
+        contestType: 'SINGLE_EVENT',
+        configuration: {
+          selectionType: 'BUDGET_PICK',
+          rosterSize: 6,
+          minimumEntries: 1,
+          maxEntriesPerSquad: 3,
+          participantScoringRules: [
+            {
+              participantScoringDefinitionId: 'TEAM_WIN_POINTS',
+              sortOrder: 1,
+              config: {},
+              active: true,
+            },
+            {
+              participantScoringDefinitionId: 'ROUND_MULTIPLIER',
+              sortOrder: 1,
+              config: {},
+              active: true,
+            },
+          ],
+          entryAggregationRule: {
+            aggregationDefinitionId: 'SUM_ALL_ENTRIES',
+            config: {},
+            active: true,
+          },
+          prizeDefinitions: [
+            {
+              prizeDefinitionId: 'FINAL_PLACE',
+              displayName: 'Champion',
+              sortOrder: 1,
+              ruleConfig: { place: 1 },
+              payoutType: 'FIXED_AMOUNT',
+              amount: 100,
+              active: true,
+            },
+          ],
+        },
+      },
+    });
+
+    expect(createRes.statusCode).toBe(422);
+    expect(createRes.json()).toMatchObject({
+      error: 'CONTEST_CONFIGURATION_INVALID',
+      message: 'Participant scoring rules must have unique sortOrder values',
+    });
+  });
 });

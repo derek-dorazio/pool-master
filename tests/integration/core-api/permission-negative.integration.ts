@@ -146,7 +146,7 @@ describe('Permission Negative Integration', () => {
       url: API_ROUTES.leagues.memberRole(leagueId, ownerUserId),
       headers: memberHeaders,
       payload: {
-        role: 'VIEWER',
+        role: 'MEMBER',
       },
     });
     expect(changeRoleRes.statusCode).toBe(403);

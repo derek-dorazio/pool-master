@@ -70,8 +70,6 @@ model User {
   invitationsAccepted LeagueInvitation[] @relation("AcceptedBy")
   auditActions        CommissionerAuditLog[] @relation("AuditActor")
   notifications       Notification[]
-  notificationPreference NotificationPreference?
-  deviceRegistrations DeviceRegistration[]
   localePreference    UserLocalePreference?
 
   refreshTokens       RefreshToken[]
@@ -125,7 +123,8 @@ model LeagueMembership {
   id          String   @id @default(uuid()) @db.Uuid
   leagueId    String   @map("league_id") @db.Uuid
   userId      String   @map("user_id") @db.Uuid
-  role        String   @default("MANAGER")
+  role        String   @default("MEMBER")
+  status      String   @default("ACTIVE") @db.VarChar(20)
   permissions Json     @default("[]")
   joinedAt    DateTime @default(now()) @map("joined_at") @db.Timestamptz
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -134,6 +133,7 @@ model LeagueMembership {
   league  League         @relation(fields: [leagueId], references: [id])
   user    User           @relation(fields: [userId], references: [id])
 
+  @@index([leagueId, status])
   @@unique([leagueId, userId])
   @@map("league_memberships")
 }
@@ -773,96 +773,6 @@ model Notification {
   @@index([userId, read, createdAt(sort: Desc)])
   @@index([userId, groupKey])
   @@map("notifications")
-}
-
-model NotificationPreference {
-  id                    String   @id @default(uuid()) @db.Uuid
-  userId                String   @unique @map("user_id") @db.Uuid
-  doNotDisturb          Boolean  @default(false) @map("do_not_disturb")
-  dndSchedule           Json?    @map("dnd_schedule")
-  categoryPreferences   Json     @default("{}") @map("category_preferences")
-  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@map("notification_preferences")
-}
-
-model NotificationTemplate {
-  id          String  @id @default(uuid()) @db.Uuid
-  eventType   String  @map("event_type") @db.VarChar(100)
-  version     Int     @default(1)
-  pushTitle   String? @map("push_title") @db.VarChar(255)
-  pushBody    String? @map("push_body")
-  emailSubject String? @map("email_subject") @db.VarChar(255)
-  emailHtml   String? @map("email_html")
-  emailText   String? @map("email_text")
-  inAppTitle  String? @map("in_app_title") @db.VarChar(255)
-  inAppBody   String? @map("in_app_body")
-  inAppIcon   String? @map("in_app_icon") @db.VarChar(50)
-  smsBody     String? @map("sms_body") @db.VarChar(160)
-  category    String  @db.VarChar(50)
-  variables   Json    @default("[]")
-  active      Boolean @default(true)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  @@unique([eventType, version])
-  @@map("notification_templates")
-}
-
-model DeviceRegistration {
-  id           String   @id @default(uuid()) @db.Uuid
-  userId       String   @map("user_id") @db.Uuid
-  platform     String   @db.VarChar(20)
-  token        String
-  appVersion   String?  @map("app_version") @db.VarChar(50)
-  osVersion    String?  @map("os_version") @db.VarChar(50)
-  deviceModel  String?  @map("device_model") @db.VarChar(100)
-  isActive     Boolean  @default(true) @map("is_active")
-  lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamptz
-  registeredAt DateTime @default(now()) @map("registered_at") @db.Timestamptz
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@unique([platform, token])
-  @@index([userId, isActive])
-  @@map("device_registrations")
-}
-
-model ScheduledNotification {
-  id              String    @id @default(uuid()) @db.Uuid
-  eventType       String    @map("event_type") @db.VarChar(100)
-  fireAt          DateTime  @map("fire_at") @db.Timestamptz
-  context         Json
-  sourceType      String    @map("source_type") @db.VarChar(50)
-  sourceId        String    @map("source_id") @db.Uuid
-  status          String    @default("PENDING") @db.VarChar(20)
-  cancelledReason String?   @map("cancelled_reason") @db.VarChar(255)
-  firedAt         DateTime? @map("fired_at") @db.Timestamptz
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  @@index([status, fireAt])
-  @@map("scheduled_notifications")
-}
-
-model NotificationDeliveryLog {
-  id                    String    @id @default(uuid()) @db.Uuid
-  notificationEventId   String    @map("notification_event_id") @db.VarChar(255)
-  userId                String    @map("user_id") @db.Uuid
-  channel               String    @db.VarChar(20)
-  status                String    @db.VarChar(20)
-  suppressionReason     String?   @map("suppression_reason") @db.VarChar(255)
-  providerMessageId     String?   @map("provider_message_id") @db.VarChar(255)
-  sentAt                DateTime? @map("sent_at") @db.Timestamptz
-  deliveredAt           DateTime? @map("delivered_at") @db.Timestamptz
-  openedAt              DateTime? @map("opened_at") @db.Timestamptz
-  tappedAt              DateTime? @map("tapped_at") @db.Timestamptz
-  failedReason          String?   @map("failed_reason")
-  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  @@index([notificationEventId])
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("notification_delivery_log")
 }
 
 // =============================================================================

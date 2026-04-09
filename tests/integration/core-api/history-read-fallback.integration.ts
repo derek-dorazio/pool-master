@@ -63,7 +63,7 @@ describe('History Read Fallback Integration', () => {
     });
     expect(acceptRes.statusCode).toBe(201);
     const challengerMembershipId = acceptRes.json().membership.id;
-    expect(acceptRes.json().membership.role).toBe(LeagueRole.MANAGER);
+    expect(acceptRes.json().membership.role).toBe(LeagueRole.MEMBER);
 
     const contestRes = await getApp().inject({
       method: 'POST',

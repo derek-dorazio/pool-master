@@ -122,20 +122,9 @@ export const API_ROUTES = {
     pick: (draftId: string) => `/api/v1/drafts/${draftId}/pick`,
   },
 
-  // Billing
-  billing: {
-    plan: '/api/v1/billing/plan',
-    plans: '/api/v1/billing/plans',
-    usage: '/api/v1/billing/usage',
-    entitlements: '/api/v1/billing/entitlements',
-    invoices: '/api/v1/billing/invoices',
-    tiers: '/api/v1/billing/tiers',
-  },
-
   // Admin
   admin: {
     users: '/api/v1/admin/users',
-    tenants: '/api/v1/admin/tenants',
     health: '/api/v1/admin/health',
     audit: '/api/v1/admin/audit',
   },
@@ -150,7 +139,6 @@ export const API_ROUTES = {
   // Notifications
   notifications: {
     list: '/api/v1/notifications',
-    preferences: '/api/v1/notifications/preferences',
   },
 
   // Account / Compliance

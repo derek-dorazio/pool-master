@@ -443,7 +443,7 @@ export type ListLeagueMembersResponse = ListLeagueMembersResponses[keyof ListLea
 
 export type ChangeMemberRoleData = {
     body: {
-        role: 'COMMISSIONER' | 'MANAGER' | 'VIEWER';
+        role: 'COMMISSIONER' | 'MEMBER';
         permissions?: Array<string>;
     };
     path: {
@@ -464,6 +464,7 @@ export type ChangeMemberRoleResponses = {
             leagueId: string;
             userId: string;
             role: string;
+            status: string;
             permissions: Array<string>;
             joinedAt: string;
             createdAt: string;
@@ -536,6 +537,7 @@ export type TransferOwnershipResponses = {
             leagueId: string;
             userId: string;
             role: string;
+            status: string;
             permissions: Array<string>;
             joinedAt: string;
             createdAt: string;
@@ -546,6 +548,7 @@ export type TransferOwnershipResponses = {
             leagueId: string;
             userId: string;
             role: string;
+            status: string;
             permissions: Array<string>;
             joinedAt: string;
             createdAt: string;
@@ -972,6 +975,7 @@ export type AcceptInvitationResponses = {
             leagueId: string;
             userId: string;
             role: string;
+            status: string;
             permissions: Array<string>;
             joinedAt: string;
             createdAt: string;
@@ -2044,7 +2048,24 @@ export type GetContestAuditLogResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        entries: Array<{
+            id: string;
+            leagueId: string;
+            contestId?: string;
+            actorId: string;
+            action: string;
+            category: string;
+            description: string;
+            beforeState?: {
+                [key: string]: unknown;
+            };
+            afterState?: {
+                [key: string]: unknown;
+            };
+            reason?: string;
+            ipAddress?: string;
+            createdAt: string;
+        }>;
     };
 };
 
@@ -2706,7 +2727,7 @@ export type RecordConsentResponses = {
      * Default Response
      */
     201: {
-        success: boolean;
+        success: true;
     };
 };
 
@@ -4969,7 +4990,15 @@ export type GetPollIntervalsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        sports: Array<{
+            id: string;
+            name: string;
+            participantType: string;
+            seasons: Array<string>;
+        }>;
+        features: {
+            [key: string]: boolean;
+        };
     };
 };
 

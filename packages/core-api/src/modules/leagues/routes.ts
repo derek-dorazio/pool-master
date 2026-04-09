@@ -226,7 +226,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         type: 'object',
         required: ['role'],
         properties: {
-          role: { type: 'string', enum: ['COMMISSIONER', 'MANAGER', 'VIEWER'] },
+          role: { type: 'string', enum: ['COMMISSIONER', 'MEMBER'] },
           permissions: { type: 'array', items: { type: 'string' } },
         },
       },

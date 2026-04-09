@@ -1,12 +1,11 @@
 import { ScoringConfigSchema, SpecialSlotConfigSchema } from '@poolmaster/shared/domain/scoring-config';
-import type { ScoringConfig, TiebreakerConfig } from '@poolmaster/shared/domain/scoring-config';
+import type { TiebreakerConfig } from '@poolmaster/shared/domain/scoring-config';
 import {
   evaluateTiebreaker,
   rankWithTiebreakers,
 } from '../../../packages/core-api/src/modules/scoring/engine/tiebreaker';
 import type { TiebreakerData } from '../../../packages/core-api/src/modules/scoring/engine/tiebreaker';
 import {
-  STAT_SCHEMAS,
   getStatSchema,
   listSports,
   validateStatKeys,

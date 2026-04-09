@@ -43,7 +43,7 @@ describe('squad management integration', () => {
       data: {
         leagueId,
         userId: coManager.user.id,
-        role: 'MANAGER',
+        role: 'MEMBER',
         permissions: [],
       },
     });
@@ -147,7 +147,7 @@ describe('squad management integration', () => {
       data: {
         leagueId,
         userId: member.user.id,
-        role: 'MANAGER',
+        role: 'MEMBER',
         permissions: [],
       },
     });

@@ -11,7 +11,7 @@ export class PrismaContestRepository implements ContestRepository {
 
   async findById(id: string, tenantId: string): Promise<Contest | null> {
     const row = await this.prisma.contest.findFirst({
-      where: { id, league: { tenantId } },
+      where: { id, ...(tenantId ? { league: { tenantId } } : {}) },
       include: {
         sportEvent: { select: { sport: true } },
       },

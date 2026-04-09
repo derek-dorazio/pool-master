@@ -107,6 +107,27 @@ describe('LeagueService', () => {
     });
   });
 
+  describe('findByUser', () => {
+    it('loads leagues through active memberships instead of tenant scope', async () => {
+      const expectedLeague = buildLeague({ id: 'league-1' });
+      const leagueRepo = createMockLeagueRepo({
+        findById: jest.fn().mockResolvedValue(expectedLeague),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByUser: jest.fn().mockResolvedValue([
+          buildMembership({ leagueId: 'league-1', userId: 'user-1' }),
+        ]),
+      });
+      const service = new LeagueService(leagueRepo, membershipRepo);
+
+      const result = await service.findByUser('user-1');
+
+      expect(membershipRepo.findByUser).toHaveBeenCalledWith('user-1');
+      expect(leagueRepo.findById).toHaveBeenCalledWith('league-1', '');
+      expect(result).toEqual([expectedLeague]);
+    });
+  });
+
   describe('updateSettings', () => {
     it('merges updates with existing settings', async () => {
       const existingLeague = buildLeague({

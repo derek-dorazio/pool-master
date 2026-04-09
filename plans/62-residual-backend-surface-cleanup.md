@@ -22,7 +22,6 @@ The main residual areas are:
 - tenant-centric platform architecture still active in auth, league, contest,
   admin, and request-context flow
 - auth/session behavior still reflects tenant-scoped bearer-token assumptions
-- league membership lifecycle is still incomplete
 - admin tenant/platform configuration and export surfaces still active
 - notifications and social subsystems are still far broader than the simplified
   first-pass communication plan
@@ -144,8 +143,6 @@ Residual quality gaps include:
 
 Residual cleanup items include:
 
-- `LeagueMembership.role` still defaults to `MANAGER`
-- `LeagueMembership` still lacks lifecycle `status`
 - some draft/standings naming still carries old terminology
 - deferred values such as `PREDICTION` remain in catalogs and should either be
   clearly documented as deferred or removed from active enums if they create
@@ -188,6 +185,18 @@ Likely work:
 
 This is the highest-value cleanup.
 
+Status:
+
+- completed for first-pass runtime constrainment on `codex-backend-refactor-lane`
+
+Implemented in this lane:
+
+- removed tenant-context request enforcement from normal product flows
+- removed product-route dependence on request tenant resolution
+- normalized league membership lifecycle with active/inactive status
+- kept remaining `tenantId` fields only as internal compatibility scaffolding
+  in persistence/auth/admin layers, not as active product-route gating
+
 ### Slice B: Admin Platform/Tenant Surface Simplification
 
 Execution owner:
@@ -215,6 +224,18 @@ Likely keepers:
 - audit
 - contest administration if still needed
 
+Status:
+
+- completed for first-pass backend scope
+
+Implemented in this lane:
+
+- removed tenant lifecycle administration routes and services
+- removed tenant export and impersonation routes/services
+- removed dunning, notification-channel, push-trigger, and rate-limit admin
+  configuration surfaces
+- reduced platform config to poll + ingestion schedule operations
+
 ### Slice C: Communication Simplification
 
 Execution owner:
@@ -233,6 +254,18 @@ Likely work:
 - remove push/email/test-channel/scheduled-notification runtime surfaces
 - collapse toward in-app notification feed only
 - replace tmpdir-backed social persistence rather than preserving it
+
+Status:
+
+- completed for first-pass backend scope
+
+Implemented in this lane:
+
+- removed social feed, direct-message, and contest-chat runtime modules
+- removed push/email/scheduled-notification runtime infrastructure
+- removed notification preferences/templates/device-registration/delivery-log
+  schema/runtime surfaces
+- kept only the in-app notification feed endpoints and `notifications` table
 
 ### Slice D: Contract Hygiene Cleanup
 
@@ -258,6 +291,10 @@ Execution owner:
 
 - worker-safe
 
+Status:
+
+- in progress
+
 Goal:
 
 - improve confidence in the active backend and reduce the gap between branch
@@ -271,6 +308,16 @@ Likely work:
   `RosterPick`
 - increase orchestration-layer scoring tests
 - revisit global coverage thresholds after residual dead surface is removed
+
+Current worker-safe sub-slice:
+
+- add negative contest-management contract coverage
+- add dedicated `RosterPick` CRUD integration coverage
+
+Completed in this lane:
+
+- negative contest-management integration coverage
+- dedicated `RosterPick` CRUD integration coverage
 
 ### Slice F: Shared Contract And Type Cleanup
 
@@ -291,17 +338,16 @@ Likely work:
 
 ## Questions To Resolve Before Implementation
 
-1. Should `Tenant` be fully removed from the active product backend now, or
-   temporarily retained as an internal container while being removed from
-   product-facing services?
+1. `Tenant` is still present in persistence/auth internals, but the active
+   first-pass product runtime no longer requires tenant-context gating.
 
-2. Which admin surfaces are still truly required in the first-pass product?
+2. The remaining admin scope is now operational-only:
+   provider health/ingestion, migrations, audit, users, and contest admin.
 
-3. Should the notification/social simplification happen immediately after the
-   tenant cleanup, or can it be a separate follow-on lane?
+3. Communication simplification was completed in this lane rather than deferred.
 
-4. Do we want cookie/session auth to move in the same lane as tenant removal,
-   or immediately after the identity boundary is simplified?
+4. Cookie/session auth remains a future follow-up after the identity boundary
+   is simplified further.
 
 ## Proposed Acceptance Criteria
 
@@ -312,6 +358,10 @@ Likely work:
 - `/api/v1/admin` no longer exposes trial/credit/dunning/export/impersonation
   features that have no first-pass consumer
 - communication runtime matches the simplified in-app-feed direction
+
+Current lane result:
+
+- achieved for the active first-pass backend runtime
 - active route contracts use typed DTO schemas rather than passthrough or
   generic success placeholders where structured data is returned
 - shared DTO/domain catalogs no longer expose broad dead platform-era surface
