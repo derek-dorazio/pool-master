@@ -10,7 +10,7 @@ interface SessionState {
   currentPickNumber: number;
   currentEntryId: string | null;
   startedAt: Date | null;
-  pickDeadline: Date | null;
+  currentTurnStartedAt: Date | null;
   timePerPickSeconds: number;
 }
 
@@ -20,11 +20,11 @@ interface DraftState {
   entryIds: string[];
   rounds: number;
   currentPickNumber: number;
-  picks: DraftPickRecord[];
+  picks: DraftPickHistoryRecord[];
   autoPickPolicy: string;
 }
 
-interface DraftPickRecord {
+interface DraftPickHistoryRecord {
   pickNumber: number;
   round: number;
   pickInRound: number;
@@ -39,14 +39,14 @@ export interface DraftStateResponseDto {
   status: string;
   currentPickNumber: number;
   currentEntryId: string | null;
-  pickDeadline: string | null;
+  currentTurnStartedAt: string | null;
   rounds: number;
   entryIds: string[];
-  picks: DraftPickDto[];
+  draftPickHistories: DraftPickHistoryDto[];
   isComplete: boolean;
 }
 
-export interface DraftPickDto {
+export interface DraftPickHistoryDto {
   pickNumber: number;
   round: number;
   pickInRound: number;
@@ -66,15 +66,15 @@ export function toDraftStateResponse(
     status: session.status,
     currentPickNumber: state.currentPickNumber,
     currentEntryId: session.currentEntryId,
-    pickDeadline: session.pickDeadline?.toISOString() ?? null,
+    currentTurnStartedAt: session.currentTurnStartedAt?.toISOString() ?? null,
     rounds: state.rounds,
     entryIds: state.entryIds,
-    picks: state.picks.map(toDraftPickDto),
+    draftPickHistories: state.picks.map(toDraftPickHistoryDto),
     isComplete: opts?.isComplete ?? false,
   };
 }
 
-export function toDraftPickDto(pick: DraftPickRecord): DraftPickDto {
+export function toDraftPickHistoryDto(pick: DraftPickHistoryRecord): DraftPickHistoryDto {
   return {
     pickNumber: pick.pickNumber,
     round: pick.round,

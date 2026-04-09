@@ -12,4 +12,15 @@ module.exports = {
   testTimeout: 30_000,
   // Run serially — integration tests share a database
   maxWorkers: 1,
+  collectCoverageFrom: [
+    'packages/core-api/src/**/*.ts',
+    'packages/shared/**/*.ts',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!packages/shared/dist/**',
+    '!packages/shared/generated/**',
+    '!packages/shared/openapi-ts.config.ts',
+    '!packages/shared/package.json',
+    '!packages/shared/tsconfig.json',
+  ],
 };

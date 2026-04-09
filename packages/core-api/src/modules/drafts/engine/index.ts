@@ -17,7 +17,7 @@ export {
   pauseSession,
   resumeSession,
   completeSession,
-  extendPickDeadline,
+  extendCurrentTurn,
   isPickExpired,
 } from './draft-session-manager';
 export type { SessionState, TransitionResult } from './draft-session-manager';
@@ -42,42 +42,5 @@ export type {
   BudgetPick,
   BudgetPickValidation,
 } from './budget-pick-engine';
-
-export { SurvivorEngine } from './survivor-engine';
-export type {
-  SurvivorConfig,
-  SurvivorState,
-  SurvivorEntryState,
-  SurvivorPick,
-  SurvivorPickValidation,
-} from './survivor-engine';
-
-export { PickEmEngine } from './pickem-engine';
-export type {
-  PickEmConfig,
-  PickEmState,
-  PickEmEntryState,
-  PickEmPick,
-  PickEmValidation,
-} from './pickem-engine';
-
-export { BracketEngine } from './bracket-engine';
-export type {
-  BracketConfig,
-  BracketState,
-  BracketEntryState,
-  MatchPrediction,
-  MatchResult,
-  BracketValidation,
-} from './bracket-engine';
-
-export { OpenSelectionEngine } from './open-selection-engine';
-export type {
-  OpenSelectionConfig,
-  OpenSelectionState,
-  OpenSelectionEntryState,
-  ValidationResult as OpenSelectionValidation,
-  SubmitResult as OpenSelectionSubmitResult,
-} from './open-selection-engine';
 
 export { DraftQueue, draftQueue } from './draft-queue';

@@ -4,14 +4,19 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
-import type { CommissionerPermission, LeagueMembership } from '@poolmaster/shared/domain';
+import type {
+  CommissionerPermission,
+  LeagueMembership,
+  LeagueMembershipStatus,
+} from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueMembershipRepository implements LeagueMembershipRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findByLeague(leagueId: string): Promise<LeagueMembership[]> {
     const rows = await this.prisma.leagueMembership.findMany({
-      where: { leagueId },
+      where: { leagueId, status: MembershipStatus.ACTIVE },
       orderBy: { joinedAt: 'asc' },
     });
     return rows.map(mapToMembership);
@@ -19,7 +24,7 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
 
   async findByUser(userId: string): Promise<LeagueMembership[]> {
     const rows = await this.prisma.leagueMembership.findMany({
-      where: { userId },
+      where: { userId, status: MembershipStatus.ACTIVE },
       orderBy: { joinedAt: 'desc' },
     });
     return rows.map(mapToMembership);
@@ -40,6 +45,7 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
         leagueId: membership.leagueId,
         userId: membership.userId,
         role: membership.role,
+        status: membership.status,
         permissions: membership.permissions as string[],
         joinedAt: membership.joinedAt,
       },
@@ -52,7 +58,9 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
       where: { id },
       data: {
         ...(updates.role !== undefined && { role: updates.role }),
+        ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.permissions !== undefined && { permissions: updates.permissions as string[] }),
+        ...(updates.joinedAt !== undefined && { joinedAt: updates.joinedAt }),
       },
     });
     return mapToMembership(row);
@@ -68,6 +76,7 @@ function mapToMembership(row: {
   leagueId: string;
   userId: string;
   role: string;
+  status: string;
   permissions: unknown;
   joinedAt: Date;
   createdAt: Date;
@@ -78,6 +87,7 @@ function mapToMembership(row: {
     leagueId: row.leagueId,
     userId: row.userId,
     role: row.role as LeagueMembership['role'],
+    status: row.status as LeagueMembershipStatus,
     permissions: (Array.isArray(row.permissions) ? row.permissions : []) as CommissionerPermission[],
     joinedAt: row.joinedAt,
     createdAt: row.createdAt,

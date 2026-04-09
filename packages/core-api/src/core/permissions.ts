@@ -3,7 +3,7 @@
  *
  * OWNER role has implicit access to all permissions.
  * COMMISSIONER role has a configurable subset stored on the membership.
- * MANAGER and VIEWER roles have no commissioner permissions.
+ * MEMBER has no commissioner permissions.
  */
 
 import { CommissionerPermission, LeagueRole } from '@poolmaster/shared/domain';

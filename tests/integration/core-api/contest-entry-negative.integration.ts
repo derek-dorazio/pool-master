@@ -20,7 +20,6 @@ import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
   ContestStatus,
   ContestType,
-  PoolType,
   TierAssignmentMethod,
   LeagueVisibility,
   ScoringEngine,
@@ -91,7 +90,7 @@ describe('Contest Entry Negative Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
@@ -119,7 +118,7 @@ describe('Contest Entry Negative Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
@@ -160,7 +159,31 @@ describe('Contest Entry Negative Integration', () => {
     });
     createdParticipantId = participant.id;
 
-    await prisma.selectionConfig.update({
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `contest-entry-negative-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: 'Contest Entry Negative Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+      },
+    });
+
+    await prisma.contest.update({
+      where: { id: openContestId },
+      data: { sportEventId: sportEvent.id },
+    });
+
+    await prisma.contestConfiguration.update({
       where: { contestId: openContestId },
       data: {
         tierConfig: [
@@ -175,25 +198,13 @@ describe('Contest Entry Negative Integration', () => {
       },
     });
 
-    await prisma.contestPool.create({
+    await prisma.sportEventParticipantValuation.create({
       data: {
-        contestId: openContestId,
-        sport: Sport.GOLF,
-        poolType: PoolType.EVENT_FIELD,
-        config: {},
-      },
-    });
-
-    await prisma.contestParticipantPool.create({
-      data: {
-        poolId: (await prisma.contestPool.findUniqueOrThrow({ where: { contestId: openContestId } })).id,
-        contestId: openContestId,
-        participantId: participant.id,
-        cost: 1000,
+        sportEventParticipantId: sportEventParticipant.id,
+        price: 1000,
         tier: 'tier-1',
-        tierAssignmentMethod: TierAssignmentMethod.ODDS,
-        ranking: 1,
-        isAvailable: true,
+        orderIndex: 1,
+        valuationSource: 'integration-test',
       },
     });
 
@@ -208,7 +219,7 @@ describe('Contest Entry Negative Integration', () => {
     await prisma.rosterPick.create({
       data: {
         entryId: openContestEntryId,
-        participantId: participant.id,
+        sportEventParticipantId: sportEventParticipant.id,
         draftRound: 1,
         draftPickNumber: 1,
         autoPicked: false,

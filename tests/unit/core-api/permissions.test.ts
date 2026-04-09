@@ -11,16 +11,16 @@ import { buildMembership } from '../../factories';
 
 describe('Commissioner Permissions', () => {
   describe('ALL_COMMISSIONER_PERMISSIONS', () => {
-    it('contains all 25 permission values', () => {
-      expect(ALL_COMMISSIONER_PERMISSIONS).toHaveLength(25);
+    it('contains all 23 permission values', () => {
+      expect(ALL_COMMISSIONER_PERMISSIONS).toHaveLength(23);
     });
 
     it('includes league.settings.edit', () => {
       expect(ALL_COMMISSIONER_PERMISSIONS).toContain('league.settings.edit');
     });
 
-    it('includes template.share', () => {
-      expect(ALL_COMMISSIONER_PERMISSIONS).toContain('template.share');
+    it('includes scoring.override', () => {
+      expect(ALL_COMMISSIONER_PERMISSIONS).toContain('scoring.override');
     });
   });
 
@@ -55,14 +55,9 @@ describe('Commissioner Permissions', () => {
       expect(hasPermission(commissioner, CommissionerPermission.SCORING_OVERRIDE)).toBe(false);
     });
 
-    it('returns false for MANAGER', () => {
-      const manager = buildMembership({ role: LeagueRole.MANAGER });
-      expect(hasPermission(manager, CommissionerPermission.LEAGUE_SETTINGS_EDIT)).toBe(false);
-    });
-
-    it('returns false for VIEWER', () => {
-      const viewer = buildMembership({ role: LeagueRole.VIEWER });
-      expect(hasPermission(viewer, CommissionerPermission.CONTEST_CREATE)).toBe(false);
+    it('returns false for MEMBER', () => {
+      const member = buildMembership({ role: LeagueRole.MEMBER });
+      expect(hasPermission(member, CommissionerPermission.LEAGUE_SETTINGS_EDIT)).toBe(false);
     });
   });
 
@@ -100,12 +95,8 @@ describe('Commissioner Permissions', () => {
       expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.COMMISSIONER }))).toBe(true);
     });
 
-    it('returns false for MANAGER', () => {
-      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.MANAGER }))).toBe(false);
-    });
-
-    it('returns false for VIEWER', () => {
-      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.VIEWER }))).toBe(false);
+    it('returns false for MEMBER', () => {
+      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.MEMBER }))).toBe(false);
     });
   });
 

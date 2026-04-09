@@ -7,7 +7,10 @@
 
 import type { FastifyInstance } from 'fastify';
 import { POLL_INTERVAL_CONFIG } from '../../plugins/poll-config';
-import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
+import {
+  PlatformConfigResponseSchema,
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
 
 export async function configModule(fastify: FastifyInstance): Promise<void> {
   /**
@@ -30,7 +33,7 @@ export async function configModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Config'],
       summary: 'Get recommended poll intervals for clients',
       operationId: 'getPollIntervals',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(PlatformConfigResponseSchema) },
     },
     handler: async (_request, reply) => {
       return reply.send(POLL_INTERVAL_CONFIG);

@@ -1,11 +1,10 @@
 /**
- * StandingsRollup — periodic job that reads totals from ContestEntry
- * and writes ranked standings to the ContestStanding table via Prisma.
+ * StandingsRollup — periodic job that reads contest totals and persists
+ * standings positions back onto ContestEntry.
  */
 
 import type { PrismaClient } from '@prisma/client';
 import type { EventBus } from '@poolmaster/shared/events/event-bus';
-import type { ScoreStore } from '../storage/score-store';
 
 // --- Types ---
 
@@ -25,7 +24,6 @@ export interface StandingEntry {
 
 export interface StandingsRollupDeps {
   eventBus: EventBus;
-  scoreStore: ScoreStore;
   prisma: PrismaClient;
 }
 
@@ -33,18 +31,16 @@ export interface StandingsRollupDeps {
 
 const DEFAULT_INTERVAL_MS = 30_000;
 
-/** Reads ScoreStore leaderboards, assigns ranks, and persists standings to Prisma. */
+/** Reads current totals, assigns ranks, and persists standings to ContestEntry. */
 export class StandingsRollup {
   private intervalHandle: ReturnType<typeof setInterval> | null = null;
   private activeContestIds: Set<string> = new Set();
   private previousRanks: Map<string, Map<string, number>> = new Map();
   private readonly eventBus: EventBus;
-  private readonly scoreStore: ScoreStore;
   private readonly prisma: PrismaClient;
 
   constructor(deps: StandingsRollupDeps) {
     this.eventBus = deps.eventBus;
-    this.scoreStore = deps.scoreStore;
     this.prisma = deps.prisma;
   }
 
@@ -61,13 +57,20 @@ export class StandingsRollup {
 
   /** Run rollup for a specific contest. */
   async rollupContest(contestId: string): Promise<RollupResult> {
-    const leaderboard = await this.scoreStore.getLeaderboard(contestId);
+    const entries = await this.prisma.contestEntry.findMany({
+      where: { contestId },
+      orderBy: [{ totalScore: 'desc' }, { id: 'asc' }],
+      select: { id: true, totalScore: true },
+    });
+    const leaderboard = entries.map((entry) => ({
+      entryId: entry.id,
+      total: entry.totalScore,
+    }));
     const standings = assignRanks(leaderboard);
     const rankChanges = this.countRankChanges(contestId, standings);
     this.updatePreviousRanks(contestId, standings);
     const rolledUpAt = new Date();
 
-    // Persist standings to Prisma
     await this.persistStandings(contestId, standings, rolledUpAt);
 
     await this.publishStandingsUpdated(contestId, standings, rolledUpAt);
@@ -116,40 +119,17 @@ export class StandingsRollup {
     return this.activeContestIds;
   }
 
-  /** Persist standings to ContestStanding and update ContestEntry.rank via Prisma. */
+  /** Persist standings positions onto ContestEntry. */
   private async persistStandings(
     contestId: string,
     standings: StandingEntry[],
-    rolledUpAt: Date,
+    _rolledUpAt: Date,
   ): Promise<void> {
-    await this.prisma.$transaction(
-      standings.map((s) =>
-        this.prisma.contestStanding.upsert({
-          where: {
-            contestId_entryId: { contestId, entryId: s.entryId },
-          },
-          create: {
-            contestId,
-            entryId: s.entryId,
-            rank: s.rank,
-            totalScore: s.totalScore,
-            lastUpdatedAt: rolledUpAt,
-          },
-          update: {
-            rank: s.rank,
-            totalScore: s.totalScore,
-            lastUpdatedAt: rolledUpAt,
-          },
-        }),
-      ),
-    );
-
-    // Update rank on ContestEntry for quick lookups
     await this.prisma.$transaction(
       standings.map((s) =>
         this.prisma.contestEntry.update({
           where: { id: s.entryId },
-          data: { rank: s.rank },
+          data: { standingsPosition: s.rank },
         }),
       ),
     );

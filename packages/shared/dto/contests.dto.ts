@@ -21,7 +21,7 @@ export const TierDefinitionRequestSchema = z.object({
   participantIds: z.array(z.string()),
 });
 
-export const SelectionConfigRequestSchema = z.object({
+export const ContestCrudConfigurationRequestSchema = z.object({
   draftMode: z.string().optional(),
   rounds: z.number().int().optional(),
   timePerPickSeconds: z.number().int().optional(),
@@ -32,11 +32,7 @@ export const SelectionConfigRequestSchema = z.object({
   pricingMethod: z.string().optional(),
   rosterSize: z.number().int().optional(),
   pickCount: z.number().int().optional(),
-  survivorStyle: z.string().optional(),
   picksPerPeriod: z.number().int().optional(),
-  oneEntityPerSeason: z.boolean().optional(),
-  strikesBeforeElimination: z.number().int().optional(),
-  buybacksAllowed: z.boolean().optional(),
   roundValues: z.array(z.number()).optional(),
   startRound: z.string().optional(),
   isExclusive: z.boolean().optional(),
@@ -46,38 +42,16 @@ export const SelectionConfigRequestSchema = z.object({
   captainMultiplier: z.number().optional(),
 });
 
-export const PayoutSlotRequestSchema = z.object({
-  rank: z.number().int().min(1),
-  percentage: z.number().min(0).max(100),
-  fixedAmount: z.number().int().min(0).optional(),
-});
-
-export const IntermediatePrizeRequestSchema = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  amount: z.number().int().min(0).optional(),
-  percentage: z.number().min(0).max(100).optional(),
-});
-
-export const PayoutConfigRequestSchema = z.object({
-  entryFee: z.number().int().min(0).optional(),
-  prizePool: z.number().int().min(0).optional(),
-  payoutStructure: z.array(PayoutSlotRequestSchema),
-  intermediatePrizes: z.array(IntermediatePrizeRequestSchema),
-});
-
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100),
-  sport: z.string().min(1),
   eventId: z.string().optional(),
-  seasonId: z.string().optional(),
   contestType: z.enum([ContestType.SINGLE_EVENT]),
   selectionType: z.enum([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
     SelectionType.BUDGET_PICK,
   ]),
-  selectionConfig: SelectionConfigRequestSchema.optional(),
+  contestConfiguration: ContestCrudConfigurationRequestSchema.optional(),
   scoringEngine: z.enum([
     ScoringEngine.ADVANCEMENT,
     ScoringEngine.STAT_ACCUMULATION,
@@ -87,9 +61,6 @@ export const CreateContestRequestSchema = z.object({
     ScoringEngine.FIGHT_RESULT,
     ScoringEngine.CUMULATIVE,
   ]),
-  scoringRules: z.record(z.unknown()).optional(),
-  scoringTemplateKey: z.string().optional(),
-  payoutConfig: PayoutConfigRequestSchema.optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
   lockAt: z.string().datetime().optional(),
@@ -100,14 +71,57 @@ export type CreateContestRequest = z.infer<typeof CreateContestRequestSchema>;
 
 export const UpdateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  scoringRules: z.record(z.unknown()).optional(),
-  payoutConfig: PayoutConfigRequestSchema.optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
   lockAt: z.string().datetime().optional(),
   isExclusive: z.boolean().optional(),
 });
 export type UpdateContestRequest = z.infer<typeof UpdateContestRequestSchema>;
+
+export const UndoContestDraftSelectionRequestSchema = z.object({
+  pickId: z.string(),
+  reason: z.string(),
+});
+export type UndoContestDraftSelectionRequest = z.infer<typeof UndoContestDraftSelectionRequestSchema>;
+
+export const PauseContestDraftRequestSchema = z.object({
+  reason: z.string(),
+});
+export type PauseContestDraftRequest = z.infer<typeof PauseContestDraftRequestSchema>;
+
+export const ExtendPickClockRequestSchema = z.object({
+  additionalSeconds: z.number().int().min(1),
+});
+export type ExtendPickClockRequest = z.infer<typeof ExtendPickClockRequestSchema>;
+
+export const AdjustContestScoreRequestSchema = z.object({
+  entryId: z.string(),
+  adjustment: z.number(),
+  reason: z.string(),
+});
+export type AdjustContestScoreRequest = z.infer<typeof AdjustContestScoreRequestSchema>;
+
+export const ReopenContestRequestSchema = z.object({
+  reason: z.string(),
+});
+export type ReopenContestRequest = z.infer<typeof ReopenContestRequestSchema>;
+
+export const CloseContestRequestSchema = z.object({
+  reason: z.string(),
+});
+export type CloseContestRequest = z.infer<typeof CloseContestRequestSchema>;
+
+export const ExtendContestDeadlineRequestSchema = z.object({
+  newEnd: z.string().datetime(),
+  reason: z.string(),
+});
+export type ExtendContestDeadlineRequest = z.infer<typeof ExtendContestDeadlineRequestSchema>;
+
+export const UpdateContestLockTimeRequestSchema = z.object({
+  newLock: z.string().datetime(),
+  reason: z.string(),
+});
+export type UpdateContestLockTimeRequest = z.infer<typeof UpdateContestLockTimeRequestSchema>;
 
 // --- Response Sub-schemas ---
 
@@ -119,6 +133,7 @@ export const ContestSummaryDtoSchema = z.object({
   selectionType: z.string(),
   scoringEngine: z.string(),
   leagueId: z.string(),
+  sportEventId: z.string().nullable().optional(),
   sport: z.string().nullable().optional(),
   entryCount: z.number().optional(),
   startsAt: z.string().datetime().nullable().optional(),
@@ -129,7 +144,6 @@ export const ContestSummaryDtoSchema = z.object({
 export type ContestSummaryDto = z.infer<typeof ContestSummaryDtoSchema>;
 
 export const ContestDetailDtoSchema = ContestSummaryDtoSchema.extend({
-  scoringRules: z.record(z.unknown()).optional(),
   lockAt: z.string().datetime().nullable().optional(),
   isExclusive: z.boolean().optional(),
   sport: z.string().nullable().optional(),
@@ -139,13 +153,14 @@ export type ContestDetailDto = z.infer<typeof ContestDetailDtoSchema>;
 export const ContestEntryDtoSchema = z.object({
   id: z.string(),
   contestId: z.string(),
-  leagueMembershipId: z.string(),
+  squadId: z.string(),
+  squadName: z.string(),
+  entryNumber: z.number().int().min(1),
   name: z.string(),
+  status: z.enum(['ACTIVE', 'INACTIVE']),
   totalScore: z.number(),
-  rank: z.number().nullable().optional(),
+  standingsPosition: z.number().nullable().optional(),
   isEliminated: z.boolean(),
-  ownerId: z.string(),
-  ownerDisplayName: z.string(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -155,7 +170,7 @@ export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
 
 export const ContestResponseSchema = z.object({
   contest: ContestDetailDtoSchema,
-  selectionConfig: z.record(z.unknown()).nullable().optional(),
+  contestConfiguration: z.record(z.unknown()).nullable().optional(),
 });
 export type ContestResponse = z.infer<typeof ContestResponseSchema>;
 
@@ -175,6 +190,7 @@ export const ContestEntryListResponseSchema = z.object({
   total: z.number(),
   isJoined: z.boolean(),
   myEntryId: z.string().nullable(),
+  myEntryIds: z.array(z.string()).optional(),
   entries: z.array(ContestEntryDtoSchema),
 });
 export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;
@@ -191,7 +207,7 @@ export const ContestEntryDeletionResponseSchema = z.object({
 });
 export type ContestEntryDeletionResponse = z.infer<typeof ContestEntryDeletionResponseSchema>;
 
-export const ContestStandingsRecalculationResponseSchema = z.object({
+export const ContestRecalculationResponseSchema = z.object({
   contestId: z.string(),
   teamsAffected: z.number(),
   standingsChanged: z.boolean(),
@@ -205,3 +221,28 @@ export const ContestStandingsRecalculationResponseSchema = z.object({
     }),
   ),
 });
+export type ContestRecalculationResponse = z.infer<typeof ContestRecalculationResponseSchema>;
+
+export const ContestStandingsRecalculationResponseSchema =
+  ContestRecalculationResponseSchema;
+
+export const ContestAuditLogEntryDtoSchema = z.object({
+  id: z.string(),
+  leagueId: z.string(),
+  contestId: z.string().nullable().optional(),
+  actorId: z.string(),
+  action: z.string(),
+  category: z.string(),
+  description: z.string(),
+  beforeState: z.record(z.unknown()).nullable().optional(),
+  afterState: z.record(z.unknown()).nullable().optional(),
+  reason: z.string().nullable().optional(),
+  ipAddress: z.string().nullable().optional(),
+  createdAt: z.string().datetime(),
+});
+export type ContestAuditLogEntryDto = z.infer<typeof ContestAuditLogEntryDtoSchema>;
+
+export const ContestAuditLogResponseSchema = z.object({
+  entries: z.array(ContestAuditLogEntryDtoSchema),
+});
+export type ContestAuditLogResponse = z.infer<typeof ContestAuditLogResponseSchema>;

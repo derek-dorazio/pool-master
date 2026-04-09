@@ -10,8 +10,6 @@ import { NotificationEventType } from '@poolmaster/shared/events/notification';
 // Event type strings from typed event interfaces (publisher contracts)
 // These are the `type` literal values on the event interfaces in scoring.ts, draft.ts, contest.ts
 const SCORING_EVENT_TYPES = ['stat.received', 'score.updated'] as const;
-const DRAFT_EVENT_TYPES = ['draft.pick_made', 'draft.completed'] as const;
-const CONTEST_EVENT_TYPES = ['contest.locked', 'contest.completed'] as const;
 
 // ========================================================================
 // Tests

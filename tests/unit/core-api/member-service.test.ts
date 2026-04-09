@@ -4,7 +4,11 @@ import {
   MemberOperationError,
 } from '../../../packages/core-api/src/modules/leagues/member-service';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
-import { CommissionerPermission, LeagueRole } from '@poolmaster/shared/domain';
+import {
+  CommissionerPermission,
+  LeagueMembershipStatus,
+  LeagueRole,
+} from '@poolmaster/shared/domain';
 import { buildMembership } from '../../factories';
 
 function createMockMembershipRepo(
@@ -32,12 +36,12 @@ function createMockMembershipRepo(
 describe('MemberService', () => {
   describe('changeRole', () => {
     it('updates the role of a non-owner member', async () => {
-      const membership = buildMembership({ role: LeagueRole.MANAGER });
+      const membership = buildMembership({ role: LeagueRole.MEMBER });
       const repo = createMockMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const service = new MemberService(repo);
-      const result = await service.changeRole({
+      await service.changeRole({
         leagueId: 'league-1',
         targetUserId: 'user-1',
         newRole: LeagueRole.COMMISSIONER,
@@ -71,7 +75,7 @@ describe('MemberService', () => {
         service.changeRole({
           leagueId: 'league-1',
           targetUserId: 'user-1',
-          newRole: LeagueRole.VIEWER,
+          newRole: LeagueRole.MEMBER,
         }),
       ).rejects.toThrow(MemberOperationError);
     });
@@ -83,21 +87,39 @@ describe('MemberService', () => {
         service.changeRole({
           leagueId: 'league-1',
           targetUserId: 'missing',
-          newRole: LeagueRole.VIEWER,
+          newRole: LeagueRole.MEMBER,
         }),
       ).rejects.toThrow(MemberNotFoundError);
+    });
+
+    it('throws MemberOperationError when target membership is inactive', async () => {
+      const repo = createMockMembershipRepo({
+        findByLeagueAndUser: jest
+          .fn()
+          .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
+      });
+      const service = new MemberService(repo);
+      await expect(
+        service.changeRole({
+          leagueId: 'league-1',
+          targetUserId: 'user-1',
+          newRole: LeagueRole.COMMISSIONER,
+        }),
+      ).rejects.toThrow(MemberOperationError);
     });
   });
 
   describe('removeMember', () => {
-    it('deletes the membership for a non-owner', async () => {
-      const membership = buildMembership({ role: LeagueRole.MANAGER });
+    it('inactivates the membership for a non-owner', async () => {
+      const membership = buildMembership({ role: LeagueRole.MEMBER });
       const repo = createMockMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const service = new MemberService(repo);
       await service.removeMember('league-1', 'user-1');
-      expect(repo.delete).toHaveBeenCalledWith(membership.id);
+      expect(repo.update).toHaveBeenCalledWith(membership.id, {
+        status: LeagueMembershipStatus.INACTIVE,
+      });
     });
 
     it('throws MemberOperationError when removing the owner', async () => {
@@ -116,6 +138,18 @@ describe('MemberService', () => {
       const service = new MemberService(repo);
       await expect(service.removeMember('league-1', 'missing')).rejects.toThrow(
         MemberNotFoundError,
+      );
+    });
+
+    it('throws MemberOperationError when member is already inactive', async () => {
+      const repo = createMockMembershipRepo({
+        findByLeagueAndUser: jest
+          .fn()
+          .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
+      });
+      const service = new MemberService(repo);
+      await expect(service.removeMember('league-1', 'user-1')).rejects.toThrow(
+        MemberOperationError,
       );
     });
   });

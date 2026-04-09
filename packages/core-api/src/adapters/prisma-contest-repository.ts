@@ -11,7 +11,10 @@ export class PrismaContestRepository implements ContestRepository {
 
   async findById(id: string, tenantId: string): Promise<Contest | null> {
     const row = await this.prisma.contest.findFirst({
-      where: { id, league: { tenantId } },
+      where: { id, ...(tenantId ? { league: { tenantId } } : {}) },
+      include: {
+        sportEvent: { select: { sport: true } },
+      },
     });
     return row ? mapToContest(row) : null;
   }
@@ -20,6 +23,9 @@ export class PrismaContestRepository implements ContestRepository {
     const rows = await this.prisma.contest.findMany({
       where: { leagueId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        sportEvent: { select: { sport: true } },
+      },
     });
     return rows.map(mapToContest);
   }
@@ -28,17 +34,14 @@ export class PrismaContestRepository implements ContestRepository {
     const row = await this.prisma.contest.create({
       data: {
         leagueId: contest.leagueId,
-        seasonId: contest.seasonId || undefined,
+        sportEventId: contest.sportEventId || undefined,
         name: contest.name,
         status: contest.status,
         contestType: contest.contestType,
         selectionType: contest.selectionType,
         scoringEngine: contest.scoringEngine,
-        sport: contest.sport,
         isExclusive: contest.isExclusive,
         scoringStopsOnElimination: contest.scoringStopsOnElimination,
-        scoringRules: contest.scoringRules as object,
-        payoutConfig: (contest as Contest & { payoutConfig?: object }).payoutConfig ?? {},
         startsAt: contest.startsAt,
         endsAt: contest.endsAt,
         lockAt: contest.lockAt,
@@ -53,8 +56,7 @@ export class PrismaContestRepository implements ContestRepository {
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.status !== undefined && { status: updates.status }),
-        ...(updates.sport !== undefined && { sport: updates.sport }),
-        ...(updates.scoringRules !== undefined && { scoringRules: updates.scoringRules as object }),
+        ...(updates.sportEventId !== undefined && { sportEventId: updates.sportEventId }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
         ...(updates.lockAt !== undefined && { lockAt: updates.lockAt }),
@@ -67,17 +69,11 @@ export class PrismaContestRepository implements ContestRepository {
   async delete(id: string): Promise<void> {
     // Delete child records in dependency order before removing the contest
     await this.prisma.$transaction([
-      this.prisma.bracketPrediction.deleteMany({ where: { contestId: id } }),
-      this.prisma.contestPick.deleteMany({ where: { contestId: id } }),
       this.prisma.rosterPick.deleteMany({ where: { entry: { contestId: id } } }),
-      this.prisma.contestStanding.deleteMany({ where: { contestId: id } }),
-      this.prisma.contestResult.deleteMany({ where: { contestId: id } }),
-      this.prisma.draftPick.deleteMany({ where: { session: { contestId: id } } }),
+      this.prisma.draftPickHistory.deleteMany({ where: { session: { contestId: id } } }),
       this.prisma.draftSession.deleteMany({ where: { contestId: id } }),
       this.prisma.contestEntry.deleteMany({ where: { contestId: id } }),
-      this.prisma.contestParticipantPool.deleteMany({ where: { contestId: id } }),
-      this.prisma.contestPool.deleteMany({ where: { contestId: id } }),
-      this.prisma.selectionConfig.deleteMany({ where: { contestId: id } }),
+      this.prisma.contestConfiguration.deleteMany({ where: { contestId: id } }),
       this.prisma.contest.delete({ where: { id } }),
     ]);
   }
@@ -86,17 +82,15 @@ export class PrismaContestRepository implements ContestRepository {
 function mapToContest(row: {
   id: string;
   leagueId: string;
-  seasonId: string | null;
+  sportEventId: string | null;
   name: string;
   status: string;
   contestType: string;
   selectionType: string;
   scoringEngine: string;
-  sport: string | null;
+  sportEvent?: { sport: string } | null;
   isExclusive: boolean;
   scoringStopsOnElimination: boolean;
-  scoringRules: unknown;
-  payoutConfig: unknown;
   startsAt: Date | null;
   endsAt: Date | null;
   lockAt: Date | null;
@@ -106,16 +100,15 @@ function mapToContest(row: {
   return {
     id: row.id,
     leagueId: row.leagueId,
-    seasonId: row.seasonId ?? '',
+    sportEventId: row.sportEventId ?? undefined,
     name: row.name,
     status: row.status as Contest['status'],
     contestType: row.contestType as Contest['contestType'],
     selectionType: row.selectionType as Contest['selectionType'],
     scoringEngine: row.scoringEngine as Contest['scoringEngine'],
-    sport: row.sport as Contest['sport'],
+    sport: row.sportEvent?.sport as Contest['sport'],
     isExclusive: row.isExclusive,
     scoringStopsOnElimination: row.scoringStopsOnElimination,
-    scoringRules: (row.scoringRules ?? {}) as Contest['scoringRules'],
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
     lockAt: row.lockAt ?? undefined,

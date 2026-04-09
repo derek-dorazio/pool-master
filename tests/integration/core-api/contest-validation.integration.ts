@@ -48,11 +48,10 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Broken Tiered Contest',
-        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           tierAssignmentMethod: 'ODDS',
           rounds: 6,
         },
@@ -92,7 +91,6 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: `Deferred ${selectionType}`,
-        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType,
         scoringEngine: ScoringEngine.STROKE_PLAY,

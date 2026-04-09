@@ -20,9 +20,14 @@ export const SubmitPickRequestSchema = z.object({
 });
 export type SubmitPickRequest = z.infer<typeof SubmitPickRequestSchema>;
 
+export const ExtendCurrentTurnRequestSchema = z.object({
+  additionalSeconds: z.number().int().min(1).max(3600),
+});
+export type ExtendCurrentTurnRequest = z.infer<typeof ExtendCurrentTurnRequestSchema>;
+
 // --- Response Sub-schemas ---
 
-export const DraftPickDtoSchema = z.object({
+export const DraftPickHistoryDtoSchema = z.object({
   pickNumber: z.number(),
   round: z.number(),
   pickInRound: z.number(),
@@ -39,7 +44,7 @@ export const DraftPickDtoSchema = z.object({
   isSkipped: z.boolean().optional(),
   pickedAt: z.string().datetime(),
 });
-export type DraftPickDto = z.infer<typeof DraftPickDtoSchema>;
+export type DraftPickHistoryDto = z.infer<typeof DraftPickHistoryDtoSchema>;
 
 export const DraftEntryDtoSchema = z.object({
   id: z.string(),
@@ -57,7 +62,7 @@ export const DraftTierConfigDtoSchema = z.object({
 });
 export type DraftTierConfigDto = z.infer<typeof DraftTierConfigDtoSchema>;
 
-export const DraftSelectionConfigDtoSchema = z.object({
+export const DraftContestConfigurationDtoSchema = z.object({
   isExclusive: z.boolean(),
   rounds: z.number().optional(),
   pickCount: z.number().optional(),
@@ -70,7 +75,7 @@ export const DraftSelectionConfigDtoSchema = z.object({
   startRound: z.string().optional(),
   tierConfig: z.array(DraftTierConfigDtoSchema).optional(),
 });
-export type DraftSelectionConfigDto = z.infer<typeof DraftSelectionConfigDtoSchema>;
+export type DraftContestConfigurationDto = z.infer<typeof DraftContestConfigurationDtoSchema>;
 
 export const DraftPickEmEventDtoSchema = z.object({
   id: z.string(),
@@ -116,7 +121,7 @@ export const DraftStateDtoSchema = z.object({
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
-  selectionConfig: DraftSelectionConfigDtoSchema.nullable().optional(),
+  contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
   status: z.string(),
   currentPickNumber: z.number(),
   currentRound: z.number(),
@@ -127,24 +132,14 @@ export const DraftStateDtoSchema = z.object({
   myEntryId: z.string().nullable(),
   isMyPick: z.boolean(),
   timePerPickSeconds: z.number(),
-  pickDeadline: z.string().datetime().nullable(),
+  currentTurnStartedAt: z.string().datetime().nullable(),
   availableParticipantIds: z.array(z.string()),
-  picks: z.array(DraftPickDtoSchema),
+  draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   entries: z.array(DraftEntryDtoSchema),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),
   bracketMatchups: z.array(DraftBracketMatchupDtoSchema).optional(),
 });
 export type DraftStateDto = z.infer<typeof DraftStateDtoSchema>;
-
-export const SelectionTemplateDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  sport: z.string(),
-  contestType: z.string(),
-  selectionType: z.string(),
-  config: z.record(z.unknown()),
-});
 
 // --- Responses ---
 
@@ -155,7 +150,7 @@ export const DraftStateResponseSchema = z.object({
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
-  selectionConfig: DraftSelectionConfigDtoSchema.nullable().optional(),
+  contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
   status: z.string(),
   currentPickNumber: z.number(),
   currentRound: z.number(),
@@ -166,9 +161,9 @@ export const DraftStateResponseSchema = z.object({
   myEntryId: z.string().nullable(),
   isMyPick: z.boolean(),
   timePerPickSeconds: z.number(),
-  pickDeadline: z.string().datetime().nullable(),
+  currentTurnStartedAt: z.string().datetime().nullable(),
   entries: z.array(DraftEntryDtoSchema),
-  picks: z.array(DraftPickDtoSchema),
+  draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   availableParticipantIds: z.array(z.string()),
   isComplete: z.boolean(),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),
@@ -183,7 +178,7 @@ export const DraftPickResponseSchema = z.object({
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
-  selectionConfig: DraftSelectionConfigDtoSchema.nullable().optional(),
+  contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
   status: z.string(),
   currentPickNumber: z.number(),
   currentRound: z.number(),
@@ -194,16 +189,12 @@ export const DraftPickResponseSchema = z.object({
   myEntryId: z.string().nullable(),
   isMyPick: z.boolean(),
   timePerPickSeconds: z.number(),
-  pickDeadline: z.string().datetime().nullable(),
+  currentTurnStartedAt: z.string().datetime().nullable(),
   entries: z.array(DraftEntryDtoSchema),
-  picks: z.array(DraftPickDtoSchema),
+  draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   availableParticipantIds: z.array(z.string()),
   isComplete: z.boolean(),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),
   bracketMatchups: z.array(DraftBracketMatchupDtoSchema).optional(),
 });
 export type DraftPickResponse = z.infer<typeof DraftPickResponseSchema>;
-
-export const SelectionTemplateListResponseSchema = z.array(SelectionTemplateDtoSchema);
-
-export const SelectionTemplateResponseSchema = SelectionTemplateDtoSchema;

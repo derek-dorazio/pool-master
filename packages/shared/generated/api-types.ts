@@ -259,6 +259,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List league members */
+        get: operations["listLeagueMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/members/{uid}/role": {
         parameters: {
             query?: never;
@@ -288,6 +305,23 @@ export interface paths {
         post?: never;
         /** Remove a member from the league */
         delete: operations["removeMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/members/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Leave a league as the current member */
+        delete: operations["leaveLeague"];
         options?: never;
         head?: never;
         patch?: never;
@@ -378,23 +412,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/leagues/{id}/contests/bulk": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Bulk-create contests from a template */
-        post: operations["bulkCreateContests"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/leagues/{id}/contests/copy-season": {
         parameters: {
             query?: never;
@@ -424,6 +441,76 @@ export interface paths {
         /** Bulk-import members via CSV rows */
         post: operations["importMembers"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/squads/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List squads in a league */
+        get: operations["listLeagueSquads"];
+        put?: never;
+        /** Create a squad in a league */
+        post: operations["createLeagueSquad"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/squads/{squadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get squad details */
+        get: operations["getLeagueSquad"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update squad details */
+        patch: operations["updateLeagueSquad"];
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/squads/{squadId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add or reactivate a squad co-manager */
+        post: operations["addSquadCoManager"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/squads/{squadId}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a squad co-manager */
+        delete: operations["removeSquadCoManager"];
         options?: never;
         head?: never;
         patch?: never;
@@ -464,6 +551,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/contest-management/contests/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a commissioner-managed contest with configuration */
+        post: operations["createManagedContest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get commissioner contest-management detail */
+        get: operations["getManagedContest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update commissioner contest configuration */
+        put: operations["updateManagedContestConfiguration"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contests/{contestId}": {
         parameters: {
             query?: never;
@@ -483,6 +621,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contests/{contestId}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List contest entries */
+        get: operations["listContestEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contests/{contestId}/entries/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the current user contest entry */
+        get: operations["getMyContestEntry"];
+        put?: never;
+        /** Create or return the current user contest entry */
+        post: operations["enterContest"];
+        /** Delete the current user contest entry */
+        delete: operations["leaveContest"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contests/{contestId}/draft/undo-pick": {
         parameters: {
             query?: never;
@@ -493,7 +667,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Undo a draft pick */
-        post: operations["undoDraftPick"];
+        post: operations["undoContestDraftSelection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -653,23 +827,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/contests/{contestId}/payouts/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Confirm and finalize contest payouts */
-        post: operations["confirmPayouts"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/contests/{contestId}/audit-log": {
         parameters: {
             query?: never;
@@ -687,38 +844,18 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/templates/": {
+    "/api/v1/events/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List contest templates for a league */
-        get: operations["listTemplates"];
+        /** List ingested sport events */
+        get: operations["listEvents"];
         put?: never;
-        /** Create a new contest template */
-        post: operations["createTemplate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/templates/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a contest template by ID */
-        get: operations["getTemplate"];
-        /** Update a contest template */
-        put: operations["updateTemplate"];
         post?: never;
-        /** Delete a contest template */
-        delete: operations["deleteTemplate"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -786,229 +923,6 @@ export interface paths {
         };
         /** Get a specific season record for a participant */
         get: operations["getParticipantSeasonRecord"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get the contest participant pool */
-        get: operations["getContestPool"];
-        /** Update the contest participant pool */
-        put: operations["updateContestPool"];
-        /** Create a contest participant pool */
-        post: operations["createContestPool"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/resolve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Resolve the pool from an external data source */
-        post: operations["resolveContestPool"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Refresh pool participant data */
-        post: operations["refreshContestPool"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/lock": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Lock the pool to prevent further changes */
-        post: operations["lockContestPool"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/participants/{participantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Exclude a participant from the pool */
-        delete: operations["excludePoolParticipant"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/participants/{participantId}/restore": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Restore an excluded participant to the pool */
-        post: operations["restorePoolParticipant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/participants/{participantId}/unavailable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Mark a pool participant as unavailable */
-        post: operations["markPoolParticipantUnavailable"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/participants/{participantId}/available": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Mark a pool participant as available */
-        post: operations["markPoolParticipantAvailable"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/pricing/calculate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Calculate prices for pool participants */
-        post: operations["calculatePoolPricing"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/pricing/override/{participantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Apply a manual price override for a participant */
-        put: operations["applyPoolPriceOverride"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/tiers/assign": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Assign participants to tiers */
-        post: operations["assignPoolTiers"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/tiers/{tierId}/participants/{participantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Move a participant to a different tier */
-        put: operations["moveParticipantTier"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/pool/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Search pool participants for the draft room */
-        get: operations["searchPoolParticipants"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1170,620 +1084,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/contests/{id}/history/timeline": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get scoring timeline for a contest */
-        get: operations["getContestTimeline"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{id}/history/draft": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get draft replay for a contest */
-        get: operations["getDraftReplay"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{id}/history/replay/{entryId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get roster replay for an entry */
-        get: operations["getRosterReplay"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/seasons": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List league season summaries */
-        get: operations["getSeasonSummaries"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/seasons/{sid}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a specific season summary */
-        get: operations["getSeasonSummary"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/champions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get league champion list */
-        get: operations["getChampionList"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/members/{mid}/stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get member stats within a league */
-        get: operations["getMemberStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/leaderboard": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all-time league leaderboard */
-        get: operations["getAllTimeLeaderboard"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/trophies/{mid}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get member trophies within a league */
-        get: operations["getMemberTrophies"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/records": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get league records */
-        get: operations["getLeagueRecords"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/records/{category}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a specific league record by category */
-        get: operations["getLeagueRecord"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/records/recompute": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Recompute all league records */
-        post: operations["recomputeLeagueRecords"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/rivalries": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get league rivalries */
-        get: operations["getLeagueRivalries"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/rivalries/{mid1}/{mid2}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get head-to-head rivalry between two members */
-        get: operations["getRivalry"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/rivalries/recompute": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Recompute all league rivalries */
-        post: operations["recomputeRivalries"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/analytics/luck": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Compute luck scores for league members */
-        get: operations["getLuckScores"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/analytics/power": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Compute power ratings for league members */
-        get: operations["getPowerRatings"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/analytics/consistency": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Compute consistency scores for league members */
-        get: operations["getConsistencyScores"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/analytics/trophies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Award analytics-based trophies for a season */
-        post: operations["awardAnalyticsTrophies"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/members/{mid}/history/yoy": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get year-over-year improvement stats for a member */
-        get: operations["getYoYStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/history/improvement-rankings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get improvement rankings for a season */
-        get: operations["getImprovementRankings"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/seasons/{season}/notes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get season notes */
-        get: operations["getSeasonNotes"];
-        put?: never;
-        /** Add a season note */
-        post: operations["addSeasonNote"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/seasons/{season}/trophies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Award a custom trophy for a season */
-        post: operations["awardCustomTrophy"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/custom-trophies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List custom trophies for a league */
-        get: operations["listCustomTrophies"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/import-season": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Import historical season data */
-        post: operations["importSeason"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/members/merge/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Preview member merge impact */
-        post: operations["previewMemberMerge"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/members/merge/execute": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Execute member merge */
-        post: operations["executeMemberMerge"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Export league history data */
-        get: operations["exportLeagueHistory"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/members/{mid}/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Export member history data */
-        get: operations["exportMemberHistory"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/retention": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get league data retention configuration */
-        get: operations["getLeagueRetentionConfig"];
-        /** Update league data retention configuration */
-        put: operations["updateLeagueRetentionConfig"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/retention/preview-cleanup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Preview retention cleanup impact */
-        post: operations["previewRetentionCleanup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/search/participants": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Search participants with filters */
-        get: operations["searchParticipants"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/search/discover/leagues": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Discover public leagues */
-        get: operations["discoverLeagues"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/search/discover/contests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Discover open contests */
-        get: operations["discoverContests"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/search/discover/report": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Report a league or contest */
-        post: operations["reportDiscoveryEntity"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/verify-age": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Verify user meets minimum age requirement */
-        post: operations["verifyAge"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/account/consent": {
         parameters: {
             query?: never;
@@ -1796,280 +1096,6 @@ export interface paths {
         put?: never;
         /** Record user consent for a policy type */
         post: operations["recordConsent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/data-export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Request personal data export (GDPR) */
-        post: operations["requestDataExport"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/data-export/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get data export status and download */
-        get: operations["getDataExport"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/delete-account": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Request account deletion */
-        post: operations["requestAccountDeletion"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/delete-account/{id}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Cancel a pending account deletion */
-        post: operations["cancelAccountDeletion"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/self-exclusion": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get active self-exclusion status */
-        get: operations["getActiveExclusion"];
-        put?: never;
-        /** Create self-exclusion or cool-down period */
-        post: operations["createSelfExclusion"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/enforcement": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create enforcement action against a user */
-        post: operations["createEnforcementAction"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/enforcement/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get enforcement history for a user */
-        get: operations["getEnforcementHistory"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/enforcement/{id}/appeal": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Update enforcement appeal status */
-        put: operations["updateAppealStatus"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/retention/cleanup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Trigger retention data cleanup */
-        post: operations["runRetentionCleanup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List all tenants with filters */
-        get: operations["adminListTenants"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get tenant detail */
-        get: operations["adminGetTenantDetail"];
-        put?: never;
-        post?: never;
-        /** Delete a tenant permanently */
-        delete: operations["adminDeleteTenant"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}/plan": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Change tenant plan tier */
-        put: operations["adminChangeTenantPlan"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}/suspend": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Suspend a tenant */
-        post: operations["adminSuspendTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}/unsuspend": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Unsuspend a tenant */
-        post: operations["adminUnsuspendTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}/credit": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Apply credit to a tenant account */
-        post: operations["adminApplyCredit"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}/extend-trial": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Extend tenant trial period */
-        post: operations["adminExtendTrial"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2127,23 +1153,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/users/{userId}/reset-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reset user password */
-        post: operations["adminResetPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/users/{userId}/force-logout": {
         parameters: {
             query?: never;
@@ -2189,23 +1198,6 @@ export interface paths {
         put?: never;
         /** Re-enable a disabled user account */
         post: operations["adminEnableUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/email": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Send administrative email to user */
-        post: operations["adminSendEmail"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2484,94 +1476,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/flags": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List all feature flags */
-        get: operations["adminListFlags"];
-        put?: never;
-        /** Create a new feature flag */
-        post: operations["adminCreateFlag"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/flags/{flagKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get feature flag detail */
-        get: operations["adminGetFlagDetail"];
-        /** Update a feature flag */
-        put: operations["adminUpdateFlag"];
-        post?: never;
-        /** Delete a feature flag */
-        delete: operations["adminDeleteFlag"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/flags/{flagKey}/overrides": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Add a tenant override for a feature flag */
-        post: operations["adminAddFlagOverride"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/flags/{flagKey}/overrides/{tenantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Remove a tenant override for a feature flag */
-        delete: operations["adminRemoveFlagOverride"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/flags/{flagKey}/resolve/{tenantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Resolve feature flag value for a tenant */
-        get: operations["adminResolveFlag"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/health/services": {
         parameters: {
             query?: never;
@@ -2725,145 +1629,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/impersonation/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Start tenant impersonation session */
-        post: operations["adminStartImpersonation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/impersonation/end": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** End tenant impersonation session */
-        post: operations["adminEndImpersonation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/impersonation/active": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get active impersonation session */
-        get: operations["adminGetActiveImpersonation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/announcements/active": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get active announcements */
-        get: operations["adminGetActiveAnnouncements"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/announcements": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List all announcements */
-        get: operations["adminListAnnouncements"];
-        put?: never;
-        /** Create a new announcement */
-        post: operations["adminCreateAnnouncement"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/announcements/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get announcement by ID */
-        get: operations["adminGetAnnouncement"];
-        /** Update an announcement */
-        put: operations["adminUpdateAnnouncement"];
-        post?: never;
-        /** Delete an announcement */
-        delete: operations["adminDeleteAnnouncement"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/announcements/{id}/activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Activate an announcement */
-        post: operations["adminActivateAnnouncement"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/announcements/{id}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Deactivate an announcement */
-        post: operations["adminDeactivateAnnouncement"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/migrations": {
         parameters: {
             query?: never;
@@ -2932,15 +1697,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/support/tenant/{tenantId}/investigation": {
+    "/api/v1/admin/audit-log/export": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get support investigation overview for a tenant */
-        get: operations["adminGetInvestigation"];
+        /** Export audit log entries */
+        get: operations["adminExportAuditLog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2949,15 +1714,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/support/tenant/{tenantId}/errors": {
+    "/api/v1/admin/audit-log": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get recent errors for a tenant */
-        get: operations["adminGetTenantErrors"];
+        /** List audit log entries */
+        get: operations["adminListAuditLog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2966,168 +1731,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/support/tenant/{tenantId}/notifications": {
+    "/api/v1/admin/audit-log/{entryId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get recent notifications for a tenant */
-        get: operations["adminGetTenantNotifications"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/support/tenant/{tenantId}/requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get recent API requests for a tenant */
-        get: operations["adminGetTenantRequests"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/support/quick-actions/reset-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Quick action: reset user password */
-        post: operations["adminQuickResetPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/support/quick-actions/check-provider": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Quick action: check sports data provider */
-        post: operations["adminQuickCheckProvider"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/support/quick-actions/check-entitlements": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Quick action: check tenant entitlements */
-        post: operations["adminQuickCheckEntitlements"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/support/quick-actions/check-notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Quick action: check user notifications */
-        post: operations["adminQuickCheckNotifications"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/support/quick-actions/re-ingest-scores": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Quick action: re-ingest scoring data */
-        post: operations["adminQuickReIngestScores"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Start tenant data export */
-        post: operations["adminStartTenantExport"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}/export/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get tenant export status */
-        get: operations["adminGetExportStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/tenants/{tenantId}/export/download": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Download tenant export */
-        get: operations["adminDownloadExport"];
+        /** Get audit log entry detail */
+        get: operations["adminGetAuditEntry"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3223,444 +1835,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/config/dunning": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get dunning schedule configuration */
-        get: operations["adminGetDunningConfig"];
-        /** Update dunning schedule configuration */
-        put: operations["adminUpdateDunningConfig"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/dunning/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reset dunning configuration to defaults */
-        post: operations["adminResetDunningConfig"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/notification-channels": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get notification channel defaults */
-        get: operations["adminGetChannelConfig"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/notification-channels/{category}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Update notification channel defaults for a category */
-        put: operations["adminUpdateChannelConfig"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/notification-channels/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reset notification channel defaults */
-        post: operations["adminResetChannelConfig"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/retention": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get data retention defaults */
-        get: operations["adminGetRetentionDefaults"];
-        /** Update data retention defaults */
-        put: operations["adminUpdateRetentionDefaults"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/retention/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reset data retention to defaults */
-        post: operations["adminResetRetentionDefaults"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/retention/{tenantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get tenant-specific retention override */
-        get: operations["adminGetTenantRetentionOverride"];
-        /** Set tenant-specific retention override */
-        put: operations["adminSetTenantRetentionOverride"];
-        post?: never;
-        /** Clear tenant-specific retention override */
-        delete: operations["adminClearTenantRetentionOverride"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/weekly-digest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get weekly digest configuration */
-        get: operations["adminGetDigestConfig"];
-        /** Update weekly digest configuration */
-        put: operations["adminUpdateDigestConfig"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/weekly-digest/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reset weekly digest configuration to defaults */
-        post: operations["adminResetDigestConfig"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/weekly-digest/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Preview weekly digest for a league */
-        get: operations["adminPreviewDigest"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/scoring-templates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List scoring templates */
-        get: operations["adminListScoringTemplates"];
-        put?: never;
-        /** Create a scoring template */
-        post: operations["adminCreateScoringTemplate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/scoring-templates/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get scoring template by ID */
-        get: operations["adminGetScoringTemplate"];
-        /** Update a scoring template */
-        put: operations["adminUpdateScoringTemplate"];
-        post?: never;
-        /** Delete a scoring template */
-        delete: operations["adminDeleteScoringTemplate"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/selection-templates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List selection templates */
-        get: operations["adminListSelectionTemplatesConfig"];
-        put?: never;
-        /** Create a selection template */
-        post: operations["adminCreateSelectionTemplate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/selection-templates/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get selection template by ID */
-        get: operations["adminGetSelectionTemplateConfig"];
-        /** Update a selection template */
-        put: operations["adminUpdateSelectionTemplate"];
-        post?: never;
-        /** Delete a selection template */
-        delete: operations["adminDeleteSelectionTemplate"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/notification-templates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List notification templates */
-        get: operations["adminListNotificationTemplates"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/notification-templates/{eventType}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get notification template by event type */
-        get: operations["adminGetNotificationTemplate"];
-        /** Update a notification template */
-        put: operations["adminUpdateNotificationTemplate"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/notification-templates/reset/{eventType}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reset a notification template to defaults */
-        post: operations["adminResetNotificationTemplate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/push-triggers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List push trigger configurations */
-        get: operations["adminListPushTriggers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/push-triggers/{eventType}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Update a push trigger configuration */
-        put: operations["adminUpdatePushTrigger"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/push-triggers/{eventType}/enable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Enable a push trigger */
-        post: operations["adminEnablePushTrigger"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/push-triggers/{eventType}/disable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Disable a push trigger */
-        post: operations["adminDisablePushTrigger"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/push-triggers/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reset all push triggers to defaults */
-        post: operations["adminResetPushTriggers"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/rate-limits": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get rate limit configuration */
-        get: operations["adminGetRateLimitConfig"];
-        /** Update rate limit configuration */
-        put: operations["adminUpdateRateLimitConfig"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/rate-limits/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reset rate limits to defaults */
-        post: operations["adminResetRateLimitConfig"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/config/poll-intervals": {
         parameters: {
             query?: never;
@@ -3673,571 +1847,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/plan": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get current plan details for tenant */
-        get: operations["getCurrentPlan"];
-        /** Change subscription plan */
-        put: operations["changePlan"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/entitlements": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all entitlement checks for current tenant */
-        get: operations["getEntitlements"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/usage": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get usage summary for current tenant */
-        get: operations["getUsage"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/plans": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List available plan tiers */
-        get: operations["listPlans"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/subscribe": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create a new subscription */
-        post: operations["createSubscription"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/resume": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Resume a cancelled subscription */
-        post: operations["resumeSubscription"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/subscription": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get current subscription details */
-        get: operations["getSubscription"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/payment-method": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create setup intent for Stripe payment method */
-        post: operations["createPaymentMethodSetup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/portal": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Stripe billing portal session URL */
-        get: operations["getBillingPortal"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/trial/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Start a trial subscription */
-        post: operations["startTrial"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/trial/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get current trial status */
-        get: operations["getTrialStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/invoices": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get invoice history for tenant */
-        get: operations["listInvoices"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/invoices/upcoming": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Preview upcoming invoice */
-        get: operations["getUpcomingInvoice"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/invoices/{invoiceId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get invoice detail by ID */
-        get: operations["getInvoiceDetail"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/invoices/{invoiceId}/pdf": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get invoice PDF download URL */
-        get: operations["getInvoicePdf"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/upgrade-preview/{planSlug}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Preview upgrade proration for a plan */
-        get: operations["previewUpgrade"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/downgrade-preview/{planSlug}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Preview downgrade impact for a plan */
-        get: operations["previewDowngrade"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/cancellation-preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Preview cancellation impact */
-        get: operations["previewCancellation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/retention-offer": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get retention offer for tenant */
-        get: operations["getRetentionOffer"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Cancel subscription with feedback */
-        post: operations["cancelSubscription"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/analytics": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get revenue analytics metrics */
-        get: operations["getRevenueAnalytics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/analytics/subscribers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get subscribers grouped by plan */
-        get: operations["getSubscribersByPlan"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/analytics/trials": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get trial conversion metrics */
-        get: operations["getTrialMetrics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/analytics/churn": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get churn metrics over time */
-        get: operations["getChurnMetrics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/enterprise": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List enterprise plans */
-        get: operations["listEnterprisePlans"];
-        put?: never;
-        /** Create a custom enterprise plan */
-        post: operations["createEnterprisePlan"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/billing/dunning/{tenantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get dunning status for a tenant */
-        get: operations["getDunningStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/webhooks/stripe": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{leagueId}/feed": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get league activity feed */
-        get: operations["getLeagueFeed"];
-        put?: never;
-        /** Create a feed post */
-        post: operations["createFeedPost"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{leagueId}/feed/{postId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a single feed post */
-        get: operations["getFeedPost"];
-        put?: never;
-        post?: never;
-        /** Delete a feed post */
-        delete: operations["deleteFeedPost"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{leagueId}/feed/{postId}/replies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reply to a feed post */
-        post: operations["addFeedReply"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{leagueId}/feed/{postId}/reactions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Add a reaction to a post */
-        post: operations["addFeedReaction"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{leagueId}/feed/{postId}/pin": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Pin a feed post */
-        post: operations["pinFeedPost"];
-        /** Unpin a feed post */
-        delete: operations["unpinFeedPost"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4287,7 +1896,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Submit a draft pick */
-        post: operations["submitDraftPick"];
+        post: operations["submitContestSelection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4337,76 +1946,42 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Extend the current pick deadline */
-        post: operations["extendPickDeadline"];
+        /** Shift the current turn start time */
+        post: operations["extendCurrentTurn"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/drafts/templates": {
+    "/api/v1/drafts/{contestId}/undo": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List selection templates */
-        get: operations["listSelectionTemplates"];
+        get?: never;
         put?: never;
-        post?: never;
+        /** Undo the most recent snake draft pick */
+        post: operations["undoSnakeDraftSelection"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/drafts/templates/{templateId}": {
+    "/api/v1/drafts/{contestId}/skip": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get a selection template by ID */
-        get: operations["getSelectionTemplate"];
+        get?: never;
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/scoring/templates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List available scoring templates */
-        get: operations["listScoringTemplates"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/scoring/templates/{key}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a scoring template by key */
-        get: operations["getScoringTemplate"];
-        put?: never;
-        post?: never;
+        /** Skip the current snake draft pick */
+        post: operations["skipSnakeDraftTurn"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4600,229 +2175,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/notifications/preferences": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get notification preferences for current user */
-        get: operations["getNotificationPreferences"];
-        /** Update notification preferences */
-        put: operations["updateNotificationPreferences"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notifications/unsubscribe/{category}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Unsubscribe from a notification category */
-        post: operations["unsubscribeNotificationCategory"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/devices": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List registered devices for current user */
-        get: operations["listDevices"];
-        put?: never;
-        /** Register a device for push notifications */
-        post: operations["registerDevice"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/devices/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Register a device for push notifications (alias) */
-        post: operations["registerDeviceAlias"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/devices/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Deactivate a registered device */
-        delete: operations["deactivateDevice"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notifications/dispatch": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Dispatch a notification event */
-        post: operations["dispatchNotification"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notifications/announce": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Send commissioner announcement to a league */
-        post: operations["sendAnnouncement"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notifications/schedule": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Schedule a notification for future delivery */
-        post: operations["scheduleNotification"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notifications/schedule/{sourceType}/{sourceId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Cancel scheduled notifications for a source */
-        delete: operations["cancelScheduledNotifications"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notifications/digest/{leagueId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Trigger weekly digest for a league */
-        post: operations["triggerWeeklyDigest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notifications/analytics": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get notification delivery analytics */
-        get: operations["getNotificationAnalytics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/test/email": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Send a test email */
-        post: operations["sendTestEmail"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/test/push": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Send a test push notification */
-        post: operations["sendTestPush"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/ingestion/providers": {
         parameters: {
             query?: never;
@@ -4949,6 +2301,8 @@ export interface operations {
                             id: string;
                             email: string;
                             displayName: string;
+                            /** @enum {string} */
+                            authProvider?: "email" | "google" | "apple";
                             tenantId?: string;
                             timezone?: string;
                             locale?: string;
@@ -4994,6 +2348,8 @@ export interface operations {
                             id: string;
                             email: string;
                             displayName: string;
+                            /** @enum {string} */
+                            authProvider?: "email" | "google" | "apple";
                             tenantId?: string;
                             timezone?: string;
                             locale?: string;
@@ -5061,7 +2417,12 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                    };
+                };
             };
         };
     };
@@ -5086,7 +2447,11 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
             };
         };
     };
@@ -5097,14 +2462,27 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    code: string;
+                    state: string;
+                };
+            };
+        };
         responses: {
             /** @description Default Response */
-            200: {
+            501: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
             };
         };
     };
@@ -5128,6 +2506,8 @@ export interface operations {
                             id: string;
                             email: string;
                             displayName: string;
+                            /** @enum {string} */
+                            authProvider?: "email" | "google" | "apple";
                             tenantId?: string;
                             timezone?: string;
                             locale?: string;
@@ -5185,9 +2565,12 @@ export interface operations {
                     name: string;
                     description?: string;
                     /** @enum {string} */
-                    visibility: "PRIVATE" | "PUBLIC";
+                    visibility: "PUBLIC" | "PRIVATE" | "UNLISTED";
                     maxMembers?: number;
-                    settings?: Record<string, never>;
+                    sport?: string;
+                    settings?: {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -5332,14 +2715,33 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        sent: {
+                            id: string;
+                            leagueId: string;
+                            email?: string | null;
+                            inviteCode: string;
+                            inviteType: string;
+                            status: string;
+                            maxUses: number;
+                            currentUses: number;
+                            invitedBy: string;
+                            /** Format: date-time */
+                            expiresAt?: string | null;
+                            acceptedAt?: (string | null) | null;
+                            acceptedBy?: string | null;
+                            /** Format: date-time */
+                            createdAt: string | null;
+                            /** Format: date-time */
+                            updatedAt: string | null;
+                        }[];
+                        skippedMembers: string[];
+                        skippedDuplicates: string[];
                     };
                 };
             };
@@ -5364,14 +2766,31 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        invitation: {
+                            id: string;
+                            leagueId: string;
+                            email?: string | null;
+                            inviteCode: string;
+                            inviteType: string;
+                            status: string;
+                            maxUses: number;
+                            currentUses: number;
+                            invitedBy: string;
+                            /** Format: date-time */
+                            expiresAt?: string | null;
+                            acceptedAt?: (string | null) | null;
+                            acceptedBy?: string | null;
+                            /** Format: date-time */
+                            createdAt: string | null;
+                            /** Format: date-time */
+                            updatedAt: string | null;
+                        };
                     };
                 };
             };
@@ -5390,14 +2809,40 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listLeagueMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        members: {
+                            id: string;
+                            userId: string;
+                            displayName: string;
+                            role: string;
+                            /** Format: date-time */
+                            joinedAt?: string;
+                        }[];
                     };
                 };
             };
@@ -5417,11 +2862,49 @@ export interface operations {
             content: {
                 "application/json": {
                     /** @enum {string} */
-                    role: "COMMISSIONER" | "MANAGER" | "VIEWER";
+                    role: "COMMISSIONER" | "MEMBER";
                     permissions?: string[];
                 };
             };
         };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        membership: {
+                            id: string;
+                            leagueId: string;
+                            userId: string;
+                            role: string;
+                            status: string;
+                            permissions: string[];
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    removeMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Default Response */
             200: {
@@ -5437,13 +2920,12 @@ export interface operations {
             };
         };
     };
-    removeMember: {
+    leaveLeague: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 id: string;
-                uid: string;
             };
             cookie?: never;
         };
@@ -5487,8 +2969,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        previousOwner: {
+                            id: string;
+                            leagueId: string;
+                            userId: string;
+                            role: string;
+                            status: string;
+                            permissions: string[];
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                        newOwner: {
+                            id: string;
+                            leagueId: string;
+                            userId: string;
+                            role: string;
+                            status: string;
+                            permissions: string[];
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -5513,21 +3021,43 @@ export interface operations {
                 content: {
                     "application/json": {
                         league: {
-                            id: string;
-                            name: string;
-                            description?: string | null;
-                            visibility: string;
-                            memberCount: number;
-                            activeContestCount: number;
-                            role?: string;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            maxMembers?: number;
-                            settings?: {
-                                [key: string]: unknown;
-                            };
-                            invitePolicy?: string;
+                            [key: string]: unknown;
                         };
+                        actionItems: {
+                            id: string;
+                            leagueId: string;
+                            contestId?: string | null;
+                            type: string;
+                            priority: string;
+                            title: string;
+                            description: string;
+                            actionUrl?: string | null;
+                            resolved: boolean;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
+                        contests: {
+                            [key: string]: unknown;
+                        }[];
+                        memberCount: number;
+                        pendingInvites: number;
+                        recentMemberActivity: {
+                            userId: string;
+                            displayName: string;
+                            action: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        }[];
+                        upcomingEvents: {
+                            contestId?: string;
+                            title: string;
+                            /** Format: date-time */
+                            date: string;
+                            /** @enum {string} */
+                            eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
+                        }[];
                     };
                 };
             };
@@ -5552,8 +3082,21 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        actionItem: {
+                            id: string;
+                            leagueId: string;
+                            contestId?: string | null;
+                            type: string;
+                            priority: string;
+                            title: string;
+                            description: string;
+                            actionUrl?: string | null;
+                            resolved: boolean;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -5577,8 +3120,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entries: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -5602,47 +3146,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    bulkCreateContests: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    templateId: string;
-                    namingPattern: string;
-                    events: {
-                        name: string;
-                        /** Format: date-time */
-                        startsAt?: string;
-                        /** Format: date-time */
-                        endsAt?: string;
-                    }[];
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entries: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -5661,20 +3167,18 @@ export interface operations {
             content: {
                 "application/json": {
                     sourceContestIds: string[];
-                    seasonId?: string;
                 };
             };
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5702,14 +3206,361 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    listLeagueSquads: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        squads: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            name: string;
+                            iconUrl?: string | null;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            memberCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                displayName?: string;
+                                /** @enum {string} */
+                                status: "ACTIVE" | "INACTIVE";
+                                /** Format: date-time */
+                                joinedAt: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    createLeagueSquad: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    /** Format: uri */
+                    iconUrl?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        squad: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            name: string;
+                            iconUrl?: string | null;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            memberCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                displayName?: string;
+                                /** @enum {string} */
+                                status: "ACTIVE" | "INACTIVE";
+                                /** Format: date-time */
+                                joinedAt: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getLeagueSquad: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        squad: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            name: string;
+                            iconUrl?: string | null;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            memberCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                displayName?: string;
+                                /** @enum {string} */
+                                status: "ACTIVE" | "INACTIVE";
+                                /** Format: date-time */
+                                joinedAt: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateLeagueSquad: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    /** Format: uri */
+                    iconUrl?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        squad: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            name: string;
+                            iconUrl?: string | null;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            memberCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                displayName?: string;
+                                /** @enum {string} */
+                                status: "ACTIVE" | "INACTIVE";
+                                /** Format: date-time */
+                                joinedAt: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    addSquadCoManager: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    userId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        membership: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            squadId: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            userId: string;
+                            displayName?: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    removeSquadCoManager: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        membership: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            squadId: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            userId: string;
+                            displayName?: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -5731,14 +3582,65 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        membership: {
+                            id: string;
+                            leagueId: string;
+                            userId: string;
+                            role: string;
+                            status: string;
+                            permissions: string[];
+                            /** Format: date-time */
+                            joinedAt: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Default Response */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
+                    };
+                };
+            };
+            /** @description Default Response */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                        message: string;
+                        details?: unknown;
                     };
                 };
             };
@@ -5770,6 +3672,8 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
                             startsAt?: string | null;
@@ -5777,6 +3681,8 @@ export interface operations {
                             endsAt?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
                         }[];
                     };
                 };
@@ -5796,31 +3702,48 @@ export interface operations {
             content: {
                 "application/json": {
                     name: string;
+                    eventId?: string;
                     /** @enum {string} */
                     contestType: "SINGLE_EVENT";
                     /** @enum {string} */
-                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+                    contestConfiguration?: {
+                        draftMode?: string;
+                        rounds?: number;
+                        timePerPickSeconds?: number;
+                        autoPickPolicy?: string;
+                        tierConfig?: {
+                            tierId: string;
+                            tierName: string;
+                            tierNumber: number;
+                            picksFromTier: number;
+                            rankingRange?: [
+                                number,
+                                number
+                            ];
+                            priceRange?: [
+                                number,
+                                number
+                            ];
+                            maxParticipants?: number;
+                            participantIds: string[];
+                        }[];
+                        tierAssignmentMethod?: string;
+                        budget?: number;
+                        pricingMethod?: string;
+                        rosterSize?: number;
+                        pickCount?: number;
+                        picksPerPeriod?: number;
+                        roundValues?: number[];
+                        startRound?: string;
+                        isExclusive?: boolean;
+                        bestBallN?: number;
+                        missedCutPenalty?: number;
+                        captainSlot?: boolean;
+                        captainMultiplier?: number;
+                    };
                     /** @enum {string} */
                     scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                    seasonId?: string;
-                    selectionConfig?: Record<string, never>;
-                    scoringRules?: Record<string, never>;
-                    scoringTemplateKey?: string;
-                    payoutConfig?: {
-                        entryFee?: number;
-                        prizePool?: number;
-                        payoutStructure?: {
-                            rank: number;
-                            percentage: number;
-                            fixedAmount?: number;
-                        }[];
-                        intermediatePrizes?: {
-                            name: string;
-                            description?: string;
-                            amount?: number;
-                            percentage?: number;
-                        }[];
-                    };
                     /** Format: date-time */
                     startsAt?: string;
                     /** Format: date-time */
@@ -5848,6 +3771,8 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
                             startsAt?: string | null;
@@ -5855,17 +3780,470 @@ export interface operations {
                             endsAt?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
+                            /** Format: date-time */
+                            updatedAt?: string;
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
-                            sport?: string | null;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
+                    };
+                };
+            };
+        };
+    };
+    createManagedContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /** Format: uuid */
+                    sportEventId: string;
+                    /**
+                     * @default SINGLE_EVENT
+                     * @enum {string}
+                     */
+                    contestType?: "SINGLE_EVENT";
+                    configuration: {
+                        /** @enum {string} */
+                        selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+                        rounds?: number;
+                        timePerPickSeconds?: number;
+                        autoPickPolicy?: string;
+                        tierConfig?: {
+                            tierId: string;
+                            tierName: string;
+                            tierNumber: number;
+                            picksFromTier: number;
+                            participantIds: string[];
+                        }[];
+                        budget?: number;
+                        pricingMethod?: string;
+                        pickCount?: number;
+                        isExclusive?: boolean;
+                        picksPerPeriod?: number;
+                        roundValues?: number[];
+                        startRound?: string;
+                        /** Format: date-time */
+                        locksAt?: string | null;
+                        minimumEntries?: number;
+                        maxEntriesPerSquad?: number;
+                        rosterSize?: number;
+                        totalPrizePoolAmount?: number | null;
+                        participantScoringRules: {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
+                            sortOrder: number;
+                            /** @default {} */
+                            config?: {
+                                [key: string]: unknown;
+                            };
+                            /** @default true */
+                            active?: boolean;
+                        }[];
+                        entryAggregationRule: {
+                            /** @enum {string} */
+                            aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
+                            /** @default {} */
+                            config?: {
+                                [key: string]: unknown;
+                            };
+                            /** @default true */
+                            active?: boolean;
+                        };
+                        /** @default [] */
+                        prizeDefinitions?: {
+                            prizeDefinitionId: string;
+                            displayName: string;
+                            sortOrder: number;
+                            /** @default {} */
+                            ruleConfig?: {
+                                [key: string]: unknown;
+                            };
+                            /** @enum {string} */
+                            payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                            amount?: number;
+                            percentage?: number;
+                            /** @default true */
+                            active?: boolean;
+                        }[];
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contest: {
+                            id: string;
+                            leagueId: string;
+                            sportEventId: string;
+                            name: string;
+                            /** @enum {string} */
+                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                            configuration: {
+                                /** @enum {string} */
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+                                rounds?: number;
+                                timePerPickSeconds?: number;
+                                autoPickPolicy?: string;
+                                tierConfig?: {
+                                    tierId: string;
+                                    tierName: string;
+                                    tierNumber: number;
+                                    picksFromTier: number;
+                                    participantIds: string[];
+                                }[];
+                                budget?: number;
+                                pricingMethod?: string;
+                                pickCount?: number;
+                                isExclusive?: boolean;
+                                picksPerPeriod?: number;
+                                roundValues?: number[];
+                                startRound?: string;
+                                /** Format: date-time */
+                                locksAt?: string | null;
+                                minimumEntries?: number;
+                                maxEntriesPerSquad?: number;
+                                rosterSize?: number;
+                                totalPrizePoolAmount?: number | null;
+                                participantScoringRules: {
+                                    /** @enum {string} */
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                entryAggregationRule: {
+                                    /** @enum {string} */
+                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                };
+                                prizeDefinitions: {
+                                    prizeDefinitionId: string;
+                                    displayName: string;
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    ruleConfig: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @enum {string} */
+                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                                    amount?: number;
+                                    percentage?: number;
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                id: string;
+                                contestId: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getManagedContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contest: {
+                            id: string;
+                            leagueId: string;
+                            sportEventId: string;
+                            name: string;
+                            /** @enum {string} */
+                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                            configuration: {
+                                /** @enum {string} */
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+                                rounds?: number;
+                                timePerPickSeconds?: number;
+                                autoPickPolicy?: string;
+                                tierConfig?: {
+                                    tierId: string;
+                                    tierName: string;
+                                    tierNumber: number;
+                                    picksFromTier: number;
+                                    participantIds: string[];
+                                }[];
+                                budget?: number;
+                                pricingMethod?: string;
+                                pickCount?: number;
+                                isExclusive?: boolean;
+                                picksPerPeriod?: number;
+                                roundValues?: number[];
+                                startRound?: string;
+                                /** Format: date-time */
+                                locksAt?: string | null;
+                                minimumEntries?: number;
+                                maxEntriesPerSquad?: number;
+                                rosterSize?: number;
+                                totalPrizePoolAmount?: number | null;
+                                participantScoringRules: {
+                                    /** @enum {string} */
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                entryAggregationRule: {
+                                    /** @enum {string} */
+                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                };
+                                prizeDefinitions: {
+                                    prizeDefinitionId: string;
+                                    displayName: string;
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    ruleConfig: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @enum {string} */
+                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                                    amount?: number;
+                                    percentage?: number;
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                id: string;
+                                contestId: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateManagedContestConfiguration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+                    rounds?: number;
+                    timePerPickSeconds?: number;
+                    autoPickPolicy?: string;
+                    tierConfig?: {
+                        tierId: string;
+                        tierName: string;
+                        tierNumber: number;
+                        picksFromTier: number;
+                        participantIds: string[];
+                    }[];
+                    budget?: number;
+                    pricingMethod?: string;
+                    pickCount?: number;
+                    isExclusive?: boolean;
+                    picksPerPeriod?: number;
+                    roundValues?: number[];
+                    startRound?: string;
+                    /** Format: date-time */
+                    locksAt?: string | null;
+                    minimumEntries?: number;
+                    maxEntriesPerSquad?: number;
+                    rosterSize?: number;
+                    totalPrizePoolAmount?: number | null;
+                    participantScoringRules: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
+                        sortOrder: number;
+                        /** @default {} */
+                        config?: {
+                            [key: string]: unknown;
+                        };
+                        /** @default true */
+                        active?: boolean;
+                    }[];
+                    entryAggregationRule: {
+                        /** @enum {string} */
+                        aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
+                        /** @default {} */
+                        config?: {
+                            [key: string]: unknown;
+                        };
+                        /** @default true */
+                        active?: boolean;
+                    };
+                    /** @default [] */
+                    prizeDefinitions?: {
+                        prizeDefinitionId: string;
+                        displayName: string;
+                        sortOrder: number;
+                        /** @default {} */
+                        ruleConfig?: {
+                            [key: string]: unknown;
+                        };
+                        /** @enum {string} */
+                        payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                        amount?: number;
+                        percentage?: number;
+                        /** @default true */
+                        active?: boolean;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contest: {
+                            id: string;
+                            leagueId: string;
+                            sportEventId: string;
+                            name: string;
+                            /** @enum {string} */
+                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                            configuration: {
+                                /** @enum {string} */
+                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+                                rounds?: number;
+                                timePerPickSeconds?: number;
+                                autoPickPolicy?: string;
+                                tierConfig?: {
+                                    tierId: string;
+                                    tierName: string;
+                                    tierNumber: number;
+                                    picksFromTier: number;
+                                    participantIds: string[];
+                                }[];
+                                budget?: number;
+                                pricingMethod?: string;
+                                pickCount?: number;
+                                isExclusive?: boolean;
+                                picksPerPeriod?: number;
+                                roundValues?: number[];
+                                startRound?: string;
+                                /** Format: date-time */
+                                locksAt?: string | null;
+                                minimumEntries?: number;
+                                maxEntriesPerSquad?: number;
+                                rosterSize?: number;
+                                totalPrizePoolAmount?: number | null;
+                                participantScoringRules: {
+                                    /** @enum {string} */
+                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                entryAggregationRule: {
+                                    /** @enum {string} */
+                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
+                                    /** @default {} */
+                                    config: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                };
+                                prizeDefinitions: {
+                                    prizeDefinitionId: string;
+                                    displayName: string;
+                                    sortOrder: number;
+                                    /** @default {} */
+                                    ruleConfig: {
+                                        [key: string]: unknown;
+                                    };
+                                    /** @enum {string} */
+                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
+                                    amount?: number;
+                                    percentage?: number;
+                                    /** @default true */
+                                    active: boolean;
+                                    id: string;
+                                }[];
+                                id: string;
+                                contestId: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -5897,6 +4275,8 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
                             startsAt?: string | null;
@@ -5904,15 +4284,13 @@ export interface operations {
                             endsAt?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
+                            /** Format: date-time */
+                            updatedAt?: string;
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
-                            sport?: string | null;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -5933,8 +4311,6 @@ export interface operations {
             content: {
                 "application/json": {
                     name?: string;
-                    scoringRules?: Record<string, never>;
-                    payoutConfig?: Record<string, never>;
                     /** Format: date-time */
                     startsAt?: string;
                     /** Format: date-time */
@@ -5961,6 +4337,8 @@ export interface operations {
                             selectionType: string;
                             scoringEngine: string;
                             leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
                             entryCount?: number;
                             /** Format: date-time */
                             startsAt?: string | null;
@@ -5968,15 +4346,13 @@ export interface operations {
                             endsAt?: string | null;
                             /** Format: date-time */
                             createdAt?: string;
-                            scoringRules?: {
-                                [key: string]: unknown;
-                            };
+                            /** Format: date-time */
+                            updatedAt?: string;
                             /** Format: date-time */
                             lockAt?: string | null;
                             isExclusive?: boolean;
-                            sport?: string | null;
                         };
-                        selectionConfig?: {
+                        contestConfiguration?: {
                             [key: string]: unknown;
                         } | null;
                     };
@@ -6009,7 +4385,188 @@ export interface operations {
             };
         };
     };
-    undoDraftPick: {
+    listContestEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        total: number;
+                        isJoined: boolean;
+                        myEntryId: string | null;
+                        myEntryIds?: string[];
+                        entries: {
+                            id: string;
+                            contestId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
+                            name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            totalScore: number;
+                            standingsPosition?: number | null;
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    getMyContestEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        entry: {
+                            id: string;
+                            contestId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
+                            name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            totalScore: number;
+                            standingsPosition?: number | null;
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        } | null;
+                    };
+                };
+            };
+        };
+    };
+    enterContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        entry: {
+                            id: string;
+                            contestId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
+                            name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            totalScore: number;
+                            standingsPosition?: number | null;
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        entry: {
+                            id: string;
+                            contestId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
+                            name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            totalScore: number;
+                            standingsPosition?: number | null;
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    leaveContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        /** @enum {boolean} */
+                        deleted: true;
+                    };
+                };
+            };
+        };
+    };
+    undoContestDraftSelection: {
         parameters: {
             query?: never;
             header?: never;
@@ -6179,8 +4736,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        teamsAffected: number;
+                        standingsChanged: boolean;
+                        changes: {
+                            entryId: string;
+                            oldRank: number;
+                            newRank: number;
+                            oldScore: number;
+                            newScore: number;
+                        }[];
                     };
                 };
             };
@@ -6210,8 +4775,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contest: {
+                            id: string;
+                            name: string;
+                            status: string;
+                            contestType: string;
+                            selectionType: string;
+                            scoringEngine: string;
+                            leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
+                            /** Format: date-time */
+                            lockAt?: string | null;
+                            isExclusive?: boolean;
+                        };
+                        contestConfiguration?: {
+                            [key: string]: unknown;
+                        } | null;
                     };
                 };
             };
@@ -6241,8 +4830,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contest: {
+                            id: string;
+                            name: string;
+                            status: string;
+                            contestType: string;
+                            selectionType: string;
+                            scoringEngine: string;
+                            leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
+                            /** Format: date-time */
+                            lockAt?: string | null;
+                            isExclusive?: boolean;
+                        };
+                        contestConfiguration?: {
+                            [key: string]: unknown;
+                        } | null;
                     };
                 };
             };
@@ -6274,8 +4887,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contest: {
+                            id: string;
+                            name: string;
+                            status: string;
+                            contestType: string;
+                            selectionType: string;
+                            scoringEngine: string;
+                            leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
+                            /** Format: date-time */
+                            lockAt?: string | null;
+                            isExclusive?: boolean;
+                        };
+                        contestConfiguration?: {
+                            [key: string]: unknown;
+                        } | null;
                     };
                 };
             };
@@ -6307,33 +4944,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    confirmPayouts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contest: {
+                            id: string;
+                            name: string;
+                            status: string;
+                            contestType: string;
+                            selectionType: string;
+                            scoringEngine: string;
+                            leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
+                            /** Format: date-time */
+                            lockAt?: string | null;
+                            isExclusive?: boolean;
+                        };
+                        contestConfiguration?: {
+                            [key: string]: unknown;
+                        } | null;
                     };
                 };
             };
@@ -6357,17 +4993,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entries: {
+                            id: string;
+                            leagueId: string;
+                            contestId?: string | null;
+                            actorId: string;
+                            action: string;
+                            category: string;
+                            description: string;
+                            beforeState?: {
+                                [key: string]: unknown;
+                            } | null;
+                            afterState?: {
+                                [key: string]: unknown;
+                            } | null;
+                            reason?: string | null;
+                            ipAddress?: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
                     };
                 };
             };
         };
     };
-    listTemplates: {
+    listEvents: {
         parameters: {
-            query: {
-                leagueId: string;
+            query?: {
+                sport?: string;
+                status?: string;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -6382,134 +5037,19 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    createTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    leagueId: string;
-                    name: string;
-                    description?: string;
-                    sport: string;
-                    /** @enum {string} */
-                    contestType: "SINGLE_EVENT" | "SEASON_LONG";
-                    draftConfig?: Record<string, never>;
-                    scoringConfig?: Record<string, never>;
-                    payoutConfig?: Record<string, never>;
-                    poolConfig?: Record<string, never>;
-                    sharedWithTenant?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    updateTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name?: string;
-                    description?: string;
-                    draftConfig?: Record<string, never>;
-                    scoringConfig?: Record<string, never>;
-                    payoutConfig?: Record<string, never>;
-                    poolConfig?: Record<string, never>;
-                    sharedWithTenant?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    deleteTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        events: {
+                            id: string;
+                            sport: string;
+                            name: string;
+                            venue?: string | null;
+                            location?: string | null;
+                            status: string;
+                            /** Format: date-time */
+                            startDate: string;
+                            endDate?: string | null;
+                            participantCount?: number | null;
+                            fieldLocked: boolean;
+                        }[];
                     };
                 };
             };
@@ -6542,12 +5082,39 @@ export interface operations {
                     "application/json": {
                         participants: {
                             id: string;
+                            sportId: string;
                             name: string;
-                            sport: string;
+                            participantType: string;
+                            externalId?: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            firstName?: string;
+                            lastName?: string;
+                            shortName?: string;
+                            nationality?: string;
                             position?: string | null;
                             teamAffiliation?: string | null;
                             status: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
                             photoUrl?: string | null;
+                            /** Format: date-time */
+                            photoLastUpdated?: string;
+                            externalIds: {
+                                [key: string]: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
                         }[];
                         total: number;
                     };
@@ -6589,8 +5156,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participant: {
+                            id: string;
+                            sportId: string;
+                            name: string;
+                            participantType: string;
+                            externalId?: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            firstName?: string;
+                            lastName?: string;
+                            shortName?: string;
+                            nationality?: string;
+                            position?: string | null;
+                            teamAffiliation?: string | null;
+                            status: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
+                            photoUrl?: string | null;
+                            /** Format: date-time */
+                            photoLastUpdated?: string;
+                            externalIds: {
+                                [key: string]: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -6614,8 +5215,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participant: {
+                            id: string;
+                            sportId: string;
+                            name: string;
+                            participantType: string;
+                            externalId?: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            firstName?: string;
+                            lastName?: string;
+                            shortName?: string;
+                            nationality?: string;
+                            position?: string | null;
+                            teamAffiliation?: string | null;
+                            status: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
+                            photoUrl?: string | null;
+                            /** Format: date-time */
+                            photoLastUpdated?: string;
+                            externalIds: {
+                                [key: string]: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -6657,8 +5292,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participant: {
+                            id: string;
+                            sportId: string;
+                            name: string;
+                            participantType: string;
+                            externalId?: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            firstName?: string;
+                            lastName?: string;
+                            shortName?: string;
+                            nationality?: string;
+                            position?: string | null;
+                            teamAffiliation?: string | null;
+                            status: string;
+                            injuryStatus: {
+                                status: string;
+                                detail?: string;
+                                /** Format: date-time */
+                                expectedReturn?: string;
+                                /** Format: date-time */
+                                updatedAt?: string;
+                                source?: string;
+                            };
+                            photoUrl?: string | null;
+                            /** Format: date-time */
+                            photoLastUpdated?: string;
+                            externalIds: {
+                                [key: string]: string;
+                            };
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -6682,8 +5351,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        seasonRecords: {
+                            id: string;
+                            participantId: string;
+                            sport: string;
+                            season: string;
+                            rankings: {
+                                rankingType: string;
+                                rank: number;
+                                points?: number;
+                                /** Format: date-time */
+                                asOfDate: string;
+                            }[];
+                            budgetPrice: number;
+                            priceTier?: string;
+                            /** Format: date-time */
+                            priceUpdatedAt?: string;
+                            eventsEntered: number;
+                            eventsCompleted: number;
+                            wins: number;
+                            top5Finishes: number;
+                            top10Finishes: number;
+                            top25Finishes: number;
+                            seasonStats: {
+                                [key: string]: number;
+                            };
+                            formRating: number;
+                            formTrend: string;
+                            /** Format: date-time */
+                            lastUpdated: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
                     };
                 };
             };
@@ -6708,500 +5409,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getContestPool: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        pool: {
+                        seasonRecord: {
                             id: string;
-                            name: string;
+                            participantId: string;
                             sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        contestId: string;
-                    };
-                };
-            };
-        };
-    };
-    updateContestPool: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @enum {string} */
-                    poolType?: "EVENT_FIELD" | "CUSTOM" | "RANKING_CUTOFF" | "FULL_SPORT";
-                    eventId?: string;
-                    config?: Record<string, never>;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        pool: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        contestId: string;
-                    };
-                };
-            };
-        };
-    };
-    createContestPool: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    sport: string;
-                    /** @enum {string} */
-                    poolType: "EVENT_FIELD" | "CUSTOM" | "RANKING_CUTOFF" | "FULL_SPORT";
-                    eventId?: string;
-                    config?: Record<string, never>;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        pool: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        contestId: string;
-                    };
-                };
-            };
-        };
-    };
-    resolveContestPool: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    refreshContestPool: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        pool: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
-                        }[];
-                        contestId: string;
-                    };
-                };
-            };
-        };
-    };
-    lockContestPool: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    excludePoolParticipant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-                participantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    restorePoolParticipant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-                participantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    markPoolParticipantUnavailable: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-                participantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    markPoolParticipantAvailable: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-                participantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    calculatePoolPricing: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    sport: string;
-                    totalBudget: number;
-                    minPrice: number;
-                    maxPrice: number;
-                    priceIncrement: number;
-                    rankingWeight: number;
-                    formWeight: number;
-                    oddsWeight: number;
-                    manualOverrides?: {
-                        participantId: string;
-                        overridePrice: number;
-                        reason: string;
-                    }[];
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    applyPoolPriceOverride: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-                participantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    price: number;
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    assignPoolTiers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    sport: string;
-                    /** @enum {string} */
-                    assignmentMode: "AUTO_RANKING" | "AUTO_PRICE" | "MANUAL";
-                    tiers: {
-                        tierId: string;
-                        tierName: string;
-                        tierNumber: number;
-                        picksFromTier: number;
-                        rankingRange?: number[];
-                        priceRange?: number[];
-                        maxParticipants?: number;
-                        participantIds?: string[];
-                    }[];
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    moveParticipantTier: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-                tierId: string;
-                participantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    searchPoolParticipants: {
-        parameters: {
-            query?: {
-                q?: string;
-                position?: string;
-                team?: string;
-                tier?: string;
-                availableOnly?: "true" | "false";
-                undraftedOnly?: "true" | "false";
-                draftedIds?: string;
-                limit?: string;
-                offset?: string;
-            };
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                            season: string;
+                            rankings: {
+                                rankingType: string;
+                                rank: number;
+                                points?: number;
+                                /** Format: date-time */
+                                asOfDate: string;
+                            }[];
+                            budgetPrice: number;
+                            priceTier?: string;
+                            /** Format: date-time */
+                            priceUpdatedAt?: string;
+                            eventsEntered: number;
+                            eventsCompleted: number;
+                            wins: number;
+                            top5Finishes: number;
+                            top10Finishes: number;
+                            top25Finishes: number;
+                            seasonStats: {
+                                [key: string]: number;
+                            };
+                            formRating: number;
+                            formTrend: string;
+                            /** Format: date-time */
+                            lastUpdated: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -7232,17 +5473,20 @@ export interface operations {
                         standings: {
                             rank: number;
                             entryId: string;
-                            userId: string;
-                            displayName: string;
-                            score: number;
-                            wins: number;
-                            losses: number;
-                            previousRank?: number | null;
+                            entryName: string;
+                            ownerDisplayName: string;
+                            ownerId: string;
+                            totalScore: number;
+                            previousRank: number | null;
                             /** @enum {string} */
-                            movement?: "up" | "down" | "same" | "new";
-                            isEliminated?: boolean;
+                            movement: "up" | "down" | "same" | "new";
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            lastUpdatedAt: string;
                         }[];
                         total: number;
+                        page: number;
+                        pageSize: number;
                         contestId: string;
                     };
                 };
@@ -7269,20 +5513,21 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        standings: {
+                        topEntries: {
                             rank: number;
                             entryId: string;
-                            userId: string;
-                            displayName: string;
-                            score: number;
-                            wins: number;
-                            losses: number;
-                            previousRank?: number | null;
+                            entryName: string;
+                            ownerDisplayName: string;
+                            ownerId: string;
+                            totalScore: number;
+                            previousRank: number | null;
                             /** @enum {string} */
-                            movement?: "up" | "down" | "same" | "new";
-                            isEliminated?: boolean;
+                            movement: "up" | "down" | "same" | "new";
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            lastUpdatedAt: string;
                         }[];
-                        total: number;
+                        totalEntries: number;
                         contestId: string;
                     };
                 };
@@ -7307,8 +5552,22 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entry: {
+                            rank: number;
+                            entryId: string;
+                            entryName: string;
+                            ownerDisplayName: string;
+                            ownerId: string;
+                            totalScore: number;
+                            previousRank: number | null;
+                            /** @enum {string} */
+                            movement: "up" | "down" | "same" | "new";
+                            isEliminated: boolean;
+                            /** Format: date-time */
+                            lastUpdatedAt: string;
+                        };
+                        totalEntries: number;
+                        contestId: string;
                     };
                 };
             };
@@ -7332,8 +5591,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7357,8 +5615,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        standings: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7383,8 +5642,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -7408,8 +5666,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        payouts: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7433,8 +5692,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        results: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
@@ -7459,1008 +5719,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getContestTimeline: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getDraftReplay: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getRosterReplay: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                entryId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getSeasonSummaries: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getSeasonSummary: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                sid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getChampionList: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getMemberStats: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                mid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getAllTimeLeaderboard: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getMemberTrophies: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                mid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getLeagueRecords: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getLeagueRecord: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                category: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    recomputeLeagueRecords: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getLeagueRivalries: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getRivalry: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                mid1: string;
-                mid2: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    recomputeRivalries: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getLuckScores: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getPowerRatings: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getConsistencyScores: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    awardAnalyticsTrophies: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getYoYStats: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                mid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getImprovementRankings: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getSeasonNotes: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                season: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    addSeasonNote: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                season: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    awardCustomTrophy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                season: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    listCustomTrophies: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    importSeason: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    previewMemberMerge: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    executeMemberMerge: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    exportLeagueHistory: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    exportMemberHistory: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                mid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getLeagueRetentionConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    updateLeagueRetentionConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    previewRetentionCleanup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    searchParticipants: {
-        parameters: {
-            query?: {
-                q?: string;
-                sportId?: string;
-                status?: string;
-                position?: string;
-                team?: string;
-                nationality?: string;
-                sortBy?: "RELEVANCE" | "RANKING" | "NAME" | "PRICE" | "FORM";
-                limit?: string;
-                offset?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        participants: {
-                            id: string;
-                            name: string;
-                            sport: string;
-                            position?: string | null;
-                            teamAffiliation?: string | null;
-                            status: string;
-                            photoUrl?: string | null;
+                        results: {
+                            [key: string]: unknown;
                         }[];
-                        total: number;
-                        facets: {
-                            positions: {
-                                value: string;
-                                count: number;
-                            }[];
-                            teams: {
-                                value: string;
-                                count: number;
-                            }[];
-                            nationalities: {
-                                value: string;
-                                count: number;
-                            }[];
-                            rankingDistribution: {
-                                top10: number;
-                                top25: number;
-                                top50: number;
-                                top100: number;
-                                unranked: number;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-    };
-    discoverLeagues: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    discoverContests: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    reportDiscoveryEntity: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @enum {string} */
-                    entityType: "LEAGUE" | "CONTEST";
-                    entityId: string;
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    verifyAge: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    birthYear: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
                     };
                 };
             };
@@ -8482,8 +5743,19 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        consents: {
+                            id: string;
+                            userId: string;
+                            consentType: string;
+                            granted: boolean;
+                            version: string;
+                            minimumAgeThreshold?: number | null;
+                            ageAffirmed?: boolean | null;
+                            ipAddress?: string | null;
+                            userAgent?: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
                     };
                 };
             };
@@ -8499,10 +5771,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
-                    consentType: "terms_of_service" | "privacy_policy" | "marketing_email" | "analytics_cookies";
+                    consentType: string;
                     granted: boolean;
                     version: string;
+                    minimumAgeThreshold?: number | null;
+                    ageAffirmed?: boolean | null;
                 };
             };
         };
@@ -8514,505 +5787,19 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    requestDataExport: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getDataExport: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    requestAccountDeletion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    cancelAccountDeletion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getActiveExclusion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    createSelfExclusion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @enum {string} */
-                    type: "COOL_DOWN" | "SELF_EXCLUSION";
-                    /** @enum {string} */
-                    duration: "24H" | "7D" | "30D" | "6M" | "1Y" | "INDEFINITE";
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    createEnforcementAction: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    userId: string;
-                    /** @enum {string} */
-                    level: "WARNING" | "TEMPORARY_SUSPENSION" | "PERMANENT_BAN";
-                    reason: string;
-                    trigger: string;
-                    durationDays?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getEnforcementHistory: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    updateAppealStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    runRetentionCleanup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminListTenants: {
-        parameters: {
-            query?: {
-                search?: string;
-                planTier?: string;
-                status?: "active" | "suspended" | "trial";
-                sortBy?: "name" | "created" | "members" | "lastActive";
-                sortDir?: "asc" | "desc";
-                page?: number;
-                pageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetTenantDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    confirmation: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminChangeTenantPlan: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    planTier: string;
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminSuspendTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUnsuspendTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminApplyCredit: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    amount: number;
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminExtendTrial: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    days: number;
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        consent: {
+                            id: string;
+                            userId: string;
+                            consentType: string;
+                            granted: boolean;
+                            version: string;
+                            minimumAgeThreshold?: number | null;
+                            ageAffirmed?: boolean | null;
+                            ipAddress?: string | null;
+                            userAgent?: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        };
                     };
                 };
             };
@@ -9040,8 +5827,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            email: string;
+                            displayName: string;
+                            tenants: {
+                                id: string;
+                                name: string;
+                                role: string;
+                            }[];
+                            /** Format: date-time */
+                            lastLoginAt?: string;
+                            /** @enum {string} */
+                            status: "active" | "disabled";
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                        totalPages: number;
                     };
                 };
             };
@@ -9095,33 +5900,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResetPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        email: string;
+                        displayName: string;
+                        authProvider?: string;
+                        /** @enum {string} */
+                        status: "active" | "disabled";
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        lastLoginAt?: string;
+                        tenants: {
+                            id: string;
+                            name: string;
+                            slug: string;
+                            role: string;
+                            /** Format: date-time */
+                            joinedAt: string;
+                        }[];
+                        leagues: {
+                            id: string;
+                            name: string;
+                            sport: string;
+                            role: string;
+                            tenantName: string;
+                        }[];
+                        activeContests: {
+                            id: string;
+                            name: string;
+                            sport: string;
+                            status: string;
+                            rank?: number;
+                        }[];
+                        devices: {
+                            id: string;
+                            platform: string;
+                            /** Format: date-time */
+                            lastActiveAt: string;
+                            tokenStatus: string;
+                        }[];
+                        recentAuthEvents: {
+                            type: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                            ipAddress?: string;
+                            success: boolean;
+                        }[];
                     };
                 };
             };
@@ -9208,38 +6032,6 @@ export interface operations {
             };
         };
     };
-    adminSendEmail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    subject: string;
-                    body: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
     adminListContests: {
         parameters: {
             query?: {
@@ -9265,8 +6057,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            name: string;
+                            leagueName: string;
+                            tenantName: string;
+                            sport: string;
+                            contestType: string;
+                            selectionType: string;
+                            status: string;
+                            entryCount: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                        total: number;
                     };
                 };
             };
@@ -9290,8 +6094,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        sport: string;
+                        contestType: string;
+                        selectionType: string;
+                        scoringEngine: string;
+                        status: string;
+                        leagueName: string;
+                        leagueId: string;
+                        tenantName: string;
+                        tenantId: string;
+                        entryCount: number;
+                        /** Format: date-time */
+                        startsAt?: string | null;
+                        /** Format: date-time */
+                        endsAt?: string | null;
+                        /** Format: date-time */
+                        lockAt?: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        standings: {
+                            entryId: string;
+                            entryName: string;
+                            ownerEmail: string;
+                            standingsPosition: number;
+                            totalScore: number;
+                        }[];
+                        draftStatus?: {
+                            status: string;
+                            currentPick: number;
+                            totalPicks: number;
+                            /** Format: date-time */
+                            startedAt?: string | null;
+                        };
+                        draftPickHistories: {
+                            round: number;
+                            pick: number;
+                            participant: string;
+                            owner: string;
+                            autoPicked: boolean;
+                            /** Format: date-time */
+                            time: string;
+                        }[];
+                        scoringFreshness: {
+                            /** Format: date-time */
+                            lastStatEvent?: string | null;
+                            isStale: boolean;
+                            staleMinutes: number;
+                        };
+                        statEventCount: number;
+                        correctionsApplied: number;
+                        overrides: {
+                            id: string;
+                            adminEmail: string;
+                            entryId: string;
+                            oldScore: number;
+                            newScore: number;
+                            reason: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
                     };
                 };
             };
@@ -9410,8 +6273,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        entriesAffected: number;
+                        rankChanges: {
+                            entryId: string;
+                            oldRank: number;
+                            newRank: number;
+                        }[];
+                        /** Format: date-time */
+                        recalculatedAt: string;
                     };
                 };
             };
@@ -9466,8 +6336,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        entriesAffected: number;
+                        rankChanges: {
+                            entryId: string;
+                            oldRank: number;
+                            newRank: number;
+                        }[];
+                        /** Format: date-time */
+                        recalculatedAt: string;
                     };
                 };
             };
@@ -9489,8 +6366,18 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            providerId: string;
+                            providerName: string;
+                            /** @enum {string} */
+                            status: "HEALTHY" | "DEGRADED" | "DOWN";
+                            errorRate: number;
+                            latencyMs: number;
+                            /** Format: date-time */
+                            lastEventAt: string | null;
+                            sportsCovered: string[];
+                            activeEventCount: number;
+                        }[];
                     };
                 };
             };
@@ -9512,8 +6399,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        sportProviderStatus: {
+                            sport: string;
+                            providerId: string;
+                            /** Format: date-time */
+                            lastPollAt: string | null;
+                            /** Format: date-time */
+                            lastEventReceivedAt: string | null;
+                            eventsToday: number;
+                            errorsToday: number;
+                            activeEventCount: number;
+                            contestsDepending: number;
+                        }[];
+                        recentErrors: {
+                            providerId: string;
+                            errorType: string;
+                            message: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                            eventId?: string | null;
+                        }[];
+                        activeJobs: {
+                            id: string;
+                            providerId: string;
+                            sport: string;
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            recordsProcessed: number;
+                            errors: number;
+                        }[];
+                        recentCompletedJobs: {
+                            id: string;
+                            providerId: string;
+                            sport: string;
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            recordsProcessed: number;
+                            errors: number;
+                        }[];
+                        throughputPerMinute: number;
                     };
                 };
             };
@@ -9535,9 +6469,12 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
+                        providerId: string;
+                        providerName: string;
+                        externalId: string;
+                        externalName: string;
+                        sport: string;
+                    }[];
                 };
             };
         };
@@ -9552,6 +6489,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    providerId: string;
                     externalId: string;
                     internalId: string;
                 };
@@ -9590,8 +6528,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        providerId: string;
+                        providerName: string;
+                        /** @enum {string} */
+                        status: "HEALTHY" | "DEGRADED" | "DOWN";
+                        errorRate: number;
+                        latencyMs: number;
+                        /** Format: date-time */
+                        lastEventAt: string | null;
+                        sportsCovered: string[];
+                        activeEventCount: number;
+                        recentHealthChecks: {
+                            providerId: string;
+                            providerName: string;
+                            /** @enum {string} */
+                            status: "HEALTHY" | "DEGRADED" | "DOWN";
+                            errorRate: number;
+                            latencyMs: number;
+                            /** Format: date-time */
+                            checkedAt: string;
+                            details: string;
+                        }[];
+                        ingestionStats: {
+                            sport: string;
+                            providerId: string;
+                            /** Format: date-time */
+                            lastPollAt: string | null;
+                            /** Format: date-time */
+                            lastEventReceivedAt: string | null;
+                            eventsToday: number;
+                            errorsToday: number;
+                            activeEventCount: number;
+                            contestsDepending: number;
+                        }[];
+                        recentErrors: {
+                            providerId: string;
+                            errorType: string;
+                            message: string;
+                            /** Format: date-time */
+                            occurredAt: string;
+                            eventId?: string | null;
+                        }[];
+                        recentJobs: {
+                            id: string;
+                            providerId: string;
+                            sport: string;
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            recordsProcessed: number;
+                            errors: number;
+                        }[];
+                        unmappedParticipants: {
+                            providerId: string;
+                            providerName: string;
+                            externalId: string;
+                            externalName: string;
+                            sport: string;
+                        }[];
+                        mappedParticipantCount: number;
                     };
                 };
             };
@@ -9655,8 +6654,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        providerId: string;
+                        providerName: string;
+                        /** @enum {string} */
+                        status: "HEALTHY" | "DEGRADED" | "DOWN";
+                        errorRate: number;
+                        latencyMs: number;
+                        /** Format: date-time */
+                        checkedAt: string;
+                        details: string;
                     };
                 };
             };
@@ -9669,236 +6675,6 @@ export interface operations {
             path: {
                 providerId: string;
                 eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminListFlags: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminCreateFlag: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    key: string;
-                    name: string;
-                    description: string;
-                    /** @enum {string} */
-                    flagType: "BOOLEAN" | "PERCENTAGE" | "TENANT_LIST";
-                    enabledGlobally: boolean;
-                    rolloutPercentage?: number;
-                    owner: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetFlagDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                flagKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateFlag: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                flagKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name?: string;
-                    description?: string;
-                    enabledGlobally?: boolean;
-                    rolloutPercentage?: number;
-                    owner?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteFlag: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                flagKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminAddFlagOverride: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                flagKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    tenantId: string;
-                    tenantName: string;
-                    enabled: boolean;
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminRemoveFlagOverride: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                flagKey: string;
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResolveFlag: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                flagKey: string;
-                tenantId: string;
             };
             cookie?: never;
         };
@@ -9934,8 +6710,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        services: {
+                            name: string;
+                            /** @enum {string} */
+                            status: "UP" | "DEGRADED" | "DOWN";
+                            uptimePercent: number;
+                            errorRatePercent: number;
+                            p95LatencyMs: number;
+                            version: string;
+                            uptimeSeconds: number;
+                            /** Format: date-time */
+                            checkedAt: string;
+                            dependencies: {
+                                name: string;
+                                /** @enum {string} */
+                                status: "UP" | "DOWN";
+                                latencyMs: number;
+                            }[];
+                        }[];
                     };
                 };
             };
@@ -9957,8 +6749,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        postgres: {
+                            /** @enum {string} */
+                            status: "UP" | "DEGRADED" | "DOWN";
+                            cpuPercent: number;
+                            connectionsCurrent: number;
+                            connectionsMax: number;
+                            diskUsageGb: number;
+                            diskTotalGb: number;
+                            replicationLagMs: number;
+                            slowQueriesLast24h: number;
+                        };
+                        messageBus: {
+                            /** @enum {string} */
+                            status: "UP" | "DEGRADED" | "DOWN";
+                            queueDepth: number;
+                            consumerLagSeconds: number;
+                            messagesPerSecond: number;
+                            deadLetterCount: number;
+                        };
+                        s3Cdn: {
+                            /** @enum {string} */
+                            status: "UP" | "DEGRADED" | "DOWN";
+                            bandwidthGbPerDay: number;
+                            requestsLast24h: number;
+                            errorRatePercent: number;
+                            storageUsedGb: number;
+                        };
+                        /** Format: date-time */
+                        checkedAt: string;
                     };
                 };
             };
@@ -9980,26 +6799,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        activeTenants: {
-                            value: number;
-                            trend: number;
-                        };
-                        totalUsers: {
-                            value: number;
-                            trend: number;
-                        };
-                        activeContests: {
-                            value: number;
-                            trend: number;
-                        };
-                        liveDrafts: {
-                            value: number;
-                            trend: number;
-                        };
-                        notificationRate: {
-                            value: number;
-                            trend: number;
-                        };
+                        activeUsersLast24h: number;
+                        websocketConnectionsCurrent: number;
+                        apiRequestsLast24h: number;
+                        notificationsSent: number;
+                        notificationsDelivered: number;
+                        notificationDeliveryRatePercent: number;
+                        activeContests: number;
+                        liveDrafts: number;
+                        /** Format: date-time */
+                        checkedAt: string;
                     };
                 };
             };
@@ -10029,8 +6838,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            service: string;
+                            /** @enum {string} */
+                            severity: "ERROR" | "CRITICAL" | "WARNING";
+                            message: string;
+                            errorType: string;
+                            requestId: string;
+                            tenantId?: string;
+                            userId?: string;
+                            stackTrace: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            /** Format: date-time */
+                            occurredAt: string;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                        totalPages: number;
                     };
                 };
             };
@@ -10054,8 +6882,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        service: string;
+                        /** @enum {string} */
+                        severity: "ERROR" | "CRITICAL" | "WARNING";
+                        message: string;
+                        errorType: string;
+                        requestId: string;
+                        tenantId?: string;
+                        userId?: string;
+                        stackTrace: string;
+                        metadata: {
+                            [key: string]: unknown;
+                        };
+                        /** Format: date-time */
+                        occurredAt: string;
+                        httpMethod?: string;
+                        httpPath?: string;
+                        httpStatusCode?: number;
+                        headers?: {
+                            [key: string]: string;
+                        };
+                        requestBody?: {
+                            [key: string]: unknown;
+                        };
+                        responseTimeMs?: number;
+                        hostName: string;
+                        environment: string;
                     };
                 };
             };
@@ -10077,8 +6930,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        rules: {
+                            id: string;
+                            name: string;
+                            description: string;
+                            /** @enum {string} */
+                            category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
+                            isEnabled: boolean;
+                            isMuted: boolean;
+                            /** Format: date-time */
+                            mutedUntil?: string;
+                            /** @enum {string} */
+                            severity: "P1" | "P2" | "P3";
+                            channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
+                            thresholds: {
+                                [key: string]: number;
+                            };
+                            windowMinutes: number;
+                            /** Format: date-time */
+                            lastTriggeredAt?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
                     };
                 };
             };
@@ -10113,8 +6988,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        /** @enum {string} */
+                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
+                        isEnabled: boolean;
+                        isMuted: boolean;
+                        /** Format: date-time */
+                        mutedUntil?: string;
+                        /** @enum {string} */
+                        severity: "P1" | "P2" | "P3";
+                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
+                        thresholds: {
+                            [key: string]: number;
+                        };
+                        windowMinutes: number;
+                        /** Format: date-time */
+                        lastTriggeredAt?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10145,8 +7040,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        /** @enum {string} */
+                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
+                        isEnabled: boolean;
+                        isMuted: boolean;
+                        /** Format: date-time */
+                        mutedUntil?: string;
+                        /** @enum {string} */
+                        severity: "P1" | "P2" | "P3";
+                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
+                        thresholds: {
+                            [key: string]: number;
+                        };
+                        windowMinutes: number;
+                        /** Format: date-time */
+                        lastTriggeredAt?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10170,317 +7085,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminStartImpersonation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    tenantId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminEndImpersonation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetActiveImpersonation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetActiveAnnouncements: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminListAnnouncements: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminCreateAnnouncement: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @enum {string} */
-                    type: "BANNER" | "NOTIFICATION" | "BOTH";
-                    title: string;
-                    body: string;
-                    linkUrl?: string;
-                    linkText?: string;
-                    /** @enum {string} */
-                    severity: "INFO" | "WARNING" | "CRITICAL";
-                    dismissable?: boolean;
-                    /** @enum {string} */
-                    target?: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
-                    targetTenantIds?: string[];
-                    /** Format: date-time */
-                    startsAt?: string;
-                    /** Format: date-time */
-                    endsAt?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetAnnouncement: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateAnnouncement: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    title?: string;
-                    body?: string;
-                    linkUrl?: string;
-                    linkText?: string;
-                    /** @enum {string} */
-                    severity?: "INFO" | "WARNING" | "CRITICAL";
-                    dismissable?: boolean;
-                    /** @enum {string} */
-                    target?: "ALL_USERS" | "ALL_TENANTS" | "SPECIFIC_TENANTS";
-                    targetTenantIds?: string[];
-                    /** Format: date-time */
-                    startsAt?: string;
-                    /** Format: date-time */
-                    endsAt?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteAnnouncement: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminActivateAnnouncement: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminDeactivateAnnouncement: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        id: string;
+                        name: string;
+                        description: string;
+                        /** @enum {string} */
+                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
+                        isEnabled: boolean;
+                        isMuted: boolean;
+                        /** Format: date-time */
+                        mutedUntil?: string;
+                        /** @enum {string} */
+                        severity: "P1" | "P2" | "P3";
+                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
+                        thresholds: {
+                            [key: string]: number;
+                        };
+                        windowMinutes: number;
+                        /** Format: date-time */
+                        lastTriggeredAt?: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
                     };
                 };
             };
@@ -10502,8 +7128,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        available: {
+                            id: string;
+                            name: string;
+                            description: string;
+                            estimatedRecords: number;
+                            /** Format: date-time */
+                            lastRunAt: string | null;
+                            /** @enum {string|null} */
+                            lastRunStatus: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED" | null;
+                        }[];
+                        activeRuns: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string|null} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED" | null;
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        }[];
+                        recentHistory: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string|null} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED" | null;
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        }[];
                     };
                 };
             };
@@ -10528,14 +7222,42 @@ export interface operations {
         };
         responses: {
             /** @description Default Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        run: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        };
                     };
                 };
             };
@@ -10559,8 +7281,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        run: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        };
                     };
                 };
             };
@@ -10584,270 +7334,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        run: {
+                            id: string;
+                            migrationId: string;
+                            migrationName: string;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            dryRun: boolean;
+                            progress: {
+                                totalRecords: number;
+                                processed: number;
+                                succeeded: number;
+                                failed: number;
+                                percentage: number;
+                            };
+                            /** Format: date-time */
+                            startedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            startedBy: {
+                                id: string;
+                                email: string;
+                                name: string;
+                            };
+                            errors: {
+                                recordId: string;
+                                error: string;
+                                /** Format: date-time */
+                                timestamp: string;
+                            }[];
+                        };
                     };
                 };
             };
         };
     };
-    adminGetInvestigation: {
+    adminExportAuditLog: {
         parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
+            query?: {
+                adminUserId?: string;
+                action?: string;
+                resourceType?: string;
+                resourceId?: string;
+                dateFrom?: string;
+                dateTo?: string;
+                search?: string;
+                page?: string;
+                pageSize?: string;
             };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetTenantErrors: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetTenantNotifications: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetTenantRequests: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminQuickResetPassword: {
-        parameters: {
-            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": {
-                    userId: string;
-                    email: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminQuickCheckProvider: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    providerId: string;
-                    sport: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminQuickCheckEntitlements: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    tenantId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminQuickCheckNotifications: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    userId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminQuickReIngestScores: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    contestId: string;
-                    eventId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminStartTenantExport: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
         requestBody?: never;
         responses: {
             /** @description Default Response */
@@ -10864,13 +7402,21 @@ export interface operations {
             };
         };
     };
-    adminGetExportStatus: {
+    adminListAuditLog: {
         parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
+            query?: {
+                adminUserId?: string;
+                action?: string;
+                resourceType?: string;
+                resourceId?: string;
+                dateFrom?: string;
+                dateTo?: string;
+                search?: string;
+                page?: string;
+                pageSize?: string;
             };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -10882,19 +7428,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        items: {
+                            id: string;
+                            adminUserEmail: string;
+                            adminUserName: string;
+                            action: string;
+                            resourceType: string;
+                            resourceId: string;
+                            description: string;
+                            reason?: string;
+                            ipAddress?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            hasStateChanges: boolean;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
                     };
                 };
             };
         };
     };
-    adminDownloadExport: {
+    adminGetAuditEntry: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                tenantId: string;
+                entryId: string;
             };
             cookie?: never;
         };
@@ -10907,8 +7468,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entry: {
+                            id: string;
+                            adminUserEmail: string;
+                            adminUserName: string;
+                            action: string;
+                            resourceType: string;
+                            resourceId: string;
+                            description: string;
+                            reason?: string;
+                            ipAddress?: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            hasStateChanges: boolean;
+                        };
                     };
                 };
             };
@@ -11107,1054 +7680,6 @@ export interface operations {
             };
         };
     };
-    adminGetDunningConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateDunningConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    retryAttempts?: {
-                        daysAfterFailure: number;
-                        action: string;
-                    }[];
-                    gracePeriodDays?: number;
-                    degradedPeriodDays?: number;
-                    cancellationDays?: number;
-                    notifyOnRetry?: boolean;
-                    notifyOnGracePeriodStart?: boolean;
-                    notifyOnDegradation?: boolean;
-                    notifyBeforeCancellation?: boolean;
-                    notifyBeforeCancellationDays?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResetDunningConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetChannelConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateChannelConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                category: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    channels: ("PUSH" | "EMAIL" | "IN_APP" | "SMS")[];
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResetChannelConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetRetentionDefaults: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateRetentionDefaults: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    contestResultRetentionSeasons?: number;
-                    rosterHistoryRetentionSeasons?: number;
-                    activityLogRetentionDays?: number;
-                    payoutRecordRetentionSeasons?: number;
-                    chatMessageRetentionDays?: number;
-                    auditLogRetentionDays?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResetRetentionDefaults: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetTenantRetentionOverride: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminSetTenantRetentionOverride: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    contestResultRetentionSeasons?: number;
-                    rosterHistoryRetentionSeasons?: number;
-                    activityLogRetentionDays?: number;
-                    payoutRecordRetentionSeasons?: number;
-                    chatMessageRetentionDays?: number;
-                    auditLogRetentionDays?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminClearTenantRetentionOverride: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetDigestConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateDigestConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    subjectTemplate?: string;
-                    headerTemplate?: string;
-                    footerTemplate?: string;
-                    includeStandings?: boolean;
-                    includeHighlights?: boolean;
-                    includeUpcomingEvents?: boolean;
-                    lookbackDays?: number;
-                    /** @enum {string} */
-                    sendDay?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
-                    sendHourUtc?: number;
-                    enabled?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResetDigestConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminPreviewDigest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminListScoringTemplates: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminCreateScoringTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    id: string;
-                    sport: string;
-                    name: string;
-                    description: string;
-                    config: Record<string, never>;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetScoringTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateScoringTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    sport?: string;
-                    name?: string;
-                    description?: string;
-                    config?: Record<string, never>;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteScoringTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminListSelectionTemplatesConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminCreateSelectionTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    id: string;
-                    name: string;
-                    description: string;
-                    sport: string;
-                    contestType: string;
-                    selectionType: string;
-                    config: Record<string, never>;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetSelectionTemplateConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateSelectionTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name?: string;
-                    description?: string;
-                    sport?: string;
-                    contestType?: string;
-                    selectionType?: string;
-                    config?: Record<string, never>;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteSelectionTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminListNotificationTemplates: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetNotificationTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventType: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateNotificationTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventType: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    pushTitle?: string;
-                    pushBody?: string;
-                    emailSubject?: string;
-                    emailText?: string;
-                    inAppTitle?: string;
-                    inAppBody?: string;
-                    inAppIcon?: string;
-                    smsBody?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResetNotificationTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventType: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminListPushTriggers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdatePushTrigger: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventType: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    enabled?: boolean;
-                    title?: string;
-                    body?: string;
-                    sound?: string;
-                    /** @enum {string} */
-                    priority?: "high" | "normal";
-                    category?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminEnablePushTrigger: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventType: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminDisablePushTrigger: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventType: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResetPushTriggers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminGetRateLimitConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateRateLimitConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    pushPerHour?: number;
-                    emailPerDay?: number;
-                    smsPerDay?: number;
-                    collapseRules?: {
-                        eventType: string;
-                        maxPerHour: number;
-                        windowMinutes: number;
-                    }[];
-                    dedupWindowSeconds?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    adminResetRateLimitConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
     getPollIntervals: {
         parameters: {
             query?: never;
@@ -12171,940 +7696,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getCurrentPlan: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        slug: string;
-                        name: string;
-                        displayOrder?: number;
-                        monthlyPriceCents?: number;
-                        annualPriceCents?: number;
-                        entitlements: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    changePlan: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        slug: string;
-                        name: string;
-                        displayOrder?: number;
-                        monthlyPriceCents?: number;
-                        annualPriceCents?: number;
-                        entitlements: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getEntitlements: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        entitlements: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getUsage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        usage: {
-                            resource: string;
-                            currentCount: number;
-                            limit: number;
-                            percentage: number;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    listPlans: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        plans: {
-                            slug: string;
+                        sports: {
+                            id: string;
                             name: string;
-                            displayOrder?: number;
-                            monthlyPriceCents?: number;
-                            annualPriceCents?: number;
-                            entitlements: {
-                                [key: string]: unknown;
-                            };
+                            participantType: string;
+                            seasons: string[];
                         }[];
-                    };
-                };
-            };
-        };
-    };
-    createSubscription: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    resumeSubscription: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getSubscription: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    createPaymentMethodSetup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getBillingPortal: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    startTrial: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getTrialStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    listInvoices: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        invoices: {
-                            id: string;
-                            amount: number;
-                            currency: string;
-                            status: string;
-                            /** Format: date-time */
-                            periodStart?: string;
-                            /** Format: date-time */
-                            periodEnd?: string;
-                            /** Format: date-time */
-                            createdAt?: string;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    getUpcomingInvoice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        invoices: {
-                            id: string;
-                            amount: number;
-                            currency: string;
-                            status: string;
-                            /** Format: date-time */
-                            periodStart?: string;
-                            /** Format: date-time */
-                            periodEnd?: string;
-                            /** Format: date-time */
-                            createdAt?: string;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    getInvoiceDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invoiceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getInvoicePdf: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invoiceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    previewUpgrade: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                planSlug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    previewDowngrade: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                planSlug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    previewCancellation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getRetentionOffer: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    cancelSubscription: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getRevenueAnalytics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getSubscribersByPlan: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getTrialMetrics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getChurnMetrics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    listEnterprisePlans: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    createEnterprisePlan: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getDunningStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getLeagueFeed: {
-        parameters: {
-            query?: {
-                cursor?: string;
-                limit?: string;
-            };
-            header?: never;
-            path: {
-                leagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        items: {
-                            id: string;
-                            type: string;
-                            authorName: string;
-                            content: string;
-                            /** Format: date-time */
-                            createdAt: string;
-                            replyCount: number;
-                            likeCount: number;
-                        }[];
-                        hasMore: boolean;
-                    };
-                };
-            };
-        };
-    };
-    createFeedPost: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    content: string;
-                    /** @enum {string} */
-                    type?: "POST" | "ANNOUNCEMENT" | "SYSTEM";
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getFeedPost: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-                postId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    deleteFeedPost: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-                postId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    addFeedReply: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-                postId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    content: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    addFeedReaction: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-                postId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    emoji: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    pinFeedPost: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-                postId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    unpinFeedPost: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-                postId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        features: {
+                            [key: string]: boolean;
+                        };
                     };
                 };
             };
@@ -13128,28 +7728,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        draftPickHistories: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13167,7 +7843,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    entryIds?: string[];
+                    entryIds: string[];
                     rounds?: number;
                     timePerPickSeconds?: number;
                     availableParticipantIds?: string[];
@@ -13184,34 +7860,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        draftPickHistories: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
         };
     };
-    submitDraftPick: {
+    submitContestSelection: {
         parameters: {
             query?: never;
             header?: never;
@@ -13223,9 +7975,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** Format: uuid */
                     entryId: string;
-                    /** Format: uuid */
                     participantId: string;
                 };
             };
@@ -13238,37 +7988,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        pick: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
+                            id: string;
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        draftPickHistories: {
                             pickNumber: number;
                             round: number;
+                            pickInRound: number;
                             entryId: string;
-                            participantId: string;
-                            isAutoPick: boolean;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
                             /** Format: date-time */
                             pickedAt: string;
-                        };
-                        draft: {
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13292,28 +8109,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        draftPickHistories: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13337,34 +8230,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        draftPickHistories: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
-                            }[];
-                        };
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
         };
     };
-    extendPickDeadline: {
+    extendCurrentTurn: {
         parameters: {
             query?: never;
             header?: never;
@@ -13388,65 +8357,236 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        draft: {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
                             id: string;
-                            contestId: string;
-                            status: string;
-                            currentRound: number;
-                            currentPick: number;
-                            picks: {
-                                pickNumber: number;
-                                round: number;
-                                entryId: string;
-                                participantId: string;
-                                isAutoPick: boolean;
-                                /** Format: date-time */
-                                pickedAt: string;
-                            }[];
-                            entries: {
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        draftPickHistories: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
                                 id: string;
-                                userId: string;
-                                displayName: string;
-                                pickCount: number;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    undoSnakeDraftSelection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
                             }[];
-                        };
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
+                            id: string;
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        draftPickHistories: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
         };
     };
-    listSelectionTemplates: {
-        parameters: {
-            query?: {
-                sport?: string;
-                contestType?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getSelectionTemplate: {
+    skipSnakeDraftTurn: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                templateId: string;
+                contestId: string;
             };
             cookie?: never;
         };
@@ -13459,56 +8599,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    listScoringTemplates: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getScoringTemplate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                key: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        contestName: string;
+                        selectionType: string;
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            pricingMethod?: string;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        status: string;
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
+                            id: string;
+                            userId: string;
+                            name: string;
+                            isOnClock: boolean;
+                        }[];
+                        draftPickHistories: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            position?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /** Format: date-time */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            label: string | null;
+                        }[];
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            topTeam: {
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            bottomTeam: ({
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null) | null;
+                            winnerId: string | null;
+                        }[];
                     };
                 };
             };
@@ -13521,7 +8709,52 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    contest_id?: string;
+                    sport: string;
+                    /** @enum {string} */
+                    scoring_type: "CUMULATIVE" | "KNOCKOUT" | "BRACKET" | "STROKE_PLAY" | "POSITION";
+                    stat_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    position_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    bonus_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    penalty_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    multiplier_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    bracket_round_rules?: {
+                        [key: string]: unknown;
+                    }[];
+                    upset_bonus_config?: null | {
+                        [key: string]: unknown;
+                    };
+                    special_slots?: {
+                        [key: string]: unknown;
+                    }[];
+                    tiebreaker_config?: {
+                        [key: string]: unknown;
+                    };
+                    missed_event_score?: number;
+                    missed_event_points?: number;
+                    /** @enum {string} */
+                    dnf_handling?: "ZERO" | "EXCLUDE" | "LAST_PLACE" | "PENALTY" | "MISSED_CUT_SCORE";
+                    /** @enum {string} */
+                    counting_method?: "ALL" | "BEST_N" | "DROP_LOWEST_N";
+                    best_n?: number;
+                    drop_lowest_n?: number;
+                    lower_is_better?: boolean;
+                };
+            };
+        };
         responses: {
             /** @description Default Response */
             200: {
@@ -13530,8 +8763,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        valid: boolean;
+                        config?: {
+                            [key: string]: unknown;
+                        };
+                        warnings?: string[];
+                        errors?: unknown[];
+                    };
+                };
+            };
+            /** @description Default Response */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        valid: boolean;
+                        config?: {
+                            [key: string]: unknown;
+                        };
+                        warnings?: string[];
+                        errors?: unknown[];
                     };
                 };
             };
@@ -13555,8 +8808,13 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        leaderboard: {
+                            entryId: string;
+                            rank: number;
+                            totalScore: number;
+                            isTied: boolean;
+                        }[];
                     };
                 };
             };
@@ -13581,8 +8839,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        entryId: string;
+                        contestId: string;
+                        totalScore: number;
+                        timeline: {
+                            contestId: string;
+                            entryId: string;
+                            /** Format: date-time */
+                            eventTimestamp: string;
+                            pointsEarned: number;
+                            runningTotal: number;
+                            participantBreakdowns: {
+                                participantId: string;
+                                participantName?: string | null;
+                                contextLabel?: string | null;
+                                statPoints: number;
+                                positionPoints: number;
+                                bonusPoints: number;
+                                penaltyPoints: number;
+                                multipliedTotal: number;
+                                dnfAdjustment: number;
+                                finalScore: number;
+                            }[];
+                        }[];
                     };
                 };
             };
@@ -13607,8 +8886,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        participantId: string;
+                        contestId: string;
+                        scores: {
+                            contestId: string;
+                            participantId: string;
+                            eventTimestamp: string;
+                            stats: {
+                                [key: string]: number;
+                            };
+                            points: number;
+                            breakdown: {
+                                participantId: string;
+                                participantName?: string | null;
+                                contextLabel?: string | null;
+                                statPoints: number;
+                                positionPoints: number;
+                                bonusPoints: number;
+                                penaltyPoints: number;
+                                multipliedTotal: number;
+                                dnfAdjustment: number;
+                                finalScore: number;
+                            };
+                        }[];
+                        totalPoints: number;
                     };
                 };
             };
@@ -13632,8 +8933,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        contestId: string;
+                        entriesUpdated: number;
+                        rankChanges: number;
+                        /** Format: date-time */
+                        rolledUpAt: string;
                     };
                 };
             };
@@ -13655,8 +8959,12 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        status: string;
+                        service: string;
+                        rollupRunning: boolean;
+                        activeContests: number;
+                        /** Format: date-time */
+                        timestamp: string;
                     };
                 };
             };
@@ -13680,15 +8988,24 @@ export interface operations {
                     "application/json": {
                         notifications: {
                             id: string;
-                            type: string;
+                            userId?: string;
+                            eventType: string;
                             title: string;
                             body: string;
                             read: boolean;
                             /** Format: date-time */
-                            createdAt: string;
-                            linkTo?: string | null;
+                            readAt?: string | null;
+                            dismissed?: boolean;
+                            imageUrl?: string | null;
+                            actionScreen?: string | null;
+                            actionParams?: {
+                                [key: string]: unknown;
+                            };
+                            groupKey?: string | null;
+                            /** Format: date-time */
+                            createdAt: string | null;
                         }[];
-                        unreadCount: number;
+                        total: number;
                     };
                 };
             };
@@ -13710,8 +9027,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        unreadCount: number;
                     };
                 };
             };
@@ -13758,8 +9074,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        markedRead: number;
                     };
                 };
             };
@@ -13772,360 +9087,6 @@ export interface operations {
             path: {
                 id: string;
             };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getNotificationPreferences: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    updateNotificationPreferences: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    unsubscribeNotificationCategory: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                category: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    listDevices: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    registerDevice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    registerDeviceAlias: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    deactivateDevice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    dispatchNotification: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    sendAnnouncement: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    scheduleNotification: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    cancelScheduledNotifications: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sourceType: string;
-                sourceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    triggerWeeklyDigest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    getNotificationAnalytics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    sendTestEmail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    sendTestPush: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -14160,8 +9121,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        providers: {
+                            providerId: string;
+                            providerName: string;
+                            sportsCovered: string[];
+                        }[];
                     };
                 };
             };
@@ -14185,8 +9149,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        job: {
+                            /** @enum {string} */
+                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            providerId: string;
+                            sport: string;
+                            eventExternalId?: string;
+                            /** @enum {string} */
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt?: string;
+                            /** Format: date-time */
+                            completedAt?: string;
+                            recordsProcessed: number;
+                            errors: number;
+                            errorLog: {
+                                [key: string]: unknown;
+                            }[];
+                        };
                     };
                 };
             };
@@ -14211,8 +9191,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        job: {
+                            /** @enum {string} */
+                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            providerId: string;
+                            sport: string;
+                            eventExternalId?: string;
+                            /** @enum {string} */
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt?: string;
+                            /** Format: date-time */
+                            completedAt?: string;
+                            recordsProcessed: number;
+                            errors: number;
+                            errorLog: {
+                                [key: string]: unknown;
+                            }[];
+                        };
                     };
                 };
             };
@@ -14237,8 +9233,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        job: {
+                            /** @enum {string} */
+                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            providerId: string;
+                            sport: string;
+                            eventExternalId?: string;
+                            /** @enum {string} */
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /** Format: date-time */
+                            startedAt?: string;
+                            /** Format: date-time */
+                            completedAt?: string;
+                            recordsProcessed: number;
+                            errors: number;
+                            errorLog: {
+                                [key: string]: unknown;
+                            }[];
+                        };
                     };
                 };
             };
@@ -14262,8 +9274,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
+                        sport: string;
+                        eventsWithOdds: number;
+                        odds: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };

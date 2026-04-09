@@ -11,12 +11,12 @@ import type {
   ContestEntryResponse,
   MyContestEntryResponse,
 } from '@poolmaster/shared/dto';
-import type { SelectionConfig } from '@poolmaster/shared/domain';
+import type { ContestConfiguration } from '@poolmaster/shared/domain';
 
 interface ContestRow {
   id: string;
   leagueId: string;
-  seasonId?: string | null;
+  sportEventId?: string | null;
   name: string;
   status: string;
   contestType: string;
@@ -24,8 +24,6 @@ interface ContestRow {
   scoringEngine: string;
   sport?: string | null;
   isExclusive: boolean;
-  scoringStopsOnElimination: boolean;
-  scoringRules: unknown;
   startsAt?: Date | null;
   endsAt?: Date | null;
   lockAt?: Date | null;
@@ -36,10 +34,12 @@ interface ContestRow {
 interface ContestEntryRow {
   id: string;
   contestId: string;
-  leagueMembershipId: string;
+  squadId: string;
+  entryNumber: number;
   name: string;
+  status: string;
   totalScore: number;
-  rank?: number | null;
+  standingsPosition?: number | null;
   isEliminated: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -57,6 +57,7 @@ export function toContestSummaryDto(
     selectionType: contest.selectionType,
     scoringEngine: contest.scoringEngine,
     leagueId: contest.leagueId,
+    sportEventId: contest.sportEventId ?? null,
     sport: contest.sport ?? null,
     entryCount: opts?.entryCount,
     startsAt: contest.startsAt?.toISOString() ?? null,
@@ -68,11 +69,10 @@ export function toContestSummaryDto(
 
 export function toContestDetailDto(
   contest: ContestRow,
-  _selectionConfig?: SelectionConfig | null,
+  _contestConfiguration?: ContestConfiguration | null,
 ): ContestDetailDto {
   return {
     ...toContestSummaryDto(contest),
-    scoringRules: (contest.scoringRules ?? {}) as Record<string, unknown>,
     lockAt: contest.lockAt?.toISOString() ?? null,
     isExclusive: contest.isExclusive,
     sport: contest.sport ?? null,
@@ -81,12 +81,12 @@ export function toContestDetailDto(
 
 export function toContestResponse(
   contest: ContestRow,
-  selectionConfig?: SelectionConfig | null,
+  contestConfiguration?: ContestConfiguration | null,
 ): ContestResponse {
   return {
-    contest: toContestDetailDto(contest, selectionConfig),
-    selectionConfig: selectionConfig
-      ? (selectionConfig as unknown as Record<string, unknown>)
+    contest: toContestDetailDto(contest, contestConfiguration),
+    contestConfiguration: contestConfiguration
+      ? (contestConfiguration as unknown as Record<string, unknown>)
       : null,
   };
 }
@@ -101,18 +101,19 @@ export function toContestListResponse(
 
 export function toContestEntryDto(
   entry: ContestEntryRow,
-  owner: { id: string; displayName: string },
+  squad: { name: string },
 ): ContestEntryDto {
   return {
     id: entry.id,
     contestId: entry.contestId,
-    leagueMembershipId: entry.leagueMembershipId,
+    squadId: entry.squadId,
+    squadName: squad.name,
+    entryNumber: entry.entryNumber,
     name: entry.name,
+    status: entry.status as ContestEntryDto['status'],
     totalScore: entry.totalScore,
-    rank: entry.rank ?? null,
+    standingsPosition: entry.standingsPosition ?? null,
     isEliminated: entry.isEliminated,
-    ownerId: owner.id,
-    ownerDisplayName: owner.displayName,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
   };
@@ -127,12 +128,14 @@ export function toContestEntryListResponse(input: {
   entries: ContestEntryDto[];
   isJoined: boolean;
   myEntryId: string | null;
+  myEntryIds?: string[];
 }): ContestEntryListResponse {
   return {
     contestId: input.contestId,
     total: input.entries.length,
     isJoined: input.isJoined,
     myEntryId: input.myEntryId,
+    myEntryIds: input.myEntryIds,
     entries: input.entries,
   };
 }

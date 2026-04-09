@@ -1,8 +1,7 @@
 /**
  * StandingsService — leaderboard queries, rank summaries, and user entry lookups.
  *
- * Reads from the ContestStanding and ContestEntry repositories to produce
- * paginated leaderboards with movement indicators and owner details.
+ * Reads from ContestEntry to produce paginated leaderboards with owner details.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -128,19 +127,28 @@ export class StandingsService {
   // Private helpers
   // -------------------------------------------------------------------------
 
-  /**
-   * Fetches contest standings joined with entry and user data.
-   * Computes movement indicators by comparing current rank with the
-   * rank stored on the ContestEntry (treated as the previous snapshot).
-   */
   private async fetchEnrichedStandings(contestId: string): Promise<StandingEntry[]> {
-    // Fetch standings with entry and membership/user details
-    const standings = await this.prisma.contestStanding.findMany({
+    const entries = await this.prisma.contestEntry.findMany({
       where: { contestId },
-      orderBy: { rank: 'asc' },
+      include: {
+        squad: {
+          include: {
+            memberships: {
+              where: { status: 'ACTIVE' },
+              include: { user: true },
+              orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+            },
+          },
+        },
+      },
+      orderBy: [
+        { standingsPosition: 'asc' },
+        { totalScore: 'desc' },
+        { createdAt: 'asc' },
+      ],
     });
 
-    if (standings.length === 0) {
+    if (entries.length === 0) {
       throw new StandingsError(
         'Standings have not been generated for this contest yet',
         'STANDINGS_UNAVAILABLE',
@@ -148,34 +156,21 @@ export class StandingsService {
       );
     }
 
-    // Fetch all entries for this contest with their owner info
-    const entries = await this.prisma.contestEntry.findMany({
-      where: { contestId },
-      include: {
-        membership: {
-          include: { user: true },
-        },
-      },
-    });
+    const rankedEntries = assignRanksFromEntries(entries);
 
-    const entryMap = new Map(entries.map((e) => [e.id, e]));
-
-    return standings.map((s) => {
-      const entry = entryMap.get(s.entryId);
-      const previousRank = entry?.rank ?? null;
-      const movement = computeMovement(s.rank, previousRank);
-
+    return rankedEntries.map(({ entry, rank }) => {
+      const ownerMembership = entry.squad.memberships[0];
       return {
-        rank: s.rank,
-        previousRank,
-        movement,
-        entryId: s.entryId,
+        rank,
+        previousRank: entry.standingsPosition ?? null,
+        movement: computeMovement(rank, entry.standingsPosition ?? null),
+        entryId: entry.id,
         entryName: entry?.name ?? 'Unknown',
-        ownerDisplayName: entry?.membership?.user?.displayName ?? 'Unknown',
-        ownerId: entry?.membership?.user?.id ?? '',
-        totalScore: s.totalScore,
+        ownerDisplayName: ownerMembership?.user?.displayName ?? entry?.squad.name ?? 'Unknown',
+        ownerId: ownerMembership?.user?.id ?? '',
+        totalScore: entry.totalScore,
         isEliminated: entry?.isEliminated ?? false,
-        lastUpdatedAt: s.lastUpdatedAt,
+        lastUpdatedAt: entry.updatedAt,
       };
     });
   }
@@ -210,4 +205,46 @@ function sortEntries(entries: StandingEntry[], sortBy: SortField): StandingEntry
       break;
   }
   return sorted;
+}
+
+function assignRanksFromEntries(
+  entries: Array<{
+    id: string;
+    totalScore: number;
+    standingsPosition: number | null;
+    createdAt: Date;
+    updatedAt: Date;
+    name: string;
+    isEliminated: boolean;
+    squad: {
+      name: string;
+      memberships: Array<{
+        user: {
+          id: string;
+          displayName: string;
+        };
+      }>;
+    };
+  }>,
+) {
+  const sorted = [...entries].sort((a, b) => {
+    if ((a.standingsPosition ?? Number.MAX_SAFE_INTEGER) !== (b.standingsPosition ?? Number.MAX_SAFE_INTEGER)) {
+      return (a.standingsPosition ?? Number.MAX_SAFE_INTEGER) - (b.standingsPosition ?? Number.MAX_SAFE_INTEGER);
+    }
+    if (a.totalScore !== b.totalScore) {
+      return b.totalScore - a.totalScore;
+    }
+    return a.createdAt.getTime() - b.createdAt.getTime();
+  });
+
+  let currentRank = 1;
+  return sorted.map((entry, index) => {
+    if (index > 0 && entry.totalScore !== sorted[index - 1]!.totalScore) {
+      currentRank = index + 1;
+    }
+    return {
+      entry,
+      rank: entry.standingsPosition ?? currentRank,
+    };
+  });
 }

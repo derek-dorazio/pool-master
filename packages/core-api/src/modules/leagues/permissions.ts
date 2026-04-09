@@ -4,6 +4,7 @@
 
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
+import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import { isCommissionerOrOwner } from '../../core/permissions';
 
 function extractLeagueContext(request: FastifyRequest): { userId?: string; leagueId?: string } {
@@ -31,6 +32,12 @@ async function loadMembership(
     await reply
       .status(403)
       .send({ error: 'FORBIDDEN', message: 'You are not a member of this league' });
+    return null;
+  }
+  if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+    await reply
+      .status(403)
+      .send({ error: 'FORBIDDEN', message: 'Your membership in this league is inactive' });
     return null;
   }
   return membership;

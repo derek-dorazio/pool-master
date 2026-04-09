@@ -5,7 +5,11 @@
  * and verifies the required permission before allowing the request to proceed.
  */
 
-import type { CommissionerPermission, LeagueMembership } from '@poolmaster/shared/domain';
+import type {
+  CommissionerPermission,
+  LeagueMembership,
+  LeagueMembershipStatus,
+} from '@poolmaster/shared/domain';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
 import { hasPermission } from './permissions';
@@ -39,6 +43,11 @@ export function requirePermission(
         .status(403)
         .send({ error: 'FORBIDDEN', message: 'You are not a member of this league' });
     }
+    if (membership.status !== ('ACTIVE' satisfies LeagueMembershipStatus)) {
+      return reply
+        .status(403)
+        .send({ error: 'FORBIDDEN', message: 'Your membership in this league is inactive' });
+    }
     if (!hasPermission(membership, permission)) {
       return reply
         .status(403)
@@ -64,7 +73,7 @@ export function requireOwner(
     }
     const leagueId = (request.params as { id: string }).id;
     const membership = await membershipRepo.findByLeagueAndUser(leagueId, userId);
-    if (!membership || membership.role !== 'OWNER') {
+    if (!membership || membership.status !== ('ACTIVE' satisfies LeagueMembershipStatus) || membership.role !== 'OWNER') {
       return reply
         .status(403)
         .send({ error: 'FORBIDDEN', message: 'Only the league owner can perform this action' });

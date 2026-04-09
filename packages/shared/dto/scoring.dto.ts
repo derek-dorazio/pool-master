@@ -1,21 +1,8 @@
 import { z } from 'zod';
+import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
 
-export const ScoringTemplateSummaryDtoSchema = z.object({
-  key: z.string(),
-  sport: z.string(),
-});
-export type ScoringTemplateSummaryDto = z.infer<typeof ScoringTemplateSummaryDtoSchema>;
-
-export const ScoringTemplateListResponseSchema = z.object({
-  templates: z.array(ScoringTemplateSummaryDtoSchema),
-});
-export type ScoringTemplateListResponse = z.infer<typeof ScoringTemplateListResponseSchema>;
-
-export const ScoringTemplateResponseSchema = z.object({
-  key: z.string(),
-  config: z.record(z.unknown()),
-});
-export type ScoringTemplateResponse = z.infer<typeof ScoringTemplateResponseSchema>;
+export const ScoringConfigValidationRequestSchema = ScoringConfigSchema;
+export type ScoringConfigValidationRequest = z.infer<typeof ScoringConfigValidationRequestSchema>;
 
 export const ScoringConfigValidationResponseSchema = z.object({
   valid: z.boolean(),

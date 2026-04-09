@@ -88,7 +88,7 @@ describe('Member and Invitation CRUD Integration', () => {
     const emailMembership = acceptEmailInviteRes.json().membership;
     expect(emailMembership.leagueId).toBe(leagueId);
     expect(emailMembership.userId).toBe(emailInvitee.user.id);
-    expect(emailMembership.role).toBe(LeagueRole.MANAGER);
+    expect(emailMembership.role).toBe(LeagueRole.MEMBER);
 
     const inviteLinkRes = await getApp().inject({
       method: 'POST',
@@ -118,7 +118,7 @@ describe('Member and Invitation CRUD Integration', () => {
     const linkMembership = acceptLinkInviteRes.json().membership;
     expect(linkMembership.leagueId).toBe(leagueId);
     expect(linkMembership.userId).toBe(linkInvitee.user.id);
-    expect(linkMembership.role).toBe(LeagueRole.MANAGER);
+    expect(linkMembership.role).toBe(LeagueRole.MEMBER);
 
     const membersRes = await getApp().inject({
       method: 'GET',
@@ -131,8 +131,8 @@ describe('Member and Invitation CRUD Integration', () => {
     expect(members).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ userId: ownerUserId, role: LeagueRole.OWNER }),
-        expect.objectContaining({ userId: emailInvitee.user.id, role: LeagueRole.MANAGER }),
-        expect.objectContaining({ userId: linkInvitee.user.id, role: LeagueRole.MANAGER }),
+        expect.objectContaining({ userId: emailInvitee.user.id, role: LeagueRole.MEMBER }),
+        expect.objectContaining({ userId: linkInvitee.user.id, role: LeagueRole.MEMBER }),
       ]),
     );
 

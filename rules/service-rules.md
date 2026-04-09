@@ -73,6 +73,16 @@ For every API endpoint:
 4. Provide `tags`, `summary`, and unique `operationId`.
 5. Regenerate and validate the shared OpenAPI/client artifacts.
 
+### Mapper File Requirement
+
+Every module that registers Fastify routes **must** have a corresponding mapper file at `packages/core-api/src/mappers/<module>.mapper.ts`. The mapper file must export named functions (e.g., `mapContestToDto`, `mapLeagueToListItem`) that handlers call to transform service/domain results into DTO shapes.
+
+- Inline `.map()` transformations in route handlers or handler files are not acceptable as a substitute for a dedicated mapper.
+- The mapper is the single place where persistence/domain shapes are translated to API response shapes.
+- Modules exempt from this rule: `config` (static data only), `health` (no domain objects).
+
+If a module currently lacks a mapper file, creating one is part of the slice — not deferred cleanup.
+
 ### Required Route Schema Fields
 
 Every route must include:
@@ -180,3 +190,38 @@ Before finishing backend API work, verify:
 5. Does `npm run api:validate` succeed?
 6. Did generated files update as expected?
 7. Did any frontend casts/local API interfaces become removable?
+
+---
+
+## 10. Pre-Commit Self-Review
+
+Before committing backend code, scan changed files for these anti-patterns. This is an execution gate, not a suggestion — catching these before commit prevents the pattern from accumulating across slices.
+
+**Grep for these in changed route/handler files:**
+
+| Pattern to find | What it means | Fix |
+|---|---|---|
+| `additionalProperties: true` in route schemas | Passthrough/generic response schema | Replace with Zod DTO via `zodToJsonSchema()` |
+| `SuccessSchema` on a route returning domain data | Placeholder response, not real contract | Create domain-specific response DTO |
+| `{ type: 'object', properties:` in route files | Inline JSON schema instead of Zod | Move to `packages/shared/dto/` as Zod schema |
+| `prisma.*.find` in handler or route files | Raw Prisma access outside service layer | Move to service; return through mapper |
+| `reply.send(await prisma` | Prisma result returned directly to client | Route through service → mapper → DTO |
+| `.map((` in route or handler files | Inline transformation instead of mapper | Extract to `packages/core-api/src/mappers/` |
+
+**Quick validation commands:**
+
+```bash
+# Find inline JSON schemas in route files
+grep -rn "type: 'object', properties:" packages/core-api/src/modules/*/routes.ts
+
+# Find SuccessSchema used for domain responses
+grep -rn "SuccessSchema" packages/core-api/src/modules/*/routes.ts
+
+# Find passthrough schemas
+grep -rn "additionalProperties: true" packages/core-api/src/modules/*/routes.ts
+
+# Find direct Prisma access in handlers
+grep -rn "prisma\." packages/core-api/src/modules/*/handler*.ts packages/core-api/src/modules/*/routes.ts
+```
+
+If any of these patterns appear in your changed files, fix them before committing. Do not defer to a cleanup slice.

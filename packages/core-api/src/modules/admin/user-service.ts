@@ -8,12 +8,7 @@
  * Persisted via Prisma to the users table.
  */
 
-import { randomBytes } from 'node:crypto';
-import bcrypt from 'bcryptjs';
 import type { PrismaClient } from '@prisma/client';
-import { createChannels } from '../notifications/channels/channel-factory';
-import type { EmailChannel } from '../notifications/channels/email-channel';
-import { loadConfig } from '../notifications/core/config';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -73,33 +68,8 @@ export class UserNotFoundError extends Error {
   }
 }
 
-export class UserPasswordResetUnsupportedError extends Error {
-  constructor(userId: string) {
-    super(`Password reset is only supported for local-auth users: ${userId}`);
-    this.name = 'UserPasswordResetUnsupportedError';
-  }
-}
-
-export class UserEmailDeliveryError extends Error {
-  constructor(userId: string, reason: string) {
-    super(`Failed to deliver email to user ${userId}: ${reason}`);
-    this.name = 'UserEmailDeliveryError';
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Service
-// ---------------------------------------------------------------------------
-
 export class UserService {
-  private readonly emailChannel: Pick<EmailChannel, 'sendToUser'>;
-
-  constructor(
-    private readonly prisma: PrismaClient,
-    emailChannel: Pick<EmailChannel, 'sendToUser'> = createChannels(loadConfig(), prisma).email,
-  ) {
-    this.emailChannel = emailChannel;
-  }
+  constructor(private readonly prisma: PrismaClient) {}
 
   /**
    * Searches users across all tenants with filtering and pagination.
@@ -193,25 +163,6 @@ export class UserService {
                 tenant: { select: { name: true } },
               },
             },
-            entries: {
-              include: {
-                contest: {
-                  select: {
-                    id: true,
-                    name: true,
-                    sport: true,
-                    status: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        deviceRegistrations: {
-          select: {
-            id: true,
-            platform: true,
-            lastActiveAt: true,
           },
         },
       },
@@ -231,7 +182,7 @@ export class UserService {
       joinedAt: user.createdAt,
     });
 
-    // Build leagues and active contests from memberships
+    // Build leagues from memberships
     const leagues: UserDetailView['leagues'] = [];
     const activeContests: UserDetailView['activeContests'] = [];
 
@@ -243,27 +194,46 @@ export class UserService {
         role: m.role.toLowerCase(),
         tenantName: m.league.tenant.name,
       });
-
-      for (const entry of m.entries) {
-        if (['ACTIVE', 'OPEN', 'IN_PROGRESS', 'DRAFT'].includes(entry.contest.status)) {
-          activeContests.push({
-            id: entry.contest.id,
-            name: entry.contest.name,
-            sport: entry.contest.sport ?? '',
-            status: entry.contest.status.toLowerCase(),
-            rank: entry.rank ?? undefined,
-          });
-        }
-      }
     }
 
-    // Build devices
-    const devices = user.deviceRegistrations.map((d) => ({
-      id: d.id,
-      platform: d.platform,
-      lastActiveAt: d.lastActiveAt,
-      tokenStatus: 'valid',
-    }));
+    const activeEntries = await this.prisma.contestEntry.findMany({
+      where: {
+        squad: {
+          memberships: {
+            some: {
+              userId,
+              status: 'ACTIVE',
+            },
+          },
+        },
+        contest: {
+          status: { in: ['ACTIVE', 'OPEN', 'IN_PROGRESS', 'DRAFT'] },
+        },
+      },
+      include: {
+        contest: {
+          select: {
+            id: true,
+            name: true,
+            sportEvent: {
+              select: { sport: true },
+            },
+            status: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+
+    for (const entry of activeEntries) {
+      activeContests.push({
+        id: entry.contest.id,
+        name: entry.contest.name,
+        sport: entry.contest.sportEvent?.sport ?? '',
+        status: entry.contest.status.toLowerCase(),
+        rank: entry.standingsPosition ?? undefined,
+      });
+    }
 
     return {
       id: user.id,
@@ -276,70 +246,9 @@ export class UserService {
       tenants: Array.from(tenantMap.values()),
       leagues,
       activeContests,
-      devices,
+      devices: [],
       recentAuthEvents: [], // Auth events not yet modelled — will come from auth service
     };
-  }
-
-  /**
-   * Triggers a password reset email for the user.
-   */
-  async resetUserPassword(
-    userId: string,
-    adminUserId: string,
-    adminUserEmail: string,
-  ): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, authProvider: true },
-    });
-    if (!user) throw new UserNotFoundError(userId);
-
-    if (user.authProvider && user.authProvider !== 'local') {
-      throw new UserPasswordResetUnsupportedError(userId);
-    }
-
-    const temporaryPassword = randomBytes(9).toString('base64url');
-    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-
-    const delivery = await this.emailChannel.sendToUser(
-      user.email,
-      'Your PoolMaster password has been reset',
-      [
-        'An admin reset your PoolMaster password.',
-        '',
-        `Temporary password: ${temporaryPassword}`,
-        '',
-        'Sign in and change it immediately.',
-      ].join('\n'),
-    );
-
-    if (!delivery.success) {
-      throw new UserEmailDeliveryError(userId, delivery.error ?? 'Email provider rejected the message');
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
-        data: {
-          passwordHash,
-          authProvider: 'local',
-        },
-      });
-      await tx.refreshToken.updateMany({
-        where: { userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-    });
-
-    await logAdminAction({
-      adminUserId,
-      adminUserEmail,
-      action: 'user.reset_password',
-      resourceType: 'USER',
-      resourceId: userId,
-      description: `Reset password and issued a temporary credential for user ${userId}`,
-    });
   }
 
   /**
@@ -424,38 +333,6 @@ export class UserService {
   }
 
   /**
-   * Sends an administrative email to a user.
-   */
-  async sendAdminEmail(
-    userId: string,
-    subject: string,
-    body: string,
-    adminUserId: string,
-    adminUserEmail: string,
-  ): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true },
-    });
-    if (!user) throw new UserNotFoundError(userId);
-
-    const delivery = await this.emailChannel.sendToUser(user.email, subject, body);
-    if (!delivery.success) {
-      throw new UserEmailDeliveryError(userId, delivery.error ?? 'Email provider rejected the message');
-    }
-
-    await logAdminAction({
-      adminUserId,
-      adminUserEmail,
-      action: 'user.send_email',
-      resourceType: 'USER',
-      resourceId: userId,
-      description: `Sent admin email to user ${userId}: "${subject}"`,
-      afterState: { subject },
-    });
-  }
-
-  /**
    * Merges a duplicate user account into a primary account.
    * Transfers all memberships, entries, and history records.
    */
@@ -497,9 +374,43 @@ export class UserService {
 
       // Transfer contest entries
       const dupEntries = await tx.contestEntry.findMany({
-        where: { membership: { userId: duplicateId } },
+        where: {
+          squad: {
+            memberships: {
+              some: {
+                userId: duplicateId,
+                status: 'ACTIVE',
+              },
+            },
+          },
+        },
       });
       entriesTransferred = dupEntries.length;
+
+      const duplicateSquadMemberships = await tx.squadMembership.findMany({
+        where: { userId: duplicateId },
+        orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+      });
+
+      for (const membership of duplicateSquadMemberships) {
+        const existing = await tx.squadMembership.findUnique({
+          where: {
+            squadId_userId: {
+              squadId: membership.squadId,
+              userId: primaryId,
+            },
+          },
+        });
+
+        if (existing) {
+          await tx.squadMembership.delete({ where: { id: membership.id } });
+        } else {
+          await tx.squadMembership.update({
+            where: { id: membership.id },
+            data: { userId: primaryId },
+          });
+        }
+      }
 
       // Revoke duplicate's tokens
       await tx.refreshToken.updateMany({

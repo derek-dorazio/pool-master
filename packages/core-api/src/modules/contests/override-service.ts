@@ -1,18 +1,17 @@
 /**
  * OverrideService — commissioner safety-valve tools for in-season contest management.
  *
- * Covers draft overrides, scoring overrides, contest lifecycle overrides,
- * and payout confirmation/override.
+ * Covers draft overrides, scoring overrides, and contest lifecycle overrides.
  */
 
 import type {
   ContestRepository,
   ContestEntryRepository,
-  ContestStandingRepository,
   DraftSessionRepository,
 } from '@poolmaster/shared/db';
 import type { Contest, DraftSession } from '@poolmaster/shared/domain';
 import { ContestStatus, DraftStatus } from '@poolmaster/shared/domain';
+import type { ContestScoringRecalculationService } from '../contest-scoring';
 
 export interface RecalculationResult {
   contestId: string;
@@ -36,7 +35,7 @@ export class OverrideService {
     private readonly contestRepo: ContestRepository,
     private readonly draftSessionRepo: DraftSessionRepository,
     private readonly entryRepo: ContestEntryRepository,
-    private readonly standingRepo: ContestStandingRepository,
+    private readonly contestScoringRecalculationService: ContestScoringRecalculationService,
   ) {}
 
   // --- Draft Overrides (08-018, 08-019, 08-020) ---
@@ -44,18 +43,18 @@ export class OverrideService {
   /** Undoes a draft pick within the configurable window (default 5 min). */
   async undoPick(contestId: string, pickId: string, _reason: string): Promise<void> {
     const session = await this.requireDraftSession(contestId);
-    const picks = await this.draftSessionRepo.getPicks(session.id);
-    const pick = picks.find((p) => p.id === pickId);
-    if (!pick) {
+    const pickHistories = await this.draftSessionRepo.getPickHistories(session.id);
+    const pickHistory = pickHistories.find((history) => history.id === pickId);
+    if (!pickHistory) {
       throw new OverrideError('Pick not found in this draft session');
     }
-    const elapsed = Date.now() - pick.pickedAt.getTime();
+    const elapsed = Date.now() - pickHistory.createdAt.getTime();
     if (elapsed > UNDO_WINDOW_MS) {
       throw new OverrideError('Undo window has expired (5 minutes)');
     }
     // Reset current pick to the undone pick's position
     await this.draftSessionRepo.update(session.id, {
-      currentPickNumber: pick.pickNumber,
+      currentPickNumber: pickHistory.pickNumber,
     });
   }
 
@@ -87,12 +86,14 @@ export class OverrideService {
     additionalSeconds: number,
   ): Promise<void> {
     const session = await this.requireDraftSession(contestId);
-    if (!session.pickDeadline) {
-      throw new OverrideError('No active pick deadline to extend');
+    if (!session.currentTurnStartedAt) {
+      throw new OverrideError('No active current turn to extend');
     }
-    const newDeadline = new Date(session.pickDeadline.getTime() + additionalSeconds * 1000);
+    const shiftedTurnStart = new Date(
+      session.currentTurnStartedAt.getTime() + additionalSeconds * 1000,
+    );
     await this.draftSessionRepo.update(session.id, {
-      pickDeadline: newDeadline,
+      currentTurnStartedAt: shiftedTurnStart,
     } as Partial<DraftSession>);
   }
 
@@ -120,41 +121,7 @@ export class OverrideService {
     if (!contest) {
       throw new OverrideError('Contest not found');
     }
-    const entries = await this.entryRepo.findByContest(contestId);
-    const oldStandings = await this.standingRepo.findByContest(contestId);
-    const oldRankMap = new Map(oldStandings.map((s) => [s.entryId, s]));
-    // Sort entries by score (descending) and assign new ranks
-    const sorted = [...entries].sort((a, b) => b.totalScore - a.totalScore);
-    const changes: StandingsChange[] = [];
-    for (let i = 0; i < sorted.length; i++) {
-      const entry = sorted[i];
-      const newRank = i + 1;
-      const old = oldRankMap.get(entry.id);
-      const oldRank = old?.rank ?? 0;
-      const oldScore = old?.totalScore ?? 0;
-      if (oldRank !== newRank || oldScore !== entry.totalScore) {
-        changes.push({
-          entryId: entry.id,
-          oldRank,
-          newRank,
-          oldScore,
-          newScore: entry.totalScore,
-        });
-      }
-      await this.standingRepo.upsert({
-        contestId,
-        entryId: entry.id,
-        rank: newRank,
-        totalScore: entry.totalScore,
-        lastUpdatedAt: new Date(),
-      });
-    }
-    return {
-      contestId,
-      teamsAffected: changes.length,
-      standingsChanged: changes.length > 0,
-      changes,
-    };
+    return this.contestScoringRecalculationService.recalculateContest(contestId);
   }
 
   // --- Contest Lifecycle Overrides (08-023) ---
@@ -211,24 +178,6 @@ export class OverrideService {
       throw new OverrideError('Contest not found');
     }
     return this.contestRepo.update(contestId, { lockAt: newLock } as Partial<Contest>);
-  }
-
-  // --- Payout Overrides (08-024) ---
-
-  /** Confirms payouts for a completed contest. */
-  async confirmPayouts(contestId: string, tenantId: string): Promise<void> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
-    if (!contest) {
-      throw new OverrideError('Contest not found');
-    }
-    if (contest.status !== ContestStatus.COMPLETED) {
-      throw new OverrideError('Payouts can only be confirmed for completed contests');
-    }
-    // Mark payouts confirmed in contest settings
-    const settings = (contest.scoringRules as Record<string, unknown>) ?? {};
-    await this.contestRepo.update(contestId, {
-      scoringRules: { ...settings, payoutsConfirmed: true },
-    } as Partial<Contest>);
   }
 
   // --- Helpers ---

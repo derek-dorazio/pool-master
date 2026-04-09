@@ -1,19 +1,19 @@
 /**
- * Integration coverage for contest history read models.
+ * Integration coverage for first-pass contest history reads.
  *
  * This suite is intentionally self-contained:
  * - creates its own owner and challenger through real invitation routes
  * - creates its own league, contest, and entries
- * - seeds standings, results, and payouts directly through Prisma
- * - verifies history endpoints return the expected live DTO shapes
+ * - seeds completed-contest standings, prizes, roster picks, and participant performance
+ * - verifies retained history endpoints read from the core contest model
  */
 import {
-  setupIntegrationTests,
-  teardownIntegrationTests,
+  cleanupTestData,
+  createTestUser,
   getApp,
   getPrisma,
-  createTestUser,
-  cleanupTestData,
+  setupIntegrationTests,
+  teardownIntegrationTests,
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
@@ -22,6 +22,7 @@ import {
   InvitationStatus,
   LeagueRole,
   LeagueVisibility,
+  ParticipantType,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -37,9 +38,7 @@ describe('History Read Integration', () => {
   let challengerHeaders: Record<string, string>;
   let leagueId: string;
   let contestId: string;
-  let ownerEntryId: string;
   let challengerEntryId: string;
-  let ownerMembershipId: string;
   let challengerMembershipId: string;
 
   beforeAll(async () => {
@@ -81,7 +80,7 @@ describe('History Read Integration', () => {
     });
     expect(acceptRes.statusCode).toBe(201);
     challengerMembershipId = acceptRes.json().membership.id;
-    expect(acceptRes.json().membership.role).toBe(LeagueRole.MANAGER);
+    expect(acceptRes.json().membership.role).toBe(LeagueRole.MEMBER);
 
     const contestRes = await getApp().inject({
       method: 'POST',
@@ -93,7 +92,7 @@ describe('History Read Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [
@@ -117,8 +116,7 @@ describe('History Read Integration', () => {
       headers: withoutJsonBodyHeaders(ownerHeaders),
     });
     expect([200, 201]).toContain(ownerEntryRes.statusCode);
-    ownerEntryId = ownerEntryRes.json().entry.id;
-    ownerMembershipId = ownerEntryRes.json().entry.leagueMembershipId;
+    const ownerEntryId = ownerEntryRes.json().entry.id;
 
     const challengerEntryRes = await getApp().inject({
       method: 'POST',
@@ -129,91 +127,112 @@ describe('History Read Integration', () => {
     challengerEntryId = challengerEntryRes.json().entry.id;
 
     const prisma = getPrisma();
-    await prisma.contestStanding.createMany({
-      data: [
-        {
-          contestId,
-          entryId: ownerEntryId,
-          rank: 2,
-          totalScore: 84.5,
-          lastUpdatedAt: new Date('2026-04-03T12:00:00Z'),
-        },
-        {
-          contestId,
-          entryId: challengerEntryId,
-          rank: 1,
-          totalScore: 91.25,
-          lastUpdatedAt: new Date('2026-04-03T12:00:00Z'),
-        },
-      ],
-    });
-
-    await prisma.contestResult.createMany({
-      data: [
-        {
-          contestId,
-          entryId: challengerEntryId,
-          finalRank: 1,
-          totalScore: 91.25,
-          prizeAmount: 250,
-          leagueId,
-          leagueMembershipId: challengerMembershipId,
-          contestName: 'History Contest',
-          contestType: ContestType.SINGLE_EVENT,
-          sport: 'GOLF',
-          numEntries: 2,
-          isWinner: true,
-          isPaidPosition: true,
-          entryFeePaid: 25,
-          prizeLabel: 'Winner',
-          netResult: 225,
-          percentileRank: 100,
-          pointsBehindWinner: 0,
-          pointsBehindNext: 0,
-          closedAt: new Date('2026-04-03T13:00:00Z'),
-        },
-        {
-          contestId,
-          entryId: ownerEntryId,
-          finalRank: 2,
-          totalScore: 84.5,
-          prizeAmount: 0,
-          leagueId,
-          leagueMembershipId: ownerMembershipId,
-          contestName: 'History Contest',
-          contestType: ContestType.SINGLE_EVENT,
-          sport: 'GOLF',
-          numEntries: 2,
-          isWinner: false,
-          isPaidPosition: false,
-          entryFeePaid: 25,
-          prizeLabel: 'Runner-up',
-          netResult: -25,
-          percentileRank: 50,
-          pointsBehindWinner: 6.75,
-          pointsBehindNext: 6.75,
-          closedAt: new Date('2026-04-03T13:00:00Z'),
-        },
-      ],
-    });
-
-    await prisma.payoutHistory.create({
+    const sport = await prisma.sport.create({
       data: {
-        contestId,
-        leagueId,
+        name: `History Read Golf ${contestId.slice(0, 8)}`,
+        participantType: 'INDIVIDUAL',
+        statSchema: {},
+      },
+    });
+
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: 'History Golfer',
+        participantType: ParticipantType.INDIVIDUAL,
+        metadata: {},
+        externalIds: {},
+      },
+    });
+
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        sport: 'GOLF',
+        providerId: 'integration-test',
+        externalId: `history-read-event-${contestId}`,
+        name: 'History Event',
+        status: 'COMPLETED',
+        startDate: new Date('2026-04-03T12:00:00Z'),
+      },
+    });
+
+    await prisma.contest.update({
+      where: { id: contestId },
+      data: {
+        status: 'COMPLETED',
+        sportEventId: sportEvent.id,
+        startsAt: new Date('2026-04-03T12:00:00Z'),
+        endsAt: new Date('2026-04-03T13:00:00Z'),
+      },
+    });
+
+    await prisma.contestEntry.update({
+      where: { id: challengerEntryId },
+      data: { totalScore: 91.25, standingsPosition: 1 },
+    });
+    await prisma.contestEntry.update({
+      where: { id: ownerEntryId },
+      data: { totalScore: 84.5, standingsPosition: 2 },
+    });
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+      },
+    });
+
+    await prisma.sportEventParticipantSourceData.create({
+      data: {
+        sportEventParticipantId: sportEventParticipant.id,
+        providerId: 'integration-test',
+        externalId: participant.id,
+        rawPayload: { finishPosition: 1 },
+        normalizedData: { scoreToPar: -8, finishPosition: 1 },
+        receivedAt: new Date('2026-04-03T13:00:00Z'),
+      },
+    });
+
+    await prisma.rosterPick.create({
+      data: {
         entryId: challengerEntryId,
-        leagueMembershipId: challengerMembershipId,
-        prizeType: 'CASH',
-        prizeLabel: 'Winner',
-        prizeRank: 1,
+        sportEventParticipantId: sportEventParticipant.id,
+        pickedAt: new Date('2026-04-03T12:05:00Z'),
+        autoPicked: false,
+      },
+    });
+
+    const configuration = await prisma.contestConfiguration.findUniqueOrThrow({
+      where: { contestId },
+    });
+
+    const prizeDefinition = await prisma.contestPrizeDefinition.create({
+      data: {
+        contestConfigurationId: configuration.id,
+        prizeDefinitionId: 'FINAL_PLACE',
+        displayName: 'Winner',
+        sortOrder: 1,
+        ruleConfig: { place: 1 },
+        payoutType: 'FIXED_AMOUNT',
         amount: 250,
-        isCash: true,
-        acknowledgedByMember: false,
+        active: true,
+      },
+    });
+
+    await prisma.contestEntryPrizeAward.create({
+      data: {
+        entryId: challengerEntryId,
+        contestPrizeDefinitionId: prizeDefinition.id,
+        prizeDefinitionId: 'FINAL_PLACE',
+        displayName: 'Winner',
+        amount: 250,
+        awardedAt: new Date('2026-04-03T13:00:00Z'),
       },
     });
   });
 
-  it('returns contest history summary, standings, payouts, and league results from persisted snapshots', async () => {
+  it('returns contest summary, standings, payouts, and roster detail from the core contest model', async () => {
     const summaryRes = await getApp().inject({
       method: 'GET',
       url: `/api/v1/contests/${contestId}/history/summary`,
@@ -221,14 +240,31 @@ describe('History Read Integration', () => {
     });
 
     expect(summaryRes.statusCode).toBe(200);
-    expect(summaryRes.json().contestId).toBe(contestId);
-    expect(summaryRes.json().contestName).toBe('History Contest');
-    expect(summaryRes.json().finalStandings).toHaveLength(2);
-    expect(summaryRes.json().payouts).toHaveLength(1);
-    expect(summaryRes.json().highlights).toEqual(
+    expect(summaryRes.json()).toEqual(
       expect.objectContaining({
-        winnerMargin: 6.75,
+        contestId,
+        contestName: 'History Contest',
+        numEntries: 2,
       }),
+    );
+    expect(summaryRes.json().finalStandings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entryId: challengerEntryId,
+          finalRank: 1,
+          totalScore: 91.25,
+          isWinner: true,
+        }),
+      ]),
+    );
+    expect(summaryRes.json().payouts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entryId: challengerEntryId,
+          amount: 250,
+          prizeLabel: 'Winner',
+        }),
+      ]),
     );
 
     const standingsRes = await getApp().inject({
@@ -261,27 +297,33 @@ describe('History Read Integration', () => {
         contestId,
         leagueId,
         entryId: challengerEntryId,
+        prizeType: 'FINAL_STANDING',
+        prizeLabel: 'Winner',
         amount: 250,
       }),
     );
 
-    const leagueResultsRes = await getApp().inject({
+    const rosterRes = await getApp().inject({
       method: 'GET',
-      url: `/api/v1/leagues/${leagueId}/history/results`,
+      url: `/api/v1/contests/${contestId}/history/roster/${challengerEntryId}`,
       headers: ownerHeaders,
     });
 
-    expect(leagueResultsRes.statusCode).toBe(200);
-    expect(leagueResultsRes.json().results).toHaveLength(2);
-    expect(leagueResultsRes.json().results).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          contestId,
-          finalRank: 1,
-          leagueId,
-          isWinner: true,
-        }),
-      ]),
+    expect(rosterRes.statusCode).toBe(200);
+    expect(rosterRes.json().rosterHistory).toEqual(
+      expect.objectContaining({
+        contestId,
+        entryId: challengerEntryId,
+        rosterPicks: [
+          expect.objectContaining({
+            participantName: 'History Golfer',
+            latestPerformance: expect.objectContaining({
+              scoreToPar: -8,
+              finishPosition: 1,
+            }),
+          }),
+        ],
+      }),
     );
   });
 });

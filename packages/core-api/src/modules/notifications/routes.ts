@@ -1,56 +1,24 @@
-// Notification routes — extracted from notification-service/src/index.ts
 import type { FastifyInstance } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
-import type { NotificationEvent, NotificationChannel, NotificationPriority } from '@poolmaster/shared/events';
-import type { NotificationDispatcher } from './core/dispatcher';
-import type { InMemoryRateLimiter } from './core/rate-limiter';
-import type { EventGrouper } from './core/event-grouper';
-import type { ScheduledRunner } from './core/scheduled-runner';
-import type { WeeklyDigestService } from './core/weekly-digest';
-import type { Channels } from './channels/channel-factory';
-import { getDefaultPreferences } from './core/preference-service';
-import { DeliveryStatus } from '@poolmaster/shared/domain';
-import {
-  zodToJsonSchema,
-} from '@poolmaster/shared/dto';
+import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import {
   NotificationListResponseSchema,
   NotificationUnreadCountResponseSchema,
   NotificationMarkedReadResponseSchema,
   NotificationMarkAllReadResponseSchema,
-  NotificationPreferencesResponseSchema,
-  NotificationUnsubscribeResponseSchema,
-  NotificationDeviceResponseSchema,
-  NotificationDeviceListResponseSchema,
-  NotificationDispatchResponseSchema,
-  NotificationScheduleResponseSchema,
-  NotificationCancelledResponseSchema,
-  NotificationAnalyticsResponseSchema,
 } from '@poolmaster/shared/dto/notifications.dto';
-import crypto from 'node:crypto';
-import {
-  mapNotificationDeviceToDto,
-  mapNotificationPreferenceToDto,
-  mapNotificationToDto,
-} from '../../mappers';
+import { mapNotificationToDto } from '../../mappers';
+import { InAppChannel } from './channels/in-app-channel';
 
 export interface NotificationModuleOpts {
   prisma: PrismaClient;
-  channels: Channels;
-  dispatcher: NotificationDispatcher;
-  rateLimiter: InMemoryRateLimiter;
-  eventGrouper: EventGrouper;
-  scheduledRunner: ScheduledRunner;
-  digestService: WeeklyDigestService;
 }
 
 export async function notificationsModule(
   app: FastifyInstance,
   opts: NotificationModuleOpts,
 ): Promise<void> {
-  const { prisma, channels, dispatcher, eventGrouper, scheduledRunner, digestService } = opts;
-
-  // --- In-App Notification Centre ---
+  const inAppChannel = new InAppChannel(opts.prisma);
 
   app.get<{ Querystring: { limit?: string; offset?: string; unreadOnly?: string } }>(
     '/notifications',
@@ -64,7 +32,7 @@ export async function notificationsModule(
     },
     async (request) => {
       const userId = request.headers['x-user-id'] as string;
-      const result = await channels.inApp.getNotifications(userId, {
+      const result = await inAppChannel.getNotifications(userId, {
         limit: request.query.limit ? parseInt(request.query.limit, 10) : undefined,
         offset: request.query.offset ? parseInt(request.query.offset, 10) : undefined,
         unreadOnly: request.query.unreadOnly === 'true',
@@ -87,7 +55,7 @@ export async function notificationsModule(
     },
     handler: async (request) => {
       const userId = request.headers['x-user-id'] as string;
-      return { unreadCount: await channels.inApp.getUnreadCount(userId) };
+      return { unreadCount: await inAppChannel.getUnreadCount(userId) };
     },
   });
 
@@ -99,7 +67,7 @@ export async function notificationsModule(
       response: { 200: zodToJsonSchema(NotificationMarkedReadResponseSchema) },
     },
     handler: async (request) => {
-      await channels.inApp.markAsRead(request.params.id);
+      await inAppChannel.markAsRead(request.params.id);
       return { success: true };
     },
   });
@@ -113,7 +81,7 @@ export async function notificationsModule(
     },
     handler: async (request) => {
       const userId = request.headers['x-user-id'] as string;
-      return { markedRead: await channels.inApp.markAllAsRead(userId) };
+      return { markedRead: await inAppChannel.markAllAsRead(userId) };
     },
   });
 
@@ -125,445 +93,8 @@ export async function notificationsModule(
       response: { 200: zodToJsonSchema(NotificationMarkedReadResponseSchema) },
     },
     handler: async (request) => {
-      await channels.inApp.dismiss(request.params.id);
+      await inAppChannel.dismiss(request.params.id);
       return { success: true };
     },
   });
-
-  // --- Preferences ---
-
-  app.get('/notifications/preferences', {
-    schema: {
-      tags: ['Notifications'],
-      summary: 'Get notification preferences for current user',
-      operationId: 'getNotificationPreferences',
-      response: { 200: zodToJsonSchema(NotificationPreferencesResponseSchema) },
-    },
-    handler: async (request) => {
-      const userId = request.headers['x-user-id'] as string;
-      const prefs = await prisma.notificationPreference.findUnique({ where: { userId } });
-      if (!prefs) {
-        return {
-          preferences: mapNotificationPreferenceToDto({
-            doNotDisturb: false,
-            categories: getDefaultPreferences() as Record<string, unknown>,
-          }),
-        };
-      }
-      return {
-        preferences: mapNotificationPreferenceToDto({
-          doNotDisturb: prefs.doNotDisturb,
-          dndSchedule: prefs.dndSchedule && typeof prefs.dndSchedule === 'object'
-            ? (prefs.dndSchedule as Record<string, unknown>)
-            : undefined,
-          categories: prefs.categoryPreferences as Record<string, unknown>,
-        }),
-      };
-    },
-  });
-
-  app.put<{ Body: { doNotDisturb?: boolean; dndSchedule?: object; categories?: object } }>(
-    '/notifications/preferences',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Update notification preferences',
-        operationId: 'updateNotificationPreferences',
-        response: { 200: zodToJsonSchema(NotificationPreferencesResponseSchema) },
-      },
-    },
-    async (request) => {
-      const userId = request.headers['x-user-id'] as string;
-      const body = request.body;
-      const prefs = await prisma.notificationPreference.upsert({
-        where: { userId },
-        create: {
-          userId,
-          doNotDisturb: body.doNotDisturb ?? false,
-          dndSchedule: body.dndSchedule ? (body.dndSchedule as object) : undefined,
-          categoryPreferences: body.categories
-            ? (body.categories as object)
-            : (getDefaultPreferences() as unknown as object),
-        },
-        update: {
-          ...(body.doNotDisturb !== undefined && { doNotDisturb: body.doNotDisturb }),
-          ...(body.dndSchedule !== undefined && { dndSchedule: body.dndSchedule as object }),
-          ...(body.categories !== undefined && { categoryPreferences: body.categories as object }),
-        },
-      });
-      return {
-        preferences: mapNotificationPreferenceToDto({
-          doNotDisturb: prefs.doNotDisturb,
-          dndSchedule: prefs.dndSchedule && typeof prefs.dndSchedule === 'object'
-            ? (prefs.dndSchedule as Record<string, unknown>)
-            : undefined,
-          categories: prefs.categoryPreferences as Record<string, unknown>,
-        }),
-      };
-    },
-  );
-
-  // --- Unsubscribe (per-category opt-out) ---
-
-  app.post<{ Params: { category: string } }>(
-    '/notifications/unsubscribe/:category',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Unsubscribe from a notification category',
-        operationId: 'unsubscribeNotificationCategory',
-        response: { 200: zodToJsonSchema(NotificationUnsubscribeResponseSchema) },
-      },
-    },
-    async (request) => {
-      const userId = request.headers['x-user-id'] as string;
-      const category = request.params.category;
-
-      const existing = await prisma.notificationPreference.findUnique({ where: { userId } });
-      const categories = (existing?.categoryPreferences ?? getDefaultPreferences()) as Record<string, unknown>;
-      const catPref = categories[category] as Record<string, unknown> | undefined;
-
-      if (catPref) {
-        catPref.enabled = false;
-      } else {
-        categories[category] = { enabled: false, channels: { push: false, email: false, in_app: true, sms: false } };
-      }
-
-      await prisma.notificationPreference.upsert({
-        where: { userId },
-        create: { userId, categoryPreferences: categories as object },
-        update: { categoryPreferences: categories as object },
-      });
-
-      return { success: true, category, enabled: false };
-    },
-  );
-
-  // --- Device Registration ---
-
-  app.post<{ Body: { platform: string; token: string; appVersion?: string; osVersion?: string; deviceModel?: string } }>(
-    '/devices',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Register a device for push notifications',
-        operationId: 'registerDevice',
-        response: { 201: zodToJsonSchema(NotificationDeviceResponseSchema) },
-      },
-    },
-    async (request, reply) => {
-      const userId = request.headers['x-user-id'] as string;
-      const body = request.body;
-      const device = await prisma.deviceRegistration.upsert({
-        where: { platform_token: { platform: body.platform, token: body.token } },
-        create: { userId, platform: body.platform, token: body.token, appVersion: body.appVersion, osVersion: body.osVersion, deviceModel: body.deviceModel, lastActiveAt: new Date() },
-        update: { userId, appVersion: body.appVersion, osVersion: body.osVersion, deviceModel: body.deviceModel, isActive: true, lastActiveAt: new Date() },
-      });
-      return reply.status(201).send({
-        device: mapNotificationDeviceToDto(device as unknown as Record<string, unknown>),
-      });
-    },
-  );
-
-  app.post<{ Body: { platform: string; token: string; appVersion?: string; osVersion?: string; deviceModel?: string } }>(
-    '/devices/register',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Register a device for push notifications (alias)',
-        operationId: 'registerDeviceAlias',
-        response: { 201: zodToJsonSchema(NotificationDeviceResponseSchema) },
-      },
-    },
-    async (request, reply) => {
-      const userId = request.headers['x-user-id'] as string;
-      const body = request.body;
-      const device = await prisma.deviceRegistration.upsert({
-        where: { platform_token: { platform: body.platform, token: body.token } },
-        create: { userId, platform: body.platform, token: body.token, appVersion: body.appVersion, osVersion: body.osVersion, deviceModel: body.deviceModel, lastActiveAt: new Date() },
-        update: { userId, appVersion: body.appVersion, osVersion: body.osVersion, deviceModel: body.deviceModel, isActive: true, lastActiveAt: new Date() },
-      });
-      return reply.status(201).send({
-        device: mapNotificationDeviceToDto(device as unknown as Record<string, unknown>),
-      });
-    },
-  );
-
-  app.delete<{ Params: { id: string } }>('/devices/:id', {
-    schema: {
-      tags: ['Notifications'],
-      summary: 'Deactivate a registered device',
-      operationId: 'deactivateDevice',
-      response: { 200: zodToJsonSchema(NotificationMarkedReadResponseSchema) },
-    },
-    handler: async (request) => {
-      await prisma.deviceRegistration.update({ where: { id: request.params.id }, data: { isActive: false } });
-      return { success: true };
-    },
-  });
-
-  app.get('/devices', {
-    schema: {
-      tags: ['Notifications'],
-      summary: 'List registered devices for current user',
-      operationId: 'listDevices',
-      response: { 200: zodToJsonSchema(NotificationDeviceListResponseSchema) },
-    },
-    handler: async (request) => {
-      const userId = request.headers['x-user-id'] as string;
-      const devices = await prisma.deviceRegistration.findMany({
-        where: { userId, isActive: true },
-        orderBy: { lastActiveAt: 'desc' },
-      });
-      return {
-        devices: devices.map((device) =>
-          mapNotificationDeviceToDto(device as unknown as Record<string, unknown>),
-        ),
-      };
-    },
-  });
-
-  // --- Dispatch (send a notification event) ---
-
-  app.post<{
-    Body: {
-      type: string;
-      tenantId: string;
-      leagueId?: string;
-      contestId?: string;
-      recipientUserIds?: string[];
-      recipientScope?: string;
-      data: Record<string, unknown>;
-      priority?: string;
-      channels?: string[];
-      action?: { type: string; screen: string; params: Record<string, string> };
-    };
-  }>('/notifications/dispatch', {
-    schema: {
-      tags: ['Notifications'],
-      summary: 'Dispatch a notification event',
-      operationId: 'dispatchNotification',
-      response: { 200: zodToJsonSchema(NotificationDispatchResponseSchema) },
-    },
-    handler: async (request) => {
-      const body = request.body;
-      const event: NotificationEvent = {
-        id: crypto.randomUUID(),
-        type: body.type,
-        sourceService: 'api',
-        timestamp: new Date().toISOString(),
-        tenantId: body.tenantId,
-        leagueId: body.leagueId,
-        contestId: body.contestId,
-        recipientUserIds: body.recipientUserIds,
-        recipientScope: body.recipientScope as NotificationEvent['recipientScope'],
-        data: body.data,
-        priority: (body.priority ?? 'NORMAL') as NotificationPriority,
-        channels: body.channels as NotificationChannel[] | undefined,
-        action: body.action as NotificationEvent['action'] ?? { type: 'NAVIGATE', screen: 'home', params: {} },
-      };
-
-      if (eventGrouper.isGroupable(event.type) && event.recipientUserIds?.length === 1) {
-        const grouped = eventGrouper.add({
-          id: event.id,
-          type: event.type,
-          userId: event.recipientUserIds[0],
-          data: event.data as Record<string, unknown>,
-          timestamp: new Date(),
-        });
-        if (grouped) {
-          return dispatcher.dispatch({
-            ...event,
-            data: { ...event.data, count: grouped.count },
-          });
-        }
-        return { queued: true, message: 'Event buffered for grouping' };
-      }
-
-      return dispatcher.dispatch(event);
-    },
-  });
-
-  // --- Commissioner Announcement (bypass preferences) ---
-
-  app.post<{
-    Body: {
-      leagueId: string;
-      tenantId: string;
-      title: string;
-      body: string;
-      channels?: string[];
-    };
-  }>('/notifications/announce', {
-    schema: {
-      tags: ['Notifications'],
-      summary: 'Send commissioner announcement to a league',
-      operationId: 'sendAnnouncement',
-      response: { 200: zodToJsonSchema(NotificationDispatchResponseSchema) },
-    },
-    handler: async (request) => {
-      const body = request.body;
-      const event: NotificationEvent = {
-        id: crypto.randomUUID(),
-        type: 'league.announcement',
-        sourceService: 'commissioner',
-        timestamp: new Date().toISOString(),
-        tenantId: body.tenantId,
-        leagueId: body.leagueId,
-        recipientScope: 'ALL_LEAGUE',
-        data: { title: body.title, body: body.body, league_name: body.leagueId },
-        priority: 'HIGH',
-        channels: (body.channels ?? ['PUSH', 'EMAIL', 'IN_APP']) as NotificationChannel[],
-        action: { type: 'NAVIGATE', screen: 'league_feed', params: { leagueId: body.leagueId } },
-      };
-      return dispatcher.dispatch(event);
-    },
-  });
-
-  // --- Scheduled Notifications ---
-
-  app.post<{
-    Body: {
-      eventType: string;
-      fireAt: string;
-      context: Record<string, unknown>;
-      sourceType: string;
-      sourceId: string;
-    };
-  }>('/notifications/schedule', {
-    schema: {
-      tags: ['Notifications'],
-      summary: 'Schedule a notification for future delivery',
-      operationId: 'scheduleNotification',
-      response: { 200: zodToJsonSchema(NotificationScheduleResponseSchema) },
-    },
-    handler: async (request) => {
-      const id = await scheduledRunner.schedule({
-        eventType: request.body.eventType,
-        fireAt: new Date(request.body.fireAt),
-        context: request.body.context,
-        sourceType: request.body.sourceType,
-        sourceId: request.body.sourceId,
-      });
-      return { scheduled: true, id };
-    },
-  });
-
-  app.delete<{ Params: { sourceType: string; sourceId: string } }>(
-    '/notifications/schedule/:sourceType/:sourceId',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Cancel scheduled notifications for a source',
-        operationId: 'cancelScheduledNotifications',
-        response: { 200: zodToJsonSchema(NotificationCancelledResponseSchema) },
-      },
-    },
-    async (request) => {
-      const count = await scheduledRunner.cancelForSource(request.params.sourceType, request.params.sourceId);
-      return { cancelled: count };
-    },
-  );
-
-  // --- Weekly Digest ---
-
-  app.post<{ Params: { leagueId: string } }>(
-    '/notifications/digest/:leagueId',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Trigger weekly digest for a league',
-        operationId: 'triggerWeeklyDigest',
-        response: { 200: zodToJsonSchema(NotificationDispatchResponseSchema) },
-      },
-    },
-    async (request) => {
-      return digestService.sendDigest(request.params.leagueId);
-    },
-  );
-
-  // --- Delivery Analytics ---
-
-  app.get<{ Querystring: { days?: string } }>(
-    '/notifications/analytics',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Get notification delivery analytics',
-        operationId: 'getNotificationAnalytics',
-        response: { 200: zodToJsonSchema(NotificationAnalyticsResponseSchema) },
-      },
-    },
-    async (request) => {
-      const days = parseInt(request.query.days ?? '7', 10);
-      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-
-      const logs = await prisma.notificationDeliveryLog.findMany({
-        where: { createdAt: { gte: since } },
-      });
-
-      const total = logs.length;
-      const sent = logs.filter((l: any) => l.status === DeliveryStatus.SENT).length;
-      const suppressed = logs.filter((l: any) => l.status === DeliveryStatus.SUPPRESSED).length;
-      const failed = logs.filter((l: any) => l.status === DeliveryStatus.FAILED).length;
-
-      const byChannel: Record<string, { sent: number; suppressed: number; failed: number }> = {};
-      for (const log of logs) {
-        const ch = byChannel[log.channel] ?? { sent: 0, suppressed: 0, failed: 0 };
-        if (log.status === DeliveryStatus.SENT) ch.sent++;
-        else if (log.status === DeliveryStatus.SUPPRESSED) ch.suppressed++;
-        else if (log.status === DeliveryStatus.FAILED) ch.failed++;
-        byChannel[log.channel] = ch;
-      }
-
-      const suppressionReasons: Record<string, number> = {};
-      for (const log of logs.filter((l: any) => l.status === DeliveryStatus.SUPPRESSED)) {
-        const reason = log.suppressionReason ?? 'UNKNOWN';
-        suppressionReasons[reason] = (suppressionReasons[reason] ?? 0) + 1;
-      }
-
-      return {
-        period: { days, since: since.toISOString() },
-        total,
-        deliveryRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0,
-        sent,
-        suppressed,
-        failed,
-        byChannel,
-        suppressionReasons,
-      };
-    },
-  );
-
-  // --- Test endpoints ---
-
-  app.post<{ Body: { to: string; subject: string; text: string; html?: string } }>(
-    '/test/email',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Send a test email',
-        operationId: 'sendTestEmail',
-        response: { 200: zodToJsonSchema(NotificationDispatchResponseSchema) },
-      },
-    },
-    async (request) => channels.email.sendToUser(request.body.to, request.body.subject, request.body.text, request.body.html),
-  );
-
-  app.post<{ Body: { platform: string; token: string; title: string; body: string; data?: Record<string, string> } }>(
-    '/test/push',
-    {
-      schema: {
-        tags: ['Notifications'],
-        summary: 'Send a test push notification',
-        operationId: 'sendTestPush',
-        response: { 200: zodToJsonSchema(NotificationDispatchResponseSchema) },
-      },
-    },
-    async (request) => channels.push.sendToDevice(
-      request.body.platform as 'ios' | 'android',
-      request.body.token,
-      { title: request.body.title, body: request.body.body, data: request.body.data },
-    ),
-  );
 }

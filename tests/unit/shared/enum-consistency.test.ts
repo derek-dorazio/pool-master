@@ -32,16 +32,12 @@ const ROUTE_SELECTION_TYPES = [
   'SNAKE_DRAFT',
   'TIERED',
   'BUDGET_PICK',
-  'OPEN_SELECTION',
-  'PICK_EM',
-  'BRACKET_PICK_EM',
 ];
 const ROUTE_SCORING_ENGINES = [
   'ADVANCEMENT',
   'STAT_ACCUMULATION',
   'STROKE_PLAY',
   'POSITION',
-  'BRACKET',
   'FIGHT_RESULT',
   'CUMULATIVE',
 ];
@@ -63,7 +59,7 @@ const ROUTE_WEEKLY_RECAP_DAYS = [
 
 // From leagues/routes.ts — PUT /:id/members/:uid/role body schema
 // Note: the route intentionally omits OWNER (cannot assign via role change)
-const ROUTE_MEMBER_ROLES = ['COMMISSIONER', 'MANAGER', 'VIEWER'];
+const ROUTE_MEMBER_ROLES = ['COMMISSIONER', 'MEMBER'];
 
 // ========================================================================
 // Tests
@@ -92,26 +88,12 @@ describe('Enum consistency — route schemas vs domain enums', () => {
     }
   });
 
-  it('route schema covers all SelectionType values', () => {
-    const valid = enumValues(SelectionType);
-    for (const val of valid) {
-      expect(ROUTE_SELECTION_TYPES).toContain(val);
-    }
-  });
-
   // --- ScoringEngine ---
 
   it('every scoringEngine in route schema is a valid ScoringEngine', () => {
     const valid = enumValues(ScoringEngine);
     for (const val of ROUTE_SCORING_ENGINES) {
       expect(valid).toContain(val);
-    }
-  });
-
-  it('route schema covers all ScoringEngine values', () => {
-    const valid = enumValues(ScoringEngine);
-    for (const val of valid) {
-      expect(ROUTE_SCORING_ENGINES).toContain(val);
     }
   });
 

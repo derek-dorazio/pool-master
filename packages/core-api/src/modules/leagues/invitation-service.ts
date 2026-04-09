@@ -8,7 +8,12 @@ import type {
   LeagueRepository,
 } from '@poolmaster/shared/db';
 import type { LeagueInvitation, LeagueMembership } from '@poolmaster/shared/domain';
-import { InvitationStatus, InviteType, LeagueRole } from '@poolmaster/shared/domain';
+import {
+  InvitationStatus,
+  InviteType,
+  LeagueMembershipStatus,
+  LeagueRole,
+} from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 
 export interface SendInvitationsInput {
@@ -110,7 +115,7 @@ export class InvitationService {
     });
   }
 
-  /** Accepts an invitation by code, creating a MANAGER membership. */
+  /** Accepts an invitation by code, creating or reactivating a MEMBER membership. */
   async acceptInvitation(inviteCode: string, userId: string): Promise<LeagueMembership> {
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
@@ -131,7 +136,9 @@ export class InvitationService {
       userId,
     );
     if (existingMembership) {
-      throw new InvitationInvalidError('You are already a member of this league');
+      if (existingMembership.status === LeagueMembershipStatus.ACTIVE) {
+        throw new InvitationInvalidError('You are already a member of this league');
+      }
     }
     const league = await this.leagueRepo.findById(invitation.leagueId, '');
     if (!league) {
@@ -141,13 +148,20 @@ export class InvitationService {
     if (members.length >= league.maxMembers) {
       throw new InvitationInvalidError('League has reached its member limit');
     }
-    const membership = await this.membershipRepo.create({
-      leagueId: invitation.leagueId,
-      userId,
-      role: LeagueRole.MANAGER,
-      permissions: [],
-      joinedAt: new Date(),
-    });
+    const membership = existingMembership
+      ? await this.membershipRepo.update(existingMembership.id, {
+          role: existingMembership.role === LeagueRole.OWNER ? LeagueRole.OWNER : LeagueRole.MEMBER,
+          status: LeagueMembershipStatus.ACTIVE,
+          joinedAt: new Date(),
+        })
+      : await this.membershipRepo.create({
+          leagueId: invitation.leagueId,
+          userId,
+          role: LeagueRole.MEMBER,
+          status: LeagueMembershipStatus.ACTIVE,
+          permissions: [],
+          joinedAt: new Date(),
+        });
     const newUses = invitation.currentUses + 1;
     const isFullyUsed = invitation.maxUses > 0 && newUses >= invitation.maxUses;
     await this.invitationRepo.update(invitation.id, {

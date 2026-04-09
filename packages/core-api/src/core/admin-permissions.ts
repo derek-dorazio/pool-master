@@ -35,12 +35,8 @@ export type AdminPermission =
   | 'sportsdata.view'
   | 'sportsdata.configure'
   | 'sportsdata.re_ingest'
-  // Feature flags
-  | 'flags.view'
-  | 'flags.edit'
   // Platform
   | 'platform.health'
-  | 'platform.announcements'
   | 'platform.migrations'
   // Audit
   | 'audit.view';
@@ -68,10 +64,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     'sportsdata.view',
     'sportsdata.configure',
     'sportsdata.re_ingest',
-    'flags.view',
-    'flags.edit',
     'platform.health',
-    'platform.announcements',
     'platform.migrations',
     'audit.view',
   ],
@@ -85,10 +78,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     'contest.recalculate',
     'sportsdata.view',
     'sportsdata.configure',
-    'flags.view',
-    'flags.edit',
     'platform.health',
-    'platform.announcements',
     'audit.view',
   ],
   SUPPORT: [
@@ -101,7 +91,6 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     'user.force_logout',
     'user.merge',
     'contest.view',
-    'flags.view',
     'audit.view',
   ],
   DATA_OPS: [
@@ -119,7 +108,6 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     'user.view',
     'contest.view',
     'sportsdata.view',
-    'flags.view',
     'platform.health',
   ],
 };

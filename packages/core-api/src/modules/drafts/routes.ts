@@ -1,39 +1,29 @@
 /**
- * Draft module — REST routes for async snake draft and selection templates.
+ * Draft module — REST routes for async snake draft and roster-based selection.
  *
  * The route surface is shared by snake drafts plus roster-based selection modes
- * such as tiered and open selection so the web draft room can consume one
- * honest contract instead of frontend-only mock state.
+ * such as tiered and budget pick so the web draft room can consume one honest
+ * contract instead of frontend-only mock state.
  */
 
 import type { FastifyInstance, FastifyReply } from 'fastify';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import {
   DraftStatus,
   SelectionType,
 } from '@poolmaster/shared/domain';
-import type { Sport } from '@poolmaster/shared/domain';
 import {
   zodToJsonSchema,
   DraftStateResponseSchema,
   DraftPickResponseSchema,
+  ExtendCurrentTurnRequestSchema,
+  StartDraftRequestSchema,
+  SubmitPickRequestSchema,
 } from '@poolmaster/shared/dto';
 import {
-  SelectionTemplateListResponseSchema,
-  SelectionTemplateResponseSchema,
-} from '@poolmaster/shared/dto/drafts.dto';
-import {
   PrismaContestEntryRepository,
-  PrismaLeagueMembershipRepository,
-  PrismaParticipantRepository,
 } from '../../adapters';
 import crypto from 'node:crypto';
-import {
-  SELECTION_TEMPLATES,
-  getTemplatesForSport,
-  getTemplatesForContestType,
-  getTemplateById,
-} from './templates/selection-templates';
 import { SnakeDraftEngine } from './engine/snake-draft-engine';
 import type { DraftState } from './engine/snake-draft-engine';
 import {
@@ -41,7 +31,7 @@ import {
   isPickExpired,
   pauseSession,
   resumeSession,
-  extendPickDeadline,
+  extendCurrentTurn,
 } from './engine/draft-session-manager';
 import type { SessionState } from './engine/draft-session-manager';
 import { draftStore } from './storage/draft-store';
@@ -49,30 +39,48 @@ import { draftQueue } from './engine/draft-queue';
 
 const engine = new SnakeDraftEngine();
 
-type ContestSelectionConfig = Awaited<ReturnType<PrismaClient['selectionConfig']['findUnique']>>;
+type ContestConfigurationRecord = Awaited<ReturnType<PrismaClient['contestConfiguration']['findUnique']>>;
 interface ContestRecord {
   id: string;
   name: string;
   leagueId: string;
+  sportEventId: string | null;
   selectionType: string;
   status: string;
   lockAt: Date | null;
 }
 type ContestEntryRecord = Awaited<ReturnType<PrismaClient['contestEntry']['findMany']>>[number];
 type MembershipRecord = Awaited<ReturnType<PrismaClient['leagueMembership']['findMany']>>[number];
-type PoolParticipantRecord = Awaited<ReturnType<PrismaClient['contestParticipantPool']['findMany']>>[number];
+type SquadMembershipRecord = Awaited<ReturnType<PrismaClient['squadMembership']['findMany']>>[number];
+type SportEventParticipantWithParticipantRecord = Awaited<
+  ReturnType<
+    PrismaClient['sportEventParticipant']['findMany']
+  >
+>[number] & {
+  participant: Awaited<ReturnType<PrismaClient['participant']['findMany']>>[number];
+};
+interface SelectionParticipantRecord {
+  sportEventParticipantId: string;
+  participantId: string;
+  participantName: string;
+  position?: string | null;
+  teamAffiliation?: string | null;
+  status?: string | null;
+  price?: number;
+  tier?: string | null;
+  orderIndex?: number;
+  isAvailable: boolean;
+  unavailableReason?: string;
+}
 type RosterPickRecord = Awaited<ReturnType<PrismaClient['rosterPick']['findMany']>>[number];
-type ContestMatchupRecord = Awaited<ReturnType<PrismaClient['contestMatchup']['findMany']>>[number];
-type ContestPickRecord = Awaited<ReturnType<PrismaClient['contestPick']['findMany']>>[number];
-type BracketPredictionRecord = Awaited<ReturnType<PrismaClient['bracketPrediction']['findMany']>>[number];
 
 interface DraftContext {
   contest: ContestRecord;
-  selectionConfig: ContestSelectionConfig;
+  contestConfiguration: ContestConfigurationRecord;
   contestEntries: ContestEntryRecord[];
   memberships: MembershipRecord[];
-  poolParticipants: PoolParticipantRecord[];
-  contestMatchups: ContestMatchupRecord[];
+  squadMemberships: SquadMembershipRecord[];
+  selectionParticipants: SelectionParticipantRecord[];
 }
 
 interface DraftTierConfig {
@@ -81,15 +89,6 @@ interface DraftTierConfig {
   tierNumber: number;
   picksFromTier: number;
   participantIds: string[];
-}
-
-interface BracketPredictionItem {
-  roundNumber: number;
-  matchNumber: number;
-  predictedWinnerId: string;
-  predictedSeriesLength?: number;
-  predictedScore?: string;
-  isCorrect?: boolean;
 }
 
 function sendWithStatus(reply: FastifyReply, statusCode: number, payload: unknown) {
@@ -114,6 +113,37 @@ function getIsCommissioner(
 ): boolean {
   const membership = getRequestMembership(context, requestUserId);
   return membership ? isCommissionerRole(membership.role) : false;
+}
+
+function buildEntryUserIdMap(context: DraftContext): Map<string, string> {
+  const membershipBySquadId = new Map<string, string>();
+  for (const membership of context.squadMemberships) {
+    if (!membershipBySquadId.has(membership.squadId)) {
+      membershipBySquadId.set(membership.squadId, membership.userId);
+    }
+  }
+
+  return new Map(
+    context.contestEntries.map((entry) => [entry.id, membershipBySquadId.get(entry.squadId) ?? '']),
+  );
+}
+
+async function loadSportEventParticipantsByIds(
+  prisma: PrismaClient,
+  sportEventParticipantIds: string[],
+): Promise<Map<string, SportEventParticipantWithParticipantRecord>> {
+  if (sportEventParticipantIds.length === 0) {
+    return new Map();
+  }
+
+  const records = await prisma.sportEventParticipant.findMany({
+    where: { id: { in: sportEventParticipantIds } },
+    include: {
+      participant: true,
+    },
+  });
+
+  return new Map(records.map((record) => [record.id, record]));
 }
 
 function rewindSnakeDraftState(state: DraftState): DraftState {
@@ -166,12 +196,11 @@ function mapContestStatusToDraftStatus(
 
 function getRosterSize(
   selectionType: string,
-  selectionConfig: ContestSelectionConfig,
+  contestConfiguration: ContestConfigurationRecord,
   tiers: DraftTierConfig[],
 ): number {
-  if (selectionType === SelectionType.SNAKE_DRAFT) return selectionConfig?.rounds ?? 0;
-  if (selectionType === SelectionType.OPEN_SELECTION) return selectionConfig?.pickCount ?? 0;
-  if (selectionType === SelectionType.BUDGET_PICK) return selectionConfig?.rosterSize ?? 0;
+  if (selectionType === SelectionType.SNAKE_DRAFT) return contestConfiguration?.rounds ?? 0;
+  if (selectionType === SelectionType.BUDGET_PICK) return contestConfiguration?.rosterSize ?? 0;
   if (selectionType === SelectionType.TIERED) {
     return tiers.reduce((sum, tier) => sum + tier.picksFromTier, 0);
   }
@@ -188,11 +217,11 @@ function compareTierNames(a: string, b: string): number {
 }
 
 function deriveTierConfig(
-  selectionConfig: ContestSelectionConfig,
-  poolParticipants: PoolParticipantRecord[],
+  contestConfiguration: ContestConfigurationRecord,
+  selectionParticipants: SelectionParticipantRecord[],
 ): DraftTierConfig[] {
-  if (Array.isArray(selectionConfig?.tierConfig) && selectionConfig.tierConfig.length > 0) {
-    return selectionConfig.tierConfig.map((tier, index) => {
+  if (Array.isArray(contestConfiguration?.tierConfig) && contestConfiguration.tierConfig.length > 0) {
+    return contestConfiguration.tierConfig.map((tier, index) => {
       const record = tier as Record<string, unknown>;
       return {
         tierId: String(record.tierId ?? record.tierName ?? `tier-${index + 1}`),
@@ -207,7 +236,7 @@ function deriveTierConfig(
   }
 
   const groups = new Map<string, string[]>();
-  for (const participant of poolParticipants) {
+  for (const participant of selectionParticipants) {
     const tierName = participant.tier ?? 'Unassigned';
     const existing = groups.get(tierName) ?? [];
     existing.push(participant.participantId);
@@ -232,6 +261,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
       id: true,
       name: true,
       leagueId: true,
+      sportEventId: true,
       selectionType: true,
       status: true,
       lockAt: true,
@@ -239,8 +269,8 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
   });
   if (!contest) return null;
 
-  const [selectionConfig, contestEntries, memberships, poolParticipants, contestMatchups] = await Promise.all([
-    prisma.selectionConfig.findUnique({ where: { contestId } }),
+  const [contestConfiguration, contestEntries, memberships, sportEventParticipants] = await Promise.all([
+    prisma.contestConfiguration.findUnique({ where: { contestId } }),
     prisma.contestEntry.findMany({
       where: { contestId },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -249,36 +279,82 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
       where: { leagueId: contest.leagueId },
       orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
     }),
-    prisma.contestParticipantPool.findMany({
-      where: { contestId },
-      orderBy: [{ ranking: 'asc' }, { id: 'asc' }],
-    }),
-    prisma.contestMatchup.findMany({
-      where: { contestId },
-      orderBy: [{ period: 'asc' }, { matchupIndex: 'asc' }],
-    }),
+    contest.sportEventId
+      ? prisma.sportEventParticipant.findMany({
+          where: { sportEventId: contest.sportEventId },
+          include: {
+            participant: true,
+            valuations: {
+              orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+            },
+          },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        })
+      : Promise.resolve([]),
   ]);
 
-  return { contest, selectionConfig, contestEntries, memberships, poolParticipants, contestMatchups };
+  const squadIds = Array.from(new Set(contestEntries.map((entry) => entry.squadId)));
+  const squadMemberships = squadIds.length === 0
+    ? []
+    : await prisma.squadMembership.findMany({
+        where: {
+          squadId: { in: squadIds },
+          status: 'ACTIVE',
+        },
+        orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+      });
+
+  return {
+    contest,
+    contestConfiguration,
+    contestEntries,
+    memberships,
+    squadMemberships,
+    selectionParticipants: sportEventParticipants.map((record) => {
+      const valuation = record.valuations[0];
+      const normalizedStatus = record.status?.toUpperCase?.();
+      const isAvailable = !normalizedStatus || !['INACTIVE', 'REMOVED', 'WITHDRAWN'].includes(normalizedStatus);
+
+      return {
+        sportEventParticipantId: record.id,
+        participantId: record.participantId,
+        participantName: record.participant.name,
+        position: record.participant.position,
+        teamAffiliation: record.participant.teamAffiliation,
+        status: record.status,
+        price: valuation?.price ?? undefined,
+        tier: valuation?.tier ?? null,
+        orderIndex: valuation?.orderIndex ?? undefined,
+        isAvailable,
+        unavailableReason: isAvailable
+          ? undefined
+          : `SportEventParticipant ${record.id} is unavailable with status ${record.status ?? 'UNKNOWN'}`,
+      };
+    }).sort((a, b) => {
+      const orderDiff = (a.orderIndex ?? Number.MAX_SAFE_INTEGER) - (b.orderIndex ?? Number.MAX_SAFE_INTEGER);
+      if (orderDiff !== 0) return orderDiff;
+      return a.participantName.localeCompare(b.participantName, undefined, { sensitivity: 'base' });
+    }),
+  };
 }
 
-function buildSelectionConfigResponse(
-  selectionConfig: ContestSelectionConfig,
+function buildContestConfigurationResponse(
+  contestConfiguration: ContestConfigurationRecord,
   tiers: DraftTierConfig[],
   rosterSize: number,
 ) {
-  if (!selectionConfig) return null;
+  if (!contestConfiguration) return null;
   return {
-    isExclusive: selectionConfig.isExclusive,
-    rounds: selectionConfig.rounds ?? undefined,
-    pickCount: selectionConfig.pickCount ?? undefined,
-    rosterSize: rosterSize || selectionConfig.rosterSize || selectionConfig.pickCount || selectionConfig.rounds || undefined,
-    budget: selectionConfig.budget ?? undefined,
-    pricingMethod: selectionConfig.pricingMethod ?? undefined,
-    timePerPickSeconds: selectionConfig.timePerPickSeconds ?? undefined,
-    picksPerPeriod: selectionConfig.picksPerPeriod ?? undefined,
-    roundValues: selectionConfig.roundValues ?? undefined,
-    startRound: selectionConfig.startRound ?? undefined,
+    isExclusive: contestConfiguration.isExclusive,
+    rounds: contestConfiguration.rounds ?? undefined,
+    pickCount: contestConfiguration.pickCount ?? undefined,
+    rosterSize: rosterSize || contestConfiguration.rosterSize || contestConfiguration.pickCount || contestConfiguration.rounds || undefined,
+    budget: contestConfiguration.budget ?? undefined,
+    pricingMethod: contestConfiguration.pricingMethod ?? undefined,
+    timePerPickSeconds: contestConfiguration.timePerPickSeconds ?? undefined,
+    picksPerPeriod: contestConfiguration.picksPerPeriod ?? undefined,
+    roundValues: contestConfiguration.roundValues ?? undefined,
+    startRound: contestConfiguration.startRound ?? undefined,
     tierConfig: tiers.length > 0
       ? tiers.map((tier) => ({
           tierId: tier.tierId,
@@ -295,35 +371,31 @@ async function buildSnakeDraftResponse(
   context: DraftContext,
   session: SessionState,
   state: DraftState,
-  availableParticipants: string[],
+  availableParticipantIds: string[],
   requestUserId?: string,
 ) {
   const takenIds = engine.getTakenParticipantIds(state);
-  const remaining = availableParticipants.filter((id) => !takenIds.includes(id));
+  const remaining = availableParticipantIds.filter((id) => !takenIds.includes(id));
   const contestEntryRepo = new PrismaContestEntryRepository(prisma);
-  const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const participantRepo = new PrismaParticipantRepository(prisma);
 
   const contestEntries = await contestEntryRepo.findByContest(state.contestId);
-  const memberships = context.contest?.leagueId ? await membershipRepo.findByLeague(context.contest.leagueId) : [];
-  const membershipById = new Map(memberships.map((membership) => [membership.id, membership]));
   const contestEntryById = new Map(contestEntries.map((entry) => [entry.id, entry]));
-  const participantIds = Array.from(new Set(
+  const entryUserIdMap = buildEntryUserIdMap(context);
+  const sportEventParticipantIds = Array.from(new Set(
     state.picks.map((pick) => pick.participantId).filter((value): value is string => Boolean(value)),
   ));
-  const participants = await Promise.all(
-    participantIds.map(async (participantId) => [participantId, await participantRepo.findById(participantId)] as const),
+  const sportEventParticipantById = await loadSportEventParticipantsByIds(
+    prisma,
+    sportEventParticipantIds,
   );
-  const participantById = new Map(participants);
-  const tiers = deriveTierConfig(context.selectionConfig, context.poolParticipants);
-  const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
+  const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+  const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
 
   const entries = state.entryIds.map((entryId) => {
     const contestEntry = contestEntryById.get(entryId);
-    const membership = contestEntry ? membershipById.get(contestEntry.leagueMembershipId) : undefined;
     return {
       id: entryId,
-      userId: membership?.userId ?? '',
+      userId: contestEntry ? entryUserIdMap.get(contestEntry.id) ?? '' : '',
       name: contestEntry?.name ?? entryId,
       isOnClock: session.currentEntryId === entryId && session.status === DraftStatus.LIVE,
     };
@@ -341,7 +413,7 @@ async function buildSnakeDraftResponse(
     isTurnBased: true,
     isCommissioner,
     rosterSize,
-    selectionConfig: buildSelectionConfigResponse(context.selectionConfig, tiers, rosterSize),
+    contestConfiguration: buildContestConfigurationResponse(context.contestConfiguration, tiers, rosterSize),
     status: session.status,
     currentPickNumber: state.currentPickNumber,
     currentRound: engine.getCurrentPickPosition(state).round,
@@ -355,12 +427,16 @@ async function buildSnakeDraftResponse(
       : null,
     myEntryId,
     isMyPick: myEntryId !== null && session.currentEntryId === myEntryId && session.status === DraftStatus.LIVE,
-    pickDeadline: session.pickDeadline?.toISOString?.() ?? session.pickDeadline,
+    currentTurnStartedAt:
+      session.currentTurnStartedAt?.toISOString?.() ?? session.currentTurnStartedAt ?? null,
     timePerPickSeconds: session.timePerPickSeconds,
     entries,
-    picks: state.picks.map((pick) => {
+    draftPickHistories: state.picks.map((pick) => {
       const contestEntry = contestEntryById.get(pick.entryId);
-      const participant = pick.participantId ? participantById.get(pick.participantId) : undefined;
+      const sportEventParticipant = pick.participantId
+        ? sportEventParticipantById.get(pick.participantId)
+        : undefined;
+      const participant = sportEventParticipant?.participant;
       return {
         pickNumber: pick.pickNumber,
         round: pick.round,
@@ -388,14 +464,17 @@ async function buildRosterSelectionResponse(
   context: DraftContext,
   requestUserId?: string,
 ) {
-  const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
   const contestEntryById = new Map(context.contestEntries.map((entry) => [entry.id, entry]));
+  const entryUserIdMap = buildEntryUserIdMap(context);
   const entryIds = context.contestEntries.map((entry) => entry.id);
-  const tiers = deriveTierConfig(context.selectionConfig, context.poolParticipants);
-  const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
+  const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+  const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
   const tierByParticipantId = new Map<string, DraftTierConfig>();
-  const priceByParticipantId = new Map(
-    context.poolParticipants.map((participant) => [participant.participantId, participant.cost ?? undefined] as const),
+  const priceBySportEventParticipantId = new Map(
+    context.selectionParticipants.map((participant) => [
+      participant.sportEventParticipantId,
+      participant.price,
+    ] as const),
   );
 
   for (const tier of tiers) {
@@ -408,22 +487,15 @@ async function buildRosterSelectionResponse(
     ? []
     : await prisma.rosterPick.findMany({
         where: { entryId: { in: entryIds } },
+        include: {
+          sportEventParticipant: {
+            include: {
+              participant: true,
+            },
+          },
+        },
         orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
       });
-
-  const participantIds = Array.from(new Set(rosterPicks.map((pick) => pick.participantId)));
-  const participants = participantIds.length === 0
-    ? []
-    : await prisma.participant.findMany({
-        where: { id: { in: participantIds } },
-        select: {
-          id: true,
-          name: true,
-          position: true,
-          teamAffiliation: true,
-        },
-      });
-  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
 
   const picksByEntry = new Map<string, RosterPickRecord[]>();
   for (const pick of rosterPicks) {
@@ -433,11 +505,10 @@ async function buildRosterSelectionResponse(
   }
 
   const entries = context.contestEntries.map((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
     const entryPicks = picksByEntry.get(entry.id) ?? [];
     return {
       id: entry.id,
-      userId: membership?.userId ?? '',
+      userId: entryUserIdMap.get(entry.id) ?? '',
       name: entry.name,
       isOnClock: false,
       pickCount: entryPicks.length,
@@ -453,9 +524,9 @@ async function buildRosterSelectionResponse(
   const pickIndexByEntry = new Map<string, number>();
   const pickIndexByEntryTier = new Map<string, number>();
   const pickDtos = rosterPicks.map((pick, index) => {
-    const participant = participantById.get(pick.participantId);
+    const participant = pick.sportEventParticipant.participant;
     const entry = contestEntryById.get(pick.entryId);
-    const tier = tierByParticipantId.get(pick.participantId);
+    const tier = tierByParticipantId.get(pick.sportEventParticipant.participantId);
     const currentEntryPickIndex = (pickIndexByEntry.get(pick.entryId) ?? 0) + 1;
     pickIndexByEntry.set(pick.entryId, currentEntryPickIndex);
 
@@ -477,11 +548,11 @@ async function buildRosterSelectionResponse(
       pickInRound: pick.draftRound ?? currentTierPickIndex,
       entryId: pick.entryId,
       entryName: entry?.name ?? pick.entryId,
-      participantId: pick.participantId,
-      participantName: participant?.name ?? pick.participantId,
+      participantId: pick.sportEventParticipantId,
+      participantName: participant?.name ?? pick.sportEventParticipantId,
       position: participant?.position ?? undefined,
       team: participant?.teamAffiliation ?? undefined,
-      price: priceByParticipantId.get(pick.participantId),
+      price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
       tierId: tier?.tierId,
       tierName: tier?.tierName,
       autoPicked: pick.autoPicked,
@@ -489,11 +560,17 @@ async function buildRosterSelectionResponse(
     };
   });
 
-  const availableParticipantIds = context.selectionConfig?.isExclusive
-    ? context.poolParticipants
-        .filter((participant) => !rosterPicks.some((pick) => pick.participantId === participant.participantId))
-        .map((participant) => participant.participantId)
-    : context.poolParticipants.map((participant) => participant.participantId);
+  const availableParticipantIds = context.contestConfiguration?.isExclusive
+    ? context.selectionParticipants.flatMap((participant) => {
+        if (!participant.isAvailable) return [];
+        if (rosterPicks.some((pick) => pick.sportEventParticipantId === participant.sportEventParticipantId)) {
+          return [];
+        }
+        return [participant.sportEventParticipantId];
+      })
+    : context.selectionParticipants.flatMap((participant) =>
+        participant.isAvailable ? [participant.sportEventParticipantId] : [],
+      );
 
   const isComplete = rosterSize > 0
     ? entries.every((entry) => (picksByEntry.get(entry.id)?.length ?? 0) >= rosterSize)
@@ -511,7 +588,7 @@ async function buildRosterSelectionResponse(
     isTurnBased: false,
     isCommissioner,
     rosterSize,
-    selectionConfig: buildSelectionConfigResponse(context.selectionConfig, tiers, rosterSize),
+    contestConfiguration: buildContestConfigurationResponse(context.contestConfiguration, tiers, rosterSize),
     status,
     currentPickNumber: canCurrentUserSubmit ? myEntryPicks.length + 1 : myEntryPicks.length,
     currentRound: context.contest.selectionType === SelectionType.TIERED
@@ -523,374 +600,12 @@ async function buildRosterSelectionResponse(
     currentEntryName: canCurrentUserSubmit ? entries.find((entry) => entry.id === myEntryId)?.name ?? null : null,
     myEntryId,
     isMyPick: canCurrentUserSubmit,
-    pickDeadline: context.contest.lockAt?.toISOString?.() ?? context.contest.lockAt ?? null,
+    currentTurnStartedAt: null,
     timePerPickSeconds: 0,
     entries: entries.map(({ pickCount: _pickCount, ...entry }) => entry),
-    picks: pickDtos,
+    draftPickHistories: pickDtos,
     availableParticipantIds,
     isComplete,
-  };
-}
-
-async function buildPickEmResponse(
-  prisma: PrismaClient,
-  context: DraftContext,
-  requestUserId?: string,
-) {
-  const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-  const myEntry = context.contestEntries.find((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
-    return membership?.userId === requestUserId;
-  });
-
-  const entries = context.contestEntries.map((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
-    return {
-      id: entry.id,
-      userId: membership?.userId ?? '',
-      name: entry.name,
-      isOnClock: false,
-    };
-  });
-
-  const picks = context.contestEntries.length === 0
-    ? []
-    : await prisma.contestPick.findMany({
-        where: {
-          contestId: context.contest.id,
-          entryId: { in: context.contestEntries.map((entry) => entry.id) },
-        },
-        orderBy: [{ period: 'asc' }, { matchupIndex: 'asc' }, { pickedAt: 'asc' }],
-      });
-  const participantIds = Array.from(new Set([
-    ...context.contestMatchups.flatMap((matchup) => [matchup.homeParticipantId, matchup.awayParticipantId]),
-    ...picks.map((pick) => pick.participantId),
-  ].filter((value): value is string => Boolean(value))));
-  const participants = participantIds.length === 0
-    ? []
-    : await prisma.participant.findMany({
-        where: { id: { in: participantIds } },
-        select: {
-          id: true,
-          name: true,
-          position: true,
-          teamAffiliation: true,
-        },
-      });
-  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
-  const picksByEntryAndMatchup = new Map<string, ContestPickRecord>();
-
-  for (const pick of picks) {
-    picksByEntryAndMatchup.set(`${pick.entryId}:${pick.period}:${pick.matchupIndex}`, pick);
-  }
-
-  const currentPeriod = context.contestMatchups.length > 0
-    ? Math.min(...context.contestMatchups.map((matchup) => matchup.period))
-    : 1;
-  const currentPeriodMatchups = context.contestMatchups.filter((matchup) => matchup.period === currentPeriod);
-  const myEntryId = myEntry?.id ?? null;
-  const myCurrentPeriodPicks = myEntryId
-    ? picks.filter((pick) => pick.entryId === myEntryId && pick.period === currentPeriod)
-    : [];
-  const isCommissioner = getIsCommissioner(context, requestUserId);
-  const picksPerPeriod = context.selectionConfig?.picksPerPeriod
-    ?? currentPeriodMatchups.length
-    ?? 0;
-  const openMatchups = currentPeriodMatchups.filter((matchup) => {
-    const lockAt = matchup.lockAt ?? context.contest.lockAt;
-    return !lockAt || lockAt.getTime() > Date.now();
-  });
-  const isMyPick = myEntryId !== null && openMatchups.length > 0;
-
-  return {
-    contestId: context.contest.id,
-    contestName: context.contest.name,
-    selectionType: context.contest.selectionType,
-    isTurnBased: false,
-    isCommissioner,
-    rosterSize: picksPerPeriod,
-    selectionConfig: buildSelectionConfigResponse(context.selectionConfig, [], picksPerPeriod),
-    status: mapContestStatusToDraftStatus(context.contest.status, false),
-    currentPickNumber: myCurrentPeriodPicks.length + 1,
-    currentRound: currentPeriod,
-    totalPicks: context.contestMatchups.length,
-    totalRounds: new Set(context.contestMatchups.map((matchup) => matchup.period)).size || 1,
-    currentEntryId: isMyPick ? myEntryId : null,
-    currentEntryName: isMyPick ? myEntry?.name ?? null : null,
-    myEntryId,
-    isMyPick,
-    timePerPickSeconds: 0,
-    pickDeadline: currentPeriodMatchups
-      .map((matchup) => matchup.lockAt ?? context.contest.lockAt)
-      .filter((value): value is Date => Boolean(value))
-      .sort((a, b) => a.getTime() - b.getTime())[0]?.toISOString() ?? null,
-    entries,
-    picks: picks.map((pick, index) => {
-      const participant = participantById.get(pick.participantId);
-      const entry = entries.find((item) => item.id === pick.entryId);
-      return {
-        pickNumber: index + 1,
-        round: pick.period,
-        pickInRound: pick.matchupIndex,
-        entryId: pick.entryId,
-        entryName: entry?.name ?? pick.entryId,
-        participantId: pick.participantId,
-        participantName: participant?.name ?? pick.participantId,
-        position: participant?.position ?? undefined,
-        team: participant?.teamAffiliation ?? undefined,
-        tierId: undefined,
-        tierName: undefined,
-        autoPicked: false,
-        pickedAt: pick.pickedAt.toISOString(),
-      };
-    }),
-    availableParticipantIds: [],
-    isComplete: currentPeriodMatchups.length > 0 && myCurrentPeriodPicks.length >= currentPeriodMatchups.length,
-    pickEmEvents: currentPeriodMatchups.map((matchup) => {
-      const myPick = myEntryId
-        ? picksByEntryAndMatchup.get(`${myEntryId}:${matchup.period}:${matchup.matchupIndex}`)
-        : undefined;
-      const homeParticipant = matchup.homeParticipantId ? participantById.get(matchup.homeParticipantId) : undefined;
-      const awayParticipant = matchup.awayParticipantId ? participantById.get(matchup.awayParticipantId) : undefined;
-      const lockAt = matchup.lockAt ?? context.contest.lockAt;
-      const isLocked = lockAt ? lockAt.getTime() <= Date.now() : false;
-      return {
-        id: matchup.id,
-        eventId: matchup.eventId ?? null,
-        period: matchup.period,
-        matchupIndex: matchup.matchupIndex,
-        homeParticipantId: matchup.homeParticipantId ?? null,
-        homeParticipantName: homeParticipant?.name ?? null,
-        awayParticipantId: matchup.awayParticipantId ?? null,
-        awayParticipantName: awayParticipant?.name ?? null,
-        eventTime: matchup.startsAt?.toISOString() ?? null,
-        deadline: lockAt?.toISOString() ?? null,
-        isLocked,
-        myPickParticipantId: myPick?.participantId ?? null,
-        confidenceWeight: myPick?.confidenceWeight ?? null,
-        label: matchup.label ?? null,
-      };
-    }),
-  };
-}
-
-function parseBracketPredictions(predictions: unknown): BracketPredictionItem[] {
-  if (!Array.isArray(predictions)) return [];
-
-  return predictions.flatMap((item) => {
-    if (!item || typeof item !== 'object') return [];
-
-    const record = item as Record<string, unknown>;
-    if (
-      typeof record.roundNumber !== 'number'
-      || typeof record.matchNumber !== 'number'
-      || typeof record.predictedWinnerId !== 'string'
-    ) {
-      return [];
-    }
-
-    return [{
-      roundNumber: record.roundNumber,
-      matchNumber: record.matchNumber,
-      predictedWinnerId: record.predictedWinnerId,
-      predictedSeriesLength: typeof record.predictedSeriesLength === 'number' ? record.predictedSeriesLength : undefined,
-      predictedScore: typeof record.predictedScore === 'string' ? record.predictedScore : undefined,
-      isCorrect: typeof record.isCorrect === 'boolean' ? record.isCorrect : undefined,
-    }];
-  });
-}
-
-function getMatchupSeed(matchup: ContestMatchupRecord, side: 'top' | 'bottom'): number | null {
-  if (!matchup.metadata || typeof matchup.metadata !== 'object') return null;
-
-  const metadata = matchup.metadata as Record<string, unknown>;
-  const candidateKeys = side === 'top'
-    ? ['topSeed', 'homeSeed']
-    : ['bottomSeed', 'awaySeed'];
-
-  for (const key of candidateKeys) {
-    const value = metadata[key];
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      const parsed = Number.parseInt(value, 10);
-      if (!Number.isNaN(parsed)) return parsed;
-    }
-  }
-
-  return null;
-}
-
-function chooseAutoFillWinner(matchup: ContestMatchupRecord): string | null {
-  const topSeed = getMatchupSeed(matchup, 'top');
-  const bottomSeed = getMatchupSeed(matchup, 'bottom');
-
-  if (
-    topSeed != null
-    && bottomSeed != null
-    && matchup.homeParticipantId
-    && matchup.awayParticipantId
-  ) {
-    return topSeed <= bottomSeed ? matchup.homeParticipantId : matchup.awayParticipantId;
-  }
-
-  return matchup.homeParticipantId ?? matchup.awayParticipantId ?? null;
-}
-
-async function buildBracketResponse(
-  prisma: PrismaClient,
-  context: DraftContext,
-  requestUserId?: string,
-) {
-  const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-  const entries = context.contestEntries.map((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
-    return {
-      id: entry.id,
-      userId: membership?.userId ?? '',
-      name: entry.name,
-      isOnClock: false,
-    };
-  });
-  const myEntry = context.contestEntries.find((entry) => {
-    const membership = membershipById.get(entry.leagueMembershipId);
-    return membership?.userId === requestUserId;
-  });
-  const myEntryId = myEntry?.id ?? null;
-
-  const bracketPredictions = context.contestEntries.length === 0
-    ? []
-    : await prisma.bracketPrediction.findMany({
-        where: {
-          contestId: context.contest.id,
-          entryId: { in: context.contestEntries.map((entry) => entry.id) },
-        },
-        orderBy: [{ submittedAt: 'asc' }, { id: 'asc' }],
-      });
-  const predictionByEntryId = new Map<string, BracketPredictionRecord>(
-    bracketPredictions.map((prediction) => [prediction.entryId, prediction]),
-  );
-
-  const participantIds = Array.from(new Set(
-    context.contestMatchups.flatMap((matchup) => [matchup.homeParticipantId, matchup.awayParticipantId])
-      .filter((value): value is string => Boolean(value)),
-  ));
-  const participants = participantIds.length === 0
-    ? []
-    : await prisma.participant.findMany({
-        where: { id: { in: participantIds } },
-        select: {
-          id: true,
-          name: true,
-          position: true,
-          teamAffiliation: true,
-        },
-      });
-  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
-
-  const myPredictions = myEntryId
-    ? parseBracketPredictions(predictionByEntryId.get(myEntryId)?.predictions)
-    : [];
-  const isCommissioner = getIsCommissioner(context, requestUserId);
-  const predictionByMatchKey = new Map<string, BracketPredictionItem>(
-    myPredictions.map((prediction) => [`${prediction.roundNumber}:${prediction.matchNumber}`, prediction]),
-  );
-  const sortedMatchups = [...context.contestMatchups].sort((a, b) => {
-    if ((a.roundNumber ?? a.period) !== (b.roundNumber ?? b.period)) {
-      return (a.roundNumber ?? a.period) - (b.roundNumber ?? b.period);
-    }
-    return (a.matchNumber ?? a.matchupIndex) - (b.matchNumber ?? b.matchupIndex);
-  });
-  const nextIncompleteMatchup = sortedMatchups.find((matchup) => {
-    const roundNumber = matchup.roundNumber ?? matchup.period;
-    const matchNumber = matchup.matchNumber ?? matchup.matchupIndex;
-    return !predictionByMatchKey.has(`${roundNumber}:${matchNumber}`);
-  });
-  const earliestLock = sortedMatchups
-    .map((matchup) => matchup.lockAt ?? context.contest.lockAt)
-    .filter((value): value is Date => Boolean(value))
-    .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
-  const isLocked = earliestLock ? earliestLock.getTime() <= Date.now() : false;
-
-  const picks = bracketPredictions.flatMap((prediction) => {
-    const entry = entries.find((item) => item.id === prediction.entryId);
-    return parseBracketPredictions(prediction.predictions).map((item, index) => {
-      const participant = participantById.get(item.predictedWinnerId);
-      return {
-        pickNumber: index + 1,
-        round: item.roundNumber,
-        pickInRound: item.matchNumber,
-        entryId: prediction.entryId,
-        entryName: entry?.name ?? prediction.entryId,
-        participantId: item.predictedWinnerId,
-        participantName: participant?.name ?? item.predictedWinnerId,
-        position: participant?.position ?? undefined,
-        team: participant?.teamAffiliation ?? undefined,
-        tierId: undefined,
-        tierName: undefined,
-        autoPicked: false,
-        pickedAt: prediction.submittedAt.toISOString(),
-      };
-    });
-  });
-
-  return {
-    contestId: context.contest.id,
-    contestName: context.contest.name,
-    selectionType: context.contest.selectionType,
-    isTurnBased: false,
-    isCommissioner,
-    rosterSize: sortedMatchups.length,
-    selectionConfig: buildSelectionConfigResponse(context.selectionConfig, [], sortedMatchups.length),
-    status: mapContestStatusToDraftStatus(context.contest.status, false),
-    currentPickNumber: myPredictions.length + 1,
-    currentRound: nextIncompleteMatchup?.roundNumber ?? nextIncompleteMatchup?.period ?? 1,
-    totalPicks: sortedMatchups.length,
-    totalRounds: new Set(sortedMatchups.map((matchup) => matchup.roundNumber ?? matchup.period)).size || 1,
-    currentEntryId: !isLocked ? myEntryId : null,
-    currentEntryName: !isLocked ? myEntry?.name ?? null : null,
-    myEntryId,
-    isMyPick: myEntryId !== null && !isLocked,
-    timePerPickSeconds: 0,
-    pickDeadline: earliestLock?.toISOString() ?? null,
-    entries,
-    picks,
-    availableParticipantIds: [],
-    isComplete: sortedMatchups.length > 0 && myPredictions.length >= sortedMatchups.length,
-    bracketMatchups: sortedMatchups.map((matchup) => {
-      const roundNumber = matchup.roundNumber ?? matchup.period;
-      const matchNumber = matchup.matchNumber ?? matchup.matchupIndex;
-      const prediction = predictionByMatchKey.get(`${roundNumber}:${matchNumber}`);
-      const topTeam = matchup.homeParticipantId
-        ? participantById.get(matchup.homeParticipantId)
-        : undefined;
-      const bottomTeam = matchup.awayParticipantId
-        ? participantById.get(matchup.awayParticipantId)
-        : undefined;
-      const lockAt = matchup.lockAt ?? context.contest.lockAt;
-
-      return {
-        id: matchup.id,
-        roundNumber,
-        matchNumber,
-        label: matchup.label ?? null,
-        isLocked: lockAt ? lockAt.getTime() <= Date.now() : false,
-        topTeam: topTeam
-          ? {
-              id: topTeam.id,
-              name: topTeam.name,
-              seed: getMatchupSeed(matchup, 'top'),
-            }
-          : null,
-        bottomTeam: bottomTeam
-          ? {
-              id: bottomTeam.id,
-              name: bottomTeam.name,
-              seed: getMatchupSeed(matchup, 'bottom'),
-            }
-          : null,
-        winnerId: prediction?.predictedWinnerId ?? null,
-      };
-    }),
   };
 }
 
@@ -924,29 +639,12 @@ async function buildDraftStateResponse(
   }
 
   if (
-    context.contest.selectionType === SelectionType.OPEN_SELECTION
-    || context.contest.selectionType === SelectionType.TIERED
+    context.contest.selectionType === SelectionType.TIERED
     || context.contest.selectionType === SelectionType.BUDGET_PICK
   ) {
     return {
       kind: 'success' as const,
       payload: await buildRosterSelectionResponse(prisma, context, requestUserId),
-      context,
-    };
-  }
-
-  if (context.contest.selectionType === SelectionType.PICK_EM) {
-    return {
-      kind: 'success' as const,
-      payload: await buildPickEmResponse(prisma, context, requestUserId),
-      context,
-    };
-  }
-
-  if (context.contest.selectionType === SelectionType.BRACKET_PICK_EM) {
-    return {
-      kind: 'success' as const,
-      payload: await buildBracketResponse(prisma, context, requestUserId),
       context,
     };
   }
@@ -963,58 +661,6 @@ async function buildDraftStateResponse(
 
 export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
-
-  fastify.get('/templates', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'List selection templates',
-      operationId: 'listSelectionTemplates',
-      querystring: {
-        type: 'object',
-        properties: {
-          sport: { type: 'string' },
-          contestType: { type: 'string' },
-        },
-      },
-      response: { 200: zodToJsonSchema(SelectionTemplateListResponseSchema) },
-    },
-    handler: async (request) => {
-      const { sport, contestType } = request.query as {
-        sport?: string;
-        contestType?: string;
-      };
-
-      if (sport && contestType) {
-        return getTemplatesForContestType(sport as Sport, contestType);
-      }
-      if (sport) {
-        return getTemplatesForSport(sport as Sport);
-      }
-      return SELECTION_TEMPLATES;
-    },
-  });
-
-  fastify.get('/templates/:templateId', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Get a selection template by ID',
-      operationId: 'getSelectionTemplate',
-      params: {
-        type: 'object',
-        required: ['templateId'],
-        properties: { templateId: { type: 'string' } },
-      },
-      response: { 200: zodToJsonSchema(SelectionTemplateResponseSchema) },
-    },
-    handler: async (request, reply) => {
-      const { templateId } = request.params as { templateId: string };
-      const template = getTemplateById(templateId);
-      if (!template) {
-        return sendWithStatus(reply, 404, { error: `Template ${templateId} not found` });
-      }
-      return template;
-    },
-  });
 
   fastify.get('/:contestId', {
     schema: {
@@ -1049,16 +695,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      body: {
-        type: 'object',
-        properties: {
-          entryIds: { type: 'array', items: { type: 'string', format: 'uuid' }, minItems: 2 },
-          rounds: { type: 'number', minimum: 1, maximum: 30 },
-          timePerPickSeconds: { type: 'number', minimum: 10, maximum: 86400 },
-          availableParticipantIds: { type: 'array', items: { type: 'string', format: 'uuid' }, minItems: 1 },
-          autoPickPolicy: { type: 'string', enum: ['QUEUE_THEN_BEST', 'BEST_AVAILABLE', 'RANDOM'] },
-        },
-      },
+      body: zodToJsonSchema(StartDraftRequestSchema),
       response: { 201: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {
@@ -1088,7 +725,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         currentPickNumber: 0,
         currentEntryId: null,
         startedAt: null,
-        pickDeadline: null,
+        currentTurnStartedAt: null,
         timePerPickSeconds,
       };
 
@@ -1128,39 +765,20 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Submit a draft pick',
-      operationId: 'submitDraftPick',
+      operationId: 'submitContestSelection',
       params: {
         type: 'object',
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      body: {
-        type: 'object',
-        required: ['entryId', 'participantId'],
-        properties: {
-          entryId: { type: 'string', format: 'uuid' },
-          participantId: { type: 'string', format: 'uuid' },
-          eventId: { type: 'string', format: 'uuid' },
-          period: { type: 'number', minimum: 1 },
-          matchupIndex: { type: 'number', minimum: 1 },
-          roundNumber: { type: 'number', minimum: 1 },
-          matchNumber: { type: 'number', minimum: 1 },
-          confidenceWeight: { type: 'number', minimum: 1 },
-        },
-      },
+      body: zodToJsonSchema(SubmitPickRequestSchema),
       response: { 200: zodToJsonSchema(DraftPickResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      const { entryId, participantId, eventId, period, matchupIndex, roundNumber, matchNumber, confidenceWeight } = request.body as {
+      const { entryId, participantId } = request.body as {
         entryId: string;
         participantId: string;
-        eventId?: string;
-        period?: number;
-        matchupIndex?: number;
-        roundNumber?: number;
-        matchNumber?: number;
-        confidenceWeight?: number;
       };
       const requestUserId = request.headers['x-user-id'] as string | undefined;
       const context = await loadDraftContext(prisma, contestId);
@@ -1178,9 +796,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
       }
 
-      const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-      const requestedMembership = membershipById.get(requestedEntry.leagueMembershipId);
-      if (!requestedMembership || requestedMembership.userId !== requestUserId) {
+      const requestedSquadMembership = context.squadMemberships.find(
+        (membership) => membership.squadId === requestedEntry.squadId && membership.userId === requestUserId,
+      );
+      if (!requestedSquadMembership) {
         return sendWithStatus(reply, 403, { error: 'FORBIDDEN', message: 'You can only draft for your own entry' });
       }
 
@@ -1208,13 +827,13 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
 
           if (autoPickId) {
             state = engine.applyPick(state, { entryId: currentEntryId, participantId: autoPickId }, true);
-            session.pickDeadline = new Date(Date.now() + session.timePerPickSeconds * 1000);
+            session.currentTurnStartedAt = new Date();
 
             if (!engine.isComplete(state)) {
               session.currentEntryId = engine.getCurrentEntryId(state);
             } else {
               session.status = DraftStatus.COMPLETE;
-              session.pickDeadline = null;
+              session.currentTurnStartedAt = null;
               session.currentEntryId = null;
             }
 
@@ -1233,12 +852,12 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         if (!engine.isComplete(state)) {
           session.currentEntryId = engine.getCurrentEntryId(state);
           session.currentPickNumber = state.currentPickNumber;
-          session.pickDeadline = new Date(Date.now() + session.timePerPickSeconds * 1000);
+          session.currentTurnStartedAt = new Date();
         } else {
           session.status = DraftStatus.COMPLETE;
           state = { ...state, status: DraftStatus.COMPLETE };
           session.currentEntryId = null;
-          session.pickDeadline = null;
+          session.currentTurnStartedAt = null;
         }
 
         await draftStore.setSession(contestId, session);
@@ -1247,145 +866,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return buildSnakeDraftResponse(prisma, context, session, state, available, requestUserId);
       }
 
-      if (context.contest.selectionType === SelectionType.PICK_EM) {
-        const resolvedPeriod = period ?? 1;
-        const resolvedMatchupIndex = matchupIndex ?? 1;
-        const matchup = context.contestMatchups.find((item) => item.period === resolvedPeriod && item.matchupIndex === resolvedMatchupIndex);
-        if (!matchup) {
-          return sendWithStatus(reply, 400, {
-            error: 'MATCHUP_NOT_FOUND',
-            message: `No matchup ${resolvedMatchupIndex} exists for period ${resolvedPeriod}`,
-          });
-        }
-
-        if (eventId && matchup.eventId && matchup.eventId !== eventId) {
-          return sendWithStatus(reply, 400, {
-            error: 'MATCHUP_EVENT_MISMATCH',
-            message: `Matchup ${resolvedMatchupIndex} does not belong to event ${eventId}`,
-          });
-        }
-
-        const allowedParticipantIds = [matchup.homeParticipantId, matchup.awayParticipantId].filter((value): value is string => Boolean(value));
-        if (!allowedParticipantIds.includes(participantId)) {
-          return sendWithStatus(reply, 400, {
-            error: 'INVALID_PICK',
-            message: `Participant ${participantId} is not a valid option for matchup ${resolvedMatchupIndex}`,
-          });
-        }
-
-        const lockAt = matchup.lockAt ?? context.contest.lockAt;
-        if (lockAt && lockAt.getTime() <= Date.now()) {
-          return sendWithStatus(reply, 400, {
-            error: 'MATCHUP_LOCKED',
-            message: `Matchup ${resolvedMatchupIndex} is already locked`,
-          });
-        }
-
-        const currentPick = await prisma.contestPick.findFirst({
-          where: {
-            entryId,
-            contestId,
-            period: resolvedPeriod,
-            matchupIndex: resolvedMatchupIndex,
-          },
-        });
-
-        if (currentPick) {
-          await prisma.contestPick.update({
-            where: { id: currentPick.id },
-            data: {
-              participantId,
-              eventId: matchup.eventId ?? eventId,
-              confidenceWeight: confidenceWeight ?? null,
-            },
-          });
-        } else {
-          await prisma.contestPick.create({
-            data: {
-              entryId,
-              contestId,
-              participantId,
-              eventId: matchup.eventId ?? eventId,
-              period: resolvedPeriod,
-              matchupIndex: resolvedMatchupIndex,
-              confidenceWeight: confidenceWeight ?? null,
-            },
-          });
-        }
-
-        return buildPickEmResponse(prisma, context, requestUserId);
-      }
-
-      if (context.contest.selectionType === SelectionType.BRACKET_PICK_EM) {
-        const resolvedRoundNumber = roundNumber ?? period ?? 1;
-        const resolvedMatchNumber = matchNumber ?? matchupIndex ?? 1;
-        const matchup = context.contestMatchups.find((item) => (
-          (item.roundNumber ?? item.period) === resolvedRoundNumber
-          && (item.matchNumber ?? item.matchupIndex) === resolvedMatchNumber
-        ));
-        if (!matchup) {
-          return sendWithStatus(reply, 400, {
-            error: 'MATCHUP_NOT_FOUND',
-            message: `No bracket matchup ${resolvedRoundNumber}-${resolvedMatchNumber} exists`,
-          });
-        }
-
-        const lockAt = matchup.lockAt ?? context.contest.lockAt;
-        if (lockAt && lockAt.getTime() <= Date.now()) {
-          return sendWithStatus(reply, 400, {
-            error: 'BRACKET_LOCKED',
-            message: `Bracket matchup ${resolvedRoundNumber}-${resolvedMatchNumber} is already locked`,
-          });
-        }
-
-        const allowedParticipantIds = [matchup.homeParticipantId, matchup.awayParticipantId].filter((value): value is string => Boolean(value));
-        if (!allowedParticipantIds.includes(participantId)) {
-          return sendWithStatus(reply, 400, {
-            error: 'INVALID_PICK',
-            message: `Participant ${participantId} is not a valid bracket option for ${resolvedRoundNumber}-${resolvedMatchNumber}`,
-          });
-        }
-
-        const existingPrediction = await prisma.bracketPrediction.findUnique({ where: { entryId } });
-        const predictions = parseBracketPredictions(existingPrediction?.predictions);
-        const nextPredictions = predictions.filter((item) => (
-          item.roundNumber !== resolvedRoundNumber || item.matchNumber !== resolvedMatchNumber
-        ));
-        nextPredictions.push({
-          roundNumber: resolvedRoundNumber,
-          matchNumber: resolvedMatchNumber,
-          predictedWinnerId: participantId,
-        });
-        nextPredictions.sort((a, b) => {
-          if (a.roundNumber !== b.roundNumber) return a.roundNumber - b.roundNumber;
-          return a.matchNumber - b.matchNumber;
-        });
-        const nextPredictionsJson = nextPredictions as unknown as Prisma.InputJsonValue;
-
-        if (existingPrediction) {
-          await prisma.bracketPrediction.update({
-            where: { id: existingPrediction.id },
-            data: {
-              predictions: nextPredictionsJson,
-              submittedAt: new Date(),
-            },
-          });
-        } else {
-          await prisma.bracketPrediction.create({
-            data: {
-              entryId,
-              contestId,
-              predictions: nextPredictionsJson,
-            },
-          });
-        }
-
-        return buildBracketResponse(prisma, context, requestUserId);
-      }
-
       if (
-        context.contest.selectionType !== SelectionType.OPEN_SELECTION
-        && context.contest.selectionType !== SelectionType.TIERED
+        context.contest.selectionType !== SelectionType.TIERED
         && context.contest.selectionType !== SelectionType.BUDGET_PICK
       ) {
         return sendWithStatus(reply, 501, {
@@ -1394,8 +876,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const tiers = deriveTierConfig(context.selectionConfig, context.poolParticipants);
-      const rosterSize = getRosterSize(context.contest.selectionType, context.selectionConfig, tiers);
+      const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+      const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
       if (rosterSize <= 0) {
         return sendWithStatus(reply, 400, {
           error: 'SELECTION_CONFIG_INVALID',
@@ -1403,22 +885,42 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const poolParticipant = context.poolParticipants.find((participant) => participant.participantId === participantId);
-      if (!poolParticipant) {
+      const sportEventParticipant = await prisma.sportEventParticipant.findUnique({
+        where: { id: participantId },
+        include: { participant: true },
+      });
+      if (!sportEventParticipant || sportEventParticipant.sportEventId !== context.contest.sportEventId) {
         return sendWithStatus(reply, 400, {
-          error: 'PARTICIPANT_NOT_IN_POOL',
-          message: `Participant ${participantId} is not in the contest pool`,
+          error: 'PARTICIPANT_NOT_IN_EVENT',
+          message: `SportEventParticipant ${participantId} is not part of contest ${contestId}`,
         });
       }
-      if (!poolParticipant.isAvailable) {
+
+      const canonicalParticipantId = sportEventParticipant.participantId;
+      const selectionParticipant = context.selectionParticipants.find(
+        (participant) => participant.sportEventParticipantId === participantId
+          || participant.participantId === canonicalParticipantId,
+      );
+      if (!selectionParticipant) {
+        return sendWithStatus(reply, 400, {
+          error: 'PARTICIPANT_NOT_SELECTABLE',
+          message: `SportEventParticipant ${participantId} is not selectable for contest ${contestId}`,
+        });
+      }
+      if (!selectionParticipant.isAvailable) {
         return sendWithStatus(reply, 400, {
           error: 'PARTICIPANT_UNAVAILABLE',
-          message: poolParticipant.unavailableReason ?? `Participant ${participantId} is unavailable`,
+          message:
+            selectionParticipant.unavailableReason
+            ?? `SportEventParticipant ${participantId} is unavailable`,
         });
       }
 
       const existingEntryPicks = await prisma.rosterPick.findMany({
         where: { entryId },
+        include: {
+          sportEventParticipant: true,
+        },
         orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
       });
       if (existingEntryPicks.length >= rosterSize) {
@@ -1427,17 +929,17 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           message: `Entry ${entryId} has already submitted all ${rosterSize} picks`,
         });
       }
-      if (existingEntryPicks.some((pick) => pick.participantId === participantId)) {
+      if (existingEntryPicks.some((pick) => pick.sportEventParticipantId === participantId)) {
         return sendWithStatus(reply, 400, {
           error: 'DUPLICATE_PICK',
-          message: `Participant ${participantId} is already on this entry`,
+          message: `SportEventParticipant ${participantId} is already on this entry`,
         });
       }
 
-      const exclusiveTaken = context.selectionConfig?.isExclusive
+      const exclusiveTaken = context.contestConfiguration?.isExclusive
         ? await prisma.rosterPick.findFirst({
             where: {
-              participantId,
+              sportEventParticipantId: participantId,
               entry: {
                 contestId,
               },
@@ -1448,17 +950,17 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       if (exclusiveTaken) {
         return sendWithStatus(reply, 400, {
           error: 'PARTICIPANT_ALREADY_TAKEN',
-          message: `Participant ${participantId} is already selected by another entry`,
+          message: `SportEventParticipant ${participantId} is already selected by another entry`,
         });
       }
 
       let draftRound = existingEntryPicks.length + 1;
       if (context.contest.selectionType === SelectionType.TIERED) {
-        const participantTier = poolParticipant.tier;
+        const participantTier = selectionParticipant.tier;
         if (!participantTier) {
           return sendWithStatus(reply, 400, {
             error: 'TIER_MISSING',
-            message: `Participant ${participantId} is missing a tier assignment`,
+            message: `SportEventParticipant ${participantId} is missing a tier assignment`,
           });
         }
 
@@ -1471,7 +973,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         }
 
         const participantIdsInTier = new Set(tier.participantIds);
-        const picksInTier = existingEntryPicks.filter((pick) => participantIdsInTier.has(pick.participantId));
+        const picksInTier = existingEntryPicks.filter((pick) =>
+          participantIdsInTier.has(pick.sportEventParticipant.participantId),
+        );
         if (picksInTier.length >= tier.picksFromTier) {
           return sendWithStatus(reply, 400, {
             error: 'TIER_FULL',
@@ -1496,7 +1000,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       await prisma.rosterPick.create({
         data: {
           entryId,
-          participantId,
+          sportEventParticipantId: participantId,
           draftRound,
           draftPickNumber: globalPickCount + 1,
           autoPicked: false,
@@ -1504,145 +1008,6 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       });
 
       return buildRosterSelectionResponse(prisma, context, requestUserId);
-    },
-  });
-
-  fastify.delete('/:contestId/bracket', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Reset the current user bracket submission',
-      operationId: 'resetBracketSubmission',
-      params: {
-        type: 'object',
-        required: ['contestId'],
-        properties: { contestId: { type: 'string', format: 'uuid' } },
-      },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
-      const context = await loadDraftContext(prisma, contestId);
-
-      if (!context) {
-        return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
-      }
-      if (context.contest.selectionType !== SelectionType.BRACKET_PICK_EM) {
-        return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Bracket reset only applies to bracket contests' });
-      }
-      if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
-      }
-
-      const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-      const myEntry = context.contestEntries.find((entry) => {
-        const membership = membershipById.get(entry.leagueMembershipId);
-        return membership?.userId === requestUserId;
-      });
-      if (!myEntry) {
-        return sendWithStatus(reply, 404, { error: 'ENTRY_NOT_FOUND', message: `No entry exists for user ${requestUserId}` });
-      }
-
-      const earliestLock = context.contestMatchups
-        .map((matchup) => matchup.lockAt ?? context.contest.lockAt)
-        .filter((value): value is Date => Boolean(value))
-        .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
-      if (earliestLock && earliestLock.getTime() <= Date.now()) {
-        return sendWithStatus(reply, 400, { error: 'BRACKET_LOCKED', message: 'Bracket picks are already locked' });
-      }
-
-      await prisma.bracketPrediction.deleteMany({
-        where: {
-          contestId,
-          entryId: myEntry.id,
-        },
-      });
-
-      return buildBracketResponse(prisma, context, requestUserId);
-    },
-  });
-
-  fastify.post('/:contestId/bracket/auto-fill', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Auto-fill the current user bracket submission',
-      operationId: 'autoFillBracketSubmission',
-      params: {
-        type: 'object',
-        required: ['contestId'],
-        properties: { contestId: { type: 'string', format: 'uuid' } },
-      },
-      response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
-      const context = await loadDraftContext(prisma, contestId);
-
-      if (!context) {
-        return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
-      }
-      if (context.contest.selectionType !== SelectionType.BRACKET_PICK_EM) {
-        return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Bracket auto-fill only applies to bracket contests' });
-      }
-      if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
-      }
-
-      const membershipById = new Map(context.memberships.map((membership) => [membership.id, membership]));
-      const myEntry = context.contestEntries.find((entry) => {
-        const membership = membershipById.get(entry.leagueMembershipId);
-        return membership?.userId === requestUserId;
-      });
-      if (!myEntry) {
-        return sendWithStatus(reply, 404, { error: 'ENTRY_NOT_FOUND', message: `No entry exists for user ${requestUserId}` });
-      }
-
-      const earliestLock = context.contestMatchups
-        .map((matchup) => matchup.lockAt ?? context.contest.lockAt)
-        .filter((value): value is Date => Boolean(value))
-        .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
-      if (earliestLock && earliestLock.getTime() <= Date.now()) {
-        return sendWithStatus(reply, 400, { error: 'BRACKET_LOCKED', message: 'Bracket picks are already locked' });
-      }
-
-      const autoFilledPredictions = context.contestMatchups
-        .map((matchup) => {
-          const predictedWinnerId = chooseAutoFillWinner(matchup);
-          if (!predictedWinnerId) return null;
-          return {
-            roundNumber: matchup.roundNumber ?? matchup.period,
-            matchNumber: matchup.matchNumber ?? matchup.matchupIndex,
-            predictedWinnerId,
-          };
-        })
-        .filter((value): value is BracketPredictionItem => value !== null)
-        .sort((a, b) => {
-          if (a.roundNumber !== b.roundNumber) return a.roundNumber - b.roundNumber;
-          return a.matchNumber - b.matchNumber;
-        });
-      const autoFilledPredictionsJson = autoFilledPredictions as unknown as Prisma.InputJsonValue;
-
-      const existingPrediction = await prisma.bracketPrediction.findUnique({ where: { entryId: myEntry.id } });
-      if (existingPrediction) {
-        await prisma.bracketPrediction.update({
-          where: { id: existingPrediction.id },
-          data: {
-            predictions: autoFilledPredictionsJson,
-            submittedAt: new Date(),
-          },
-        });
-      } else {
-        await prisma.bracketPrediction.create({
-          data: {
-            entryId: myEntry.id,
-            contestId,
-            predictions: autoFilledPredictionsJson,
-          },
-        });
-      }
-
-      return buildBracketResponse(prisma, context, requestUserId);
     },
   });
 
@@ -1747,20 +1112,14 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   fastify.post('/:contestId/extend', {
     schema: {
       tags: ['Drafts'],
-      summary: 'Extend the current pick deadline',
-      operationId: 'extendPickDeadline',
+      summary: 'Shift the current turn start time',
+      operationId: 'extendCurrentTurn',
       params: {
         type: 'object',
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
-      body: {
-        type: 'object',
-        required: ['additionalSeconds'],
-        properties: {
-          additionalSeconds: { type: 'number', minimum: 1, maximum: 3600 },
-        },
-      },
+      body: zodToJsonSchema(ExtendCurrentTurnRequestSchema),
       response: { 200: zodToJsonSchema(DraftStateResponseSchema) },
     },
     handler: async (request, reply) => {
@@ -1792,7 +1151,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
       const available = await draftStore.getAvailableParticipants(contestId);
 
-      const extendedSession = extendPickDeadline(session, additionalSeconds);
+      const extendedSession = extendCurrentTurn(session, additionalSeconds);
       await draftStore.setSession(contestId, extendedSession);
 
       return buildSnakeDraftResponse(prisma, context, extendedSession, state, available, requestUserId);
@@ -1803,7 +1162,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Undo the most recent snake draft pick',
-      operationId: 'undoLiveDraftPick',
+      operationId: 'undoSnakeDraftSelection',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -1849,7 +1208,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         status: DraftStatus.LIVE,
         currentPickNumber: rewoundState.currentPickNumber,
         currentEntryId: rewoundEntryId,
-        pickDeadline: new Date(Date.now() + session.timePerPickSeconds * 1000),
+        currentTurnStartedAt: new Date(),
       };
 
       await draftStore.setState(contestId, rewoundState);
@@ -1863,7 +1222,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Skip the current snake draft pick',
-      operationId: 'skipLiveDraftPick',
+      operationId: 'skipSnakeDraftTurn',
       params: {
         type: 'object',
         required: ['contestId'],
@@ -1909,7 +1268,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         status: isComplete ? DraftStatus.COMPLETE : DraftStatus.LIVE,
         currentPickNumber: skippedState.currentPickNumber,
         currentEntryId: isComplete ? null : engine.getCurrentEntryId(skippedState),
-        pickDeadline: isComplete ? null : new Date(Date.now() + session.timePerPickSeconds * 1000),
+        currentTurnStartedAt: isComplete ? null : new Date(),
       };
 
       await draftStore.setState(contestId, skippedState);

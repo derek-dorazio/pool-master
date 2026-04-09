@@ -21,33 +21,23 @@ import bcrypt from 'bcryptjs';
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
 import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
-import { tenantPlugin } from '../../packages/core-api/src/core/tenant-context';
 import { authModule } from '../../packages/core-api/src/modules/auth/routes';
 import { leaguesModule } from '../../packages/core-api/src/modules/leagues/routes';
+import { squadsModule } from '../../packages/core-api/src/modules/squads/routes';
 import { invitationsModule } from '../../packages/core-api/src/modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
+import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { standingsModule } from '../../packages/core-api/src/modules/standings/routes';
-import { searchModule } from '../../packages/core-api/src/modules/search/routes';
-import { complianceModule } from '../../packages/core-api/src/modules/compliance/routes';
+import { scoringRoutes } from '../../packages/core-api/src/modules/scoring/routes';
+import { StandingsRollup } from '../../packages/core-api/src/modules/scoring/rollup/standings-rollup';
+import { ScoringService } from '../../packages/core-api/src/modules/scoring/service';
+import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
 import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
-import { templatesModule } from '../../packages/core-api/src/modules/templates/routes';
-import { contestPoolModule } from '../../packages/core-api/src/modules/participants/pool-routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
-import { billingModule } from '../../packages/core-api/src/modules/billing/routes';
-import { socialModule } from '../../packages/core-api/src/modules/social/routes';
-import { registerScoringTemplates } from '../../packages/core-api/src/modules/contests/service';
-import { SCORING_TEMPLATES } from '../../packages/core-api/src/modules/scoring/templates/registry';
 import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
-import { loadConfig as loadNotifConfig } from '../../packages/core-api/src/modules/notifications/core/config';
-import { createChannels } from '../../packages/core-api/src/modules/notifications/channels/channel-factory';
-import { NotificationDispatcher } from '../../packages/core-api/src/modules/notifications/core/dispatcher';
-import { InMemoryRateLimiter } from '../../packages/core-api/src/modules/notifications/core/rate-limiter';
-import { EventGrouper } from '../../packages/core-api/src/modules/notifications/core/event-grouper';
-import { ScheduledRunner } from '../../packages/core-api/src/modules/notifications/core/scheduled-runner';
-import { WeeklyDigestService } from '../../packages/core-api/src/modules/notifications/core/weekly-digest';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const TEST_TENANT_ID = randomUUID();
@@ -76,45 +66,41 @@ export function getTestTenantId(): string {
 async function buildTestApp(): Promise<FastifyInstance> {
   const testApp = Fastify({ logger: false });
 
-  registerScoringTemplates(SCORING_TEMPLATES as Record<string, Record<string, unknown>>);
-
   // Core plugins
   testApp.register(healthPlugin);
   testApp.register(authGuard);
-  testApp.register(tenantPlugin);
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth' });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues' });
+  testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations' });
   testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
+  testApp.register(contestManagementModule, {
+    prefix: '/api/v1/leagues/:id/contest-management/contests',
+  });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
   testApp.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
-  testApp.register(searchModule, { prefix: '/api/v1/search' });
-  testApp.register(complianceModule, { prefix: '/api/v1/account' });
+  const standingsRollup = new StandingsRollup({
+    eventBus: {
+      publish: async () => undefined,
+    } as any,
+    prisma,
+  });
+  const scoringService = new ScoringService({
+    standingsRollup,
+    prisma,
+  });
+  testApp.register(scoringRoutes, { prefix: '/api/v1', scoringService });
+  testApp.register(accountConsentModule, { prefix: '/api/v1/account' });
   testApp.register(configModule, { prefix: '/api/v1/config' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
-  testApp.register(templatesModule, { prefix: '/api/v1/templates' });
-  testApp.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
   testApp.register(historyModule, { prefix: '/api/v1' });
-  testApp.register(billingModule, { prefix: '/api/v1/billing' });
-  testApp.register(socialModule, { prefix: '/api/v1' });
-
-  // Notification module (for notification persistence tests)
-  const notifConfig = loadNotifConfig();
-  const notifChannels = createChannels(notifConfig, prisma);
-  const rateLimiter = new InMemoryRateLimiter();
-  const dispatcher = new NotificationDispatcher(prisma, notifChannels, rateLimiter);
-  const eventGrouper = new EventGrouper();
-  const scheduledRunner = new ScheduledRunner(prisma, dispatcher);
-  const digestService = new WeeklyDigestService(prisma, notifChannels);
-
   testApp.register(notificationsModule, {
     prefix: '/api/v1',
-    prisma, channels: notifChannels, dispatcher, rateLimiter,
-    eventGrouper, scheduledRunner, digestService,
+    prisma,
   });
 
   await testApp.ready();
@@ -231,15 +217,16 @@ export async function cleanupTestData(): Promise<void> {
   const tid = TEST_TENANT_ID;
   // Tables that reference contests
   const contestChildTables = [
-    'contest_entries', 'contest_standings', 'contest_results', 'scoring_checkpoints',
-    'draft_sessions', 'draft_picks', 'selection_configs', 'bracket_predictions',
-    'contest_participant_pool', 'contest_pools', 'contest_matchups', 'roster_picks', 'contest_picks', 'payout_history',
+    'contest_entry_participant_score_events', 'contest_entry_participant_scores', 'contest_entry_prize_awards',
+    'contest_entries',
+    'draft_sessions', 'draft_pick_histories',
+    'contest_participant_pool', 'contest_pools', 'roster_picks',
+    'participant_contest_scoring_rules', 'contest_entry_aggregation_rules', 'contest_prize_definitions', 'contest_configurations',
     'commissioner_audit_log', 'commissioner_action_items', 'discoverable_contests',
   ];
   // Tables that reference leagues
   const leagueChildTables = [
-    'season_notes', 'league_season_summaries', 'league_records', 'rivalry_records',
-    'trophies', 'team_roster_history', 'retention_configs', 'retention_job_runs',
+    'squad_memberships', 'squads',
     'discoverable_leagues',
   ];
 
@@ -252,6 +239,19 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.$executeRawUnsafe(
     'DELETE FROM contests WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1::uuid)',
     tid,
+  ).catch(() => {});
+
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM sport_event_participant_source_data WHERE sport_event_participant_id IN (SELECT id FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test'))",
+  ).catch(() => {});
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM sport_event_participant_valuations WHERE sport_event_participant_id IN (SELECT id FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test'))",
+  ).catch(() => {});
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test')",
+  ).catch(() => {});
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM sport_events WHERE provider_id = 'integration-test'",
   ).catch(() => {});
 
   for (const table of leagueChildTables) {

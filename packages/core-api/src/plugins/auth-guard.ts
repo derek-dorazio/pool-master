@@ -2,7 +2,7 @@
  * Auth guard plugin — Fastify preHandler that validates JWT access tokens.
  *
  * Decodes the Bearer token from the Authorization header, verifies it,
- * and attaches user context (userId, email, tenantId) to the request.
+ * and attaches user context to the request.
  * Public routes (auth module, health check) are skipped automatically.
  */
 
@@ -17,7 +17,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 export interface AuthUser {
   userId: string;
   email: string;
-  tenantId: string;
+  tenantId?: string;
 }
 
 // Extend Fastify request to carry auth context
@@ -67,7 +67,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
       const payload = jwt.verify(token, jwtSecret) as {
         sub: string;
         email: string;
-        tenantId: string;
+        tenantId?: string;
       };
 
       request.authUser = {

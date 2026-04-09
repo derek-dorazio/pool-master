@@ -207,8 +207,7 @@ async function main(): Promise<void> {
         'user.view', 'user.edit', 'user.reset_password', 'user.force_logout', 'user.merge',
         'contest.view', 'contest.override', 'contest.recalculate', 'contest.close',
         'sportsdata.view', 'sportsdata.configure', 'sportsdata.re_ingest',
-        'flags.view', 'flags.edit',
-        'platform.health', 'platform.announcements', 'platform.migrations',
+        'platform.health', 'platform.migrations',
         'audit.view',
       ],
       isActive: true,
@@ -228,7 +227,6 @@ async function main(): Promise<void> {
         'user.view', 'user.edit', 'user.reset_password',
         'contest.view', 'contest.override', 'contest.recalculate',
         'sportsdata.view', 'sportsdata.configure',
-        'flags.view',
         'platform.health',
         'audit.view',
       ],
@@ -434,30 +432,6 @@ async function main(): Promise<void> {
     },
   });
   console.log('  ✓ Season: NFL 2025-2026');
-
-  // --- Notification Preferences (defaults for real users) ---
-  console.log('Seeding notification preferences...');
-  const defaultPrefs = {
-    DRAFT: { enabled: true, channels: { push: true, email: true, in_app: true, sms: false } },
-    SCORING: { enabled: true, channels: { push: true, email: false, in_app: true, sms: false } },
-    CONTEST: { enabled: true, channels: { push: true, email: true, in_app: true, sms: false } },
-    LEAGUE: { enabled: true, channels: { push: false, email: false, in_app: true, sms: false } },
-    SOCIAL: { enabled: true, channels: { push: true, email: false, in_app: true, sms: false } },
-    ACCOUNT: { enabled: true, channels: { push: false, email: true, in_app: true, sms: false } },
-  };
-
-  for (const user of [derek, jackson]) {
-    await prisma.notificationPreference.upsert({
-      where: { userId: user.id },
-      update: {},
-      create: {
-        userId: user.id,
-        doNotDisturb: false,
-        categoryPreferences: defaultPrefs,
-      },
-    });
-  }
-  console.log('  ✓ Notification preferences for Derek + Jackson');
 
   // --- Done ---
   console.log('');

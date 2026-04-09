@@ -1,61 +1,42 @@
-// PoolMaster API — monolith entry point
-// Merges core-api + draft-service + scoring-service + notification-service + ingestion-worker
+// PoolMaster API entry point for the active backend-first product surface.
 
 import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import crypto from 'node:crypto';
 
 // Core plugins
 import { healthPlugin } from './plugins/health';
 import { swaggerPlugin } from './plugins/swagger';
 import { authGuard } from './plugins/auth-guard';
-import { tenantPlugin } from './core/tenant-context';
 import { etagPlugin } from './plugins/etag-support';
 import { pollConfigPlugin } from './plugins/poll-config';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
 import { leaguesModule } from './modules/leagues/routes';
+import { squadsModule } from './modules/squads/routes';
 import { invitationsModule } from './modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
-import { registerScoringTemplates } from './modules/contests/service';
-import { templatesModule } from './modules/templates/routes';
+import { contestManagementModule } from './modules/contest-management/routes';
 import { eventsModule } from './modules/events/routes';
 import { participantsModule } from './modules/participants/routes';
-import { contestPoolModule } from './modules/participants/pool-routes';
 import { standingsModule } from './modules/standings/routes';
 import { historyModule } from './modules/history/routes';
-import { searchModule } from './modules/search/routes';
-import { complianceModule } from './modules/compliance/routes';
+import { accountConsentModule } from './modules/account-consent/routes';
 import { adminModule } from './modules/admin/routes';
 import { configModule } from './modules/config/routes';
-import { billingModule } from './modules/billing/routes';
-import { webhookModule } from './modules/billing/webhook-handler';
 
 // Draft module
 import { draftsModule } from './modules/drafts/routes';
 
-// Social module
-import { socialModule } from './modules/social/routes';
-
 // Scoring module
 import { eventBus } from '@poolmaster/shared/events/event-bus';
-import { ScoreStore } from './modules/scoring/storage/score-store';
 import { subscribeStatEventConsumer, ContestLookup } from './modules/scoring/consumer/stat-event-consumer';
 import { StandingsRollup } from './modules/scoring/rollup/standings-rollup';
 import { ScoringService } from './modules/scoring/service';
 import { scoringRoutes } from './modules/scoring/routes';
-import { SCORING_TEMPLATES } from './modules/scoring/templates/registry';
+import { ContestScoringRecalculationService } from './modules/contest-scoring';
 
 // Notification module
-import { loadConfig as loadNotifConfig } from './modules/notifications/core/config';
-import { createChannels } from './modules/notifications/channels/channel-factory';
-import { NotificationDispatcher } from './modules/notifications/core/dispatcher';
-import { InMemoryRateLimiter } from './modules/notifications/core/rate-limiter';
-import { EventGrouper } from './modules/notifications/core/event-grouper';
-import { ScheduledRunner } from './modules/notifications/core/scheduled-runner';
-import { WeeklyDigestService } from './modules/notifications/core/weekly-digest';
-import { registerPushTriggers } from './modules/notifications/triggers/push-triggers';
 import { notificationsModule } from './modules/notifications/routes';
 
 // Ingestion module
@@ -72,8 +53,6 @@ export function buildApp() {
   const prisma = new PrismaClient();
   const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
 
-  registerScoringTemplates(SCORING_TEMPLATES as Record<string, Record<string, unknown>>);
-
   const registry = new ProviderRegistry();
   registry.register(Sport.GOLF, new PgaTourAdapter(), 'PRIMARY');
   registry.register(Sport.F1, new OpenF1Adapter(), 'PRIMARY');
@@ -86,10 +65,10 @@ export function buildApp() {
   const ingestionPersistence = new IngestionPersistence(prisma);
 
   // --- Scoring subsystem (Prisma-backed) ---
-  const scoreStore = new ScoreStore(prisma);
   const contestLookup = new ContestLookup(prisma);
-  const standingsRollup = new StandingsRollup({ eventBus, scoreStore, prisma });
-  const scoringService = new ScoringService({ scoreStore, standingsRollup, prisma });
+  const standingsRollup = new StandingsRollup({ eventBus, prisma });
+  const scoringService = new ScoringService({ standingsRollup, prisma });
+  const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma);
 
   // =========================================================================
   // Core plugins
@@ -99,7 +78,6 @@ export function buildApp() {
   app.register(etagPlugin);
   app.register(pollConfigPlugin);
   app.register(authGuard);
-  app.register(tenantPlugin);
 
   // =========================================================================
   // Auth (public routes — no JWT required)
@@ -110,26 +88,20 @@ export function buildApp() {
   // Domain modules (protected by auth-guard)
   // =========================================================================
   app.register(leaguesModule, { prefix: '/api/v1/leagues' });
+  app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
   app.register(invitationsModule, { prefix: '/api/v1/invitations' });
   app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
+  app.register(contestManagementModule, {
+    prefix: '/api/v1/leagues/:id/contest-management/contests',
+  });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
-  app.register(templatesModule, { prefix: '/api/v1/templates' });
   app.register(eventsModule, { prefix: '/api/v1/events' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
-  app.register(contestPoolModule, { prefix: '/api/v1/contests/:contestId/pool', registry });
   app.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
   app.register(historyModule, { prefix: '/api/v1' });
-  app.register(searchModule, { prefix: '/api/v1/search' });
-  app.register(complianceModule, { prefix: '/api/v1/account' });
+  app.register(accountConsentModule, { prefix: '/api/v1/account' });
   app.register(adminModule, { prefix: '/api/v1/admin' });
   app.register(configModule, { prefix: '/api/v1/config' });
-  app.register(billingModule, { prefix: '/api/v1/billing' });
-  app.register(webhookModule, { prefix: '/api/v1' });
-
-  // =========================================================================
-  // Social module (from social/communication layer)
-  // =========================================================================
-  app.register(socialModule, { prefix: '/api/v1' });
 
   // =========================================================================
   // Draft module (from draft-service)
@@ -143,30 +115,20 @@ export function buildApp() {
 
   // Subscribe stat event consumer + start periodic standings rollup
   if (!isOpenApiExport) {
-    subscribeStatEventConsumer({ eventBus, scoreStore, contestLookup });
+    subscribeStatEventConsumer({
+      eventBus,
+      contestLookup,
+      contestScoringRecalculationService,
+    });
     standingsRollup.startPeriodicRollup();
   }
 
   // =========================================================================
   // Notification module (from notification-service)
   // =========================================================================
-  const notifConfig = loadNotifConfig();
-  const notifChannels = createChannels(notifConfig, prisma);
-  const rateLimiter = new InMemoryRateLimiter();
-  const dispatcher = new NotificationDispatcher(prisma, notifChannels, rateLimiter);
-  const eventGrouper = new EventGrouper();
-  const scheduledRunner = new ScheduledRunner(prisma, dispatcher);
-  const digestService = new WeeklyDigestService(prisma, notifChannels);
-
   app.register(notificationsModule, {
     prefix: '/api/v1',
     prisma,
-    channels: notifChannels,
-    dispatcher,
-    rateLimiter,
-    eventGrouper,
-    scheduledRunner,
-    digestService,
   });
 
   // =========================================================================
@@ -214,30 +176,6 @@ export function buildApp() {
       return;
     }
 
-    // Notifications
-    scheduledRunner.start();
-    app.log.info('Scheduled notification runner started');
-    registerPushTriggers(dispatcher);
-    app.log.info('Push notification triggers registered');
-
-    // Event grouper flush
-    setInterval(() => {
-      const grouped = eventGrouper.flushExpired();
-      for (const g of grouped) {
-        dispatcher.dispatch({
-          id: crypto.randomUUID(),
-          type: g.eventType,
-          sourceService: 'event-grouper',
-          timestamp: new Date().toISOString(),
-          tenantId: '',
-          recipientUserIds: [g.userId],
-          data: { ...g.latestData, count: g.count },
-          priority: 'NORMAL' as any,
-          action: { type: 'NAVIGATE', screen: 'home', params: {} },
-        });
-      }
-    }, 30_000);
-
     // Ingestion
     if (process.env.AUTO_START_SCHEDULER !== 'false') {
       ingestionScheduler.start();
@@ -247,7 +185,6 @@ export function buildApp() {
 
   app.addHook('onClose', async () => {
     standingsRollup.stopPeriodicRollup();
-    scheduledRunner.stop();
     ingestionScheduler.stop();
     eventBus.clear();
     await prisma.$disconnect();

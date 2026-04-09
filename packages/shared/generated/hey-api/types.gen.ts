@@ -235,8 +235,9 @@ export type CreateLeagueData = {
     body: {
         name: string;
         description?: string;
-        visibility: 'PRIVATE' | 'PUBLIC';
+        visibility: 'PUBLIC' | 'PRIVATE' | 'UNLISTED';
         maxMembers?: number;
+        sport?: string;
         settings?: {
             [key: string]: unknown;
         };
@@ -364,8 +365,25 @@ export type SendLeagueInvitationsResponses = {
     /**
      * Default Response
      */
-    200: {
-        [key: string]: unknown;
+    201: {
+        sent: Array<{
+            id: string;
+            leagueId: string;
+            email?: string;
+            inviteCode: string;
+            inviteType: string;
+            status: string;
+            maxUses: number;
+            currentUses: number;
+            invitedBy: string;
+            expiresAt?: string;
+            acceptedAt?: string;
+            acceptedBy?: string;
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        skippedMembers: Array<string>;
+        skippedDuplicates: Array<string>;
     };
 };
 
@@ -387,8 +405,23 @@ export type GenerateInviteLinkResponses = {
     /**
      * Default Response
      */
-    200: {
-        [key: string]: unknown;
+    201: {
+        invitation: {
+            id: string;
+            leagueId: string;
+            email?: string;
+            inviteCode: string;
+            inviteType: string;
+            status: string;
+            maxUses: number;
+            currentUses: number;
+            invitedBy: string;
+            expiresAt?: string;
+            acceptedAt?: string;
+            acceptedBy?: string;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -408,9 +441,7 @@ export type RevokeInviteLinkResponses = {
     /**
      * Default Response
      */
-    200: {
-        [key: string]: unknown;
-    };
+    204: void;
 };
 
 export type RevokeInviteLinkResponse = RevokeInviteLinkResponses[keyof RevokeInviteLinkResponses];
@@ -443,7 +474,7 @@ export type ListLeagueMembersResponse = ListLeagueMembersResponses[keyof ListLea
 
 export type ChangeMemberRoleData = {
     body: {
-        role: 'COMMISSIONER' | 'MANAGER' | 'VIEWER';
+        role: 'COMMISSIONER' | 'MEMBER';
         permissions?: Array<string>;
     };
     path: {
@@ -464,6 +495,7 @@ export type ChangeMemberRoleResponses = {
             leagueId: string;
             userId: string;
             role: string;
+            status: string;
             permissions: Array<string>;
             joinedAt: string;
             createdAt: string;
@@ -536,6 +568,7 @@ export type TransferOwnershipResponses = {
             leagueId: string;
             userId: string;
             role: string;
+            status: string;
             permissions: Array<string>;
             joinedAt: string;
             createdAt: string;
@@ -546,6 +579,7 @@ export type TransferOwnershipResponses = {
             leagueId: string;
             userId: string;
             role: string;
+            status: string;
             permissions: Array<string>;
             joinedAt: string;
             createdAt: string;
@@ -570,7 +604,39 @@ export type GetLeagueDashboardResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        league: {
+            [key: string]: unknown;
+        };
+        actionItems: Array<{
+            id: string;
+            leagueId: string;
+            contestId?: string;
+            type: string;
+            priority: string;
+            title: string;
+            description: string;
+            actionUrl?: string;
+            resolved: boolean;
+            createdAt: string;
+            updatedAt: string;
+        }>;
+        contests: Array<{
+            [key: string]: unknown;
+        }>;
+        memberCount: number;
+        pendingInvites: number;
+        recentMemberActivity: Array<{
+            userId: string;
+            displayName: string;
+            action: string;
+            timestamp: string;
+        }>;
+        upcomingEvents: Array<{
+            contestId?: string;
+            title: string;
+            date: string;
+            eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
+        }>;
     };
 };
 
@@ -591,7 +657,19 @@ export type ResolveActionItemResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        actionItem: {
+            id: string;
+            leagueId: string;
+            contestId?: string;
+            type: string;
+            priority: string;
+            title: string;
+            description: string;
+            actionUrl?: string;
+            resolved: boolean;
+            createdAt: string;
+            updatedAt: string;
+        };
     };
 };
 
@@ -611,7 +689,9 @@ export type GetLeagueAuditLogResponses = {
      * Default Response
      */
     200: {
-        [key: string]: unknown;
+        entries: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 
@@ -639,38 +719,9 @@ export type GetMemberAuditLogResponses = {
 
 export type GetMemberAuditLogResponse = GetMemberAuditLogResponses[keyof GetMemberAuditLogResponses];
 
-export type BulkCreateContestsData = {
-    body: {
-        templateId: string;
-        namingPattern: string;
-        events: Array<{
-            name: string;
-            startsAt?: string;
-            endsAt?: string;
-        }>;
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/contests/bulk';
-};
-
-export type BulkCreateContestsResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        [key: string]: unknown;
-    };
-};
-
-export type BulkCreateContestsResponse = BulkCreateContestsResponses[keyof BulkCreateContestsResponses];
-
 export type CopySeasonData = {
     body: {
         sourceContestIds: Array<string>;
-        seasonId?: string;
     };
     path: {
         id: string;
@@ -715,6 +766,243 @@ export type ImportMembersResponses = {
 };
 
 export type ImportMembersResponse = ImportMembersResponses[keyof ImportMembersResponses];
+
+export type ListLeagueSquadsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/';
+};
+
+export type ListLeagueSquadsResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        squads: Array<{
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            iconUrl?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            memberCount: number;
+            createdAt: string;
+            updatedAt: string;
+            members?: Array<{
+                id: string;
+                squadId: string;
+                leagueId: string;
+                userId: string;
+                displayName?: string;
+                status: 'ACTIVE' | 'INACTIVE';
+                joinedAt: string;
+                createdAt: string;
+                updatedAt: string;
+            }>;
+        }>;
+    };
+};
+
+export type ListLeagueSquadsResponse = ListLeagueSquadsResponses[keyof ListLeagueSquadsResponses];
+
+export type CreateLeagueSquadData = {
+    body: {
+        name?: string;
+        iconUrl?: string;
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/';
+};
+
+export type CreateLeagueSquadResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        squad: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            iconUrl?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            memberCount: number;
+            createdAt: string;
+            updatedAt: string;
+            members?: Array<{
+                id: string;
+                squadId: string;
+                leagueId: string;
+                userId: string;
+                displayName?: string;
+                status: 'ACTIVE' | 'INACTIVE';
+                joinedAt: string;
+                createdAt: string;
+                updatedAt: string;
+            }>;
+        };
+    };
+};
+
+export type CreateLeagueSquadResponse = CreateLeagueSquadResponses[keyof CreateLeagueSquadResponses];
+
+export type GetLeagueSquadData = {
+    body?: never;
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/{squadId}';
+};
+
+export type GetLeagueSquadResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        squad: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            iconUrl?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            memberCount: number;
+            createdAt: string;
+            updatedAt: string;
+            members?: Array<{
+                id: string;
+                squadId: string;
+                leagueId: string;
+                userId: string;
+                displayName?: string;
+                status: 'ACTIVE' | 'INACTIVE';
+                joinedAt: string;
+                createdAt: string;
+                updatedAt: string;
+            }>;
+        };
+    };
+};
+
+export type GetLeagueSquadResponse = GetLeagueSquadResponses[keyof GetLeagueSquadResponses];
+
+export type UpdateLeagueSquadData = {
+    body: {
+        name?: string;
+        iconUrl?: string;
+    };
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/{squadId}';
+};
+
+export type UpdateLeagueSquadResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        squad: {
+            id: string;
+            leagueId: string;
+            createdBy: string;
+            name: string;
+            iconUrl?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            memberCount: number;
+            createdAt: string;
+            updatedAt: string;
+            members?: Array<{
+                id: string;
+                squadId: string;
+                leagueId: string;
+                userId: string;
+                displayName?: string;
+                status: 'ACTIVE' | 'INACTIVE';
+                joinedAt: string;
+                createdAt: string;
+                updatedAt: string;
+            }>;
+        };
+    };
+};
+
+export type UpdateLeagueSquadResponse = UpdateLeagueSquadResponses[keyof UpdateLeagueSquadResponses];
+
+export type AddSquadCoManagerData = {
+    body: {
+        userId: string;
+    };
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/{squadId}/members';
+};
+
+export type AddSquadCoManagerResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        membership: {
+            id: string;
+            squadId: string;
+            leagueId: string;
+            userId: string;
+            displayName?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type AddSquadCoManagerResponse = AddSquadCoManagerResponses[keyof AddSquadCoManagerResponses];
+
+export type RemoveSquadCoManagerData = {
+    body?: never;
+    path: {
+        id: string;
+        squadId: string;
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/squads/{squadId}/members/{userId}';
+};
+
+export type RemoveSquadCoManagerResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        membership: {
+            id: string;
+            squadId: string;
+            leagueId: string;
+            userId: string;
+            displayName?: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            joinedAt: string;
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type RemoveSquadCoManagerResponse = RemoveSquadCoManagerResponses[keyof RemoveSquadCoManagerResponses];
 
 export type AcceptInvitationData = {
     body: {
@@ -764,6 +1052,7 @@ export type AcceptInvitationResponses = {
             leagueId: string;
             userId: string;
             role: string;
+            status: string;
             permissions: Array<string>;
             joinedAt: string;
             createdAt: string;
@@ -796,6 +1085,7 @@ export type ListContestsResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
@@ -811,12 +1101,10 @@ export type ListContestsResponse = ListContestsResponses[keyof ListContestsRespo
 export type CreateContestData = {
     body: {
         name: string;
-        sport: string;
         eventId?: string;
-        seasonId?: string;
         contestType: 'SINGLE_EVENT';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
-        selectionConfig?: {
+        contestConfiguration?: {
             draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
@@ -842,11 +1130,7 @@ export type CreateContestData = {
             pricingMethod?: string;
             rosterSize?: number;
             pickCount?: number;
-            survivorStyle?: string;
             picksPerPeriod?: number;
-            oneEntityPerSeason?: boolean;
-            strikesBeforeElimination?: number;
-            buybacksAllowed?: boolean;
             roundValues?: Array<number>;
             startRound?: string;
             isExclusive?: boolean;
@@ -856,25 +1140,6 @@ export type CreateContestData = {
             captainMultiplier?: number;
         };
         scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
-        scoringRules?: {
-            [key: string]: unknown;
-        };
-        scoringTemplateKey?: string;
-        payoutConfig?: {
-            entryFee?: number;
-            prizePool?: number;
-            payoutStructure: Array<{
-                rank: number;
-                percentage: number;
-                fixedAmount?: number;
-            }>;
-            intermediatePrizes: Array<{
-                name: string;
-                description?: string;
-                amount?: number;
-                percentage?: number;
-            }>;
-        };
         startsAt?: string;
         endsAt?: string;
         lockAt?: string;
@@ -901,25 +1166,387 @@ export type CreateContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
 };
 
 export type CreateContestResponse = CreateContestResponses[keyof CreateContestResponses];
+
+export type CreateManagedContestData = {
+    body: {
+        name: string;
+        sportEventId: string;
+        contestType?: 'SINGLE_EVENT';
+        configuration: {
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+                participantIds: Array<string>;
+            }>;
+            budget?: number;
+            pricingMethod?: string;
+            pickCount?: number;
+            isExclusive?: boolean;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            locksAt?: string;
+            minimumEntries?: number;
+            maxEntriesPerSquad?: number;
+            rosterSize?: number;
+            totalPrizePoolAmount?: number;
+            participantScoringRules: Array<{
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+                sortOrder: number;
+                config?: {
+                    [key: string]: unknown;
+                };
+                active?: boolean;
+            }>;
+            entryAggregationRule: {
+                aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                config?: {
+                    [key: string]: unknown;
+                };
+                active?: boolean;
+            };
+            prizeDefinitions?: Array<{
+                prizeDefinitionId: string;
+                displayName: string;
+                sortOrder: number;
+                ruleConfig?: {
+                    [key: string]: unknown;
+                };
+                payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                amount?: number;
+                percentage?: number;
+                active?: boolean;
+            }>;
+        };
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/';
+};
+
+export type CreateManagedContestResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        contest: {
+            id: string;
+            leagueId: string;
+            sportEventId: string;
+            name: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            configuration: {
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: Array<{
+                    tierId: string;
+                    tierName: string;
+                    tierNumber: number;
+                    picksFromTier: number;
+                    participantIds: Array<string>;
+                }>;
+                budget?: number;
+                pricingMethod?: string;
+                pickCount?: number;
+                isExclusive?: boolean;
+                picksPerPeriod?: number;
+                roundValues?: Array<number>;
+                startRound?: string;
+                locksAt?: string;
+                minimumEntries?: number;
+                maxEntriesPerSquad?: number;
+                rosterSize?: number;
+                totalPrizePoolAmount?: number;
+                participantScoringRules: Array<{
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+                    sortOrder: number;
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                }>;
+                entryAggregationRule: {
+                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                };
+                prizeDefinitions: Array<{
+                    prizeDefinitionId: string;
+                    displayName: string;
+                    sortOrder: number;
+                    ruleConfig?: {
+                        [key: string]: unknown;
+                    };
+                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    amount?: number;
+                    percentage?: number;
+                    active?: boolean;
+                    id: string;
+                }>;
+                id: string;
+                contestId: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type CreateManagedContestResponse = CreateManagedContestResponses[keyof CreateManagedContestResponses];
+
+export type GetManagedContestData = {
+    body?: never;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}';
+};
+
+export type GetManagedContestResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contest: {
+            id: string;
+            leagueId: string;
+            sportEventId: string;
+            name: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            configuration: {
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: Array<{
+                    tierId: string;
+                    tierName: string;
+                    tierNumber: number;
+                    picksFromTier: number;
+                    participantIds: Array<string>;
+                }>;
+                budget?: number;
+                pricingMethod?: string;
+                pickCount?: number;
+                isExclusive?: boolean;
+                picksPerPeriod?: number;
+                roundValues?: Array<number>;
+                startRound?: string;
+                locksAt?: string;
+                minimumEntries?: number;
+                maxEntriesPerSquad?: number;
+                rosterSize?: number;
+                totalPrizePoolAmount?: number;
+                participantScoringRules: Array<{
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+                    sortOrder: number;
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                }>;
+                entryAggregationRule: {
+                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                };
+                prizeDefinitions: Array<{
+                    prizeDefinitionId: string;
+                    displayName: string;
+                    sortOrder: number;
+                    ruleConfig?: {
+                        [key: string]: unknown;
+                    };
+                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    amount?: number;
+                    percentage?: number;
+                    active?: boolean;
+                    id: string;
+                }>;
+                id: string;
+                contestId: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type GetManagedContestResponse = GetManagedContestResponses[keyof GetManagedContestResponses];
+
+export type UpdateManagedContestConfigurationData = {
+    body: {
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+        rounds?: number;
+        timePerPickSeconds?: number;
+        autoPickPolicy?: string;
+        tierConfig?: Array<{
+            tierId: string;
+            tierName: string;
+            tierNumber: number;
+            picksFromTier: number;
+            participantIds: Array<string>;
+        }>;
+        budget?: number;
+        pricingMethod?: string;
+        pickCount?: number;
+        isExclusive?: boolean;
+        picksPerPeriod?: number;
+        roundValues?: Array<number>;
+        startRound?: string;
+        locksAt?: string;
+        minimumEntries?: number;
+        maxEntriesPerSquad?: number;
+        rosterSize?: number;
+        totalPrizePoolAmount?: number;
+        participantScoringRules: Array<{
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+            sortOrder: number;
+            config?: {
+                [key: string]: unknown;
+            };
+            active?: boolean;
+        }>;
+        entryAggregationRule: {
+            aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+            config?: {
+                [key: string]: unknown;
+            };
+            active?: boolean;
+        };
+        prizeDefinitions?: Array<{
+            prizeDefinitionId: string;
+            displayName: string;
+            sortOrder: number;
+            ruleConfig?: {
+                [key: string]: unknown;
+            };
+            payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+            amount?: number;
+            percentage?: number;
+            active?: boolean;
+        }>;
+    };
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration';
+};
+
+export type UpdateManagedContestConfigurationResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        contest: {
+            id: string;
+            leagueId: string;
+            sportEventId: string;
+            name: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            configuration: {
+                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: Array<{
+                    tierId: string;
+                    tierName: string;
+                    tierNumber: number;
+                    picksFromTier: number;
+                    participantIds: Array<string>;
+                }>;
+                budget?: number;
+                pricingMethod?: string;
+                pickCount?: number;
+                isExclusive?: boolean;
+                picksPerPeriod?: number;
+                roundValues?: Array<number>;
+                startRound?: string;
+                locksAt?: string;
+                minimumEntries?: number;
+                maxEntriesPerSquad?: number;
+                rosterSize?: number;
+                totalPrizePoolAmount?: number;
+                participantScoringRules: Array<{
+                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+                    sortOrder: number;
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                }>;
+                entryAggregationRule: {
+                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    active?: boolean;
+                    id: string;
+                };
+                prizeDefinitions: Array<{
+                    prizeDefinitionId: string;
+                    displayName: string;
+                    sortOrder: number;
+                    ruleConfig?: {
+                        [key: string]: unknown;
+                    };
+                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    amount?: number;
+                    percentage?: number;
+                    active?: boolean;
+                    id: string;
+                }>;
+                id: string;
+                contestId: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
+    };
+};
+
+export type UpdateManagedContestConfigurationResponse = UpdateManagedContestConfigurationResponses[keyof UpdateManagedContestConfigurationResponses];
 
 export type DeleteContestData = {
     body?: never;
@@ -963,19 +1590,17 @@ export type GetContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -986,24 +1611,6 @@ export type GetContestResponse = GetContestResponses[keyof GetContestResponses];
 export type UpdateContestData = {
     body: {
         name?: string;
-        scoringRules?: {
-            [key: string]: unknown;
-        };
-        payoutConfig?: {
-            entryFee?: number;
-            prizePool?: number;
-            payoutStructure: Array<{
-                rank: number;
-                percentage: number;
-                fixedAmount?: number;
-            }>;
-            intermediatePrizes: Array<{
-                name: string;
-                description?: string;
-                amount?: number;
-                percentage?: number;
-            }>;
-        };
         startsAt?: string;
         endsAt?: string;
         lockAt?: string;
@@ -1029,19 +1636,17 @@ export type UpdateContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1067,16 +1672,18 @@ export type ListContestEntriesResponses = {
         total: number;
         isJoined: boolean;
         myEntryId: string;
+        myEntryIds?: Array<string>;
         entries: Array<{
             id: string;
             contestId: string;
-            leagueMembershipId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
             name: string;
+            status: 'ACTIVE' | 'INACTIVE';
             totalScore: number;
-            rank?: number;
+            standingsPosition?: number;
             isEliminated: boolean;
-            ownerId: string;
-            ownerDisplayName: string;
             createdAt: string;
             updatedAt: string;
         }>;
@@ -1124,13 +1731,14 @@ export type GetMyContestEntryResponses = {
         entry: {
             id: string;
             contestId: string;
-            leagueMembershipId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
             name: string;
+            status: 'ACTIVE' | 'INACTIVE';
             totalScore: number;
-            rank?: number;
+            standingsPosition?: number;
             isEliminated: boolean;
-            ownerId: string;
-            ownerDisplayName: string;
             createdAt: string;
             updatedAt: string;
         };
@@ -1157,13 +1765,14 @@ export type EnterContestResponses = {
         entry: {
             id: string;
             contestId: string;
-            leagueMembershipId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
             name: string;
+            status: 'ACTIVE' | 'INACTIVE';
             totalScore: number;
-            rank?: number;
+            standingsPosition?: number;
             isEliminated: boolean;
-            ownerId: string;
-            ownerDisplayName: string;
             createdAt: string;
             updatedAt: string;
         };
@@ -1176,13 +1785,14 @@ export type EnterContestResponses = {
         entry: {
             id: string;
             contestId: string;
-            leagueMembershipId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
             name: string;
+            status: 'ACTIVE' | 'INACTIVE';
             totalScore: number;
-            rank?: number;
+            standingsPosition?: number;
             isEliminated: boolean;
-            ownerId: string;
-            ownerDisplayName: string;
             createdAt: string;
             updatedAt: string;
         };
@@ -1191,7 +1801,7 @@ export type EnterContestResponses = {
 
 export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
 
-export type UndoDraftPickData = {
+export type UndoContestDraftSelectionData = {
     body: {
         pickId: string;
         reason: string;
@@ -1203,7 +1813,7 @@ export type UndoDraftPickData = {
     url: '/api/v1/contests/{contestId}/draft/undo-pick';
 };
 
-export type UndoDraftPickResponses = {
+export type UndoContestDraftSelectionResponses = {
     /**
      * Default Response
      */
@@ -1212,7 +1822,7 @@ export type UndoDraftPickResponses = {
     };
 };
 
-export type UndoDraftPickResponse = UndoDraftPickResponses[keyof UndoDraftPickResponses];
+export type UndoContestDraftSelectionResponse = UndoContestDraftSelectionResponses[keyof UndoContestDraftSelectionResponses];
 
 export type PauseContestDraftData = {
     body: {
@@ -1355,19 +1965,17 @@ export type ReopenContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1399,19 +2007,17 @@ export type CloseContestResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1444,19 +2050,17 @@ export type ExtendContestDeadlineResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
@@ -1489,45 +2093,23 @@ export type UpdateContestLockTimeResponses = {
             selectionType: string;
             scoringEngine: string;
             leagueId: string;
+            sportEventId?: string;
             sport?: string;
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
             createdAt?: string;
             updatedAt?: string;
-            scoringRules?: {
-                [key: string]: unknown;
-            };
             lockAt?: string;
             isExclusive?: boolean;
         };
-        selectionConfig?: {
+        contestConfiguration?: {
             [key: string]: unknown;
         };
     };
 };
 
 export type UpdateContestLockTimeResponse = UpdateContestLockTimeResponses[keyof UpdateContestLockTimeResponses];
-
-export type ConfirmPayoutsData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/payouts/confirm';
-};
-
-export type ConfirmPayoutsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type ConfirmPayoutsResponse = ConfirmPayoutsResponses[keyof ConfirmPayoutsResponses];
 
 export type GetContestAuditLogData = {
     body?: never;
@@ -1543,248 +2125,28 @@ export type GetContestAuditLogResponses = {
      * Default Response
      */
     200: {
-        success: true;
-    };
-};
-
-export type GetContestAuditLogResponse = GetContestAuditLogResponses[keyof GetContestAuditLogResponses];
-
-export type ListTemplatesData = {
-    body?: never;
-    path?: never;
-    query: {
-        leagueId: string;
-    };
-    url: '/api/v1/templates/';
-};
-
-export type ListTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        templates: Array<{
+        entries: Array<{
             id: string;
             leagueId: string;
-            createdBy: string;
-            name: string;
-            description?: string;
-            sport: string;
-            contestType: string;
-            draftConfig: {
+            contestId?: string;
+            actorId: string;
+            action: string;
+            category: string;
+            description: string;
+            beforeState?: {
                 [key: string]: unknown;
             };
-            scoringConfig: {
+            afterState?: {
                 [key: string]: unknown;
             };
-            payoutConfig: {
-                [key: string]: unknown;
-            };
-            poolConfig: {
-                [key: string]: unknown;
-            };
-            sharedWithTenant: boolean;
-            isPlatformTemplate: boolean;
-            timesUsed: number;
-            lastUsedAt?: string;
+            reason?: string;
+            ipAddress?: string;
             createdAt: string;
-            updatedAt: string;
         }>;
     };
 };
 
-export type ListTemplatesResponse = ListTemplatesResponses[keyof ListTemplatesResponses];
-
-export type CreateTemplateData = {
-    body: {
-        leagueId: string;
-        name: string;
-        description?: string;
-        sport: string;
-        contestType: 'SINGLE_EVENT';
-        draftConfig?: {
-            [key: string]: unknown;
-        };
-        scoringConfig?: {
-            [key: string]: unknown;
-        };
-        payoutConfig?: {
-            [key: string]: unknown;
-        };
-        poolConfig?: {
-            [key: string]: unknown;
-        };
-        sharedWithTenant?: boolean;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/templates/';
-};
-
-export type CreateTemplateResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        template: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            name: string;
-            description?: string;
-            sport: string;
-            contestType: string;
-            draftConfig: {
-                [key: string]: unknown;
-            };
-            scoringConfig: {
-                [key: string]: unknown;
-            };
-            payoutConfig: {
-                [key: string]: unknown;
-            };
-            poolConfig: {
-                [key: string]: unknown;
-            };
-            sharedWithTenant: boolean;
-            isPlatformTemplate: boolean;
-            timesUsed: number;
-            lastUsedAt?: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type CreateTemplateResponse = CreateTemplateResponses[keyof CreateTemplateResponses];
-
-export type DeleteTemplateData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/templates/{id}';
-};
-
-export type DeleteTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type DeleteTemplateResponse = DeleteTemplateResponses[keyof DeleteTemplateResponses];
-
-export type GetTemplateData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/templates/{id}';
-};
-
-export type GetTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        template: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            name: string;
-            description?: string;
-            sport: string;
-            contestType: string;
-            draftConfig: {
-                [key: string]: unknown;
-            };
-            scoringConfig: {
-                [key: string]: unknown;
-            };
-            payoutConfig: {
-                [key: string]: unknown;
-            };
-            poolConfig: {
-                [key: string]: unknown;
-            };
-            sharedWithTenant: boolean;
-            isPlatformTemplate: boolean;
-            timesUsed: number;
-            lastUsedAt?: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type GetTemplateResponse = GetTemplateResponses[keyof GetTemplateResponses];
-
-export type UpdateTemplateData = {
-    body: {
-        name?: string;
-        description?: string;
-        draftConfig?: {
-            [key: string]: unknown;
-        };
-        scoringConfig?: {
-            [key: string]: unknown;
-        };
-        payoutConfig?: {
-            [key: string]: unknown;
-        };
-        poolConfig?: {
-            [key: string]: unknown;
-        };
-        sharedWithTenant?: boolean;
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/templates/{id}';
-};
-
-export type UpdateTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        template: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            name: string;
-            description?: string;
-            sport: string;
-            contestType: string;
-            draftConfig: {
-                [key: string]: unknown;
-            };
-            scoringConfig: {
-                [key: string]: unknown;
-            };
-            payoutConfig: {
-                [key: string]: unknown;
-            };
-            poolConfig: {
-                [key: string]: unknown;
-            };
-            sharedWithTenant: boolean;
-            isPlatformTemplate: boolean;
-            timesUsed: number;
-            lastUsedAt?: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type UpdateTemplateResponse = UpdateTemplateResponses[keyof UpdateTemplateResponses];
+export type GetContestAuditLogResponse = GetContestAuditLogResponses[keyof GetContestAuditLogResponses];
 
 export type ListEventsData = {
     body?: never;
@@ -2158,418 +2520,6 @@ export type GetParticipantSeasonRecordResponses = {
 
 export type GetParticipantSeasonRecordResponse = GetParticipantSeasonRecordResponses[keyof GetParticipantSeasonRecordResponses];
 
-export type GetContestPoolData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/';
-};
-
-export type GetContestPoolResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetContestPoolResponse = GetContestPoolResponses[keyof GetContestPoolResponses];
-
-export type CreateContestPoolData = {
-    body: {
-        sport: string;
-        poolType: 'EVENT_FIELD' | 'CUSTOM' | 'RANKING_CUTOFF' | 'FULL_SPORT';
-        eventId?: string;
-        config?: {
-            [key: string]: unknown;
-        };
-    };
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/';
-};
-
-export type CreateContestPoolResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        [key: string]: unknown;
-    };
-};
-
-export type CreateContestPoolResponse = CreateContestPoolResponses[keyof CreateContestPoolResponses];
-
-export type UpdateContestPoolData = {
-    body: {
-        poolType?: 'EVENT_FIELD' | 'CUSTOM' | 'RANKING_CUTOFF' | 'FULL_SPORT';
-        eventId?: string;
-        config?: {
-            [key: string]: unknown;
-        };
-    };
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/';
-};
-
-export type UpdateContestPoolResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type UpdateContestPoolResponse = UpdateContestPoolResponses[keyof UpdateContestPoolResponses];
-
-export type ResolveContestPoolData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/resolve';
-};
-
-export type ResolveContestPoolResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type ResolveContestPoolResponse = ResolveContestPoolResponses[keyof ResolveContestPoolResponses];
-
-export type RefreshContestPoolData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/refresh';
-};
-
-export type RefreshContestPoolResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type RefreshContestPoolResponse = RefreshContestPoolResponses[keyof RefreshContestPoolResponses];
-
-export type LockContestPoolData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/lock';
-};
-
-export type LockContestPoolResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type LockContestPoolResponse = LockContestPoolResponses[keyof LockContestPoolResponses];
-
-export type ExcludePoolParticipantData = {
-    body?: never;
-    path: {
-        contestId: string;
-        participantId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/participants/{participantId}';
-};
-
-export type ExcludePoolParticipantResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type ExcludePoolParticipantResponse = ExcludePoolParticipantResponses[keyof ExcludePoolParticipantResponses];
-
-export type RestorePoolParticipantData = {
-    body?: never;
-    path: {
-        contestId: string;
-        participantId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/participants/{participantId}/restore';
-};
-
-export type RestorePoolParticipantResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type RestorePoolParticipantResponse = RestorePoolParticipantResponses[keyof RestorePoolParticipantResponses];
-
-export type MarkPoolParticipantUnavailableData = {
-    body: {
-        reason: string;
-    };
-    path: {
-        contestId: string;
-        participantId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/participants/{participantId}/unavailable';
-};
-
-export type MarkPoolParticipantUnavailableResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type MarkPoolParticipantUnavailableResponse = MarkPoolParticipantUnavailableResponses[keyof MarkPoolParticipantUnavailableResponses];
-
-export type MarkPoolParticipantAvailableData = {
-    body?: never;
-    path: {
-        contestId: string;
-        participantId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/participants/{participantId}/available';
-};
-
-export type MarkPoolParticipantAvailableResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type MarkPoolParticipantAvailableResponse = MarkPoolParticipantAvailableResponses[keyof MarkPoolParticipantAvailableResponses];
-
-export type CalculatePoolPricingData = {
-    body: {
-        sport: string;
-        totalBudget: number;
-        minPrice: number;
-        maxPrice: number;
-        priceIncrement: number;
-        rankingWeight: number;
-        formWeight: number;
-        oddsWeight: number;
-        manualOverrides?: Array<{
-            participantId: string;
-            overridePrice: number;
-            reason: string;
-        }>;
-    };
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/pricing/calculate';
-};
-
-export type CalculatePoolPricingResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type CalculatePoolPricingResponse = CalculatePoolPricingResponses[keyof CalculatePoolPricingResponses];
-
-export type ApplyPoolPriceOverrideData = {
-    body: {
-        price: number;
-        reason: string;
-    };
-    path: {
-        contestId: string;
-        participantId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/pricing/override/{participantId}';
-};
-
-export type ApplyPoolPriceOverrideResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type ApplyPoolPriceOverrideResponse = ApplyPoolPriceOverrideResponses[keyof ApplyPoolPriceOverrideResponses];
-
-export type AssignPoolTiersData = {
-    body: {
-        sport: string;
-        assignmentMode: 'AUTO_RANKING' | 'AUTO_PRICE' | 'MANUAL';
-        tiers: Array<{
-            tierId: string;
-            tierName: string;
-            tierNumber: number;
-            picksFromTier: number;
-            rankingRange?: [
-                number,
-                number
-            ];
-            priceRange?: [
-                number,
-                number
-            ];
-            maxParticipants?: number;
-            participantIds?: Array<string>;
-        }>;
-    };
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/tiers/assign';
-};
-
-export type AssignPoolTiersResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type AssignPoolTiersResponse = AssignPoolTiersResponses[keyof AssignPoolTiersResponses];
-
-export type MoveParticipantTierData = {
-    body?: never;
-    path: {
-        contestId: string;
-        tierId: string;
-        participantId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/pool/tiers/{tierId}/participants/{participantId}';
-};
-
-export type MoveParticipantTierResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type MoveParticipantTierResponse = MoveParticipantTierResponses[keyof MoveParticipantTierResponses];
-
-export type SearchPoolParticipantsData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: {
-        q?: string;
-        position?: string;
-        team?: string;
-        tier?: string;
-        availableOnly?: 'true' | 'false';
-        undraftedOnly?: 'true' | 'false';
-        draftedIds?: string;
-        limit?: string;
-        offset?: string;
-    };
-    url: '/api/v1/contests/{contestId}/pool/search';
-};
-
-export type SearchPoolParticipantsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        participants: Array<{
-            participantId: string;
-            displayName: string;
-            photoUrl: string;
-            sport: string;
-            position?: string;
-            teamAffiliation?: string;
-            nationality?: string;
-            ranking?: number;
-            budgetPrice?: number;
-            tier?: string;
-            injuryStatus: {
-                status: string;
-                detail?: string;
-                expectedReturn?: string;
-                updatedAt?: string;
-                source?: string;
-            };
-            isAvailable: boolean;
-            unavailableReason?: string;
-            isDrafted: boolean;
-        }>;
-        total: number;
-        facets: {
-            positions: Array<{
-                value: string;
-                count: number;
-            }>;
-            teams: Array<{
-                value: string;
-                count: number;
-            }>;
-            nationalities: Array<{
-                value: string;
-                count: number;
-            }>;
-            tiers: Array<{
-                value: string;
-                count: number;
-            }>;
-            injuryStatuses: Array<{
-                value: string;
-                count: number;
-            }>;
-        };
-    };
-};
-
-export type SearchPoolParticipantsResponse = SearchPoolParticipantsResponses[keyof SearchPoolParticipantsResponses];
-
 export type GetStandingsData = {
     body?: never;
     path: {
@@ -2807,1001 +2757,6 @@ export type GetMemberResultsResponses = {
 
 export type GetMemberResultsResponse = GetMemberResultsResponses[keyof GetMemberResultsResponses];
 
-export type GetContestTimelineData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{id}/history/timeline';
-};
-
-export type GetContestTimelineResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetContestTimelineResponse = GetContestTimelineResponses[keyof GetContestTimelineResponses];
-
-export type GetDraftReplayData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{id}/history/draft';
-};
-
-export type GetDraftReplayResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetDraftReplayResponse = GetDraftReplayResponses[keyof GetDraftReplayResponses];
-
-export type GetRosterReplayData = {
-    body?: never;
-    path: {
-        id: string;
-        entryId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{id}/history/replay/{entryId}';
-};
-
-export type GetRosterReplayResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetRosterReplayResponse = GetRosterReplayResponses[keyof GetRosterReplayResponses];
-
-export type GetSeasonSummariesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/seasons';
-};
-
-export type GetSeasonSummariesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        seasons: Array<{
-            id: string;
-            leagueId: string;
-            seasonId?: string;
-            seasonName: string;
-            sport?: string;
-            year?: number;
-            numMembers: number;
-            numContests: number;
-            totalPrizePool: number;
-            champions: Array<{
-                contestId: string;
-                contestName: string;
-                entryId: string;
-                entryName: string;
-                memberId: string;
-                memberName: string;
-                finalScore: number;
-                prizeWon?: number;
-            }>;
-            highlights: {
-                highestScore?: number;
-                lowestScore?: number;
-            };
-            commissionerNote?: string;
-            openedAt?: string;
-            closedAt?: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-    };
-};
-
-export type GetSeasonSummariesResponse = GetSeasonSummariesResponses[keyof GetSeasonSummariesResponses];
-
-export type GetSeasonSummaryData = {
-    body?: never;
-    path: {
-        id: string;
-        sid: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/seasons/{sid}';
-};
-
-export type GetSeasonSummaryResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetSeasonSummaryResponse = GetSeasonSummaryResponses[keyof GetSeasonSummaryResponses];
-
-export type GetChampionListData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/champions';
-};
-
-export type GetChampionListResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        champions: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetChampionListResponse = GetChampionListResponses[keyof GetChampionListResponses];
-
-export type GetMemberStatsData = {
-    body?: never;
-    path: {
-        id: string;
-        mid: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/members/{mid}/stats';
-};
-
-export type GetMemberStatsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetMemberStatsResponse = GetMemberStatsResponses[keyof GetMemberStatsResponses];
-
-export type GetAllTimeLeaderboardData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/leaderboard';
-};
-
-export type GetAllTimeLeaderboardResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        leaderboard: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetAllTimeLeaderboardResponse = GetAllTimeLeaderboardResponses[keyof GetAllTimeLeaderboardResponses];
-
-export type GetMemberTrophiesData = {
-    body?: never;
-    path: {
-        id: string;
-        mid: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/trophies/{mid}';
-};
-
-export type GetMemberTrophiesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        trophies: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetMemberTrophiesResponse = GetMemberTrophiesResponses[keyof GetMemberTrophiesResponses];
-
-export type GetLeagueRecordsData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/records';
-};
-
-export type GetLeagueRecordsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        records: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetLeagueRecordsResponse = GetLeagueRecordsResponses[keyof GetLeagueRecordsResponses];
-
-export type GetLeagueRecordData = {
-    body?: never;
-    path: {
-        id: string;
-        category: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/records/{category}';
-};
-
-export type GetLeagueRecordResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetLeagueRecordResponse = GetLeagueRecordResponses[keyof GetLeagueRecordResponses];
-
-export type RecomputeLeagueRecordsData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/records/recompute';
-};
-
-export type RecomputeLeagueRecordsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type RecomputeLeagueRecordsResponse = RecomputeLeagueRecordsResponses[keyof RecomputeLeagueRecordsResponses];
-
-export type GetLeagueRivalriesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/rivalries';
-};
-
-export type GetLeagueRivalriesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        rivalries: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetLeagueRivalriesResponse = GetLeagueRivalriesResponses[keyof GetLeagueRivalriesResponses];
-
-export type GetRivalryData = {
-    body?: never;
-    path: {
-        id: string;
-        mid1: string;
-        mid2: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/rivalries/{mid1}/{mid2}';
-};
-
-export type GetRivalryResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetRivalryResponse = GetRivalryResponses[keyof GetRivalryResponses];
-
-export type RecomputeRivalriesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/rivalries/recompute';
-};
-
-export type RecomputeRivalriesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type RecomputeRivalriesResponse = RecomputeRivalriesResponses[keyof RecomputeRivalriesResponses];
-
-export type GetLuckScoresData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/analytics/luck';
-};
-
-export type GetLuckScoresResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        luckScores: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetLuckScoresResponse = GetLuckScoresResponses[keyof GetLuckScoresResponses];
-
-export type GetPowerRatingsData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/analytics/power';
-};
-
-export type GetPowerRatingsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        powerRatings: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetPowerRatingsResponse = GetPowerRatingsResponses[keyof GetPowerRatingsResponses];
-
-export type GetConsistencyScoresData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/analytics/consistency';
-};
-
-export type GetConsistencyScoresResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        consistencyScores: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetConsistencyScoresResponse = GetConsistencyScoresResponses[keyof GetConsistencyScoresResponses];
-
-export type AwardAnalyticsTrophiesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/analytics/trophies';
-};
-
-export type AwardAnalyticsTrophiesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type AwardAnalyticsTrophiesResponse = AwardAnalyticsTrophiesResponses[keyof AwardAnalyticsTrophiesResponses];
-
-export type GetYoYStatsData = {
-    body?: never;
-    path: {
-        mid: string;
-    };
-    query?: never;
-    url: '/api/v1/members/{mid}/history/yoy';
-};
-
-export type GetYoYStatsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetYoYStatsResponse = GetYoYStatsResponses[keyof GetYoYStatsResponses];
-
-export type GetImprovementRankingsData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/improvement-rankings';
-};
-
-export type GetImprovementRankingsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        rankings: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetImprovementRankingsResponse = GetImprovementRankingsResponses[keyof GetImprovementRankingsResponses];
-
-export type GetSeasonNotesData = {
-    body?: never;
-    path: {
-        id: string;
-        season: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/seasons/{season}/notes';
-};
-
-export type GetSeasonNotesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        notes: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetSeasonNotesResponse = GetSeasonNotesResponses[keyof GetSeasonNotesResponses];
-
-export type AddSeasonNoteData = {
-    body?: never;
-    path: {
-        id: string;
-        season: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/seasons/{season}/notes';
-};
-
-export type AddSeasonNoteResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        [key: string]: unknown;
-    };
-};
-
-export type AddSeasonNoteResponse = AddSeasonNoteResponses[keyof AddSeasonNoteResponses];
-
-export type AwardCustomTrophyData = {
-    body?: never;
-    path: {
-        id: string;
-        season: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/seasons/{season}/trophies';
-};
-
-export type AwardCustomTrophyResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        [key: string]: unknown;
-    };
-};
-
-export type AwardCustomTrophyResponse = AwardCustomTrophyResponses[keyof AwardCustomTrophyResponses];
-
-export type ListCustomTrophiesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/custom-trophies';
-};
-
-export type ListCustomTrophiesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        trophies: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type ListCustomTrophiesResponse = ListCustomTrophiesResponses[keyof ListCustomTrophiesResponses];
-
-export type ImportSeasonData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/import-season';
-};
-
-export type ImportSeasonResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type ImportSeasonResponse = ImportSeasonResponses[keyof ImportSeasonResponses];
-
-export type PreviewMemberMergeData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/members/merge/preview';
-};
-
-export type PreviewMemberMergeResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type PreviewMemberMergeResponse = PreviewMemberMergeResponses[keyof PreviewMemberMergeResponses];
-
-export type ExecuteMemberMergeData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/members/merge/execute';
-};
-
-export type ExecuteMemberMergeResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type ExecuteMemberMergeResponse = ExecuteMemberMergeResponses[keyof ExecuteMemberMergeResponses];
-
-export type ExportLeagueHistoryData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/export';
-};
-
-export type ExportLeagueHistoryResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type ExportLeagueHistoryResponse = ExportLeagueHistoryResponses[keyof ExportLeagueHistoryResponses];
-
-export type ExportMemberHistoryData = {
-    body?: never;
-    path: {
-        mid: string;
-    };
-    query?: never;
-    url: '/api/v1/members/{mid}/export';
-};
-
-export type ExportMemberHistoryResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type ExportMemberHistoryResponse = ExportMemberHistoryResponses[keyof ExportMemberHistoryResponses];
-
-export type GetLeagueRetentionConfigData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/retention';
-};
-
-export type GetLeagueRetentionConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetLeagueRetentionConfigResponse = GetLeagueRetentionConfigResponses[keyof GetLeagueRetentionConfigResponses];
-
-export type UpdateLeagueRetentionConfigData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/retention';
-};
-
-export type UpdateLeagueRetentionConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type UpdateLeagueRetentionConfigResponse = UpdateLeagueRetentionConfigResponses[keyof UpdateLeagueRetentionConfigResponses];
-
-export type PreviewRetentionCleanupData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/retention/preview-cleanup';
-};
-
-export type PreviewRetentionCleanupResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type PreviewRetentionCleanupResponse = PreviewRetentionCleanupResponses[keyof PreviewRetentionCleanupResponses];
-
-export type SearchParticipantsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        q?: string;
-        sportId?: string;
-        status?: string;
-        position?: string;
-        team?: string;
-        nationality?: string;
-        sortBy?: 'RELEVANCE' | 'RANKING' | 'NAME' | 'PRICE' | 'FORM';
-        limit?: string;
-        offset?: string;
-    };
-    url: '/api/v1/search/participants';
-};
-
-export type SearchParticipantsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        participants: Array<{
-            id: string;
-            sportId: string;
-            name: string;
-            participantType: string;
-            externalId?: string;
-            metadata: {
-                [key: string]: unknown;
-            };
-            firstName?: string;
-            lastName?: string;
-            shortName?: string;
-            nationality?: string;
-            position?: string;
-            teamAffiliation?: string;
-            status: string;
-            injuryStatus: {
-                status: string;
-                detail?: string;
-                expectedReturn?: string;
-                updatedAt?: string;
-                source?: string;
-            };
-            photoUrl?: string;
-            photoLastUpdated?: string;
-            externalIds: {
-                [key: string]: string;
-            };
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        total: number;
-        facets: {
-            positions: Array<{
-                value: string;
-                count: number;
-            }>;
-            teams: Array<{
-                value: string;
-                count: number;
-            }>;
-            nationalities: Array<{
-                value: string;
-                count: number;
-            }>;
-            rankingDistribution: {
-                top10: number;
-                top25: number;
-                top50: number;
-                top100: number;
-                unranked: number;
-            };
-        };
-    };
-};
-
-export type SearchParticipantsResponse = SearchParticipantsResponses[keyof SearchParticipantsResponses];
-
-export type DiscoverLeaguesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        q?: string;
-        sport?: string;
-        sort?: 'POPULAR' | 'NEWEST' | 'ACTIVITY';
-        limit?: string;
-        offset?: string;
-    };
-    url: '/api/v1/search/discover/leagues';
-};
-
-export type DiscoverLeaguesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        leagues: Array<{
-            id: string;
-            name: string;
-            description?: string;
-            sport?: string;
-            memberCount: number;
-            maxMembers?: number;
-            activeContestCount: number;
-            activityLevel: string;
-            joinPolicy: string;
-            commissionerName?: string;
-            visibility?: string;
-            createdAt?: string;
-        }>;
-        total: number;
-    };
-};
-
-export type DiscoverLeaguesResponse = DiscoverLeaguesResponses[keyof DiscoverLeaguesResponses];
-
-export type DiscoverContestsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        q?: string;
-        sport?: string;
-        sort?: 'STARTING_SOON' | 'POPULAR' | 'PRIZE_POOL';
-        limit?: string;
-        offset?: string;
-    };
-    url: '/api/v1/search/discover/contests';
-};
-
-export type DiscoverContestsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        contests: Array<{
-            id: string;
-            leagueName?: string;
-            contestName: string;
-            sport?: string;
-            eventName?: string;
-            draftType?: string;
-            status: string;
-            memberCount: number;
-            maxMembers?: number;
-            entryFee?: number;
-            prizePool?: number;
-            draftStart?: string;
-            lockTime?: string;
-        }>;
-        total: number;
-    };
-};
-
-export type DiscoverContestsResponse = DiscoverContestsResponses[keyof DiscoverContestsResponses];
-
-export type JoinDiscoverableLeagueData = {
-    body?: never;
-    path: {
-        leagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/search/discover/leagues/{leagueId}/join';
-};
-
-export type JoinDiscoverableLeagueErrors = {
-    /**
-     * Default Response
-     */
-    400: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    409: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type JoinDiscoverableLeagueError = JoinDiscoverableLeagueErrors[keyof JoinDiscoverableLeagueErrors];
-
-export type JoinDiscoverableLeagueResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        membership: {
-            id: string;
-            leagueId: string;
-            userId: string;
-            role: string;
-            permissions: Array<string>;
-            joinedAt: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type JoinDiscoverableLeagueResponse = JoinDiscoverableLeagueResponses[keyof JoinDiscoverableLeagueResponses];
-
-export type ReportDiscoveryEntityData = {
-    body: {
-        entityType: 'LEAGUE' | 'CONTEST';
-        entityId: string;
-        reason: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/search/discover/report';
-};
-
-export type ReportDiscoveryEntityResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        report: {
-            id: string;
-        };
-        reportCount: number;
-    };
-};
-
-export type ReportDiscoveryEntityResponse = ReportDiscoveryEntityResponses[keyof ReportDiscoveryEntityResponses];
-
-export type VerifyAgeData = {
-    body: {
-        birthYear: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/verify-age';
-};
-
-export type VerifyAgeResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        allowed: boolean;
-        age: number;
-        reason?: string;
-    };
-};
-
-export type VerifyAgeResponse = VerifyAgeResponses[keyof VerifyAgeResponses];
-
 export type GetConsentHistoryData = {
     body?: never;
     path?: never;
@@ -3820,6 +2775,8 @@ export type GetConsentHistoryResponses = {
             consentType: string;
             granted: boolean;
             version: string;
+            minimumAgeThreshold?: number;
+            ageAffirmed?: boolean;
             ipAddress?: string;
             userAgent?: string;
             createdAt: string;
@@ -3831,9 +2788,11 @@ export type GetConsentHistoryResponse = GetConsentHistoryResponses[keyof GetCons
 
 export type RecordConsentData = {
     body: {
-        consentType: 'terms_of_service' | 'privacy_policy' | 'marketing_email' | 'analytics_cookies' | 'third_party_integrations' | 'do_not_sell';
+        consentType: string;
         granted: boolean;
         version: string;
+        minimumAgeThreshold?: number;
+        ageAffirmed?: boolean;
     };
     path?: never;
     query?: never;
@@ -3845,584 +2804,22 @@ export type RecordConsentResponses = {
      * Default Response
      */
     201: {
-        success: boolean;
+        consent: {
+            id: string;
+            userId: string;
+            consentType: string;
+            granted: boolean;
+            version: string;
+            minimumAgeThreshold?: number;
+            ageAffirmed?: boolean;
+            ipAddress?: string;
+            userAgent?: string;
+            createdAt: string;
+        };
     };
 };
 
 export type RecordConsentResponse = RecordConsentResponses[keyof RecordConsentResponses];
-
-export type GetDataExportStatusData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/data-export';
-};
-
-export type GetDataExportStatusResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        status: 'none' | 'pending' | 'ready';
-        requestedAt: string;
-        downloadUrl: string;
-        expiresAt: string;
-        nextAllowedAt: string;
-    };
-};
-
-export type GetDataExportStatusResponse = GetDataExportStatusResponses[keyof GetDataExportStatusResponses];
-
-export type RequestDataExportData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/data-export';
-};
-
-export type RequestDataExportResponses = {
-    /**
-     * Default Response
-     */
-    202: {
-        requestId: string;
-        message: string;
-    };
-};
-
-export type RequestDataExportResponse = RequestDataExportResponses[keyof RequestDataExportResponses];
-
-export type GetDataExportData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/account/data-export/{id}';
-};
-
-export type GetDataExportResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetDataExportResponse = GetDataExportResponses[keyof GetDataExportResponses];
-
-export type GetAccountDeletionStatusData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/delete-account';
-};
-
-export type GetAccountDeletionStatusResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        status: 'none' | 'pending' | 'cancelled' | 'completed';
-        requestId: string;
-        requestedAt: string;
-        scheduledDeletionAt: string;
-        cancelledAt: string;
-        completedAt: string;
-        reason: string;
-    };
-};
-
-export type GetAccountDeletionStatusResponse = GetAccountDeletionStatusResponses[keyof GetAccountDeletionStatusResponses];
-
-export type RequestAccountDeletionData = {
-    body: {
-        reason?: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/delete-account';
-};
-
-export type RequestAccountDeletionResponses = {
-    /**
-     * Default Response
-     */
-    202: {
-        requestId: string;
-        message: string;
-    };
-};
-
-export type RequestAccountDeletionResponse = RequestAccountDeletionResponses[keyof RequestAccountDeletionResponses];
-
-export type GetActivityLimitData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/activity-limit';
-};
-
-export type GetActivityLimitResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        activityLimit: {
-            enabled: boolean;
-            weeklyContestLimit: number;
-        };
-    };
-};
-
-export type GetActivityLimitResponse = GetActivityLimitResponses[keyof GetActivityLimitResponses];
-
-export type UpdateActivityLimitData = {
-    body: {
-        enabled: boolean;
-        weeklyContestLimit: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/activity-limit';
-};
-
-export type UpdateActivityLimitResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        activityLimit: {
-            enabled: boolean;
-            weeklyContestLimit: number;
-        };
-    };
-};
-
-export type UpdateActivityLimitResponse = UpdateActivityLimitResponses[keyof UpdateActivityLimitResponses];
-
-export type GetSessionReminderData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/session-reminder';
-};
-
-export type GetSessionReminderResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        sessionReminder: {
-            enabled: boolean;
-            intervalMinutes: number;
-        };
-    };
-};
-
-export type GetSessionReminderResponse = GetSessionReminderResponses[keyof GetSessionReminderResponses];
-
-export type UpdateSessionReminderData = {
-    body: {
-        enabled: boolean;
-        intervalMinutes: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/session-reminder';
-};
-
-export type UpdateSessionReminderResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        sessionReminder: {
-            enabled: boolean;
-            intervalMinutes: number;
-        };
-    };
-};
-
-export type UpdateSessionReminderResponse = UpdateSessionReminderResponses[keyof UpdateSessionReminderResponses];
-
-export type CancelAccountDeletionData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/account/delete-account/{id}/cancel';
-};
-
-export type CancelAccountDeletionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-        message: string;
-    };
-};
-
-export type CancelAccountDeletionResponse = CancelAccountDeletionResponses[keyof CancelAccountDeletionResponses];
-
-export type GetActiveExclusionData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/self-exclusion';
-};
-
-export type GetActiveExclusionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        exclusion: {
-            id: string;
-            userId: string;
-            exclusionType: string;
-            duration: string;
-            endsAt?: string;
-            isActive: boolean;
-            startedAt: string;
-            reactivatedAt?: string;
-        };
-    };
-};
-
-export type GetActiveExclusionResponse = GetActiveExclusionResponses[keyof GetActiveExclusionResponses];
-
-export type CreateSelfExclusionData = {
-    body: {
-        type: 'COOL_DOWN' | 'SELF_EXCLUSION';
-        duration: '24H' | '7D' | '30D' | '6M' | '1Y' | 'INDEFINITE';
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/self-exclusion';
-};
-
-export type CreateSelfExclusionResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        exclusionId: string;
-    };
-};
-
-export type CreateSelfExclusionResponse = CreateSelfExclusionResponses[keyof CreateSelfExclusionResponses];
-
-export type CreateEnforcementActionData = {
-    body: {
-        userId: string;
-        level: 'WARNING' | 'TEMPORARY_SUSPENSION' | 'PERMANENT_BAN';
-        reason: string;
-        trigger: string;
-        durationDays?: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/enforcement';
-};
-
-export type CreateEnforcementActionResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        enforcementId: string;
-    };
-};
-
-export type CreateEnforcementActionResponse = CreateEnforcementActionResponses[keyof CreateEnforcementActionResponses];
-
-export type GetEnforcementHistoryData = {
-    body?: never;
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/account/enforcement/{userId}';
-};
-
-export type GetEnforcementHistoryResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        enforcement: Array<{
-            id: string;
-            userId: string;
-            level: string;
-            reason: string;
-            trigger: string;
-            enforcedBy?: string;
-            endsAt?: string;
-            appealStatus?: string;
-            createdAt: string;
-        }>;
-    };
-};
-
-export type GetEnforcementHistoryResponse = GetEnforcementHistoryResponses[keyof GetEnforcementHistoryResponses];
-
-export type UpdateAppealStatusData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/account/enforcement/{id}/appeal';
-};
-
-export type UpdateAppealStatusResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: boolean;
-    };
-};
-
-export type UpdateAppealStatusResponse = UpdateAppealStatusResponses[keyof UpdateAppealStatusResponses];
-
-export type RunRetentionCleanupData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/retention/cleanup';
-};
-
-export type RunRetentionCleanupResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: number;
-    };
-};
-
-export type RunRetentionCleanupResponse = RunRetentionCleanupResponses[keyof RunRetentionCleanupResponses];
-
-export type AdminListTenantsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        search?: string;
-        planTier?: string;
-        status?: 'active' | 'suspended' | 'trial';
-        sortBy?: 'name' | 'created' | 'members' | 'lastActive';
-        sortDir?: 'asc' | 'desc';
-        page?: number;
-        pageSize?: number;
-    };
-    url: '/api/v1/admin/tenants';
-};
-
-export type AdminListTenantsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        items: Array<{
-            id: string;
-            name: string;
-            slug: string;
-            planTier: string;
-            memberCount: number;
-            contestCount: number;
-            leagueCount: number;
-            status: 'active' | 'suspended' | 'trial';
-            lastActiveAt?: string;
-            createdAt: string;
-        }>;
-        total: number;
-        page: number;
-        pageSize: number;
-        totalPages: number;
-    };
-};
-
-export type AdminListTenantsResponse = AdminListTenantsResponses[keyof AdminListTenantsResponses];
-
-export type AdminDeleteTenantData = {
-    body: {
-        confirmation: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}';
-};
-
-export type AdminDeleteTenantResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDeleteTenantResponse = AdminDeleteTenantResponses[keyof AdminDeleteTenantResponses];
-
-export type AdminGetTenantDetailData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}';
-};
-
-export type AdminGetTenantDetailResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        tenant: {
-            id: string;
-            name: string;
-            slug: string;
-            planTier: string;
-            settings: {
-                [key: string]: unknown;
-            };
-            createdAt: string;
-            updatedAt: string;
-        };
-        memberCount: number;
-        leagueCount: number;
-        contestCount: number;
-        activeContestCount: number;
-        status: 'active' | 'suspended' | 'trial';
-        lastActiveAt?: string;
-        recentMembers: Array<{
-            id: string;
-            email: string;
-            displayName: string;
-            createdAt: string;
-        }>;
-    };
-};
-
-export type AdminGetTenantDetailResponse = AdminGetTenantDetailResponses[keyof AdminGetTenantDetailResponses];
-
-export type AdminChangeTenantPlanData = {
-    body: {
-        planTier: string;
-        reason: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/plan';
-};
-
-export type AdminChangeTenantPlanResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminChangeTenantPlanResponse = AdminChangeTenantPlanResponses[keyof AdminChangeTenantPlanResponses];
-
-export type AdminSuspendTenantData = {
-    body: {
-        reason: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/suspend';
-};
-
-export type AdminSuspendTenantResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminSuspendTenantResponse = AdminSuspendTenantResponses[keyof AdminSuspendTenantResponses];
-
-export type AdminUnsuspendTenantData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/unsuspend';
-};
-
-export type AdminUnsuspendTenantResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUnsuspendTenantResponse = AdminUnsuspendTenantResponses[keyof AdminUnsuspendTenantResponses];
-
-export type AdminApplyCreditData = {
-    body: {
-        amount: number;
-        reason: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/credit';
-};
-
-export type AdminApplyCreditResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminApplyCreditResponse = AdminApplyCreditResponses[keyof AdminApplyCreditResponses];
-
-export type AdminExtendTrialData = {
-    body: {
-        days: number;
-        reason: string;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/extend-trial';
-};
-
-export type AdminExtendTrialResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminExtendTrialResponse = AdminExtendTrialResponses[keyof AdminExtendTrialResponses];
 
 export type AdminListUsersData = {
     body?: never;
@@ -4544,26 +2941,6 @@ export type AdminGetUserDetailResponses = {
 
 export type AdminGetUserDetailResponse = AdminGetUserDetailResponses[keyof AdminGetUserDetailResponses];
 
-export type AdminResetPasswordData = {
-    body?: never;
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/reset-password';
-};
-
-export type AdminResetPasswordResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetPasswordResponse = AdminResetPasswordResponses[keyof AdminResetPasswordResponses];
-
 export type AdminForceLogoutData = {
     body?: never;
     path: {
@@ -4625,29 +3002,6 @@ export type AdminEnableUserResponses = {
 };
 
 export type AdminEnableUserResponse = AdminEnableUserResponses[keyof AdminEnableUserResponses];
-
-export type AdminSendEmailData = {
-    body: {
-        subject: string;
-        body: string;
-    };
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/email';
-};
-
-export type AdminSendEmailResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminSendEmailResponse = AdminSendEmailResponses[keyof AdminSendEmailResponses];
 
 export type AdminListContestsData = {
     body?: never;
@@ -4722,7 +3076,7 @@ export type AdminGetContestDetailResponses = {
             entryId: string;
             entryName: string;
             ownerEmail: string;
-            rank: number;
+            standingsPosition: number;
             totalScore: number;
         }>;
         draftStatus?: {
@@ -4731,7 +3085,7 @@ export type AdminGetContestDetailResponses = {
             totalPicks: number;
             startedAt?: string;
         };
-        picks: Array<{
+        draftPickHistories: Array<{
             round: number;
             pick: number;
             participant: string;
@@ -5182,183 +3536,6 @@ export type AdminReIngestEventResponses = {
 
 export type AdminReIngestEventResponse = AdminReIngestEventResponses[keyof AdminReIngestEventResponses];
 
-export type AdminListFlagsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/flags';
-};
-
-export type AdminListFlagsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminListFlagsResponse = AdminListFlagsResponses[keyof AdminListFlagsResponses];
-
-export type AdminCreateFlagData = {
-    body: {
-        key: string;
-        name: string;
-        description: string;
-        flagType: 'BOOLEAN' | 'PERCENTAGE' | 'TENANT_LIST';
-        enabledGlobally: boolean;
-        rolloutPercentage?: number;
-        owner: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/flags';
-};
-
-export type AdminCreateFlagResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminCreateFlagResponse = AdminCreateFlagResponses[keyof AdminCreateFlagResponses];
-
-export type AdminDeleteFlagData = {
-    body?: never;
-    path: {
-        flagKey: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/flags/{flagKey}';
-};
-
-export type AdminDeleteFlagResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDeleteFlagResponse = AdminDeleteFlagResponses[keyof AdminDeleteFlagResponses];
-
-export type AdminGetFlagDetailData = {
-    body?: never;
-    path: {
-        flagKey: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/flags/{flagKey}';
-};
-
-export type AdminGetFlagDetailResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetFlagDetailResponse = AdminGetFlagDetailResponses[keyof AdminGetFlagDetailResponses];
-
-export type AdminUpdateFlagData = {
-    body: {
-        name?: string;
-        description?: string;
-        enabledGlobally?: boolean;
-        rolloutPercentage?: number;
-        owner?: string;
-    };
-    path: {
-        flagKey: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/flags/{flagKey}';
-};
-
-export type AdminUpdateFlagResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateFlagResponse = AdminUpdateFlagResponses[keyof AdminUpdateFlagResponses];
-
-export type AdminAddFlagOverrideData = {
-    body: {
-        tenantId: string;
-        tenantName: string;
-        enabled: boolean;
-        reason: string;
-    };
-    path: {
-        flagKey: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/flags/{flagKey}/overrides';
-};
-
-export type AdminAddFlagOverrideResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminAddFlagOverrideResponse = AdminAddFlagOverrideResponses[keyof AdminAddFlagOverrideResponses];
-
-export type AdminRemoveFlagOverrideData = {
-    body?: never;
-    path: {
-        flagKey: string;
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/flags/{flagKey}/overrides/{tenantId}';
-};
-
-export type AdminRemoveFlagOverrideResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminRemoveFlagOverrideResponse = AdminRemoveFlagOverrideResponses[keyof AdminRemoveFlagOverrideResponses];
-
-export type AdminResolveFlagData = {
-    body?: never;
-    path: {
-        flagKey: string;
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/flags/{flagKey}/resolve/{tenantId}';
-};
-
-export type AdminResolveFlagResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResolveFlagResponse = AdminResolveFlagResponses[keyof AdminResolveFlagResponses];
-
 export type AdminGetServiceHealthData = {
     body?: never;
     path?: never;
@@ -5697,350 +3874,6 @@ export type AdminUnmuteAlertResponses = {
 
 export type AdminUnmuteAlertResponse = AdminUnmuteAlertResponses[keyof AdminUnmuteAlertResponses];
 
-export type AdminStartImpersonationData = {
-    body: {
-        tenantId: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/impersonation/start';
-};
-
-export type AdminStartImpersonationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminStartImpersonationResponse = AdminStartImpersonationResponses[keyof AdminStartImpersonationResponses];
-
-export type AdminEndImpersonationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/impersonation/end';
-};
-
-export type AdminEndImpersonationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminEndImpersonationResponse = AdminEndImpersonationResponses[keyof AdminEndImpersonationResponses];
-
-export type AdminGetActiveImpersonationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/impersonation/active';
-};
-
-export type AdminGetActiveImpersonationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetActiveImpersonationResponse = AdminGetActiveImpersonationResponses[keyof AdminGetActiveImpersonationResponses];
-
-export type AdminGetActiveAnnouncementsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/announcements/active';
-};
-
-export type AdminGetActiveAnnouncementsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        items: Array<{
-            id: string;
-            type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
-            title: string;
-            body: string;
-            linkUrl?: string;
-            linkText?: string;
-            severity: 'INFO' | 'WARNING' | 'CRITICAL';
-            dismissable: boolean;
-            target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-            targetTenantIds?: Array<string>;
-            startsAt: string;
-            endsAt?: string;
-            isActive: boolean;
-            createdBy: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        total: number;
-    };
-};
-
-export type AdminGetActiveAnnouncementsResponse = AdminGetActiveAnnouncementsResponses[keyof AdminGetActiveAnnouncementsResponses];
-
-export type AdminListAnnouncementsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/announcements';
-};
-
-export type AdminListAnnouncementsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        items: Array<{
-            id: string;
-            type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
-            title: string;
-            body: string;
-            linkUrl?: string;
-            linkText?: string;
-            severity: 'INFO' | 'WARNING' | 'CRITICAL';
-            dismissable: boolean;
-            target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-            targetTenantIds?: Array<string>;
-            startsAt: string;
-            endsAt?: string;
-            isActive: boolean;
-            createdBy: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        total: number;
-    };
-};
-
-export type AdminListAnnouncementsResponse = AdminListAnnouncementsResponses[keyof AdminListAnnouncementsResponses];
-
-export type AdminCreateAnnouncementData = {
-    body: {
-        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
-        title: string;
-        body: string;
-        linkUrl?: string;
-        linkText?: string;
-        severity: 'INFO' | 'WARNING' | 'CRITICAL';
-        dismissable?: boolean;
-        target?: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-        targetTenantIds?: Array<string>;
-        startsAt?: string;
-        endsAt?: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/announcements';
-};
-
-export type AdminCreateAnnouncementResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
-        title: string;
-        body: string;
-        linkUrl?: string;
-        linkText?: string;
-        severity: 'INFO' | 'WARNING' | 'CRITICAL';
-        dismissable: boolean;
-        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-        targetTenantIds?: Array<string>;
-        startsAt: string;
-        endsAt?: string;
-        isActive: boolean;
-        createdBy: string;
-        createdAt: string;
-        updatedAt: string;
-    };
-};
-
-export type AdminCreateAnnouncementResponse = AdminCreateAnnouncementResponses[keyof AdminCreateAnnouncementResponses];
-
-export type AdminDeleteAnnouncementData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/announcements/{id}';
-};
-
-export type AdminDeleteAnnouncementResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDeleteAnnouncementResponse = AdminDeleteAnnouncementResponses[keyof AdminDeleteAnnouncementResponses];
-
-export type AdminGetAnnouncementData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/announcements/{id}';
-};
-
-export type AdminGetAnnouncementResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
-        title: string;
-        body: string;
-        linkUrl?: string;
-        linkText?: string;
-        severity: 'INFO' | 'WARNING' | 'CRITICAL';
-        dismissable: boolean;
-        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-        targetTenantIds?: Array<string>;
-        startsAt: string;
-        endsAt?: string;
-        isActive: boolean;
-        createdBy: string;
-        createdAt: string;
-        updatedAt: string;
-    };
-};
-
-export type AdminGetAnnouncementResponse = AdminGetAnnouncementResponses[keyof AdminGetAnnouncementResponses];
-
-export type AdminUpdateAnnouncementData = {
-    body: {
-        title?: string;
-        body?: string;
-        linkUrl?: string;
-        linkText?: string;
-        severity?: 'INFO' | 'WARNING' | 'CRITICAL';
-        dismissable?: boolean;
-        target?: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-        targetTenantIds?: Array<string>;
-        startsAt?: string;
-        endsAt?: string;
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/announcements/{id}';
-};
-
-export type AdminUpdateAnnouncementResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
-        title: string;
-        body: string;
-        linkUrl?: string;
-        linkText?: string;
-        severity: 'INFO' | 'WARNING' | 'CRITICAL';
-        dismissable: boolean;
-        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-        targetTenantIds?: Array<string>;
-        startsAt: string;
-        endsAt?: string;
-        isActive: boolean;
-        createdBy: string;
-        createdAt: string;
-        updatedAt: string;
-    };
-};
-
-export type AdminUpdateAnnouncementResponse = AdminUpdateAnnouncementResponses[keyof AdminUpdateAnnouncementResponses];
-
-export type AdminActivateAnnouncementData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/announcements/{id}/activate';
-};
-
-export type AdminActivateAnnouncementResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
-        title: string;
-        body: string;
-        linkUrl?: string;
-        linkText?: string;
-        severity: 'INFO' | 'WARNING' | 'CRITICAL';
-        dismissable: boolean;
-        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-        targetTenantIds?: Array<string>;
-        startsAt: string;
-        endsAt?: string;
-        isActive: boolean;
-        createdBy: string;
-        createdAt: string;
-        updatedAt: string;
-    };
-};
-
-export type AdminActivateAnnouncementResponse = AdminActivateAnnouncementResponses[keyof AdminActivateAnnouncementResponses];
-
-export type AdminDeactivateAnnouncementData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/announcements/{id}/deactivate';
-};
-
-export type AdminDeactivateAnnouncementResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        type: 'BANNER' | 'NOTIFICATION' | 'BOTH';
-        title: string;
-        body: string;
-        linkUrl?: string;
-        linkText?: string;
-        severity: 'INFO' | 'WARNING' | 'CRITICAL';
-        dismissable: boolean;
-        target: 'ALL_USERS' | 'ALL_TENANTS' | 'SPECIFIC_TENANTS';
-        targetTenantIds?: Array<string>;
-        startsAt: string;
-        endsAt?: string;
-        isActive: boolean;
-        createdBy: string;
-        createdAt: string;
-        updatedAt: string;
-    };
-};
-
-export type AdminDeactivateAnnouncementResponse = AdminDeactivateAnnouncementResponses[keyof AdminDeactivateAnnouncementResponses];
-
 export type AdminListMigrationsData = {
     body?: never;
     path?: never;
@@ -6255,391 +4088,6 @@ export type AdminCancelMigrationRunResponses = {
 };
 
 export type AdminCancelMigrationRunResponse = AdminCancelMigrationRunResponses[keyof AdminCancelMigrationRunResponses];
-
-export type AdminGetInvestigationData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/support/tenant/{tenantId}/investigation';
-};
-
-export type AdminGetInvestigationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        tenantId: string;
-        recentErrors: Array<{
-            id: string;
-            service: string;
-            errorType: string;
-            message: string;
-            requestId: string;
-            occurredAt: string;
-        }>;
-        notificationFailures: Array<{
-            id: string;
-            eventType: string;
-            channel: string;
-            failureReason: string;
-            userId: string;
-            occurredAt: string;
-        }>;
-        recentActivity: Array<{
-            id: string;
-            action: string;
-            resourceType: string;
-            resourceId: string;
-            description: string;
-            adminUserEmail: string;
-            occurredAt: string;
-        }>;
-        scoringStaleness: Array<{
-            contestId: string;
-            contestName: string;
-            sport: string;
-            lastScoringUpdate: string;
-            staleMinutes: number;
-        }>;
-        pendingCorrections: number;
-        failedWebhooks: number;
-    };
-};
-
-export type AdminGetInvestigationResponse = AdminGetInvestigationResponses[keyof AdminGetInvestigationResponses];
-
-export type AdminGetTenantErrorsData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/support/tenant/{tenantId}/errors';
-};
-
-export type AdminGetTenantErrorsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        items: Array<{
-            id: string;
-            service: string;
-            errorType: string;
-            message: string;
-            requestId: string;
-            occurredAt: string;
-        }>;
-        total: number;
-    };
-};
-
-export type AdminGetTenantErrorsResponse = AdminGetTenantErrorsResponses[keyof AdminGetTenantErrorsResponses];
-
-export type AdminGetTenantNotificationsData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/support/tenant/{tenantId}/notifications';
-};
-
-export type AdminGetTenantNotificationsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        items: Array<{
-            id: string;
-            eventType: string;
-            channel: string;
-            failureReason: string;
-            userId: string;
-            occurredAt: string;
-        }>;
-        total: number;
-    };
-};
-
-export type AdminGetTenantNotificationsResponse = AdminGetTenantNotificationsResponses[keyof AdminGetTenantNotificationsResponses];
-
-export type AdminGetTenantRequestsData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/support/tenant/{tenantId}/requests';
-};
-
-export type AdminGetTenantRequestsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        items: Array<{
-            id: string;
-            action: string;
-            resourceType: string;
-            resourceId: string;
-            description: string;
-            adminUserEmail: string;
-            occurredAt: string;
-        }>;
-        total: number;
-    };
-};
-
-export type AdminGetTenantRequestsResponse = AdminGetTenantRequestsResponses[keyof AdminGetTenantRequestsResponses];
-
-export type AdminQuickResetPasswordData = {
-    body: {
-        userId: string;
-        email: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/support/quick-actions/reset-password';
-};
-
-export type AdminQuickResetPasswordResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        action: 'reset-password';
-        userId: string;
-        email: string;
-        result: 'PASSWORD_RESET_TRIGGERED';
-        triggeredAt: string;
-    };
-};
-
-export type AdminQuickResetPasswordResponse = AdminQuickResetPasswordResponses[keyof AdminQuickResetPasswordResponses];
-
-export type AdminQuickCheckProviderData = {
-    body: {
-        providerId: string;
-        sport: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/support/quick-actions/check-provider';
-};
-
-export type AdminQuickCheckProviderResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        action: 'check-provider';
-        requestedSport: string;
-        matchesSportCoverage: boolean;
-        provider: {
-            providerId: string;
-            providerName: string;
-            status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
-            errorRate: number;
-            latencyMs: number;
-            lastEventAt: string;
-            sportsCovered: Array<string>;
-            activeEventCount: number;
-        };
-        checkedAt: string;
-    };
-};
-
-export type AdminQuickCheckProviderResponse = AdminQuickCheckProviderResponses[keyof AdminQuickCheckProviderResponses];
-
-export type AdminQuickCheckEntitlementsData = {
-    body: {
-        tenantId: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/support/quick-actions/check-entitlements';
-};
-
-export type AdminQuickCheckEntitlementsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        action: 'check-entitlements';
-        tenantId: string;
-        planTier: string;
-        entitlements: {
-            [key: string]: {
-                entitled: boolean;
-                reason?: string;
-                currentUsage?: number;
-                limit?: number;
-                upgradePlan?: string;
-            };
-        };
-        usage: {
-            leagues: {
-                resource: 'LEAGUES' | 'MEMBERS' | 'CONTESTS';
-                current: number;
-                limit: number;
-                percentage: number;
-            };
-            members: {
-                resource: 'LEAGUES' | 'MEMBERS' | 'CONTESTS';
-                current: number;
-                limit: number;
-                percentage: number;
-            };
-            contests: {
-                resource: 'LEAGUES' | 'MEMBERS' | 'CONTESTS';
-                current: number;
-                limit: number;
-                percentage: number;
-            };
-        };
-        withinLimits: boolean;
-        checkedAt: string;
-    };
-};
-
-export type AdminQuickCheckEntitlementsResponse = AdminQuickCheckEntitlementsResponses[keyof AdminQuickCheckEntitlementsResponses];
-
-export type AdminQuickCheckNotificationsData = {
-    body: {
-        userId: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/support/quick-actions/check-notifications';
-};
-
-export type AdminQuickCheckNotificationsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        action: 'check-notifications';
-        userId: string;
-        preferences: {
-            doNotDisturb: boolean;
-            categories: {
-                [key: string]: boolean;
-            };
-        };
-        devices: Array<{
-            platform: string;
-            lastSeen: string;
-            tokenStatus: string;
-        }>;
-        recentDelivery: {
-            sent: number;
-            delivered: number;
-            failed: number;
-            deliveryRate: number;
-        };
-        failures: Array<{
-            eventType: string;
-            channel: string;
-            reason: string;
-            at: string;
-        }>;
-        checkedAt: string;
-    };
-};
-
-export type AdminQuickCheckNotificationsResponse = AdminQuickCheckNotificationsResponses[keyof AdminQuickCheckNotificationsResponses];
-
-export type AdminQuickReIngestScoresData = {
-    body: {
-        contestId: string;
-        eventId: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/support/quick-actions/re-ingest-scores';
-};
-
-export type AdminQuickReIngestScoresResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        contestId: string;
-        entriesAffected: number;
-        rankChanges: Array<{
-            entryId: string;
-            oldRank: number;
-            newRank: number;
-        }>;
-        recalculatedAt: string;
-        action: 're-ingest-scores';
-    };
-};
-
-export type AdminQuickReIngestScoresResponse = AdminQuickReIngestScoresResponses[keyof AdminQuickReIngestScoresResponses];
-
-export type AdminStartTenantExportData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/export';
-};
-
-export type AdminStartTenantExportResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminStartTenantExportResponse = AdminStartTenantExportResponses[keyof AdminStartTenantExportResponses];
-
-export type AdminGetExportStatusData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/export/status';
-};
-
-export type AdminGetExportStatusResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetExportStatusResponse = AdminGetExportStatusResponses[keyof AdminGetExportStatusResponses];
-
-export type AdminDownloadExportData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/tenants/{tenantId}/export/download';
-};
-
-export type AdminDownloadExportResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDownloadExportResponse = AdminDownloadExportResponses[keyof AdminDownloadExportResponses];
 
 export type AdminExportAuditLogData = {
     body?: never;
@@ -6890,886 +4338,6 @@ export type AdminResetIngestionScheduleResponses = {
 
 export type AdminResetIngestionScheduleResponse = AdminResetIngestionScheduleResponses[keyof AdminResetIngestionScheduleResponses];
 
-export type AdminGetDunningConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/dunning';
-};
-
-export type AdminGetDunningConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetDunningConfigResponse = AdminGetDunningConfigResponses[keyof AdminGetDunningConfigResponses];
-
-export type AdminUpdateDunningConfigData = {
-    body: {
-        retryAttempts?: Array<{
-            daysAfterFailure: number;
-            action: string;
-        }>;
-        gracePeriodDays?: number;
-        degradedPeriodDays?: number;
-        cancellationDays?: number;
-        notifyOnRetry?: boolean;
-        notifyOnGracePeriodStart?: boolean;
-        notifyOnDegradation?: boolean;
-        notifyBeforeCancellation?: boolean;
-        notifyBeforeCancellationDays?: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/dunning';
-};
-
-export type AdminUpdateDunningConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateDunningConfigResponse = AdminUpdateDunningConfigResponses[keyof AdminUpdateDunningConfigResponses];
-
-export type AdminResetDunningConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/dunning/reset';
-};
-
-export type AdminResetDunningConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetDunningConfigResponse = AdminResetDunningConfigResponses[keyof AdminResetDunningConfigResponses];
-
-export type AdminGetChannelConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/notification-channels';
-};
-
-export type AdminGetChannelConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetChannelConfigResponse = AdminGetChannelConfigResponses[keyof AdminGetChannelConfigResponses];
-
-export type AdminUpdateChannelConfigData = {
-    body: {
-        channels: Array<'PUSH' | 'EMAIL' | 'IN_APP' | 'SMS'>;
-    };
-    path: {
-        category: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/notification-channels/{category}';
-};
-
-export type AdminUpdateChannelConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateChannelConfigResponse = AdminUpdateChannelConfigResponses[keyof AdminUpdateChannelConfigResponses];
-
-export type AdminResetChannelConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/notification-channels/reset';
-};
-
-export type AdminResetChannelConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetChannelConfigResponse = AdminResetChannelConfigResponses[keyof AdminResetChannelConfigResponses];
-
-export type AdminGetRetentionDefaultsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/retention';
-};
-
-export type AdminGetRetentionDefaultsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetRetentionDefaultsResponse = AdminGetRetentionDefaultsResponses[keyof AdminGetRetentionDefaultsResponses];
-
-export type AdminUpdateRetentionDefaultsData = {
-    body: {
-        contestResultRetentionSeasons?: number;
-        rosterHistoryRetentionSeasons?: number;
-        activityLogRetentionDays?: number;
-        payoutRecordRetentionSeasons?: number;
-        chatMessageRetentionDays?: number;
-        auditLogRetentionDays?: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/retention';
-};
-
-export type AdminUpdateRetentionDefaultsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateRetentionDefaultsResponse = AdminUpdateRetentionDefaultsResponses[keyof AdminUpdateRetentionDefaultsResponses];
-
-export type AdminResetRetentionDefaultsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/retention/reset';
-};
-
-export type AdminResetRetentionDefaultsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetRetentionDefaultsResponse = AdminResetRetentionDefaultsResponses[keyof AdminResetRetentionDefaultsResponses];
-
-export type AdminClearTenantRetentionOverrideData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/retention/{tenantId}';
-};
-
-export type AdminClearTenantRetentionOverrideResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminClearTenantRetentionOverrideResponse = AdminClearTenantRetentionOverrideResponses[keyof AdminClearTenantRetentionOverrideResponses];
-
-export type AdminGetTenantRetentionOverrideData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/retention/{tenantId}';
-};
-
-export type AdminGetTenantRetentionOverrideResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetTenantRetentionOverrideResponse = AdminGetTenantRetentionOverrideResponses[keyof AdminGetTenantRetentionOverrideResponses];
-
-export type AdminSetTenantRetentionOverrideData = {
-    body: {
-        contestResultRetentionSeasons?: number;
-        rosterHistoryRetentionSeasons?: number;
-        activityLogRetentionDays?: number;
-        payoutRecordRetentionSeasons?: number;
-        chatMessageRetentionDays?: number;
-        auditLogRetentionDays?: number;
-    };
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/retention/{tenantId}';
-};
-
-export type AdminSetTenantRetentionOverrideResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminSetTenantRetentionOverrideResponse = AdminSetTenantRetentionOverrideResponses[keyof AdminSetTenantRetentionOverrideResponses];
-
-export type AdminGetDigestConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/weekly-digest';
-};
-
-export type AdminGetDigestConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetDigestConfigResponse = AdminGetDigestConfigResponses[keyof AdminGetDigestConfigResponses];
-
-export type AdminUpdateDigestConfigData = {
-    body: {
-        subjectTemplate?: string;
-        headerTemplate?: string;
-        footerTemplate?: string;
-        includeStandings?: boolean;
-        includeHighlights?: boolean;
-        includeUpcomingEvents?: boolean;
-        lookbackDays?: number;
-        sendDay?: 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
-        sendHourUtc?: number;
-        enabled?: boolean;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/weekly-digest';
-};
-
-export type AdminUpdateDigestConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateDigestConfigResponse = AdminUpdateDigestConfigResponses[keyof AdminUpdateDigestConfigResponses];
-
-export type AdminResetDigestConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/weekly-digest/reset';
-};
-
-export type AdminResetDigestConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetDigestConfigResponse = AdminResetDigestConfigResponses[keyof AdminResetDigestConfigResponses];
-
-export type AdminPreviewDigestData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/weekly-digest/preview';
-};
-
-export type AdminPreviewDigestResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminPreviewDigestResponse = AdminPreviewDigestResponses[keyof AdminPreviewDigestResponses];
-
-export type AdminListScoringTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/scoring-templates';
-};
-
-export type AdminListScoringTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        sport: string;
-        name: string;
-        description: string;
-        config: {
-            [key: string]: unknown;
-        };
-        createdAt: string;
-        updatedAt: string;
-    }>;
-};
-
-export type AdminListScoringTemplatesResponse = AdminListScoringTemplatesResponses[keyof AdminListScoringTemplatesResponses];
-
-export type AdminCreateScoringTemplateData = {
-    body: {
-        id: string;
-        sport: string;
-        name: string;
-        description: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/scoring-templates';
-};
-
-export type AdminCreateScoringTemplateResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        sport: string;
-        name: string;
-        description: string;
-        config: {
-            [key: string]: unknown;
-        };
-        createdAt: string;
-        updatedAt: string;
-    };
-};
-
-export type AdminCreateScoringTemplateResponse = AdminCreateScoringTemplateResponses[keyof AdminCreateScoringTemplateResponses];
-
-export type AdminDeleteScoringTemplateData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/scoring-templates/{id}';
-};
-
-export type AdminDeleteScoringTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDeleteScoringTemplateResponse = AdminDeleteScoringTemplateResponses[keyof AdminDeleteScoringTemplateResponses];
-
-export type AdminGetScoringTemplateData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/scoring-templates/{id}';
-};
-
-export type AdminGetScoringTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        sport: string;
-        name: string;
-        description: string;
-        config: {
-            [key: string]: unknown;
-        };
-        createdAt: string;
-        updatedAt: string;
-    };
-};
-
-export type AdminGetScoringTemplateResponse = AdminGetScoringTemplateResponses[keyof AdminGetScoringTemplateResponses];
-
-export type AdminUpdateScoringTemplateData = {
-    body: {
-        sport?: string;
-        name?: string;
-        description?: string;
-        config?: {
-            [key: string]: unknown;
-        };
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/scoring-templates/{id}';
-};
-
-export type AdminUpdateScoringTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        sport: string;
-        name: string;
-        description: string;
-        config: {
-            [key: string]: unknown;
-        };
-        createdAt: string;
-        updatedAt: string;
-    };
-};
-
-export type AdminUpdateScoringTemplateResponse = AdminUpdateScoringTemplateResponses[keyof AdminUpdateScoringTemplateResponses];
-
-export type AdminListSelectionTemplatesConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates';
-};
-
-export type AdminListSelectionTemplatesConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    }>;
-};
-
-export type AdminListSelectionTemplatesConfigResponse = AdminListSelectionTemplatesConfigResponses[keyof AdminListSelectionTemplatesConfigResponses];
-
-export type AdminCreateSelectionTemplateData = {
-    body: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates';
-};
-
-export type AdminCreateSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type AdminCreateSelectionTemplateResponse = AdminCreateSelectionTemplateResponses[keyof AdminCreateSelectionTemplateResponses];
-
-export type AdminDeleteSelectionTemplateData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates/{id}';
-};
-
-export type AdminDeleteSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDeleteSelectionTemplateResponse = AdminDeleteSelectionTemplateResponses[keyof AdminDeleteSelectionTemplateResponses];
-
-export type AdminGetSelectionTemplateConfigData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates/{id}';
-};
-
-export type AdminGetSelectionTemplateConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type AdminGetSelectionTemplateConfigResponse = AdminGetSelectionTemplateConfigResponses[keyof AdminGetSelectionTemplateConfigResponses];
-
-export type AdminUpdateSelectionTemplateData = {
-    body: {
-        name?: string;
-        description?: string;
-        sport?: string;
-        contestType?: string;
-        selectionType?: string;
-        config?: {
-            [key: string]: unknown;
-        };
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/selection-templates/{id}';
-};
-
-export type AdminUpdateSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type AdminUpdateSelectionTemplateResponse = AdminUpdateSelectionTemplateResponses[keyof AdminUpdateSelectionTemplateResponses];
-
-export type AdminListNotificationTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/notification-templates';
-};
-
-export type AdminListNotificationTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminListNotificationTemplatesResponse = AdminListNotificationTemplatesResponses[keyof AdminListNotificationTemplatesResponses];
-
-export type AdminGetNotificationTemplateData = {
-    body?: never;
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/notification-templates/{eventType}';
-};
-
-export type AdminGetNotificationTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetNotificationTemplateResponse = AdminGetNotificationTemplateResponses[keyof AdminGetNotificationTemplateResponses];
-
-export type AdminUpdateNotificationTemplateData = {
-    body: {
-        pushTitle?: string;
-        pushBody?: string;
-        emailSubject?: string;
-        emailText?: string;
-        inAppTitle?: string;
-        inAppBody?: string;
-        inAppIcon?: string;
-        smsBody?: string;
-    };
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/notification-templates/{eventType}';
-};
-
-export type AdminUpdateNotificationTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateNotificationTemplateResponse = AdminUpdateNotificationTemplateResponses[keyof AdminUpdateNotificationTemplateResponses];
-
-export type AdminResetNotificationTemplateData = {
-    body?: never;
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/notification-templates/reset/{eventType}';
-};
-
-export type AdminResetNotificationTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetNotificationTemplateResponse = AdminResetNotificationTemplateResponses[keyof AdminResetNotificationTemplateResponses];
-
-export type AdminListPushTriggersData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers';
-};
-
-export type AdminListPushTriggersResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminListPushTriggersResponse = AdminListPushTriggersResponses[keyof AdminListPushTriggersResponses];
-
-export type AdminUpdatePushTriggerData = {
-    body: {
-        enabled?: boolean;
-        title?: string;
-        body?: string;
-        sound?: string;
-        priority?: 'high' | 'normal';
-        category?: string;
-    };
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers/{eventType}';
-};
-
-export type AdminUpdatePushTriggerResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdatePushTriggerResponse = AdminUpdatePushTriggerResponses[keyof AdminUpdatePushTriggerResponses];
-
-export type AdminEnablePushTriggerData = {
-    body?: never;
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers/{eventType}/enable';
-};
-
-export type AdminEnablePushTriggerResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminEnablePushTriggerResponse = AdminEnablePushTriggerResponses[keyof AdminEnablePushTriggerResponses];
-
-export type AdminDisablePushTriggerData = {
-    body?: never;
-    path: {
-        eventType: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers/{eventType}/disable';
-};
-
-export type AdminDisablePushTriggerResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminDisablePushTriggerResponse = AdminDisablePushTriggerResponses[keyof AdminDisablePushTriggerResponses];
-
-export type AdminResetPushTriggersData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/push-triggers/reset';
-};
-
-export type AdminResetPushTriggersResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetPushTriggersResponse = AdminResetPushTriggersResponses[keyof AdminResetPushTriggersResponses];
-
-export type AdminGetRateLimitConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/rate-limits';
-};
-
-export type AdminGetRateLimitConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminGetRateLimitConfigResponse = AdminGetRateLimitConfigResponses[keyof AdminGetRateLimitConfigResponses];
-
-export type AdminUpdateRateLimitConfigData = {
-    body: {
-        pushPerHour?: number;
-        emailPerDay?: number;
-        smsPerDay?: number;
-        collapseRules?: Array<{
-            eventType: string;
-            maxPerHour: number;
-            windowMinutes: number;
-        }>;
-        dedupWindowSeconds?: number;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/rate-limits';
-};
-
-export type AdminUpdateRateLimitConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminUpdateRateLimitConfigResponse = AdminUpdateRateLimitConfigResponses[keyof AdminUpdateRateLimitConfigResponses];
-
-export type AdminResetRateLimitConfigData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/config/rate-limits/reset';
-};
-
-export type AdminResetRateLimitConfigResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type AdminResetRateLimitConfigResponse = AdminResetRateLimitConfigResponses[keyof AdminResetRateLimitConfigResponses];
-
 export type GetPollIntervalsData = {
     body?: never;
     path?: never;
@@ -7782,1468 +4350,19 @@ export type GetPollIntervalsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        sports: Array<{
+            id: string;
+            name: string;
+            participantType: string;
+            seasons: Array<string>;
+        }>;
+        features: {
+            [key: string]: boolean;
+        };
     };
 };
 
 export type GetPollIntervalsResponse = GetPollIntervalsResponses[keyof GetPollIntervalsResponses];
-
-export type GetCurrentPlanData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/plan';
-};
-
-export type GetCurrentPlanResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        slug: string;
-        name: string;
-        displayOrder?: number;
-        monthlyPriceCents?: number;
-        annualPriceCents?: number;
-        entitlements: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type GetCurrentPlanResponse = GetCurrentPlanResponses[keyof GetCurrentPlanResponses];
-
-export type ChangePlanData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/plan';
-};
-
-export type ChangePlanErrors = {
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type ChangePlanError = ChangePlanErrors[keyof ChangePlanErrors];
-
-export type ChangePlanResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        subscription: {
-            id: string;
-            tenantId: string;
-            stripeCustomerId: string;
-            stripeSubscriptionId: string;
-            planSlug: string;
-            billingCycle: 'MONTHLY' | 'ANNUAL';
-            status: string;
-            trialStart: string;
-            trialEnd: string;
-            currentPeriodStart: string;
-            currentPeriodEnd: string;
-            cancelledAt: string;
-            cancelAtPeriodEnd: boolean;
-            paymentMethodLast4: string;
-            paymentMethodBrand: string;
-            currency: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type ChangePlanResponse = ChangePlanResponses[keyof ChangePlanResponses];
-
-export type GetEntitlementsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/entitlements';
-};
-
-export type GetEntitlementsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        entitlements: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type GetEntitlementsResponse = GetEntitlementsResponses[keyof GetEntitlementsResponses];
-
-export type GetUsageData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/usage';
-};
-
-export type GetUsageResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        usage: {
-            leagues: {
-                resource: string;
-                current: number;
-                limit: number;
-                percentage: number;
-            };
-            members: {
-                resource: string;
-                current: number;
-                limit: number;
-                percentage: number;
-            };
-            contests: {
-                resource: string;
-                current: number;
-                limit: number;
-                percentage: number;
-            };
-        };
-    };
-};
-
-export type GetUsageResponse = GetUsageResponses[keyof GetUsageResponses];
-
-export type ListPlansData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/plans';
-};
-
-export type ListPlansResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        plans: Array<{
-            slug: string;
-            name: string;
-            displayOrder?: number;
-            monthlyPriceCents?: number;
-            annualPriceCents?: number;
-            entitlements: {
-                [key: string]: unknown;
-            };
-        }>;
-        billingEnabled?: boolean;
-        upgradeLabel?: string;
-    };
-};
-
-export type ListPlansResponse = ListPlansResponses[keyof ListPlansResponses];
-
-export type CreateSubscriptionData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/subscribe';
-};
-
-export type CreateSubscriptionErrors = {
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type CreateSubscriptionError = CreateSubscriptionErrors[keyof CreateSubscriptionErrors];
-
-export type CreateSubscriptionResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        subscription: {
-            id: string;
-            tenantId: string;
-            stripeCustomerId: string;
-            stripeSubscriptionId: string;
-            planSlug: string;
-            billingCycle: 'MONTHLY' | 'ANNUAL';
-            status: string;
-            trialStart: string;
-            trialEnd: string;
-            currentPeriodStart: string;
-            currentPeriodEnd: string;
-            cancelledAt: string;
-            cancelAtPeriodEnd: boolean;
-            paymentMethodLast4: string;
-            paymentMethodBrand: string;
-            currency: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type CreateSubscriptionResponse = CreateSubscriptionResponses[keyof CreateSubscriptionResponses];
-
-export type ResumeSubscriptionData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/resume';
-};
-
-export type ResumeSubscriptionErrors = {
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type ResumeSubscriptionError = ResumeSubscriptionErrors[keyof ResumeSubscriptionErrors];
-
-export type ResumeSubscriptionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        subscription: {
-            id: string;
-            tenantId: string;
-            stripeCustomerId: string;
-            stripeSubscriptionId: string;
-            planSlug: string;
-            billingCycle: 'MONTHLY' | 'ANNUAL';
-            status: string;
-            trialStart: string;
-            trialEnd: string;
-            currentPeriodStart: string;
-            currentPeriodEnd: string;
-            cancelledAt: string;
-            cancelAtPeriodEnd: boolean;
-            paymentMethodLast4: string;
-            paymentMethodBrand: string;
-            currency: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type ResumeSubscriptionResponse = ResumeSubscriptionResponses[keyof ResumeSubscriptionResponses];
-
-export type GetSubscriptionData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/subscription';
-};
-
-export type GetSubscriptionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        subscription: {
-            id: string;
-            tenantId: string;
-            stripeCustomerId: string;
-            stripeSubscriptionId: string;
-            planSlug: string;
-            billingCycle: 'MONTHLY' | 'ANNUAL';
-            status: string;
-            trialStart: string;
-            trialEnd: string;
-            currentPeriodStart: string;
-            currentPeriodEnd: string;
-            cancelledAt: string;
-            cancelAtPeriodEnd: boolean;
-            paymentMethodLast4: string;
-            paymentMethodBrand: string;
-            currency: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type GetSubscriptionResponse = GetSubscriptionResponses[keyof GetSubscriptionResponses];
-
-export type CreatePaymentMethodSetupData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/payment-method';
-};
-
-export type CreatePaymentMethodSetupErrors = {
-    /**
-     * Default Response
-     */
-    400: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type CreatePaymentMethodSetupError = CreatePaymentMethodSetupErrors[keyof CreatePaymentMethodSetupErrors];
-
-export type CreatePaymentMethodSetupResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        clientSecret: string;
-    };
-};
-
-export type CreatePaymentMethodSetupResponse = CreatePaymentMethodSetupResponses[keyof CreatePaymentMethodSetupResponses];
-
-export type GetBillingPortalData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/portal';
-};
-
-export type GetBillingPortalErrors = {
-    /**
-     * Default Response
-     */
-    400: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetBillingPortalError = GetBillingPortalErrors[keyof GetBillingPortalErrors];
-
-export type GetBillingPortalResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        url: string;
-    };
-};
-
-export type GetBillingPortalResponse = GetBillingPortalResponses[keyof GetBillingPortalResponses];
-
-export type StartTrialData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/trial/start';
-};
-
-export type StartTrialResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type StartTrialResponse = StartTrialResponses[keyof StartTrialResponses];
-
-export type GetTrialStatusData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/trial/status';
-};
-
-export type GetTrialStatusResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type GetTrialStatusResponse = GetTrialStatusResponses[keyof GetTrialStatusResponses];
-
-export type ListInvoicesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/invoices';
-};
-
-export type ListInvoicesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        items: Array<{
-            id: string;
-            tenantId?: string;
-            stripeInvoiceId?: string;
-            amount?: number;
-            amountCents?: number;
-            currency: string;
-            status: string;
-            periodStart?: string;
-            periodEnd?: string;
-            paidAt?: string;
-            invoicePdfUrl?: string;
-            lineItems?: Array<{
-                description: string;
-                amountCents: number;
-                quantity: number;
-            }>;
-            createdAt?: string;
-        }>;
-        total: number;
-    };
-};
-
-export type ListInvoicesResponse = ListInvoicesResponses[keyof ListInvoicesResponses];
-
-export type GetUpcomingInvoiceData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/invoices/upcoming';
-};
-
-export type GetUpcomingInvoiceErrors = {
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetUpcomingInvoiceError = GetUpcomingInvoiceErrors[keyof GetUpcomingInvoiceErrors];
-
-export type GetUpcomingInvoiceResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        tenantId?: string;
-        stripeInvoiceId?: string;
-        amount?: number;
-        amountCents?: number;
-        currency: string;
-        status: string;
-        periodStart?: string;
-        periodEnd?: string;
-        paidAt?: string;
-        invoicePdfUrl?: string;
-        lineItems?: Array<{
-            description: string;
-            amountCents: number;
-            quantity: number;
-        }>;
-        createdAt?: string;
-    };
-};
-
-export type GetUpcomingInvoiceResponse = GetUpcomingInvoiceResponses[keyof GetUpcomingInvoiceResponses];
-
-export type GetInvoiceDetailData = {
-    body?: never;
-    path: {
-        invoiceId: string;
-    };
-    query?: never;
-    url: '/api/v1/billing/invoices/{invoiceId}';
-};
-
-export type GetInvoiceDetailErrors = {
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetInvoiceDetailError = GetInvoiceDetailErrors[keyof GetInvoiceDetailErrors];
-
-export type GetInvoiceDetailResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        tenantId?: string;
-        stripeInvoiceId?: string;
-        amount?: number;
-        amountCents?: number;
-        currency: string;
-        status: string;
-        periodStart?: string;
-        periodEnd?: string;
-        paidAt?: string;
-        invoicePdfUrl?: string;
-        lineItems?: Array<{
-            description: string;
-            amountCents: number;
-            quantity: number;
-        }>;
-        createdAt?: string;
-    };
-};
-
-export type GetInvoiceDetailResponse = GetInvoiceDetailResponses[keyof GetInvoiceDetailResponses];
-
-export type PreviewUpgradeData = {
-    body?: never;
-    path: {
-        planSlug: string;
-    };
-    query?: never;
-    url: '/api/v1/billing/upgrade-preview/{planSlug}';
-};
-
-export type PreviewUpgradeResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type PreviewUpgradeResponse = PreviewUpgradeResponses[keyof PreviewUpgradeResponses];
-
-export type PreviewDowngradeData = {
-    body?: never;
-    path: {
-        planSlug: string;
-    };
-    query?: never;
-    url: '/api/v1/billing/downgrade-preview/{planSlug}';
-};
-
-export type PreviewDowngradeResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type PreviewDowngradeResponse = PreviewDowngradeResponses[keyof PreviewDowngradeResponses];
-
-export type PreviewCancellationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/cancellation-preview';
-};
-
-export type PreviewCancellationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type PreviewCancellationResponse = PreviewCancellationResponses[keyof PreviewCancellationResponses];
-
-export type GetRetentionOfferData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/retention-offer';
-};
-
-export type GetRetentionOfferResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type GetRetentionOfferResponse = GetRetentionOfferResponses[keyof GetRetentionOfferResponses];
-
-export type CancelSubscriptionData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/cancel';
-};
-
-export type CancelSubscriptionErrors = {
-    /**
-     * Default Response
-     */
-    501: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type CancelSubscriptionError = CancelSubscriptionErrors[keyof CancelSubscriptionErrors];
-
-export type CancelSubscriptionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type CancelSubscriptionResponse = CancelSubscriptionResponses[keyof CancelSubscriptionResponses];
-
-export type GetRevenueAnalyticsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/analytics';
-};
-
-export type GetRevenueAnalyticsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type GetRevenueAnalyticsResponse = GetRevenueAnalyticsResponses[keyof GetRevenueAnalyticsResponses];
-
-export type GetSubscribersByPlanData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/analytics/subscribers';
-};
-
-export type GetSubscribersByPlanResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type GetSubscribersByPlanResponse = GetSubscribersByPlanResponses[keyof GetSubscribersByPlanResponses];
-
-export type GetTrialMetricsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/analytics/trials';
-};
-
-export type GetTrialMetricsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type GetTrialMetricsResponse = GetTrialMetricsResponses[keyof GetTrialMetricsResponses];
-
-export type GetChurnMetricsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/analytics/churn';
-};
-
-export type GetChurnMetricsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type GetChurnMetricsResponse = GetChurnMetricsResponses[keyof GetChurnMetricsResponses];
-
-export type ListEnterprisePlansData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/enterprise';
-};
-
-export type ListEnterprisePlansResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type ListEnterprisePlansResponse = ListEnterprisePlansResponses[keyof ListEnterprisePlansResponses];
-
-export type CreateEnterprisePlanData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/billing/enterprise';
-};
-
-export type CreateEnterprisePlanResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type CreateEnterprisePlanResponse = CreateEnterprisePlanResponses[keyof CreateEnterprisePlanResponses];
-
-export type GetDunningStatusData = {
-    body?: never;
-    path: {
-        tenantId: string;
-    };
-    query?: never;
-    url: '/api/v1/billing/dunning/{tenantId}';
-};
-
-export type GetDunningStatusResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        tenantId: string;
-        phase: 'NONE' | 'GRACE' | 'DEGRADED' | 'PENDING_CANCEL' | 'CANCELLED';
-        failedAt: string;
-        retryCount: number;
-        nextRetryAt: string;
-        gracePeriodEndsAt: string;
-        degradedPeriodEndsAt: string;
-        cancellationAt: string;
-    };
-};
-
-export type GetDunningStatusResponse = GetDunningStatusResponses[keyof GetDunningStatusResponses];
-
-export type PostApiV1InternalWebhooksStripeData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/internal/webhooks/stripe';
-};
-
-export type PostApiV1InternalWebhooksStripeResponses = {
-    /**
-     * Default Response
-     */
-    200: unknown;
-};
-
-export type GetLeagueFeedData = {
-    body?: never;
-    path: {
-        leagueId: string;
-    };
-    query?: {
-        cursor?: string;
-        limit?: string;
-    };
-    url: '/api/v1/leagues/{leagueId}/feed';
-};
-
-export type GetLeagueFeedResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        posts: Array<{
-            id: string;
-            leagueId: string;
-            authorId: string;
-            type: string;
-            authorName: string;
-            content: string;
-            isPinned: boolean;
-            reactions: {
-                [key: string]: Array<string>;
-            };
-            replyCount: number;
-            parentId?: string;
-            createdAt: string;
-            updatedAt: string;
-        }>;
-        nextCursor?: string;
-    };
-};
-
-export type GetLeagueFeedResponse = GetLeagueFeedResponses[keyof GetLeagueFeedResponses];
-
-export type CreateFeedPostData = {
-    body: {
-        content: string;
-        type?: 'POST' | 'ANNOUNCEMENT' | 'SYSTEM';
-    };
-    path: {
-        leagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed';
-};
-
-export type CreateFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        leagueId: string;
-        authorId: string;
-        type: string;
-        authorName: string;
-        content: string;
-        isPinned: boolean;
-        reactions: {
-            [key: string]: Array<string>;
-        };
-        replyCount: number;
-        parentId?: string;
-        createdAt: string;
-        updatedAt: string;
-        replies?: Array<unknown>;
-    };
-};
-
-export type CreateFeedPostResponse = CreateFeedPostResponses[keyof CreateFeedPostResponses];
-
-export type DeleteFeedPostData = {
-    body?: never;
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}';
-};
-
-export type DeleteFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type DeleteFeedPostResponse = DeleteFeedPostResponses[keyof DeleteFeedPostResponses];
-
-export type GetFeedPostData = {
-    body?: never;
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}';
-};
-
-export type GetFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        leagueId: string;
-        authorId: string;
-        type: string;
-        authorName: string;
-        content: string;
-        isPinned: boolean;
-        reactions: {
-            [key: string]: Array<string>;
-        };
-        replyCount: number;
-        parentId?: string;
-        createdAt: string;
-        updatedAt: string;
-        replies?: Array<unknown>;
-    };
-};
-
-export type GetFeedPostResponse = GetFeedPostResponses[keyof GetFeedPostResponses];
-
-export type AddFeedReplyData = {
-    body: {
-        content: string;
-    };
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/replies';
-};
-
-export type AddFeedReplyResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        leagueId: string;
-        authorId: string;
-        type: string;
-        authorName: string;
-        content: string;
-        isPinned: boolean;
-        reactions: {
-            [key: string]: Array<string>;
-        };
-        replyCount: number;
-        parentId?: string;
-        createdAt: string;
-        updatedAt: string;
-        replies?: Array<unknown>;
-    };
-};
-
-export type AddFeedReplyResponse = AddFeedReplyResponses[keyof AddFeedReplyResponses];
-
-export type AddFeedReactionData = {
-    body: {
-        emoji: string;
-    };
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/reactions';
-};
-
-export type AddFeedReactionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        added: boolean;
-    };
-};
-
-export type AddFeedReactionResponse = AddFeedReactionResponses[keyof AddFeedReactionResponses];
-
-export type UnpinFeedPostData = {
-    body?: never;
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/pin';
-};
-
-export type UnpinFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type UnpinFeedPostResponse = UnpinFeedPostResponses[keyof UnpinFeedPostResponses];
-
-export type PinFeedPostData = {
-    body?: never;
-    path: {
-        leagueId: string;
-        postId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/pin';
-};
-
-export type PinFeedPostResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type PinFeedPostResponse = PinFeedPostResponses[keyof PinFeedPostResponses];
-
-export type ListSocialConversationsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/social/messages/conversations';
-};
-
-export type ListSocialConversationsErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type ListSocialConversationsError = ListSocialConversationsErrors[keyof ListSocialConversationsErrors];
-
-export type ListSocialConversationsResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        participantName: string;
-        participantInitials: string;
-        participantAvatarUrl: string;
-        lastMessage: string;
-        lastMessageAt: string;
-        unreadCount: number;
-    }>;
-};
-
-export type ListSocialConversationsResponse = ListSocialConversationsResponses[keyof ListSocialConversationsResponses];
-
-export type GetSocialConversationMessagesData = {
-    body?: never;
-    path: {
-        conversationId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/messages/conversations/{conversationId}';
-};
-
-export type GetSocialConversationMessagesErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetSocialConversationMessagesError = GetSocialConversationMessagesErrors[keyof GetSocialConversationMessagesErrors];
-
-export type GetSocialConversationMessagesResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        senderId: string;
-        senderName: string;
-        content: string;
-        createdAt: string;
-        isOwn: boolean;
-        delivered: boolean;
-        read: boolean;
-    }>;
-};
-
-export type GetSocialConversationMessagesResponse = GetSocialConversationMessagesResponses[keyof GetSocialConversationMessagesResponses];
-
-export type SendSocialConversationMessageData = {
-    body: {
-        content: string;
-    };
-    path: {
-        conversationId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/messages/conversations/{conversationId}';
-};
-
-export type SendSocialConversationMessageErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type SendSocialConversationMessageError = SendSocialConversationMessageErrors[keyof SendSocialConversationMessageErrors];
-
-export type SendSocialConversationMessageResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        senderId: string;
-        senderName: string;
-        content: string;
-        createdAt: string;
-        isOwn: boolean;
-        delivered: boolean;
-        read: boolean;
-    };
-};
-
-export type SendSocialConversationMessageResponse = SendSocialConversationMessageResponses[keyof SendSocialConversationMessageResponses];
-
-export type MarkSocialConversationReadData = {
-    body?: never;
-    path: {
-        conversationId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/messages/conversations/{conversationId}/read';
-};
-
-export type MarkSocialConversationReadErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type MarkSocialConversationReadError = MarkSocialConversationReadErrors[keyof MarkSocialConversationReadErrors];
-
-export type MarkSocialConversationReadResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type MarkSocialConversationReadResponse = MarkSocialConversationReadResponses[keyof MarkSocialConversationReadResponses];
-
-export type GetContestChatData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/contests/{contestId}/chat';
-};
-
-export type GetContestChatErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetContestChatError = GetContestChatErrors[keyof GetContestChatErrors];
-
-export type GetContestChatResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        type: 'user' | 'system';
-        authorName: string;
-        authorInitials: string;
-        content: string;
-        createdAt: string;
-        isOwn: boolean;
-    }>;
-};
-
-export type GetContestChatResponse = GetContestChatResponses[keyof GetContestChatResponses];
-
-export type SendContestChatMessageData = {
-    body: {
-        content: string;
-    };
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/contests/{contestId}/chat';
-};
-
-export type SendContestChatMessageErrors = {
-    /**
-     * Default Response
-     */
-    401: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type SendContestChatMessageError = SendContestChatMessageErrors[keyof SendContestChatMessageErrors];
-
-export type SendContestChatMessageResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        id: string;
-        type: 'user' | 'system';
-        authorName: string;
-        authorInitials: string;
-        content: string;
-        createdAt: string;
-        isOwn: boolean;
-    };
-};
-
-export type SendContestChatMessageResponse = SendContestChatMessageResponses[keyof SendContestChatMessageResponses];
-
-export type GetShareCardData = {
-    body?: never;
-    path: {
-        shareId: string;
-    };
-    query?: never;
-    url: '/api/v1/social/shares/{shareId}';
-};
-
-export type GetShareCardErrors = {
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetShareCardError = GetShareCardErrors[keyof GetShareCardErrors];
-
-export type GetShareCardResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        type: 'contest_result' | 'season_champion' | 'achievement';
-        title: string;
-        sport: string;
-        sportIcon: string;
-        winnerName: string;
-        winnerAvatarUrl: string;
-        winnerScore: string;
-        leaderboard: Array<{
-            rank: number;
-            name: string;
-            score: string;
-        }>;
-        dateRange: string;
-        imageUrl: string;
-        ogTitle: string;
-        ogDescription: string;
-    };
-};
-
-export type GetShareCardResponse = GetShareCardResponses[keyof GetShareCardResponses];
-
-export type GetLeagueRecapData = {
-    body?: never;
-    path: {
-        leagueId: string;
-    };
-    query?: {
-        week?: string;
-    };
-    url: '/api/v1/social/leagues/{leagueId}/recap';
-};
-
-export type GetLeagueRecapErrors = {
-    /**
-     * Default Response
-     */
-    404: {
-        error: string;
-        message: string;
-        details?: unknown;
-    };
-};
-
-export type GetLeagueRecapError = GetLeagueRecapErrors[keyof GetLeagueRecapErrors];
-
-export type GetLeagueRecapResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        weekLabel: string;
-        standings: Array<{
-            rank: number;
-            name: string;
-            initials: string;
-            points: number;
-            change: number;
-        }>;
-        highlights: Array<{
-            icon: string;
-            title: string;
-            detail: string;
-        }>;
-        upcoming: Array<{
-            name: string;
-            dateTime: string;
-            daysUntil: number;
-        }>;
-    };
-};
-
-export type GetLeagueRecapResponse = GetLeagueRecapResponses[keyof GetLeagueRecapResponses];
-
-export type ListSelectionTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        sport?: string;
-        contestType?: string;
-    };
-    url: '/api/v1/drafts/templates';
-};
-
-export type ListSelectionTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: Array<{
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    }>;
-};
-
-export type ListSelectionTemplatesResponse = ListSelectionTemplatesResponses[keyof ListSelectionTemplatesResponses];
-
-export type GetSelectionTemplateData = {
-    body?: never;
-    path: {
-        templateId: string;
-    };
-    query?: never;
-    url: '/api/v1/drafts/templates/{templateId}';
-};
-
-export type GetSelectionTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        id: string;
-        name: string;
-        description: string;
-        sport: string;
-        contestType: string;
-        selectionType: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type GetSelectionTemplateResponse = GetSelectionTemplateResponses[keyof GetSelectionTemplateResponses];
 
 export type GetDraftStateData = {
     body?: never;
@@ -9265,7 +4384,7 @@ export type GetDraftStateResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -9293,14 +4412,14 @@ export type GetDraftStateResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -9360,7 +4479,7 @@ export type GetDraftStateResponse = GetDraftStateResponses[keyof GetDraftStateRe
 
 export type StartDraftData = {
     body: {
-        entryIds?: Array<string>;
+        entryIds: Array<string>;
         rounds?: number;
         timePerPickSeconds?: number;
         availableParticipantIds?: Array<string>;
@@ -9384,7 +4503,7 @@ export type StartDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -9412,14 +4531,14 @@ export type StartDraftResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -9477,16 +4596,10 @@ export type StartDraftResponses = {
 
 export type StartDraftResponse = StartDraftResponses[keyof StartDraftResponses];
 
-export type SubmitDraftPickData = {
+export type SubmitContestSelectionData = {
     body: {
         entryId: string;
         participantId: string;
-        eventId?: string;
-        period?: number;
-        matchupIndex?: number;
-        roundNumber?: number;
-        matchNumber?: number;
-        confidenceWeight?: number;
     };
     path: {
         contestId: string;
@@ -9495,7 +4608,7 @@ export type SubmitDraftPickData = {
     url: '/api/v1/drafts/{contestId}/pick';
 };
 
-export type SubmitDraftPickResponses = {
+export type SubmitContestSelectionResponses = {
     /**
      * Default Response
      */
@@ -9506,7 +4619,7 @@ export type SubmitDraftPickResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -9534,14 +4647,14 @@ export type SubmitDraftPickResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -9597,233 +4710,7 @@ export type SubmitDraftPickResponses = {
     };
 };
 
-export type SubmitDraftPickResponse = SubmitDraftPickResponses[keyof SubmitDraftPickResponses];
-
-export type ResetBracketSubmissionData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/drafts/{contestId}/bracket';
-};
-
-export type ResetBracketSubmissionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        contestId: string;
-        contestName: string;
-        selectionType: string;
-        isTurnBased: boolean;
-        isCommissioner?: boolean;
-        rosterSize: number;
-        selectionConfig?: {
-            isExclusive: boolean;
-            rounds?: number;
-            pickCount?: number;
-            rosterSize?: number;
-            budget?: number;
-            pricingMethod?: string;
-            timePerPickSeconds?: number;
-            picksPerPeriod?: number;
-            roundValues?: Array<number>;
-            startRound?: string;
-            tierConfig?: Array<{
-                tierId: string;
-                tierName: string;
-                tierNumber: number;
-                picksFromTier: number;
-            }>;
-        };
-        status: string;
-        currentPickNumber: number;
-        currentRound: number;
-        totalPicks: number;
-        totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
-        isMyPick: boolean;
-        timePerPickSeconds: number;
-        pickDeadline: string;
-        entries: Array<{
-            id: string;
-            userId: string;
-            name: string;
-            isOnClock: boolean;
-        }>;
-        picks: Array<{
-            pickNumber: number;
-            round: number;
-            pickInRound: number;
-            entryId: string;
-            entryName: string;
-            participantId: string;
-            participantName: string;
-            position?: string;
-            team?: string;
-            price?: number;
-            tierId?: string;
-            tierName?: string;
-            autoPicked: boolean;
-            isSkipped?: boolean;
-            pickedAt: string;
-        }>;
-        availableParticipantIds: Array<string>;
-        isComplete: boolean;
-        pickEmEvents?: Array<{
-            id: string;
-            eventId: string;
-            period: number;
-            matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
-            isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
-            label: string;
-        }>;
-        bracketMatchups?: Array<{
-            id: string;
-            roundNumber: number;
-            matchNumber: number;
-            label: string;
-            isLocked: boolean;
-            topTeam: {
-                id: string;
-                name: string;
-                seed: number;
-            };
-            bottomTeam: {
-                id: string;
-                name: string;
-                seed: number;
-            };
-            winnerId: string;
-        }>;
-    };
-};
-
-export type ResetBracketSubmissionResponse = ResetBracketSubmissionResponses[keyof ResetBracketSubmissionResponses];
-
-export type AutoFillBracketSubmissionData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/drafts/{contestId}/bracket/auto-fill';
-};
-
-export type AutoFillBracketSubmissionResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        contestId: string;
-        contestName: string;
-        selectionType: string;
-        isTurnBased: boolean;
-        isCommissioner?: boolean;
-        rosterSize: number;
-        selectionConfig?: {
-            isExclusive: boolean;
-            rounds?: number;
-            pickCount?: number;
-            rosterSize?: number;
-            budget?: number;
-            pricingMethod?: string;
-            timePerPickSeconds?: number;
-            picksPerPeriod?: number;
-            roundValues?: Array<number>;
-            startRound?: string;
-            tierConfig?: Array<{
-                tierId: string;
-                tierName: string;
-                tierNumber: number;
-                picksFromTier: number;
-            }>;
-        };
-        status: string;
-        currentPickNumber: number;
-        currentRound: number;
-        totalPicks: number;
-        totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
-        isMyPick: boolean;
-        timePerPickSeconds: number;
-        pickDeadline: string;
-        entries: Array<{
-            id: string;
-            userId: string;
-            name: string;
-            isOnClock: boolean;
-        }>;
-        picks: Array<{
-            pickNumber: number;
-            round: number;
-            pickInRound: number;
-            entryId: string;
-            entryName: string;
-            participantId: string;
-            participantName: string;
-            position?: string;
-            team?: string;
-            price?: number;
-            tierId?: string;
-            tierName?: string;
-            autoPicked: boolean;
-            isSkipped?: boolean;
-            pickedAt: string;
-        }>;
-        availableParticipantIds: Array<string>;
-        isComplete: boolean;
-        pickEmEvents?: Array<{
-            id: string;
-            eventId: string;
-            period: number;
-            matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
-            isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
-            label: string;
-        }>;
-        bracketMatchups?: Array<{
-            id: string;
-            roundNumber: number;
-            matchNumber: number;
-            label: string;
-            isLocked: boolean;
-            topTeam: {
-                id: string;
-                name: string;
-                seed: number;
-            };
-            bottomTeam: {
-                id: string;
-                name: string;
-                seed: number;
-            };
-            winnerId: string;
-        }>;
-    };
-};
-
-export type AutoFillBracketSubmissionResponse = AutoFillBracketSubmissionResponses[keyof AutoFillBracketSubmissionResponses];
+export type SubmitContestSelectionResponse = SubmitContestSelectionResponses[keyof SubmitContestSelectionResponses];
 
 export type PauseDraftData = {
     body?: never;
@@ -9845,7 +4732,7 @@ export type PauseDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -9873,14 +4760,14 @@ export type PauseDraftResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -9958,7 +4845,7 @@ export type ResumeDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -9986,14 +4873,14 @@ export type ResumeDraftResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -10051,7 +4938,7 @@ export type ResumeDraftResponses = {
 
 export type ResumeDraftResponse = ResumeDraftResponses[keyof ResumeDraftResponses];
 
-export type ExtendPickDeadlineData = {
+export type ExtendCurrentTurnData = {
     body: {
         additionalSeconds: number;
     };
@@ -10062,7 +4949,7 @@ export type ExtendPickDeadlineData = {
     url: '/api/v1/drafts/{contestId}/extend';
 };
 
-export type ExtendPickDeadlineResponses = {
+export type ExtendCurrentTurnResponses = {
     /**
      * Default Response
      */
@@ -10073,7 +4960,7 @@ export type ExtendPickDeadlineResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -10101,14 +4988,14 @@ export type ExtendPickDeadlineResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -10164,9 +5051,9 @@ export type ExtendPickDeadlineResponses = {
     };
 };
 
-export type ExtendPickDeadlineResponse = ExtendPickDeadlineResponses[keyof ExtendPickDeadlineResponses];
+export type ExtendCurrentTurnResponse = ExtendCurrentTurnResponses[keyof ExtendCurrentTurnResponses];
 
-export type UndoLiveDraftPickData = {
+export type UndoSnakeDraftSelectionData = {
     body?: never;
     path: {
         contestId: string;
@@ -10175,7 +5062,7 @@ export type UndoLiveDraftPickData = {
     url: '/api/v1/drafts/{contestId}/undo';
 };
 
-export type UndoLiveDraftPickResponses = {
+export type UndoSnakeDraftSelectionResponses = {
     /**
      * Default Response
      */
@@ -10186,7 +5073,7 @@ export type UndoLiveDraftPickResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -10214,14 +5101,14 @@ export type UndoLiveDraftPickResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -10277,9 +5164,9 @@ export type UndoLiveDraftPickResponses = {
     };
 };
 
-export type UndoLiveDraftPickResponse = UndoLiveDraftPickResponses[keyof UndoLiveDraftPickResponses];
+export type UndoSnakeDraftSelectionResponse = UndoSnakeDraftSelectionResponses[keyof UndoSnakeDraftSelectionResponses];
 
-export type SkipLiveDraftPickData = {
+export type SkipSnakeDraftTurnData = {
     body?: never;
     path: {
         contestId: string;
@@ -10288,7 +5175,7 @@ export type SkipLiveDraftPickData = {
     url: '/api/v1/drafts/{contestId}/skip';
 };
 
-export type SkipLiveDraftPickResponses = {
+export type SkipSnakeDraftTurnResponses = {
     /**
      * Default Response
      */
@@ -10299,7 +5186,7 @@ export type SkipLiveDraftPickResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
-        selectionConfig?: {
+        contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
             pickCount?: number;
@@ -10327,14 +5214,14 @@ export type SkipLiveDraftPickResponses = {
         myEntryId: string;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        pickDeadline: string;
+        currentTurnStartedAt: string;
         entries: Array<{
             id: string;
             userId: string;
             name: string;
             isOnClock: boolean;
         }>;
-        picks: Array<{
+        draftPickHistories: Array<{
             pickNumber: number;
             round: number;
             pickInRound: number;
@@ -10390,54 +5277,48 @@ export type SkipLiveDraftPickResponses = {
     };
 };
 
-export type SkipLiveDraftPickResponse = SkipLiveDraftPickResponses[keyof SkipLiveDraftPickResponses];
-
-export type ListScoringTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/scoring/templates';
-};
-
-export type ListScoringTemplatesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        templates: Array<{
-            key: string;
-            sport: string;
-        }>;
-    };
-};
-
-export type ListScoringTemplatesResponse = ListScoringTemplatesResponses[keyof ListScoringTemplatesResponses];
-
-export type GetScoringTemplateData = {
-    body?: never;
-    path: {
-        key: string;
-    };
-    query?: never;
-    url: '/api/v1/scoring/templates/{key}';
-};
-
-export type GetScoringTemplateResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        key: string;
-        config: {
-            [key: string]: unknown;
-        };
-    };
-};
-
-export type GetScoringTemplateResponse = GetScoringTemplateResponses[keyof GetScoringTemplateResponses];
+export type SkipSnakeDraftTurnResponse = SkipSnakeDraftTurnResponses[keyof SkipSnakeDraftTurnResponses];
 
 export type ValidateScoringConfigData = {
-    body?: never;
+    body: {
+        contest_id?: string;
+        sport: string;
+        scoring_type: 'CUMULATIVE' | 'KNOCKOUT' | 'BRACKET' | 'STROKE_PLAY' | 'POSITION';
+        stat_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        position_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        bonus_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        penalty_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        multiplier_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        bracket_round_rules?: Array<{
+            [key: string]: unknown;
+        }>;
+        upset_bonus_config?: null | {
+            [key: string]: unknown;
+        };
+        special_slots?: Array<{
+            [key: string]: unknown;
+        }>;
+        tiebreaker_config?: {
+            [key: string]: unknown;
+        };
+        missed_event_score?: number;
+        missed_event_points?: number;
+        dnf_handling?: 'ZERO' | 'EXCLUDE' | 'LAST_PLACE' | 'PENALTY' | 'MISSED_CUT_SCORE';
+        counting_method?: 'ALL' | 'BEST_N' | 'DROP_LOWEST_N';
+        best_n?: number;
+        drop_lowest_n?: number;
+        lower_is_better?: boolean;
+    };
     path?: never;
     query?: never;
     url: '/api/v1/scoring/config/validate';
@@ -10743,355 +5624,6 @@ export type DismissNotificationResponses = {
 
 export type DismissNotificationResponse = DismissNotificationResponses[keyof DismissNotificationResponses];
 
-export type GetNotificationPreferencesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/preferences';
-};
-
-export type GetNotificationPreferencesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        preferences: {
-            doNotDisturb: boolean;
-            dndSchedule?: {
-                [key: string]: unknown;
-            };
-            categories: {
-                [key: string]: unknown;
-            };
-        };
-    };
-};
-
-export type GetNotificationPreferencesResponse = GetNotificationPreferencesResponses[keyof GetNotificationPreferencesResponses];
-
-export type UpdateNotificationPreferencesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/preferences';
-};
-
-export type UpdateNotificationPreferencesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        preferences: {
-            doNotDisturb: boolean;
-            dndSchedule?: {
-                [key: string]: unknown;
-            };
-            categories: {
-                [key: string]: unknown;
-            };
-        };
-    };
-};
-
-export type UpdateNotificationPreferencesResponse = UpdateNotificationPreferencesResponses[keyof UpdateNotificationPreferencesResponses];
-
-export type UnsubscribeNotificationCategoryData = {
-    body?: never;
-    path: {
-        category: string;
-    };
-    query?: never;
-    url: '/api/v1/notifications/unsubscribe/{category}';
-};
-
-export type UnsubscribeNotificationCategoryResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-        category: string;
-        enabled: false;
-    };
-};
-
-export type UnsubscribeNotificationCategoryResponse = UnsubscribeNotificationCategoryResponses[keyof UnsubscribeNotificationCategoryResponses];
-
-export type ListDevicesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/devices';
-};
-
-export type ListDevicesResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        devices: Array<{
-            id: string;
-            userId: string;
-            platform: string;
-            token: string;
-            appVersion?: string;
-            osVersion?: string;
-            deviceModel?: string;
-            isActive: boolean;
-            registeredAt: string;
-            lastActiveAt: string;
-        }>;
-    };
-};
-
-export type ListDevicesResponse = ListDevicesResponses[keyof ListDevicesResponses];
-
-export type RegisterDeviceData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/devices';
-};
-
-export type RegisterDeviceResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        device: {
-            id: string;
-            userId: string;
-            platform: string;
-            token: string;
-            appVersion?: string;
-            osVersion?: string;
-            deviceModel?: string;
-            isActive: boolean;
-            registeredAt: string;
-            lastActiveAt: string;
-        };
-    };
-};
-
-export type RegisterDeviceResponse = RegisterDeviceResponses[keyof RegisterDeviceResponses];
-
-export type RegisterDeviceAliasData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/devices/register';
-};
-
-export type RegisterDeviceAliasResponses = {
-    /**
-     * Default Response
-     */
-    201: {
-        device: {
-            id: string;
-            userId: string;
-            platform: string;
-            token: string;
-            appVersion?: string;
-            osVersion?: string;
-            deviceModel?: string;
-            isActive: boolean;
-            registeredAt: string;
-            lastActiveAt: string;
-        };
-    };
-};
-
-export type RegisterDeviceAliasResponse = RegisterDeviceAliasResponses[keyof RegisterDeviceAliasResponses];
-
-export type DeactivateDeviceData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/devices/{id}';
-};
-
-export type DeactivateDeviceResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        success: true;
-    };
-};
-
-export type DeactivateDeviceResponse = DeactivateDeviceResponses[keyof DeactivateDeviceResponses];
-
-export type DispatchNotificationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/dispatch';
-};
-
-export type DispatchNotificationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type DispatchNotificationResponse = DispatchNotificationResponses[keyof DispatchNotificationResponses];
-
-export type SendAnnouncementData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/announce';
-};
-
-export type SendAnnouncementResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type SendAnnouncementResponse = SendAnnouncementResponses[keyof SendAnnouncementResponses];
-
-export type ScheduleNotificationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/schedule';
-};
-
-export type ScheduleNotificationResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        scheduled: boolean;
-        id: string;
-    };
-};
-
-export type ScheduleNotificationResponse = ScheduleNotificationResponses[keyof ScheduleNotificationResponses];
-
-export type CancelScheduledNotificationsData = {
-    body?: never;
-    path: {
-        sourceType: string;
-        sourceId: string;
-    };
-    query?: never;
-    url: '/api/v1/notifications/schedule/{sourceType}/{sourceId}';
-};
-
-export type CancelScheduledNotificationsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        cancelled: number;
-    };
-};
-
-export type CancelScheduledNotificationsResponse = CancelScheduledNotificationsResponses[keyof CancelScheduledNotificationsResponses];
-
-export type TriggerWeeklyDigestData = {
-    body?: never;
-    path: {
-        leagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/notifications/digest/{leagueId}';
-};
-
-export type TriggerWeeklyDigestResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type TriggerWeeklyDigestResponse = TriggerWeeklyDigestResponses[keyof TriggerWeeklyDigestResponses];
-
-export type GetNotificationAnalyticsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/analytics';
-};
-
-export type GetNotificationAnalyticsResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        period: {
-            days: number;
-            since: string;
-        };
-        total: number;
-        deliveryRate: number;
-        sent: number;
-        suppressed: number;
-        failed: number;
-        byChannel: {
-            [key: string]: {
-                sent: number;
-                suppressed: number;
-                failed: number;
-            };
-        };
-        suppressionReasons: {
-            [key: string]: number;
-        };
-    };
-};
-
-export type GetNotificationAnalyticsResponse = GetNotificationAnalyticsResponses[keyof GetNotificationAnalyticsResponses];
-
-export type SendTestEmailData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/test/email';
-};
-
-export type SendTestEmailResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type SendTestEmailResponse = SendTestEmailResponses[keyof SendTestEmailResponses];
-
-export type SendTestPushData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/test/push';
-};
-
-export type SendTestPushResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type SendTestPushResponse = SendTestPushResponses[keyof SendTestPushResponses];
-
 export type ListIngestionProvidersData = {
     body?: never;
     path?: never;
@@ -11104,7 +5636,11 @@ export type ListIngestionProvidersResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        providers: Array<{
+            providerId: string;
+            providerName: string;
+            sportsCovered: Array<string>;
+        }>;
     };
 };
 
@@ -11124,7 +5660,20 @@ export type SyncSportDataResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        job: {
+            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            providerId: string;
+            sport: string;
+            eventExternalId?: string;
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt?: string;
+            completedAt?: string;
+            recordsProcessed: number;
+            errors: number;
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        };
     };
 };
 
@@ -11145,7 +5694,20 @@ export type IngestEventScoresResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        job: {
+            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            providerId: string;
+            sport: string;
+            eventExternalId?: string;
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt?: string;
+            completedAt?: string;
+            recordsProcessed: number;
+            errors: number;
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        };
     };
 };
 
@@ -11166,7 +5728,20 @@ export type IngestEventResultsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        job: {
+            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            providerId: string;
+            sport: string;
+            eventExternalId?: string;
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt?: string;
+            completedAt?: string;
+            recordsProcessed: number;
+            errors: number;
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        };
     };
 };
 
@@ -11186,7 +5761,11 @@ export type IngestSportOddsResponses = {
      * Default Response
      */
     200: {
-        success: true;
+        sport: string;
+        eventsWithOdds: number;
+        odds: Array<{
+            [key: string]: unknown;
+        }>;
     };
 };
 

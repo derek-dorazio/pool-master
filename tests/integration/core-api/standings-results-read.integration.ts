@@ -4,8 +4,8 @@
  * This suite is intentionally self-contained:
  * - creates its own owner and second member through real invitation routes
  * - creates its own league, contest, and entries through real routes
- * - persists standings and final results snapshots through Prisma
- * - verifies live standings endpoints and history result endpoints
+ * - persists live entry standings on contest entries through Prisma
+ * - verifies live standings endpoints and first-pass history result endpoints
  */
 import {
   setupIntegrationTests,
@@ -95,7 +95,7 @@ describe('Standings and Results Read Integration', () => {
 
     expect(acceptInviteRes.statusCode).toBe(201);
     challengerMembershipId = acceptInviteRes.json().membership.id;
-    expect(acceptInviteRes.json().membership.role).toBe(LeagueRole.MANAGER);
+    expect(acceptInviteRes.json().membership.role).toBe(LeagueRole.MEMBER);
 
     const contestRes = await getApp().inject({
       method: 'POST',
@@ -107,7 +107,7 @@ describe('Standings and Results Read Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [
@@ -143,84 +143,33 @@ describe('Standings and Results Read Integration', () => {
     challengerEntryId = challengerEntryRes.json().entry.id;
 
     const prisma = getPrisma();
-    const challengerMembership = await prisma.leagueMembership.findUniqueOrThrow({
-      where: { id: challengerMembershipId },
-    });
 
     await prisma.contestEntry.update({
       where: { id: ownerEntryId },
-      data: { rank: 2 },
+      data: {
+        totalScore: 88.25,
+        standingsPosition: 2,
+      },
     });
     await prisma.contestEntry.update({
       where: { id: challengerEntryId },
-      data: { rank: 1 },
+      data: {
+        totalScore: 92.5,
+        standingsPosition: 1,
+      },
     });
 
-    await prisma.contestStanding.createMany({
-      data: [
-        {
-          contestId,
-          entryId: challengerEntryId,
-          rank: 1,
-          totalScore: 92.5,
-          lastUpdatedAt: new Date('2026-04-03T12:00:00Z'),
-        },
-        {
-          contestId,
-          entryId: ownerEntryId,
-          rank: 2,
-          totalScore: 88.25,
-          lastUpdatedAt: new Date('2026-04-03T12:00:00Z'),
-        },
-      ],
-    });
-
-    await prisma.contestResult.createMany({
-      data: [
-        {
-          contestId,
-          entryId: challengerEntryId,
-          finalRank: 1,
-          totalScore: 92.5,
-          prizeAmount: 500,
-          leagueId,
-          leagueMembershipId: challengerMembership.id,
-          contestName: 'Standings Read Contest',
-          contestType: ContestType.SINGLE_EVENT,
-          sport: 'GOLF',
-          numEntries: 2,
-          isWinner: true,
-          isPaidPosition: true,
-          prizeLabel: 'Champion',
-          percentileRank: 100,
-          pointsBehindWinner: 0,
-          pointsBehindNext: 0,
-          closedAt: new Date('2026-04-03T13:00:00Z'),
-        },
-        {
-          contestId,
-          entryId: ownerEntryId,
-          finalRank: 2,
-          totalScore: 88.25,
-          prizeAmount: 0,
-          leagueId,
-          leagueMembershipId: ownerEntryRes.json().entry.leagueMembershipId,
-          contestName: 'Standings Read Contest',
-          contestType: ContestType.SINGLE_EVENT,
-          sport: 'GOLF',
-          numEntries: 2,
-          isWinner: false,
-          isPaidPosition: false,
-          percentileRank: 50,
-          pointsBehindWinner: 4.25,
-          pointsBehindNext: 4.25,
-          closedAt: new Date('2026-04-03T13:00:00Z'),
-        },
-      ],
+    await prisma.contest.update({
+      where: { id: contestId },
+      data: {
+        status: 'COMPLETED',
+        startsAt: new Date('2026-04-03T12:00:00Z'),
+        endsAt: new Date('2026-04-03T13:00:00Z'),
+      },
     });
   });
 
-  it('returns live standings, summary, my-entry context, and historical results from persisted records', async () => {
+  it('returns live standings, summary, my-entry context, and historical results from contest entries', async () => {
     const standingsRes = await getApp().inject({
       method: 'GET',
       url: `${API_ROUTES.contests.standings(contestId)}?page=1&pageSize=10&sortBy=rank`,

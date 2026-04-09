@@ -100,10 +100,10 @@ Agents working on the backend-first refactor should:
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
 | 49-001 | 1 | Define first-pass product as fully free with no billing or tier model | Done | No `League.tier` needed yet |
-| 49-002 | 1 | Remove tenant-based billing persistence models from target refactor model | Pending | `PlanTier`, `TenantUsage`, `EntitlementOverride`, `TenantSubscription` |
-| 49-003 | 2 | Remove or defer Stripe, subscription, invoice, dunning, analytics, and entitlement services | Pending | No payment provider or billing engine first pass |
-| 49-004 | 2 | Remove billing routes and tenant plan-management flows from the active backend contract | Pending | No billing APIs in first pass |
-| 49-005 | 3 | Revisit league tiers only when a real product consumer exists | Pending | Add later, not now |
+| 49-002 | 1 | Remove tenant-based billing persistence models from target refactor model | Done | Removed tenant billing tables and `planTier` |
+| 49-003 | 2 | Remove or defer Stripe, subscription, invoice, dunning, analytics, and entitlement services | Done | Removed billing services and entitlement guard |
+| 49-004 | 2 | Remove billing routes and tenant plan-management flows from the active backend contract | Done | Removed billing/admin billing endpoints |
+| 49-005 | 3 | Revisit league tiers only when a real product consumer exists | Done | Deferred entirely for first pass |
 
 ## Acceptance Criteria
 

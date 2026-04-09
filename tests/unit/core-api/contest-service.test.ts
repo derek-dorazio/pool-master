@@ -2,23 +2,25 @@ import {
   ContestService,
   ContestNotFoundError,
   ContestOperationError,
-  registerScoringTemplates,
 } from '../../../packages/core-api/src/modules/contests/service';
 import type {
+  ContestConfigurationRepository,
   ContestRepository,
   ContestEntryRepository,
   LeagueMembershipRepository,
   LeagueRepository,
-  SelectionConfigRepository,
+  SquadMembershipRepository,
+  SquadRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, SelectionType, ScoringEngine, ContestType } from '@poolmaster/shared/domain';
+import {
+  ContestStatus,
+  SelectionType,
+  ScoringEngine,
+  ContestType,
+  SquadMembershipStatus,
+  SquadStatus,
+} from '@poolmaster/shared/domain';
 import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
-
-beforeAll(() => {
-  registerScoringTemplates({
-    golf_dfs_standard: { sport: 'GOLF', scoring_type: 'CUMULATIVE', stat_rules: [{ stat_key: 'birdie', points_per_unit: 3 }] },
-  });
-});
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return {
@@ -39,10 +41,11 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
   };
 }
 
-function createMockSelectionConfigRepo(
-  overrides: Partial<SelectionConfigRepository> = {},
-): SelectionConfigRepository {
+function createMockContestConfigurationRepo(
+  overrides: Partial<ContestConfigurationRepository> = {},
+): ContestConfigurationRepository {
   return {
+    findById: jest.fn().mockResolvedValue(null),
     findByContest: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
@@ -73,7 +76,7 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
   return {
     findById: jest.fn().mockResolvedValue(null),
     findByContest: jest.fn().mockResolvedValue([]),
-    findByMember: jest.fn().mockResolvedValue([]),
+    findBySquad: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
       id: 'entry-1',
@@ -83,9 +86,12 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
     update: jest.fn().mockImplementation(async (id, updates) => ({
       id,
       contestId: 'contest-1',
-      leagueMembershipId: 'membership-1',
-      name: 'Entry',
+      squadId: 'squad-1',
+      entryNumber: 1,
+      name: 'Ace Squad Entry 1',
+      status: 'ACTIVE',
       totalScore: 0,
+      standingsPosition: undefined,
       isEliminated: false,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
@@ -107,6 +113,58 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
   };
 }
 
+function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
+  return {
+    findById: jest.fn().mockResolvedValue({
+      id: 'squad-1',
+      leagueId: 'league-1',
+      createdBy: 'user-1',
+      name: "Derek's Squad",
+      iconUrl: undefined,
+      status: SquadStatus.ACTIVE,
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    }),
+    findByLeague: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockResolvedValue({
+      id: 'squad-1',
+      leagueId: 'league-1',
+      createdBy: 'user-1',
+      name: "Derek's Squad",
+      iconUrl: undefined,
+      status: SquadStatus.ACTIVE,
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    }),
+    update: jest.fn(),
+    delete: jest.fn(),
+    ...overrides,
+  };
+}
+
+function createMockSquadMembershipRepo(
+  overrides: Partial<SquadMembershipRepository> = {},
+): SquadMembershipRepository {
+  return {
+    findBySquad: jest.fn().mockResolvedValue([]),
+    findBySquadAndUser: jest.fn().mockResolvedValue(null),
+    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({
+      id: 'squad-membership-1',
+      squadId: 'squad-1',
+      leagueId: 'league-1',
+      userId: 'user-1',
+      status: SquadMembershipStatus.ACTIVE,
+      joinedAt: new Date('2026-01-01'),
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    }),
+    update: jest.fn(),
+    delete: jest.fn(),
+    ...overrides,
+  };
+}
+
 function createMockPrisma(overrides: Record<string, unknown> = {}) {
   const user = buildUser({ id: 'user-1', displayName: 'Derek' });
   return {
@@ -115,42 +173,39 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
         {
           id: 'entry-1',
           contestId: 'contest-1',
-          leagueMembershipId: 'membership-1',
-          name: "Derek's Entry",
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: "Derek's Squad Entry 1",
+          status: 'ACTIVE',
           totalScore: 0,
-          rank: null,
+          standingsPosition: null,
           isEliminated: false,
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-01'),
-          membership: {
-            id: 'membership-1',
-            userId: user.id,
-            user,
-          },
+          squad: { id: 'squad-1', name: "Derek's Squad" },
         },
       ]),
       findUnique: jest.fn().mockResolvedValue({
         id: 'entry-1',
         contestId: 'contest-1',
-        leagueMembershipId: 'membership-1',
-        name: "Derek's Entry",
+        squadId: 'squad-1',
+        entryNumber: 1,
+        name: "Derek's Squad Entry 1",
+        status: 'ACTIVE',
         totalScore: 0,
-        rank: null,
+        standingsPosition: null,
         isEliminated: false,
         createdAt: new Date('2026-01-01'),
         updatedAt: new Date('2026-01-01'),
-        membership: {
-          id: 'membership-1',
-          userId: user.id,
-          user,
-        },
+        squad: { id: 'squad-1', name: "Derek's Squad" },
       }),
     },
     rosterPick: { count: jest.fn().mockResolvedValue(0) },
     contestPick: { count: jest.fn().mockResolvedValue(0) },
     bracketPrediction: { count: jest.fn().mockResolvedValue(0) },
-    draftPick: { count: jest.fn().mockResolvedValue(0) },
+    draftPickHistory: { count: jest.fn().mockResolvedValue(0) },
     user: { findUnique: jest.fn().mockResolvedValue(user) },
+    contestConfiguration: { findUnique: jest.fn().mockResolvedValue({ maxEntriesPerSquad: 1 }) },
     ...overrides,
   };
 }
@@ -159,10 +214,10 @@ describe('ContestService', () => {
   describe('createContest', () => {
     it('creates a contest and selection config', async () => {
       const contestRepo = createMockContestRepo();
-      const selectionConfigRepo = createMockSelectionConfigRepo();
+      const contestConfigurationRepo = createMockContestConfigurationRepo();
       const service = new ContestService(
         contestRepo,
-        selectionConfigRepo,
+        contestConfigurationRepo,
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -170,25 +225,29 @@ describe('ContestService', () => {
         leagueId: 'league-1',
         tenantId: 'tenant-1',
         createdBy: 'user-1',
+        sportEventId: 'event-1',
         name: 'Masters Pool',
-        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
-        selectionConfig: { rounds: 5, timePerPickSeconds: 60 },
+        contestConfiguration: { rounds: 5, timePerPickSeconds: 60 },
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        scoringRules: { missedCutPenalty: 80 },
       });
       expect(contestRepo.create).toHaveBeenCalledTimes(1);
-      expect(selectionConfigRepo.create).toHaveBeenCalledTimes(1);
+      expect(contestRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sportEventId: 'event-1',
+        }),
+      );
+      expect(contestConfigurationRepo.create).toHaveBeenCalledTimes(1);
       expect(result.contest.id).toBe('new-contest-id');
-      expect(result.selectionConfig.id).toBe('new-config-id');
+      expect(result.contestConfiguration.id).toBe('new-config-id');
     });
 
     it('creates contest with status DRAFT', async () => {
       const contestRepo = createMockContestRepo();
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -197,10 +256,9 @@ describe('ContestService', () => {
         tenantId: 'tenant-1',
         createdBy: 'user-1',
         name: 'Test',
-        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.SNAKE_DRAFT,
-        selectionConfig: {},
+        contestConfiguration: {},
         scoringEngine: ScoringEngine.CUMULATIVE,
       });
       const createArg = (contestRepo.create as jest.Mock).mock.calls[0][0];
@@ -213,7 +271,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         createMockContestRepo(),
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         leagueRepo,
       );
@@ -223,120 +281,14 @@ describe('ContestService', () => {
           tenantId: 'tenant-1',
           createdBy: 'user-1',
           name: 'Test',
-          sport: 'GOLF',
           contestType: ContestType.SINGLE_EVENT,
           selectionType: SelectionType.SNAKE_DRAFT,
-          selectionConfig: {},
+          contestConfiguration: {},
           scoringEngine: ScoringEngine.CUMULATIVE,
         }),
       ).rejects.toThrow(ContestOperationError);
     });
 
-    it('resolves scoring template key to scoring rules', async () => {
-      const contestRepo = createMockContestRepo();
-      const service = new ContestService(
-        contestRepo,
-        createMockSelectionConfigRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await service.createContest({
-        leagueId: 'league-1',
-        tenantId: 'tenant-1',
-        createdBy: 'user-1',
-        name: 'Golf Pool',
-        sport: 'GOLF',
-        contestType: ContestType.SINGLE_EVENT,
-        selectionType: SelectionType.SNAKE_DRAFT,
-        selectionConfig: {},
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-        scoringTemplateKey: 'golf_dfs_standard',
-      });
-      const createArg = (contestRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.scoringRules).toBeDefined();
-      expect((createArg.scoringRules as Record<string, unknown>).sport).toBe('GOLF');
-    });
-
-    it('throws for unknown scoring template key', async () => {
-      const service = new ContestService(
-        createMockContestRepo(),
-        createMockSelectionConfigRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await expect(
-        service.createContest({
-          leagueId: 'league-1',
-          tenantId: 'tenant-1',
-          createdBy: 'user-1',
-          name: 'Test',
-          sport: 'GOLF',
-          contestType: ContestType.SINGLE_EVENT,
-          selectionType: SelectionType.SNAKE_DRAFT,
-          selectionConfig: {},
-          scoringEngine: ScoringEngine.CUMULATIVE,
-          scoringTemplateKey: 'nonexistent_template',
-        }),
-      ).rejects.toThrow(ContestOperationError);
-    });
-
-    it('validates payout config — rejects duplicate ranks', async () => {
-      const service = new ContestService(
-        createMockContestRepo(),
-        createMockSelectionConfigRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await expect(
-        service.createContest({
-          leagueId: 'league-1',
-          tenantId: 'tenant-1',
-          createdBy: 'user-1',
-          name: 'Test',
-          sport: 'GOLF',
-          contestType: ContestType.SINGLE_EVENT,
-          selectionType: SelectionType.SNAKE_DRAFT,
-          selectionConfig: {},
-          scoringEngine: ScoringEngine.CUMULATIVE,
-          payoutConfig: {
-            payoutStructure: [
-              { rank: 1, percentage: 60 },
-              { rank: 1, percentage: 40 },
-            ],
-            intermediatePrizes: [],
-          },
-        }),
-      ).rejects.toThrow('duplicate ranks');
-    });
-
-    it('validates payout config — rejects percentages over 100', async () => {
-      const service = new ContestService(
-        createMockContestRepo(),
-        createMockSelectionConfigRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await expect(
-        service.createContest({
-          leagueId: 'league-1',
-          tenantId: 'tenant-1',
-          createdBy: 'user-1',
-          name: 'Test',
-          sport: 'GOLF',
-          contestType: ContestType.SINGLE_EVENT,
-          selectionType: SelectionType.SNAKE_DRAFT,
-          selectionConfig: {},
-          scoringEngine: ScoringEngine.CUMULATIVE,
-          payoutConfig: {
-            payoutStructure: [
-              { rank: 1, percentage: 70 },
-              { rank: 2, percentage: 40 },
-            ],
-            intermediatePrizes: [],
-          },
-        }),
-      ).rejects.toThrow('exceeds 100%');
-    });
   });
 
   describe('updateContest', () => {
@@ -347,7 +299,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -362,7 +314,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -374,7 +326,7 @@ describe('ContestService', () => {
     it('throws ContestNotFoundError for missing contest', async () => {
       const service = new ContestService(
         createMockContestRepo(),
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -392,7 +344,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -407,7 +359,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -425,7 +377,7 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -440,7 +392,7 @@ describe('ContestService', () => {
       const contestRepo = createMockContestRepo({
         findById: jest.fn().mockResolvedValue(contest),
       });
-      const configRepo = createMockSelectionConfigRepo({
+      const configRepo = createMockContestConfigurationRepo({
         findByContest: jest.fn().mockResolvedValue({ id: 'cfg-1', contestId: 'c-1' }),
       });
       const service = new ContestService(
@@ -452,13 +404,13 @@ describe('ContestService', () => {
       const result = await service.getContest('c-1', 'tenant-1');
       expect(result).not.toBeNull();
       expect(result!.contest.id).toBe('c-1');
-      expect(result!.selectionConfig).toBeDefined();
+      expect(result!.contestConfiguration).toBeDefined();
     });
 
     it('returns null for missing contest', async () => {
       const service = new ContestService(
         createMockContestRepo(),
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
@@ -478,14 +430,16 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findByMember: jest.fn().mockResolvedValue([]),
+        findBySquad: jest.fn().mockResolvedValue([]),
       });
       const prisma = createMockPrisma();
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         membershipRepo,
         createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo(),
         entryRepo,
         prisma as any,
       );
@@ -495,8 +449,9 @@ describe('ContestService', () => {
       expect(result.created).toBe(true);
       expect(entryRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         contestId: 'contest-1',
-        leagueMembershipId: 'membership-1',
-        name: "Derek's Entry",
+        squadId: 'squad-1',
+        entryNumber: 1,
+        name: "Derek's Squad Entry 1",
       }));
     });
 
@@ -511,9 +466,22 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         membershipRepo,
         createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
         createMockEntryRepo(),
         createMockPrisma() as any,
       );
@@ -522,7 +490,7 @@ describe('ContestService', () => {
 
       expect(result.isJoined).toBe(true);
       expect(result.myEntryId).toBe('entry-1');
-      expect(result.entries[0].ownerDisplayName).toBe('Derek');
+      expect(result.entries[0].squadName).toBe("Derek's Squad");
     });
 
     it('rejects leaving a contest after picks already exist', async () => {
@@ -535,13 +503,16 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findByMember: jest.fn().mockResolvedValue([
+        findBySquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
-            leagueMembershipId: 'membership-1',
-            name: "Derek's Entry",
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
             totalScore: 0,
+            standingsPosition: undefined,
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -553,9 +524,22 @@ describe('ContestService', () => {
       });
       const service = new ContestService(
         contestRepo,
-        createMockSelectionConfigRepo(),
+        createMockContestConfigurationRepo(),
         membershipRepo,
         createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
         entryRepo,
         prisma as any,
       );

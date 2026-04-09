@@ -1,14 +1,24 @@
 /**
- * ScoringService — reads from ScoreStore and returns formatted leaderboard data.
+ * ScoringService — reads persisted contest scoring state and exposes
+ * leaderboard, entry breakdown, participant history, and rollup operations.
  */
 
 import type { PrismaClient } from '@prisma/client';
-import { SelectionType } from '@poolmaster/shared/domain';
-import type { ScoreStore, EntryContestScore, ParticipantEventScore } from './storage/score-store';
-import type { StandingsRollup, RollupResult } from './rollup/standings-rollup';
+import type { RollupResult, StandingsRollup } from './rollup/standings-rollup';
 import { assignRanks } from './rollup/standings-rollup';
 
-// --- Response Types ---
+export interface ScoreBreakdownView {
+  participantId: string;
+  participantName: string | null;
+  contextLabel: string | null;
+  statPoints: number;
+  positionPoints: number;
+  bonusPoints: number;
+  penaltyPoints: number;
+  multipliedTotal: number;
+  dnfAdjustment: number;
+  finalScore: number;
+}
 
 export interface LeaderboardEntry {
   entryId: string;
@@ -17,21 +27,39 @@ export interface LeaderboardEntry {
   isTied: boolean;
 }
 
+export interface EntryContestScoreView {
+  contestId: string;
+  entryId: string;
+  eventTimestamp: string;
+  pointsEarned: number;
+  runningTotal: number;
+  participantBreakdowns: ScoreBreakdownView[];
+}
+
 export interface EntryScoreDetail {
   entryId: string;
   contestId: string;
   totalScore: number;
-  timeline: EntryContestScore[];
+  timeline: EntryContestScoreView[];
 }
 
 interface BreakdownContext {
   contextLabel: string | null;
 }
 
+export interface ParticipantEventScoreView {
+  contestId: string;
+  participantId: string;
+  eventTimestamp: string;
+  stats: Record<string, number>;
+  points: number;
+  breakdown: ScoreBreakdownView;
+}
+
 export interface ParticipantScoreHistory {
   participantId: string;
   contestId: string;
-  scores: ParticipantEventScore[];
+  scores: ParticipantEventScoreView[];
   totalPoints: number;
 }
 
@@ -43,227 +71,171 @@ export interface HealthDetail {
   timestamp: string;
 }
 
-// --- Service ---
-
 export interface ScoringServiceDeps {
-  scoreStore: ScoreStore;
   standingsRollup: StandingsRollup;
   prisma: PrismaClient;
 }
 
-/** Service layer for leaderboard and scoring queries. */
 export class ScoringService {
-  private readonly scoreStore: ScoreStore;
   private readonly standingsRollup: StandingsRollup;
   private readonly prisma: PrismaClient;
 
   constructor(deps: ScoringServiceDeps) {
-    this.scoreStore = deps.scoreStore;
     this.standingsRollup = deps.standingsRollup;
     this.prisma = deps.prisma;
   }
 
-  /** Get full leaderboard for a contest with ranks. */
   async getLeaderboard(contestId: string): Promise<LeaderboardEntry[]> {
-    const leaderboard = await this.scoreStore.getLeaderboard(contestId);
-    return assignRanks(leaderboard);
+    const entries = await this.prisma.contestEntry.findMany({
+      where: { contestId },
+      orderBy: [{ totalScore: 'desc' }, { id: 'asc' }],
+      select: { id: true, totalScore: true },
+    });
+    return assignRanks(entries.map((entry) => ({ entryId: entry.id, total: entry.totalScore })));
   }
 
-  /** Get detailed score breakdown for a specific entry. */
   async getEntryScore(contestId: string, entryId: string): Promise<EntryScoreDetail> {
-    const timeline = await this.scoreStore.getEntryTimeline(contestId, entryId);
-    const totalScore = await this.scoreStore.getEntryTotal(contestId, entryId);
-    const participantIds = Array.from(new Set(
-      timeline.flatMap((event) => event.participantBreakdowns.map((breakdown) => breakdown.participantId)),
-    ));
-    const [participants, contextByParticipantId] = await Promise.all([
-      participantIds.length === 0
-        ? Promise.resolve([])
-        : this.prisma.participant.findMany({
-            where: { id: { in: participantIds } },
-            select: { id: true, name: true },
-          }),
-      this.getBreakdownContext(contestId, entryId),
-    ]);
-    const participantNameById = new Map(participants.map((participant) => [participant.id, participant.name]));
+    const entry = await this.prisma.contestEntry.findUnique({
+      where: { id: entryId },
+      select: {
+        id: true,
+        contestId: true,
+        totalScore: true,
+      },
+    });
+    if (!entry || entry.contestId !== contestId) {
+      return {
+        entryId,
+        contestId,
+        totalScore: 0,
+        timeline: [],
+      };
+    }
 
+    const scoreEvents = await this.prisma.contestEntryParticipantScoreEvent.findMany({
+      where: {
+        participantScore: {
+          entryId,
+        },
+      },
+      include: {
+        participantScore: {
+          include: {
+            rosterPick: {
+              include: {
+                sportEventParticipant: {
+                  include: {
+                    participant: {
+                      select: { id: true, name: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+
+    const contextByParticipantId = await this.getBreakdownContext(contestId, entryId);
+
+    let runningTotal = 0;
     return {
       entryId,
       contestId,
-      totalScore,
-      timeline: timeline.map((event) => ({
-        ...event,
-        participantBreakdowns: event.participantBreakdowns.map((breakdown) => ({
-          ...breakdown,
-          participantName: participantNameById.get(breakdown.participantId) ?? null,
-          contextLabel: contextByParticipantId.get(breakdown.participantId)?.contextLabel ?? null,
-        })),
-      })),
+      totalScore: entry.totalScore,
+      timeline: scoreEvents.map((event) => {
+        const participant =
+          event.participantScore.rosterPick.sportEventParticipant.participant;
+        runningTotal += event.points;
+        return {
+          contestId,
+          entryId,
+          eventTimestamp: event.createdAt.toISOString(),
+          pointsEarned: event.points,
+          runningTotal,
+          participantBreakdowns: [
+            buildBreakdown(
+              participant.id,
+              participant.name,
+              event.points,
+              event.detailsJson as Record<string, unknown>,
+              contextByParticipantId.get(participant.id)?.contextLabel ?? null,
+            ),
+          ],
+        };
+      }),
     };
   }
 
   private async getBreakdownContext(
-    contestId: string,
-    entryId: string,
+    _contestId: string,
+    _entryId: string,
   ): Promise<Map<string, BreakdownContext>> {
-    const contest = await this.prisma.contest.findUnique({
-      where: { id: contestId },
-      select: { selectionType: true },
-    });
-    if (!contest) {
-      return new Map();
-    }
-
-    switch (contest.selectionType) {
-      case SelectionType.PICK_EM:
-        return this.getPickEmBreakdownContext(contestId, entryId);
-      case SelectionType.BRACKET_PICK_EM:
-        return this.getBracketBreakdownContext(contestId, entryId);
-      default:
-        return new Map();
-    }
+    return new Map();
   }
 
-  private async getPickEmBreakdownContext(
-    contestId: string,
-    entryId: string,
-  ): Promise<Map<string, BreakdownContext>> {
-    const [contestPicks, contestMatchups] = await Promise.all([
-      this.prisma.contestPick.findMany({
-        where: { contestId, entryId },
-        select: {
-          participantId: true,
-          period: true,
-          matchupIndex: true,
-          periodLabel: true,
-          eventId: true,
-        },
-      }),
-      this.prisma.contestMatchup.findMany({
-        where: { contestId },
-        select: {
-          eventId: true,
-          period: true,
-          matchupIndex: true,
-          label: true,
-        },
-      }),
-    ]);
-
-    const matchupByPeriod = new Map(
-      contestMatchups.map((matchup) => [`${matchup.period}:${matchup.matchupIndex}`, matchup]),
-    );
-    const matchupByEventId = new Map(
-      contestMatchups
-        .filter((matchup) => matchup.eventId)
-        .map((matchup) => [matchup.eventId!, matchup]),
-    );
-    const picksByParticipantId = new Map<string, typeof contestPicks>();
-
-    for (const pick of contestPicks) {
-      const existing = picksByParticipantId.get(pick.participantId) ?? [];
-      existing.push(pick);
-      picksByParticipantId.set(pick.participantId, existing);
-    }
-
-    const contextByParticipantId = new Map<string, BreakdownContext>();
-    for (const [participantId, picks] of picksByParticipantId.entries()) {
-      if (picks.length !== 1) {
-        continue;
-      }
-
-      const pick = picks[0];
-      const matchup = pick.eventId
-        ? matchupByEventId.get(pick.eventId) ?? matchupByPeriod.get(`${pick.period}:${pick.matchupIndex}`)
-        : matchupByPeriod.get(`${pick.period}:${pick.matchupIndex}`);
-      const contextLabel = matchup?.label
-        ?? (pick.periodLabel
-          ? `${pick.periodLabel} Matchup ${pick.matchupIndex}`
-          : `Period ${pick.period} Matchup ${pick.matchupIndex}`);
-
-      contextByParticipantId.set(participantId, { contextLabel });
-    }
-
-    return contextByParticipantId;
-  }
-
-  private async getBracketBreakdownContext(
-    contestId: string,
-    entryId: string,
-  ): Promise<Map<string, BreakdownContext>> {
-    const [prediction, contestMatchups] = await Promise.all([
-      this.prisma.bracketPrediction.findUnique({
-        where: { entryId },
-        select: { predictions: true },
-      }),
-      this.prisma.contestMatchup.findMany({
-        where: { contestId },
-        select: {
-          roundNumber: true,
-          matchNumber: true,
-          label: true,
-        },
-      }),
-    ]);
-
-    const predictionRows = Array.isArray(prediction?.predictions)
-      ? prediction.predictions as Array<Record<string, unknown>>
-      : [];
-    const matchupByRound = new Map(
-      contestMatchups.map((matchup) => [`${matchup.roundNumber ?? 0}:${matchup.matchNumber ?? 0}`, matchup]),
-    );
-    const predictionsByParticipantId = new Map<string, Array<{ roundNumber: number; matchNumber: number }>>();
-
-    for (const row of predictionRows) {
-      const predictedWinnerId = typeof row.predictedWinnerId === 'string' ? row.predictedWinnerId : null;
-      const roundNumber = typeof row.roundNumber === 'number' ? row.roundNumber : null;
-      const matchNumber = typeof row.matchNumber === 'number' ? row.matchNumber : null;
-      if (!predictedWinnerId || roundNumber === null || matchNumber === null) {
-        continue;
-      }
-
-      const existing = predictionsByParticipantId.get(predictedWinnerId) ?? [];
-      existing.push({ roundNumber, matchNumber });
-      predictionsByParticipantId.set(predictedWinnerId, existing);
-    }
-
-    const contextByParticipantId = new Map<string, BreakdownContext>();
-    for (const [participantId, predictions] of predictionsByParticipantId.entries()) {
-      if (predictions.length !== 1) {
-        continue;
-      }
-
-      const predictionItem = predictions[0];
-      const matchup = matchupByRound.get(`${predictionItem.roundNumber}:${predictionItem.matchNumber}`);
-      const contextLabel = matchup?.label
-        ?? `Round ${predictionItem.roundNumber} Match ${predictionItem.matchNumber}`;
-      contextByParticipantId.set(participantId, { contextLabel });
-    }
-
-    return contextByParticipantId;
-  }
-
-  /** Get participant score history for a contest. */
   async getParticipantScoreHistory(
     contestId: string,
     participantId: string,
   ): Promise<ParticipantScoreHistory> {
-    const scores = await this.scoreStore.getParticipantScores(contestId, participantId);
-    const totalPoints = scores.reduce((sum, s) => sum + s.points, 0);
+    const scoreEvents = await this.prisma.contestEntryParticipantScoreEvent.findMany({
+      where: {
+        participantScore: {
+          entry: { contestId },
+          rosterPick: {
+            sportEventParticipant: { participantId },
+          },
+        },
+      },
+      include: {
+        participantScore: {
+          include: {
+            rosterPick: {
+              include: {
+                sportEventParticipant: {
+                  include: {
+                    participant: { select: { id: true, name: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+
+    const participantName =
+      scoreEvents[0]?.participantScore.rosterPick.sportEventParticipant.participant.name ?? null;
+    const scores = scoreEvents.map((event) => ({
+      contestId,
+      participantId,
+      eventTimestamp: event.createdAt.toISOString(),
+      stats: extractNumericStats(event.detailsJson as Record<string, unknown>),
+      points: event.points,
+      breakdown: buildBreakdown(
+        participantId,
+        participantName,
+        event.points,
+        event.detailsJson as Record<string, unknown>,
+        null,
+      ),
+    }));
+
     return {
       participantId,
       contestId,
       scores,
-      totalPoints,
+      totalPoints: scores.reduce((sum, score) => sum + score.points, 0),
     };
   }
 
-  /** Trigger manual rollup for a contest. */
   async triggerRollup(contestId: string): Promise<RollupResult> {
     return this.standingsRollup.rollupContest(contestId);
   }
 
-  /** Get detailed health information. */
   getHealth(): HealthDetail {
     return {
       status: 'ok',
@@ -273,4 +245,54 @@ export class ScoringService {
       timestamp: new Date().toISOString(),
     };
   }
+}
+
+function buildBreakdown(
+  participantId: string,
+  participantName: string | null,
+  points: number,
+  details: Record<string, unknown>,
+  contextLabel: string | null,
+): ScoreBreakdownView {
+  const eventType = typeof details.eventType === 'string' ? details.eventType : null;
+  const scoreToPar =
+    typeof details.scoreToPar === 'number' ? details.scoreToPar : undefined;
+  const penaltyApplied =
+    typeof details.penaltyApplied === 'number' ? details.penaltyApplied : undefined;
+
+  let statPoints = points;
+  let bonusPoints = 0;
+  let penaltyPoints = 0;
+
+  if (scoreToPar !== undefined) {
+    statPoints = scoreToPar;
+  }
+
+  if (penaltyApplied !== undefined) {
+    penaltyPoints = penaltyApplied;
+  }
+
+  if (eventType === 'ROUND_MULTIPLIER' || eventType === 'SEED_DIFFERENTIAL_BONUS') {
+    statPoints = 0;
+    bonusPoints = points;
+  }
+
+  return {
+    participantId,
+    participantName,
+    contextLabel,
+    statPoints,
+    positionPoints: 0,
+    bonusPoints,
+    penaltyPoints,
+    multipliedTotal: points,
+    dnfAdjustment: 0,
+    finalScore: points,
+  };
+}
+
+function extractNumericStats(details: Record<string, unknown>): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(details).filter(([, value]) => typeof value === 'number'),
+  ) as Record<string, number>;
 }

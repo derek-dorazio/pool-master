@@ -124,9 +124,3 @@ export const ParticipantSeasonRecordResponseSchema = z.object({
 export const ParticipantSeasonRecordListResponseSchema = z.object({
   seasonRecords: z.array(ParticipantSeasonRecordDtoSchema),
 });
-
-export const ContestPoolResponseSchema = z.object({
-  pool: z.array(ParticipantDtoSchema),
-  contestId: z.string(),
-});
-export type ContestPoolResponse = z.infer<typeof ContestPoolResponseSchema>;

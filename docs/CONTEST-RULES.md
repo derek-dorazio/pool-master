@@ -113,7 +113,7 @@ All survivor contests share these configurable options:
 - Missed cut: 80 strokes per missed round
 - Best N of M counting method (e.g., best 4 of 6 golfers)
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -187,7 +187,7 @@ All survivor contests share these configurable options:
 - 100+ rushing yards: +3 pts
 - 100+ receiving yards: +3 pts
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -243,7 +243,7 @@ All survivor contests share these configurable options:
 | Double-double | +1.5 bonus |
 | Triple-double | +3 bonus |
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -303,7 +303,7 @@ All survivor contests share these configurable options:
 | **Seed Multiplier** | Correct pick points multiplied by the winning team's seed number |
 | **Flat** | 1 point per correct pick regardless of round |
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -365,7 +365,7 @@ All survivor contests share these configurable options:
 | Lost 5-9 spots | -3 |
 | Lost 10+ spots | -5 |
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -414,7 +414,7 @@ All survivor contests share these configurable options:
 | Break points won | +0.5 per break |
 | Straight-sets win | +5 |
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -469,7 +469,7 @@ All survivor contests share these configurable options:
 | Own goal | -2 |
 | Penalty missed | -2 |
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -522,7 +522,7 @@ All survivor contests share these configurable options:
 
 **Bonus:** Led any lap: +2 pts
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -563,7 +563,7 @@ All survivor contests share these configurable options:
 | 5th | 15 |
 | 6th-10th | 5 |
 
-### Selection Templates
+### Example Configurations
 
 | Template | Type | Config |
 |---|---|---|
@@ -574,8 +574,8 @@ All survivor contests share these configurable options:
 
 ## Source Files
 
-- Scoring templates: `packages/core-api/src/modules/scoring/templates/`
-- Selection templates: `packages/core-api/src/modules/drafts/templates/selection-templates.ts`
+- Launch scoring rules and aggregation rules are defined in `plans/51-scoring-and-participant-data-review.md`
+- Later rule expansion ideas are tracked in `plans/52-potential-rules-function-expansion.md`
 - Contest structures specification: `plans/archive/2026-04-completed-wave/02a-poolmaster-contest-structures.md`
 - Scoring config schemas: `packages/shared/domain/scoring-config.ts`
 - Domain enums: `packages/shared/domain/enums.ts`

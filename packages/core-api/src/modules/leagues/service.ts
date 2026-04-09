@@ -9,7 +9,7 @@ import type {
   LeagueSettings,
   LeagueVisibility,
 } from '@poolmaster/shared/domain';
-import { InvitePolicy, LeagueRole, WeekDay } from '@poolmaster/shared/domain';
+import { InvitePolicy, LeagueMembershipStatus, LeagueRole, WeekDay } from '@poolmaster/shared/domain';
 
 export interface CreateLeagueInput {
   tenantId: string;
@@ -59,6 +59,7 @@ export class LeagueService {
       leagueId: league.id,
       userId: input.createdBy,
       role: LeagueRole.OWNER,
+      status: LeagueMembershipStatus.ACTIVE,
       permissions: [],
       joinedAt: new Date(),
     });
@@ -67,6 +68,14 @@ export class LeagueService {
 
   async findById(leagueId: string, tenantId: string): Promise<League | null> {
     return this.leagueRepo.findById(leagueId, tenantId);
+  }
+
+  async findByUser(userId: string): Promise<League[]> {
+    const memberships = await this.membershipRepo.findByUser(userId);
+    const leagues = await Promise.all(
+      memberships.map((membership) => this.leagueRepo.findById(membership.leagueId, '')),
+    );
+    return leagues.filter((league): league is League => league !== null);
   }
 
   async findByTenant(tenantId: string): Promise<League[]> {

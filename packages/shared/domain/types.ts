@@ -1,9 +1,10 @@
 /**
  * Domain types — TypeScript interfaces for the full PoolMaster domain model.
  *
- * Aligned to poolmaster-contest-structures-v4.md.
- * Three contest categories: squad selection pools, survivor/knockout pools, pick'em/bracket.
- * No roster management, waivers, trades, or DFS mechanics.
+ * Aligned to poolmaster-contest-structures-v4.md and the active refactor plans.
+ * The current backend is centered on roster-based contests and core league/
+ * contest operations; deferred mechanics remain in the shared type catalog
+ * until they are rebuilt or removed.
  */
 
 import type {
@@ -16,19 +17,18 @@ import type {
   InjuryStatusCode,
   InvitationStatus,
   InvitePolicy,
-  PoolType,
   InviteType,
+  LeagueMembershipStatus,
   LeagueRole,
   LeagueVisibility,
   MappingConfidence,
   ParticipantStatus,
   ParticipantType,
-  PricingMethod,
   ScoringEngine,
   SelectionType,
   Sport,
-  SurvivorStyle,
-  TierAssignmentMethod,
+  SquadMembershipStatus,
+  SquadStatus,
   WeekDay,
 } from './enums';
 
@@ -45,7 +45,6 @@ export interface DomainEntity {
 export interface Tenant extends DomainEntity {
   name: string;
   slug: string;
-  planTier: string;
   settings: Record<string, unknown>;
   defaultLocale: string;
   defaultTimezone: string;
@@ -95,7 +94,24 @@ export interface LeagueMembership extends DomainEntity {
   leagueId: string;
   userId: string;
   role: LeagueRole;
+  status: LeagueMembershipStatus;
   permissions: CommissionerPermission[];
+  joinedAt: Date;
+}
+
+export interface Squad extends DomainEntity {
+  leagueId: string;
+  createdBy: string;
+  name: string;
+  iconUrl?: string;
+  status: SquadStatus;
+}
+
+export interface SquadMembership extends DomainEntity {
+  squadId: string;
+  leagueId: string;
+  userId: string;
+  status: SquadMembershipStatus;
   joinedAt: Date;
 }
 
@@ -118,7 +134,6 @@ export interface LeagueSettings {
   inviteLinkCode?: string;
   allowMidSeasonJoin: boolean;
   requireApproval: boolean;
-  defaultScoringTemplateId?: string;
   defaultDraftType?: DraftMode;
   defaultPayoutTemplateId?: string;
   activityFeedEnabled: boolean;
@@ -213,7 +228,7 @@ export interface ParticipantProviderMapping extends DomainEntity {
 
 export interface Contest extends DomainEntity {
   leagueId: string;
-  seasonId: string;
+  sportEventId?: string;
   name: string;
   status: ContestStatus;
   contestType: ContestType;
@@ -226,96 +241,7 @@ export interface Contest extends DomainEntity {
   startsAt?: Date;
   endsAt?: Date;
   lockAt?: Date;
-
-  // Scoring behaviour
   scoringStopsOnElimination: boolean;
-  scoringRules: ScoringRulesConfig;
-
-  // Links
-  selectionConfigId?: string;
-}
-
-/**
- * Structured scoring configuration — stored as JSONB per contest.
- * Only the fields relevant to the contest's scoringEngine are populated.
- */
-export interface ScoringRulesConfig {
-  // Advancement scoring (team wins / series wins)
-  roundValues?: number[];                      // [1, 2, 4, 8] — multiplier per playoff round
-
-  // Stat accumulation scoring (player personal stats)
-  statWeights?: Record<string, number>;        // { goal: 6, assist: 3, cleanSheet: 4 }
-
-  // Stroke play (golf)
-  missedCutPenalty?: number;                   // e.g. 80 per missed round
-  bestBallN?: number;                          // pick 6, use best 4
-
-  // Position scoring (horse racing)
-  positionPoints?: Record<number, number>;     // { 1: 100, 2: 60, 3: 40 }
-
-  // Bracket / pick'em
-  roundMultipliers?: number[];                 // points per correct pick per round
-  seriesLengthBonus?: number;                  // bonus for predicting series length
-  correctScoreBonus?: number;                  // bonus for exact score prediction
-  groupStagePredictions?: boolean;             // soccer: includes group stage W/D/L
-
-  // Fight result (UFC)
-  resultWeights?: Record<string, number>;      // { ko_tko: 10, submission: 9, decision: 7 }
-  bonusWeights?: Record<string, number>;       // { round1_finish: 2, round1_ko: 3 }
-
-  // Confidence weighting (optional for pick'em)
-  confidenceWeighted?: boolean;
-
-  // Tiebreaker
-  tiebreakerRule?: string;
-}
-
-// --- Selection Configuration ---
-
-/**
- * How participants make their picks for a contest.
- * Replaces the old DraftConfiguration — covers drafts, tiered picks, budget picks,
- * survivor picks, and bracket predictions.
- */
-export interface SelectionConfig extends DomainEntity {
-  contestId: string;
-  selectionType: SelectionType;
-
-  // --- Snake Draft config ---
-  draftMode?: DraftMode;
-  rounds?: number;
-  timePerPickSeconds?: number;
-  autoPickPolicy?: string;
-
-  // --- Tiered Pick config ---
-  tierConfig?: TierDefinition[];
-  tierAssignmentMethod?: TierAssignmentMethod;
-
-  // --- Budget Pick config ---
-  budget?: number;
-  pricingMethod?: PricingMethod;
-  rosterSize?: number;
-
-  // --- Open Selection config ---
-  pickCount?: number;                          // "Pick 8" — how many from the full field
-
-  // --- Survivor config ---
-  survivorStyle?: SurvivorStyle;
-  picksPerPeriod?: number;                     // typically 1; 2 = Double Pick
-  oneEntityPerSeason?: boolean;                // each team/player usable only once
-  strikesBeforeElimination?: number;            // 0 = instant elimination
-  buybacksAllowed?: boolean;
-
-  // --- Bracket / Pick'em config ---
-  roundValues?: number[];                      // bracket: points per correct pick per round
-  startRound?: string;                         // e.g. "SWEET_16", "QUARTERFINALS"
-
-  // --- Shared ---
-  isExclusive: boolean;
-  bestBallN?: number;                          // golf: use best N of submitted picks
-  missedCutPenalty?: number;
-  captainSlot?: boolean;                       // optional 2x multiplier on one pick
-  captainMultiplier?: number;
 }
 
 export interface TierDefinition {
@@ -362,76 +288,20 @@ export interface TierConfig {
   tiers: TierDefinition[];
 }
 
-// --- Contest Pool ---
-
-export interface ContestPool extends DomainEntity {
-  contestId: string;
-  sport: Sport;
-  eventId?: string;
-  poolType: PoolType;
-  config: ContestPoolConfig;
-  excludedParticipantIds: string[];
-  poolLocked: boolean;
-  poolLockedAt?: Date;
-}
-
-export interface ContestPoolConfig {
-  // EVENT_FIELD config
-  includeAlternates?: boolean;
-  autoUpdateOnFieldChange?: boolean;
-
-  // RANKING_CUTOFF config
-  rankingType?: string;
-  maxRank?: number;
-
-  // CUSTOM config
-  customParticipantIds?: string[];
-}
-
-export interface ContestParticipantPool extends DomainEntity {
-  poolId: string;
-  contestId: string;
-  participantId: string;
-  cost?: number;
-  tier?: string;
-  tierAssignmentMethod?: TierAssignmentMethod;
-  ranking?: number;
-  isAvailable: boolean;
-  unavailableReason?: string;
-}
-
-/**
- * A contest-owned matchup or bracket slot that entries can predict.
- * Used by pick'em and bracket contests to define the actual prediction surface.
- */
-export interface ContestMatchup extends DomainEntity {
-  contestId: string;
-  eventId?: string;
-  period: number;                             // week / round / slate number
-  matchupIndex: number;                       // stable order within the period
-  roundNumber?: number;                       // bracket round, if applicable
-  matchNumber?: number;                       // bracket match number, if applicable
-  label?: string;                             // "Week 5 Game 3", "Sweet 16 - Midwest 1"
-  homeParticipantId?: string;
-  awayParticipantId?: string;
-  startsAt?: Date;
-  lockAt?: Date;
-  metadata: Record<string, unknown>;
-}
-
 // --- Entry & Picks ---
 
 /**
  * An entry in a contest — one per league member per contest.
- * For squad contests, this owns the drafted/picked roster.
- * For survivor/pick'em, this owns the submitted picks.
+ * For roster-based contests, this owns the selected roster.
  */
 export interface ContestEntry extends DomainEntity {
   contestId: string;
-  leagueMembershipId: string;
+  squadId: string;
+  entryNumber: number;
   name: string;
+  status: 'ACTIVE' | 'INACTIVE';
   totalScore: number;
-  rank?: number;
+  standingsPosition?: number;
   isEliminated: boolean;
 }
 
@@ -441,50 +311,11 @@ export interface ContestEntry extends DomainEntity {
  */
 export interface RosterPick extends DomainEntity {
   entryId: string;
-  participantId: string;
+  sportEventParticipantId: string;
   draftRound?: number;
   draftPickNumber?: number;
   pickedAt: Date;
   autoPicked: boolean;
-}
-
-/**
- * A single pick within a survivor or pick'em contest.
- * Pick'em contests may have multiple matchup picks per entry per period.
- */
-export interface ContestPick extends DomainEntity {
-  entryId: string;
-  contestId: string;
-  participantId: string;
-  eventId?: string;                           // optional linked sport event for matchup-based contests
-  period: number;
-  matchupIndex: number;                       // 1..N within the period; survivor/live-pick usually uses 1
-  periodLabel?: string;                        // "Week 5", "Round 2", "Quarterfinals"
-  pickedAt: Date;
-  isCorrect?: boolean;                         // resolved after period ends
-  confidenceWeight?: number;                   // for confidence-weighted pick'em
-  multiplier?: number;                         // for multiplier survivor (NCAAF-5)
-  isReplacement?: boolean;                     // for buyback/hold'em replacement picks
-}
-
-/**
- * A bracket prediction — all round predictions submitted at once.
- */
-export interface BracketPrediction extends DomainEntity {
-  entryId: string;
-  contestId: string;
-  predictions: BracketMatchPrediction[];
-  submittedAt: Date;
-  tiebreakerValue?: number;                    // e.g. predicted total score of final
-}
-
-export interface BracketMatchPrediction {
-  roundNumber: number;
-  matchNumber: number;
-  predictedWinnerId: string;
-  predictedSeriesLength?: number;              // for NHL/NBA series
-  predictedScore?: string;                     // for soccer exact score
-  isCorrect?: boolean;
 }
 
 // --- Draft Session (Snake Draft only) ---
@@ -495,31 +326,22 @@ export interface DraftSession extends DomainEntity {
   currentPickNumber: number;
   currentEntryId?: string;
   startedAt?: Date;
-  pickDeadline?: Date;
+  currentTurnStartedAt?: Date;
 }
 
-export interface DraftPick extends DomainEntity {
+export interface DraftPickHistory extends DomainEntity {
   draftSessionId: string;
+  rosterPickId: string;
   entryId: string;
-  participantId: string;
   pickNumber: number;
   round: number;
   pickInRound: number;
-  pickedAt: Date;
   autoPicked: boolean;
 }
 
 // --- Standings & Results ---
 
-export interface ContestStanding extends DomainEntity {
-  contestId: string;
-  entryId: string;
-  rank: number;
-  totalScore: number;
-  lastUpdatedAt: Date;
-}
-
-export interface ContestResult extends DomainEntity {
+export interface ContestHistoryResult extends DomainEntity {
   contestId: string;
   entryId: string;
   finalRank: number;
@@ -528,7 +350,6 @@ export interface ContestResult extends DomainEntity {
 
   // Denormalised history fields (immutable after contest close)
   leagueId?: string;
-  seasonId?: string;
   leagueMembershipId?: string;
   contestName?: string;
   contestType?: string;
@@ -551,16 +372,6 @@ export interface ContestResult extends DomainEntity {
 
 // --- Contest History ---
 
-export interface TeamRosterHistory {
-  id: string;
-  contestId: string;
-  entryId: string;
-  lockedAt: Date;
-  roster: RosterHistoryEntry[];
-  draftBudgetUsed?: number;
-  tiersSelected?: TierSelection[];
-}
-
 export interface RosterHistoryEntry {
   participantId: string;
   participantName: string;
@@ -576,7 +387,7 @@ export interface TierSelection {
   participantIds: string[];
 }
 
-export interface PayoutHistoryRecord {
+export interface ContestHistoryPayout {
   id: string;
   contestId: string;
   leagueId: string;
@@ -602,8 +413,8 @@ export interface ContestHistorySummary {
   startedAt?: Date;
   endedAt?: Date;
   numEntries: number;
-  finalStandings: ContestResult[];
-  payouts: PayoutHistoryRecord[];
+  finalStandings: ContestHistoryResult[];
+  payouts: ContestHistoryPayout[];
   highlights: ContestHighlights;
 }
 
@@ -645,8 +456,7 @@ export type AdminPermission =
   | 'user.view' | 'user.edit' | 'user.reset_password' | 'user.force_logout' | 'user.merge'
   | 'contest.view' | 'contest.override' | 'contest.recalculate' | 'contest.close'
   | 'sportsdata.view' | 'sportsdata.configure' | 'sportsdata.re_ingest'
-  | 'flags.view' | 'flags.edit'
-  | 'platform.health' | 'platform.announcements' | 'platform.migrations'
+  | 'platform.health' | 'platform.migrations'
   | 'audit.view';
 
 export interface AdminUser extends DomainEntity {
@@ -674,45 +484,6 @@ export interface AdminAuditEntry {
   reason?: string;
   ipAddress?: string;
   userAgent?: string;
-  createdAt: Date;
-}
-
-export interface FeatureFlag extends DomainEntity {
-  key: string;
-  name: string;
-  description?: string;
-  flagType: string;
-  enabledGlobally: boolean;
-  rolloutPercentage?: number;
-  owner?: string;
-  updatedById?: string;
-}
-
-export interface FeatureFlagOverride {
-  id: string;
-  flagId: string;
-  tenantId: string;
-  enabled: boolean;
-  reason?: string;
-  createdAt: Date;
-  createdById?: string;
-}
-
-export interface GlobalAnnouncement {
-  id: string;
-  type: string;
-  title: string;
-  body: string;
-  linkUrl?: string;
-  linkText?: string;
-  severity: string;
-  dismissable: boolean;
-  target: string;
-  targetTenantIds: string[];
-  startsAt: Date;
-  endsAt?: Date;
-  isActive: boolean;
-  createdById: string;
   createdAt: Date;
 }
 
@@ -784,23 +555,4 @@ export interface UpcomingEvent {
   title: string;
   date: Date;
   eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
-}
-
-// --- Contest Template ---
-
-export interface ContestTemplate extends DomainEntity {
-  leagueId: string;
-  createdBy: string;
-  name: string;
-  description?: string;
-  sport: Sport;
-  contestType: ContestType;
-  draftConfig: Record<string, unknown>;
-  scoringConfig: Record<string, unknown>;
-  payoutConfig: Record<string, unknown>;
-  poolConfig: Record<string, unknown>;
-  sharedWithTenant: boolean;
-  isPlatformTemplate: boolean;
-  timesUsed: number;
-  lastUsedAt?: Date;
 }

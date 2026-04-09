@@ -1,5 +1,9 @@
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
-import { LeagueRole, CommissionerPermission } from '@poolmaster/shared/domain';
+import {
+  LeagueMembershipStatus,
+  LeagueRole,
+  CommissionerPermission,
+} from '@poolmaster/shared/domain';
 import { requireCommissionerOrOwner, requireLeagueMembership } from '../../../packages/core-api/src/modules/leagues/permissions';
 import { buildMembership } from '../../factories';
 
@@ -44,7 +48,7 @@ function createReply() {
 
 describe('league permissions', () => {
   it('allows any member through requireLeagueMembership', async () => {
-    const membership = buildMembership({ role: LeagueRole.MANAGER });
+    const membership = buildMembership({ role: LeagueRole.MEMBER });
     const repo = createMockMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });
@@ -82,6 +86,30 @@ describe('league permissions', () => {
     expect(reply.payload).toEqual({
       error: 'FORBIDDEN',
       message: 'You are not a member of this league',
+    });
+  });
+
+  it('rejects inactive memberships on requireLeagueMembership', async () => {
+    const repo = createMockMembershipRepo({
+      findByLeagueAndUser: jest
+        .fn()
+        .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
+    });
+    const hook = requireLeagueMembership(repo);
+    const reply = createReply();
+    await hook.call(
+      {} as never,
+      {
+        headers: { 'x-user-id': 'user-1' },
+        params: { id: 'league-1' },
+      } as never,
+      reply as never,
+      jest.fn(),
+    );
+    expect(reply.statusCode).toBe(403);
+    expect(reply.payload).toEqual({
+      error: 'FORBIDDEN',
+      message: 'Your membership in this league is inactive',
     });
   });
 
@@ -149,7 +177,7 @@ describe('league permissions', () => {
   });
 
   it('rejects regular members on requireCommissionerOrOwner', async () => {
-    const membership = buildMembership({ role: LeagueRole.MANAGER });
+    const membership = buildMembership({ role: LeagueRole.MEMBER });
     const repo = createMockMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });

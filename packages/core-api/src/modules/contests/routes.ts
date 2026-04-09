@@ -7,75 +7,64 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
-  zodToJsonSchema,
-  CreateContestRequestSchema,
+  AdjustContestScoreRequestSchema,
+  CloseContestRequestSchema,
+  ContestAuditLogResponseSchema,
+  ContestEntryDeletionResponseSchema,
   ContestEntryListResponseSchema,
   ContestEntryResponseSchema,
   ContestListResponseSchema,
-  MyContestEntryResponseSchema,
+  ContestRecalculationResponseSchema,
   ContestResponseSchema,
-  ContestStandingsRecalculationResponseSchema,
+  CreateContestRequestSchema,
+  ExtendContestDeadlineRequestSchema,
+  ExtendPickClockRequestSchema,
+  MyContestEntryResponseSchema,
+  PauseContestDraftRequestSchema,
+  ReopenContestRequestSchema,
   SuccessSchema,
+  UndoContestDraftSelectionRequestSchema,
+  UpdateContestLockTimeRequestSchema,
   UpdateContestRequestSchema,
+  zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import {
   PrismaContestRepository,
-  PrismaSelectionConfigRepository,
+  PrismaContestConfigurationRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaContestEntryRepository,
-  PrismaContestStandingRepository,
   PrismaDraftSessionRepository,
-  PrismaContestPoolRepository,
-  PrismaContestParticipantPoolRepository,
-  PrismaContestMatchupRepository,
-  PrismaParticipantRepository,
-  PrismaParticipantSeasonRecordRepository,
+  PrismaSquadMembershipRepository,
+  PrismaSquadRepository,
 } from '../../adapters';
 import { requirePermission } from '../../core/require-permission';
 import { ContestService } from './service';
 import { OverrideService } from './override-service';
+import { ContestScoringRecalculationService } from '../contest-scoring';
 import { createContestHandlers } from './handler';
 import { createOverrideHandlers } from './override-handler';
-import { ContestPoolService } from '../participants/pool-service';
-import { PricingAndTierService } from '../participants/pricing-service';
-import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
 
 export async function contestsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const contestRepo = new PrismaContestRepository(prisma);
-  const selectionConfigRepo = new PrismaSelectionConfigRepository(prisma);
+  const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
+  const squadRepo = new PrismaSquadRepository(prisma);
+  const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
 
   const contestService = new ContestService(
     contestRepo,
-    selectionConfigRepo,
+    contestConfigurationRepo,
     membershipRepo,
     leagueRepo,
+    squadRepo,
+    squadMembershipRepo,
     undefined,
     prisma,
   );
-  const poolRepo = new PrismaContestPoolRepository(prisma);
-  const poolParticipantRepo = new PrismaContestParticipantPoolRepository(prisma);
-  const contestMatchupRepo = new PrismaContestMatchupRepository(prisma);
-  const participantRepo = new PrismaParticipantRepository(prisma);
-  const seasonRecordRepo = new PrismaParticipantSeasonRecordRepository(prisma);
-  const poolService = new ContestPoolService(
-    poolRepo,
-    poolParticipantRepo,
-    participantRepo,
-    contestMatchupRepo,
-    prisma,
-    new IngestionPersistence(prisma),
-  );
-  const pricingService = new PricingAndTierService(
-    poolRepo,
-    poolParticipantRepo,
-    seasonRecordRepo,
-    participantRepo,
-  );
-  const handlers = createContestHandlers(contestService, { poolService, pricingService });
+  const handlers = createContestHandlers(contestService);
 
   // --- League-scoped contest routes (under /api/v1/leagues/:id/contests) ---
   // Note: These are registered under the leagues prefix, so :id = leagueId
@@ -110,22 +99,30 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
 export async function contestsByIdModule(fastify: FastifyInstance): Promise<void> {
   const prisma = new PrismaClient();
   const contestRepo = new PrismaContestRepository(prisma);
-  const selectionConfigRepo = new PrismaSelectionConfigRepository(prisma);
+  const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
+  const squadRepo = new PrismaSquadRepository(prisma);
+  const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const entryRepo = new PrismaContestEntryRepository(prisma);
-  const standingRepo = new PrismaContestStandingRepository(prisma);
   const draftSessionRepo = new PrismaDraftSessionRepository(prisma);
 
   const contestService = new ContestService(
     contestRepo,
-    selectionConfigRepo,
+    contestConfigurationRepo,
     membershipRepo,
     leagueRepo,
+    squadRepo,
+    squadMembershipRepo,
     entryRepo,
     prisma,
   );
-  const overrideService = new OverrideService(contestRepo, draftSessionRepo, entryRepo, standingRepo);
+  const overrideService = new OverrideService(
+    contestRepo,
+    draftSessionRepo,
+    entryRepo,
+    new ContestScoringRecalculationService(prisma),
+  );
   const handlers = createContestHandlers(contestService);
   const overrides = createOverrideHandlers(overrideService);
 
@@ -179,14 +176,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       summary: 'Delete the current user contest entry',
       operationId: 'leaveContest',
       response: {
-        200: {
-          type: 'object',
-          required: ['contestId', 'deleted'],
-          properties: {
-            contestId: { type: 'string' },
-            deleted: { type: 'boolean', enum: [true] },
-          },
-        },
+        200: zodToJsonSchema(ContestEntryDeletionResponseSchema),
       },
     },
     handler: handlers.deleteMyEntry,
@@ -218,8 +208,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Undo a draft pick',
-      operationId: 'undoDraftPick',
-      body: { type: 'object', required: ['pickId', 'reason'], properties: { pickId: { type: 'string' }, reason: { type: 'string' } } },
+      operationId: 'undoContestDraftSelection',
+      body: zodToJsonSchema(UndoContestDraftSelectionRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.undoPick,
@@ -229,7 +219,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Pause an active draft (contest override)',
       operationId: 'pauseContestDraft',
-      body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+      body: zodToJsonSchema(PauseContestDraftRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.pauseDraft,
@@ -248,7 +238,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Extend the pick clock for the current drafter',
       operationId: 'extendPickClock',
-      body: { type: 'object', required: ['additionalSeconds'], properties: { additionalSeconds: { type: 'integer', minimum: 1 } } },
+      body: zodToJsonSchema(ExtendPickClockRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.extendPickClock,
@@ -260,7 +250,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Manually adjust an entry score',
       operationId: 'adjustScore',
-      body: { type: 'object', required: ['entryId', 'adjustment', 'reason'], properties: { entryId: { type: 'string' }, adjustment: { type: 'number' }, reason: { type: 'string' } } },
+      body: zodToJsonSchema(AdjustContestScoreRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: overrides.adjustScore,
@@ -270,7 +260,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Recalculate standings for a contest',
       operationId: 'recalculateStandings',
-      response: { 200: zodToJsonSchema(ContestStandingsRecalculationResponseSchema) },
+      response: { 200: zodToJsonSchema(ContestRecalculationResponseSchema) },
     },
     handler: overrides.recalculateStandings,
   });
@@ -281,7 +271,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Reopen a closed contest',
       operationId: 'reopenContest',
-      body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+      body: zodToJsonSchema(ReopenContestRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
     handler: overrides.reopenContest,
@@ -291,7 +281,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Close a contest early',
       operationId: 'closeContest',
-      body: { type: 'object', required: ['reason'], properties: { reason: { type: 'string' } } },
+      body: zodToJsonSchema(CloseContestRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
     handler: overrides.closeContest,
@@ -301,7 +291,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Extend the contest end deadline',
       operationId: 'extendContestDeadline',
-      body: { type: 'object', required: ['newEnd', 'reason'], properties: { newEnd: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } },
+      body: zodToJsonSchema(ExtendContestDeadlineRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
     handler: overrides.extendDeadline,
@@ -311,30 +301,18 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Update the contest lock time',
       operationId: 'updateContestLockTime',
-      body: { type: 'object', required: ['newLock', 'reason'], properties: { newLock: { type: 'string', format: 'date-time' }, reason: { type: 'string' } } },
+      body: zodToJsonSchema(UpdateContestLockTimeRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
     handler: overrides.updateLockTime,
   });
-
-  // --- Payout Overrides ---
-  fastify.post('/:contestId/payouts/confirm', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Confirm and finalize contest payouts',
-      operationId: 'confirmPayouts',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    handler: overrides.confirmPayouts,
-  });
-
   // --- Contest Audit Log ---
   fastify.get('/:contestId/audit-log', {
     schema: {
       tags: ['Contests'],
       summary: 'Get the audit log for a contest',
       operationId: 'getContestAuditLog',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(ContestAuditLogResponseSchema) },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };

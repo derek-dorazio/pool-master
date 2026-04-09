@@ -7,11 +7,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { UserService } from './user-service';
-import {
-  UserEmailDeliveryError,
-  UserNotFoundError,
-  UserPasswordResetUnsupportedError,
-} from './user-service';
+import { UserNotFoundError } from './user-service';
 
 // ---------------------------------------------------------------------------
 // Admin context helper
@@ -37,11 +33,9 @@ export function createUserHandlers(userService: UserService) {
   return {
     listUsers,
     getUserDetail,
-    resetPassword,
     forceLogout,
     disableUser,
     enableUser,
-    sendAdminEmail,
     mergeUsers,
   };
 
@@ -119,32 +113,6 @@ export function createUserHandlers(userService: UserService) {
     }
   }
 
-  // --- Reset password ---
-
-  async function resetPassword(
-    request: FastifyRequest<{ Params: { userId: string } }>,
-    reply: FastifyReply,
-  ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
-    const { userId } = request.params;
-
-    try {
-      await userService.resetUserPassword(userId, adminUserId, adminUserEmail);
-      return reply.status(204).send();
-    } catch (err) {
-      if (err instanceof UserNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
-      }
-      if (err instanceof UserPasswordResetUnsupportedError) {
-        return reply.status(400).send({ error: 'PASSWORD_RESET_UNSUPPORTED', message: err.message });
-      }
-      if (err instanceof UserEmailDeliveryError) {
-        return reply.status(502).send({ error: 'EMAIL_DELIVERY_FAILED', message: err.message });
-      }
-      throw err;
-    }
-  }
-
   // --- Force logout ---
 
   async function forceLogout(
@@ -204,33 +172,6 @@ export function createUserHandlers(userService: UserService) {
     } catch (err) {
       if (err instanceof UserNotFoundError) {
         return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
-      }
-      throw err;
-    }
-  }
-
-  // --- Send admin email ---
-
-  async function sendAdminEmail(
-    request: FastifyRequest<{
-      Params: { userId: string };
-      Body: { subject: string; body: string };
-    }>,
-    reply: FastifyReply,
-  ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
-    const { userId } = request.params;
-    const { subject, body } = request.body;
-
-    try {
-      await userService.sendAdminEmail(userId, subject, body, adminUserId, adminUserEmail);
-      return reply.status(204).send();
-    } catch (err) {
-      if (err instanceof UserNotFoundError) {
-        return reply.status(404).send({ error: 'NOT_FOUND', message: err.message });
-      }
-      if (err instanceof UserEmailDeliveryError) {
-        return reply.status(502).send({ error: 'EMAIL_DELIVERY_FAILED', message: err.message });
       }
       throw err;
     }

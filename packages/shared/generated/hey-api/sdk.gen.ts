@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddFeedReactionData, AddFeedReactionResponses, AddFeedReplyData, AddFeedReplyResponses, AddSeasonNoteData, AddSeasonNoteResponses, AdjustScoreData, AdjustScoreResponses, AdminActivateAnnouncementData, AdminActivateAnnouncementResponses, AdminAddFlagOverrideData, AdminAddFlagOverrideResponses, AdminApplyCreditData, AdminApplyCreditResponses, AdminCancelMigrationRunData, AdminCancelMigrationRunResponses, AdminChangeTenantPlanData, AdminChangeTenantPlanResponses, AdminClearTenantRetentionOverrideData, AdminClearTenantRetentionOverrideResponses, AdminCreateAnnouncementData, AdminCreateAnnouncementResponses, AdminCreateFlagData, AdminCreateFlagResponses, AdminCreateScoringTemplateData, AdminCreateScoringTemplateResponses, AdminCreateSelectionTemplateData, AdminCreateSelectionTemplateResponses, AdminDeactivateAnnouncementData, AdminDeactivateAnnouncementResponses, AdminDeleteAnnouncementData, AdminDeleteAnnouncementResponses, AdminDeleteFlagData, AdminDeleteFlagResponses, AdminDeleteScoringTemplateData, AdminDeleteScoringTemplateResponses, AdminDeleteSelectionTemplateData, AdminDeleteSelectionTemplateResponses, AdminDeleteTenantData, AdminDeleteTenantResponses, AdminDisablePushTriggerData, AdminDisablePushTriggerResponses, AdminDisableUserData, AdminDisableUserResponses, AdminDownloadExportData, AdminDownloadExportResponses, AdminEnablePushTriggerData, AdminEnablePushTriggerResponses, AdminEnableUserData, AdminEnableUserResponses, AdminEndImpersonationData, AdminEndImpersonationResponses, AdminExportAuditLogData, AdminExportAuditLogResponses, AdminExtendTrialData, AdminExtendTrialResponses, AdminForceCloseContestData, AdminForceCloseContestResponses, AdminForceLogoutData, AdminForceLogoutResponses, AdminGetActiveAnnouncementsData, AdminGetActiveAnnouncementsResponses, AdminGetActiveImpersonationData, AdminGetActiveImpersonationResponses, AdminGetAlertRulesData, AdminGetAlertRulesResponses, AdminGetAnnouncementData, AdminGetAnnouncementResponses, AdminGetAuditEntryData, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsResponses, AdminGetChannelConfigData, AdminGetChannelConfigResponses, AdminGetContestDetailData, AdminGetContestDetailResponses, AdminGetDigestConfigData, AdminGetDigestConfigResponses, AdminGetDunningConfigData, AdminGetDunningConfigResponses, AdminGetErrorDetailData, AdminGetErrorDetailResponses, AdminGetExportStatusData, AdminGetExportStatusResponses, AdminGetFlagDetailData, AdminGetFlagDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleResponses, AdminGetInvestigationData, AdminGetInvestigationResponses, AdminGetMigrationRunDetailData, AdminGetMigrationRunDetailResponses, AdminGetNotificationTemplateData, AdminGetNotificationTemplateResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailResponses, AdminGetRateLimitConfigData, AdminGetRateLimitConfigResponses, AdminGetRetentionDefaultsData, AdminGetRetentionDefaultsResponses, AdminGetScoringTemplateData, AdminGetScoringTemplateResponses, AdminGetSelectionTemplateConfigData, AdminGetSelectionTemplateConfigResponses, AdminGetServiceHealthData, AdminGetServiceHealthResponses, AdminGetTenantDetailData, AdminGetTenantDetailResponses, AdminGetTenantErrorsData, AdminGetTenantErrorsResponses, AdminGetTenantNotificationsData, AdminGetTenantNotificationsResponses, AdminGetTenantRequestsData, AdminGetTenantRequestsResponses, AdminGetTenantRetentionOverrideData, AdminGetTenantRetentionOverrideResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailResponses, AdminListAnnouncementsData, AdminListAnnouncementsResponses, AdminListAuditLogData, AdminListAuditLogResponses, AdminListContestsData, AdminListContestsResponses, AdminListFlagsData, AdminListFlagsResponses, AdminListMigrationsData, AdminListMigrationsResponses, AdminListNotificationTemplatesData, AdminListNotificationTemplatesResponses, AdminListProvidersData, AdminListProvidersResponses, AdminListPushTriggersData, AdminListPushTriggersResponses, AdminListScoringTemplatesData, AdminListScoringTemplatesResponses, AdminListSelectionTemplatesConfigData, AdminListSelectionTemplatesConfigResponses, AdminListTenantsData, AdminListTenantsResponses, AdminListUsersData, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantResponses, AdminMergeUsersData, AdminMergeUsersResponses, AdminMuteAlertData, AdminMuteAlertResponses, AdminOverrideScoreData, AdminOverrideScoreResponses, AdminPreviewDigestData, AdminPreviewDigestResponses, AdminQuickCheckEntitlementsData, AdminQuickCheckEntitlementsResponses, AdminQuickCheckNotificationsData, AdminQuickCheckNotificationsResponses, AdminQuickCheckProviderData, AdminQuickCheckProviderResponses, AdminQuickReIngestScoresData, AdminQuickReIngestScoresResponses, AdminQuickResetPasswordData, AdminQuickResetPasswordResponses, AdminRecalculatePayoutsData, AdminRecalculatePayoutsResponses, AdminRecalculateStandingsData, AdminRecalculateStandingsResponses, AdminReIngestEventData, AdminReIngestEventResponses, AdminReIngestScoringData, AdminReIngestScoringResponses, AdminRemoveFlagOverrideData, AdminRemoveFlagOverrideResponses, AdminReopenContestData, AdminReopenContestResponses, AdminResetChannelConfigData, AdminResetChannelConfigResponses, AdminResetDigestConfigData, AdminResetDigestConfigResponses, AdminResetDunningConfigData, AdminResetDunningConfigResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetNotificationTemplateData, AdminResetNotificationTemplateResponses, AdminResetPasswordData, AdminResetPasswordResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsResponses, AdminResetPushTriggersData, AdminResetPushTriggersResponses, AdminResetRateLimitConfigData, AdminResetRateLimitConfigResponses, AdminResetRetentionDefaultsData, AdminResetRetentionDefaultsResponses, AdminResolveFlagData, AdminResolveFlagResponses, AdminSearchErrorsData, AdminSearchErrorsResponses, AdminSendEmailData, AdminSendEmailResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideResponses, AdminSetTenantRetentionOverrideData, AdminSetTenantRetentionOverrideResponses, AdminStartImpersonationData, AdminStartImpersonationResponses, AdminStartMigrationRunData, AdminStartMigrationRunResponses, AdminStartTenantExportData, AdminStartTenantExportResponses, AdminSuspendTenantData, AdminSuspendTenantResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertResponses, AdminUnsuspendTenantData, AdminUnsuspendTenantResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleResponses, AdminUpdateAnnouncementData, AdminUpdateAnnouncementResponses, AdminUpdateChannelConfigData, AdminUpdateChannelConfigResponses, AdminUpdateDigestConfigData, AdminUpdateDigestConfigResponses, AdminUpdateDunningConfigData, AdminUpdateDunningConfigResponses, AdminUpdateFlagData, AdminUpdateFlagResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleResponses, AdminUpdateNotificationTemplateData, AdminUpdateNotificationTemplateResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigResponses, AdminUpdatePushTriggerData, AdminUpdatePushTriggerResponses, AdminUpdateRateLimitConfigData, AdminUpdateRateLimitConfigResponses, AdminUpdateRetentionDefaultsData, AdminUpdateRetentionDefaultsResponses, AdminUpdateScoringTemplateData, AdminUpdateScoringTemplateResponses, AdminUpdateSelectionTemplateData, AdminUpdateSelectionTemplateResponses, ApplyPoolPriceOverrideData, ApplyPoolPriceOverrideResponses, AssignPoolTiersData, AssignPoolTiersResponses, AutoFillBracketSubmissionData, AutoFillBracketSubmissionResponses, AwardAnalyticsTrophiesData, AwardAnalyticsTrophiesResponses, AwardCustomTrophyData, AwardCustomTrophyResponses, BulkCreateContestsData, BulkCreateContestsResponses, CalculatePoolPricingData, CalculatePoolPricingResponses, CancelAccountDeletionData, CancelAccountDeletionResponses, CancelScheduledNotificationsData, CancelScheduledNotificationsResponses, CancelSubscriptionData, CancelSubscriptionErrors, CancelSubscriptionResponses, ChangeMemberRoleData, ChangeMemberRoleResponses, ChangePlanData, ChangePlanErrors, ChangePlanResponses, CloseContestData, CloseContestResponses, ConfirmPayoutsData, ConfirmPayoutsResponses, CopySeasonData, CopySeasonResponses, CreateContestData, CreateContestPoolData, CreateContestPoolResponses, CreateContestResponses, CreateEnforcementActionData, CreateEnforcementActionResponses, CreateEnterprisePlanData, CreateEnterprisePlanResponses, CreateFeedPostData, CreateFeedPostResponses, CreateLeagueData, CreateLeagueResponses, CreateParticipantData, CreateParticipantResponses, CreatePaymentMethodSetupData, CreatePaymentMethodSetupErrors, CreatePaymentMethodSetupResponses, CreateSelfExclusionData, CreateSelfExclusionResponses, CreateSubscriptionData, CreateSubscriptionErrors, CreateSubscriptionResponses, CreateTemplateData, CreateTemplateResponses, DeactivateDeviceData, DeactivateDeviceResponses, DeleteContestData, DeleteContestResponses, DeleteFeedPostData, DeleteFeedPostResponses, DeleteTemplateData, DeleteTemplateResponses, DiscoverContestsData, DiscoverContestsResponses, DiscoverLeaguesData, DiscoverLeaguesResponses, DismissNotificationData, DismissNotificationResponses, DispatchNotificationData, DispatchNotificationResponses, EnterContestData, EnterContestResponses, ExcludePoolParticipantData, ExcludePoolParticipantResponses, ExecuteMemberMergeData, ExecuteMemberMergeResponses, ExportLeagueHistoryData, ExportLeagueHistoryResponses, ExportMemberHistoryData, ExportMemberHistoryResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendPickClockData, ExtendPickClockResponses, ExtendPickDeadlineData, ExtendPickDeadlineResponses, ForgotPasswordData, ForgotPasswordResponses, GenerateInviteLinkData, GenerateInviteLinkResponses, GetAccountDeletionStatusData, GetAccountDeletionStatusResponses, GetActiveExclusionData, GetActiveExclusionResponses, GetActivityLimitData, GetActivityLimitResponses, GetAllTimeLeaderboardData, GetAllTimeLeaderboardResponses, GetBillingPortalData, GetBillingPortalErrors, GetBillingPortalResponses, GetChampionListData, GetChampionListResponses, GetChurnMetricsData, GetChurnMetricsResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetConsistencyScoresData, GetConsistencyScoresResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestChatData, GetContestChatErrors, GetContestChatResponses, GetContestData, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestPoolData, GetContestPoolResponses, GetContestResponses, GetContestTimelineData, GetContestTimelineResponses, GetCurrentPlanData, GetCurrentPlanResponses, GetCurrentUserData, GetCurrentUserResponses, GetDataExportData, GetDataExportResponses, GetDataExportStatusData, GetDataExportStatusResponses, GetDraftReplayData, GetDraftReplayResponses, GetDraftStateData, GetDraftStateResponses, GetDunningStatusData, GetDunningStatusResponses, GetEnforcementHistoryData, GetEnforcementHistoryResponses, GetEntitlementsData, GetEntitlementsResponses, GetEntryScoreData, GetEntryScoreResponses, GetFeedPostData, GetFeedPostResponses, GetHealthData, GetHealthResponses, GetImprovementRankingsData, GetImprovementRankingsResponses, GetInvoiceDetailData, GetInvoiceDetailErrors, GetInvoiceDetailResponses, GetLeagueAuditLogData, GetLeagueAuditLogResponses, GetLeagueDashboardData, GetLeagueDashboardResponses, GetLeagueData, GetLeagueFeedData, GetLeagueFeedResponses, GetLeagueRecapData, GetLeagueRecapErrors, GetLeagueRecapResponses, GetLeagueRecordData, GetLeagueRecordResponses, GetLeagueRecordsData, GetLeagueRecordsResponses, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueRetentionConfigData, GetLeagueRetentionConfigResponses, GetLeagueRivalriesData, GetLeagueRivalriesResponses, GetLuckScoresData, GetLuckScoresResponses, GetMemberAuditLogData, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMemberStatsData, GetMemberStatsResponses, GetMemberTrophiesData, GetMemberTrophiesResponses, GetMyContestEntryData, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryResponses, GetNotificationAnalyticsData, GetNotificationAnalyticsResponses, GetNotificationPreferencesData, GetNotificationPreferencesResponses, GetParticipantData, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreResponses, GetParticipantSeasonRecordData, GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordsData, GetParticipantSeasonRecordsResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetPowerRatingsData, GetPowerRatingsResponses, GetRetentionOfferData, GetRetentionOfferResponses, GetRevenueAnalyticsData, GetRevenueAnalyticsResponses, GetRivalryData, GetRivalryResponses, GetRosterHistoryData, GetRosterHistoryResponses, GetRosterReplayData, GetRosterReplayResponses, GetScoringHealthData, GetScoringHealthResponses, GetScoringTemplateData, GetScoringTemplateResponses, GetSeasonNotesData, GetSeasonNotesResponses, GetSeasonSummariesData, GetSeasonSummariesResponses, GetSeasonSummaryData, GetSeasonSummaryResponses, GetSelectionTemplateData, GetSelectionTemplateResponses, GetSessionReminderData, GetSessionReminderResponses, GetShareCardData, GetShareCardErrors, GetShareCardResponses, GetSocialConversationMessagesData, GetSocialConversationMessagesErrors, GetSocialConversationMessagesResponses, GetStandingsData, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryResponses, GetSubscribersByPlanData, GetSubscribersByPlanResponses, GetSubscriptionData, GetSubscriptionResponses, GetTemplateData, GetTemplateResponses, GetTrialMetricsData, GetTrialMetricsResponses, GetTrialStatusData, GetTrialStatusResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, GetUpcomingInvoiceData, GetUpcomingInvoiceErrors, GetUpcomingInvoiceResponses, GetUsageData, GetUsageResponses, GetYoYStatsData, GetYoYStatsResponses, ImportMembersData, ImportMembersResponses, ImportSeasonData, ImportSeasonResponses, IngestEventResultsData, IngestEventResultsResponses, IngestEventScoresData, IngestEventScoresResponses, IngestSportOddsData, IngestSportOddsResponses, JoinDiscoverableLeagueData, JoinDiscoverableLeagueErrors, JoinDiscoverableLeagueResponses, LeaveContestData, LeaveContestResponses, LeaveLeagueData, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListCustomTrophiesData, ListCustomTrophiesResponses, ListDevicesData, ListDevicesResponses, ListEnterprisePlansData, ListEnterprisePlansResponses, ListEventsData, ListEventsResponses, ListIngestionProvidersData, ListIngestionProvidersResponses, ListInvoicesData, ListInvoicesResponses, ListLeagueMembersData, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, ListPlansData, ListPlansResponses, ListScoringTemplatesData, ListScoringTemplatesResponses, ListSelectionTemplatesData, ListSelectionTemplatesResponses, ListSocialConversationsData, ListSocialConversationsErrors, ListSocialConversationsResponses, ListTemplatesData, ListTemplatesResponses, LockContestPoolData, LockContestPoolResponses, LoginUserData, LoginUserResponses, LogoutUserData, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, MarkPoolParticipantAvailableData, MarkPoolParticipantAvailableResponses, MarkPoolParticipantUnavailableData, MarkPoolParticipantUnavailableResponses, MarkSocialConversationReadData, MarkSocialConversationReadErrors, MarkSocialConversationReadResponses, MoveParticipantTierData, MoveParticipantTierResponses, OauthCallbackData, OauthCallbackErrors, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftResponses, PinFeedPostData, PinFeedPostResponses, PostApiV1InternalWebhooksStripeData, PostApiV1InternalWebhooksStripeResponses, PreviewCancellationData, PreviewCancellationResponses, PreviewDowngradeData, PreviewDowngradeResponses, PreviewMemberMergeData, PreviewMemberMergeResponses, PreviewRetentionCleanupData, PreviewRetentionCleanupResponses, PreviewUpgradeData, PreviewUpgradeResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecomputeLeagueRecordsData, RecomputeLeagueRecordsResponses, RecomputeRivalriesData, RecomputeRivalriesResponses, RecordConsentData, RecordConsentResponses, RefreshContestPoolData, RefreshContestPoolResponses, RefreshTokenData, RefreshTokenResponses, RegisterDeviceAliasData, RegisterDeviceAliasResponses, RegisterDeviceData, RegisterDeviceResponses, RegisterUserData, RegisterUserResponses, RemoveMemberData, RemoveMemberResponses, ReopenContestData, ReopenContestResponses, ReportDiscoveryEntityData, ReportDiscoveryEntityResponses, RequestAccountDeletionData, RequestAccountDeletionResponses, RequestDataExportData, RequestDataExportResponses, ResetBracketSubmissionData, ResetBracketSubmissionResponses, ResolveActionItemData, ResolveActionItemResponses, ResolveContestPoolData, ResolveContestPoolResponses, RestorePoolParticipantData, RestorePoolParticipantResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftResponses, ResumeSubscriptionData, ResumeSubscriptionErrors, ResumeSubscriptionResponses, RevokeInviteLinkData, RevokeInviteLinkResponses, RunRetentionCleanupData, RunRetentionCleanupResponses, ScheduleNotificationData, ScheduleNotificationResponses, SearchParticipantsData, SearchParticipantsResponses, SearchPoolParticipantsData, SearchPoolParticipantsResponses, SendAnnouncementData, SendAnnouncementResponses, SendContestChatMessageData, SendContestChatMessageErrors, SendContestChatMessageResponses, SendLeagueInvitationsData, SendLeagueInvitationsResponses, SendSocialConversationMessageData, SendSocialConversationMessageErrors, SendSocialConversationMessageResponses, SendTestEmailData, SendTestEmailResponses, SendTestPushData, SendTestPushResponses, SkipLiveDraftPickData, SkipLiveDraftPickResponses, StartDraftData, StartDraftResponses, StartTrialData, StartTrialResponses, SubmitDraftPickData, SubmitDraftPickResponses, SyncSportDataData, SyncSportDataResponses, TransferOwnershipData, TransferOwnershipResponses, TriggerStandingsRollupData, TriggerStandingsRollupResponses, TriggerWeeklyDigestData, TriggerWeeklyDigestResponses, UndoDraftPickData, UndoDraftPickResponses, UndoLiveDraftPickData, UndoLiveDraftPickResponses, UnpinFeedPostData, UnpinFeedPostResponses, UnsubscribeNotificationCategoryData, UnsubscribeNotificationCategoryResponses, UpdateActivityLimitData, UpdateActivityLimitResponses, UpdateAppealStatusData, UpdateAppealStatusResponses, UpdateContestData, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestPoolData, UpdateContestPoolResponses, UpdateContestResponses, UpdateLeagueRetentionConfigData, UpdateLeagueRetentionConfigResponses, UpdateLeagueSettingsData, UpdateLeagueSettingsResponses, UpdateNotificationPreferencesData, UpdateNotificationPreferencesResponses, UpdateParticipantData, UpdateParticipantResponses, UpdateSessionReminderData, UpdateSessionReminderResponses, UpdateTemplateData, UpdateTemplateResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses, VerifyAgeData, VerifyAgeResponses } from './types.gen.js';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddSquadCoManagerData, AddSquadCoManagerResponses, AdjustScoreData, AdjustScoreResponses, AdminCancelMigrationRunData, AdminCancelMigrationRunResponses, AdminDisableUserData, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogResponses, AdminForceCloseContestData, AdminForceCloseContestResponses, AdminForceLogoutData, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsResponses, AdminGetContestDetailData, AdminGetContestDetailResponses, AdminGetErrorDetailData, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleResponses, AdminGetMigrationRunDetailData, AdminGetMigrationRunDetailResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailResponses, AdminListAuditLogData, AdminListAuditLogResponses, AdminListContestsData, AdminListContestsResponses, AdminListMigrationsData, AdminListMigrationsResponses, AdminListProvidersData, AdminListProvidersResponses, AdminListUsersData, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantResponses, AdminMergeUsersData, AdminMergeUsersResponses, AdminMuteAlertData, AdminMuteAlertResponses, AdminOverrideScoreData, AdminOverrideScoreResponses, AdminRecalculatePayoutsData, AdminRecalculatePayoutsResponses, AdminRecalculateStandingsData, AdminRecalculateStandingsResponses, AdminReIngestEventData, AdminReIngestEventResponses, AdminReIngestScoringData, AdminReIngestScoringResponses, AdminReopenContestData, AdminReopenContestResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsResponses, AdminSearchErrorsData, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideResponses, AdminStartMigrationRunData, AdminStartMigrationRunResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigResponses, ChangeMemberRoleData, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonResponses, CreateContestData, CreateContestResponses, CreateLeagueData, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, DeleteContestData, DeleteContestResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, ForgotPasswordData, ForgotPasswordResponses, GenerateInviteLinkData, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserResponses, GetDraftStateData, GetDraftStateResponses, GetEntryScoreData, GetEntryScoreResponses, GetHealthData, GetHealthResponses, GetLeagueAuditLogData, GetLeagueAuditLogResponses, GetLeagueDashboardData, GetLeagueDashboardResponses, GetLeagueData, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryResponses, GetParticipantData, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreResponses, GetParticipantSeasonRecordData, GetParticipantSeasonRecordResponses, GetParticipantSeasonRecordsData, GetParticipantSeasonRecordsResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRosterHistoryData, GetRosterHistoryResponses, GetScoringHealthData, GetScoringHealthResponses, GetStandingsData, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, ImportMembersData, ImportMembersResponses, IngestEventResultsData, IngestEventResultsResponses, IngestEventScoresData, IngestEventScoresResponses, IngestSportOddsData, IngestSportOddsResponses, LeaveContestData, LeaveContestResponses, LeaveLeagueData, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListIngestionProvidersData, ListIngestionProvidersResponses, ListLeagueMembersData, ListLeagueMembersResponses, ListLeaguesData, ListLeagueSquadsData, ListLeagueSquadsResponses, ListLeaguesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, LoginUserData, LoginUserResponses, LogoutUserData, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, OauthCallbackData, OauthCallbackErrors, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenResponses, RegisterUserData, RegisterUserResponses, RemoveMemberData, RemoveMemberResponses, RemoveSquadCoManagerData, RemoveSquadCoManagerResponses, ReopenContestData, ReopenContestResponses, ResolveActionItemData, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkResponses, SendLeagueInvitationsData, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionResponses, SyncSportDataData, SyncSportDataResponses, TransferOwnershipData, TransferOwnershipResponses, TriggerStandingsRollupData, TriggerStandingsRollupResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionResponses, UpdateContestData, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueSettingsData, UpdateLeagueSettingsResponses, UpdateLeagueSquadData, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -280,19 +280,6 @@ export const getMemberAuditLog = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Bulk-create contests from a template
- */
-export const bulkCreateContests = <ThrowOnError extends boolean = false>(options: Options<BulkCreateContestsData, ThrowOnError>) => (options.client ?? client).post<BulkCreateContestsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/contests/bulk',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * Copy contests from a previous season
  */
 export const copySeason = <ThrowOnError extends boolean = false>(options: Options<CopySeasonData, ThrowOnError>) => (options.client ?? client).post<CopySeasonResponses, unknown, ThrowOnError>({
@@ -316,6 +303,72 @@ export const importMembers = <ThrowOnError extends boolean = false>(options: Opt
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * List squads in a league
+ */
+export const listLeagueSquads = <ThrowOnError extends boolean = false>(options: Options<ListLeagueSquadsData, ThrowOnError>) => (options.client ?? client).get<ListLeagueSquadsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/squads/',
+    ...options
+});
+
+/**
+ * Create a squad in a league
+ */
+export const createLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<CreateLeagueSquadData, ThrowOnError>) => (options.client ?? client).post<CreateLeagueSquadResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/squads/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get squad details
+ */
+export const getLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<GetLeagueSquadData, ThrowOnError>) => (options.client ?? client).get<GetLeagueSquadResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/squads/{squadId}',
+    ...options
+});
+
+/**
+ * Update squad details
+ */
+export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueSquadData, ThrowOnError>) => (options.client ?? client).patch<UpdateLeagueSquadResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/squads/{squadId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Add or reactivate a squad co-manager
+ */
+export const addSquadCoManager = <ThrowOnError extends boolean = false>(options: Options<AddSquadCoManagerData, ThrowOnError>) => (options.client ?? client).post<AddSquadCoManagerResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/squads/{squadId}/members',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a squad co-manager
+ */
+export const removeSquadCoManager = <ThrowOnError extends boolean = false>(options: Options<RemoveSquadCoManagerData, ThrowOnError>) => (options.client ?? client).delete<RemoveSquadCoManagerResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/squads/{squadId}/members/{userId}',
+    ...options
 });
 
 /**
@@ -346,6 +399,41 @@ export const listContests = <ThrowOnError extends boolean = false>(options: Opti
 export const createContest = <ThrowOnError extends boolean = false>(options: Options<CreateContestData, ThrowOnError>) => (options.client ?? client).post<CreateContestResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/leagues/{id}/contests/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create a commissioner-managed contest with configuration
+ */
+export const createManagedContest = <ThrowOnError extends boolean = false>(options: Options<CreateManagedContestData, ThrowOnError>) => (options.client ?? client).post<CreateManagedContestResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/contest-management/contests/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get commissioner contest-management detail
+ */
+export const getManagedContest = <ThrowOnError extends boolean = false>(options: Options<GetManagedContestData, ThrowOnError>) => (options.client ?? client).get<GetManagedContestResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}',
+    ...options
+});
+
+/**
+ * Update commissioner contest configuration
+ */
+export const updateManagedContestConfiguration = <ThrowOnError extends boolean = false>(options: Options<UpdateManagedContestConfigurationData, ThrowOnError>) => (options.client ?? client).put<UpdateManagedContestConfigurationResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -423,7 +511,7 @@ export const enterContest = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Undo a draft pick
  */
-export const undoDraftPick = <ThrowOnError extends boolean = false>(options: Options<UndoDraftPickData, ThrowOnError>) => (options.client ?? client).post<UndoDraftPickResponses, unknown, ThrowOnError>({
+export const undoContestDraftSelection = <ThrowOnError extends boolean = false>(options: Options<UndoContestDraftSelectionData, ThrowOnError>) => (options.client ?? client).post<UndoContestDraftSelectionResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/draft/undo-pick',
     ...options,
@@ -543,74 +631,12 @@ export const updateContestLockTime = <ThrowOnError extends boolean = false>(opti
 });
 
 /**
- * Confirm and finalize contest payouts
- */
-export const confirmPayouts = <ThrowOnError extends boolean = false>(options: Options<ConfirmPayoutsData, ThrowOnError>) => (options.client ?? client).post<ConfirmPayoutsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/payouts/confirm',
-    ...options
-});
-
-/**
  * Get the audit log for a contest
  */
 export const getContestAuditLog = <ThrowOnError extends boolean = false>(options: Options<GetContestAuditLogData, ThrowOnError>) => (options.client ?? client).get<GetContestAuditLogResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/contests/{contestId}/audit-log',
     ...options
-});
-
-/**
- * List contest templates for a league
- */
-export const listTemplates = <ThrowOnError extends boolean = false>(options: Options<ListTemplatesData, ThrowOnError>) => (options.client ?? client).get<ListTemplatesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/templates/',
-    ...options
-});
-
-/**
- * Create a new contest template
- */
-export const createTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/templates/',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a contest template
- */
-export const deleteTemplate = <ThrowOnError extends boolean = false>(options: Options<DeleteTemplateData, ThrowOnError>) => (options.client ?? client).delete<DeleteTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/templates/{id}',
-    ...options
-});
-
-/**
- * Get a contest template by ID
- */
-export const getTemplate = <ThrowOnError extends boolean = false>(options: Options<GetTemplateData, ThrowOnError>) => (options.client ?? client).get<GetTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/templates/{id}',
-    ...options
-});
-
-/**
- * Update a contest template
- */
-export const updateTemplate = <ThrowOnError extends boolean = false>(options: Options<UpdateTemplateData, ThrowOnError>) => (options.client ?? client).put<UpdateTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/templates/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
 });
 
 /**
@@ -681,165 +707,6 @@ export const getParticipantSeasonRecords = <ThrowOnError extends boolean = false
 export const getParticipantSeasonRecord = <ThrowOnError extends boolean = false>(options: Options<GetParticipantSeasonRecordData, ThrowOnError>) => (options.client ?? client).get<GetParticipantSeasonRecordResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/participants/{id}/seasons/{season}',
-    ...options
-});
-
-/**
- * Get the contest participant pool
- */
-export const getContestPool = <ThrowOnError extends boolean = false>(options: Options<GetContestPoolData, ThrowOnError>) => (options.client ?? client).get<GetContestPoolResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/',
-    ...options
-});
-
-/**
- * Create a contest participant pool
- */
-export const createContestPool = <ThrowOnError extends boolean = false>(options: Options<CreateContestPoolData, ThrowOnError>) => (options.client ?? client).post<CreateContestPoolResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Update the contest participant pool
- */
-export const updateContestPool = <ThrowOnError extends boolean = false>(options: Options<UpdateContestPoolData, ThrowOnError>) => (options.client ?? client).put<UpdateContestPoolResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Resolve the pool from an external data source
- */
-export const resolveContestPool = <ThrowOnError extends boolean = false>(options: Options<ResolveContestPoolData, ThrowOnError>) => (options.client ?? client).post<ResolveContestPoolResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/resolve',
-    ...options
-});
-
-/**
- * Refresh pool participant data
- */
-export const refreshContestPool = <ThrowOnError extends boolean = false>(options: Options<RefreshContestPoolData, ThrowOnError>) => (options.client ?? client).post<RefreshContestPoolResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/refresh',
-    ...options
-});
-
-/**
- * Lock the pool to prevent further changes
- */
-export const lockContestPool = <ThrowOnError extends boolean = false>(options: Options<LockContestPoolData, ThrowOnError>) => (options.client ?? client).post<LockContestPoolResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/lock',
-    ...options
-});
-
-/**
- * Exclude a participant from the pool
- */
-export const excludePoolParticipant = <ThrowOnError extends boolean = false>(options: Options<ExcludePoolParticipantData, ThrowOnError>) => (options.client ?? client).delete<ExcludePoolParticipantResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/participants/{participantId}',
-    ...options
-});
-
-/**
- * Restore an excluded participant to the pool
- */
-export const restorePoolParticipant = <ThrowOnError extends boolean = false>(options: Options<RestorePoolParticipantData, ThrowOnError>) => (options.client ?? client).post<RestorePoolParticipantResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/participants/{participantId}/restore',
-    ...options
-});
-
-/**
- * Mark a pool participant as unavailable
- */
-export const markPoolParticipantUnavailable = <ThrowOnError extends boolean = false>(options: Options<MarkPoolParticipantUnavailableData, ThrowOnError>) => (options.client ?? client).post<MarkPoolParticipantUnavailableResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/participants/{participantId}/unavailable',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Mark a pool participant as available
- */
-export const markPoolParticipantAvailable = <ThrowOnError extends boolean = false>(options: Options<MarkPoolParticipantAvailableData, ThrowOnError>) => (options.client ?? client).post<MarkPoolParticipantAvailableResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/participants/{participantId}/available',
-    ...options
-});
-
-/**
- * Calculate prices for pool participants
- */
-export const calculatePoolPricing = <ThrowOnError extends boolean = false>(options: Options<CalculatePoolPricingData, ThrowOnError>) => (options.client ?? client).post<CalculatePoolPricingResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/pricing/calculate',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Apply a manual price override for a participant
- */
-export const applyPoolPriceOverride = <ThrowOnError extends boolean = false>(options: Options<ApplyPoolPriceOverrideData, ThrowOnError>) => (options.client ?? client).put<ApplyPoolPriceOverrideResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/pricing/override/{participantId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Assign participants to tiers
- */
-export const assignPoolTiers = <ThrowOnError extends boolean = false>(options: Options<AssignPoolTiersData, ThrowOnError>) => (options.client ?? client).post<AssignPoolTiersResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/tiers/assign',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Move a participant to a different tier
- */
-export const moveParticipantTier = <ThrowOnError extends boolean = false>(options: Options<MoveParticipantTierData, ThrowOnError>) => (options.client ?? client).put<MoveParticipantTierResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/tiers/{tierId}/participants/{participantId}',
-    ...options
-});
-
-/**
- * Search pool participants for the draft room
- */
-export const searchPoolParticipants = <ThrowOnError extends boolean = false>(options: Options<SearchPoolParticipantsData, ThrowOnError>) => (options.client ?? client).get<SearchPoolParticipantsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/pool/search',
     ...options
 });
 
@@ -925,365 +792,6 @@ export const getMemberResults = <ThrowOnError extends boolean = false>(options: 
 });
 
 /**
- * Get scoring timeline for a contest
- */
-export const getContestTimeline = <ThrowOnError extends boolean = false>(options: Options<GetContestTimelineData, ThrowOnError>) => (options.client ?? client).get<GetContestTimelineResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{id}/history/timeline',
-    ...options
-});
-
-/**
- * Get draft replay for a contest
- */
-export const getDraftReplay = <ThrowOnError extends boolean = false>(options: Options<GetDraftReplayData, ThrowOnError>) => (options.client ?? client).get<GetDraftReplayResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{id}/history/draft',
-    ...options
-});
-
-/**
- * Get roster replay for an entry
- */
-export const getRosterReplay = <ThrowOnError extends boolean = false>(options: Options<GetRosterReplayData, ThrowOnError>) => (options.client ?? client).get<GetRosterReplayResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{id}/history/replay/{entryId}',
-    ...options
-});
-
-/**
- * List league season summaries
- */
-export const getSeasonSummaries = <ThrowOnError extends boolean = false>(options: Options<GetSeasonSummariesData, ThrowOnError>) => (options.client ?? client).get<GetSeasonSummariesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/seasons',
-    ...options
-});
-
-/**
- * Get a specific season summary
- */
-export const getSeasonSummary = <ThrowOnError extends boolean = false>(options: Options<GetSeasonSummaryData, ThrowOnError>) => (options.client ?? client).get<GetSeasonSummaryResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/seasons/{sid}',
-    ...options
-});
-
-/**
- * Get league champion list
- */
-export const getChampionList = <ThrowOnError extends boolean = false>(options: Options<GetChampionListData, ThrowOnError>) => (options.client ?? client).get<GetChampionListResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/champions',
-    ...options
-});
-
-/**
- * Get member stats within a league
- */
-export const getMemberStats = <ThrowOnError extends boolean = false>(options: Options<GetMemberStatsData, ThrowOnError>) => (options.client ?? client).get<GetMemberStatsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/members/{mid}/stats',
-    ...options
-});
-
-/**
- * Get all-time league leaderboard
- */
-export const getAllTimeLeaderboard = <ThrowOnError extends boolean = false>(options: Options<GetAllTimeLeaderboardData, ThrowOnError>) => (options.client ?? client).get<GetAllTimeLeaderboardResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/leaderboard',
-    ...options
-});
-
-/**
- * Get member trophies within a league
- */
-export const getMemberTrophies = <ThrowOnError extends boolean = false>(options: Options<GetMemberTrophiesData, ThrowOnError>) => (options.client ?? client).get<GetMemberTrophiesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/trophies/{mid}',
-    ...options
-});
-
-/**
- * Get league records
- */
-export const getLeagueRecords = <ThrowOnError extends boolean = false>(options: Options<GetLeagueRecordsData, ThrowOnError>) => (options.client ?? client).get<GetLeagueRecordsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/records',
-    ...options
-});
-
-/**
- * Get a specific league record by category
- */
-export const getLeagueRecord = <ThrowOnError extends boolean = false>(options: Options<GetLeagueRecordData, ThrowOnError>) => (options.client ?? client).get<GetLeagueRecordResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/records/{category}',
-    ...options
-});
-
-/**
- * Recompute all league records
- */
-export const recomputeLeagueRecords = <ThrowOnError extends boolean = false>(options: Options<RecomputeLeagueRecordsData, ThrowOnError>) => (options.client ?? client).post<RecomputeLeagueRecordsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/records/recompute',
-    ...options
-});
-
-/**
- * Get league rivalries
- */
-export const getLeagueRivalries = <ThrowOnError extends boolean = false>(options: Options<GetLeagueRivalriesData, ThrowOnError>) => (options.client ?? client).get<GetLeagueRivalriesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/rivalries',
-    ...options
-});
-
-/**
- * Get head-to-head rivalry between two members
- */
-export const getRivalry = <ThrowOnError extends boolean = false>(options: Options<GetRivalryData, ThrowOnError>) => (options.client ?? client).get<GetRivalryResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/rivalries/{mid1}/{mid2}',
-    ...options
-});
-
-/**
- * Recompute all league rivalries
- */
-export const recomputeRivalries = <ThrowOnError extends boolean = false>(options: Options<RecomputeRivalriesData, ThrowOnError>) => (options.client ?? client).post<RecomputeRivalriesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/rivalries/recompute',
-    ...options
-});
-
-/**
- * Compute luck scores for league members
- */
-export const getLuckScores = <ThrowOnError extends boolean = false>(options: Options<GetLuckScoresData, ThrowOnError>) => (options.client ?? client).get<GetLuckScoresResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/analytics/luck',
-    ...options
-});
-
-/**
- * Compute power ratings for league members
- */
-export const getPowerRatings = <ThrowOnError extends boolean = false>(options: Options<GetPowerRatingsData, ThrowOnError>) => (options.client ?? client).get<GetPowerRatingsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/analytics/power',
-    ...options
-});
-
-/**
- * Compute consistency scores for league members
- */
-export const getConsistencyScores = <ThrowOnError extends boolean = false>(options: Options<GetConsistencyScoresData, ThrowOnError>) => (options.client ?? client).get<GetConsistencyScoresResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/analytics/consistency',
-    ...options
-});
-
-/**
- * Award analytics-based trophies for a season
- */
-export const awardAnalyticsTrophies = <ThrowOnError extends boolean = false>(options: Options<AwardAnalyticsTrophiesData, ThrowOnError>) => (options.client ?? client).post<AwardAnalyticsTrophiesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/analytics/trophies',
-    ...options
-});
-
-/**
- * Get year-over-year improvement stats for a member
- */
-export const getYoYStats = <ThrowOnError extends boolean = false>(options: Options<GetYoYStatsData, ThrowOnError>) => (options.client ?? client).get<GetYoYStatsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/{mid}/history/yoy',
-    ...options
-});
-
-/**
- * Get improvement rankings for a season
- */
-export const getImprovementRankings = <ThrowOnError extends boolean = false>(options: Options<GetImprovementRankingsData, ThrowOnError>) => (options.client ?? client).get<GetImprovementRankingsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/history/improvement-rankings',
-    ...options
-});
-
-/**
- * Get season notes
- */
-export const getSeasonNotes = <ThrowOnError extends boolean = false>(options: Options<GetSeasonNotesData, ThrowOnError>) => (options.client ?? client).get<GetSeasonNotesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/seasons/{season}/notes',
-    ...options
-});
-
-/**
- * Add a season note
- */
-export const addSeasonNote = <ThrowOnError extends boolean = false>(options: Options<AddSeasonNoteData, ThrowOnError>) => (options.client ?? client).post<AddSeasonNoteResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/seasons/{season}/notes',
-    ...options
-});
-
-/**
- * Award a custom trophy for a season
- */
-export const awardCustomTrophy = <ThrowOnError extends boolean = false>(options: Options<AwardCustomTrophyData, ThrowOnError>) => (options.client ?? client).post<AwardCustomTrophyResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/seasons/{season}/trophies',
-    ...options
-});
-
-/**
- * List custom trophies for a league
- */
-export const listCustomTrophies = <ThrowOnError extends boolean = false>(options: Options<ListCustomTrophiesData, ThrowOnError>) => (options.client ?? client).get<ListCustomTrophiesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/custom-trophies',
-    ...options
-});
-
-/**
- * Import historical season data
- */
-export const importSeason = <ThrowOnError extends boolean = false>(options: Options<ImportSeasonData, ThrowOnError>) => (options.client ?? client).post<ImportSeasonResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/import-season',
-    ...options
-});
-
-/**
- * Preview member merge impact
- */
-export const previewMemberMerge = <ThrowOnError extends boolean = false>(options?: Options<PreviewMemberMergeData, ThrowOnError>) => (options?.client ?? client).post<PreviewMemberMergeResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/merge/preview',
-    ...options
-});
-
-/**
- * Execute member merge
- */
-export const executeMemberMerge = <ThrowOnError extends boolean = false>(options?: Options<ExecuteMemberMergeData, ThrowOnError>) => (options?.client ?? client).post<ExecuteMemberMergeResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/merge/execute',
-    ...options
-});
-
-/**
- * Export league history data
- */
-export const exportLeagueHistory = <ThrowOnError extends boolean = false>(options: Options<ExportLeagueHistoryData, ThrowOnError>) => (options.client ?? client).get<ExportLeagueHistoryResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/export',
-    ...options
-});
-
-/**
- * Export member history data
- */
-export const exportMemberHistory = <ThrowOnError extends boolean = false>(options: Options<ExportMemberHistoryData, ThrowOnError>) => (options.client ?? client).get<ExportMemberHistoryResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/{mid}/export',
-    ...options
-});
-
-/**
- * Get league data retention configuration
- */
-export const getLeagueRetentionConfig = <ThrowOnError extends boolean = false>(options: Options<GetLeagueRetentionConfigData, ThrowOnError>) => (options.client ?? client).get<GetLeagueRetentionConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/retention',
-    ...options
-});
-
-/**
- * Update league data retention configuration
- */
-export const updateLeagueRetentionConfig = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueRetentionConfigData, ThrowOnError>) => (options.client ?? client).put<UpdateLeagueRetentionConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/retention',
-    ...options
-});
-
-/**
- * Preview retention cleanup impact
- */
-export const previewRetentionCleanup = <ThrowOnError extends boolean = false>(options: Options<PreviewRetentionCleanupData, ThrowOnError>) => (options.client ?? client).post<PreviewRetentionCleanupResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{id}/retention/preview-cleanup',
-    ...options
-});
-
-/**
- * Search participants with filters
- */
-export const searchParticipants = <ThrowOnError extends boolean = false>(options?: Options<SearchParticipantsData, ThrowOnError>) => (options?.client ?? client).get<SearchParticipantsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/search/participants',
-    ...options
-});
-
-/**
- * Discover public leagues
- */
-export const discoverLeagues = <ThrowOnError extends boolean = false>(options?: Options<DiscoverLeaguesData, ThrowOnError>) => (options?.client ?? client).get<DiscoverLeaguesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/search/discover/leagues',
-    ...options
-});
-
-/**
- * Discover open contests
- */
-export const discoverContests = <ThrowOnError extends boolean = false>(options?: Options<DiscoverContestsData, ThrowOnError>) => (options?.client ?? client).get<DiscoverContestsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/search/discover/contests',
-    ...options
-});
-
-/**
- * Join an open public league from discovery
- */
-export const joinDiscoverableLeague = <ThrowOnError extends boolean = false>(options: Options<JoinDiscoverableLeagueData, ThrowOnError>) => (options.client ?? client).post<JoinDiscoverableLeagueResponses, JoinDiscoverableLeagueErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/search/discover/leagues/{leagueId}/join',
-    ...options
-});
-
-/**
- * Report a league or contest
- */
-export const reportDiscoveryEntity = <ThrowOnError extends boolean = false>(options: Options<ReportDiscoveryEntityData, ThrowOnError>) => (options.client ?? client).post<ReportDiscoveryEntityResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/search/discover/report',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Verify user meets minimum age requirement
- */
-export const verifyAge = <ThrowOnError extends boolean = false>(options: Options<VerifyAgeData, ThrowOnError>) => (options.client ?? client).post<VerifyAgeResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/verify-age',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * Get consent history for current user
  */
 export const getConsentHistory = <ThrowOnError extends boolean = false>(options?: Options<GetConsentHistoryData, ThrowOnError>) => (options?.client ?? client).get<GetConsentHistoryResponses, unknown, ThrowOnError>({
@@ -1298,262 +806,6 @@ export const getConsentHistory = <ThrowOnError extends boolean = false>(options?
 export const recordConsent = <ThrowOnError extends boolean = false>(options: Options<RecordConsentData, ThrowOnError>) => (options.client ?? client).post<RecordConsentResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/account/consent',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Check current personal data export status
- */
-export const getDataExportStatus = <ThrowOnError extends boolean = false>(options?: Options<GetDataExportStatusData, ThrowOnError>) => (options?.client ?? client).get<GetDataExportStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/data-export',
-    ...options
-});
-
-/**
- * Request personal data export (GDPR)
- */
-export const requestDataExport = <ThrowOnError extends boolean = false>(options?: Options<RequestDataExportData, ThrowOnError>) => (options?.client ?? client).post<RequestDataExportResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/data-export',
-    ...options
-});
-
-/**
- * Get data export status and download
- */
-export const getDataExport = <ThrowOnError extends boolean = false>(options: Options<GetDataExportData, ThrowOnError>) => (options.client ?? client).get<GetDataExportResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/data-export/{id}',
-    ...options
-});
-
-/**
- * Get current account deletion request status
- */
-export const getAccountDeletionStatus = <ThrowOnError extends boolean = false>(options?: Options<GetAccountDeletionStatusData, ThrowOnError>) => (options?.client ?? client).get<GetAccountDeletionStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/delete-account',
-    ...options
-});
-
-/**
- * Request account deletion
- */
-export const requestAccountDeletion = <ThrowOnError extends boolean = false>(options: Options<RequestAccountDeletionData, ThrowOnError>) => (options.client ?? client).post<RequestAccountDeletionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/delete-account',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get activity limit settings for current user
- */
-export const getActivityLimit = <ThrowOnError extends boolean = false>(options?: Options<GetActivityLimitData, ThrowOnError>) => (options?.client ?? client).get<GetActivityLimitResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/activity-limit',
-    ...options
-});
-
-/**
- * Update activity limit settings for current user
- */
-export const updateActivityLimit = <ThrowOnError extends boolean = false>(options: Options<UpdateActivityLimitData, ThrowOnError>) => (options.client ?? client).put<UpdateActivityLimitResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/activity-limit',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get session reminder settings for current user
- */
-export const getSessionReminder = <ThrowOnError extends boolean = false>(options?: Options<GetSessionReminderData, ThrowOnError>) => (options?.client ?? client).get<GetSessionReminderResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/session-reminder',
-    ...options
-});
-
-/**
- * Update session reminder settings for current user
- */
-export const updateSessionReminder = <ThrowOnError extends boolean = false>(options: Options<UpdateSessionReminderData, ThrowOnError>) => (options.client ?? client).put<UpdateSessionReminderResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/session-reminder',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Cancel a pending account deletion
- */
-export const cancelAccountDeletion = <ThrowOnError extends boolean = false>(options: Options<CancelAccountDeletionData, ThrowOnError>) => (options.client ?? client).post<CancelAccountDeletionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/delete-account/{id}/cancel',
-    ...options
-});
-
-/**
- * Get active self-exclusion status
- */
-export const getActiveExclusion = <ThrowOnError extends boolean = false>(options?: Options<GetActiveExclusionData, ThrowOnError>) => (options?.client ?? client).get<GetActiveExclusionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/self-exclusion',
-    ...options
-});
-
-/**
- * Create self-exclusion or cool-down period
- */
-export const createSelfExclusion = <ThrowOnError extends boolean = false>(options: Options<CreateSelfExclusionData, ThrowOnError>) => (options.client ?? client).post<CreateSelfExclusionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/self-exclusion',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Create enforcement action against a user
- */
-export const createEnforcementAction = <ThrowOnError extends boolean = false>(options: Options<CreateEnforcementActionData, ThrowOnError>) => (options.client ?? client).post<CreateEnforcementActionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/enforcement',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get enforcement history for a user
- */
-export const getEnforcementHistory = <ThrowOnError extends boolean = false>(options: Options<GetEnforcementHistoryData, ThrowOnError>) => (options.client ?? client).get<GetEnforcementHistoryResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/enforcement/{userId}',
-    ...options
-});
-
-/**
- * Update enforcement appeal status
- */
-export const updateAppealStatus = <ThrowOnError extends boolean = false>(options: Options<UpdateAppealStatusData, ThrowOnError>) => (options.client ?? client).put<UpdateAppealStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/enforcement/{id}/appeal',
-    ...options
-});
-
-/**
- * Trigger retention data cleanup
- */
-export const runRetentionCleanup = <ThrowOnError extends boolean = false>(options?: Options<RunRetentionCleanupData, ThrowOnError>) => (options?.client ?? client).post<RunRetentionCleanupResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/retention/cleanup',
-    ...options
-});
-
-/**
- * List all tenants with filters
- */
-export const adminListTenants = <ThrowOnError extends boolean = false>(options?: Options<AdminListTenantsData, ThrowOnError>) => (options?.client ?? client).get<AdminListTenantsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants',
-    ...options
-});
-
-/**
- * Delete a tenant permanently
- */
-export const adminDeleteTenant = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteTenantData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteTenantResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get tenant detail
- */
-export const adminGetTenantDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetTenantDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetTenantDetailResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}',
-    ...options
-});
-
-/**
- * Change tenant plan tier
- */
-export const adminChangeTenantPlan = <ThrowOnError extends boolean = false>(options: Options<AdminChangeTenantPlanData, ThrowOnError>) => (options.client ?? client).put<AdminChangeTenantPlanResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/plan',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Suspend a tenant
- */
-export const adminSuspendTenant = <ThrowOnError extends boolean = false>(options: Options<AdminSuspendTenantData, ThrowOnError>) => (options.client ?? client).post<AdminSuspendTenantResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/suspend',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Unsuspend a tenant
- */
-export const adminUnsuspendTenant = <ThrowOnError extends boolean = false>(options: Options<AdminUnsuspendTenantData, ThrowOnError>) => (options.client ?? client).post<AdminUnsuspendTenantResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/unsuspend',
-    ...options
-});
-
-/**
- * Apply credit to a tenant account
- */
-export const adminApplyCredit = <ThrowOnError extends boolean = false>(options: Options<AdminApplyCreditData, ThrowOnError>) => (options.client ?? client).post<AdminApplyCreditResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/credit',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Extend tenant trial period
- */
-export const adminExtendTrial = <ThrowOnError extends boolean = false>(options: Options<AdminExtendTrialData, ThrowOnError>) => (options.client ?? client).post<AdminExtendTrialResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/extend-trial',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1593,15 +845,6 @@ export const adminGetUserDetail = <ThrowOnError extends boolean = false>(options
 });
 
 /**
- * Reset user password
- */
-export const adminResetPassword = <ThrowOnError extends boolean = false>(options: Options<AdminResetPasswordData, ThrowOnError>) => (options.client ?? client).post<AdminResetPasswordResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/reset-password',
-    ...options
-});
-
-/**
  * Force logout a user from all sessions
  */
 export const adminForceLogout = <ThrowOnError extends boolean = false>(options: Options<AdminForceLogoutData, ThrowOnError>) => (options.client ?? client).post<AdminForceLogoutResponses, unknown, ThrowOnError>({
@@ -1630,19 +873,6 @@ export const adminEnableUser = <ThrowOnError extends boolean = false>(options: O
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/users/{userId}/enable',
     ...options
-});
-
-/**
- * Send administrative email to user
- */
-export const adminSendEmail = <ThrowOnError extends boolean = false>(options: Options<AdminSendEmailData, ThrowOnError>) => (options.client ?? client).post<AdminSendEmailResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/email',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
 });
 
 /**
@@ -1814,90 +1044,6 @@ export const adminReIngestEvent = <ThrowOnError extends boolean = false>(options
 });
 
 /**
- * List all feature flags
- */
-export const adminListFlags = <ThrowOnError extends boolean = false>(options?: Options<AdminListFlagsData, ThrowOnError>) => (options?.client ?? client).get<AdminListFlagsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/flags',
-    ...options
-});
-
-/**
- * Create a new feature flag
- */
-export const adminCreateFlag = <ThrowOnError extends boolean = false>(options: Options<AdminCreateFlagData, ThrowOnError>) => (options.client ?? client).post<AdminCreateFlagResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/flags',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a feature flag
- */
-export const adminDeleteFlag = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteFlagData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteFlagResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/flags/{flagKey}',
-    ...options
-});
-
-/**
- * Get feature flag detail
- */
-export const adminGetFlagDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetFlagDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetFlagDetailResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/flags/{flagKey}',
-    ...options
-});
-
-/**
- * Update a feature flag
- */
-export const adminUpdateFlag = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateFlagData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateFlagResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/flags/{flagKey}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Add a tenant override for a feature flag
- */
-export const adminAddFlagOverride = <ThrowOnError extends boolean = false>(options: Options<AdminAddFlagOverrideData, ThrowOnError>) => (options.client ?? client).post<AdminAddFlagOverrideResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/flags/{flagKey}/overrides',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Remove a tenant override for a feature flag
- */
-export const adminRemoveFlagOverride = <ThrowOnError extends boolean = false>(options: Options<AdminRemoveFlagOverrideData, ThrowOnError>) => (options.client ?? client).delete<AdminRemoveFlagOverrideResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/flags/{flagKey}/overrides/{tenantId}',
-    ...options
-});
-
-/**
- * Resolve feature flag value for a tenant
- */
-export const adminResolveFlag = <ThrowOnError extends boolean = false>(options: Options<AdminResolveFlagData, ThrowOnError>) => (options.client ?? client).get<AdminResolveFlagResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/flags/{flagKey}/resolve/{tenantId}',
-    ...options
-});
-
-/**
  * Get service health status
  */
 export const adminGetServiceHealth = <ThrowOnError extends boolean = false>(options?: Options<AdminGetServiceHealthData, ThrowOnError>) => (options?.client ?? client).get<AdminGetServiceHealthResponses, unknown, ThrowOnError>({
@@ -1987,117 +1133,6 @@ export const adminUnmuteAlert = <ThrowOnError extends boolean = false>(options: 
 });
 
 /**
- * Start tenant impersonation session
- */
-export const adminStartImpersonation = <ThrowOnError extends boolean = false>(options: Options<AdminStartImpersonationData, ThrowOnError>) => (options.client ?? client).post<AdminStartImpersonationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/impersonation/start',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * End tenant impersonation session
- */
-export const adminEndImpersonation = <ThrowOnError extends boolean = false>(options?: Options<AdminEndImpersonationData, ThrowOnError>) => (options?.client ?? client).post<AdminEndImpersonationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/impersonation/end',
-    ...options
-});
-
-/**
- * Get active impersonation session
- */
-export const adminGetActiveImpersonation = <ThrowOnError extends boolean = false>(options?: Options<AdminGetActiveImpersonationData, ThrowOnError>) => (options?.client ?? client).get<AdminGetActiveImpersonationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/impersonation/active',
-    ...options
-});
-
-/**
- * Get active announcements
- */
-export const adminGetActiveAnnouncements = <ThrowOnError extends boolean = false>(options?: Options<AdminGetActiveAnnouncementsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetActiveAnnouncementsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/announcements/active',
-    ...options
-});
-
-/**
- * List all announcements
- */
-export const adminListAnnouncements = <ThrowOnError extends boolean = false>(options?: Options<AdminListAnnouncementsData, ThrowOnError>) => (options?.client ?? client).get<AdminListAnnouncementsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/announcements',
-    ...options
-});
-
-/**
- * Create a new announcement
- */
-export const adminCreateAnnouncement = <ThrowOnError extends boolean = false>(options: Options<AdminCreateAnnouncementData, ThrowOnError>) => (options.client ?? client).post<AdminCreateAnnouncementResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/announcements',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete an announcement
- */
-export const adminDeleteAnnouncement = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteAnnouncementData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteAnnouncementResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/announcements/{id}',
-    ...options
-});
-
-/**
- * Get announcement by ID
- */
-export const adminGetAnnouncement = <ThrowOnError extends boolean = false>(options: Options<AdminGetAnnouncementData, ThrowOnError>) => (options.client ?? client).get<AdminGetAnnouncementResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/announcements/{id}',
-    ...options
-});
-
-/**
- * Update an announcement
- */
-export const adminUpdateAnnouncement = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateAnnouncementData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateAnnouncementResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/announcements/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Activate an announcement
- */
-export const adminActivateAnnouncement = <ThrowOnError extends boolean = false>(options: Options<AdminActivateAnnouncementData, ThrowOnError>) => (options.client ?? client).post<AdminActivateAnnouncementResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/announcements/{id}/activate',
-    ...options
-});
-
-/**
- * Deactivate an announcement
- */
-export const adminDeactivateAnnouncement = <ThrowOnError extends boolean = false>(options: Options<AdminDeactivateAnnouncementData, ThrowOnError>) => (options.client ?? client).post<AdminDeactivateAnnouncementResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/announcements/{id}/deactivate',
-    ...options
-});
-
-/**
  * List available data migrations
  */
 export const adminListMigrations = <ThrowOnError extends boolean = false>(options?: Options<AdminListMigrationsData, ThrowOnError>) => (options?.client ?? client).get<AdminListMigrationsResponses, unknown, ThrowOnError>({
@@ -2134,134 +1169,6 @@ export const adminGetMigrationRunDetail = <ThrowOnError extends boolean = false>
 export const adminCancelMigrationRun = <ThrowOnError extends boolean = false>(options: Options<AdminCancelMigrationRunData, ThrowOnError>) => (options.client ?? client).post<AdminCancelMigrationRunResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/migrations/runs/{runId}/cancel',
-    ...options
-});
-
-/**
- * Get support investigation overview for a tenant
- */
-export const adminGetInvestigation = <ThrowOnError extends boolean = false>(options: Options<AdminGetInvestigationData, ThrowOnError>) => (options.client ?? client).get<AdminGetInvestigationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/tenant/{tenantId}/investigation',
-    ...options
-});
-
-/**
- * Get recent errors for a tenant
- */
-export const adminGetTenantErrors = <ThrowOnError extends boolean = false>(options: Options<AdminGetTenantErrorsData, ThrowOnError>) => (options.client ?? client).get<AdminGetTenantErrorsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/tenant/{tenantId}/errors',
-    ...options
-});
-
-/**
- * Get recent notifications for a tenant
- */
-export const adminGetTenantNotifications = <ThrowOnError extends boolean = false>(options: Options<AdminGetTenantNotificationsData, ThrowOnError>) => (options.client ?? client).get<AdminGetTenantNotificationsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/tenant/{tenantId}/notifications',
-    ...options
-});
-
-/**
- * Get recent support activity for a tenant
- */
-export const adminGetTenantRequests = <ThrowOnError extends boolean = false>(options: Options<AdminGetTenantRequestsData, ThrowOnError>) => (options.client ?? client).get<AdminGetTenantRequestsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/tenant/{tenantId}/requests',
-    ...options
-});
-
-/**
- * Quick action: reset user password
- */
-export const adminQuickResetPassword = <ThrowOnError extends boolean = false>(options: Options<AdminQuickResetPasswordData, ThrowOnError>) => (options.client ?? client).post<AdminQuickResetPasswordResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/quick-actions/reset-password',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Quick action: check sports data provider
- */
-export const adminQuickCheckProvider = <ThrowOnError extends boolean = false>(options: Options<AdminQuickCheckProviderData, ThrowOnError>) => (options.client ?? client).post<AdminQuickCheckProviderResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/quick-actions/check-provider',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Quick action: check tenant entitlements
- */
-export const adminQuickCheckEntitlements = <ThrowOnError extends boolean = false>(options: Options<AdminQuickCheckEntitlementsData, ThrowOnError>) => (options.client ?? client).post<AdminQuickCheckEntitlementsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/quick-actions/check-entitlements',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Quick action: check user notifications
- */
-export const adminQuickCheckNotifications = <ThrowOnError extends boolean = false>(options: Options<AdminQuickCheckNotificationsData, ThrowOnError>) => (options.client ?? client).post<AdminQuickCheckNotificationsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/quick-actions/check-notifications',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Quick action: re-ingest scoring data
- */
-export const adminQuickReIngestScores = <ThrowOnError extends boolean = false>(options: Options<AdminQuickReIngestScoresData, ThrowOnError>) => (options.client ?? client).post<AdminQuickReIngestScoresResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/support/quick-actions/re-ingest-scores',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Start tenant data export
- */
-export const adminStartTenantExport = <ThrowOnError extends boolean = false>(options: Options<AdminStartTenantExportData, ThrowOnError>) => (options.client ?? client).post<AdminStartTenantExportResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/export',
-    ...options
-});
-
-/**
- * Get tenant export status
- */
-export const adminGetExportStatus = <ThrowOnError extends boolean = false>(options: Options<AdminGetExportStatusData, ThrowOnError>) => (options.client ?? client).get<AdminGetExportStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/export/status',
-    ...options
-});
-
-/**
- * Download tenant export
- */
-export const adminDownloadExport = <ThrowOnError extends boolean = false>(options: Options<AdminDownloadExportData, ThrowOnError>) => (options.client ?? client).get<AdminDownloadExportResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/tenants/{tenantId}/export/download',
     ...options
 });
 
@@ -2368,832 +1275,11 @@ export const adminResetIngestionSchedule = <ThrowOnError extends boolean = false
 });
 
 /**
- * Get dunning schedule configuration
- */
-export const adminGetDunningConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminGetDunningConfigData, ThrowOnError>) => (options?.client ?? client).get<AdminGetDunningConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/dunning',
-    ...options
-});
-
-/**
- * Update dunning schedule configuration
- */
-export const adminUpdateDunningConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateDunningConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateDunningConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/dunning',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset dunning configuration to defaults
- */
-export const adminResetDunningConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminResetDunningConfigData, ThrowOnError>) => (options?.client ?? client).post<AdminResetDunningConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/dunning/reset',
-    ...options
-});
-
-/**
- * Get notification channel defaults
- */
-export const adminGetChannelConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminGetChannelConfigData, ThrowOnError>) => (options?.client ?? client).get<AdminGetChannelConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-channels',
-    ...options
-});
-
-/**
- * Update notification channel defaults for a category
- */
-export const adminUpdateChannelConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateChannelConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateChannelConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-channels/{category}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset notification channel defaults
- */
-export const adminResetChannelConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminResetChannelConfigData, ThrowOnError>) => (options?.client ?? client).post<AdminResetChannelConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-channels/reset',
-    ...options
-});
-
-/**
- * Get data retention defaults
- */
-export const adminGetRetentionDefaults = <ThrowOnError extends boolean = false>(options?: Options<AdminGetRetentionDefaultsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetRetentionDefaultsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/retention',
-    ...options
-});
-
-/**
- * Update data retention defaults
- */
-export const adminUpdateRetentionDefaults = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateRetentionDefaultsData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateRetentionDefaultsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/retention',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset data retention to defaults
- */
-export const adminResetRetentionDefaults = <ThrowOnError extends boolean = false>(options?: Options<AdminResetRetentionDefaultsData, ThrowOnError>) => (options?.client ?? client).post<AdminResetRetentionDefaultsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/retention/reset',
-    ...options
-});
-
-/**
- * Clear tenant-specific retention override
- */
-export const adminClearTenantRetentionOverride = <ThrowOnError extends boolean = false>(options: Options<AdminClearTenantRetentionOverrideData, ThrowOnError>) => (options.client ?? client).delete<AdminClearTenantRetentionOverrideResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/retention/{tenantId}',
-    ...options
-});
-
-/**
- * Get tenant-specific retention override
- */
-export const adminGetTenantRetentionOverride = <ThrowOnError extends boolean = false>(options: Options<AdminGetTenantRetentionOverrideData, ThrowOnError>) => (options.client ?? client).get<AdminGetTenantRetentionOverrideResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/retention/{tenantId}',
-    ...options
-});
-
-/**
- * Set tenant-specific retention override
- */
-export const adminSetTenantRetentionOverride = <ThrowOnError extends boolean = false>(options: Options<AdminSetTenantRetentionOverrideData, ThrowOnError>) => (options.client ?? client).put<AdminSetTenantRetentionOverrideResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/retention/{tenantId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get weekly digest configuration
- */
-export const adminGetDigestConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminGetDigestConfigData, ThrowOnError>) => (options?.client ?? client).get<AdminGetDigestConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/weekly-digest',
-    ...options
-});
-
-/**
- * Update weekly digest configuration
- */
-export const adminUpdateDigestConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateDigestConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateDigestConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/weekly-digest',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset weekly digest configuration to defaults
- */
-export const adminResetDigestConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminResetDigestConfigData, ThrowOnError>) => (options?.client ?? client).post<AdminResetDigestConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/weekly-digest/reset',
-    ...options
-});
-
-/**
- * Preview weekly digest for a league
- */
-export const adminPreviewDigest = <ThrowOnError extends boolean = false>(options?: Options<AdminPreviewDigestData, ThrowOnError>) => (options?.client ?? client).get<AdminPreviewDigestResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/weekly-digest/preview',
-    ...options
-});
-
-/**
- * List scoring templates
- */
-export const adminListScoringTemplates = <ThrowOnError extends boolean = false>(options?: Options<AdminListScoringTemplatesData, ThrowOnError>) => (options?.client ?? client).get<AdminListScoringTemplatesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/scoring-templates',
-    ...options
-});
-
-/**
- * Create a scoring template
- */
-export const adminCreateScoringTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminCreateScoringTemplateData, ThrowOnError>) => (options.client ?? client).post<AdminCreateScoringTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/scoring-templates',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a scoring template
- */
-export const adminDeleteScoringTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteScoringTemplateData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteScoringTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/scoring-templates/{id}',
-    ...options
-});
-
-/**
- * Get scoring template by ID
- */
-export const adminGetScoringTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminGetScoringTemplateData, ThrowOnError>) => (options.client ?? client).get<AdminGetScoringTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/scoring-templates/{id}',
-    ...options
-});
-
-/**
- * Update a scoring template
- */
-export const adminUpdateScoringTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateScoringTemplateData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateScoringTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/scoring-templates/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List selection templates
- */
-export const adminListSelectionTemplatesConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminListSelectionTemplatesConfigData, ThrowOnError>) => (options?.client ?? client).get<AdminListSelectionTemplatesConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/selection-templates',
-    ...options
-});
-
-/**
- * Create a selection template
- */
-export const adminCreateSelectionTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminCreateSelectionTemplateData, ThrowOnError>) => (options.client ?? client).post<AdminCreateSelectionTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/selection-templates',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a selection template
- */
-export const adminDeleteSelectionTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteSelectionTemplateData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteSelectionTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/selection-templates/{id}',
-    ...options
-});
-
-/**
- * Get selection template by ID
- */
-export const adminGetSelectionTemplateConfig = <ThrowOnError extends boolean = false>(options: Options<AdminGetSelectionTemplateConfigData, ThrowOnError>) => (options.client ?? client).get<AdminGetSelectionTemplateConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/selection-templates/{id}',
-    ...options
-});
-
-/**
- * Update a selection template
- */
-export const adminUpdateSelectionTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateSelectionTemplateData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateSelectionTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/selection-templates/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List notification templates
- */
-export const adminListNotificationTemplates = <ThrowOnError extends boolean = false>(options?: Options<AdminListNotificationTemplatesData, ThrowOnError>) => (options?.client ?? client).get<AdminListNotificationTemplatesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-templates',
-    ...options
-});
-
-/**
- * Get notification template by event type
- */
-export const adminGetNotificationTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminGetNotificationTemplateData, ThrowOnError>) => (options.client ?? client).get<AdminGetNotificationTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-templates/{eventType}',
-    ...options
-});
-
-/**
- * Update a notification template
- */
-export const adminUpdateNotificationTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateNotificationTemplateData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateNotificationTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-templates/{eventType}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset a notification template to defaults
- */
-export const adminResetNotificationTemplate = <ThrowOnError extends boolean = false>(options: Options<AdminResetNotificationTemplateData, ThrowOnError>) => (options.client ?? client).post<AdminResetNotificationTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/notification-templates/reset/{eventType}',
-    ...options
-});
-
-/**
- * List push trigger configurations
- */
-export const adminListPushTriggers = <ThrowOnError extends boolean = false>(options?: Options<AdminListPushTriggersData, ThrowOnError>) => (options?.client ?? client).get<AdminListPushTriggersResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers',
-    ...options
-});
-
-/**
- * Update a push trigger configuration
- */
-export const adminUpdatePushTrigger = <ThrowOnError extends boolean = false>(options: Options<AdminUpdatePushTriggerData, ThrowOnError>) => (options.client ?? client).put<AdminUpdatePushTriggerResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers/{eventType}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Enable a push trigger
- */
-export const adminEnablePushTrigger = <ThrowOnError extends boolean = false>(options: Options<AdminEnablePushTriggerData, ThrowOnError>) => (options.client ?? client).post<AdminEnablePushTriggerResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers/{eventType}/enable',
-    ...options
-});
-
-/**
- * Disable a push trigger
- */
-export const adminDisablePushTrigger = <ThrowOnError extends boolean = false>(options: Options<AdminDisablePushTriggerData, ThrowOnError>) => (options.client ?? client).post<AdminDisablePushTriggerResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers/{eventType}/disable',
-    ...options
-});
-
-/**
- * Reset all push triggers to defaults
- */
-export const adminResetPushTriggers = <ThrowOnError extends boolean = false>(options?: Options<AdminResetPushTriggersData, ThrowOnError>) => (options?.client ?? client).post<AdminResetPushTriggersResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/push-triggers/reset',
-    ...options
-});
-
-/**
- * Get rate limit configuration
- */
-export const adminGetRateLimitConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminGetRateLimitConfigData, ThrowOnError>) => (options?.client ?? client).get<AdminGetRateLimitConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/rate-limits',
-    ...options
-});
-
-/**
- * Update rate limit configuration
- */
-export const adminUpdateRateLimitConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateRateLimitConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateRateLimitConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/rate-limits',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset rate limits to defaults
- */
-export const adminResetRateLimitConfig = <ThrowOnError extends boolean = false>(options?: Options<AdminResetRateLimitConfigData, ThrowOnError>) => (options?.client ?? client).post<AdminResetRateLimitConfigResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/rate-limits/reset',
-    ...options
-});
-
-/**
  * Get recommended poll intervals for clients
  */
 export const getPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<GetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).get<GetPollIntervalsResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/config/poll-intervals',
-    ...options
-});
-
-/**
- * Get current plan details for tenant
- */
-export const getCurrentPlan = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentPlanData, ThrowOnError>) => (options?.client ?? client).get<GetCurrentPlanResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/plan',
-    ...options
-});
-
-/**
- * Change subscription plan
- */
-export const changePlan = <ThrowOnError extends boolean = false>(options?: Options<ChangePlanData, ThrowOnError>) => (options?.client ?? client).put<ChangePlanResponses, ChangePlanErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/plan',
-    ...options
-});
-
-/**
- * Get all entitlement checks for current tenant
- */
-export const getEntitlements = <ThrowOnError extends boolean = false>(options?: Options<GetEntitlementsData, ThrowOnError>) => (options?.client ?? client).get<GetEntitlementsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/entitlements',
-    ...options
-});
-
-/**
- * Get usage summary for current tenant
- */
-export const getUsage = <ThrowOnError extends boolean = false>(options?: Options<GetUsageData, ThrowOnError>) => (options?.client ?? client).get<GetUsageResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/usage',
-    ...options
-});
-
-/**
- * List available plan tiers
- */
-export const listPlans = <ThrowOnError extends boolean = false>(options?: Options<ListPlansData, ThrowOnError>) => (options?.client ?? client).get<ListPlansResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/plans',
-    ...options
-});
-
-/**
- * Create a new subscription
- */
-export const createSubscription = <ThrowOnError extends boolean = false>(options?: Options<CreateSubscriptionData, ThrowOnError>) => (options?.client ?? client).post<CreateSubscriptionResponses, CreateSubscriptionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/subscribe',
-    ...options
-});
-
-/**
- * Resume a cancelled subscription
- */
-export const resumeSubscription = <ThrowOnError extends boolean = false>(options?: Options<ResumeSubscriptionData, ThrowOnError>) => (options?.client ?? client).post<ResumeSubscriptionResponses, ResumeSubscriptionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/resume',
-    ...options
-});
-
-/**
- * Get current subscription details
- */
-export const getSubscription = <ThrowOnError extends boolean = false>(options?: Options<GetSubscriptionData, ThrowOnError>) => (options?.client ?? client).get<GetSubscriptionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/subscription',
-    ...options
-});
-
-/**
- * Create setup intent for Stripe payment method
- */
-export const createPaymentMethodSetup = <ThrowOnError extends boolean = false>(options?: Options<CreatePaymentMethodSetupData, ThrowOnError>) => (options?.client ?? client).post<CreatePaymentMethodSetupResponses, CreatePaymentMethodSetupErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/payment-method',
-    ...options
-});
-
-/**
- * Get Stripe billing portal session URL
- */
-export const getBillingPortal = <ThrowOnError extends boolean = false>(options?: Options<GetBillingPortalData, ThrowOnError>) => (options?.client ?? client).get<GetBillingPortalResponses, GetBillingPortalErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/portal',
-    ...options
-});
-
-/**
- * Start a trial subscription
- */
-export const startTrial = <ThrowOnError extends boolean = false>(options?: Options<StartTrialData, ThrowOnError>) => (options?.client ?? client).post<StartTrialResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/trial/start',
-    ...options
-});
-
-/**
- * Get current trial status
- */
-export const getTrialStatus = <ThrowOnError extends boolean = false>(options?: Options<GetTrialStatusData, ThrowOnError>) => (options?.client ?? client).get<GetTrialStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/trial/status',
-    ...options
-});
-
-/**
- * Get invoice history for tenant
- */
-export const listInvoices = <ThrowOnError extends boolean = false>(options?: Options<ListInvoicesData, ThrowOnError>) => (options?.client ?? client).get<ListInvoicesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/invoices',
-    ...options
-});
-
-/**
- * Preview upcoming invoice
- */
-export const getUpcomingInvoice = <ThrowOnError extends boolean = false>(options?: Options<GetUpcomingInvoiceData, ThrowOnError>) => (options?.client ?? client).get<GetUpcomingInvoiceResponses, GetUpcomingInvoiceErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/invoices/upcoming',
-    ...options
-});
-
-/**
- * Get invoice detail by ID
- */
-export const getInvoiceDetail = <ThrowOnError extends boolean = false>(options: Options<GetInvoiceDetailData, ThrowOnError>) => (options.client ?? client).get<GetInvoiceDetailResponses, GetInvoiceDetailErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/invoices/{invoiceId}',
-    ...options
-});
-
-/**
- * Preview upgrade proration for a plan
- */
-export const previewUpgrade = <ThrowOnError extends boolean = false>(options: Options<PreviewUpgradeData, ThrowOnError>) => (options.client ?? client).get<PreviewUpgradeResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/upgrade-preview/{planSlug}',
-    ...options
-});
-
-/**
- * Preview downgrade impact for a plan
- */
-export const previewDowngrade = <ThrowOnError extends boolean = false>(options: Options<PreviewDowngradeData, ThrowOnError>) => (options.client ?? client).get<PreviewDowngradeResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/downgrade-preview/{planSlug}',
-    ...options
-});
-
-/**
- * Preview cancellation impact
- */
-export const previewCancellation = <ThrowOnError extends boolean = false>(options?: Options<PreviewCancellationData, ThrowOnError>) => (options?.client ?? client).get<PreviewCancellationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/cancellation-preview',
-    ...options
-});
-
-/**
- * Get retention offer for tenant
- */
-export const getRetentionOffer = <ThrowOnError extends boolean = false>(options?: Options<GetRetentionOfferData, ThrowOnError>) => (options?.client ?? client).get<GetRetentionOfferResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/retention-offer',
-    ...options
-});
-
-/**
- * Cancel subscription with feedback
- */
-export const cancelSubscription = <ThrowOnError extends boolean = false>(options?: Options<CancelSubscriptionData, ThrowOnError>) => (options?.client ?? client).post<CancelSubscriptionResponses, CancelSubscriptionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/cancel',
-    ...options
-});
-
-/**
- * Get revenue analytics metrics
- */
-export const getRevenueAnalytics = <ThrowOnError extends boolean = false>(options?: Options<GetRevenueAnalyticsData, ThrowOnError>) => (options?.client ?? client).get<GetRevenueAnalyticsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/analytics',
-    ...options
-});
-
-/**
- * Get subscribers grouped by plan
- */
-export const getSubscribersByPlan = <ThrowOnError extends boolean = false>(options?: Options<GetSubscribersByPlanData, ThrowOnError>) => (options?.client ?? client).get<GetSubscribersByPlanResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/analytics/subscribers',
-    ...options
-});
-
-/**
- * Get trial conversion metrics
- */
-export const getTrialMetrics = <ThrowOnError extends boolean = false>(options?: Options<GetTrialMetricsData, ThrowOnError>) => (options?.client ?? client).get<GetTrialMetricsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/analytics/trials',
-    ...options
-});
-
-/**
- * Get churn metrics over time
- */
-export const getChurnMetrics = <ThrowOnError extends boolean = false>(options?: Options<GetChurnMetricsData, ThrowOnError>) => (options?.client ?? client).get<GetChurnMetricsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/analytics/churn',
-    ...options
-});
-
-/**
- * List enterprise plans
- */
-export const listEnterprisePlans = <ThrowOnError extends boolean = false>(options?: Options<ListEnterprisePlansData, ThrowOnError>) => (options?.client ?? client).get<ListEnterprisePlansResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/enterprise',
-    ...options
-});
-
-/**
- * Create a custom enterprise plan
- */
-export const createEnterprisePlan = <ThrowOnError extends boolean = false>(options?: Options<CreateEnterprisePlanData, ThrowOnError>) => (options?.client ?? client).post<CreateEnterprisePlanResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/enterprise',
-    ...options
-});
-
-/**
- * Get dunning status for a tenant
- */
-export const getDunningStatus = <ThrowOnError extends boolean = false>(options: Options<GetDunningStatusData, ThrowOnError>) => (options.client ?? client).get<GetDunningStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/billing/dunning/{tenantId}',
-    ...options
-});
-
-export const postApiV1InternalWebhooksStripe = <ThrowOnError extends boolean = false>(options?: Options<PostApiV1InternalWebhooksStripeData, ThrowOnError>) => (options?.client ?? client).post<PostApiV1InternalWebhooksStripeResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/internal/webhooks/stripe',
-    ...options
-});
-
-/**
- * Get league activity feed
- */
-export const getLeagueFeed = <ThrowOnError extends boolean = false>(options: Options<GetLeagueFeedData, ThrowOnError>) => (options.client ?? client).get<GetLeagueFeedResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed',
-    ...options
-});
-
-/**
- * Create a feed post
- */
-export const createFeedPost = <ThrowOnError extends boolean = false>(options: Options<CreateFeedPostData, ThrowOnError>) => (options.client ?? client).post<CreateFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a feed post
- */
-export const deleteFeedPost = <ThrowOnError extends boolean = false>(options: Options<DeleteFeedPostData, ThrowOnError>) => (options.client ?? client).delete<DeleteFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}',
-    ...options
-});
-
-/**
- * Get a single feed post
- */
-export const getFeedPost = <ThrowOnError extends boolean = false>(options: Options<GetFeedPostData, ThrowOnError>) => (options.client ?? client).get<GetFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}',
-    ...options
-});
-
-/**
- * Reply to a feed post
- */
-export const addFeedReply = <ThrowOnError extends boolean = false>(options: Options<AddFeedReplyData, ThrowOnError>) => (options.client ?? client).post<AddFeedReplyResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/replies',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Add a reaction to a post
- */
-export const addFeedReaction = <ThrowOnError extends boolean = false>(options: Options<AddFeedReactionData, ThrowOnError>) => (options.client ?? client).post<AddFeedReactionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/reactions',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Unpin a feed post
- */
-export const unpinFeedPost = <ThrowOnError extends boolean = false>(options: Options<UnpinFeedPostData, ThrowOnError>) => (options.client ?? client).delete<UnpinFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/pin',
-    ...options
-});
-
-/**
- * Pin a feed post
- */
-export const pinFeedPost = <ThrowOnError extends boolean = false>(options: Options<PinFeedPostData, ThrowOnError>) => (options.client ?? client).post<PinFeedPostResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/leagues/{leagueId}/feed/{postId}/pin',
-    ...options
-});
-
-/**
- * List direct message conversations
- */
-export const listSocialConversations = <ThrowOnError extends boolean = false>(options?: Options<ListSocialConversationsData, ThrowOnError>) => (options?.client ?? client).get<ListSocialConversationsResponses, ListSocialConversationsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/messages/conversations',
-    ...options
-});
-
-/**
- * Get messages in a direct message conversation
- */
-export const getSocialConversationMessages = <ThrowOnError extends boolean = false>(options: Options<GetSocialConversationMessagesData, ThrowOnError>) => (options.client ?? client).get<GetSocialConversationMessagesResponses, GetSocialConversationMessagesErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/messages/conversations/{conversationId}',
-    ...options
-});
-
-/**
- * Send a direct message
- */
-export const sendSocialConversationMessage = <ThrowOnError extends boolean = false>(options: Options<SendSocialConversationMessageData, ThrowOnError>) => (options.client ?? client).post<SendSocialConversationMessageResponses, SendSocialConversationMessageErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/messages/conversations/{conversationId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Mark a direct message conversation as read
- */
-export const markSocialConversationRead = <ThrowOnError extends boolean = false>(options: Options<MarkSocialConversationReadData, ThrowOnError>) => (options.client ?? client).patch<MarkSocialConversationReadResponses, MarkSocialConversationReadErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/messages/conversations/{conversationId}/read',
-    ...options
-});
-
-/**
- * Get contest chat messages
- */
-export const getContestChat = <ThrowOnError extends boolean = false>(options: Options<GetContestChatData, ThrowOnError>) => (options.client ?? client).get<GetContestChatResponses, GetContestChatErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/contests/{contestId}/chat',
-    ...options
-});
-
-/**
- * Send a contest chat message
- */
-export const sendContestChatMessage = <ThrowOnError extends boolean = false>(options: Options<SendContestChatMessageData, ThrowOnError>) => (options.client ?? client).post<SendContestChatMessageResponses, SendContestChatMessageErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/contests/{contestId}/chat',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get share card details
- */
-export const getShareCard = <ThrowOnError extends boolean = false>(options: Options<GetShareCardData, ThrowOnError>) => (options.client ?? client).get<GetShareCardResponses, GetShareCardErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/shares/{shareId}',
-    ...options
-});
-
-/**
- * Get league recap
- */
-export const getLeagueRecap = <ThrowOnError extends boolean = false>(options: Options<GetLeagueRecapData, ThrowOnError>) => (options.client ?? client).get<GetLeagueRecapResponses, GetLeagueRecapErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/social/leagues/{leagueId}/recap',
-    ...options
-});
-
-/**
- * List selection templates
- */
-export const listSelectionTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListSelectionTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListSelectionTemplatesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/drafts/templates',
-    ...options
-});
-
-/**
- * Get a selection template by ID
- */
-export const getSelectionTemplate = <ThrowOnError extends boolean = false>(options: Options<GetSelectionTemplateData, ThrowOnError>) => (options.client ?? client).get<GetSelectionTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/drafts/templates/{templateId}',
     ...options
 });
 
@@ -3222,7 +1308,7 @@ export const startDraft = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Submit a draft pick
  */
-export const submitDraftPick = <ThrowOnError extends boolean = false>(options: Options<SubmitDraftPickData, ThrowOnError>) => (options.client ?? client).post<SubmitDraftPickResponses, unknown, ThrowOnError>({
+export const submitContestSelection = <ThrowOnError extends boolean = false>(options: Options<SubmitContestSelectionData, ThrowOnError>) => (options.client ?? client).post<SubmitContestSelectionResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/pick',
     ...options,
@@ -3230,24 +1316,6 @@ export const submitDraftPick = <ThrowOnError extends boolean = false>(options: O
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * Reset the current user bracket submission
- */
-export const resetBracketSubmission = <ThrowOnError extends boolean = false>(options: Options<ResetBracketSubmissionData, ThrowOnError>) => (options.client ?? client).delete<ResetBracketSubmissionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/drafts/{contestId}/bracket',
-    ...options
-});
-
-/**
- * Auto-fill the current user bracket submission
- */
-export const autoFillBracketSubmission = <ThrowOnError extends boolean = false>(options: Options<AutoFillBracketSubmissionData, ThrowOnError>) => (options.client ?? client).post<AutoFillBracketSubmissionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/drafts/{contestId}/bracket/auto-fill',
-    ...options
 });
 
 /**
@@ -3269,9 +1337,9 @@ export const resumeDraft = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
- * Extend the current pick deadline
+ * Shift the current turn start time
  */
-export const extendPickDeadline = <ThrowOnError extends boolean = false>(options: Options<ExtendPickDeadlineData, ThrowOnError>) => (options.client ?? client).post<ExtendPickDeadlineResponses, unknown, ThrowOnError>({
+export const extendCurrentTurn = <ThrowOnError extends boolean = false>(options: Options<ExtendCurrentTurnData, ThrowOnError>) => (options.client ?? client).post<ExtendCurrentTurnResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/extend',
     ...options,
@@ -3284,7 +1352,7 @@ export const extendPickDeadline = <ThrowOnError extends boolean = false>(options
 /**
  * Undo the most recent snake draft pick
  */
-export const undoLiveDraftPick = <ThrowOnError extends boolean = false>(options: Options<UndoLiveDraftPickData, ThrowOnError>) => (options.client ?? client).post<UndoLiveDraftPickResponses, unknown, ThrowOnError>({
+export const undoSnakeDraftSelection = <ThrowOnError extends boolean = false>(options: Options<UndoSnakeDraftSelectionData, ThrowOnError>) => (options.client ?? client).post<UndoSnakeDraftSelectionResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/undo',
     ...options
@@ -3293,37 +1361,23 @@ export const undoLiveDraftPick = <ThrowOnError extends boolean = false>(options:
 /**
  * Skip the current snake draft pick
  */
-export const skipLiveDraftPick = <ThrowOnError extends boolean = false>(options: Options<SkipLiveDraftPickData, ThrowOnError>) => (options.client ?? client).post<SkipLiveDraftPickResponses, unknown, ThrowOnError>({
+export const skipSnakeDraftTurn = <ThrowOnError extends boolean = false>(options: Options<SkipSnakeDraftTurnData, ThrowOnError>) => (options.client ?? client).post<SkipSnakeDraftTurnResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/skip',
     ...options
 });
 
 /**
- * List available scoring templates
- */
-export const listScoringTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListScoringTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListScoringTemplatesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/scoring/templates',
-    ...options
-});
-
-/**
- * Get a scoring template by key
- */
-export const getScoringTemplate = <ThrowOnError extends boolean = false>(options: Options<GetScoringTemplateData, ThrowOnError>) => (options.client ?? client).get<GetScoringTemplateResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/scoring/templates/{key}',
-    ...options
-});
-
-/**
  * Validate a scoring configuration
  */
-export const validateScoringConfig = <ThrowOnError extends boolean = false>(options?: Options<ValidateScoringConfigData, ThrowOnError>) => (options?.client ?? client).post<ValidateScoringConfigResponses, ValidateScoringConfigErrors, ThrowOnError>({
+export const validateScoringConfig = <ThrowOnError extends boolean = false>(options: Options<ValidateScoringConfigData, ThrowOnError>) => (options.client ?? client).post<ValidateScoringConfigResponses, ValidateScoringConfigErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/scoring/config/validate',
-    ...options
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**
@@ -3413,141 +1467,6 @@ export const markAllNotificationsRead = <ThrowOnError extends boolean = false>(o
 export const dismissNotification = <ThrowOnError extends boolean = false>(options: Options<DismissNotificationData, ThrowOnError>) => (options.client ?? client).delete<DismissNotificationResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/notifications/{id}',
-    ...options
-});
-
-/**
- * Get notification preferences for current user
- */
-export const getNotificationPreferences = <ThrowOnError extends boolean = false>(options?: Options<GetNotificationPreferencesData, ThrowOnError>) => (options?.client ?? client).get<GetNotificationPreferencesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/preferences',
-    ...options
-});
-
-/**
- * Update notification preferences
- */
-export const updateNotificationPreferences = <ThrowOnError extends boolean = false>(options?: Options<UpdateNotificationPreferencesData, ThrowOnError>) => (options?.client ?? client).put<UpdateNotificationPreferencesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/preferences',
-    ...options
-});
-
-/**
- * Unsubscribe from a notification category
- */
-export const unsubscribeNotificationCategory = <ThrowOnError extends boolean = false>(options: Options<UnsubscribeNotificationCategoryData, ThrowOnError>) => (options.client ?? client).post<UnsubscribeNotificationCategoryResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/unsubscribe/{category}',
-    ...options
-});
-
-/**
- * List registered devices for current user
- */
-export const listDevices = <ThrowOnError extends boolean = false>(options?: Options<ListDevicesData, ThrowOnError>) => (options?.client ?? client).get<ListDevicesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/devices',
-    ...options
-});
-
-/**
- * Register a device for push notifications
- */
-export const registerDevice = <ThrowOnError extends boolean = false>(options?: Options<RegisterDeviceData, ThrowOnError>) => (options?.client ?? client).post<RegisterDeviceResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/devices',
-    ...options
-});
-
-/**
- * Register a device for push notifications (alias)
- */
-export const registerDeviceAlias = <ThrowOnError extends boolean = false>(options?: Options<RegisterDeviceAliasData, ThrowOnError>) => (options?.client ?? client).post<RegisterDeviceAliasResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/devices/register',
-    ...options
-});
-
-/**
- * Deactivate a registered device
- */
-export const deactivateDevice = <ThrowOnError extends boolean = false>(options: Options<DeactivateDeviceData, ThrowOnError>) => (options.client ?? client).delete<DeactivateDeviceResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/devices/{id}',
-    ...options
-});
-
-/**
- * Dispatch a notification event
- */
-export const dispatchNotification = <ThrowOnError extends boolean = false>(options?: Options<DispatchNotificationData, ThrowOnError>) => (options?.client ?? client).post<DispatchNotificationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/dispatch',
-    ...options
-});
-
-/**
- * Send commissioner announcement to a league
- */
-export const sendAnnouncement = <ThrowOnError extends boolean = false>(options?: Options<SendAnnouncementData, ThrowOnError>) => (options?.client ?? client).post<SendAnnouncementResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/announce',
-    ...options
-});
-
-/**
- * Schedule a notification for future delivery
- */
-export const scheduleNotification = <ThrowOnError extends boolean = false>(options?: Options<ScheduleNotificationData, ThrowOnError>) => (options?.client ?? client).post<ScheduleNotificationResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/schedule',
-    ...options
-});
-
-/**
- * Cancel scheduled notifications for a source
- */
-export const cancelScheduledNotifications = <ThrowOnError extends boolean = false>(options: Options<CancelScheduledNotificationsData, ThrowOnError>) => (options.client ?? client).delete<CancelScheduledNotificationsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/schedule/{sourceType}/{sourceId}',
-    ...options
-});
-
-/**
- * Trigger weekly digest for a league
- */
-export const triggerWeeklyDigest = <ThrowOnError extends boolean = false>(options: Options<TriggerWeeklyDigestData, ThrowOnError>) => (options.client ?? client).post<TriggerWeeklyDigestResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/digest/{leagueId}',
-    ...options
-});
-
-/**
- * Get notification delivery analytics
- */
-export const getNotificationAnalytics = <ThrowOnError extends boolean = false>(options?: Options<GetNotificationAnalyticsData, ThrowOnError>) => (options?.client ?? client).get<GetNotificationAnalyticsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/notifications/analytics',
-    ...options
-});
-
-/**
- * Send a test email
- */
-export const sendTestEmail = <ThrowOnError extends boolean = false>(options?: Options<SendTestEmailData, ThrowOnError>) => (options?.client ?? client).post<SendTestEmailResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/test/email',
-    ...options
-});
-
-/**
- * Send a test push notification
- */
-export const sendTestPush = <ThrowOnError extends boolean = false>(options?: Options<SendTestPushData, ThrowOnError>) => (options?.client ?? client).post<SendTestPushResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/test/push',
     ...options
 });
 

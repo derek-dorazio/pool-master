@@ -79,13 +79,13 @@ Single Fastify + TypeScript process running on port 3000. All domain modules are
 | **standings** | `/api/v1/contests/:id/standings` | Leaderboards, rankings |
 | **history** | `/api/v1/` | Historical data, timelines, records, rivalries |
 | **search** | `/api/v1/search` | Full-text search, league/contest discovery |
-| **drafts** | `/api/v1/drafts` | 6 draft engines, selection templates |
-| **scoring** | `/api/v1/scoring` | 7 scoring engines, 16 templates, stat validation |
+| **drafts** | `/api/v1/drafts` | draft-room runtime and selection workflows |
+| **scoring** | `/api/v1/scoring` | participant scoring rules, aggregation rules, stat validation |
 | **notifications** | `/api/v1/notifications` | Multi-channel dispatch, preferences, scheduling |
 | **ingestion** | `/api/v1/ingestion` | Sports data polling, provider adapters |
 | **admin** | `/api/v1/admin` | Platform admin, feature flags, impersonation |
 | **billing** | `/api/v1/billing` | Plans, entitlements, usage tracking |
-| **compliance** | `/api/v1/account` | GDPR, age verification, self-exclusion |
+| **account/privacy** | `/api/v1/account` | minimal consent and account-related flows retained for first pass |
 
 ### Shared Package (packages/shared)
 
@@ -303,7 +303,7 @@ Push to main
 | **In-process EventBus** (not Redis Streams) | All publishers and subscribers run in the same process. External queue infrastructure can be added later only when scale or deployment topology requires it. |
 | **S3 + CloudFront** (not Docker/nginx for frontends) | Static React SPAs don't need a server. CloudFront is cheaper, faster (global CDN), and simpler to deploy. |
 | **Hexagonal architecture** | Repository port interfaces allow swapping Prisma for any adapter. Tests can use in-memory implementations. |
-| **Sport-agnostic scoring** | All scoring is driven by ScoringConfig JSONB, not hard-coded sport logic. Adding a new sport means adding a template, not new code. |
+| **Explicit scoring rules** | Scoring is driven by code-owned rule registries plus contest-owned configured rules. Adding a new sport or rule means adding tested code and configuration support, not preserving a broad template abstraction. |
 | **Multi-tenancy via tenant_id** | Every row carries `tenant_id`. Extracted from JWT or `x-tenant-id` header. Supports white-label deployments. |
 | **Tests separate from source** | All tests in `tests/` directory, never inside `src/`. Keeps package builds clean and test dependencies isolated. |
 

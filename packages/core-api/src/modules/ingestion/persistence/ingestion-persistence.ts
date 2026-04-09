@@ -8,6 +8,7 @@
 import type { PrismaClient } from '@prisma/client';
 import type {
   SportEvent,
+  SportEventDetail,
   ProviderParticipant,
   ProviderRanking,
 } from '../core/provider-interface';
@@ -149,6 +150,106 @@ export class IngestionPersistence {
     }
 
     return count;
+  }
+
+  /**
+   * Persist a full event detail payload and link the event-scoped participants.
+   *
+   * This is the first-pass bridge between provider event detail responses and
+   * the new event-participant model used by scoring and roster picks.
+   */
+  async persistEventDetail(detail: SportEventDetail): Promise<{
+    eventsPersisted: number;
+    participantsPersisted: number;
+    sportEventParticipantsPersisted: number;
+    sourceDataPersisted: number;
+  }> {
+    const eventsPersisted = await this.persistEvents([detail]);
+    const participantsPersisted = await this.persistParticipants(detail.participants);
+
+    const persistedEvent = await this.prisma.sportEvent.findUnique({
+      where: {
+        providerId_externalId: {
+          providerId: detail.providerId,
+          externalId: detail.externalId,
+        },
+      },
+    });
+    if (!persistedEvent) {
+      throw new Error(
+        `Persisted sport event not found for ${detail.providerId}:${detail.externalId}`,
+      );
+    }
+
+    let sportEventParticipantsPersisted = 0;
+    let sourceDataPersisted = 0;
+
+    for (const participant of detail.participants) {
+      const mapping = await this.prisma.participantProviderMapping.findUnique({
+        where: {
+          providerId_externalId: {
+            providerId: participant.providerId,
+            externalId: participant.externalId,
+          },
+        },
+      });
+      if (!mapping) {
+        continue;
+      }
+
+      const sportEventParticipant = await this.prisma.sportEventParticipant.upsert({
+        where: {
+          sportEventId_participantId: {
+            sportEventId: persistedEvent.id,
+            participantId: mapping.participantId,
+          },
+        },
+        create: {
+          sportEventId: persistedEvent.id,
+          participantId: mapping.participantId,
+          status: participant.active ? 'ACTIVE' : 'INACTIVE',
+          metadata: participant.metadata as any,
+        },
+        update: {
+          status: participant.active ? 'ACTIVE' : 'INACTIVE',
+          metadata: participant.metadata as any,
+        },
+      });
+
+      sportEventParticipantsPersisted++;
+
+      await this.prisma.sportEventParticipantSourceData.create({
+        data: {
+          sportEventParticipantId: sportEventParticipant.id,
+          providerId: participant.providerId,
+          externalId: participant.externalId,
+          rawPayload: {
+            externalId: participant.externalId,
+            providerId: participant.providerId,
+            sport: participant.sport,
+            name: participant.name,
+            firstName: participant.firstName ?? null,
+            lastName: participant.lastName ?? null,
+            nationality: participant.nationality ?? null,
+            position: participant.position ?? null,
+            teamAffiliation: participant.teamAffiliation ?? null,
+            photoUrl: participant.photoUrl ?? null,
+            active: participant.active,
+            metadata: participant.metadata,
+          } as any,
+          normalizedData: participant.metadata as any,
+          receivedAt: new Date(),
+        },
+      });
+      sourceDataPersisted++;
+    }
+
+    return {
+      eventsPersisted,
+      participantsPersisted,
+      sportEventParticipantsPersisted,
+      sourceDataPersisted,
+    };
   }
 
   /**

@@ -59,6 +59,14 @@ Run and pass:
 - `cd clients/web && npx vitest run`
 - `cd clients/admin && npx vitest run`
 
+Backend-refactor lane exception:
+
+- On the dedicated backend-first refactor branch `codex-backend-refactor-lane`,
+  use the narrower backend-first gate set from
+  [plans/43-backend-first-refactor-execution-strategy.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/43-backend-first-refactor-execution-strategy.md)
+  and [rules/workflow-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/workflow-rules.md)
+  instead of requiring web/admin test gates before each push.
+
 CI-only follow-up signals:
 
 - `tests/api/functional/` smoke tests

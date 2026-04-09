@@ -4,7 +4,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { DraftSessionRepository } from '@poolmaster/shared/db';
-import type { DraftPick, DraftSession } from '@poolmaster/shared/domain';
+import type { DraftPickHistory, DraftSession } from '@poolmaster/shared/domain';
 
 export class PrismaDraftSessionRepository implements DraftSessionRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -27,7 +27,7 @@ export class PrismaDraftSessionRepository implements DraftSessionRepository {
         currentPickNumber: session.currentPickNumber,
         currentEntryId: session.currentEntryId,
         startedAt: session.startedAt,
-        pickDeadline: session.pickDeadline,
+        currentTurnStartedAt: session.currentTurnStartedAt,
       },
     });
     return mapToSession(row);
@@ -40,34 +40,35 @@ export class PrismaDraftSessionRepository implements DraftSessionRepository {
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.currentPickNumber !== undefined && { currentPickNumber: updates.currentPickNumber }),
         ...(updates.currentEntryId !== undefined && { currentEntryId: updates.currentEntryId }),
-        ...(updates.pickDeadline !== undefined && { pickDeadline: updates.pickDeadline }),
+        ...(updates.currentTurnStartedAt !== undefined && { currentTurnStartedAt: updates.currentTurnStartedAt }),
       },
     });
     return mapToSession(row);
   }
 
-  async getPicks(sessionId: string): Promise<DraftPick[]> {
-    const rows = await this.prisma.draftPick.findMany({
+  async getPickHistories(sessionId: string): Promise<DraftPickHistory[]> {
+    const rows = await this.prisma.draftPickHistory.findMany({
       where: { draftSessionId: sessionId },
       orderBy: { pickNumber: 'asc' },
     });
-    return rows.map(mapToPick);
+    return rows.map(mapToPickHistory);
   }
 
-  async addPick(pick: Omit<DraftPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<DraftPick> {
-    const row = await this.prisma.draftPick.create({
+  async addPickHistory(
+    pickHistory: Omit<DraftPickHistory, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<DraftPickHistory> {
+    const row = await this.prisma.draftPickHistory.create({
       data: {
-        draftSessionId: pick.draftSessionId,
-        entryId: pick.entryId,
-        participantId: pick.participantId,
-        pickNumber: pick.pickNumber,
-        round: pick.round,
-        pickInRound: pick.pickInRound,
-        pickedAt: pick.pickedAt,
-        autoPicked: pick.autoPicked,
+        draftSessionId: pickHistory.draftSessionId,
+        rosterPickId: pickHistory.rosterPickId,
+        entryId: pickHistory.entryId,
+        pickNumber: pickHistory.pickNumber,
+        round: pickHistory.round,
+        pickInRound: pickHistory.pickInRound,
+        autoPicked: pickHistory.autoPicked,
       },
     });
-    return mapToPick(row);
+    return mapToPickHistory(row);
   }
 }
 
@@ -78,7 +79,7 @@ function mapToSession(row: {
   currentPickNumber: number;
   currentEntryId: string | null;
   startedAt: Date | null;
-  pickDeadline: Date | null;
+  currentTurnStartedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }): DraftSession {
@@ -89,34 +90,32 @@ function mapToSession(row: {
     currentPickNumber: row.currentPickNumber,
     currentEntryId: row.currentEntryId ?? undefined,
     startedAt: row.startedAt ?? undefined,
-    pickDeadline: row.pickDeadline ?? undefined,
+    currentTurnStartedAt: row.currentTurnStartedAt ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
 }
 
-function mapToPick(row: {
+function mapToPickHistory(row: {
   id: string;
   draftSessionId: string;
+  rosterPickId: string;
   entryId: string;
-  participantId: string;
   pickNumber: number;
   round: number;
   pickInRound: number;
-  pickedAt: Date;
   autoPicked: boolean;
   createdAt: Date;
   updatedAt: Date;
-}): DraftPick {
+}): DraftPickHistory {
   return {
     id: row.id,
     draftSessionId: row.draftSessionId,
+    rosterPickId: row.rosterPickId,
     entryId: row.entryId,
-    participantId: row.participantId,
     pickNumber: row.pickNumber,
     round: row.round,
     pickInRound: row.pickInRound,
-    pickedAt: row.pickedAt,
     autoPicked: row.autoPicked,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

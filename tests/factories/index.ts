@@ -8,7 +8,6 @@
 
 import type {
   Contest,
-  ContestTemplate,
   League,
   LeagueInvitation,
   LeagueMembership,
@@ -22,6 +21,7 @@ import {
   InvitationStatus,
   InvitePolicy,
   InviteType,
+  LeagueMembershipStatus,
   LeagueRole,
   LeagueVisibility,
   ScoringEngine,
@@ -83,7 +83,8 @@ export function buildMembership(overrides: Partial<LeagueMembership> = {}): Leag
     id: nextId(),
     leagueId: 'league-1',
     userId: 'user-1',
-    role: LeagueRole.MANAGER,
+    role: LeagueRole.MEMBER,
+    status: LeagueMembershipStatus.ACTIVE,
     permissions: [],
     joinedAt: new Date('2026-01-01'),
     createdAt: new Date('2026-01-01'),
@@ -114,7 +115,7 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
   return {
     id: nextId(),
     leagueId: 'league-1',
-    seasonId: 'season-1',
+    sportEventId: undefined,
     name: 'Masters Pool 2026',
     status: ContestStatus.DRAFT,
     contestType: ContestType.SINGLE_EVENT,
@@ -122,7 +123,6 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     scoringEngine: ScoringEngine.STROKE_PLAY,
     isExclusive: false,
     scoringStopsOnElimination: false,
-    scoringRules: {},
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,
@@ -139,27 +139,6 @@ export function buildPayoutConfig(overrides: Partial<PayoutConfig> = {}): Payout
       { rank: 3, percentage: 15 },
     ],
     intermediatePrizes: [],
-    ...overrides,
-  };
-}
-
-export function buildContestTemplate(overrides: Partial<ContestTemplate> = {}): ContestTemplate {
-  return {
-    id: nextId(),
-    leagueId: 'league-1',
-    createdBy: 'owner-1',
-    name: 'Standard Golf Pool',
-    sport: 'GOLF' as ContestTemplate['sport'],
-    contestType: ContestType.SINGLE_EVENT,
-    draftConfig: {},
-    scoringConfig: {},
-    payoutConfig: {},
-    poolConfig: {},
-    sharedWithTenant: false,
-    isPlatformTemplate: false,
-    timesUsed: 0,
-    createdAt: new Date('2026-01-01'),
-    updatedAt: new Date('2026-01-01'),
     ...overrides,
   };
 }

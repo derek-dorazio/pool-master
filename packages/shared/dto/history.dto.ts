@@ -23,7 +23,6 @@ export type HistorySeasonHighlightsDto = z.infer<typeof HistorySeasonHighlightsD
 export const HistorySeasonSummaryDtoSchema = z.object({
   id: z.string(),
   leagueId: z.string(),
-  seasonId: z.string().nullable().optional(),
   seasonName: z.string(),
   sport: z.string().nullable().optional(),
   year: z.number().nullable().optional(),

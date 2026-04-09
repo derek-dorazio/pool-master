@@ -4,7 +4,7 @@
  * This suite is intentionally self-contained:
  * - creates its own owner user
  * - creates its own league, contest, and contest entry
- * - seeds a tiny contest pool through Prisma using real models
+ * - seeds event participants plus valuations through Prisma using real models
  * - reads the draft room state
  * - submits a selection through the real draft route
  * - verifies read-after-write room state
@@ -42,6 +42,7 @@ describe('Draft Session Flow Integration', () => {
   let contestId: string;
   let entryId: string;
   let participantId: string;
+  let sportEventParticipantId: string;
 
   beforeAll(async () => {
     const owner = await createTestUser({ displayName: 'Draft Flow Owner' });
@@ -70,7 +71,7 @@ describe('Draft Session Flow Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [
@@ -124,7 +125,32 @@ describe('Draft Session Flow Integration', () => {
     createdParticipantIds.push(participant.id);
     participantId = participant.id;
 
-    await prisma.selectionConfig.update({
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `draft-flow-event-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: 'GOLF',
+        name: 'Draft Flow Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId,
+        status: 'ACTIVE',
+      },
+    });
+    sportEventParticipantId = sportEventParticipant.id;
+
+    await prisma.contest.update({
+      where: { id: contestId },
+      data: { sportEventId: sportEvent.id },
+    });
+
+    await prisma.contestConfiguration.update({
       where: { contestId },
       data: {
         tierConfig: [
@@ -135,29 +161,17 @@ describe('Draft Session Flow Integration', () => {
             picksFromTier: 1,
             participantIds: [participantId],
           },
-        ],
+        ] as object[],
       },
     });
 
-    const pool = await prisma.contestPool.create({
+    await prisma.sportEventParticipantValuation.create({
       data: {
-        contestId,
-        sport: 'GOLF',
-        poolType: 'EVENT_FIELD',
-        config: {},
-      },
-    });
-
-    await prisma.contestParticipantPool.create({
-      data: {
-        poolId: pool.id,
-        contestId,
-        participantId,
-        cost: 1200,
+        sportEventParticipantId,
+        price: 1200,
         tier: 'tier-1',
-        tierAssignmentMethod: 'AUTO_ODDS',
-        ranking: 1,
-        isAvailable: true,
+        orderIndex: 1,
+        valuationSource: 'integration-test',
       },
     });
   });
@@ -189,8 +203,8 @@ describe('Draft Session Flow Integration', () => {
     expect(roomRes.json().contestId).toBe(contestId);
     expect(roomRes.json().selectionType).toBe(SelectionType.TIERED);
     expect(roomRes.json().myEntryId).toBe(entryId);
-    expect(roomRes.json().availableParticipantIds).toContain(participantId);
-    expect(roomRes.json().picks).toEqual([]);
+    expect(roomRes.json().availableParticipantIds).toContain(sportEventParticipantId);
+    expect(roomRes.json().draftPickHistories).toEqual([]);
 
     const submitRes = await getApp().inject({
       method: 'POST',
@@ -198,18 +212,18 @@ describe('Draft Session Flow Integration', () => {
       headers: ownerHeaders,
       payload: {
         entryId,
-        participantId,
+        participantId: sportEventParticipantId,
       },
     });
 
     expect(submitRes.statusCode).toBe(200);
     expect(submitRes.json().contestId).toBe(contestId);
     expect(submitRes.json().selectionType).toBe(SelectionType.TIERED);
-    expect(submitRes.json().picks).toHaveLength(1);
-    expect(submitRes.json().picks[0].entryId).toBe(entryId);
-    expect(submitRes.json().picks[0].participantId).toBe(participantId);
-    expect(submitRes.json().picks[0].tierId).toBe('tier-1');
-    expect(submitRes.json().picks[0].tierName).toBe('Tier 1');
+    expect(submitRes.json().draftPickHistories).toHaveLength(1);
+    expect(submitRes.json().draftPickHistories[0].entryId).toBe(entryId);
+    expect(submitRes.json().draftPickHistories[0].participantId).toBe(sportEventParticipantId);
+    expect(submitRes.json().draftPickHistories[0].tierId).toBe('tier-1');
+    expect(submitRes.json().draftPickHistories[0].tierName).toBe('Tier 1');
     expect(submitRes.json().isComplete).toBe(true);
 
     const afterPickRes = await getApp().inject({
@@ -219,9 +233,9 @@ describe('Draft Session Flow Integration', () => {
     });
 
     expect(afterPickRes.statusCode).toBe(200);
-    expect(afterPickRes.json().picks).toHaveLength(1);
-    expect(afterPickRes.json().picks[0].participantId).toBe(participantId);
+    expect(afterPickRes.json().draftPickHistories).toHaveLength(1);
+    expect(afterPickRes.json().draftPickHistories[0].participantId).toBe(sportEventParticipantId);
     expect(afterPickRes.json().isComplete).toBe(true);
-    expect(afterPickRes.json().availableParticipantIds).toContain(participantId);
+    expect(afterPickRes.json().availableParticipantIds).toContain(sportEventParticipantId);
   });
 });

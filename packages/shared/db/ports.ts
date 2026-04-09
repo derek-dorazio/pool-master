@@ -7,17 +7,9 @@
 
 import type {
   ActionItem,
-  BracketPrediction,
   Contest,
   ContestEntry,
-  ContestMatchup,
-  ContestParticipantPool,
-  ContestPick,
-  ContestPool,
-  ContestResult,
-  ContestStanding,
-  ContestTemplate,
-  DraftPick,
+  DraftPickHistory,
   DraftSession,
   League,
   LeagueInvitation,
@@ -27,8 +19,9 @@ import type {
   ParticipantSeasonRecord,
   RosterPick,
   Season,
-  SelectionConfig,
   SportConfig,
+  Squad,
+  SquadMembership,
   Tenant,
   User,
 } from '../domain';
@@ -69,6 +62,25 @@ export interface LeagueMembershipRepository {
   findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null>;
   create(membership: Omit<LeagueMembership, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueMembership>;
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
+  delete(id: string): Promise<void>;
+}
+
+export interface SquadRepository {
+  findById(id: string): Promise<Squad | null>;
+  findByLeague(leagueId: string, includeInactive?: boolean): Promise<Squad[]>;
+  create(squad: Omit<Squad, 'id' | 'createdAt' | 'updatedAt'>): Promise<Squad>;
+  update(id: string, updates: Partial<Squad>): Promise<Squad>;
+  delete(id: string): Promise<void>;
+}
+
+export interface SquadMembershipRepository {
+  findBySquad(squadId: string, includeInactive?: boolean): Promise<SquadMembership[]>;
+  findBySquadAndUser(squadId: string, userId: string): Promise<SquadMembership | null>;
+  findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
+  create(
+    membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<SquadMembership>;
+  update(id: string, updates: Partial<SquadMembership>): Promise<SquadMembership>;
   delete(id: string): Promise<void>;
 }
 
@@ -138,43 +150,12 @@ export interface ContestRepository {
   delete(id: string): Promise<void>;
 }
 
-export interface SelectionConfigRepository {
-  findByContest(contestId: string): Promise<SelectionConfig | null>;
-  create(config: Omit<SelectionConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<SelectionConfig>;
-  update(id: string, updates: Partial<SelectionConfig>): Promise<SelectionConfig>;
-}
-
-export interface ContestPoolRepository {
-  findByContest(contestId: string): Promise<ContestPool | null>;
-  create(pool: Omit<ContestPool, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestPool>;
-  update(id: string, updates: Partial<ContestPool>): Promise<ContestPool>;
-  lock(id: string): Promise<ContestPool>;
-}
-
-export interface ContestParticipantPoolRepository {
-  findByContest(contestId: string): Promise<ContestParticipantPool[]>;
-  findByPool(poolId: string): Promise<ContestParticipantPool[]>;
-  create(entry: Omit<ContestParticipantPool, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestParticipantPool>;
-  createMany(entries: Omit<ContestParticipantPool, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
-  update(id: string, updates: Partial<ContestParticipantPool>): Promise<ContestParticipantPool>;
-  deleteByPool(poolId: string): Promise<number>;
-}
-
-export interface ContestMatchupRepository {
-  findByContest(contestId: string): Promise<ContestMatchup[]>;
-  findByPeriod(contestId: string, period: number): Promise<ContestMatchup[]>;
-  create(matchup: Omit<ContestMatchup, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestMatchup>;
-  createMany(matchups: Omit<ContestMatchup, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
-  update(id: string, updates: Partial<ContestMatchup>): Promise<ContestMatchup>;
-  deleteByContest(contestId: string): Promise<number>;
-}
-
 // --- Entries & Picks ---
 
 export interface ContestEntryRepository {
   findById(id: string): Promise<ContestEntry | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
-  findByMember(leagueMembershipId: string): Promise<ContestEntry[]>;
+  findBySquad(squadId: string): Promise<ContestEntry[]>;
   create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntry>;
   update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry>;
   delete(id: string): Promise<void>;
@@ -185,21 +166,6 @@ export interface RosterPickRepository {
   create(pick: Omit<RosterPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<RosterPick>;
 }
 
-export interface ContestPickRepository {
-  findByEntry(entryId: string): Promise<ContestPick[]>;
-  findByPeriod(contestId: string, period: number): Promise<ContestPick[]>;
-  create(pick: Omit<ContestPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestPick>;
-  update(id: string, updates: Partial<ContestPick>): Promise<ContestPick>;
-  markCorrect(id: string, isCorrect: boolean): Promise<void>;
-}
-
-export interface BracketPredictionRepository {
-  findByEntry(entryId: string): Promise<BracketPrediction | null>;
-  findByContest(contestId: string): Promise<BracketPrediction[]>;
-  create(prediction: Omit<BracketPrediction, 'id' | 'createdAt' | 'updatedAt'>): Promise<BracketPrediction>;
-  update(id: string, updates: Partial<BracketPrediction>): Promise<BracketPrediction>;
-}
-
 // --- Draft Session (Snake Draft only) ---
 
 export interface DraftSessionRepository {
@@ -207,20 +173,10 @@ export interface DraftSessionRepository {
   findByContest(contestId: string): Promise<DraftSession | null>;
   create(session: Omit<DraftSession, 'id' | 'createdAt' | 'updatedAt'>): Promise<DraftSession>;
   update(id: string, updates: Partial<DraftSession>): Promise<DraftSession>;
-  getPicks(sessionId: string): Promise<DraftPick[]>;
-  addPick(pick: Omit<DraftPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<DraftPick>;
-}
-
-// --- Standings & Results ---
-
-export interface ContestStandingRepository {
-  findByContest(contestId: string): Promise<ContestStanding[]>;
-  upsert(standing: Omit<ContestStanding, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestStanding>;
-}
-
-export interface ContestResultRepository {
-  findByContest(contestId: string): Promise<ContestResult[]>;
-  create(result: Omit<ContestResult, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestResult>;
+  getPickHistories(sessionId: string): Promise<DraftPickHistory[]>;
+  addPickHistory(
+    pickHistory: Omit<DraftPickHistory, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<DraftPickHistory>;
 }
 
 // --- Commissioner Action Items ---
@@ -231,16 +187,4 @@ export interface ActionItemRepository {
   create(item: Omit<ActionItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<ActionItem>;
   resolve(id: string): Promise<ActionItem>;
   delete(id: string): Promise<void>;
-}
-
-// --- Contest Templates ---
-
-export interface ContestTemplateRepository {
-  findById(id: string): Promise<ContestTemplate | null>;
-  findByLeague(leagueId: string): Promise<ContestTemplate[]>;
-  findPlatformTemplates(): Promise<ContestTemplate[]>;
-  create(template: Omit<ContestTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestTemplate>;
-  update(id: string, updates: Partial<ContestTemplate>): Promise<ContestTemplate>;
-  delete(id: string): Promise<void>;
-  incrementUsage(id: string): Promise<void>;
 }

@@ -1,16 +1,25 @@
 export { PrismaLeagueRepository } from './prisma-league-repository';
 export { PrismaLeagueMembershipRepository } from './prisma-league-membership-repository';
 export { PrismaLeagueInvitationRepository } from './prisma-league-invitation-repository';
+export { PrismaSquadRepository } from './prisma-squad-repository';
+export { PrismaSquadMembershipRepository } from './prisma-squad-membership-repository';
 export { PrismaContestRepository } from './prisma-contest-repository';
-export { PrismaSelectionConfigRepository } from './prisma-selection-config-repository';
-export { PrismaContestTemplateRepository } from './prisma-contest-template-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantSeasonRecordRepository } from './prisma-participant-season-record-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
 export { PrismaActionItemRepository } from './prisma-action-item-repository';
-export { PrismaContestPoolRepository } from './prisma-contest-pool-repository';
-export { PrismaContestParticipantPoolRepository } from './prisma-contest-participant-pool-repository';
-export { PrismaContestMatchupRepository } from './prisma-contest-matchup-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
-export { PrismaContestStandingRepository } from './prisma-contest-standing-repository';
 export { PrismaDraftSessionRepository } from './prisma-draft-session-repository';
+export {
+  PrismaContestConfigurationRepository,
+  PrismaContestCoreRepository,
+  PrismaContestEntryAggregationRuleRepository,
+  PrismaContestEntryParticipantScoreEventRepository,
+  PrismaContestEntryParticipantScoreRepository,
+  PrismaContestEntryPrizeAwardRepository,
+  PrismaContestPrizeDefinitionRepository,
+  PrismaParticipantContestScoringRuleRepository,
+  PrismaSportEventParticipantRepository,
+  PrismaSportEventParticipantSourceDataRepository,
+  PrismaSportEventParticipantValuationRepository,
+} from './prisma-contest-management-repositories';

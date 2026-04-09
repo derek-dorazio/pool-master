@@ -287,10 +287,10 @@ export class ProviderService {
         }),
       ]);
 
-    const contestMatchups = activeEventRows.length > 0
-      ? await this.prisma.contestMatchup.count({
+    const contestsDepending = activeEventRows.length > 0
+      ? await this.prisma.contest.count({
           where: {
-            eventId: { in: activeEventRows.map((row) => row.id) },
+            sportEventId: { in: activeEventRows.map((row) => row.id) },
           },
         })
       : 0;
@@ -303,7 +303,7 @@ export class ProviderService {
       eventsToday,
       errorsToday,
       activeEventCount: activeEventRows.length,
-      contestsDepending: contestMatchups,
+      contestsDepending,
     };
   }
 
@@ -594,10 +594,7 @@ export class ProviderService {
       data: { sport: detail.sport },
     });
 
-    await this.ingestionPersistence.persistEvents([detail]);
-    if (detail.participants.length > 0) {
-      await this.ingestionPersistence.persistParticipants(detail.participants);
-    }
+    await this.ingestionPersistence.persistEventDetail(detail);
 
     await this.prisma.ingestionJob.update({
       where: { id: job.id },

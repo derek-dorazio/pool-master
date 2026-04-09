@@ -96,7 +96,7 @@ describe('Permission Negative Integration', () => {
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
@@ -146,7 +146,7 @@ describe('Permission Negative Integration', () => {
       url: API_ROUTES.leagues.memberRole(leagueId, ownerUserId),
       headers: memberHeaders,
       payload: {
-        role: 'VIEWER',
+        role: 'MEMBER',
       },
     });
     expect(changeRoleRes.statusCode).toBe(403);

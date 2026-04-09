@@ -19,8 +19,8 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return rows.map(mapToEntry);
   }
 
-  async findByMember(leagueMembershipId: string): Promise<ContestEntry[]> {
-    const rows = await this.prisma.contestEntry.findMany({ where: { leagueMembershipId } });
+  async findBySquad(squadId: string): Promise<ContestEntry[]> {
+    const rows = await this.prisma.contestEntry.findMany({ where: { squadId } });
     return rows.map(mapToEntry);
   }
 
@@ -28,10 +28,12 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     const row = await this.prisma.contestEntry.create({
       data: {
         contestId: entry.contestId,
-        leagueMembershipId: entry.leagueMembershipId,
+        squadId: entry.squadId,
+        entryNumber: entry.entryNumber,
         name: entry.name,
+        status: entry.status,
         totalScore: entry.totalScore,
-        rank: entry.rank,
+        standingsPosition: entry.standingsPosition,
         isEliminated: entry.isEliminated,
       },
     });
@@ -42,8 +44,12 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     const row = await this.prisma.contestEntry.update({
       where: { id },
       data: {
+        ...(updates.name !== undefined && { name: updates.name }),
+        ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.totalScore !== undefined && { totalScore: updates.totalScore }),
-        ...(updates.rank !== undefined && { rank: updates.rank }),
+        ...(updates.standingsPosition !== undefined && {
+          standingsPosition: updates.standingsPosition,
+        }),
         ...(updates.isEliminated !== undefined && { isEliminated: updates.isEliminated }),
       },
     });
@@ -58,10 +64,12 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
 function mapToEntry(row: {
   id: string;
   contestId: string;
-  leagueMembershipId: string;
+  squadId: string;
+  entryNumber: number;
   name: string;
+  status: string;
   totalScore: number;
-  rank: number | null;
+  standingsPosition: number | null;
   isEliminated: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -69,10 +77,12 @@ function mapToEntry(row: {
   return {
     id: row.id,
     contestId: row.contestId,
-    leagueMembershipId: row.leagueMembershipId,
+    squadId: row.squadId,
+    entryNumber: row.entryNumber,
     name: row.name,
+    status: row.status as ContestEntry['status'],
     totalScore: row.totalScore,
-    rank: row.rank ?? undefined,
+    standingsPosition: row.standingsPosition ?? undefined,
     isEliminated: row.isEliminated,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

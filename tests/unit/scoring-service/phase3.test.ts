@@ -1,19 +1,17 @@
 import { ScoringConfigSchema, SpecialSlotConfigSchema } from '@poolmaster/shared/domain/scoring-config';
-import type { ScoringConfig, TiebreakerConfig } from '@poolmaster/shared/domain/scoring-config';
+import type { TiebreakerConfig } from '@poolmaster/shared/domain/scoring-config';
 import {
   evaluateTiebreaker,
   rankWithTiebreakers,
 } from '../../../packages/core-api/src/modules/scoring/engine/tiebreaker';
 import type { TiebreakerData } from '../../../packages/core-api/src/modules/scoring/engine/tiebreaker';
 import {
-  STAT_SCHEMAS,
   getStatSchema,
   listSports,
   validateStatKeys,
 } from '../../../packages/core-api/src/modules/scoring/engine/stat-schemas';
 import { scoreParticipant } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
 import type { ParticipantScoringData } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
-import { getTemplate, listTemplates } from '../../../packages/core-api/src/modules/scoring/templates/registry';
 
 // ========================================================================
 // 03-017: Special Roster Slot Configuration
@@ -329,59 +327,4 @@ describe('Stat schema validation', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('validates all built-in templates have valid stat keys', () => {
-    const templates = listTemplates();
-    for (const { key } of templates) {
-      const template = getTemplate(key)!;
-      const config = ScoringConfigSchema.parse(template);
-      const errors = validateStatKeys(config);
-      expect(errors).toHaveLength(0);
-    }
-  });
-});
-
-// ========================================================================
-// 03-020: Scoring Template Library
-// ========================================================================
-
-describe('Template library', () => {
-  it('lists all templates with sport info', () => {
-    const templates = listTemplates();
-    expect(templates.length).toBeGreaterThanOrEqual(12);
-
-    const sports = new Set(templates.map((t) => t.sport));
-    expect(sports.size).toBeGreaterThanOrEqual(7);
-  });
-
-  it('getTemplate returns deep copy that can be modified', () => {
-    const original = getTemplate('golf_relative_to_par');
-    expect(original).toBeDefined();
-
-    // Template configs are plain objects — modifying a spread copy
-    // should not affect the registry
-    const copy = { ...original!, stat_rules: [...original!.stat_rules] };
-    copy.stat_rules.push({ stat_key: 'custom', points_per_unit: 99 });
-
-    const fresh = getTemplate('golf_relative_to_par');
-    expect(fresh!.stat_rules).not.toContainEqual(
-      expect.objectContaining({ stat_key: 'custom' }),
-    );
-  });
-
-  it('all templates group correctly by sport', () => {
-    const templates = listTemplates();
-    const bySport = new Map<string, string[]>();
-    for (const t of templates) {
-      const list = bySport.get(t.sport) ?? [];
-      list.push(t.key);
-      bySport.set(t.sport, list);
-    }
-
-    // NFL has 0 templates (player scoring deferred)
-    expect(bySport.get('NFL')?.length ?? 0).toBe(0);
-    // NCAA should have 4
-    expect(bySport.get('NCAA_BASKETBALL')?.length).toBe(4);
-    // Golf should have 2
-    expect(bySport.get('GOLF')?.length).toBe(2);
-  });
 });

@@ -10,8 +10,6 @@ import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/
 import type {
   SportDataProvider,
   SportEvent,
-  ProviderParticipant,
-  ProviderRanking,
   ProviderStatEvent,
   ProviderEventResult,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';

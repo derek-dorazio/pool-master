@@ -16,15 +16,15 @@
 export const API_PREFIXES = {
   AUTH: '/api/v1/auth',
   LEAGUES: '/api/v1/leagues',
+  SQUADS_BY_LEAGUE: '/api/v1/leagues/:id/squads',
   INVITATIONS: '/api/v1/invitations',
   CONTESTS_BY_LEAGUE: '/api/v1/leagues/:id/contests',
+  CONTEST_MANAGEMENT: '/api/v1/leagues/:id/contest-management/contests',
   CONTESTS: '/api/v1/contests',
-  TEMPLATES: '/api/v1/templates',
   PARTICIPANTS: '/api/v1/participants',
   CONTEST_POOL: '/api/v1/contests/:contestId/pool',
   STANDINGS: '/api/v1/contests/:contestId/standings',
   HISTORY: '/api/v1',
-  SEARCH: '/api/v1/search',
   ACCOUNT: '/api/v1/account',
   ADMIN: '/api/v1/admin',
   CONFIG: '/api/v1/config',
@@ -69,6 +69,20 @@ export const API_ROUTES = {
     inviteLink: (id: string) => `/api/v1/leagues/${id}/invite-link`,
     settings: (id: string) => `/api/v1/leagues/${id}/settings`,
     contests: (id: string) => `/api/v1/leagues/${id}/contests`,
+    squads: (id: string) => `/api/v1/leagues/${id}/squads`,
+    contestManagement: (id: string) =>
+      `/api/v1/leagues/${id}/contest-management/contests`,
+  },
+
+  squads: {
+    list: (leagueId: string) => `/api/v1/leagues/${leagueId}/squads`,
+    create: (leagueId: string) => `/api/v1/leagues/${leagueId}/squads`,
+    detail: (leagueId: string, squadId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}`,
+    addMember: (leagueId: string, squadId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}/members`,
+    removeMember: (leagueId: string, squadId: string, userId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}/members/${userId}`,
   },
 
   // Invitations
@@ -86,6 +100,13 @@ export const API_ROUTES = {
     pool: (id: string) => `/api/v1/contests/${id}/pool`,
   },
 
+  contestManagement: {
+    detail: (leagueId: string, contestId: string) =>
+      `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}`,
+    configuration: (leagueId: string, contestId: string) =>
+      `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
+  },
+
   scoring: {
     leaderboard: (contestId: string) => `/api/v1/scoring/contests/${contestId}/leaderboard`,
     entry: (contestId: string, entryId: string) => `/api/v1/scoring/contests/${contestId}/entry/${entryId}`,
@@ -101,37 +122,9 @@ export const API_ROUTES = {
     pick: (draftId: string) => `/api/v1/drafts/${draftId}/pick`,
   },
 
-  // Billing
-  billing: {
-    plan: '/api/v1/billing/plan',
-    plans: '/api/v1/billing/plans',
-    usage: '/api/v1/billing/usage',
-    entitlements: '/api/v1/billing/entitlements',
-    invoices: '/api/v1/billing/invoices',
-    tiers: '/api/v1/billing/tiers',
-  },
-
-  // Search
-  search: {
-    participants: '/api/v1/search/participants',
-    leagues: '/api/v1/search/leagues',
-    contests: '/api/v1/search/contests',
-    discoverLeagues: '/api/v1/search/discover/leagues',
-    discoverContests: '/api/v1/search/discover/contests',
-    joinDiscoverableLeague: (leagueId: string) => `/api/v1/search/discover/leagues/${leagueId}/join`,
-  },
-
-  // Templates
-  templates: {
-    scoring: '/api/v1/templates/scoring',
-  },
-
   // Admin
   admin: {
     users: '/api/v1/admin/users',
-    tenants: '/api/v1/admin/tenants',
-    flags: '/api/v1/admin/flags',
-    announcements: '/api/v1/admin/announcements',
     health: '/api/v1/admin/health',
     audit: '/api/v1/admin/audit',
   },
@@ -146,13 +139,11 @@ export const API_ROUTES = {
   // Notifications
   notifications: {
     list: '/api/v1/notifications',
-    preferences: '/api/v1/notifications/preferences',
   },
 
   // Account / Compliance
   account: {
     consent: '/api/v1/account/consent',
-    dataExport: '/api/v1/account/data-export',
   },
 
   // Health

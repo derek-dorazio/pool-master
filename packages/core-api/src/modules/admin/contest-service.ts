@@ -60,7 +60,7 @@ export interface ContestAdminView {
     entryId: string;
     entryName: string;
     ownerEmail: string;
-    rank: number;
+    standingsPosition: number;
     totalScore: number;
   }[];
   draftStatus?: {
@@ -69,7 +69,7 @@ export interface ContestAdminView {
     totalPicks: number;
     startedAt?: Date;
   };
-  picks: {
+  draftPickHistories: {
     round: number;
     pick: number;
     participant: string;
@@ -132,7 +132,7 @@ export class ContestService {
 
     const where: Record<string, unknown> = {};
 
-    if (query.sport) where.sport = query.sport;
+    if (query.sport) where.sportEvent = { is: { sport: query.sport } };
     if (query.status) where.status = query.status.toUpperCase();
     if (query.contestType) where.contestType = query.contestType;
     if (query.selectionType) where.selectionType = query.selectionType;
@@ -154,6 +154,9 @@ export class ContestService {
               tenant: { select: { name: true } },
             },
           },
+          sportEvent: {
+            select: { sport: true },
+          },
           _count: { select: { entries: true } },
         },
       }),
@@ -165,7 +168,7 @@ export class ContestService {
       name: row.name,
       leagueName: row.league.name,
       tenantName: row.league.tenant.name,
-      sport: row.sport ?? '',
+      sport: row.sportEvent?.sport ?? '',
       contestType: row.contestType,
       selectionType: row.selectionType,
       status: row.status.toLowerCase(),
@@ -191,37 +194,57 @@ export class ContestService {
             tenant: { select: { name: true } },
           },
         },
+        sportEvent: {
+          select: { sport: true },
+        },
         entries: {
           include: {
-            membership: {
+            squad: {
               include: {
-                user: { select: { email: true } },
+                memberships: {
+                  where: { status: 'ACTIVE' },
+                  include: {
+                    user: { select: { email: true } },
+                  },
+                  orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+                },
               },
             },
           },
-          orderBy: { rank: 'asc' },
-        },
-        standings: {
-          orderBy: { rank: 'asc' },
+          orderBy: { standingsPosition: 'asc' },
         },
         draftSession: {
           include: {
-            picks: {
+            pickHistories: {
               include: {
-                participant: {
-                  select: { name: true },
+                rosterPick: {
+                  include: {
+                    sportEventParticipant: {
+                      include: {
+                        participant: {
+                          select: { name: true },
+                        },
+                      },
+                    },
+                  },
                 },
                 entry: {
                   include: {
-                    membership: {
+                    squad: {
                       include: {
-                        user: { select: { email: true } },
+                        memberships: {
+                          where: { status: 'ACTIVE' },
+                          include: {
+                            user: { select: { email: true } },
+                          },
+                          orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+                        },
                       },
                     },
                   },
                 },
               },
-              orderBy: { pickedAt: 'asc' },
+              orderBy: { createdAt: 'asc' },
             },
           },
         },
@@ -232,14 +255,14 @@ export class ContestService {
       throw new ContestNotFoundError(contestId);
     }
 
-    // Build standings from contest entries (which have rank and totalScore)
+    // Build standings directly from persisted contest-entry summary fields.
     const standings = contest.entries
-      .filter((e) => e.rank !== null)
+      .filter((e) => e.standingsPosition !== null)
       .map((e) => ({
         entryId: e.id,
         entryName: e.name,
-        ownerEmail: e.membership.user.email,
-        rank: e.rank!,
+        ownerEmail: e.squad.memberships[0]?.user.email ?? '',
+        standingsPosition: e.standingsPosition!,
         totalScore: e.totalScore,
       }));
 
@@ -256,7 +279,7 @@ export class ContestService {
     return {
       id: contest.id,
       name: contest.name,
-      sport: contest.sport ?? '',
+      sport: contest.sportEvent?.sport ?? '',
       contestType: contest.contestType,
       selectionType: contest.selectionType,
       scoringEngine: contest.scoringEngine,
@@ -272,13 +295,13 @@ export class ContestService {
       createdAt: contest.createdAt,
       standings,
       draftStatus,
-      picks: contest.draftSession?.picks.map((pick) => ({
+      draftPickHistories: contest.draftSession?.pickHistories.map((pick) => ({
         round: pick.round,
         pick: pick.pickNumber,
-        participant: pick.participant.name,
-        owner: pick.entry.membership.user.email,
+        participant: pick.rosterPick.sportEventParticipant.participant.name,
+        owner: pick.entry.squad.memberships[0]?.user.email ?? '',
         autoPicked: pick.autoPicked,
-        time: pick.pickedAt,
+        time: pick.createdAt,
       })) ?? [],
       scoringFreshness: {
         lastStatEvent: undefined,
@@ -421,7 +444,7 @@ export class ContestService {
     // Assign new ranks and record changes
     for (let i = 0; i < entries.length; i++) {
       const newRank = i + 1;
-      const oldRank = entries[i].rank ?? 0;
+      const oldRank = entries[i].standingsPosition ?? 0;
 
       if (oldRank !== newRank) {
         rankChanges.push({ entryId: entries[i].id, oldRank, newRank });
@@ -430,27 +453,9 @@ export class ContestService {
 
       await this.prisma.contestEntry.update({
         where: { id: entries[i].id },
-        data: { rank: newRank },
+        data: { standingsPosition: newRank },
       });
 
-      // Also upsert into contest_standings
-      await this.prisma.contestStanding.upsert({
-        where: {
-          contestId_entryId: { contestId, entryId: entries[i].id },
-        },
-        create: {
-          contestId,
-          entryId: entries[i].id,
-          rank: newRank,
-          totalScore: entries[i].totalScore,
-          lastUpdatedAt: new Date(),
-        },
-        update: {
-          rank: newRank,
-          totalScore: entries[i].totalScore,
-          lastUpdatedAt: new Date(),
-        },
-      });
     }
 
     const result: RecalculationResult = {
@@ -487,7 +492,7 @@ export class ContestService {
     const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
     if (!contest) throw new ContestNotFoundError(contestId);
 
-    // TODO: Trigger payout recalculation via billing/payout engine
+    // TODO: Trigger payout recalculation via the prize-award engine
     await logAdminAction({
       adminUserId,
       adminUserEmail,

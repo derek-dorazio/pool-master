@@ -48,7 +48,7 @@ First-pass contest history should come from:
   - elimination state where relevant
 - `RosterPick`
   - the participants chosen for the entry
-- `ContestEntryPrize`
+- `ContestEntryPrizeAward`
   - the prizes won by the entry
 - `SportEventParticipant`
   - event-scoped participant identity
@@ -56,6 +56,23 @@ First-pass contest history should come from:
   - live/final participant performance data imported from the real event
 
 ## User Cases
+
+### H-000: Member opens the history view of completed contests
+
+Actor:
+- League Member
+
+Goal:
+- browse the list of completed contests for the current league
+
+Flow:
+1. Member opens contest history.
+2. System loads completed contests for the league.
+3. UI shows a list of finished contests that can be opened for detail.
+
+Notes:
+- this is the second major contest-browsing view alongside the active contests view
+- it is not a public discovery feature
 
 ### H-001: Member reviews completed contest standings
 
@@ -85,7 +102,7 @@ Goal:
 
 Flow:
 1. Member opens a completed contest.
-2. System loads `ContestEntryPrize` records for entries in that contest.
+2. System loads `ContestEntryPrizeAward` records for entries in that contest.
 3. UI shows the prize labels and winning amounts attached to the winning entries.
 
 Notes:
@@ -139,7 +156,7 @@ Goal:
 
 Flow:
 1. Commissioner opens a past contest.
-2. System loads the completed `Contest`, `ContestEntry`, `RosterPick`, and `ContestEntryPrize` data.
+2. System loads the completed `Contest`, `ContestEntry`, `RosterPick`, and `ContestEntryPrizeAward` data.
 3. Commissioner reviews final standings, rosters, and prizes.
 
 Notes:
@@ -172,7 +189,7 @@ Agents implementing first-pass history-related functionality should prefer:
 - `Contest`
 - `ContestEntry`
 - `RosterPick`
-- `ContestEntryPrize`
+- `ContestEntryPrizeAward`
 - `SportEventParticipant`
 - `SportEventParticipantSourceData`
 

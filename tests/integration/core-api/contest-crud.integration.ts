@@ -62,11 +62,10 @@ describe('Contest CRUD Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Contest CRUD Pool',
-        sport: 'GOLF',
         contestType: ContestType.SINGLE_EVENT,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        selectionConfig: {
+        contestConfiguration: {
           rounds: 6,
           tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [
