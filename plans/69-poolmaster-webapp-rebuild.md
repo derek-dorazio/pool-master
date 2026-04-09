@@ -4,6 +4,12 @@ Build a new web application from scratch at `clients/poolmaster` using the same 
 
 This app becomes the single go-forward web frontend for PoolMaster.
 
+## Dependencies
+
+- Can start independently.
+- Benefits from [plans/65-error-envelope-and-route-contract-cleanup.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/65-error-envelope-and-route-contract-cleanup.md), but is not blocked by it.
+- Will become the primary dependency for [plans/70-admin-webapp-removal.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/70-admin-webapp-removal.md) and [plans/71-legacy-webapp-archive-and-cutover.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/71-legacy-webapp-archive-and-cutover.md).
+
 ## Direction
 
 - Create `clients/poolmaster` as the only active long-term web app.
@@ -12,16 +18,36 @@ This app becomes the single go-forward web frontend for PoolMaster.
 - Use only exported generated SDK operations and exported TypeScript types as the API contract source of truth.
 - Build role-based behavior inside one app for members, commissioners, and root admins.
 - Do not spend implementation effort modernizing `clients/web` or `clients/admin` in parallel.
+- Build any future root-admin UI from scratch inside `clients/poolmaster`; do not use the old admin app as a migration baseline.
+
+## Clarifications
+
+- Preserve the same branding and product identity by reusing the legacy web app’s theme direction where it still fits:
+  - Tailwind theme/config
+  - color palette
+  - typography choices
+  - shared visual language and branding assets
+- The new app should still use an app-local SDK re-export pattern such as `src/lib/api.ts` for configured client access, auth token wiring, and thin convenience helpers.
+- “Frontend-layer functional tests” here means rendered frontend tests that exercise components, routing, forms, query state, and generated-client request wiring through the frontend layer. These are not the same thing as the backend SDK functional API suite from Plans 64/66.
+- Add an explicit early design decision for how the single app handles:
+  - member and commissioner flows through the normal app-auth model
+  - root-admin flows with the current admin-auth model
+  - role-aware navigation and session handling inside one app shell
+- Inventory `clients/shared` early and decide whether it remains a useful shared frontend package or should be absorbed/simplified as the app landscape reduces to one active webapp.
 
 ## Task List
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Scaffold `clients/poolmaster` with the approved stack | React, Vite, TypeScript, Tailwind, shadcn/ui, React Router, TanStack Query, Zustand, React Hook Form |
+| Pending | Define the initial route map from active use-case plans | Member, commissioner, and root-admin surfaces in one role-based app; this should happen early because it defines the app skeleton |
+| Pending | Decide the single-app auth/session model for member, commissioner, and root-admin flows | Capture how normal app auth and admin auth coexist in one app |
+| Pending | Inventory and decide the future of `clients/shared` | Keep, simplify, or absorb as the frontend landscape reduces to one active webapp |
+| Pending | Scaffold `clients/poolmaster` shell and base stack (69-A) | React, Vite, TypeScript, Tailwind, shadcn/ui, React Router, TanStack Query, Zustand, React Hook Form |
+| Pending | Build auth/session, configured SDK client, query provider, and router shell (69-B) | Include the `src/lib/api.ts` style re-export pattern |
+| Pending | Build layout primitives and role-aware navigation (69-C) | App shell, nav structure, role-gated sections |
+| Pending | Build the first product flow slice (69-D) | Start with auth + league list/detail as the first high-value vertical slice |
 | Pending | Wire the new app into local build/test commands | Include dev, build, lint, unit test, coverage, and future frontend functional test commands |
 | Pending | Wire the new app into CI | Replace legacy web/admin frontend gates with PoolMaster app gates as the app becomes active |
-| Pending | Create shared app infrastructure | auth/session setup, generated SDK client wiring, query client, router shell, layout primitives, role-aware navigation |
-| Pending | Define the initial route map from active use-case plans | member, commissioner, and root-admin surfaces in one role-based app |
 | Pending | Build the first core product flows | auth, league list/detail, invitation acceptance, contest list/detail, entry creation, standings/history reads |
 | Pending | Add PoolMaster-specific frontend tests | unit + frontend-layer functional tests aligned with the new rules |
 | Pending | Update docs/rules/README references | Make PoolMaster the single active web app in repo guidance |

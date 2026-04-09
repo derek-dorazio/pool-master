@@ -15,6 +15,12 @@ This plan intentionally excludes:
 - frontend error-state implementation details beyond contract alignment
 - unrelated success-response DTO cleanup already handled in Plan 64
 
+## Dependencies
+
+- Can start independently.
+- Must coordinate with [plans/63-tenant-removal-and-auth-redesign.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/63-tenant-removal-and-auth-redesign.md) before touching auth-route internals so the same routes are not refactored twice in conflicting ways.
+- Should coordinate with [plans/69-poolmaster-webapp-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/69-poolmaster-webapp-rebuild.md) because tightening error contracts will directly affect the new frontend’s expectations.
+
 ## Target Standard
 
 All new and materially changed backend routes should converge on:
@@ -35,28 +41,46 @@ With the following expectations:
 - structured validation details when available
 - shared DTO/schema definition in `packages/shared/dto/`
 - route schemas that declare relevant error responses
-- contract and integration tests that assert error shape, not just status code
+- functional/integration tests that assert error shape, not just status code
+
+## Compatibility Note
+
+The target nested envelope:
+
+```ts
+{
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+}
+```
+
+is intentionally different from the older flat error payload shape still present in parts of the codebase.
+
+This should be treated as an intentional contract cleanup and coordinated with frontend cutover work. Do not flip large route groups casually without accounting for active consumers.
 
 ## Task List
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Inventory active backend routes that do not yet use a consistent error envelope | Identify route groups, current error shapes, and whether they rely on raw Fastify defaults, thrown domain errors, or bespoke reply bodies |
-| Pending | Add shared backend error DTO/schema package support | Introduce shared error envelope DTOs and reusable schema helpers in `packages/shared/dto/` |
+| Pending | Inventory active backend routes that do not yet use a consistent error envelope | Produce a route table with current error shape, target shape, priority, and whether the route is blocked by Plan 63 or frontend cutover timing |
+| Pending | Add shared backend error DTO/schema package support | Create `packages/shared/dto/errors.dto.ts` with the standard envelope Zod schema and reusable schema exports for route files |
 | Pending | Normalize global Fastify error formatting | Ensure unhandled and translated domain errors flow through one consistent formatter where practical |
-| Pending | Standardize domain error translation in high-traffic modules | Prioritize auth, leagues, squads, contests, draft, scoring, history, ingestion, and consent routes |
+| Pending | Standardize domain error translation in high-traffic modules | Prioritize leagues, squads, contests, draft, scoring, history, ingestion, and consent routes first; coordinate auth work with Plan 63 to avoid double-touching |
 | Pending | Declare route-level error response schemas for active product routes | Add `400`, `401`, `403`, `404` response schemas where they are relevant and realistic |
 | Pending | Replace bespoke inline error bodies on touched routes | Remove one-off `{ message }`, `{ success: false }`, or raw Fastify-style error responses where route work already touches that surface |
-| Pending | Add API contract coverage for error envelopes | Extend contract suites to `safeParse()` representative error responses for active web/admin routes |
+| Pending | Add functional/integration coverage for error envelopes | Prefer shared error-envelope assertions in functional and integration suites rather than relying on standalone contract suites |
 | Pending | Add negative integration coverage for critical flows | Assert status code plus error-envelope shape for validation, auth, permission, and not-found scenarios |
 | Pending | Document remaining non-conforming routes and defer if needed | Keep a short tracked list of routes intentionally left for later so the stricter rule can be adopted incrementally |
-| Pending | Tighten service rules after implementation reaches acceptable coverage | Once the active route surface is mostly compliant, update `rules/service-rules.md` from “new/touched routes” to the stricter universal standard |
+| Pending | Tighten service rules after implementation reaches the route-compliance gate | Flip `rules/service-rules.md` to the stricter universal standard only after all active product routes use the standard envelope and representative negative-path tests are in place |
 
 ## Suggested Execution Order
 
 1. Shared error DTO/schema and global formatter
 2. Route inventory and high-traffic module cleanup
-3. Contract and integration error-shape coverage
+3. Functional and integration error-shape coverage
 4. Residual-route inventory and stricter rule adoption
 
 ## Validation

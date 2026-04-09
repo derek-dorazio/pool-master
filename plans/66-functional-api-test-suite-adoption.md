@@ -13,6 +13,11 @@ The suite is intended to become the primary pre-merge/pre-publish confidence lay
 - error-envelope and contract behavior
 - end-to-end service-stack integrity through the generated SDK
 
+This plan is the adoption and coordination companion to Plan 64.
+
+- Use Plan 64 as the canonical execution tracker for framework and per-domain implementation slices.
+- Use this plan to track rollout decisions, dependencies, rule ownership, CI adoption, and downstream suite retirement.
+
 ## Review Outcome For Plan 64
 
 The direction in [plans/64-sdk-functional-test-suite.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/64-sdk-functional-test-suite.md) is strong and should be adopted with these clarifications:
@@ -89,24 +94,23 @@ The functional API suite should cover, at minimum:
 | Status | Task | Notes |
 | --- | --- | --- |
 | Pending | Finalize the functional-suite naming and scope | Use “functional API test suite” consistently in scripts, docs, and CI |
-| Pending | Create `tests/functional/` harness | Add Jest config, app lifecycle, SDK client setup, and cleanup helpers |
-| Pending | Add reusable authenticated client and builder utilities | Prefer shared helpers when object-graph setup repeats across files |
-| Pending | Add CRUD-focused functional suites for active backend domains | Ensure create/read/update/delete and common negative cases are covered |
-| Pending | Add use-case workflow functional suites aligned with active plans | League, contest, entry, draft, scoring, history, consent |
-| Pending | Add authorization and permission-path assertions | Include 401, 403, wrong-league, wrong-role, and ownership checks where applicable |
-| Pending | Add error-envelope assertions | Validate status plus error body shape on migrated routes |
+| Pending | Adopt Plan 64 Slice 64-A as the required pilot gate | Do not expand into domain coverage until the pilot harness is green locally and in CI |
+| Pending | Execute the domain coverage slices from Plan 64 | Track implementation progress in Plan 64 task rows rather than duplicating per-domain slice rows here |
 | Pending | Integrate functional suite into local build/test flow | Add package scripts and document expected local gate usage |
 | Pending | Integrate functional suite into CI | Include in backend quality gates and coverage merge flow |
-| Pending | Update rules/docs to reflect the new test strategy | Testing rules, workflow references, AGENTS/README where appropriate |
+| Pending | Own cross-rule/docs updates for the new test strategy | Testing rules, workflow references, AGENTS/README where appropriate |
+| Pending | Define and execute redundant-test pruning after coverage is in place | Remove integration/contract tests only when the functional suite clearly replaces their signal |
+
+## Relationship To Plan 64
+
+- Plan 64: implementation slices, harness design, pilot, and per-domain execution tasks
+- Plan 66: approval, rollout, dependency management, rule ownership, CI adoption, and downstream suite retirement
 
 ## Validation
 
-- `npx turbo typecheck --filter=@poolmaster/core-api --filter=@poolmaster/shared --force`
-- `npx eslint 'packages/core-api/src/**/*.ts' 'packages/shared/**/*.ts' 'tests/**/*.ts' --max-warnings 0`
-- `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npx jest --config tests/jest.config.js --forceExit`
-- `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npx jest --config tests/integration/jest.config.js --forceExit`
-- functional API suite command once introduced
-- merged backend coverage command once updated
-- `npm run api:export`
-- `npm run api:validate`
-- `npm run api:generate`
+Follow the active local and CI validation gates defined in:
+
+- [rules/workflow-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/workflow-rules.md)
+- [rules/testing-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/testing-rules.md)
+
+Functional-suite adoption work should update those rules as the strategy becomes active.

@@ -4,6 +4,13 @@
 
 Create a new **SDK functional test suite** that exercises the full request/response stack through the generated hey-api client SDK, proving contract compliance from TypeScript types through HTTP serialization, Fastify routing, business logic, and persistence — then back through SDK deserialization to typed responses.
 
+This plan is the canonical execution tracker for the functional API suite implementation work.
+
+Plan 66 is the adoption and coordination companion:
+
+- Plan 64 tracks framework and per-domain implementation slices
+- Plan 66 tracks rollout decisions, rule ownership, CI adoption, and downstream suite retirement
+
 This suite fills the gap between:
 - **Unit tests** (mock dependencies, test logic in isolation)
 - **DB integration tests** (use `app.inject()`, bypass HTTP and SDK layers)
@@ -38,6 +45,12 @@ This is not a contract-only test suite. It is a **full behavioral test suite** t
 
 - **Contract test suites** (`api-contracts-web.integration.ts`, `api-contracts-admin.integration.ts`) — if the SDK compiles and the typed response is correct, the contract is proven. Separate `.safeParse()` contract tests become redundant.
 - **Most API smoke tests** — the smoke suite can be reduced to a thin deployed-environment health check. The heavy use-case validation moves here where it runs faster and with stronger guarantees.
+
+Important clarification:
+
+- success-path contract coverage is largely subsumed by the SDK functional suite
+- error-path contract coverage still requires explicit assertions on status and error-envelope shape
+- shared helpers should make those error-envelope assertions easy and consistent
 
 ---
 
@@ -150,11 +163,15 @@ export function createAuthenticatedClient(accessToken: string): Client {
 
 /**
  * Start Fastify on a random port and configure the SDK client.
+ *
+ * Decision:
+ * - boot one shared app instance for the whole functional suite
+ * - use suite-level setup/teardown rather than cold-starting per file
+ * - keep `maxWorkers: 1` and enforce stronger cleanup/isolation discipline
  */
 export async function setupFunctionalTests(): Promise<void> {
   prisma = new PrismaClient();
   await prisma.$connect();
-  await ensureTestTenant();
 
   app = await buildTestApp(); // Same as integration helpers
   await app.listen({ port: 0 }); // Random available port
@@ -174,14 +191,22 @@ export async function teardownFunctionalTests(): Promise<void> {
 }
 ```
 
+Functional test setup should be built tenant-free from the start.
+
+- Do not design the harness around `ensureTestTenant()` or tenant-scoped cleanup helpers.
+- Use test-created identifiers and deterministic cleanup scopes that will survive Plan 63 without rework.
+- If a temporary bridge to existing helper code is unavoidable during the pilot, keep it narrow and mark it as migration debt in the slice notes.
+
 ### `tests/functional/builders.ts`
 
 Test data builders that use SDK operations to create data — proving the SDK works as part of setup.
 
+Builders must fail loudly with descriptive setup errors if a prerequisite SDK operation does not return data.
+
 ```typescript
 import { createAuthenticatedClient, getPrisma } from './setup';
 import {
-  register, loginWithCredentials, createLeague, generateInviteLink,
+  registerUser, loginUser, createLeague, generateInviteLink,
   acceptInvitation, createContestManagement, createContestEntry,
 } from '@poolmaster/shared/generated/hey-api';
 
@@ -192,21 +217,23 @@ export async function buildAuthenticatedUser(overrides?: {
   const password = overrides?.password ?? 'FuncTest123!';
 
   // Register through SDK
-  const { data: regData } = await register({
+  const { data: regData } = await registerUser({
     client: getSdkClient(),
     body: { email, password, displayName: overrides?.displayName ?? 'Func Test User' },
   });
+  if (!regData) throw new Error('Builder: registerUser failed while creating authenticated user');
 
   // Login through SDK
-  const { data: loginData } = await loginWithCredentials({
+  const { data: loginData } = await loginUser({
     client: getSdkClient(),
     body: { email, password },
   });
+  if (!loginData) throw new Error('Builder: loginUser failed while creating authenticated user');
 
-  const token = loginData!.accessToken;
+  const token = loginData.accessToken;
   const client = createAuthenticatedClient(token);
 
-  return { userId: regData!.user.id, email, token, client };
+  return { userId: regData.user.id, email, token, client };
 }
 
 export async function buildLeagueWithOwner(overrides?: {
@@ -221,7 +248,8 @@ export async function buildLeagueWithOwner(overrides?: {
       settings: { invitePolicy: 'COMMISSIONER_ONLY' },
     },
   });
-  return { owner, league: data!.league, ownerClient: owner.client };
+  if (!data) throw new Error('Builder: createLeague failed while creating league owner context');
+  return { owner, league: data.league, ownerClient: owner.client };
 }
 
 // Additional builders for: contest, entries, sport events, etc.
@@ -236,6 +264,8 @@ Each test file maps to documented use cases from plan companions. Tests walk com
 ## Pilot Slice To Vet The Framework
 
 Before building the full suite, prove the harness on a very small slice covering 1-2 stable API controllers and 1-3 high-signal tests.
+
+This pilot is the canonical scope for Slice 64-A.
 
 ### Recommended Pilot Controllers
 
@@ -484,6 +514,7 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@poolmaster/shared/(.*)$': '<rootDir>/packages/shared/$1',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   setupFilesAfterFramework: [],
   testTimeout: 30_000,
@@ -501,16 +532,28 @@ module.exports = {
 
 ### Global Setup/Teardown
 
-Each test file calls setup/teardown in `beforeAll`/`afterAll`:
+Decision:
+
+- use a shared suite-level app boot instead of cold-starting per file
+- prefer Jest `globalSetup` / `globalTeardown` or an equivalent single-boot harness pattern
+- keep per-file cleanup deterministic so shared-process leakage is caught early
+
+Do not make each `.functional.ts` file boot and tear down its own Fastify instance unless the shared harness proves unworkable.
+
+### Error-Envelope Assertion Pattern
+
+Add a small shared helper for non-2xx SDK responses so error-path assertions stay explicit and consistent.
+
+Example direction:
 
 ```typescript
-import { setupFunctionalTests, teardownFunctionalTests } from './setup';
-
-beforeAll(async () => { await setupFunctionalTests(); });
-afterAll(async () => { await teardownFunctionalTests(); });
+expectErrorEnvelope(error, {
+  status: 401,
+  code: 'UNAUTHORIZED',
+});
 ```
 
-Or use Jest `globalSetup`/`globalTeardown` if a single app instance across all files is preferred (faster, but requires careful cleanup).
+This is the preferred replacement for broad standalone contract suites on error paths.
 
 ---
 
@@ -624,9 +667,13 @@ npx jest --config tests/functional/jest.config.js tests/functional/league-lifecy
 
 ## Implementation Slices
 
-### Slice 64-A: Framework + Proof-of-Concept (Do This First)
+### Slice 64-A: Framework + Pilot (Do This First)
 
-Goal: Establish the test infrastructure and prove it works end-to-end with a single test file that exercises health, auth, and league CRUD through the SDK.
+Goal: Establish the test infrastructure and prove it works end-to-end with the pilot scope:
+
+- `auth`
+- `account-consent`
+- one shared-harness proof
 
 **Step 1: Create Jest config** — `tests/functional/jest.config.js`
 
@@ -674,51 +721,39 @@ This module:
 2. Calls `app.listen({ port: 0 })` to bind to a random port (unlike integration tests which use `inject`)
 3. Creates a hey-api SDK client pointing at `http://localhost:{port}`
 4. Exposes helpers: `getApp()`, `getPrisma()`, `getBaseUrl()`, `getSdkClient()`, `createAuthenticatedClient(token)`
-5. Handles tenant setup (reuses `ensureTestTenant()`)
-6. Cleanup in `teardown` closes the server and cleans test data
+5. Uses a shared suite-level boot pattern rather than per-file cold starts
+6. Cleanup in `teardown` closes the server and cleans test data without tenant-scoped assumptions
 
 Key difference from integration helpers: the Fastify app **listens on a real port** so the SDK's `fetch()` can reach it over HTTP.
 
 **Step 3: Create builders module** — `tests/functional/builders.ts`
 
-Initial builders (just enough for the proof-of-concept):
+Initial builders (just enough for the pilot):
 - `buildRegisteredUser(overrides?)` — calls `registerUser` SDK op, returns `{ userId, email, token, client }`
 - `buildLeagueWithOwner(overrides?)` — calls `buildRegisteredUser` + `createLeague`, returns `{ owner, league, ownerClient }`
 
 Builders use SDK operations (not Prisma) so they are themselves testing the create path.
+Builders must fail loudly with descriptive setup errors if a prerequisite SDK operation does not return data.
 
-**Step 4: Create proof-of-concept test** — `tests/functional/league-lifecycle.functional.ts`
+**Step 4: Create pilot tests**
 
-This single file proves the entire framework works by testing:
+Pilot file set:
+
+- `auth.functional.ts`
+- `consent.functional.ts`
+
+These files prove the framework by testing:
 
 ```
-describe('SDK Functional: League Lifecycle')
-  ├── it('health endpoint returns 200 through SDK')
-  │     → getHealth({ client }) — proves: SDK → HTTP → Fastify → response → SDK
-  │
-  ├── it('registers a user and fetches profile through SDK')
-  │     → registerUser → loginUser → getCurrentUser
-  │     → proves: auth flow works, JWT issued, profile returns typed data
-  │
-  ├── it('creates a league and lists it')
-  │     → createLeague → listLeagues → assert league in list
-  │     → proves: CRUD create + read, auth header forwarding, response typing
-  │
-  ├── it('updates league settings and reads back')
-  │     → createLeague → updateLeagueSettings → getLeague → assert changes persisted
-  │     → proves: CRUD update, data round-trips to DB and back
-  │
-  ├── it('commissioner invites member who joins and appears in member list')
-  │     → buildLeagueWithOwner → generateInviteLink → buildRegisteredUser
-  │     → acceptInvitation → listLeagueMembers → assert both users present
-  │     → proves: multi-user workflow, invitation lifecycle, membership creation
-  │
-  └── it('unauthenticated request returns 401')
-        → createLeague with unauthenticated client → assert error
-        → proves: auth guard works through SDK, error shape returned
+describe('SDK Functional: Auth')
+  └── it('register -> login -> fetch profile succeeds through the SDK')
+
+describe('SDK Functional: Consent')
+  ├── it('authenticated user records consent with age affirmation and can read it back')
+  └── it('unauthenticated consent read/write is rejected with the expected status and error shape')
 ```
 
-This is ~6 test cases that exercise: health, auth CRUD, league CRUD, invitation workflow, and error handling.
+This pilot is intentionally small. The broader league-lifecycle proof-of-concept moves to Slice 64-B.
 
 **Step 5: Add npm scripts** — update root `package.json`
 
@@ -727,7 +762,11 @@ This is ~6 test cases that exercise: health, auth CRUD, league CRUD, invitation 
 "test:functional:coverage": "jest --config tests/functional/jest.config.js --forceExit --coverage --coverageReporters json-summary json lcovonly text-summary"
 ```
 
-**Step 6: Verify it runs**
+**Step 6: Update coverage merge from day one**
+
+Update `scripts/run-backend-coverage.mjs` during the pilot slice so functional coverage is part of the merged report immediately rather than waiting until the final slice.
+
+**Step 7: Verify it runs**
 
 ```bash
 # Requires Postgres running (docker-compose.dev.yml or local)
@@ -737,23 +776,21 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npm run te
 **Success criteria for Slice 64-A:**
 - [ ] Jest config compiles and discovers `.functional.ts` files
 - [ ] hey-api SDK imports resolve correctly (no `.js` extension errors)
-- [ ] Fastify boots and listens on random port
+- [ ] Fastify boots once and listens on a random port for the shared suite
 - [ ] SDK client can reach the server via HTTP
-- [ ] `getHealth` returns typed response
 - [ ] `registerUser` + `loginUser` + `getCurrentUser` works through SDK
-- [ ] `createLeague` + `listLeagues` proves CRUD round-trip
-- [ ] `generateInviteLink` + `acceptInvitation` proves multi-user workflow
-- [ ] Unauthenticated request returns error (not crash)
-- [ ] Coverage collection works
-- [ ] All 6 tests pass
+- [ ] consent write/read works through SDK with persisted verification
+- [ ] unauthenticated consent request returns error envelope (not crash)
+- [ ] Coverage collection and merge work
+- [ ] Pilot tests pass locally and in CI
 
 ---
 
 ### Slice 64-B: Core Domain Tests
-- `auth.functional.ts` — full auth CRUD + error paths
+- Expand `auth.functional.ts` — full auth CRUD + error paths
+- Create `league-lifecycle.functional.ts` — league CRUD + invitation + member lifecycle
 - `squad-management.functional.ts` — squad CRUD + co-manager workflow + one-per-league enforcement
-- `consent.functional.ts` — consent recording + history
-- Expand `league-lifecycle.functional.ts` with role management + member removal + business rules
+- Expand `consent.functional.ts` — consent recording + history depth
 - Expand builders as needed
 
 ### Slice 64-C: Contest Domain Tests
@@ -768,7 +805,6 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npm run te
 
 ### Slice 64-E: Admin + Integration
 - `admin.functional.ts` — admin operations + auth boundaries
-- Update `scripts/run-backend-coverage.mjs` to merge functional coverage
 - Update CI workflow
 - Reduce smoke suite
 - Update rules
@@ -783,8 +819,10 @@ When this plan is executed, update:
 2. **`rules/testing-rules.md`** §3 (Quality Gates) — add functional tests to required gates
 3. **`rules/testing-rules.md`** §4 (Contract Testing) — note that SDK functional tests subsume contract suites
 4. **`rules/testing-rules.md`** §6 (Smoke and E2E) — reduce smoke scope, reference functional suite for use-case coverage
-5. **`rules/workflow-rules.md`** — add functional tests to backend-first refactor gates
+5. **`rules/workflow-rules.md`** — update active quality gates and references once the suite is adopted
 6. **`rules/model-change-rules.md`** — update test checklist to reference functional tests
+
+Cross-rule/docs adoption is coordinated in Plan 66.
 
 ---
 
@@ -793,15 +831,16 @@ When this plan is executed, update:
 | ID | Slice | Task | Status | Notes |
 |---|---|---|---|---|
 | 64-A01 | A | Create `tests/functional/jest.config.js` | Not Started | hey-api .js extension handling, moduleNameMapper |
-| 64-A02 | A | Create `tests/functional/setup.ts` — app lifecycle, `listen({ port: 0 })`, SDK client factory | Not Started | Reuse module imports from integration helpers |
+| 64-A02 | A | Create `tests/functional/setup.ts` — shared app lifecycle, `listen({ port: 0 })`, SDK client factory | Not Started | Shared boot, tenant-free cleanup design |
 | 64-A03 | A | Create `tests/functional/builders.ts` — `buildRegisteredUser`, `buildLeagueWithOwner` | Not Started | Builders use SDK ops, not Prisma |
 | 64-A04 | A | Add `test:functional` and `test:functional:coverage` npm scripts | Not Started | Root package.json |
-| 64-A05 | A | Create `tests/functional/league-lifecycle.functional.ts` — 6 proof-of-concept tests | Not Started | Health, auth, league CRUD, invite flow, 401 error |
-| 64-A06 | A | Verify all 6 tests pass against local Postgres | Not Started | Success criteria gate |
-| 64-B01 | B | Create `auth.functional.ts` — full auth CRUD + token refresh + error paths | Not Started | |
-| 64-B02 | B | Create `squad-management.functional.ts` — CRUD + co-manager + one-per-league | Not Started | |
-| 64-B03 | B | Create `consent.functional.ts` — record + history | Not Started | |
-| 64-B04 | B | Expand `league-lifecycle.functional.ts` — role mgmt, removal, business rules | Not Started | |
+| 64-A05 | A | Create pilot `auth.functional.ts` and `consent.functional.ts` | Not Started | Auth success path, consent write/read, unauthenticated error path |
+| 64-A06 | A | Update `scripts/run-backend-coverage.mjs` to merge functional coverage from day one | Not Started | |
+| 64-A07 | A | Verify pilot tests pass against local Postgres and CI | Not Started | Success criteria gate |
+| 64-B01 | B | Expand `auth.functional.ts` — full auth CRUD + token refresh + error paths | Not Started | |
+| 64-B02 | B | Create `league-lifecycle.functional.ts` — league CRUD + invitation + member lifecycle | Not Started | Broader workflow moved here from the original proof-of-concept |
+| 64-B03 | B | Create `squad-management.functional.ts` — CRUD + co-manager + one-per-league | Not Started | |
+| 64-B04 | B | Expand `consent.functional.ts` — record + history depth | Not Started | |
 | 64-C01 | C | Create `contest-lifecycle.functional.ts` — CRUD + config + scoring rules + prizes | Not Started | |
 | 64-C02 | C | Create `entry-and-roster.functional.ts` — entry CRUD + roster picks + rules | Not Started | |
 | 64-C03 | C | Create `draft-flow.functional.ts` — session lifecycle + pick submission | Not Started | |
@@ -809,7 +848,6 @@ When this plan is executed, update:
 | 64-D02 | D | Create `history.functional.ts` — completed contest queries | Not Started | |
 | 64-D03 | D | Create `notifications.functional.ts` — notification CRUD | Not Started | |
 | 64-E01 | E | Create `admin.functional.ts` — admin ops + auth boundaries | Not Started | |
-| 64-E02 | E | Update `scripts/run-backend-coverage.mjs` to merge functional coverage | Not Started | |
-| 64-E03 | E | Update CI workflow (`.github/workflows/ci.yml`) to run functional tests | Not Started | |
-| 64-E04 | E | Reduce API smoke suite to thin deployment health checks | Not Started | |
-| 64-E05 | E | Update rules (testing-rules, workflow-rules, model-change-rules) | Not Started | |
+| 64-E02 | E | Update CI workflow (`.github/workflows/ci.yml`) to run functional tests | Not Started | |
+| 64-E03 | E | Reduce API smoke suite to thin deployment health checks | Not Started | |
+| 64-E04 | E | Prune redundant integration tests once functional coverage replaces their signal | Not Started | Keep repository/persistence-edge coverage that still adds signal |
