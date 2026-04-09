@@ -65,8 +65,8 @@ This should be treated as an intentional contract cleanup and coordinated with f
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Inventory active backend routes that do not yet use a consistent error envelope | Produce a route table with current error shape, target shape, priority, and whether the route is blocked by Plan 63 or frontend cutover timing |
-| Pending | Add shared backend error DTO/schema package support | Create `packages/shared/dto/errors.dto.ts` with the standard envelope Zod schema and reusable schema exports for route files |
+| Done | Inventory active backend routes that do not yet use a consistent error envelope | Major categories: mixed flat `{ error, message }` responses in route handlers, bespoke `{ success: false }`/raw 400s in draft and contest override flows, `SuccessSchema`/generic success responses on route files that return domain data, and raw Fastify default-ish responses in admin/permissions helpers. Plan 63-owned auth routes were left untouched for now. |
+| Done | Add shared backend error DTO/schema package support | Added `packages/shared/dto/errors.dto.ts` with the standard nested envelope Zod schema and exported it from the shared DTO index. |
 | Pending | Normalize global Fastify error formatting | Ensure unhandled and translated domain errors flow through one consistent formatter where practical |
 | Pending | Standardize domain error translation in high-traffic modules | Prioritize leagues, squads, contests, draft, scoring, history, ingestion, and consent routes first; coordinate auth work with Plan 63 to avoid double-touching |
 | Pending | Declare route-level error response schemas for active product routes | Add `400`, `401`, `403`, `404` response schemas where they are relevant and realistic |
