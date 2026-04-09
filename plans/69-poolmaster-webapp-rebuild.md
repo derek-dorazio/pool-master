@@ -39,12 +39,12 @@ This app becomes the single go-forward web frontend for PoolMaster.
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Define the initial route map from active use-case plans | Member, commissioner, and root-admin surfaces in one role-based app; this should happen early because it defines the app skeleton |
+| In Progress | Define the initial route map from active use-case plans | Initial route-map skeleton added for member, commissioner, and root-admin surfaces; detailed use-case pages still to be built |
 | Pending | Decide the single-app auth/session model for member, commissioner, and root-admin flows | Capture how normal app auth and admin auth coexist in one app |
 | Pending | Inventory and decide the future of `clients/shared` | Keep, simplify, or absorb as the frontend landscape reduces to one active webapp |
-| Pending | Scaffold `clients/poolmaster` shell and base stack (69-A) | React, Vite, TypeScript, Tailwind, shadcn/ui, React Router, TanStack Query, Zustand, React Hook Form |
+| In Progress | Scaffold `clients/poolmaster` shell and base stack (69-A) | React, Vite, TypeScript, Tailwind, React Router, TanStack Query, generated SDK re-export, and initial app shell scaffolded; shadcn/component primitives still to be added |
 | Pending | Build auth/session, configured SDK client, query provider, and router shell (69-B) | Include the `src/lib/api.ts` style re-export pattern |
-| Pending | Build layout primitives and role-aware navigation (69-C) | App shell, nav structure, role-gated sections |
+| In Progress | Build layout primitives and role-aware navigation (69-C) | Initial app shell and route-map navigation scaffolded; real role/session gating still to be added |
 | Pending | Build the first product flow slice (69-D) | Start with auth + league list/detail as the first high-value vertical slice |
 | Pending | Wire the new app into local build/test commands | Include dev, build, lint, unit test, coverage, and future frontend functional test commands |
 | Pending | Wire the new app into CI | Replace legacy web/admin frontend gates with PoolMaster app gates as the app becomes active |
