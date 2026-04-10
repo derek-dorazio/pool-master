@@ -714,7 +714,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
 
     expectFunctionalError(wrongEntryResponse, {
       status: 403,
-      code: 'FORBIDDEN',
+      code: 'DRAFT_ENTRY_ACCESS_DENIED',
     });
 
     const missingStateResponse = await getDraftState({
@@ -727,6 +727,53 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     expectFunctionalError(missingStateResponse, {
       status: 404,
       code: 'CONTEST_NOT_FOUND',
+    });
+  });
+
+  it('rejects non-commissioners from snake draft control endpoints with stable draft permission codes', async () => {
+    const fixture = await seedSnakeDraftFixture();
+
+    const startResponse = await startDraft({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryIds: [fixture.commissionerEntryId, fixture.challengerEntryId],
+        rounds: 2,
+        timePerPickSeconds: 60,
+        availableParticipantIds: fixture.availableParticipantIds,
+        autoPickPolicy: 'BEST_AVAILABLE',
+      },
+    });
+
+    expect(startResponse.data?.status).toBe('LIVE');
+
+    const pauseDenied = await pauseDraft({
+      client: fixture.challenger.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expectFunctionalError(pauseDenied, {
+      status: 403,
+      code: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
+    });
+
+    const extendDenied = await extendCurrentTurn({
+      client: fixture.challenger.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        additionalSeconds: 15,
+      },
+    });
+
+    expectFunctionalError(extendDenied, {
+      status: 403,
+      code: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
     });
   });
 

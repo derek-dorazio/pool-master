@@ -824,14 +824,17 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
 
       if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
+        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
       }
 
       const requestedSquadMembership = context.squadMemberships.find(
         (membership) => membership.squadId === requestedEntry.squadId && membership.userId === requestUserId,
       );
       if (!requestedSquadMembership) {
-        return sendWithStatus(reply, 403, { error: 'FORBIDDEN', message: 'You can only draft for your own entry' });
+        return sendWithStatus(reply, 403, {
+          error: 'DRAFT_ENTRY_ACCESS_DENIED',
+          message: 'You can only submit draft picks for your own contest entry',
+        });
       }
 
       if (context.contest.selectionType === SelectionType.SNAKE_DRAFT) {
@@ -1069,10 +1072,13 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Pause is only available for snake drafts' });
       }
       if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
+        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
       }
       if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, { error: 'FORBIDDEN', message: 'Only commissioners can pause drafts' });
+        return sendWithStatus(reply, 403, {
+          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
+          message: 'Only commissioners can pause drafts',
+        });
       }
 
       const session = await draftStore.getSession(contestId);
@@ -1121,10 +1127,13 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Resume is only available for snake drafts' });
       }
       if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
+        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
       }
       if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, { error: 'FORBIDDEN', message: 'Only commissioners can resume drafts' });
+        return sendWithStatus(reply, 403, {
+          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
+          message: 'Only commissioners can resume drafts',
+        });
       }
 
       const session = await draftStore.getSession(contestId);
@@ -1175,10 +1184,13 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Clock extension is only available for snake drafts' });
       }
       if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
+        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
       }
       if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, { error: 'FORBIDDEN', message: 'Only commissioners can extend draft clocks' });
+        return sendWithStatus(reply, 403, {
+          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
+          message: 'Only commissioners can extend draft clocks',
+        });
       }
 
       const session = await draftStore.getSession(contestId);
@@ -1225,10 +1237,13 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Undo is only available for snake drafts' });
       }
       if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
+        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
       }
       if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, { error: 'FORBIDDEN', message: 'Only commissioners can undo draft picks' });
+        return sendWithStatus(reply, 403, {
+          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
+          message: 'Only commissioners can undo draft picks',
+        });
       }
 
       const session = await draftStore.getSession(contestId);
@@ -1288,10 +1303,13 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Skip is only available for snake drafts' });
       }
       if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'UNAUTHORIZED', message: 'Missing user identity' });
+        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
       }
       if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, { error: 'FORBIDDEN', message: 'Only commissioners can skip draft picks' });
+        return sendWithStatus(reply, 403, {
+          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
+          message: 'Only commissioners can skip draft picks',
+        });
       }
 
       const session = await draftStore.getSession(contestId);

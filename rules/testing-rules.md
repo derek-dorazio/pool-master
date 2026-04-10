@@ -218,6 +218,7 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
 - Use shared route constants from `@poolmaster/shared/api-routes`.
 - Use shared domain enums from `@poolmaster/shared/domain` for status values, sport types, etc.
 - When endpoint contracts change, functional tests must change with them.
+- Do not weaken a test to match known-wrong production behavior when the contract or domain rule says the implementation is wrong. Fix the service behavior first, then update the test to assert the corrected behavior.
 - When a slice introduces or standardizes intentional error conditions, functional API coverage must include explicit negative-path cases for those errors and assert the expected application error codes, not just the HTTP status.
 - Do not stop at a single generic failure case when the route exposes multiple meaningful denial reasons; cover the distinct error conditions that the frontend or other clients need to handle differently.
 
