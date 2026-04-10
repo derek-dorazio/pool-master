@@ -214,6 +214,8 @@ npm run test:poolmaster:unit
 
 Legacy browser suites were intentionally removed during the PoolMaster cutover. The active browser lane is now a single minimal post-deploy PoolMaster login-to-authenticated-landing check; richer browser journeys are still deferred.
 
+PoolMaster production builds also emit `clients/poolmaster/dist/version-info.json` so deployed environments can expose the webapp version, service version, git SHAs, and build metadata.
+
 ---
 
 ## 7. Type Checking and Linting

@@ -435,8 +435,17 @@ jobs:
           npx prisma generate --schema=packages/core-api/prisma/schema.prisma
           WEB_RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
           cd clients/poolmaster
-          APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" npx vite build
+          APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" \
+          POOLMASTER_ENVIRONMENT="qa" \
+          POOLMASTER_RELEASE_PREFIX="${WEB_RELEASE_PREFIX}" \
+          POOLMASTER_BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+          POOLMASTER_GIT_REF="${GITHUB_REF_NAME}" \
+          POOLMASTER_WEBAPP_GIT_SHA="${{ steps.tags.outputs.full_sha }}" \
+          POOLMASTER_SERVICE_VERSION="${{ steps.tags.outputs.full_sha }}" \
+          POOLMASTER_SERVICE_GIT_SHA="${{ steps.tags.outputs.full_sha }}" \
+          npm run build
           grep -q "/${WEB_RELEASE_PREFIX}/" dist/index.html
+          test -f dist/version-info.json
 
       - name: Deploy PoolMaster webapp to S3 + invalidate CloudFront
         id: deploy-webapp

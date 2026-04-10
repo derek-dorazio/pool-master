@@ -41,6 +41,7 @@ Out of scope:
 | Done | Wire QA seed/bootstrap env for one real browser-login user | CI seed task now requires `QA_ROOT_ADMIN_EMAIL` and `QA_ROOT_ADMIN_PASSWORD`, then passes them into the existing seed path as `ROOT_ADMIN_*` env values |
 | Done | Add post-deploy PoolMaster browser E2E job to CI | `poolmaster-browser-e2e` now runs after `migrate-qa` on push to `main` |
 | Done | Upload Playwright artifacts and summarize the browser result in CI | Browser artifact upload and a concise summary are now part of the new CI job |
+| Done | Emit deployable PoolMaster version metadata and add an app-side reader | The PoolMaster build now writes `dist/version-info.json` with webapp/service versions, SHAs, build time, and release context; the app exposes `getVersionInfo()` as the typed reader |
 | Done | Update testing/docs/rules references for the restored minimal browser lane | Testing rules and setup docs now describe the intentionally tiny deploy-gate browser lane |
 | In Progress | Validate locally where feasible and push to verify full CI/CD path | Local typecheck, lint, Vitest, and Playwright suite discovery pass. Full browser execution is deferred to CI because this sandbox is not the deployed QA target |
 
