@@ -1,9 +1,14 @@
 import {
   acceptInvitation,
+  changeMemberRole,
   createLeague,
   generateInviteLink,
   getLeague,
+  leaveLeague,
+  listLeagueMembers,
   listLeagues,
+  removeMember,
+  updateLeagueSettings,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser } from './builders';
 import {
@@ -262,6 +267,259 @@ describe('SDK Functional: Leagues', () => {
     expectFunctionalError(secondAcceptResponse, {
       status: 400,
       code: 'LEAGUE_INVITATION_ALREADY_ACCEPTED',
+    });
+  });
+
+  it('updates league settings and manages the member lifecycle through the generated SDK', async () => {
+    const commissioner = await buildRegisteredUser({
+      displayName: 'Settings Commissioner',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'Settings Member',
+    });
+
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: {
+        name: 'League Settings Flow',
+        visibility: 'PRIVATE',
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    const leagueId = createResponse.data?.league.id;
+    expect(leagueId).toBeTruthy();
+
+    const updateResponse = await updateLeagueSettings({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+      body: {
+        invitePolicy: 'OPEN',
+        allowMidSeasonJoin: true,
+        requireApproval: false,
+        weeklyRecapEnabled: true,
+        weeklyRecapDay: 'MONDAY',
+        timezone: 'America/New_York',
+        currency: 'USD',
+      },
+    });
+
+    expect(updateResponse.data).toBeDefined();
+    expect(updateResponse.data?.league.invitePolicy).toBe('OPEN');
+    expect(updateResponse.data?.league.settings).toEqual(
+      expect.objectContaining({
+        invitePolicy: 'OPEN',
+        allowMidSeasonJoin: true,
+        requireApproval: false,
+        weeklyRecapEnabled: true,
+        weeklyRecapDay: 'MONDAY',
+        timezone: 'America/New_York',
+        currency: 'USD',
+      }),
+    );
+
+    const invitationResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+      body: {
+        maxUses: 1,
+      },
+    });
+
+    const inviteCode = invitationResponse.data?.invitation.inviteCode;
+    expect(inviteCode).toBeTruthy();
+
+    const firstAcceptResponse = await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: inviteCode as string,
+      },
+    });
+
+    expect(firstAcceptResponse.data?.membership.role).toBe('MEMBER');
+    expect(firstAcceptResponse.data?.membership.status).toBe('ACTIVE');
+
+    const membersResponse = await listLeagueMembers({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expect(membersResponse.data).toBeDefined();
+    expect(membersResponse.data?.members).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          userId: commissioner.userId,
+          role: 'COMMISSIONER',
+        }),
+        expect.objectContaining({
+          userId: member.userId,
+          role: 'MEMBER',
+        }),
+      ]),
+    );
+
+    const promoteResponse = await changeMemberRole({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+        uid: member.userId,
+      },
+      body: {
+        role: 'COMMISSIONER',
+      },
+    });
+
+    expect(promoteResponse.data).toBeDefined();
+    expect(promoteResponse.data?.membership.role).toBe('COMMISSIONER');
+    expect(promoteResponse.data?.membership.status).toBe('ACTIVE');
+
+    const removeResponse = await removeMember({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+        uid: member.userId,
+      },
+    });
+
+    expect(removeResponse.data).toEqual({ success: true });
+
+    const secondInviteResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+      body: {
+        maxUses: 1,
+      },
+    });
+
+    const reactivatedMembership = await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: secondInviteResponse.data?.invitation.inviteCode as string,
+      },
+    });
+
+    expect(reactivatedMembership.data).toBeDefined();
+    expect(reactivatedMembership.data?.membership.userId).toBe(member.userId);
+    expect(reactivatedMembership.data?.membership.status).toBe('ACTIVE');
+
+    const leaveResponse = await leaveLeague({
+      client: member.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expect(leaveResponse.data).toEqual({ success: true });
+
+    const secondLeaveResponse = await leaveLeague({
+      client: member.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expectFunctionalError(secondLeaveResponse, {
+      status: 400,
+      code: 'LEAGUE_MEMBER_ALREADY_INACTIVE',
+    });
+  });
+
+  it('rejects non-commissioners from member management routes with stable league permission codes', async () => {
+    const commissioner = await buildRegisteredUser({
+      displayName: 'Management Commissioner',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'Managed Member',
+    });
+    const outsider = await buildRegisteredUser({
+      displayName: 'Management Outsider',
+    });
+
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: {
+        name: 'League Management Negative Flow',
+        visibility: 'PRIVATE',
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    const leagueId = createResponse.data?.league.id;
+    expect(leagueId).toBeTruthy();
+
+    const invitationResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+      body: {
+        maxUses: 1,
+      },
+    });
+
+    const inviteCode = invitationResponse.data?.invitation.inviteCode;
+    expect(inviteCode).toBeTruthy();
+
+    const acceptResponse = await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: inviteCode as string,
+      },
+    });
+
+    expect(acceptResponse.data?.membership.userId).toBe(member.userId);
+
+    const outsiderMembersResponse = await listLeagueMembers({
+      client: outsider.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expectFunctionalError(outsiderMembersResponse, {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_REQUIRED',
+    });
+
+    const memberRoleResponse = await changeMemberRole({
+      client: member.client,
+      path: {
+        id: leagueId as string,
+        uid: member.userId,
+      },
+      body: {
+        role: 'COMMISSIONER',
+      },
+    });
+
+    expectFunctionalError(memberRoleResponse, {
+      status: 403,
+      code: 'LEAGUE_PERMISSION_DENIED',
+    });
+
+    const outsiderRemoveResponse = await removeMember({
+      client: outsider.client,
+      path: {
+        id: leagueId as string,
+        uid: member.userId,
+      },
+    });
+
+    expectFunctionalError(outsiderRemoveResponse, {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
   });
 });
