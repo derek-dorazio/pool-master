@@ -96,7 +96,11 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
-    expectReplyError(reply, 'FORBIDDEN', 'You are not a member of this league');
+    expectReplyError(
+      reply,
+      'LEAGUE_MEMBERSHIP_REQUIRED',
+      'You must be an active member of this league to perform this action',
+    );
   });
 
   it('rejects inactive memberships on requireLeagueMembership', async () => {
@@ -117,7 +121,7 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
-    expectReplyError(reply, 'FORBIDDEN', 'Your membership in this league is inactive');
+    expectReplyError(reply, 'LEAGUE_MEMBERSHIP_INACTIVE', 'Your membership in this league is inactive');
   });
 
   it('rejects requests without a user identity on requireLeagueMembership', async () => {
@@ -134,7 +138,7 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(401);
-    expectReplyError(reply, 'UNAUTHORIZED', 'Missing user identity');
+    expectReplyError(reply, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
   });
 
   it('rejects requests without a league id on requireCommissioner', async () => {
@@ -151,7 +155,7 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(400);
-    expectReplyError(reply, 'BAD_REQUEST', 'Missing league id');
+    expectReplyError(reply, 'LEAGUE_ID_REQUIRED', 'League id is required');
   });
 
   it('allows commissioners through requireCommissioner', async () => {
@@ -194,6 +198,6 @@ describe('league permissions', () => {
       jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
-    expectReplyError(reply, 'FORBIDDEN', 'You do not have permission for this action');
+    expectReplyError(reply, 'LEAGUE_PERMISSION_DENIED', 'You do not have permission for this action');
   });
 });

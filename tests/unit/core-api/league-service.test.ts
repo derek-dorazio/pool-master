@@ -94,13 +94,12 @@ describe('LeagueService', () => {
   describe('findByUser', () => {
     it('loads leagues through active memberships instead of tenant scope', async () => {
       const expectedLeague = buildLeague({ id: 'league-1' });
+      const expectedMembership = buildMembership({ leagueId: 'league-1', userId: 'user-1' });
       const leagueRepo = createMockLeagueRepo({
         findById: jest.fn().mockResolvedValue(expectedLeague),
       });
       const membershipRepo = createMockMembershipRepo({
-        findByUser: jest.fn().mockResolvedValue([
-          buildMembership({ leagueId: 'league-1', userId: 'user-1' }),
-        ]),
+        findByUser: jest.fn().mockResolvedValue([expectedMembership]),
       });
       const service = new LeagueService(leagueRepo, membershipRepo);
 
@@ -108,7 +107,12 @@ describe('LeagueService', () => {
 
       expect(membershipRepo.findByUser).toHaveBeenCalledWith('user-1');
       expect(leagueRepo.findById).toHaveBeenCalledWith('league-1');
-      expect(result).toEqual([expectedLeague]);
+      expect(result).toEqual([
+        {
+          league: expectedLeague,
+          membership: expectedMembership,
+        },
+      ]);
     });
   });
 
