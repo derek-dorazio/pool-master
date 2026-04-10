@@ -427,6 +427,141 @@ async function seedBudgetPickFixture() {
   };
 }
 
+async function seedTieredDraftFixture() {
+  const { commissioner, league } = await buildLeagueWithCommissioner({
+    displayName: 'Tiered Draft Commissioner',
+    leagueName: 'Tiered Draft Functional League',
+  });
+
+  const contestResponse = await createContest({
+    client: commissioner.client,
+    path: {
+      id: league.id,
+    },
+    body: {
+      name: 'Tiered Draft Functional Contest',
+      contestType: ContestType.SINGLE_EVENT,
+      selectionType: SelectionType.TIERED,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
+      contestConfiguration: {
+        rounds: 1,
+        tierAssignmentMethod: 'AUTO_ODDS',
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [],
+          },
+        ],
+      },
+    },
+  });
+
+  if (!contestResponse.data) {
+    throw new Error('Builder: createContest failed for tiered draft fixture');
+  }
+
+  const contestId = contestResponse.data.contest.id;
+
+  const entryResponse = await enterContest({
+    client: commissioner.client,
+    path: {
+      contestId,
+    },
+  });
+
+  if (!entryResponse.data) {
+    throw new Error('Builder: enterContest failed for tiered draft fixture');
+  }
+
+  const prisma = getFunctionalPrisma();
+  const sport = await prisma.sport.create({
+    data: {
+      name: `DraftTieredSport-${randomUUID().slice(0, 8)}`,
+      participantType: 'INDIVIDUAL',
+      statSchema: {},
+    },
+  });
+  createdSportIds.push(sport.id);
+
+  const participant = await prisma.participant.create({
+    data: {
+      sportId: sport.id,
+      name: `Draft Tiered Player ${randomUUID().slice(0, 8)}`,
+      participantType: 'INDIVIDUAL',
+      externalIds: {},
+      metadata: {},
+      position: 'GOLFER',
+      teamAffiliation: null,
+    },
+  });
+  createdParticipantIds.push(participant.id);
+
+  const event = await prisma.sportEvent.create({
+    data: {
+      externalId: `tiered-functional-event-${randomUUID().slice(0, 8)}`,
+      providerId: 'integration-test',
+      sport: 'GOLF',
+      name: 'Tiered Functional Event',
+      startDate: new Date('2026-04-20T12:00:00.000Z'),
+      status: 'SCHEDULED',
+    },
+  });
+  createdSportEventIds.push(event.id);
+
+  const eventParticipant = await prisma.sportEventParticipant.create({
+    data: {
+      sportEventId: event.id,
+      participantId: participant.id,
+      status: 'ACTIVE',
+      valuations: {
+        create: {
+          price: 1200,
+          tier: 'tier-1',
+          orderIndex: 1,
+          valuationSource: 'functional-test',
+        },
+      },
+    },
+  });
+  createdSportEventParticipantIds.push(eventParticipant.id);
+
+  await prisma.contest.update({
+    where: {
+      id: contestId,
+    },
+    data: {
+      sportEventId: event.id,
+    },
+  });
+
+  await prisma.contestConfiguration.update({
+    where: {
+      contestId,
+    },
+    data: {
+      tierConfig: [
+        {
+          tierId: 'tier-1',
+          tierName: 'Tier 1',
+          tierNumber: 1,
+          picksFromTier: 1,
+          participantIds: [participant.id],
+        },
+      ] as object[],
+    },
+  });
+
+  return {
+    contestId,
+    commissioner,
+    entryId: entryResponse.data.entry.id,
+    sportEventParticipantId: eventParticipant.id,
+  };
+}
+
 afterEach(async () => {
   await cleanupDraftArtifacts();
   await cleanupFunctionalData();
@@ -468,8 +603,11 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     });
 
     expect(stateResponse.data).toBeDefined();
+    expect(stateResponse.data?.contestId).toBe(fixture.contestId);
     expect(stateResponse.data?.currentPickNumber).toBe(1);
     expect(stateResponse.data?.isTurnBased).toBe(true);
+    expect(stateResponse.data?.entries).toHaveLength(2);
+    expect(stateResponse.data?.draftPickHistories).toHaveLength(0);
 
     const pauseResponse = await pauseDraft({
       client: fixture.commissioner.client,
@@ -501,6 +639,25 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
 
     expect(extendResponse.data?.currentTurnStartedAt).toBeTruthy();
 
+    const duplicateStartResponse = await startDraft({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryIds: [fixture.commissionerEntryId, fixture.challengerEntryId],
+        rounds: 2,
+        timePerPickSeconds: 60,
+        availableParticipantIds: fixture.availableParticipantIds,
+        autoPickPolicy: 'BEST_AVAILABLE',
+      },
+    });
+
+    expectFunctionalError(duplicateStartResponse, {
+      status: 409,
+      code: 'DRAFT_EXISTS',
+    });
+
     const firstPickResponse = await submitContestSelection({
       client: fixture.commissioner.client,
       path: {
@@ -516,6 +673,17 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
     expect(firstPickResponse.data?.draftPickHistories[0].participantId).toBe(fixture.availableParticipantIds[0]);
     expect(firstPickResponse.data?.isComplete).toBe(false);
+    expect(firstPickResponse.data?.status).toBe('LIVE');
+
+    const afterPickStateResponse = await getDraftState({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expect(afterPickStateResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(afterPickStateResponse.data?.status).toBe('LIVE');
 
     const duplicatePickResponse = await submitContestSelection({
       client: fixture.challenger.client,
@@ -532,6 +700,34 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       status: 400,
       code: 'INVALID_PICK',
     });
+
+    const wrongEntryResponse = await submitContestSelection({
+      client: fixture.challenger.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryId: fixture.commissionerEntryId,
+        participantId: fixture.availableParticipantIds[1],
+      },
+    });
+
+    expectFunctionalError(wrongEntryResponse, {
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+
+    const missingStateResponse = await getDraftState({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: randomUUID(),
+      },
+    });
+
+    expectFunctionalError(missingStateResponse, {
+      status: 404,
+      code: 'CONTEST_NOT_FOUND',
+    });
   });
 
   it('reads a budget-pick room and rejects duplicate roster picks across entries', async () => {
@@ -545,8 +741,13 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     });
 
     expect(stateResponse.data).toBeDefined();
+    expect(stateResponse.data?.contestId).toBe(fixture.contestId);
     expect(stateResponse.data?.selectionType).toBe(SelectionType.BUDGET_PICK);
+    expect(stateResponse.data?.myEntryId).toBe(fixture.commissionerEntryId);
     expect(stateResponse.data?.contestConfiguration?.rosterSize).toBe(1);
+    expect(stateResponse.data?.contestConfiguration?.budget).toBe(8000);
+    expect(stateResponse.data?.contestConfiguration?.pricingMethod).toBe('WORLD_RANKING');
+    expect(stateResponse.data?.draftPickHistories).toHaveLength(0);
     expect(stateResponse.data?.availableParticipantIds).toEqual(
       expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),
     );
@@ -573,6 +774,24 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     );
     expect(firstPickResponse.data?.isComplete).toBe(false);
 
+    const afterPickStateResponse = await getDraftState({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expect(afterPickStateResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(afterPickStateResponse.data?.draftPickHistories[0]).toEqual(
+      expect.objectContaining({
+        entryId: fixture.commissionerEntryId,
+        participantId: fixture.firstEventParticipantId,
+        price: 3200,
+      }),
+    );
+    expect(afterPickStateResponse.data?.availableParticipantIds).not.toContain(fixture.firstEventParticipantId);
+    expect(afterPickStateResponse.data?.availableParticipantIds).toContain(fixture.secondEventParticipantId);
+
     const duplicatePickResponse = await submitContestSelection({
       client: fixture.challenger.client,
       path: {
@@ -588,5 +807,66 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       status: 400,
       code: 'PARTICIPANT_ALREADY_TAKEN',
     });
+  });
+
+  it('reads a tiered room, submits a selection, and returns updated tiered state', async () => {
+    const fixture = await seedTieredDraftFixture();
+
+    const stateResponse = await getDraftState({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expect(stateResponse.data).toBeDefined();
+    expect(stateResponse.data?.contestId).toBe(fixture.contestId);
+    expect(stateResponse.data?.selectionType).toBe(SelectionType.TIERED);
+    expect(stateResponse.data?.myEntryId).toBe(fixture.entryId);
+    expect(stateResponse.data?.availableParticipantIds).toContain(fixture.sportEventParticipantId);
+    expect(stateResponse.data?.draftPickHistories).toHaveLength(0);
+
+    const submitResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryId: fixture.entryId,
+        participantId: fixture.sportEventParticipantId,
+      },
+    });
+
+    expect(submitResponse.data).toBeDefined();
+    expect(submitResponse.data?.contestId).toBe(fixture.contestId);
+    expect(submitResponse.data?.selectionType).toBe(SelectionType.TIERED);
+    expect(submitResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(submitResponse.data?.draftPickHistories[0]).toEqual(
+      expect.objectContaining({
+        entryId: fixture.entryId,
+        participantId: fixture.sportEventParticipantId,
+        tierId: 'tier-1',
+        tierName: 'Tier 1',
+      }),
+    );
+    expect(submitResponse.data?.isComplete).toBe(true);
+
+    const afterPickStateResponse = await getDraftState({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expect(afterPickStateResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(afterPickStateResponse.data?.draftPickHistories[0]).toEqual(
+      expect.objectContaining({
+        participantId: fixture.sportEventParticipantId,
+        tierId: 'tier-1',
+        tierName: 'Tier 1',
+      }),
+    );
+    expect(afterPickStateResponse.data?.isComplete).toBe(true);
+    expect(afterPickStateResponse.data?.availableParticipantIds).toContain(fixture.sportEventParticipantId);
   });
 });

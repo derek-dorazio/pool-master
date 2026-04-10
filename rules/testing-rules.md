@@ -258,6 +258,10 @@ Do not keep a data integration test if:
 Prefer to keep data integration tests for:
 - scoring persistence/recalculation
 - repository-heavy ingestion persistence
+- history fallback logic
+- draft/roster persistence details that are more about stored state than client workflow
+- query/read-model correctness where the main proof is “this returns the correct data from the real DB”
+- representative permanent keep areas such as scoring results/recalculation, ingestion persistence, history read fallbacks, roster-pick persistence, sport-event participant repository queries, standings/dashboard read models, and lower-level contest-management configuration flows
 
 ### Data Integration Depth Requirement
 
@@ -271,9 +275,6 @@ Data integration files should prove a meaningful slice of persistence or lower-l
   - not-found or missing-state path where applicable
 - It is acceptable for a highly focused persistence file to have fewer cases when the subject is intentionally narrow, but that should be the exception rather than the default.
 - Do not create placeholder data-integration files that only prove one trivial success path and leave the real persistence/query behavior untested.
-- history fallback logic
-- draft/roster persistence details that are more about stored state than client workflow
-- query/read-model correctness where the main proof is “this returns the correct data from the real DB”
 
 ### Backend Suite Placement Heuristics
 
