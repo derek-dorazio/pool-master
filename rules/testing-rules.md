@@ -24,7 +24,7 @@ All services and clients must follow these testing standards. This document defi
 | Vitest | unit and integration-style test runner |
 | React Testing Library | user-focused component and page tests |
 | MSW | request-level API mocking |
-| Playwright | future post-deploy browser E2E tests for the rebuilt PoolMaster web app |
+| Playwright | post-deploy browser E2E tests for the rebuilt PoolMaster web app |
 
 ### Mobile
 
@@ -316,8 +316,10 @@ Redundancy between suites is acceptable when each suite is true to its purpose. 
 
 ### Browser E2E Tests (Playwright)
 
-- Browser E2E is currently reset and should not block the active delivery pipeline until the rebuilt PoolMaster browser suite is reintroduced.
-- When browser E2E returns, it should target only the PoolMaster web app.
+- Browser E2E should target only the PoolMaster web app.
+- The current active browser lane is intentionally tiny and does block the deploy pipeline once QA deploy succeeds.
+- The current deploy-gate journey is limited to: login page -> sign in -> authenticated landing selector.
+- Do not expand this deploy-gate lane into deeper product coverage until those product surfaces are intentionally designed and stabilized.
 
 **Use-case-driven E2E:**
 
@@ -511,7 +513,8 @@ Do not rely on `prisma migrate reset` between test runs. Tests must be idempoten
 
 ### E2E (Playwright)
 
-- High-value end-to-end user journeys aligned with the active product scope
+- Minimal deploy-gate authentication proof for the current primitive PoolMaster app
+- High-value end-to-end user journeys aligned with the active product scope once the rebuilt app grows beyond the primitive baseline
 - Error boundary absence on all tested pages
 - Console error absence on all tested pages
 

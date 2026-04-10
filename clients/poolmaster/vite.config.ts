@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig(() => {
   const assetBase = process.env.APP_ASSET_BASE ?? '/';
@@ -49,6 +49,10 @@ export default defineConfig(() => {
           rewrite: (p) => p.replace(/^\/api/, ''),
         },
       },
+    },
+    test: {
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
+      exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     },
   };
 });

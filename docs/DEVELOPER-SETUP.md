@@ -212,7 +212,7 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm r
 npm run test:poolmaster:unit
 ```
 
-Legacy smoke tests and browser E2E suites were intentionally removed from the active flow during the PoolMaster cutover. Browser E2E will be rebuilt later for the new app from scratch.
+Legacy browser suites were intentionally removed during the PoolMaster cutover. The active browser lane is now a single minimal post-deploy PoolMaster login-to-authenticated-landing check; richer browser journeys are still deferred.
 
 ---
 

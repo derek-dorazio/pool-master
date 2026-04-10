@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { LoginRequestSchema, RegisterRequestSchema } from '@poolmaster/shared/dto';
 import { loginUser, registerUser } from '@/lib/api';
 import { useSessionStore } from './session-store';
@@ -40,9 +40,11 @@ function extractErrorMessage(error: unknown): string {
 }
 
 export function AuthHomePage() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useSessionStore((state) => state.user);
   const setSession = useSessionStore((state) => state.setSession);
 
   const loginForm = useForm<LoginFormValues>({
@@ -76,6 +78,7 @@ export function AuthHomePage() {
       }
 
       setSession(response.data.user);
+      navigate('/leagues', { replace: true });
     } catch (error) {
       setServerError(extractErrorMessage(error));
     } finally {
@@ -97,11 +100,16 @@ export function AuthHomePage() {
       }
 
       setSession(response.data.user);
+      navigate('/leagues', { replace: true });
     } catch (error) {
       setServerError(extractErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (user) {
+    return <Navigate replace to="/leagues" />;
   }
 
   return (

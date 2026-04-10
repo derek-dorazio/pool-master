@@ -29,7 +29,10 @@ export function LeaguesPage() {
 
   if (leaguesQuery.isLoading) {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
+      <section
+        className="rounded-[2rem] border border-border bg-card p-8"
+        data-testid="authenticated-landing"
+      >
         <p className="text-sm text-muted-foreground">Loading your leagues...</p>
       </section>
     );
@@ -37,7 +40,10 @@ export function LeaguesPage() {
 
   if (leaguesQuery.isError) {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
+      <section
+        className="rounded-[2rem] border border-border bg-card p-8"
+        data-testid="authenticated-landing"
+      >
         <h2 className="text-xl font-semibold">We couldn&apos;t load your leagues.</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           This route is wired to the generated SDK and current backend contracts. Try refreshing
@@ -49,7 +55,10 @@ export function LeaguesPage() {
 
   if (!leaguesQuery.data?.length) {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
+      <section
+        className="rounded-[2rem] border border-border bg-card p-8"
+        data-testid="authenticated-landing"
+      >
         <h2 className="text-2xl font-semibold">You&apos;re not in any leagues yet.</h2>
         <p className="mt-2 max-w-xl text-sm text-muted-foreground">
           The first PoolMaster member flow starts here: join leagues, accept invitations, and move
@@ -60,7 +69,7 @@ export function LeaguesPage() {
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-5" data-testid="authenticated-landing">
       <div className="flex items-end justify-between gap-4">
         <div className="space-y-2">
           <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
