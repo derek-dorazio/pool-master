@@ -100,11 +100,11 @@ The functional API suite should cover, at minimum:
 | Done | Adopt Plan 64 Slice 64-A as the required pilot gate | Functional harness, pilot auth/consent coverage, CI wiring, renamed service coverage surfaces, and child-process coverage attribution are all in place and green |
 | Done | Expand the functional server from the pilot surface to the full live service app before delegating broader domain slices | The shared functional server now boots the full live service app, and the first league/invitation slice validates against real routes without test-only wiring |
 | Done | Add squads-and-memberships functional coverage on the live service surface | The squads slice now covers create, add co-manager, remove co-manager, and non-member rejection against the current generated SDK and live routes |
-| In Progress | Execute the domain coverage slices from Plan 64 | Auth/session, consent, leagues/invitations, contests/entries, squads, and standings/history are now covered; continue the remaining domain slices without reintroducing retired model assumptions |
+| Done | Execute the domain coverage slices from Plan 64 | Auth/session, consent, leagues/invitations, contests/entries, squads, drafts/roster-selection, standings/history, and root-admin flows are now covered on the live post-refactor service model |
 | Done | Integrate functional suite into local build/test flow | Root scripts now expose `test:service:functional-api` and `test:coverage:service:merged`, and active setup docs use those names. |
 | Done | Integrate functional suite into CI | CI now reports `service-coverage-report` and `poolmaster-unit-tests` with the renamed service coverage buckets and artifacts. |
 | Done | Own cross-rule/docs updates for the new test strategy | Updated workflow/testing rules, AGENTS, README, developer setup, and Plan 64 naming references. |
-| Pending | Define and execute redundant-test pruning after coverage is in place | Remove integration/contract tests only when the functional suite clearly replaces their signal |
+| In Progress | Define and execute redundant-test pruning after coverage is in place | Removed the now-duplicative `auth-session.integration.ts` and `consent.integration.ts` suites after the functional auth/session and consent slices fully replaced their signal; leave contest, draft, history, scoring, and repository-heavy persistence suites in place until their remaining unique signal is explicitly replaced |
 
 ## Worker-Safe Rollout Slices
 

@@ -1,0 +1,592 @@
+import {
+  acceptInvitation,
+  createContest,
+  enterContest,
+  extendCurrentTurn,
+  generateInviteLink,
+  getDraftState,
+  pauseDraft,
+  resumeDraft,
+  startDraft,
+  submitContestSelection,
+} from '@poolmaster/shared/generated/hey-api';
+import { ContestType, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
+import {
+  cleanupFunctionalData,
+  disconnectFunctionalPrisma,
+  expectFunctionalError,
+  getFunctionalPrisma,
+} from './setup';
+import { randomUUID } from 'node:crypto';
+
+const createdSportIds: string[] = [];
+const createdParticipantIds: string[] = [];
+const createdSportEventIds: string[] = [];
+const createdSportEventParticipantIds: string[] = [];
+
+async function cleanupDraftArtifacts(): Promise<void> {
+  const prisma = getFunctionalPrisma();
+
+  if (createdSportEventIds.length > 0) {
+    const eventParticipants = await prisma.sportEventParticipant.findMany({
+      where: {
+        sportEventId: {
+          in: createdSportEventIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    const eventParticipantIds = eventParticipants.map((row) => row.id);
+
+    if (eventParticipantIds.length > 0) {
+      await prisma.rosterPick.deleteMany({
+        where: {
+          sportEventParticipantId: {
+            in: eventParticipantIds,
+          },
+        },
+      });
+      await prisma.sportEventParticipantValuation.deleteMany({
+        where: {
+          sportEventParticipantId: {
+            in: eventParticipantIds,
+          },
+        },
+      });
+      await prisma.sportEventParticipant.deleteMany({
+        where: {
+          id: {
+            in: eventParticipantIds,
+          },
+        },
+      });
+    }
+
+    createdSportEventParticipantIds.length = 0;
+
+    await prisma.sportEvent.deleteMany({
+      where: {
+        id: {
+          in: createdSportEventIds,
+        },
+      },
+    });
+    createdSportEventIds.length = 0;
+  }
+
+  if (createdParticipantIds.length > 0) {
+    await prisma.participant.deleteMany({
+      where: {
+        id: {
+          in: createdParticipantIds,
+        },
+      },
+    });
+    createdParticipantIds.length = 0;
+  }
+
+  if (createdSportIds.length > 0) {
+    await prisma.sport.deleteMany({
+      where: {
+        id: {
+          in: createdSportIds,
+        },
+      },
+    });
+    createdSportIds.length = 0;
+  }
+}
+
+async function seedSnakeDraftFixture() {
+  const { commissioner, league } = await buildLeagueWithCommissioner({
+    displayName: 'Draft Commissioner',
+    leagueName: 'Draft Functional League',
+  });
+  const challenger = await buildRegisteredUser({
+    displayName: 'Draft Challenger',
+  });
+
+  const inviteResponse = await generateInviteLink({
+    client: commissioner.client,
+    path: {
+      id: league.id,
+    },
+    body: {
+      maxUses: 1,
+    },
+  });
+
+  if (!inviteResponse.data) {
+    throw new Error('Builder: generateInviteLink failed for draft functional fixture');
+  }
+
+  const acceptResponse = await acceptInvitation({
+    client: challenger.client,
+    body: {
+      inviteCode: inviteResponse.data.invitation.inviteCode,
+    },
+  });
+
+  if (!acceptResponse.data) {
+    throw new Error('Builder: acceptInvitation failed for draft functional fixture');
+  }
+
+  const contestResponse = await createContest({
+    client: commissioner.client,
+    path: {
+      id: league.id,
+    },
+    body: {
+      name: 'Draft Functional Contest',
+      contestType: ContestType.SINGLE_EVENT,
+      selectionType: SelectionType.SNAKE_DRAFT,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
+      contestConfiguration: {
+        rounds: 2,
+        timePerPickSeconds: 60,
+      },
+    },
+  });
+
+  if (!contestResponse.data) {
+    throw new Error('Builder: createContest failed for draft functional fixture');
+  }
+
+  const contestId = contestResponse.data.contest.id;
+
+  const commissionerEntry = await enterContest({
+    client: commissioner.client,
+    path: {
+      contestId,
+    },
+  });
+  if (!commissionerEntry.data) {
+    throw new Error('Builder: enterContest failed for commissioner draft fixture');
+  }
+
+  const challengerEntry = await enterContest({
+    client: challenger.client,
+    path: {
+      contestId,
+    },
+  });
+  if (!challengerEntry.data) {
+    throw new Error('Builder: enterContest failed for challenger draft fixture');
+  }
+
+  const prisma = getFunctionalPrisma();
+  const sport = await prisma.sport.create({
+    data: {
+      name: `DraftSnakeSport-${randomUUID().slice(0, 8)}`,
+      participantType: 'INDIVIDUAL',
+      statSchema: {},
+    },
+  });
+  createdSportIds.push(sport.id);
+
+  const event = await prisma.sportEvent.create({
+    data: {
+      externalId: `snake-functional-event-${randomUUID().slice(0, 8)}`,
+      providerId: 'integration-test',
+      sport: 'GOLF',
+      name: 'Snake Functional Event',
+      startDate: new Date('2026-04-20T12:00:00.000Z'),
+      status: 'SCHEDULED',
+    },
+  });
+  createdSportEventIds.push(event.id);
+
+  const participants = await Promise.all(
+    [1, 2, 3, 4].map((index) =>
+      prisma.participant.create({
+        data: {
+          sportId: sport.id,
+          name: `Draft Snake Player ${index}-${randomUUID().slice(0, 8)}`,
+          participantType: 'INDIVIDUAL',
+          externalIds: {},
+          metadata: {},
+          position: 'GOLFER',
+          teamAffiliation: null,
+        },
+      }),
+    ),
+  );
+  createdParticipantIds.push(...participants.map((participant) => participant.id));
+
+  const eventParticipants = await Promise.all(
+    participants.map((participant) =>
+      prisma.sportEventParticipant.create({
+        data: {
+          sportEventId: event.id,
+          participantId: participant.id,
+          status: 'ACTIVE',
+        },
+      }),
+    ),
+  );
+  createdSportEventParticipantIds.push(...eventParticipants.map((row) => row.id));
+
+  await prisma.contest.update({
+    where: {
+      id: contestId,
+    },
+    data: {
+      sportEventId: event.id,
+    },
+  });
+
+  return {
+    contestId,
+    commissioner,
+    challenger,
+    commissionerEntryId: commissionerEntry.data.entry.id,
+    challengerEntryId: challengerEntry.data.entry.id,
+    availableParticipantIds: eventParticipants.map((row) => row.id),
+  };
+}
+
+async function seedBudgetPickFixture() {
+  const { commissioner, league } = await buildLeagueWithCommissioner({
+    displayName: 'Budget Commissioner',
+    leagueName: 'Budget Functional League',
+  });
+  const challenger = await buildRegisteredUser({
+    displayName: 'Budget Challenger',
+  });
+
+  const inviteResponse = await generateInviteLink({
+    client: commissioner.client,
+    path: {
+      id: league.id,
+    },
+    body: {
+      maxUses: 1,
+    },
+  });
+
+  if (!inviteResponse.data) {
+    throw new Error('Builder: generateInviteLink failed for budget fixture');
+  }
+
+  const acceptResponse = await acceptInvitation({
+    client: challenger.client,
+    body: {
+      inviteCode: inviteResponse.data.invitation.inviteCode,
+    },
+  });
+
+  if (!acceptResponse.data) {
+    throw new Error('Builder: acceptInvitation failed for budget fixture');
+  }
+
+  const contestResponse = await createContest({
+    client: commissioner.client,
+    path: {
+      id: league.id,
+    },
+    body: {
+      name: 'Budget Functional Contest',
+      contestType: ContestType.SINGLE_EVENT,
+      selectionType: SelectionType.BUDGET_PICK,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
+      contestConfiguration: {
+        rosterSize: 1,
+        budget: 8000,
+        pricingMethod: 'WORLD_RANKING',
+        isExclusive: true,
+      },
+    },
+  });
+
+  if (!contestResponse.data) {
+    throw new Error('Builder: createContest failed for budget fixture');
+  }
+
+  const contestId = contestResponse.data.contest.id;
+
+  const commissionerEntry = await enterContest({
+    client: commissioner.client,
+    path: {
+      contestId,
+    },
+  });
+  if (!commissionerEntry.data) {
+    throw new Error('Builder: enterContest failed for commissioner budget fixture');
+  }
+
+  const challengerEntry = await enterContest({
+    client: challenger.client,
+    path: {
+      contestId,
+    },
+  });
+  if (!challengerEntry.data) {
+    throw new Error('Builder: enterContest failed for challenger budget fixture');
+  }
+
+  const prisma = getFunctionalPrisma();
+  const sport = await prisma.sport.create({
+    data: {
+      name: `DraftBudgetSport-${randomUUID().slice(0, 8)}`,
+      participantType: 'INDIVIDUAL',
+      statSchema: {},
+    },
+  });
+  createdSportIds.push(sport.id);
+
+  const firstParticipant = await prisma.participant.create({
+    data: {
+      sportId: sport.id,
+      name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
+      participantType: 'INDIVIDUAL',
+      externalIds: {},
+      metadata: {},
+      position: 'GOLFER',
+      teamAffiliation: null,
+    },
+  });
+  createdParticipantIds.push(firstParticipant.id);
+
+  const secondParticipant = await prisma.participant.create({
+    data: {
+      sportId: sport.id,
+      name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
+      participantType: 'INDIVIDUAL',
+      externalIds: {},
+      metadata: {},
+      position: 'GOLFER',
+      teamAffiliation: null,
+    },
+  });
+  createdParticipantIds.push(secondParticipant.id);
+
+  const event = await prisma.sportEvent.create({
+    data: {
+      externalId: `budget-functional-event-${randomUUID().slice(0, 8)}`,
+      providerId: 'integration-test',
+      sport: 'GOLF',
+      name: 'Budget Functional Event',
+      startDate: new Date('2026-04-20T12:00:00.000Z'),
+      status: 'SCHEDULED',
+    },
+  });
+  createdSportEventIds.push(event.id);
+
+  const firstEventParticipant = await prisma.sportEventParticipant.create({
+    data: {
+      sportEventId: event.id,
+      participantId: firstParticipant.id,
+      status: 'ACTIVE',
+      valuations: {
+        create: {
+          price: 3200,
+          orderIndex: 1,
+          valuationSource: 'functional-test',
+        },
+      },
+    },
+  });
+  createdSportEventParticipantIds.push(firstEventParticipant.id);
+
+  const secondEventParticipant = await prisma.sportEventParticipant.create({
+    data: {
+      sportEventId: event.id,
+      participantId: secondParticipant.id,
+      status: 'ACTIVE',
+      valuations: {
+        create: {
+          price: 5100,
+          orderIndex: 2,
+          valuationSource: 'functional-test',
+        },
+      },
+    },
+  });
+  createdSportEventParticipantIds.push(secondEventParticipant.id);
+
+  await prisma.contest.update({
+    where: {
+      id: contestId,
+    },
+    data: {
+      sportEventId: event.id,
+    },
+  });
+
+  return {
+    contestId,
+    commissioner,
+    challenger,
+    commissionerEntryId: commissionerEntry.data.entry.id,
+    challengerEntryId: challengerEntry.data.entry.id,
+    firstEventParticipantId: firstEventParticipant.id,
+    secondEventParticipantId: secondEventParticipant.id,
+  };
+}
+
+afterEach(async () => {
+  await cleanupDraftArtifacts();
+  await cleanupFunctionalData();
+});
+
+afterAll(async () => {
+  await disconnectFunctionalPrisma();
+});
+
+describe('SDK Functional: Drafts and Roster Selection', () => {
+  it('drives the snake draft lifecycle and rejects duplicate picks', async () => {
+    const fixture = await seedSnakeDraftFixture();
+
+    const startResponse = await startDraft({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryIds: [fixture.commissionerEntryId, fixture.challengerEntryId],
+        rounds: 2,
+        timePerPickSeconds: 60,
+        availableParticipantIds: fixture.availableParticipantIds,
+        autoPickPolicy: 'BEST_AVAILABLE',
+      },
+    });
+
+    expect(startResponse.data).toBeDefined();
+    expect(startResponse.data?.contestId).toBe(fixture.contestId);
+    expect(startResponse.data?.status).toBe('LIVE');
+    expect(startResponse.data?.entries).toHaveLength(2);
+    expect(startResponse.data?.draftPickHistories).toHaveLength(0);
+
+    const stateResponse = await getDraftState({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expect(stateResponse.data).toBeDefined();
+    expect(stateResponse.data?.currentPickNumber).toBe(1);
+    expect(stateResponse.data?.isTurnBased).toBe(true);
+
+    const pauseResponse = await pauseDraft({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expect(pauseResponse.data?.status).toBe('PAUSED');
+
+    const resumeResponse = await resumeDraft({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expect(resumeResponse.data?.status).toBe('LIVE');
+
+    const extendResponse = await extendCurrentTurn({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        additionalSeconds: 30,
+      },
+    });
+
+    expect(extendResponse.data?.currentTurnStartedAt).toBeTruthy();
+
+    const firstPickResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryId: fixture.commissionerEntryId,
+        participantId: fixture.availableParticipantIds[0],
+      },
+    });
+
+    expect(firstPickResponse.data).toBeDefined();
+    expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(firstPickResponse.data?.draftPickHistories[0].participantId).toBe(fixture.availableParticipantIds[0]);
+    expect(firstPickResponse.data?.isComplete).toBe(false);
+
+    const duplicatePickResponse = await submitContestSelection({
+      client: fixture.challenger.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryId: fixture.challengerEntryId,
+        participantId: fixture.availableParticipantIds[0],
+      },
+    });
+
+    expectFunctionalError(duplicatePickResponse, {
+      status: 400,
+      code: 'INVALID_PICK',
+    });
+  });
+
+  it('reads a budget-pick room and rejects duplicate roster picks across entries', async () => {
+    const fixture = await seedBudgetPickFixture();
+
+    const stateResponse = await getDraftState({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+    });
+
+    expect(stateResponse.data).toBeDefined();
+    expect(stateResponse.data?.selectionType).toBe(SelectionType.BUDGET_PICK);
+    expect(stateResponse.data?.contestConfiguration?.rosterSize).toBe(1);
+    expect(stateResponse.data?.availableParticipantIds).toEqual(
+      expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),
+    );
+
+    const firstPickResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryId: fixture.commissionerEntryId,
+        participantId: fixture.firstEventParticipantId,
+      },
+    });
+
+    expect(firstPickResponse.data).toBeDefined();
+    expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(firstPickResponse.data?.draftPickHistories[0]).toEqual(
+      expect.objectContaining({
+        entryId: fixture.commissionerEntryId,
+        participantId: fixture.firstEventParticipantId,
+        price: 3200,
+      }),
+    );
+    expect(firstPickResponse.data?.isComplete).toBe(false);
+
+    const duplicatePickResponse = await submitContestSelection({
+      client: fixture.challenger.client,
+      path: {
+        contestId: fixture.contestId,
+      },
+      body: {
+        entryId: fixture.challengerEntryId,
+        participantId: fixture.firstEventParticipantId,
+      },
+    });
+
+    expectFunctionalError(duplicatePickResponse, {
+      status: 400,
+      code: 'PARTICIPANT_ALREADY_TAKEN',
+    });
+  });
+});
