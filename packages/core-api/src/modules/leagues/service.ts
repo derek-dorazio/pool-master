@@ -21,6 +21,11 @@ export interface CreateLeagueInput {
   settings?: Partial<LeagueSettings>;
 }
 
+export interface UserLeagueView {
+  league: League;
+  membership: LeagueMembership;
+}
+
 const DEFAULT_LEAGUE_SETTINGS: LeagueSettings = {
   invitePolicy: InvitePolicy.COMMISSIONER_ONLY,
   allowMidSeasonJoin: false,
@@ -69,12 +74,22 @@ export class LeagueService {
     return this.leagueRepo.findById(leagueId);
   }
 
-  async findByUser(userId: string): Promise<League[]> {
+  async findByUser(userId: string): Promise<UserLeagueView[]> {
     const memberships = await this.membershipRepo.findByUser(userId);
     const leagues = await Promise.all(
       memberships.map((membership) => this.leagueRepo.findById(membership.leagueId)),
     );
-    return leagues.filter((league): league is League => league !== null);
+    return memberships.flatMap((membership, index) => {
+      const league = leagues[index];
+      if (!league) {
+        return [];
+      }
+
+      return [{
+        league,
+        membership,
+      }];
+    });
   }
 
   /** Partially updates the league settings JSONB, merging with existing values. */

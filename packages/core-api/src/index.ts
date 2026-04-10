@@ -209,6 +209,9 @@ async function start(): Promise<void> {
   }
 }
 
-if (process.env.OPENAPI_EXPORT !== 'true') {
+if (
+  process.env.OPENAPI_EXPORT !== 'true'
+  && process.env.POOLMASTER_DISABLE_AUTO_START !== 'true'
+) {
   void start();
 }

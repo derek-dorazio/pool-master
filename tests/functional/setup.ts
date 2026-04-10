@@ -118,6 +118,17 @@ export async function cleanupFunctionalData(): Promise<void> {
   }
 
   const userIds = users.map((user) => user.id);
+  const leagues = await database.league.findMany({
+    where: {
+      createdBy: {
+        in: userIds,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+  const leagueIds = leagues.map((league) => league.id);
 
   await database.consentRecord.deleteMany({
     where: {
@@ -126,6 +137,57 @@ export async function cleanupFunctionalData(): Promise<void> {
       },
     },
   });
+  if (leagueIds.length > 0) {
+    await database.leagueInvitation.deleteMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+    });
+    await database.leagueMembership.deleteMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+    });
+    await database.squadMembership.deleteMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+    });
+    await database.squad.deleteMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+    });
+    await database.commissionerAuditLog.deleteMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+    });
+    await database.commissionerActionItem.deleteMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+    });
+    await database.league.deleteMany({
+      where: {
+        id: {
+          in: leagueIds,
+        },
+      },
+    });
+  }
   await database.refreshToken.deleteMany({
     where: {
       userId: {

@@ -5,7 +5,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
   toLeagueDetailDto,
-  toLeagueListResponse,
+  toLeagueSummaryDto,
 } from '../../mappers/leagues.mapper';
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueService } from './service';
@@ -28,7 +28,11 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
     const leagues = await leagueService.findByUser(userId);
-    return toLeagueListResponse(leagues);
+    return {
+      leagues: leagues.map(({ league, membership }) => toLeagueSummaryDto(league, {
+        role: membership.role,
+      })),
+    };
   }
 
   async function createLeague(
@@ -61,6 +65,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       league: toLeagueDetailDto(result.league, {
         memberCount: 1,
         activeContestCount: 0,
+        role: result.membership.role,
       }),
     });
   }

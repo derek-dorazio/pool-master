@@ -1,10 +1,6 @@
-import Fastify from 'fastify';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { healthPlugin } from '../../packages/core-api/src/plugins/health';
-import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
-import { authModule } from '../../packages/core-api/src/modules/auth/routes';
-import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
+import { buildApp } from '../../packages/core-api/src/index';
 
 const stateFilePath = process.env.FUNCTIONAL_SERVER_STATE_FILE;
 const runId = process.env.FUNCTIONAL_RUN_ID ?? 'functional-run';
@@ -27,12 +23,7 @@ async function writeState(port: number): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const app = Fastify({ logger: false });
-
-  app.register(healthPlugin);
-  app.register(authGuard);
-  app.register(authModule, { prefix: '/api/v1/auth' });
-  app.register(accountConsentModule, { prefix: '/api/v1/account' });
+  const app = buildApp();
 
   await app.ready();
   await app.listen({ host: '127.0.0.1', port: 0 });

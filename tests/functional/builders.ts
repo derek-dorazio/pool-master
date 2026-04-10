@@ -84,7 +84,7 @@ export async function buildRegisteredUser(overrides?: {
   };
 }
 
-export async function buildLeagueWithOwner(overrides?: {
+export async function buildLeagueWithCommissioner(overrides?: {
   displayName?: string;
   email?: string;
   leagueName?: string;
@@ -103,17 +103,17 @@ export async function buildLeagueWithOwner(overrides?: {
     role?: string;
     settings?: Record<string, unknown>;
   };
-  owner: RegisteredUserContext;
-  ownerClient: Client;
+  commissioner: RegisteredUserContext;
+  commissionerClient: Client;
 }> {
-  const owner = await buildRegisteredUser({
+  const commissioner = await buildRegisteredUser({
     displayName: overrides?.displayName,
     email: overrides?.email,
     password: overrides?.password,
   });
 
   const leagueResponse = await createLeague({
-    client: owner.client,
+    client: commissioner.client,
     body: {
       name: overrides?.leagueName ?? 'Functional Pilot League',
       visibility: 'PRIVATE',
@@ -124,12 +124,12 @@ export async function buildLeagueWithOwner(overrides?: {
   });
 
   if (!leagueResponse.data) {
-    throw new Error(`Builder: createLeague failed for owner ${owner.userId}`);
+    throw new Error(`Builder: createLeague failed for commissioner ${commissioner.userId}`);
   }
 
   return {
     league: leagueResponse.data.league,
-    owner,
-    ownerClient: owner.client,
+    commissioner,
+    commissionerClient: commissioner.client,
   };
 }

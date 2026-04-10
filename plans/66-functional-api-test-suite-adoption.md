@@ -98,7 +98,8 @@ The functional API suite should cover, at minimum:
 | --- | --- | --- |
 | Done | Finalize the functional-suite naming and scope | Service-facing scripts, coverage directories, CI jobs, artifact names, and docs now use the `service-*` / `poolmaster-*` naming consistently. |
 | Done | Adopt Plan 64 Slice 64-A as the required pilot gate | Functional harness, pilot auth/consent coverage, CI wiring, renamed service coverage surfaces, and child-process coverage attribution are all in place and green |
-| Pending | Execute the domain coverage slices from Plan 64 | Track implementation progress in Plan 64 task rows rather than duplicating per-domain slice rows here |
+| Done | Expand the functional server from the pilot surface to the full live service app before delegating broader domain slices | The shared functional server now boots the full live service app, and the first league/invitation slice validates against real routes without test-only wiring |
+| Pending | Execute the domain coverage slices from Plan 64 | Auth, consent, and leagues/invitations are now covered; continue the remaining domain slices without reintroducing retired model assumptions |
 | Done | Integrate functional suite into local build/test flow | Root scripts now expose `test:service:functional-api` and `test:coverage:service:merged`, and active setup docs use those names. |
 | Done | Integrate functional suite into CI | CI now reports `service-coverage-report` and `poolmaster-unit-tests` with the renamed service coverage buckets and artifacts. |
 | Done | Own cross-rule/docs updates for the new test strategy | Updated workflow/testing rules, AGENTS, README, developer setup, and Plan 64 naming references. |
@@ -149,6 +150,7 @@ Use only the live post-refactor model and contracts when expanding coverage:
 - Do not write suites around retired concepts such as `Tenant`, `AdminUser`, `OWNER`, or header-based user/admin trust.
 - Use the generated SDK and current exported DTO/domain types only.
 - When a historical plan example conflicts with the live model, the live service model wins.
+- Do not implement domain slices against a partial functional harness; expand the shared functional server to the relevant live service surface first.
 
 ## Relationship To Plan 64
 
