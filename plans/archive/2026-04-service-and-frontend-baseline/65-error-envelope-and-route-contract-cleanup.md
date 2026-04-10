@@ -22,7 +22,7 @@ This plan intentionally excludes:
 ## Dependencies
 
 - Can start independently.
-- Must coordinate with [plans/63-tenant-removal-and-auth-redesign.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/63-tenant-removal-and-auth-redesign.md) before touching auth-route internals so the same routes are not refactored twice in conflicting ways.
+- Must coordinate with archived [plans/archive/2026-04-backend-completion/63-tenant-removal-and-auth-redesign.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-backend-completion/63-tenant-removal-and-auth-redesign.md) before touching auth-route internals so the same routes are not refactored twice in conflicting ways.
 - Should coordinate with [plans/69-poolmaster-webapp-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/69-poolmaster-webapp-rebuild.md) because tightening error contracts will directly affect the new frontend’s expectations.
 
 ## Target Standard
