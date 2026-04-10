@@ -1,15 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { listLeagues } from '@/lib/api';
+import { listLeagues, type ListLeaguesResponses } from '@/lib/api';
 
-type LeagueSummary = {
-  id: string;
-  name: string;
-  role?: string;
-  memberCount: number;
-  activeContestCount: number;
-  visibility: string;
-};
+type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
 function roleLabel(role: string | undefined) {
   if (!role) {
@@ -30,7 +23,7 @@ export function LeaguesPage() {
       if (!response.data) {
         throw response.error ?? new Error('League list response is missing data.');
       }
-      return response.data.leagues as LeagueSummary[];
+      return response.data.leagues;
     },
   });
 

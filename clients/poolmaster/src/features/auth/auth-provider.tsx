@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useEffect, useMemo } from 'react';
+import { ReactNode, createContext, useContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser, logoutUser, refreshToken } from '@/lib/api';
 import { useSessionStore } from './session-store';
@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useSessionStore((state) => state.user);
-  const setMemberSession = useSessionStore((state) => state.setMemberSession);
+  const setSession = useSessionStore((state) => state.setSession);
   const clearSessionState = useSessionStore((state) => state.clearSession);
 
   const meQuery = useQuery({
@@ -45,12 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setMemberSession({
-      id: meQuery.data.id,
-      email: meQuery.data.email,
-      displayName: meQuery.data.displayName,
-    });
-  }, [meQuery.data, setMemberSession]);
+    setSession(meQuery.data);
+  }, [meQuery.data, setSession]);
 
   useEffect(() => {
     if (!meQuery.error) {
@@ -69,19 +65,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, [clearSessionState, meQuery, meQuery.error, refreshQuery]);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      isAuthenticated: Boolean(user),
-      isLoading: meQuery.isLoading || refreshQuery.isFetching,
-      isRootAdmin: false,
-      user,
-      clearSession: async () => {
-        await logoutUser().catch(() => undefined);
-        clearSessionState();
-      },
-    }),
-    [clearSessionState, meQuery.isLoading, refreshQuery.isFetching, user],
-  );
+  const value: AuthContextValue = {
+    isAuthenticated: Boolean(user),
+    isLoading: meQuery.isLoading || refreshQuery.isFetching,
+    isRootAdmin: user?.isRootAdmin ?? false,
+    user,
+    clearSession: async () => {
+      await logoutUser().catch(() => undefined);
+      clearSessionState();
+    },
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

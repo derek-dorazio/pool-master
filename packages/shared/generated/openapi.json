@@ -88,6 +88,9 @@
                         "displayName": {
                           "type": "string"
                         },
+                        "isRootAdmin": {
+                          "type": "boolean"
+                        },
                         "authProvider": {
                           "type": "string",
                           "enum": [
@@ -114,7 +117,8 @@
                       "required": [
                         "id",
                         "email",
-                        "displayName"
+                        "displayName",
+                        "isRootAdmin"
                       ],
                       "additionalProperties": false
                     },
@@ -272,6 +276,9 @@
                         "displayName": {
                           "type": "string"
                         },
+                        "isRootAdmin": {
+                          "type": "boolean"
+                        },
                         "authProvider": {
                           "type": "string",
                           "enum": [
@@ -298,7 +305,8 @@
                       "required": [
                         "id",
                         "email",
-                        "displayName"
+                        "displayName",
+                        "isRootAdmin"
                       ],
                       "additionalProperties": false
                     },
@@ -657,6 +665,9 @@
                         "displayName": {
                           "type": "string"
                         },
+                        "isRootAdmin": {
+                          "type": "boolean"
+                        },
                         "authProvider": {
                           "type": "string",
                           "enum": [
@@ -683,7 +694,8 @@
                       "required": [
                         "id",
                         "email",
-                        "displayName"
+                        "displayName",
+                        "isRootAdmin"
                       ],
                       "additionalProperties": false
                     }

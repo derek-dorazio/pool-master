@@ -6,7 +6,7 @@ import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { LeaguesPage } from '@/features/leagues/leagues-page';
-import { MemberRouteGuard } from './route-guards';
+import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
 export const router = createBrowserRouter([
   {
@@ -49,24 +49,19 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'commissioner',
-        element: (
-          <PlaceholderPage
-            description="Commissioner-owned contest setup, scoring-rule configuration, aggregation, and prizes will be rebuilt here."
-            eyebrow="Commissioner"
-            title="Commissioner routes"
-          />
-        ),
-      },
-      {
-        path: 'root-admin',
-        element: (
-          <PlaceholderPage
-            description="Future platform administration will be rebuilt from scratch inside PoolMaster rather than through a separate app."
-            eyebrow="Root Admin"
-            title="Root-admin routes"
-          />
-        ),
+        element: <RootAdminRouteGuard />,
+        children: [
+          {
+            path: 'root-admin',
+            element: (
+              <PlaceholderPage
+                description="Future platform administration will be rebuilt from scratch inside PoolMaster rather than through a separate app."
+                eyebrow="Root Admin"
+                title="Root-admin routes"
+              />
+            ),
+          },
+        ],
       },
     ],
   },

@@ -41,7 +41,7 @@
     "test:coverage:poolmaster": "npm run test:coverage:poolmaster:unit",
     "test:api": "jest --config tests/jest.config.js tests/api",
     "format": "prettier --write .",
-    "api:export": "node --import tsx packages/core-api/scripts/export-openapi.ts",
+    "api:export": "npm run build --workspace @poolmaster/shared && node --import tsx packages/core-api/scripts/export-openapi.ts",
     "api:generate": "npx @hey-api/openapi-ts -f packages/shared/openapi-ts.config.ts",
     "api:validate": "node --import tsx scripts/validate-openapi-spec.ts",
     "api:refresh": "npm run api:export && npm run api:generate"

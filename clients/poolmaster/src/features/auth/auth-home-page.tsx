@@ -43,7 +43,7 @@ export function AuthHomePage() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const setMemberSession = useSessionStore((state) => state.setMemberSession);
+  const setSession = useSessionStore((state) => state.setSession);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -75,11 +75,7 @@ export function AuthHomePage() {
         throw response.error ?? new Error('Login response is missing data.');
       }
 
-      setMemberSession({
-        id: response.data.user.id,
-        email: response.data.user.email,
-        displayName: response.data.user.displayName,
-      });
+      setSession(response.data.user);
     } catch (error) {
       setServerError(extractErrorMessage(error));
     } finally {
@@ -100,11 +96,7 @@ export function AuthHomePage() {
         throw response.error ?? new Error('Registration response is missing data.');
       }
 
-      setMemberSession({
-        id: response.data.user.id,
-        email: response.data.user.email,
-        displayName: response.data.user.displayName,
-      });
+      setSession(response.data.user);
     } catch (error) {
       setServerError(extractErrorMessage(error));
     } finally {

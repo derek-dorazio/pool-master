@@ -32,6 +32,7 @@ export interface UserProfile {
   id: string;
   email: string;
   displayName: string;
+  isRootAdmin: boolean;
   authProvider?: 'email' | 'google' | 'apple';
   timezone?: string | null;
   locale?: string | null;
@@ -220,6 +221,7 @@ function mapUserProfile(user: {
   id: string;
   email: string;
   displayName: string;
+  isRootAdmin: boolean;
   authProvider: string | null;
   timezone: string | null;
   locale: string | null;
@@ -229,6 +231,7 @@ function mapUserProfile(user: {
     id: user.id,
     email: user.email,
     displayName: user.displayName,
+    isRootAdmin: user.isRootAdmin,
     authProvider: mapAuthProvider(user.authProvider),
     timezone: user.timezone ?? undefined,
     locale: user.locale ?? undefined,

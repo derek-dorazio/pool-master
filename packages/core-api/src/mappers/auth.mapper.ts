@@ -7,6 +7,7 @@ interface UserRow {
   id: string;
   email: string;
   displayName: string;
+  isRootAdmin: boolean;
   timezone?: string | null;
   locale?: string | null;
   avatarUrl?: string | null;
@@ -25,6 +26,7 @@ export function toUserProfileDto(user: UserRow): UserProfileDto {
     id: user.id,
     email: user.email,
     displayName: user.displayName,
+    isRootAdmin: user.isRootAdmin,
     timezone: user.timezone ?? undefined,
     locale: user.locale ?? undefined,
     avatarUrl: user.avatarUrl ?? null,

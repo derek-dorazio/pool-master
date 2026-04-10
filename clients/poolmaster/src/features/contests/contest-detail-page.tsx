@@ -1,25 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { getContest, getContestLeaderboard } from '@/lib/api';
+import { getContest, getContestLeaderboard, type GetContestLeaderboardResponses, type GetContestResponses } from '@/lib/api';
 
-type ContestDetail = {
-  id: string;
-  name: string;
-  status: string;
-  contestType: string;
-  selectionType: string;
-  scoringEngine: string;
-  leagueId: string;
-  sport?: string | null;
-  entryCount?: number;
-};
-
-type LeaderboardEntry = {
-  entryId: string;
-  rank: number;
-  totalScore: number;
-  isTied: boolean;
-};
+type ContestDetail = GetContestResponses[200]['contest'];
+type LeaderboardEntry = GetContestLeaderboardResponses[200]['leaderboard'][number];
 
 export function ContestDetailPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
@@ -33,7 +17,7 @@ export function ContestDetailPage() {
         throw response.error ?? new Error('Contest detail response is missing data.');
       }
 
-      return response.data.contest as ContestDetail;
+      return response.data.contest;
     },
     enabled: Boolean(contestId),
     retry: false,
@@ -48,7 +32,7 @@ export function ContestDetailPage() {
         throw response.error ?? new Error('Contest leaderboard response is missing data.');
       }
 
-      return response.data.leaderboard as LeaderboardEntry[];
+      return response.data.leaderboard;
     },
     enabled: Boolean(contestId),
     retry: false,

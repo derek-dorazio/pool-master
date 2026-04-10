@@ -63,6 +63,7 @@ export type RegisterUserResponses = {
             id: string;
             email: string;
             displayName: string;
+            isRootAdmin: boolean;
             authProvider?: 'email' | 'google' | 'apple';
             timezone?: string;
             locale?: string;
@@ -114,6 +115,7 @@ export type LoginUserResponses = {
             id: string;
             email: string;
             displayName: string;
+            isRootAdmin: boolean;
             authProvider?: 'email' | 'google' | 'apple';
             timezone?: string;
             locale?: string;
@@ -276,6 +278,7 @@ export type GetCurrentUserResponses = {
             id: string;
             email: string;
             displayName: string;
+            isRootAdmin: boolean;
             authProvider?: 'email' | 'google' | 'apple';
             timezone?: string;
             locale?: string;

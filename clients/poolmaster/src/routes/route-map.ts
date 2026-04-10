@@ -1,4 +1,4 @@
-export type PoolmasterRole = 'PUBLIC' | 'MEMBER' | 'COMMISSIONER' | 'ROOT_ADMIN';
+export type PoolmasterRole = 'PUBLIC' | 'MEMBER' | 'ROOT_ADMIN';
 
 export type RouteMapItem = {
   path: string;
@@ -25,12 +25,6 @@ export const routeMap: RouteMapItem[] = [
     label: 'Contests',
     role: 'MEMBER',
     description: 'Contest browsing, entry creation, standings, and history.',
-  },
-  {
-    path: '/commissioner',
-    label: 'Commissioner',
-    role: 'COMMISSIONER',
-    description: 'League-owned contest and roster management surface.',
   },
   {
     path: '/root-admin',
