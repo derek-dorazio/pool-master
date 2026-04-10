@@ -46,7 +46,6 @@ function buildStatEvent(overrides: Partial<StatEvent> = {}): StatEvent {
     type: 'stat.received',
     sourceService: 'ingestion-worker',
     timestamp: '2026-01-01T00:00:00Z',
-    tenantId: 'tenant-1',
     eventId: 'evt-1',
     participantExternalId: 'ext-p1',
     statKey: 'passing_yards',

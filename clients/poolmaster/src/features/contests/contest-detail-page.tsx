@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { getContest, getContestLeaderboard } from '@/lib/api';
-import { useSessionStore } from '@/features/auth/session-store';
 
 type ContestDetail = {
   id: string;
@@ -24,19 +23,11 @@ type LeaderboardEntry = {
 
 export function ContestDetailPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
-  const tokens = useSessionStore((state) => state.tokens);
 
   const contestQuery = useQuery({
-    queryKey: ['poolmaster', 'contest', contestId, tokens?.accessToken],
+    queryKey: ['poolmaster', 'contest', contestId],
     queryFn: async (): Promise<ContestDetail> => {
-      const response = await getContest({
-        path: { contestId },
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
-      });
+      const response = await getContest({ path: { contestId } });
 
       if (!response.data?.contest) {
         throw response.error ?? new Error('Contest detail response is missing data.');
@@ -44,21 +35,14 @@ export function ContestDetailPage() {
 
       return response.data.contest as ContestDetail;
     },
-    enabled: Boolean(contestId && tokens?.accessToken),
+    enabled: Boolean(contestId),
     retry: false,
   });
 
   const leaderboardQuery = useQuery({
-    queryKey: ['poolmaster', 'contest-leaderboard', contestId, tokens?.accessToken],
+    queryKey: ['poolmaster', 'contest-leaderboard', contestId],
     queryFn: async (): Promise<LeaderboardEntry[]> => {
-      const response = await getContestLeaderboard({
-        path: { contestId },
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
-      });
+      const response = await getContestLeaderboard({ path: { contestId } });
 
       if (!response.data?.leaderboard) {
         throw response.error ?? new Error('Contest leaderboard response is missing data.');
@@ -66,7 +50,7 @@ export function ContestDetailPage() {
 
       return response.data.leaderboard as LeaderboardEntry[];
     },
-    enabled: Boolean(contestId && tokens?.accessToken),
+    enabled: Boolean(contestId),
     retry: false,
   });
 

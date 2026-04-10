@@ -6,7 +6,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
 import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto/leagues.dto';
 import {
@@ -16,9 +15,10 @@ import {
 } from '../../adapters';
 import { InvitationService } from '../leagues/invitation-service';
 import { createInvitationHandlers } from '../leagues/invitation-handler';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function invitationsModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);

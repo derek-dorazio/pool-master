@@ -27,9 +27,6 @@ afterAll(async () => {
   await prisma.participant.deleteMany({
     where: { externalId: 'ingestion-player-1' },
   });
-  await prisma.sport.deleteMany({
-    where: { name: Sport.GOLF },
-  });
   await teardownIntegrationTests();
 });
 

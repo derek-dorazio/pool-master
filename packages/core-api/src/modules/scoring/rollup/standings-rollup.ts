@@ -169,7 +169,6 @@ export class StandingsRollup {
       type: 'standings.updated',
       sourceService: 'scoring-service',
       timestamp: rolledUpAt.toISOString(),
-      tenantId: '',
       contestId,
       standings: standings.map((s) => ({
         entryId: s.entryId,

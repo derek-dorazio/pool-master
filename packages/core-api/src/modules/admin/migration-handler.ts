@@ -12,13 +12,13 @@ import {
 } from '../../mappers/admin-migration.mapper';
 import type { MigrationService, StartMigrationInput } from './migration-service';
 import {
-  AdminUserNotFoundError,
+  RootAdminUserNotFoundError,
   MigrationNotFoundError,
   MigrationRunNotFoundError,
   MigrationAlreadyRunningError,
 } from './migration-service';
 import { sendError } from '../../core/error-handler';
-import { extractAdminContext } from './request-admin-context';
+import { extractRootAdminContext } from './request-admin-context';
 
 // ---------------------------------------------------------------------------
 // Handler factory
@@ -48,10 +48,10 @@ export function createMigrationHandlers(service: MigrationService) {
     request: FastifyRequest<{ Body: StartMigrationInput }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
 
     try {
-      const run = await service.startRun(request.body, adminUserId, adminUserEmail);
+      const run = await service.startRun(request.body, rootAdminUserId, rootAdminEmail);
       return reply.status(201).send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationNotFoundError) {
@@ -60,7 +60,7 @@ export function createMigrationHandlers(service: MigrationService) {
       if (err instanceof MigrationAlreadyRunningError) {
         return sendError(reply, 409, 'ALREADY_RUNNING', err.message);
       }
-      if (err instanceof AdminUserNotFoundError) {
+      if (err instanceof RootAdminUserNotFoundError) {
         return sendError(reply, 403, 'FORBIDDEN', err.message);
       }
       throw err;
@@ -90,20 +90,20 @@ export function createMigrationHandlers(service: MigrationService) {
     request: FastifyRequest<{ Params: { runId: string } }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
 
     try {
       const run = await service.cancelRun(
         request.params.runId,
-        adminUserId,
-        adminUserEmail,
+        rootAdminUserId,
+        rootAdminEmail,
       );
       return reply.send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationRunNotFoundError) {
         return sendError(reply, 404, 'NOT_FOUND', err.message);
       }
-      if (err instanceof AdminUserNotFoundError) {
+      if (err instanceof RootAdminUserNotFoundError) {
         return sendError(reply, 403, 'FORBIDDEN', err.message);
       }
       throw err;

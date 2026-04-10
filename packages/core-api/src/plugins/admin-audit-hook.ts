@@ -78,15 +78,15 @@ export async function adminAuditHook(app: FastifyInstance): Promise<void> {
     if (!isSuccessStatus(reply.statusCode)) return;
     const basePath = request.url.split('?')[0];
     if (SKIP_ROUTES.has(basePath)) return;
-    const adminUserId = request.adminContext?.adminUser.id ?? 'unknown';
-    const adminUserEmail = request.adminContext?.adminUser.email ?? 'unknown';
+    const actorUserId = request.rootAdminContext?.rootAdminUser.id ?? 'unknown';
+    const actorEmail = request.rootAdminContext?.rootAdminUser.email ?? 'unknown';
     const ipAddress = request.ip;
     const userAgent = request.headers['user-agent'] ?? 'unknown';
     const action = deriveAction(request.method, request.url);
     const resource = deriveResource(request.url);
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId,
+      actorEmail,
       action,
       resourceType: resource.type,
       resourceId: resource.id,

@@ -1,11 +1,11 @@
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import { EventListResponseSchema } from '@poolmaster/shared/dto/events.dto';
 import { toEventListResponse } from '../../mappers';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function eventsModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
 
   fastify.get('/', {
     schema: {

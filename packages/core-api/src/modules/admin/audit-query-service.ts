@@ -8,7 +8,7 @@
 import type { PrismaClient } from '@prisma/client';
 
 export interface AuditListQuery {
-  adminUserId?: string;
+  actorUserId?: string;
   action?: string;
   resourceType?: string;
   resourceId?: string;
@@ -21,8 +21,8 @@ export interface AuditListQuery {
 
 export interface AuditEntryView {
   id: string;
-  adminUserEmail: string;
-  adminUserName: string;
+  actorEmail: string;
+  actorName: string;
   action: string;
   resourceType: string;
   resourceId: string;
@@ -72,8 +72,8 @@ function toAuditEntryView(row: {
 }): AuditEntryView {
   return {
     id: row.id,
-    adminUserEmail: row.actorEmail,
-    adminUserName: row.actor?.displayName ?? row.actorEmail,
+    actorEmail: row.actorEmail,
+    actorName: row.actor?.displayName ?? row.actorEmail,
     action: row.action,
     resourceType: row.resourceType,
     resourceId: row.resourceId,
@@ -92,7 +92,7 @@ export async function queryAuditLog(query: AuditListQuery): Promise<AuditListRes
   const skip = (page - 1) * pageSize;
 
   const where: Record<string, unknown> = {};
-  if (query.adminUserId) where.actorId = query.adminUserId;
+  if (query.actorUserId) where.actorId = query.actorUserId;
   if (query.action) where.action = query.action;
   if (query.resourceType) where.resourceType = query.resourceType;
   if (query.resourceId) where.resourceId = query.resourceId;
@@ -158,8 +158,8 @@ export async function exportAuditLogCsv(query: AuditListQuery): Promise<string> 
   const escapeCsv = (value: string): string => `"${value.replace(/"/g, '""')}"`;
   const header = [
     'id',
-    'adminUserEmail',
-    'adminUserName',
+    'actorEmail',
+    'actorName',
     'action',
     'resourceType',
     'resourceId',
@@ -172,8 +172,8 @@ export async function exportAuditLogCsv(query: AuditListQuery): Promise<string> 
 
   const rows = result.items.map((item) => [
     item.id,
-    item.adminUserEmail,
-    item.adminUserName,
+    item.actorEmail,
+    item.actorName,
     item.action,
     item.resourceType,
     item.resourceId,

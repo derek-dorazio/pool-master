@@ -6,7 +6,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryPrisma } from './audit-query-service';
 import { UserService } from './user-service';
@@ -49,6 +48,7 @@ import {
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import adminAuth from '../../plugins/admin-auth';
+import { getAppPrisma } from '../../core/prisma-context';
 
 function withAdminErrorResponses(
   successResponses: Record<number, unknown>,
@@ -71,7 +71,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   await fastify.register(adminAuth);
 
   // --- Shared Prisma client for all admin services ---
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
 
   // Initialise the audit service's Prisma reference so that the module-level
   // logAdminAction() helper can persist audit entries to the database.
@@ -107,7 +107,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
         type: 'object',
         properties: {
           search: { type: 'string' },
-          tenant: { type: 'string' },
           status: { type: 'string', enum: ['active', 'disabled'] },
           page: { type: 'integer', minimum: 1 },
           pageSize: { type: 'integer', minimum: 1, maximum: 100 },
@@ -193,7 +192,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       querystring: {
         type: 'object',
         properties: {
-          tenant: { type: 'string' },
           league: { type: 'string' },
           sport: { type: 'string' },
           status: { type: 'string' },
@@ -460,7 +458,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
           severity: { type: 'string', enum: ['ERROR', 'CRITICAL', 'WARNING'] },
           dateFrom: { type: 'string', format: 'date-time' },
           dateTo: { type: 'string', format: 'date-time' },
-          tenant: { type: 'string' },
           page: { type: 'integer', minimum: 1 },
           pageSize: { type: 'integer', minimum: 1, maximum: 100 },
         },

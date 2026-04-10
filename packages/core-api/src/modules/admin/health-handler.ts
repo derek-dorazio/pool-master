@@ -90,7 +90,6 @@ export function createHealthHandlers(healthService: HealthService) {
         severity?: 'ERROR' | 'CRITICAL' | 'WARNING';
         dateFrom?: string;
         dateTo?: string;
-        tenant?: string;
         page?: number;
         pageSize?: number;
       };
@@ -103,7 +102,6 @@ export function createHealthHandlers(healthService: HealthService) {
       severity: query.severity,
       startDate: query.dateFrom,
       endDate: query.dateTo,
-      tenant: query.tenant,
       page: query.page,
       pageSize: query.pageSize,
     });

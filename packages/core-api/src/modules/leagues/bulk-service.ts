@@ -21,7 +21,6 @@ export interface BulkContestCopyResult {
 
 export interface CopySeasonInput {
   leagueId: string;
-  tenantId: string;
   createdBy: string;
   sourceContestIds: string[];
 }

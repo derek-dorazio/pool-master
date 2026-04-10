@@ -54,6 +54,8 @@ export function buildApp() {
   const prisma = new PrismaClient();
   const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
 
+  app.decorate('prisma', prisma);
+
   const registry = new ProviderRegistry();
   registry.register(Sport.GOLF, new PgaTourAdapter(), 'PRIMARY');
   registry.register(Sport.F1, new OpenF1Adapter(), 'PRIMARY');

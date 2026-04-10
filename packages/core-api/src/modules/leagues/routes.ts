@@ -3,7 +3,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   CreateLeagueRequestSchema,
@@ -24,8 +23,6 @@ import {
   ChangeLeagueMemberRoleRequestSchema,
   CopySeasonRequestSchema,
   LeagueMembersResponseSchema,
-  TransferOwnershipResponseSchema,
-  TransferOwnershipRequestSchema,
   UpdateLeagueSettingsRequestSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -36,7 +33,7 @@ import {
   PrismaContestRepository,
   PrismaActionItemRepository,
 } from '../../adapters';
-import { requirePermission, requireOwner } from '../../core/require-permission';
+import { requirePermission } from '../../core/require-permission';
 import { LeagueService } from './service';
 import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
@@ -44,16 +41,17 @@ import { MemberDirectoryService } from './member-directory-service';
 import { DashboardService } from './dashboard-service';
 import { AuditService } from './audit-service';
 import { BulkService } from './bulk-service';
-import { requireCommissionerOrOwner, requireLeagueMembership } from './permissions';
+import { requireCommissioner, requireLeagueMembership } from './permissions';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
 import { createDashboardHandlers } from './dashboard-handler';
 import { createAuditHandlers } from './audit-handler';
 import { createBulkHandlers } from './bulk-handler';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
@@ -258,22 +256,6 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     handler: member.leaveLeague,
   });
 
-  fastify.post('/:id/transfer-ownership', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Transfer league ownership to another member',
-      operationId: 'transferOwnership',
-      body: zodToJsonSchema(TransferOwnershipRequestSchema),
-      response: {
-        200: zodToJsonSchema(TransferOwnershipResponseSchema),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireOwner(membershipRepo),
-    handler: member.transferOwnership,
-  });
-
   // --- Commissioner Dashboard ---
 
   fastify.get('/:id/dashboard', {
@@ -287,7 +269,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requireCommissionerOrOwner(membershipRepo),
+    preHandler: requireCommissioner(membershipRepo),
     handler: dashboard.getDashboard,
   });
 
@@ -301,7 +283,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requireCommissionerOrOwner(membershipRepo),
+    preHandler: requireCommissioner(membershipRepo),
     handler: dashboard.resolveActionItem,
   });
 
@@ -317,7 +299,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requireCommissionerOrOwner(membershipRepo),
+    preHandler: requireCommissioner(membershipRepo),
     handler: audit.getLeagueAuditLog,
   });
 

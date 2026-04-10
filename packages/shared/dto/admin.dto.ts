@@ -13,7 +13,7 @@ export const MetricValueDtoSchema = z.object({
 export type MetricValueDto = z.infer<typeof MetricValueDtoSchema>;
 
 export const PlatformMetricsResponseSchema = z.object({
-  activeTenants: MetricValueDtoSchema,
+  activeLeagues: MetricValueDtoSchema,
   totalUsers: MetricValueDtoSchema,
   activeContests: MetricValueDtoSchema,
   liveDrafts: MetricValueDtoSchema,
@@ -21,163 +21,18 @@ export const PlatformMetricsResponseSchema = z.object({
 });
 export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSchema>;
 
-export const TenantDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  slug: z.string(),
-  members: z.number(),
-  leagues: z.number(),
-  contests: z.number(),
-  status: z.string(),
-  lastActive: z.string().datetime(),
-  createdAt: z.string().datetime(),
-});
-export type TenantDto = z.infer<typeof TenantDtoSchema>;
-
-export const TenantDetailDtoSchema = TenantDtoSchema.extend({
-  recentSignups: z.array(z.object({
-    email: z.string(),
-    date: z.string().datetime(),
-  })),
-  membersList: z.array(z.object({
-    id: z.string(),
-    email: z.string(),
-    displayName: z.string(),
-    role: z.string(),
-    lastActive: z.string().datetime(),
-  })),
-  leaguesList: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    sport: z.string(),
-    members: z.number(),
-    contests: z.number(),
-  })),
-  contestsList: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    sport: z.string(),
-    type: z.string(),
-    status: z.string(),
-    entries: z.number(),
-  })),
-  activity: z.array(z.object({
-    id: z.string(),
-    timestamp: z.string().datetime(),
-    action: z.string(),
-    description: z.string(),
-  })),
-});
-export type TenantDetailDto = z.infer<typeof TenantDetailDtoSchema>;
-
-export const UserResultDtoSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-  tenants: z.array(z.string()),
-  lastLogin: z.string().datetime(),
-  status: z.string(),
-});
-export type UserResultDto = z.infer<typeof UserResultDtoSchema>;
-
-export const UserDetailDtoSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-  status: z.string(),
-  authProvider: z.string(),
-  createdAt: z.string().datetime(),
-  lastLogin: z.string().datetime(),
-  locale: z.string(),
-  tenantMemberships: z.array(z.object({
-    tenantId: z.string(),
-    tenantName: z.string(),
-    role: z.string(),
-  })),
-  leagueMemberships: z.array(z.object({
-    leagueId: z.string(),
-    leagueName: z.string(),
-    sport: z.string(),
-    role: z.string(),
-  })),
-  contests: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    sport: z.string(),
-    status: z.string(),
-    rank: z.number(),
-  })),
-  devices: z.array(z.object({
-    id: z.string(),
-    platform: z.string(),
-    lastActive: z.string().datetime(),
-    tokenStatus: z.string(),
-  })),
-  authEvents: z.array(z.object({
-    id: z.string(),
-    type: z.string(),
-    timestamp: z.string().datetime(),
-    ip: z.string(),
-    success: z.boolean(),
-  })),
-});
-export type UserDetailDto = z.infer<typeof UserDetailDtoSchema>;
-
-export const TenantListItemDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  slug: z.string(),
-  memberCount: z.number(),
-  contestCount: z.number(),
-  leagueCount: z.number(),
-  status: z.enum(['active', 'suspended', 'trial']),
-  lastActiveAt: z.string().datetime().optional(),
-  createdAt: z.string().datetime(),
-});
-export type TenantListItemDto = z.infer<typeof TenantListItemDtoSchema>;
-
-export const TenantListResponseSchema = PaginatedSchema(TenantListItemDtoSchema);
-export type TenantListResponse = z.infer<typeof TenantListResponseSchema>;
-
-export const TenantRecentMemberDtoSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-  createdAt: z.string().datetime(),
-});
-export type TenantRecentMemberDto = z.infer<typeof TenantRecentMemberDtoSchema>;
-
-export const TenantDetailResponseSchema = z.object({
-  tenant: z.object({
-    id: z.string(),
-    name: z.string(),
-    slug: z.string(),
-    settings: z.record(z.unknown()),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
-  }),
-  memberCount: z.number(),
-  leagueCount: z.number(),
-  contestCount: z.number(),
-  activeContestCount: z.number(),
-  status: z.enum(['active', 'suspended', 'trial']),
-  lastActiveAt: z.string().datetime().optional(),
-  recentMembers: z.array(TenantRecentMemberDtoSchema),
-});
-export type TenantDetailResponse = z.infer<typeof TenantDetailResponseSchema>;
-
-export const UserTenantMembershipDtoSchema = z.object({
+export const UserLeagueMembershipSummaryDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
   role: z.string(),
 });
-export type UserTenantMembershipDto = z.infer<typeof UserTenantMembershipDtoSchema>;
+export type UserLeagueMembershipSummaryDto = z.infer<typeof UserLeagueMembershipSummaryDtoSchema>;
 
 export const UserListItemDtoSchema = z.object({
   id: z.string(),
   email: z.string(),
   displayName: z.string(),
-  tenants: z.array(UserTenantMembershipDtoSchema),
+  leagues: z.array(UserLeagueMembershipSummaryDtoSchema),
   lastLoginAt: z.string().datetime().optional(),
   status: z.enum(['active', 'disabled']),
   createdAt: z.string().datetime(),
@@ -187,21 +42,12 @@ export type UserListItemDto = z.infer<typeof UserListItemDtoSchema>;
 export const UserListResponseSchema = PaginatedSchema(UserListItemDtoSchema);
 export type UserListResponse = z.infer<typeof UserListResponseSchema>;
 
-export const UserTenantDetailDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  slug: z.string(),
-  role: z.string(),
-  joinedAt: z.string().datetime(),
-});
-export type UserTenantDetailDto = z.infer<typeof UserTenantDetailDtoSchema>;
-
 export const UserLeagueDetailDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
   sport: z.string(),
   role: z.string(),
-  tenantName: z.string(),
+  joinedAt: z.string().datetime().optional(),
 });
 export type UserLeagueDetailDto = z.infer<typeof UserLeagueDetailDtoSchema>;
 
@@ -238,7 +84,6 @@ export const UserDetailResponseSchema = z.object({
   status: z.enum(['active', 'disabled']),
   createdAt: z.string().datetime(),
   lastLoginAt: z.string().datetime().optional(),
-  tenants: z.array(UserTenantDetailDtoSchema),
   leagues: z.array(UserLeagueDetailDtoSchema),
   activeContests: z.array(UserContestDetailDtoSchema),
   devices: z.array(UserDeviceDtoSchema),
@@ -306,7 +151,6 @@ export const StartMigrationRunRequestSchema = z.object({
   migrationId: z.string().min(1),
   dryRun: z.boolean().optional(),
   batchSize: z.number().int().min(1).optional(),
-  tenantIds: z.array(z.string()).optional(),
 });
 export type StartMigrationRunRequest = z.infer<typeof StartMigrationRunRequestSchema>;
 
@@ -489,7 +333,6 @@ export const ContestListItemDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
   leagueName: z.string(),
-  tenantName: z.string(),
   sport: z.string(),
   contestType: z.string(),
   selectionType: z.string(),
@@ -570,8 +413,6 @@ export const ContestAdminDetailResponseSchema = z.object({
   status: z.string(),
   leagueName: z.string(),
   leagueId: z.string(),
-  tenantName: z.string(),
-  tenantId: z.string(),
   entryCount: z.number(),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
@@ -598,7 +439,6 @@ export const ErrorLogEntryDtoSchema = z.object({
   message: z.string(),
   errorType: z.string(),
   requestId: z.string(),
-  tenantId: z.string().optional(),
   userId: z.string().optional(),
   stackTrace: z.string(),
   metadata: z.record(z.unknown()),
@@ -646,8 +486,8 @@ export type AlertRulesResponse = z.infer<typeof AlertRulesResponseSchema>;
 
 export const AuditEntryDtoSchema = z.object({
   id: z.string(),
-  adminUserEmail: z.string(),
-  adminUserName: z.string(),
+  actorEmail: z.string(),
+  actorName: z.string(),
   action: z.string(),
   resourceType: z.string(),
   resourceId: z.string(),

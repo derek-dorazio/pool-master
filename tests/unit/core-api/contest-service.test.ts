@@ -105,7 +105,6 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
-    findByTenant: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
     delete: jest.fn().mockResolvedValue(undefined),
@@ -223,7 +222,6 @@ describe('ContestService', () => {
       );
       const result = await service.createContest({
         leagueId: 'league-1',
-        tenantId: 'tenant-1',
         createdBy: 'user-1',
         sportEventId: 'event-1',
         name: 'Masters Pool',
@@ -253,7 +251,6 @@ describe('ContestService', () => {
       );
       await service.createContest({
         leagueId: 'league-1',
-        tenantId: 'tenant-1',
         createdBy: 'user-1',
         name: 'Test',
         contestType: ContestType.SINGLE_EVENT,
@@ -278,7 +275,6 @@ describe('ContestService', () => {
       await expect(
         service.createContest({
           leagueId: 'missing',
-          tenantId: 'tenant-1',
           createdBy: 'user-1',
           name: 'Test',
           contestType: ContestType.SINGLE_EVENT,
@@ -303,7 +299,7 @@ describe('ContestService', () => {
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
-      await service.updateContest('c-1', 'tenant-1', { name: 'Updated Name' });
+      await service.updateContest('c-1', { name: 'Updated Name' });
       expect(contestRepo.update).toHaveBeenCalledWith('c-1', { name: 'Updated Name' });
     });
 
@@ -319,7 +315,7 @@ describe('ContestService', () => {
         createMockLeagueRepo(),
       );
       await expect(
-        service.updateContest('c-1', 'tenant-1', { name: 'Updated' }),
+        service.updateContest('c-1', { name: 'Updated' }),
       ).rejects.toThrow('DRAFT status');
     });
 
@@ -331,7 +327,7 @@ describe('ContestService', () => {
         createMockLeagueRepo(),
       );
       await expect(
-        service.updateContest('missing', 'tenant-1', { name: 'X' }),
+        service.updateContest('missing', { name: 'X' }),
       ).rejects.toThrow(ContestNotFoundError);
     });
   });
@@ -348,7 +344,7 @@ describe('ContestService', () => {
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
-      await service.deleteContest('c-1', 'tenant-1');
+      await service.deleteContest('c-1');
       expect(contestRepo.delete).toHaveBeenCalledWith('c-1');
     });
 
@@ -363,7 +359,7 @@ describe('ContestService', () => {
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
-      await expect(service.deleteContest('c-1', 'tenant-1')).rejects.toThrow(
+      await expect(service.deleteContest('c-1')).rejects.toThrow(
         'DRAFT status',
       );
     });
@@ -401,7 +397,7 @@ describe('ContestService', () => {
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
-      const result = await service.getContest('c-1', 'tenant-1');
+      const result = await service.getContest('c-1');
       expect(result).not.toBeNull();
       expect(result!.contest.id).toBe('c-1');
       expect(result!.contestConfiguration).toBeDefined();
@@ -414,7 +410,7 @@ describe('ContestService', () => {
         createMockMembershipRepo(),
         createMockLeagueRepo(),
       );
-      const result = await service.getContest('missing', 'tenant-1');
+      const result = await service.getContest('missing');
       expect(result).toBeNull();
     });
   });
@@ -444,7 +440,7 @@ describe('ContestService', () => {
         prisma as any,
       );
 
-      const result = await service.createEntry('contest-1', 'tenant-1', 'user-1');
+      const result = await service.createEntry('contest-1', 'user-1');
 
       expect(result.created).toBe(true);
       expect(entryRepo.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -486,7 +482,7 @@ describe('ContestService', () => {
         createMockPrisma() as any,
       );
 
-      const result = await service.listEntries('contest-1', 'tenant-1', 'user-1');
+      const result = await service.listEntries('contest-1', 'user-1');
 
       expect(result.isJoined).toBe(true);
       expect(result.myEntryId).toBe('entry-1');
@@ -544,7 +540,7 @@ describe('ContestService', () => {
         prisma as any,
       );
 
-      await expect(service.deleteMyEntry('contest-1', 'tenant-1', 'user-1')).rejects.toThrow(
+      await expect(service.deleteMyEntry('contest-1', 'user-1')).rejects.toThrow(
         'Cannot leave a contest after making picks or draft selections',
       );
       expect(entryRepo.delete).not.toHaveBeenCalled();

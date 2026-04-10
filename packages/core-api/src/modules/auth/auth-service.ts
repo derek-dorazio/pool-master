@@ -17,6 +17,7 @@ import type { PrismaClient } from '@prisma/client';
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
+  csrfToken: string;
   expiresIn: number;
 }
 
@@ -205,6 +206,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken: refreshTokenValue,
+      csrfToken: uuidv4(),
       expiresIn: ACCESS_TOKEN_EXPIRY,
     };
   }

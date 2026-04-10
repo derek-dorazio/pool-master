@@ -150,7 +150,7 @@ export class InvitationService {
     }
     const membership = existingMembership
       ? await this.membershipRepo.update(existingMembership.id, {
-          role: existingMembership.role === LeagueRole.OWNER ? LeagueRole.OWNER : LeagueRole.MEMBER,
+          role: LeagueRole.MEMBER,
           status: LeagueMembershipStatus.ACTIVE,
           joinedAt: new Date(),
         })

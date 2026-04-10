@@ -454,8 +454,8 @@ export class ProviderService {
   async updateProviderConfig(
     providerId: string,
     _updates: Record<string, unknown>,
-    _adminUserId: string,
-    _adminUserEmail: string,
+    _rootAdminUserId: string,
+    _rootAdminEmail: string,
   ): Promise<never> {
     this.getProviderOrThrow(providerId);
     throw new ProviderConfigUnsupportedError(providerId);
@@ -463,8 +463,8 @@ export class ProviderService {
 
   async triggerHealthCheck(
     providerId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<ProviderHealthCheck> {
     const provider = this.getProviderOrThrow(providerId);
     const health = await provider.healthCheck();
@@ -494,8 +494,8 @@ export class ProviderService {
     };
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'sportsdata.health_check',
       resourceType: 'PROVIDER',
       resourceId: providerId,
@@ -557,8 +557,8 @@ export class ProviderService {
   async reIngestEvent(
     providerId: string,
     eventId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<IngestionJob> {
     const provider = this.getProviderOrThrow(providerId);
     const job = await this.prisma.ingestionJob.create({
@@ -614,8 +614,8 @@ export class ProviderService {
     }
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'sportsdata.re_ingest',
       resourceType: 'PROVIDER',
       resourceId: providerId,
@@ -641,8 +641,8 @@ export class ProviderService {
     providerId: string,
     externalId: string,
     internalId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<void> {
     const provider = this.getProviderOrThrow(providerId);
     const participant = await this.prisma.participant.findUnique({
@@ -673,8 +673,8 @@ export class ProviderService {
     });
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'sportsdata.map_participant',
       resourceType: 'PARTICIPANT',
       resourceId: externalId,

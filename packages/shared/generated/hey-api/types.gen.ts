@@ -64,7 +64,6 @@ export type RegisterUserResponses = {
             email: string;
             displayName: string;
             authProvider?: 'email' | 'google' | 'apple';
-            tenantId?: string;
             timezone?: string;
             locale?: string;
             avatarUrl?: string;
@@ -73,6 +72,7 @@ export type RegisterUserResponses = {
         tokens: {
             accessToken: string;
             refreshToken: string;
+            csrfToken: string;
             expiresIn: number;
         };
     };
@@ -115,7 +115,6 @@ export type LoginUserResponses = {
             email: string;
             displayName: string;
             authProvider?: 'email' | 'google' | 'apple';
-            tenantId?: string;
             timezone?: string;
             locale?: string;
             avatarUrl?: string;
@@ -124,6 +123,7 @@ export type LoginUserResponses = {
         tokens: {
             accessToken: string;
             refreshToken: string;
+            csrfToken: string;
             expiresIn: number;
         };
     };
@@ -132,9 +132,7 @@ export type LoginUserResponses = {
 export type LoginUserResponse = LoginUserResponses[keyof LoginUserResponses];
 
 export type RefreshTokenData = {
-    body: {
-        refreshToken: string;
-    };
+    body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/auth/refresh';
@@ -162,6 +160,7 @@ export type RefreshTokenResponses = {
     200: {
         accessToken: string;
         refreshToken: string;
+        csrfToken: string;
         expiresIn: number;
     };
 };
@@ -169,9 +168,7 @@ export type RefreshTokenResponses = {
 export type RefreshTokenResponse = RefreshTokenResponses[keyof RefreshTokenResponses];
 
 export type LogoutUserData = {
-    body: {
-        refreshToken: string;
-    };
+    body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/auth/logout';
@@ -280,7 +277,6 @@ export type GetCurrentUserResponses = {
             email: string;
             displayName: string;
             authProvider?: 'email' | 'google' | 'apple';
-            tenantId?: string;
             timezone?: string;
             locale?: string;
             avatarUrl?: string;
@@ -880,74 +876,6 @@ export type LeaveLeagueResponses = {
 };
 
 export type LeaveLeagueResponse = LeaveLeagueResponses[keyof LeaveLeagueResponses];
-
-export type TransferOwnershipData = {
-    body: {
-        newOwnerId: string;
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/transfer-ownership';
-};
-
-export type TransferOwnershipErrors = {
-    /**
-     * Default Response
-     */
-    400: {
-        error: {
-            code: string;
-            message: string;
-            details?: unknown;
-        };
-    };
-    /**
-     * Default Response
-     */
-    404: {
-        error: {
-            code: string;
-            message: string;
-            details?: unknown;
-        };
-    };
-};
-
-export type TransferOwnershipError = TransferOwnershipErrors[keyof TransferOwnershipErrors];
-
-export type TransferOwnershipResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        previousOwner: {
-            id: string;
-            leagueId: string;
-            userId: string;
-            role: string;
-            status: string;
-            permissions: Array<string>;
-            joinedAt: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-        newOwner: {
-            id: string;
-            leagueId: string;
-            userId: string;
-            role: string;
-            status: string;
-            permissions: Array<string>;
-            joinedAt: string;
-            createdAt: string;
-            updatedAt: string;
-        };
-    };
-};
-
-export type TransferOwnershipResponse = TransferOwnershipResponses[keyof TransferOwnershipResponses];
 
 export type GetLeagueDashboardData = {
     body?: never;
@@ -4016,7 +3944,6 @@ export type AdminListUsersData = {
     path?: never;
     query?: {
         search?: string;
-        tenant?: string;
         status?: 'active' | 'disabled';
         page?: number;
         pageSize?: number;
@@ -4048,7 +3975,7 @@ export type AdminListUsersResponses = {
             id: string;
             email: string;
             displayName: string;
-            tenants: Array<{
+            leagues: Array<{
                 id: string;
                 name: string;
                 role: string;
@@ -4148,19 +4075,12 @@ export type AdminGetUserDetailResponses = {
         status: 'active' | 'disabled';
         createdAt: string;
         lastLoginAt?: string;
-        tenants: Array<{
-            id: string;
-            name: string;
-            slug: string;
-            role: string;
-            joinedAt: string;
-        }>;
         leagues: Array<{
             id: string;
             name: string;
             sport: string;
             role: string;
-            tenantName: string;
+            joinedAt?: string;
         }>;
         activeContests: Array<{
             id: string;
@@ -4327,7 +4247,6 @@ export type AdminListContestsData = {
     body?: never;
     path?: never;
     query?: {
-        tenant?: string;
         league?: string;
         sport?: string;
         status?: string;
@@ -4363,7 +4282,6 @@ export type AdminListContestsResponses = {
             id: string;
             name: string;
             leagueName: string;
-            tenantName: string;
             sport: string;
             contestType: string;
             selectionType: string;
@@ -4425,8 +4343,6 @@ export type AdminGetContestDetailResponses = {
         status: string;
         leagueName: string;
         leagueId: string;
-        tenantName: string;
-        tenantId: string;
         entryCount: number;
         startsAt?: string;
         endsAt?: string;
@@ -5369,7 +5285,6 @@ export type AdminSearchErrorsData = {
         severity?: 'ERROR' | 'CRITICAL' | 'WARNING';
         dateFrom?: string;
         dateTo?: string;
-        tenant?: string;
         page?: number;
         pageSize?: number;
     };
@@ -5403,7 +5318,6 @@ export type AdminSearchErrorsResponses = {
             message: string;
             errorType: string;
             requestId: string;
-            tenantId?: string;
             userId?: string;
             stackTrace: string;
             metadata: {
@@ -5465,7 +5379,6 @@ export type AdminGetErrorDetailResponses = {
         message: string;
         errorType: string;
         requestId: string;
-        tenantId?: string;
         userId?: string;
         stackTrace: string;
         metadata: {
@@ -5836,7 +5749,6 @@ export type AdminStartMigrationRunData = {
         migrationId: string;
         dryRun?: boolean;
         batchSize?: number;
-        tenantIds?: Array<string>;
     };
     path?: never;
     query?: never;
@@ -6078,7 +5990,7 @@ export type AdminExportAuditLogData = {
     body?: never;
     path?: never;
     query?: {
-        adminUserId?: string;
+        actorUserId?: string;
         action?: string;
         resourceType?: string;
         resourceId?: string;
@@ -6121,7 +6033,7 @@ export type AdminListAuditLogData = {
     body?: never;
     path?: never;
     query?: {
-        adminUserId?: string;
+        actorUserId?: string;
         action?: string;
         resourceType?: string;
         resourceId?: string;
@@ -6156,8 +6068,8 @@ export type AdminListAuditLogResponses = {
     200: {
         items: Array<{
             id: string;
-            adminUserEmail: string;
-            adminUserName: string;
+            actorEmail: string;
+            actorName: string;
             action: string;
             resourceType: string;
             resourceId: string;
@@ -6216,8 +6128,8 @@ export type AdminGetAuditEntryResponses = {
     200: {
         entry: {
             id: string;
-            adminUserEmail: string;
-            adminUserName: string;
+            actorEmail: string;
+            actorName: string;
             action: string;
             resourceType: string;
             resourceId: string;

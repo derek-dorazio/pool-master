@@ -1,5 +1,4 @@
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import {
   AddSquadMemberRequestSchema,
   SquadListResponseSchema,
@@ -17,9 +16,10 @@ import {
 } from '../../adapters';
 import { createSquadHandlers } from './handler';
 import { SquadService } from './service';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function squadsModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const leagueMembershipRepo = new PrismaLeagueMembershipRepository(prisma);

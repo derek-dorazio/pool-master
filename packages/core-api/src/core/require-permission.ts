@@ -27,7 +27,7 @@ export function requirePermission(
     request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string | undefined;
+    const userId = request.authUser?.userId;
     if (!userId) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
@@ -47,29 +47,6 @@ export function requirePermission(
     }
     if (!hasPermission(membership, permission)) {
       return sendError(reply, 403, 'FORBIDDEN', 'You do not have permission for this action');
-    }
-  };
-}
-
-/**
- * Creates a preHandler hook that checks whether the requesting user is the
- * OWNER of the league identified by `:id` in params.
- */
-export function requireOwner(
-  membershipRepo: LeagueMembershipRepository,
-): preHandlerHookHandler {
-  return async function checkOwner(
-    request: FastifyRequest,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string | undefined;
-    if (!userId) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
-    }
-    const leagueId = (request.params as { id: string }).id;
-    const membership = await membershipRepo.findByLeagueAndUser(leagueId, userId);
-    if (!membership || membership.status !== ('ACTIVE' satisfies LeagueMembershipStatus) || membership.role !== 'OWNER') {
-      return sendError(reply, 403, 'FORBIDDEN', 'Only the league owner can perform this action');
     }
   };
 }

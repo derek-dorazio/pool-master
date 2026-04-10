@@ -3,7 +3,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import {
   zodToJsonSchema,
   ParticipantListResponseSchema,
@@ -21,9 +20,10 @@ import {
 } from '../../adapters';
 import { ParticipantService } from './service';
 import { createParticipantHandlers } from './handler';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function participantsModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const participantRepo = new PrismaParticipantRepository(prisma);
   const seasonRecordRepo = new PrismaParticipantSeasonRecordRepository(prisma);
   const providerMappingRepo = new PrismaParticipantProviderMappingRepository(prisma);

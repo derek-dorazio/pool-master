@@ -1,7 +1,6 @@
 /**
  * Commissioner permission checking utilities.
  *
- * OWNER role has implicit access to all permissions.
  * COMMISSIONER role has a configurable subset stored on the membership.
  * MEMBER has no commissioner permissions.
  */
@@ -22,16 +21,16 @@ export const DEFAULT_COMMISSIONER_PERMISSIONS: readonly CommissionerPermission[]
   CommissionerPermission.DRAFT_PAUSE,
 ] as const;
 
-/** Returns true if the membership grants the given permission. OWNER always passes. */
+/** Returns true if the membership grants the given permission. */
 export function hasPermission(
   membership: LeagueMembership,
   permission: CommissionerPermission,
 ): boolean {
-  if (membership.role === LeagueRole.OWNER) {
-    return true;
-  }
   if (membership.role === LeagueRole.COMMISSIONER) {
-    return membership.permissions.includes(permission);
+    const permissions = membership.permissions.length > 0
+      ? membership.permissions
+      : ALL_COMMISSIONER_PERMISSIONS;
+    return permissions.includes(permission);
   }
   return false;
 }
@@ -44,9 +43,9 @@ export function hasAnyPermission(
   return permissions.some((p) => hasPermission(membership, p));
 }
 
-/** Returns true if the member is OWNER or COMMISSIONER. */
-export function isCommissionerOrOwner(membership: LeagueMembership): boolean {
-  return membership.role === LeagueRole.OWNER || membership.role === LeagueRole.COMMISSIONER;
+/** Returns true if the member is a commissioner. */
+export function isCommissioner(membership: LeagueMembership): boolean {
+  return membership.role === LeagueRole.COMMISSIONER;
 }
 
 /** Shorthand: can the member manage other members (invite, remove, change role)? */

@@ -61,16 +61,16 @@ export class IngestionConfigService {
    */
   async updateConfig(
     partial: Partial<Omit<IngestionScheduleConfig, 'perSportOverrides'>>,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
     const before = deepCopy(currentConfig);
     const { ...updates } = partial;
     currentConfig = { ...currentConfig, ...updates };
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'UPDATE_INGESTION_CONFIG',
       resourceType: 'PLATFORM_CONFIG',
       resourceId: 'ingestion-schedule',
@@ -104,8 +104,8 @@ export class IngestionConfigService {
   async setPerSportOverride(
     sport: string,
     config: Partial<Omit<IngestionScheduleConfig, 'perSportOverrides'>>,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
     const before = deepCopy(currentConfig);
     if (!currentConfig.perSportOverrides) {
@@ -117,8 +117,8 @@ export class IngestionConfigService {
     };
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'SET_INGESTION_SPORT_OVERRIDE',
       resourceType: 'PLATFORM_CONFIG',
       resourceId: `ingestion-schedule:${sport}`,
@@ -134,8 +134,8 @@ export class IngestionConfigService {
    * Resets all schedules (including per-sport overrides) to defaults.
    */
   async resetDefaults(
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
     const before = deepCopy(currentConfig);
     currentConfig = {
@@ -144,8 +144,8 @@ export class IngestionConfigService {
     };
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'RESET_INGESTION_CONFIG',
       resourceType: 'PLATFORM_CONFIG',
       resourceId: 'ingestion-schedule',

@@ -9,7 +9,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { UserService } from './user-service';
 import { UserNotFoundError } from './user-service';
 import { sendError } from '../../core/error-handler';
-import { extractAdminContext } from './request-admin-context';
+import { extractRootAdminContext } from './request-admin-context';
 
 // ---------------------------------------------------------------------------
 // Handler factory
@@ -53,7 +53,7 @@ export function createUserHandlers(userService: UserService) {
         id: item.id,
         email: item.email,
         displayName: item.displayName,
-        tenants: item.tenants,
+        leagues: item.leagues,
         lastLoginAt: item.lastLoginAt?.toISOString(),
         status: item.status,
         createdAt: item.createdAt.toISOString(),
@@ -77,9 +77,9 @@ export function createUserHandlers(userService: UserService) {
         ...detail,
         createdAt: detail.createdAt.toISOString(),
         lastLoginAt: detail.lastLoginAt?.toISOString(),
-        tenants: detail.tenants.map((tenant) => ({
-          ...tenant,
-          joinedAt: tenant.joinedAt.toISOString(),
+        leagues: detail.leagues.map((league) => ({
+          ...league,
+          joinedAt: league.joinedAt?.toISOString(),
         })),
         devices: detail.devices.map((device) => ({
           ...device,
@@ -104,11 +104,11 @@ export function createUserHandlers(userService: UserService) {
     request: FastifyRequest<{ Params: { userId: string } }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { userId } = request.params;
 
     try {
-      await userService.forceUserLogout(userId, adminUserId, adminUserEmail);
+      await userService.forceUserLogout(userId, rootAdminUserId, rootAdminEmail);
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
@@ -127,12 +127,12 @@ export function createUserHandlers(userService: UserService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { userId } = request.params;
     const { reason } = request.body;
 
     try {
-      await userService.disableUser(userId, reason, adminUserId, adminUserEmail);
+      await userService.disableUser(userId, reason, rootAdminUserId, rootAdminEmail);
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
@@ -148,11 +148,11 @@ export function createUserHandlers(userService: UserService) {
     request: FastifyRequest<{ Params: { userId: string } }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { userId } = request.params;
 
     try {
-      await userService.enableUser(userId, adminUserId, adminUserEmail);
+      await userService.enableUser(userId, rootAdminUserId, rootAdminEmail);
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
@@ -170,14 +170,14 @@ export function createUserHandlers(userService: UserService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { primaryId, duplicateId } = request.body;
 
     const result = await userService.mergeUsers(
       primaryId,
       duplicateId,
-      adminUserId,
-      adminUserEmail,
+      rootAdminUserId,
+      rootAdminEmail,
     );
     return reply.send(result);
   }

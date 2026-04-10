@@ -13,12 +13,6 @@ import { sendError } from './error-handler';
 // ---------------------------------------------------------------------------
 
 export type AdminPermission =
-  // Tenant operations
-  | 'tenant.view'
-  | 'tenant.edit'
-  | 'tenant.suspend'
-  | 'tenant.delete'
-  | 'tenant.impersonate'
   // User operations
   | 'user.view'
   | 'user.edit'
@@ -41,7 +35,7 @@ export type AdminPermission =
   | 'audit.view';
 
 /**
- * Fastify preHandler hook factory that checks whether the admin user on the
+ * Fastify preHandler hook factory that checks whether the root-admin user on the
  * request has the required permission. Returns 401 if no admin context and
  * otherwise allows the request through for unified root-admin access.
  */
@@ -52,7 +46,7 @@ export function requireAdminPermission(
     request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<void> {
-    const ctx = request.adminContext;
+    const ctx = request.rootAdminContext;
     if (!ctx) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Root-admin authentication required');
     }

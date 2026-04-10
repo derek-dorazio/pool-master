@@ -9,7 +9,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ContestService } from './contest-service';
 import { ContestNotFoundError } from './contest-service';
 import { sendError } from '../../core/error-handler';
-import { extractAdminContext } from './request-admin-context';
+import { extractRootAdminContext } from './request-admin-context';
 
 // ---------------------------------------------------------------------------
 // Handler factory
@@ -32,7 +32,6 @@ export function createContestHandlers(contestService: ContestService) {
   async function listContests(
     request: FastifyRequest<{
       Querystring: {
-        tenant?: string;
         league?: string;
         sport?: string;
         status?: string;
@@ -83,12 +82,12 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { contestId } = request.params;
     const { reason } = request.body;
 
     try {
-      await contestService.forceCloseContest(contestId, reason, adminUserId, adminUserEmail);
+      await contestService.forceCloseContest(contestId, reason, rootAdminUserId, rootAdminEmail);
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
@@ -107,12 +106,12 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { contestId } = request.params;
     const { reason } = request.body;
 
     try {
-      await contestService.reopenContest(contestId, reason, adminUserId, adminUserEmail);
+      await contestService.reopenContest(contestId, reason, rootAdminUserId, rootAdminEmail);
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
@@ -131,12 +130,12 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { contestId } = request.params;
     const { entryId, newScore, reason } = request.body;
 
     try {
-      await contestService.overrideScore(contestId, entryId, newScore, reason, adminUserId, adminUserEmail);
+      await contestService.overrideScore(contestId, entryId, newScore, reason, rootAdminUserId, rootAdminEmail);
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
@@ -152,11 +151,11 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { contestId } = request.params;
 
     try {
-      const result = await contestService.recalculateStandings(contestId, adminUserId, adminUserEmail);
+      const result = await contestService.recalculateStandings(contestId, rootAdminUserId, rootAdminEmail);
       return reply.send(result);
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
@@ -172,11 +171,11 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { contestId } = request.params;
 
     try {
-      await contestService.recalculatePayouts(contestId, adminUserId, adminUserEmail);
+      await contestService.recalculatePayouts(contestId, rootAdminUserId, rootAdminEmail);
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
@@ -195,12 +194,12 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { contestId } = request.params;
     const { eventId } = request.body;
 
     try {
-      const result = await contestService.reIngestScoring(contestId, eventId, adminUserId, adminUserEmail);
+      const result = await contestService.reIngestScoring(contestId, eventId, rootAdminUserId, rootAdminEmail);
       return reply.send(result);
     } catch (err) {
       if (err instanceof ContestNotFoundError) {

@@ -12,7 +12,6 @@ import { buildContest, buildInvitation, buildLeague, buildMembership } from '../
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
-    findByTenant: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
     delete: jest.fn().mockResolvedValue(undefined),
@@ -124,7 +123,7 @@ describe('DashboardService', () => {
         createMockInvitationRepo(),
         createMockActionItemRepo(),
       );
-      const dashboard = await service.getDashboard('league-1', 'tenant-1');
+      const dashboard = await service.getDashboard('league-1');
       expect(dashboard).not.toBeNull();
       expect(dashboard!.league.id).toBe('league-1');
       expect(dashboard!.memberCount).toBe(2);
@@ -151,7 +150,7 @@ describe('DashboardService', () => {
         createMockActionItemRepo(),
       );
 
-      const dashboard = await service.getDashboard('league-1', 'tenant-1');
+      const dashboard = await service.getDashboard('league-1');
 
       expect(dashboard!.recentMemberActivity.map((activity) => activity.userId)).toEqual([
         'user-newer',
@@ -184,7 +183,7 @@ describe('DashboardService', () => {
         createMockActionItemRepo(),
       );
 
-      const dashboard = await service.getDashboard('league-1', 'tenant-1');
+      const dashboard = await service.getDashboard('league-1');
 
       expect(dashboard!.upcomingEvents).toHaveLength(20);
       expect(dashboard!.upcomingEvents[0].title).toBe('Contest 1 starts');
@@ -199,7 +198,7 @@ describe('DashboardService', () => {
         createMockInvitationRepo(),
         createMockActionItemRepo(),
       );
-      const dashboard = await service.getDashboard('league-1', 'tenant-1');
+      const dashboard = await service.getDashboard('league-1');
       expect(dashboard!.upcomingEvents.length).toBeGreaterThan(0);
       expect(dashboard!.upcomingEvents[0].eventType).toBeDefined();
     });
@@ -212,7 +211,7 @@ describe('DashboardService', () => {
         createMockInvitationRepo(),
         createMockActionItemRepo(),
       );
-      const dashboard = await service.getDashboard('missing', 'tenant-1');
+      const dashboard = await service.getDashboard('missing');
       expect(dashboard).toBeNull();
     });
   });

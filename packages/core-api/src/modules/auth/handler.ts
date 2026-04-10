@@ -6,6 +6,11 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { sendError } from '../../core/error-handler';
 import type { AuthService } from './auth-service';
 import { AuthError } from './auth-service';
+import {
+  createClearedSessionCookieHeaders,
+  createSessionCookieHeaders,
+  readRefreshCookie,
+} from '../../core/session-cookies';
 
 export function createAuthHandlers(authService: AuthService) {
   return {
@@ -27,6 +32,7 @@ export function createAuthHandlers(authService: AuthService) {
     try {
       const { email, password, displayName } = request.body;
       const result = await authService.register(email, password, displayName);
+      reply.header('Set-Cookie', createSessionCookieHeaders(result.tokens));
       return reply.status(201).send(result);
     } catch (err) {
       if (err instanceof AuthError) {
@@ -45,6 +51,7 @@ export function createAuthHandlers(authService: AuthService) {
     try {
       const { email, password } = request.body;
       const result = await authService.login(email, password);
+      reply.header('Set-Cookie', createSessionCookieHeaders(result.tokens));
       return reply.send(result);
     } catch (err) {
       if (err instanceof AuthError) {
@@ -56,13 +63,17 @@ export function createAuthHandlers(authService: AuthService) {
 
   async function handleRefresh(
     request: FastifyRequest<{
-      Body: { refreshToken: string };
+      Body?: { refreshToken?: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const { refreshToken } = request.body;
+      const refreshToken = request.body?.refreshToken ?? readRefreshCookie(request.headers.cookie);
+      if (!refreshToken) {
+        return sendError(reply, 401, 'INVALID_REFRESH_TOKEN', 'Missing refresh token');
+      }
       const tokens = await authService.refresh(refreshToken);
+      reply.header('Set-Cookie', createSessionCookieHeaders(tokens));
       return reply.send(tokens);
     } catch (err) {
       if (err instanceof AuthError) {
@@ -74,12 +85,15 @@ export function createAuthHandlers(authService: AuthService) {
 
   async function handleLogout(
     request: FastifyRequest<{
-      Body: { refreshToken: string };
+      Body?: { refreshToken?: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { refreshToken } = request.body;
-    await authService.logout(refreshToken);
+    const refreshToken = request.body?.refreshToken ?? readRefreshCookie(request.headers.cookie);
+    if (refreshToken) {
+      await authService.logout(refreshToken);
+    }
+    reply.header('Set-Cookie', createClearedSessionCookieHeaders());
     return reply.send({ success: true });
   }
 
@@ -112,20 +126,11 @@ export function createAuthHandlers(authService: AuthService) {
     request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<void> {
-    const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing authorization header');
-    }
-
     try {
-      const token = authHeader.slice(7);
-      const payload = authService.verifyAccessToken(token);
-
-      if (!payload.sub) {
-        return sendError(reply, 401, 'UNAUTHORIZED', 'Token missing required sub claim');
+      if (!request.authUser?.userId) {
+        return sendError(reply, 401, 'UNAUTHORIZED', 'Authenticated session required');
       }
-
-      const profile = await authService.getProfile(payload.sub);
+      const profile = await authService.getProfile(request.authUser.userId);
       return reply.send({ user: profile });
     } catch (err) {
       if (err instanceof AuthError) {

@@ -3,7 +3,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import {
   HistoryObjectSchema,
@@ -14,9 +13,10 @@ import {
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { HistoryService } from './history-service';
 import { sendError } from '../../core/error-handler';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function historyModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const historyService = new HistoryService(prisma);
 
   fastify.get<{ Params: { id: string } }>(

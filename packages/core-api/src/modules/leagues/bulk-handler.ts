@@ -20,10 +20,9 @@ export function createBulkHandlers(bulkService: BulkService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId as string;
     const result = await bulkService.copyLastSeason({
       leagueId: request.params.id,
-      tenantId: '',
       createdBy: userId,
       sourceContestIds: request.body.sourceContestIds,
     });
@@ -37,7 +36,7 @@ export function createBulkHandlers(bulkService: BulkService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId as string;
     try {
       const result = await bulkService.importMembersFromCsv(
         request.params.id,

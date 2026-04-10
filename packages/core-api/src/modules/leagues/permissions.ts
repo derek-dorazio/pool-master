@@ -5,11 +5,11 @@
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
-import { isCommissionerOrOwner } from '../../core/permissions';
+import { isCommissioner } from '../../core/permissions';
 import { sendError } from '../../core/error-handler';
 
 function extractLeagueContext(request: FastifyRequest): { userId?: string; leagueId?: string } {
-  const userId = request.headers['x-user-id'] as string | undefined;
+  const userId = request.authUser?.userId;
   const leagueId = (request.params as { id?: string }).id;
   return { userId, leagueId };
 }
@@ -49,16 +49,16 @@ export function requireLeagueMembership(
   };
 }
 
-/** Allows commissioners and owners to access the route. */
-export function requireCommissionerOrOwner(
+/** Allows commissioners to access the route. */
+export function requireCommissioner(
   membershipRepo: LeagueMembershipRepository,
 ): preHandlerHookHandler {
-  return async function checkCommissionerOrOwner(request, reply): Promise<void> {
+  return async function checkCommissioner(request, reply): Promise<void> {
     const membership = await loadMembership(membershipRepo, request, reply);
     if (!membership) {
       return;
     }
-    if (!isCommissionerOrOwner(membership)) {
+    if (!isCommissioner(membership)) {
       return sendError(reply, 403, 'FORBIDDEN', 'You do not have permission for this action');
     }
   };

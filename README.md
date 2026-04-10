@@ -14,7 +14,7 @@ npm install
 npm run dev:start
 ```
 
-This starts Docker (Postgres, DynamoDB, and Mailpit), runs migrations, seeds test data, and launches the active backend and PoolMaster web app.
+This starts Docker (Postgres, DynamoDB, and Mailpit), runs migrations, runs the minimal bootstrap seed step, and launches the active backend and PoolMaster web app.
 
 | What | URL | Purpose |
 |------|-----|---------|

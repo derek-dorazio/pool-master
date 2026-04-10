@@ -58,7 +58,6 @@ const ROUTE_WEEKLY_RECAP_DAYS = [
 ];
 
 // From leagues/routes.ts — PUT /:id/members/:uid/role body schema
-// Note: the route intentionally omits OWNER (cannot assign via role change)
 const ROUTE_MEMBER_ROLES = ['COMMISSIONER', 'MEMBER'];
 
 // ========================================================================

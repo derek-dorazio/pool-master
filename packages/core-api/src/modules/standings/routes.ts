@@ -8,7 +8,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
@@ -20,9 +19,10 @@ import {
 } from '@poolmaster/shared/dto/standings.dto';
 import { StandingsService } from './service';
 import { createStandingsHandlers } from './handler';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function standingsModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const standingsService = new StandingsService(prisma);
   const handlers = createStandingsHandlers(standingsService);
 

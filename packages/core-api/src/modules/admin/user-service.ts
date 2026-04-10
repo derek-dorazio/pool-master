@@ -26,7 +26,7 @@ export interface UserListItem {
   id: string;
   email: string;
   displayName: string;
-  tenants: { id: string; name: string; role: string }[];
+  leagues: { id: string; name: string; role: string }[];
   lastLoginAt?: Date;
   status: 'active' | 'disabled';
   createdAt: Date;
@@ -40,8 +40,7 @@ export interface UserDetailView {
   status: 'active' | 'disabled';
   createdAt: Date;
   lastLoginAt?: Date;
-  tenants: { id: string; name: string; slug: string; role: string; joinedAt: Date }[];
-  leagues: { id: string; name: string; sport: string; role: string; tenantName: string }[];
+  leagues: { id: string; name: string; sport: string; role: string; joinedAt?: Date }[];
   activeContests: { id: string; name: string; sport: string; status: string; rank?: number }[];
   devices: { id: string; platform: string; lastActiveAt: Date; tokenStatus: string }[];
   recentAuthEvents: { type: string; timestamp: Date; ipAddress?: string; success: boolean }[];
@@ -111,7 +110,11 @@ export class UserService {
         id: row.id,
         email: row.email,
         displayName: row.displayName,
-        tenants: [],
+        leagues: row.memberships.map((membership) => ({
+          id: membership.league.id,
+          name: membership.league.name,
+          role: membership.role.toLowerCase(),
+        })),
         lastLoginAt: undefined, // User model has no lastLoginAt column yet
         status: 'active' as const,
         createdAt: row.createdAt,
@@ -160,7 +163,7 @@ export class UserService {
         name: m.league.name,
         sport: '',
         role: m.role.toLowerCase(),
-        tenantName: '',
+        joinedAt: m.joinedAt,
       });
     }
 
@@ -211,7 +214,6 @@ export class UserService {
       status: 'active',
       createdAt: user.createdAt,
       lastLoginAt: undefined,
-      tenants: [],
       leagues,
       activeContests,
       devices: [],
@@ -224,8 +226,8 @@ export class UserService {
    */
   async forceUserLogout(
     userId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UserNotFoundError(userId);
@@ -237,8 +239,8 @@ export class UserService {
     });
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'user.force_logout',
       resourceType: 'USER',
       resourceId: userId,
@@ -254,8 +256,8 @@ export class UserService {
   async disableUser(
     userId: string,
     reason: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UserNotFoundError(userId);
@@ -267,8 +269,8 @@ export class UserService {
     });
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'user.disable',
       resourceType: 'USER',
       resourceId: userId,
@@ -283,15 +285,15 @@ export class UserService {
    */
   async enableUser(
     userId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UserNotFoundError(userId);
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'user.enable',
       resourceType: 'USER',
       resourceId: userId,
@@ -307,8 +309,8 @@ export class UserService {
   async mergeUsers(
     primaryId: string,
     duplicateId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<MergeResult> {
     const [primary, duplicate] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: primaryId } }),
@@ -397,8 +399,8 @@ export class UserService {
     };
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'user.merge',
       resourceType: 'USER',
       resourceId: primaryId,

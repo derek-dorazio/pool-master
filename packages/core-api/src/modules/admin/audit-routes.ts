@@ -17,7 +17,7 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
     querystring: {
       type: 'object' as const,
       properties: {
-        adminUserId: { type: 'string' as const },
+        actorUserId: { type: 'string' as const },
         action: { type: 'string' as const },
         resourceType: { type: 'string' as const },
         resourceId: { type: 'string' as const },

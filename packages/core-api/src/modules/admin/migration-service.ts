@@ -53,7 +53,6 @@ export interface StartMigrationInput {
   migrationId: string;
   dryRun?: boolean;
   batchSize?: number;
-  tenantIds?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -81,10 +80,10 @@ export class MigrationAlreadyRunningError extends Error {
   }
 }
 
-export class AdminUserNotFoundError extends Error {
-  constructor(adminUserId: string) {
-    super(`Root admin user not found: ${adminUserId}`);
-    this.name = 'AdminUserNotFoundError';
+export class RootAdminUserNotFoundError extends Error {
+  constructor(rootAdminUserId: string) {
+    super(`Root admin user not found: ${rootAdminUserId}`);
+    this.name = 'RootAdminUserNotFoundError';
   }
 }
 
@@ -163,14 +162,14 @@ export class MigrationService {
    */
   async startRun(
     input: StartMigrationInput,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<MigrationRun> {
     const migration = AVAILABLE_MIGRATIONS.find((m) => m.id === input.migrationId);
     if (!migration) throw new MigrationNotFoundError(input.migrationId);
 
-    const adminUser = await this.prisma.user.findUnique({
-      where: { id: adminUserId },
+    const rootAdminUser = await this.prisma.user.findUnique({
+      where: { id: rootAdminUserId },
       select: {
         id: true,
         email: true,
@@ -178,8 +177,8 @@ export class MigrationService {
         isRootAdmin: true,
       },
     });
-    if (!adminUser || !adminUser.isRootAdmin) {
-      throw new AdminUserNotFoundError(adminUserId);
+    if (!rootAdminUser || !rootAdminUser.isRootAdmin) {
+      throw new RootAdminUserNotFoundError(rootAdminUserId);
     }
 
     const existingRun = await this.prisma.migrationRun.findFirst({
@@ -200,7 +199,6 @@ export class MigrationService {
         options: {
           dryRun: input.dryRun ?? false,
           batchSize: input.batchSize ?? null,
-          tenantIds: input.tenantIds ?? [],
         },
         progress: {
           totalRecords: migration.estimatedRecords,
@@ -210,7 +208,7 @@ export class MigrationService {
           percentage: 0,
         },
         errors: [],
-        startedById: adminUser.id,
+        startedById: rootAdminUser.id,
       },
       include: { startedBy: true },
     });
@@ -218,8 +216,8 @@ export class MigrationService {
     const run = this.mapRowToRun(row);
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'migration.run',
       resourceType: 'MIGRATION',
       resourceId: input.migrationId,
@@ -247,8 +245,8 @@ export class MigrationService {
    */
   async cancelRun(
     runId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<MigrationRun> {
     const row = await this.prisma.migrationRun.findUnique({
       where: { id: runId },
@@ -272,8 +270,8 @@ export class MigrationService {
     const cancelledRun = this.mapRowToRun(updated);
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'migration.cancel',
       resourceType: 'MIGRATION_RUN',
       resourceId: runId,

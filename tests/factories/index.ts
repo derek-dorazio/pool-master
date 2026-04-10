@@ -41,7 +41,6 @@ export function buildUser(overrides: Partial<User> = {}): User {
     id,
     email: `user-${id}@example.com`,
     displayName: `User ${id}`,
-    tenantId: 'tenant-1',
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,
@@ -52,7 +51,6 @@ export function buildLeague(overrides: Partial<League> = {}): League {
   const id = nextId();
   return {
     id,
-    tenantId: 'tenant-1',
     name: `League ${id}`,
     createdBy: 'owner-1',
     visibility: LeagueVisibility.PRIVATE,

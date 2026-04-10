@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { acceptInvitation } from '@/lib/api';
-import { useSessionStore } from '@/features/auth/session-store';
+import { useAuth } from '@/features/auth/auth-provider';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -28,20 +28,12 @@ function getErrorMessage(error: unknown) {
 export function JoinLeaguePage() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
-  const tokens = useSessionStore((state) => state.tokens);
-  const isAuthenticated = Boolean(tokens?.accessToken);
+  const { isAuthenticated } = useAuth();
   const [attemptedCode, setAttemptedCode] = useState<string | null>(null);
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      const response = await acceptInvitation({
-        body: { inviteCode },
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
-      });
+      const response = await acceptInvitation({ body: { inviteCode } });
 
       if (!response.data?.membership) {
         throw response.error ?? new Error('Invitation acceptance response is missing data.');

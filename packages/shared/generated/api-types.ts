@@ -327,23 +327,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/leagues/{id}/transfer-ownership": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Transfer league ownership to another member */
-        post: operations["transferOwnership"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/leagues/{id}/dashboard": {
         parameters: {
             query?: never;
@@ -2303,7 +2286,6 @@ export interface operations {
                             displayName: string;
                             /** @enum {string} */
                             authProvider?: "email" | "google" | "apple";
-                            tenantId?: string;
                             timezone?: string;
                             locale?: string;
                             avatarUrl?: string | null;
@@ -2313,6 +2295,7 @@ export interface operations {
                         tokens: {
                             accessToken: string;
                             refreshToken: string;
+                            csrfToken: string;
                             expiresIn: number;
                         };
                     };
@@ -2380,7 +2363,6 @@ export interface operations {
                             displayName: string;
                             /** @enum {string} */
                             authProvider?: "email" | "google" | "apple";
-                            tenantId?: string;
                             timezone?: string;
                             locale?: string;
                             avatarUrl?: string | null;
@@ -2390,6 +2372,7 @@ export interface operations {
                         tokens: {
                             accessToken: string;
                             refreshToken: string;
+                            csrfToken: string;
                             expiresIn: number;
                         };
                     };
@@ -2421,8 +2404,8 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    refreshToken: string;
+                "application/json": unknown | {
+                    refreshToken?: string;
                 };
             };
         };
@@ -2436,6 +2419,7 @@ export interface operations {
                     "application/json": {
                         accessToken: string;
                         refreshToken: string;
+                        csrfToken: string;
                         expiresIn: number;
                     };
                 };
@@ -2466,8 +2450,8 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    refreshToken: string;
+                "application/json": unknown | {
+                    refreshToken?: string;
                 };
             };
         };
@@ -2585,7 +2569,6 @@ export interface operations {
                             displayName: string;
                             /** @enum {string} */
                             authProvider?: "email" | "google" | "apple";
-                            tenantId?: string;
                             timezone?: string;
                             locale?: string;
                             avatarUrl?: string | null;
@@ -3297,93 +3280,6 @@ export interface operations {
             };
             /** @description Default Response */
             401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            code: string;
-                            message: string;
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Default Response */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            code: string;
-                            message: string;
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    transferOwnership: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    newOwnerId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        previousOwner: {
-                            id: string;
-                            leagueId: string;
-                            userId: string;
-                            role: string;
-                            status: string;
-                            permissions: string[];
-                            /** Format: date-time */
-                            joinedAt: string;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        };
-                        newOwner: {
-                            id: string;
-                            leagueId: string;
-                            userId: string;
-                            role: string;
-                            status: string;
-                            permissions: string[];
-                            /** Format: date-time */
-                            joinedAt: string;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        };
-                    };
-                };
-            };
-            /** @description Default Response */
-            400: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7232,7 +7128,6 @@ export interface operations {
         parameters: {
             query?: {
                 search?: string;
-                tenant?: string;
                 status?: "active" | "disabled";
                 page?: number;
                 pageSize?: number;
@@ -7254,7 +7149,7 @@ export interface operations {
                             id: string;
                             email: string;
                             displayName: string;
-                            tenants: {
+                            leagues: {
                                 id: string;
                                 name: string;
                                 role: string;
@@ -7363,20 +7258,13 @@ export interface operations {
                         createdAt: string;
                         /** Format: date-time */
                         lastLoginAt?: string;
-                        tenants: {
-                            id: string;
-                            name: string;
-                            slug: string;
-                            role: string;
-                            /** Format: date-time */
-                            joinedAt: string;
-                        }[];
                         leagues: {
                             id: string;
                             name: string;
                             sport: string;
                             role: string;
-                            tenantName: string;
+                            /** Format: date-time */
+                            joinedAt?: string;
                         }[];
                         activeContests: {
                             id: string;
@@ -7608,7 +7496,6 @@ export interface operations {
     adminListContests: {
         parameters: {
             query?: {
-                tenant?: string;
                 league?: string;
                 sport?: string;
                 status?: string;
@@ -7634,7 +7521,6 @@ export interface operations {
                             id: string;
                             name: string;
                             leagueName: string;
-                            tenantName: string;
                             sport: string;
                             contestType: string;
                             selectionType: string;
@@ -7691,8 +7577,6 @@ export interface operations {
                         status: string;
                         leagueName: string;
                         leagueId: string;
-                        tenantName: string;
-                        tenantId: string;
                         entryCount: number;
                         /** Format: date-time */
                         startsAt?: string | null;
@@ -8859,7 +8743,6 @@ export interface operations {
                 severity?: "ERROR" | "CRITICAL" | "WARNING";
                 dateFrom?: string;
                 dateTo?: string;
-                tenant?: string;
                 page?: number;
                 pageSize?: number;
             };
@@ -8884,7 +8767,6 @@ export interface operations {
                             message: string;
                             errorType: string;
                             requestId: string;
-                            tenantId?: string;
                             userId?: string;
                             stackTrace: string;
                             metadata: {
@@ -8942,7 +8824,6 @@ export interface operations {
                         message: string;
                         errorType: string;
                         requestId: string;
-                        tenantId?: string;
                         userId?: string;
                         stackTrace: string;
                         metadata: {
@@ -9434,7 +9315,6 @@ export interface operations {
                     migrationId: string;
                     dryRun?: boolean;
                     batchSize?: number;
-                    tenantIds?: string[];
                 };
             };
         };
@@ -9725,7 +9605,7 @@ export interface operations {
     adminExportAuditLog: {
         parameters: {
             query?: {
-                adminUserId?: string;
+                actorUserId?: string;
                 action?: string;
                 resourceType?: string;
                 resourceId?: string;
@@ -9773,7 +9653,7 @@ export interface operations {
     adminListAuditLog: {
         parameters: {
             query?: {
-                adminUserId?: string;
+                actorUserId?: string;
                 action?: string;
                 resourceType?: string;
                 resourceId?: string;
@@ -9798,8 +9678,8 @@ export interface operations {
                     "application/json": {
                         items: {
                             id: string;
-                            adminUserEmail: string;
-                            adminUserName: string;
+                            actorEmail: string;
+                            actorName: string;
                             action: string;
                             resourceType: string;
                             resourceId: string;
@@ -9853,8 +9733,8 @@ export interface operations {
                     "application/json": {
                         entry: {
                             id: string;
-                            adminUserEmail: string;
-                            adminUserName: string;
+                            actorEmail: string;
+                            actorName: string;
                             action: string;
                             resourceType: string;
                             resourceId: string;

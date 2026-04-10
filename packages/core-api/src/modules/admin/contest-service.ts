@@ -29,7 +29,6 @@ export interface ContestListItem {
   id: string;
   name: string;
   leagueName: string;
-  tenantName: string;
   sport: string;
   contestType: string;
   selectionType: string;
@@ -48,8 +47,6 @@ export interface ContestAdminView {
   status: string;
   leagueName: string;
   leagueId: string;
-  tenantName: string;
-  tenantId: string;
   entryCount: number;
   startsAt?: Date;
   endsAt?: Date;
@@ -162,7 +159,6 @@ export class ContestService {
       id: row.id,
       name: row.name,
       leagueName: row.league.name,
-      tenantName: '',
       sport: row.sportEvent?.sport ?? '',
       contestType: row.contestType,
       selectionType: row.selectionType,
@@ -279,8 +275,6 @@ export class ContestService {
       status: contest.status.toLowerCase(),
       leagueName: contest.league.name,
       leagueId: contest.league.id,
-      tenantName: '',
-      tenantId: '',
       entryCount: contest.entries.length,
       startsAt: contest.startsAt ?? undefined,
       endsAt: contest.endsAt ?? undefined,
@@ -313,8 +307,8 @@ export class ContestService {
   async forceCloseContest(
     contestId: string,
     reason: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<void> {
     const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
     if (!contest) throw new ContestNotFoundError(contestId);
@@ -327,8 +321,8 @@ export class ContestService {
     });
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'contest.force_close',
       resourceType: 'CONTEST',
       resourceId: contestId,
@@ -345,8 +339,8 @@ export class ContestService {
   async reopenContest(
     contestId: string,
     reason: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<void> {
     const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
     if (!contest) throw new ContestNotFoundError(contestId);
@@ -359,8 +353,8 @@ export class ContestService {
     });
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'contest.reopen',
       resourceType: 'CONTEST',
       resourceId: contestId,
@@ -380,8 +374,8 @@ export class ContestService {
     entryId: string,
     newScore: number,
     reason: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<void> {
     const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
     if (!contest) throw new ContestNotFoundError(contestId);
@@ -401,8 +395,8 @@ export class ContestService {
     });
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'contest.override_score',
       resourceType: 'CONTEST',
       resourceId: contestId,
@@ -419,8 +413,8 @@ export class ContestService {
    */
   async recalculateStandings(
     contestId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<RecalculationResult> {
     const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
     if (!contest) throw new ContestNotFoundError(contestId);
@@ -459,8 +453,8 @@ export class ContestService {
     };
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'contest.recalculate_standings',
       resourceType: 'CONTEST',
       resourceId: contestId,
@@ -479,16 +473,16 @@ export class ContestService {
    */
   async recalculatePayouts(
     contestId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<void> {
     const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
     if (!contest) throw new ContestNotFoundError(contestId);
 
     // TODO: Trigger payout recalculation via the prize-award engine
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'contest.recalculate_payouts',
       resourceType: 'CONTEST',
       resourceId: contestId,
@@ -502,10 +496,10 @@ export class ContestService {
   async reIngestScoring(
     contestId: string,
     eventId: string,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<RecalculationResult> {
     void eventId;
-    return this.recalculateStandings(contestId, adminUserId, adminUserEmail);
+    return this.recalculateStandings(contestId, rootAdminUserId, rootAdminEmail);
   }
 }

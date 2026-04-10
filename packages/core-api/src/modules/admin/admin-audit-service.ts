@@ -10,8 +10,8 @@
 import type { PrismaClient } from '@prisma/client';
 
 export interface AuditLogParams {
-  adminUserId: string;
-  adminUserEmail: string;
+  actorUserId: string;
+  actorEmail: string;
   action: string;
   resourceType: string;
   resourceId: string;
@@ -25,8 +25,8 @@ export interface AuditLogParams {
 
 export interface AdminAuditEntry {
   id: string;
-  adminUserId: string;
-  adminUserEmail: string;
+  actorUserId: string;
+  actorEmail: string;
   action: string;
   resourceType: string;
   resourceId: string;
@@ -40,7 +40,7 @@ export interface AdminAuditEntry {
 }
 
 export interface AuditListQuery {
-  adminUserId?: string;
+  actorUserId?: string;
   action?: string;
   resourceType?: string;
   resourceId?: string;
@@ -78,7 +78,7 @@ export async function logAdminAction(params: AuditLogParams): Promise<void> {
       action: params.action,
       resourceType: params.resourceType,
       resourceId: params.resourceId,
-      adminUserEmail: params.adminUserEmail,
+      actorEmail: params.actorEmail,
       description: params.description,
       reason: params.reason,
       timestamp: new Date().toISOString(),
@@ -88,8 +88,8 @@ export async function logAdminAction(params: AuditLogParams): Promise<void> {
 
   await _prisma.adminAuditEntry.create({
     data: {
-      actorId: params.adminUserId,
-      actorEmail: params.adminUserEmail,
+      actorId: params.actorUserId,
+      actorEmail: params.actorEmail,
       action: params.action,
       resourceType: params.resourceType,
       resourceId: params.resourceId,
@@ -123,8 +123,8 @@ export async function listAuditEntries(
 
   const where: Record<string, unknown> = {};
 
-  if (filters.adminUserId) {
-    where.actorId = filters.adminUserId;
+  if (filters.actorUserId) {
+    where.actorId = filters.actorUserId;
   }
   if (filters.action) {
     where.action = filters.action;
@@ -157,8 +157,8 @@ export async function listAuditEntries(
 
   const items: AdminAuditEntry[] = rows.map((r) => ({
     id: r.id,
-    adminUserId: r.actorId,
-    adminUserEmail: r.actorEmail,
+    actorUserId: r.actorId,
+    actorEmail: r.actorEmail,
     action: r.action,
     resourceType: r.resourceType,
     resourceId: r.resourceId,

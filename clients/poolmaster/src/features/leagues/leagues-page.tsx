@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { listLeagues } from '@/lib/api';
-import { useSessionStore } from '@/features/auth/session-store';
 
 type LeagueSummary = {
   id: string;
@@ -24,23 +23,15 @@ function roleLabel(role: string | undefined) {
 }
 
 export function LeaguesPage() {
-  const tokens = useSessionStore((state) => state.tokens);
   const leaguesQuery = useQuery({
-    queryKey: ['poolmaster', 'leagues', tokens?.accessToken],
+    queryKey: ['poolmaster', 'leagues'],
     queryFn: async (): Promise<LeagueSummary[]> => {
-      const response = await listLeagues({
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
-      });
+      const response = await listLeagues();
       if (!response.data) {
         throw response.error ?? new Error('League list response is missing data.');
       }
       return response.data.leagues as LeagueSummary[];
     },
-    enabled: Boolean(tokens?.accessToken),
   });
 
   if (leaguesQuery.isLoading) {

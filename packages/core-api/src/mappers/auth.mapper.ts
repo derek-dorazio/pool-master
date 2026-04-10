@@ -16,6 +16,7 @@ interface UserRow {
 interface TokenPair {
   accessToken: string;
   refreshToken: string;
+  csrfToken: string;
   expiresIn: number;
 }
 
@@ -37,6 +38,7 @@ export function toAuthResponse(user: UserRow, tokens: TokenPair): AuthResponse {
     tokens: {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+      csrfToken: tokens.csrfToken,
       expiresIn: tokens.expiresIn,
     },
   };

@@ -1,5 +1,5 @@
 /**
- * Member management route handlers — role changes, removal, ownership transfer.
+ * Member management route handlers — role changes and member lifecycle.
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -18,7 +18,6 @@ export function createMemberHandlers(
     changeRole,
     removeMember,
     leaveLeague,
-    transferOwnership,
   };
 
   async function listMembers(
@@ -77,7 +76,7 @@ export function createMemberHandlers(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string | undefined;
+    const userId = request.authUser?.userId;
     if (!userId) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
@@ -85,38 +84,6 @@ export function createMemberHandlers(
     try {
       await memberService.removeMember(request.params.id, userId);
       return reply.send({ success: true });
-    } catch (err) {
-      if (err instanceof MemberNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
-      }
-      if (err instanceof MemberOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
-      }
-      throw err;
-    }
-  }
-
-  async function transferOwnership(
-    request: FastifyRequest<{
-      Params: { id: string };
-      Body: { newOwnerId: string };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
-    if (!userId) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
-    }
-    try {
-      const result = await memberService.transferOwnership(
-        request.params.id,
-        userId,
-        request.body.newOwnerId,
-      );
-      return reply.send({
-        previousOwner: mapLeagueMembershipToDto(result.previousOwner),
-        newOwner: mapLeagueMembershipToDto(result.newOwner),
-      });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
         return sendError(reply, 404, 'NOT_FOUND', err.message);

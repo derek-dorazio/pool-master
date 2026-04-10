@@ -34,7 +34,6 @@ import {
 } from '../../mappers/contests.mapper';
 export interface CreateContestInput {
   leagueId: string;
-  tenantId: string;
   createdBy: string;
   sportEventId?: string;
   name: string;
@@ -105,7 +104,6 @@ export class ContestService {
 
   async getContest(
     contestId: string,
-    _tenantId: string,
   ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration | null } | null> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
@@ -122,7 +120,6 @@ export class ContestService {
   /** Updates a contest. Only allowed when status is DRAFT. */
   async updateContest(
     contestId: string,
-    tenantId: string,
     updates: UpdateContestInput,
   ): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
@@ -136,7 +133,7 @@ export class ContestService {
   }
 
   /** Deletes a contest. Only allowed when status is DRAFT. */
-  async deleteContest(contestId: string, _tenantId: string): Promise<void> {
+  async deleteContest(contestId: string): Promise<void> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new ContestNotFoundError(contestId);
@@ -149,7 +146,6 @@ export class ContestService {
 
   async listEntries(
     contestId: string,
-    _tenantId: string,
     userId: string,
   ): Promise<{
     entries: ContestEntryDto[];
@@ -157,7 +153,7 @@ export class ContestService {
     myEntryId: string | null;
     myEntryIds: string[];
   }> {
-    const context = await this.getEntryContext(contestId, _tenantId, userId);
+    const context = await this.getEntryContext(contestId, userId);
     const squadId = context.squadMembership?.squadId ?? null;
     const entries = await this.loadEntryDtos(contestId);
     const myEntries = squadId
@@ -179,10 +175,9 @@ export class ContestService {
 
   async getMyEntry(
     contestId: string,
-    _tenantId: string,
     userId: string,
   ): Promise<ContestEntryDto | null> {
-    const context = await this.getEntryContext(contestId, _tenantId, userId);
+    const context = await this.getEntryContext(contestId, userId);
     if (!context.squadMembership) {
       return null;
     }
@@ -192,10 +187,9 @@ export class ContestService {
 
   async createEntry(
     contestId: string,
-    _tenantId: string,
     userId: string,
   ): Promise<{ entry: ContestEntryDto; created: boolean }> {
-    const context = await this.getEntryContext(contestId, _tenantId, userId);
+    const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
     if (!membership) {
       throw new ContestEntryOperationError('You must be a league member to enter this contest');
@@ -237,10 +231,9 @@ export class ContestService {
 
   async deleteMyEntry(
     contestId: string,
-    _tenantId: string,
     userId: string,
   ): Promise<void> {
-    const context = await this.getEntryContext(contestId, _tenantId, userId);
+    const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
     if (!membership) {
       throw new ContestEntryOperationError('You must be a league member to leave this contest');
@@ -267,7 +260,6 @@ export class ContestService {
 
   private async getEntryContext(
     contestId: string,
-    tenantId: string,
     userId: string,
   ): Promise<{
     contest: Contest;

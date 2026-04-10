@@ -62,11 +62,6 @@ export const ChangeLeagueMemberRoleRequestSchema = z.object({
 });
 export type ChangeLeagueMemberRoleRequest = z.infer<typeof ChangeLeagueMemberRoleRequestSchema>;
 
-export const TransferOwnershipRequestSchema = z.object({
-  newOwnerId: z.string().min(1),
-});
-export type TransferOwnershipRequest = z.infer<typeof TransferOwnershipRequestSchema>;
-
 export const CopySeasonRequestSchema = z.object({
   sourceContestIds: z.array(z.string()).min(1),
 });
@@ -209,11 +204,6 @@ export const GenerateInviteLinkResponseSchema = z.object({
   invitation: LeagueInvitationDtoSchema,
 });
 export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkResponseSchema>;
-
-export const TransferOwnershipResponseSchema = z.object({
-  previousOwner: LeagueMembershipDtoSchema,
-  newOwner: LeagueMembershipDtoSchema,
-});
 
 export const LeagueAuditEntriesResponseSchema = z.object({
   entries: z.array(LeagueAuditEntryDtoSchema),

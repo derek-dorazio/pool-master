@@ -250,10 +250,7 @@ describe('Contest scoring recalculation integration', () => {
     const res = await getApp().inject({
       method: 'POST',
       url: `/api/v1/contests/${contest.id}/scoring/recalculate`,
-      headers: withoutJsonBodyHeaders({
-        ...owner.headers,
-        'x-tenant-id': owner.user.tenantId,
-      }),
+      headers: withoutJsonBodyHeaders(owner.headers),
     });
 
     expect(res.statusCode).toBe(200);

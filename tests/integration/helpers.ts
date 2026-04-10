@@ -59,6 +59,8 @@ export function getPrisma(): PrismaClient {
 async function buildTestApp(): Promise<FastifyInstance> {
   const testApp = Fastify({ logger: false });
 
+  testApp.decorate('prisma', prisma);
+
   // Core plugins
   testApp.register(healthPlugin);
   testApp.register(authGuard);

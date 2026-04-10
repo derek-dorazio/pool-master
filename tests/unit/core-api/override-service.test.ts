@@ -211,7 +211,7 @@ describe('OverrideService', () => {
         createMockEntryRepo(),
         scoringRecalculationService,
       );
-      const result = await service.recalculateStandings('contest-1', 'tenant-1');
+      const result = await service.recalculateStandings('contest-1');
       expect(result.contestId).toBe('contest-1');
       expect(result.teamsAffected).toBe(2);
       expect(scoringRecalculationService.recalculateContest).toHaveBeenCalledWith('contest-1');
@@ -227,7 +227,7 @@ describe('OverrideService', () => {
         contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(),
         createMockContestScoringRecalculationService(),
       );
-      await service.reopenContest('contest-1', 'tenant-1', 'Scoring error found');
+      await service.reopenContest('contest-1', 'Scoring error found');
       expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { status: ContestStatus.ACTIVE });
     });
 
@@ -236,7 +236,7 @@ describe('OverrideService', () => {
         createMockContestRepo(), createMockDraftSessionRepo(), createMockEntryRepo(),
         createMockContestScoringRecalculationService(),
       );
-      await expect(service.reopenContest('contest-1', 'tenant-1', 'reason')).rejects.toThrow('completed');
+      await expect(service.reopenContest('contest-1', 'reason')).rejects.toThrow('completed');
     });
   });
 
@@ -247,7 +247,7 @@ describe('OverrideService', () => {
         contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(),
         createMockContestScoringRecalculationService(),
       );
-      await service.closeContest('contest-1', 'tenant-1', 'Season over');
+      await service.closeContest('contest-1', 'Season over');
       expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { status: ContestStatus.COMPLETED });
     });
 
@@ -259,7 +259,7 @@ describe('OverrideService', () => {
         contestRepo, createMockDraftSessionRepo(), createMockEntryRepo(),
         createMockContestScoringRecalculationService(),
       );
-      await expect(service.closeContest('contest-1', 'tenant-1', 'reason')).rejects.toThrow('already closed');
+      await expect(service.closeContest('contest-1', 'reason')).rejects.toThrow('already closed');
     });
   });
 

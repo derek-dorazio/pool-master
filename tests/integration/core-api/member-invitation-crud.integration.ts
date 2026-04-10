@@ -130,7 +130,7 @@ describe('Member and Invitation CRUD Integration', () => {
     const members = membersRes.json().members as Array<{ userId: string; role: string }>;
     expect(members).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ userId: ownerUserId, role: LeagueRole.OWNER }),
+        expect.objectContaining({ userId: ownerUserId, role: LeagueRole.COMMISSIONER }),
         expect.objectContaining({ userId: emailInvitee.user.id, role: LeagueRole.MEMBER }),
         expect.objectContaining({ userId: linkInvitee.user.id, role: LeagueRole.MEMBER }),
       ]),

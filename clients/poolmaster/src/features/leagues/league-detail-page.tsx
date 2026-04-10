@@ -8,7 +8,6 @@ import {
   listLeagueMembers,
   sendLeagueInvitations,
 } from '@/lib/api';
-import { useSessionStore } from '@/features/auth/session-store';
 
 type LeagueDetail = {
   id: string;
@@ -50,21 +49,13 @@ function formatRole(role: string | undefined) {
 
 export function LeagueDetailPage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
-  const tokens = useSessionStore((state) => state.tokens);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
 
   const leagueQuery = useQuery({
-    queryKey: ['poolmaster', 'league', leagueId, tokens?.accessToken],
+    queryKey: ['poolmaster', 'league', leagueId],
     queryFn: async (): Promise<LeagueDetail> => {
-      const response = await getLeague({
-        path: { id: leagueId },
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
-      });
+      const response = await getLeague({ path: { id: leagueId } });
 
       if (!response.data?.league) {
         throw response.error ?? new Error('League detail response is missing data.');
@@ -72,21 +63,14 @@ export function LeagueDetailPage() {
 
       return response.data.league as LeagueDetail;
     },
-    enabled: Boolean(leagueId && tokens?.accessToken),
+    enabled: Boolean(leagueId),
     retry: false,
   });
 
   const membersQuery = useQuery({
-    queryKey: ['poolmaster', 'league-members', leagueId, tokens?.accessToken],
+    queryKey: ['poolmaster', 'league-members', leagueId],
     queryFn: async (): Promise<LeagueMember[]> => {
-      const response = await listLeagueMembers({
-        path: { id: leagueId },
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
-      });
+      const response = await listLeagueMembers({ path: { id: leagueId } });
 
       if (!response.data?.members) {
         throw response.error ?? new Error('League members response is missing data.');
@@ -94,21 +78,14 @@ export function LeagueDetailPage() {
 
       return response.data.members as LeagueMember[];
     },
-    enabled: Boolean(leagueId && tokens?.accessToken),
+    enabled: Boolean(leagueId),
     retry: false,
   });
 
   const contestsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-contests', leagueId, tokens?.accessToken],
+    queryKey: ['poolmaster', 'league-contests', leagueId],
     queryFn: async (): Promise<ContestSummary[]> => {
-      const response = await listContests({
-        path: { id: leagueId },
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
-      });
+      const response = await listContests({ path: { id: leagueId } });
 
       if (!response.data?.contests) {
         throw response.error ?? new Error('Contest list response is missing data.');
@@ -116,7 +93,7 @@ export function LeagueDetailPage() {
 
       return response.data.contests as ContestSummary[];
     },
-    enabled: Boolean(leagueId && tokens?.accessToken),
+    enabled: Boolean(leagueId),
     retry: false,
   });
 
@@ -125,11 +102,6 @@ export function LeagueDetailPage() {
       const response = await generateInviteLink({
         path: { id: leagueId },
         body: {},
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
       });
 
       const inviteCode = response.data?.invitation?.inviteCode;
@@ -148,11 +120,6 @@ export function LeagueDetailPage() {
         body: {
           emails: [email],
         },
-        headers: tokens?.accessToken
-          ? {
-              Authorization: `Bearer ${tokens.accessToken}`,
-            }
-          : undefined,
       });
 
       if (!response.data) {
@@ -163,8 +130,7 @@ export function LeagueDetailPage() {
     },
   });
 
-  const isCommissioner =
-    leagueQuery.data?.role === 'OWNER' || leagueQuery.data?.role === 'COMMISSIONER';
+  const isCommissioner = leagueQuery.data?.role === 'COMMISSIONER';
 
   async function handleGenerateInviteLink() {
     const nextLink = await inviteLinkMutation.mutateAsync();

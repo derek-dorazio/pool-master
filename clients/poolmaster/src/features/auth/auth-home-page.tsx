@@ -76,12 +76,9 @@ export function AuthHomePage() {
       }
 
       setMemberSession({
-        tokens: response.data.tokens,
-        user: {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          displayName: response.data.user.displayName,
-        },
+        id: response.data.user.id,
+        email: response.data.user.email,
+        displayName: response.data.user.displayName,
       });
     } catch (error) {
       setServerError(extractErrorMessage(error));
@@ -104,12 +101,9 @@ export function AuthHomePage() {
       }
 
       setMemberSession({
-        tokens: response.data.tokens,
-        user: {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          displayName: response.data.user.displayName,
-        },
+        id: response.data.user.id,
+        email: response.data.user.email,
+        displayName: response.data.user.displayName,
       });
     } catch (error) {
       setServerError(extractErrorMessage(error));

@@ -31,7 +31,7 @@ export class DashboardService {
   ) {}
 
   /** Builds the full commissioner dashboard for a league. */
-  async getDashboard(leagueId: string, _tenantId: string): Promise<CommissionerDashboard | null> {
+  async getDashboard(leagueId: string): Promise<CommissionerDashboard | null> {
     const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
       return null;

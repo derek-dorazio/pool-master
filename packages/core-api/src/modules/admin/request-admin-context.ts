@@ -1,18 +1,18 @@
 import type { FastifyRequest } from 'fastify';
 
 interface RootAdminContext {
-  adminUserId: string;
-  adminUserEmail: string;
+  rootAdminUserId: string;
+  rootAdminEmail: string;
 }
 
-export function extractAdminContext(request: FastifyRequest): RootAdminContext {
-  const adminUser = request.adminContext?.adminUser;
-  if (!adminUser) {
+export function extractRootAdminContext(request: FastifyRequest): RootAdminContext {
+  const rootAdminUser = request.rootAdminContext?.rootAdminUser;
+  if (!rootAdminUser) {
     throw new Error('Root admin context is required before admin handlers execute');
   }
 
   return {
-    adminUserId: adminUser.id,
-    adminUserEmail: adminUser.email,
+    rootAdminUserId: rootAdminUser.id,
+    rootAdminEmail: rootAdminUser.email,
   };
 }

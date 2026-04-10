@@ -4,7 +4,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   AdjustContestScoreRequestSchema,
@@ -45,9 +44,10 @@ import { OverrideService } from './override-service';
 import { ContestScoringRecalculationService } from '../contest-scoring';
 import { createContestHandlers } from './handler';
 import { createOverrideHandlers } from './override-handler';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function contestsModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const contestRepo = new PrismaContestRepository(prisma);
   const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
@@ -102,7 +102,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
  * operations that use contestId rather than leagueId.
  */
 export async function contestsByIdModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const contestRepo = new PrismaContestRepository(prisma);
   const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);

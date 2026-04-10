@@ -171,7 +171,6 @@ export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
 // --- League ---
 
 export const LeagueRole = {
-  OWNER: 'OWNER',
   COMMISSIONER: 'COMMISSIONER',
   MEMBER: 'MEMBER',
 } as const;

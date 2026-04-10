@@ -10,7 +10,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ProviderService } from './provider-service';
 import { ProviderConfigUnsupportedError, ProviderNotFoundError } from './provider-service';
 import { sendError } from '../../core/error-handler';
-import { extractAdminContext } from './request-admin-context';
+import { extractRootAdminContext } from './request-admin-context';
 
 // ---------------------------------------------------------------------------
 // Handler factory
@@ -64,15 +64,15 @@ export function createProviderHandlers(providerService: ProviderService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId } = request.params;
 
     try {
       const config = await providerService.updateProviderConfig(
         providerId,
         request.body,
-        adminUserId,
-        adminUserEmail,
+        rootAdminUserId,
+        rootAdminEmail,
       );
       return reply.send(config);
     } catch (err) {
@@ -92,14 +92,14 @@ export function createProviderHandlers(providerService: ProviderService) {
     request: FastifyRequest<{ Params: { providerId: string } }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId } = request.params;
 
     try {
       const result = await providerService.triggerHealthCheck(
         providerId,
-        adminUserId,
-        adminUserEmail,
+        rootAdminUserId,
+        rootAdminEmail,
       );
       return reply.send(result);
     } catch (err) {
@@ -128,15 +128,15 @@ export function createProviderHandlers(providerService: ProviderService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId, eventId } = request.params;
 
     try {
       const job = await providerService.reIngestEvent(
         providerId,
         eventId,
-        adminUserId,
-        adminUserEmail,
+        rootAdminUserId,
+        rootAdminEmail,
       );
       return reply.status(201).send(job);
     } catch (err) {
@@ -165,15 +165,15 @@ export function createProviderHandlers(providerService: ProviderService) {
     }>,
     reply: FastifyReply,
   ) {
-    const { adminUserId, adminUserEmail } = extractAdminContext(request);
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId, externalId, internalId } = request.body;
 
     await providerService.mapParticipant(
       providerId,
       externalId,
       internalId,
-      adminUserId,
-      adminUserEmail,
+      rootAdminUserId,
+      rootAdminEmail,
     );
     return reply.status(204).send();
   }

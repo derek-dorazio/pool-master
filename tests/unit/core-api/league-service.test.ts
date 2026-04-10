@@ -6,7 +6,6 @@ import { buildLeague, buildMembership } from '../../factories';
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: jest.fn().mockResolvedValue(null),
-    findByTenant: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
       id: 'new-league-id',
@@ -43,12 +42,11 @@ function createMockMembershipRepo(
 
 describe('LeagueService', () => {
   describe('createLeague', () => {
-    it('creates a league and an OWNER membership', async () => {
+    it('creates a league and a COMMISSIONER membership', async () => {
       const leagueRepo = createMockLeagueRepo();
       const membershipRepo = createMockMembershipRepo();
       const service = new LeagueService(leagueRepo, membershipRepo);
       const result = await service.createLeague({
-        tenantId: 'tenant-1',
         createdBy: 'user-1',
         name: 'My League',
         visibility: LeagueVisibility.PRIVATE,
@@ -56,7 +54,7 @@ describe('LeagueService', () => {
       expect(leagueRepo.create).toHaveBeenCalledTimes(1);
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
       const membershipInput = (membershipRepo.create as jest.Mock).mock.calls[0][0];
-      expect(membershipInput.role).toBe(LeagueRole.OWNER);
+      expect(membershipInput.role).toBe(LeagueRole.COMMISSIONER);
       expect(membershipInput.userId).toBe('user-1');
       expect(result.league.id).toBe('new-league-id');
     });
@@ -66,7 +64,6 @@ describe('LeagueService', () => {
       const membershipRepo = createMockMembershipRepo();
       const service = new LeagueService(leagueRepo, membershipRepo);
       await service.createLeague({
-        tenantId: 'tenant-1',
         createdBy: 'user-1',
         name: 'My League',
         visibility: LeagueVisibility.PRIVATE,
@@ -85,25 +82,12 @@ describe('LeagueService', () => {
       const membershipRepo = createMockMembershipRepo();
       const service = new LeagueService(leagueRepo, membershipRepo);
       await service.createLeague({
-        tenantId: 'tenant-1',
         createdBy: 'user-1',
         name: 'My League',
         visibility: LeagueVisibility.PRIVATE,
       });
       const createArg = (leagueRepo.create as jest.Mock).mock.calls[0][0];
       expect(createArg.maxMembers).toBe(20);
-    });
-  });
-
-  describe('findByTenant', () => {
-    it('delegates to the repository', async () => {
-      const expectedLeagues = [buildLeague()];
-      const leagueRepo = createMockLeagueRepo({
-        findByTenant: jest.fn().mockResolvedValue(expectedLeagues),
-      });
-      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
-      const result = await service.findByTenant('tenant-1');
-      expect(result).toBe(expectedLeagues);
     });
   });
 
@@ -123,7 +107,7 @@ describe('LeagueService', () => {
       const result = await service.findByUser('user-1');
 
       expect(membershipRepo.findByUser).toHaveBeenCalledWith('user-1');
-      expect(leagueRepo.findById).toHaveBeenCalledWith('league-1', '');
+      expect(leagueRepo.findById).toHaveBeenCalledWith('league-1');
       expect(result).toEqual([expectedLeague]);
     });
   });
@@ -147,7 +131,7 @@ describe('LeagueService', () => {
         findById: jest.fn().mockResolvedValue(existingLeague),
       });
       const service = new LeagueService(leagueRepo, createMockMembershipRepo());
-      await service.updateSettings('league-1', 'tenant-1', { timezone: 'Europe/London' });
+      await service.updateSettings('league-1', { timezone: 'Europe/London' });
       const updateArg = (leagueRepo.update as jest.Mock).mock.calls[0][1];
       expect((updateArg.settings as Record<string, unknown>).timezone).toBe('Europe/London');
       expect((updateArg.settings as Record<string, unknown>).currency).toBe('USD');
@@ -159,7 +143,7 @@ describe('LeagueService', () => {
       });
       const service = new LeagueService(leagueRepo, createMockMembershipRepo());
       await expect(
-        service.updateSettings('missing', 'tenant-1', { timezone: 'UTC' }),
+        service.updateSettings('missing', { timezone: 'UTC' }),
       ).rejects.toThrow(LeagueNotFoundError);
     });
   });
@@ -175,7 +159,7 @@ describe('LeagueService', () => {
         findByLeague: jest.fn().mockResolvedValue(members),
       });
       const service = new LeagueService(leagueRepo, membershipRepo);
-      const result = await service.getLeagueWithMembers('league-1', 'tenant-1');
+      const result = await service.getLeagueWithMembers('league-1');
       expect(result).not.toBeNull();
       expect(result!.league.id).toBe('league-1');
       expect(result!.members).toHaveLength(1);
@@ -184,7 +168,7 @@ describe('LeagueService', () => {
     it('returns null for missing league', async () => {
       const leagueRepo = createMockLeagueRepo();
       const service = new LeagueService(leagueRepo, createMockMembershipRepo());
-      const result = await service.getLeagueWithMembers('missing', 'tenant-1');
+      const result = await service.getLeagueWithMembers('missing');
       expect(result).toBeNull();
     });
   });

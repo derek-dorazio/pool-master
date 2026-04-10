@@ -4,7 +4,7 @@ import {
   LeagueRole,
   CommissionerPermission,
 } from '@poolmaster/shared/domain';
-import { requireCommissionerOrOwner, requireLeagueMembership } from '../../../packages/core-api/src/modules/leagues/permissions';
+import { requireCommissioner, requireLeagueMembership } from '../../../packages/core-api/src/modules/leagues/permissions';
 import { buildMembership } from '../../factories';
 
 function createMockMembershipRepo(
@@ -70,7 +70,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        headers: { 'x-user-id': 'user-1' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
         params: { id: 'league-1' },
       } as never,
       reply as never,
@@ -89,7 +89,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        headers: { 'x-user-id': 'outsider' },
+        authUser: { userId: 'outsider', email: 'outsider@integration.test' },
         params: { id: 'league-1' },
       } as never,
       reply as never,
@@ -110,7 +110,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        headers: { 'x-user-id': 'user-1' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
         params: { id: 'league-1' },
       } as never,
       reply as never,
@@ -137,14 +137,14 @@ describe('league permissions', () => {
     expectReplyError(reply, 'UNAUTHORIZED', 'Missing user identity');
   });
 
-  it('rejects requests without a league id on requireCommissionerOrOwner', async () => {
+  it('rejects requests without a league id on requireCommissioner', async () => {
     const repo = createMockMembershipRepo();
-    const hook = requireCommissionerOrOwner(repo);
+    const hook = requireCommissioner(repo);
     const reply = createReply();
     await hook.call(
       {} as never,
       {
-        headers: { 'x-user-id': 'user-1' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
         params: {},
       } as never,
       reply as never,
@@ -154,7 +154,7 @@ describe('league permissions', () => {
     expectReplyError(reply, 'BAD_REQUEST', 'Missing league id');
   });
 
-  it('allows owners and commissioners through requireCommissionerOrOwner', async () => {
+  it('allows commissioners through requireCommissioner', async () => {
     const membership = buildMembership({
       role: LeagueRole.COMMISSIONER,
       permissions: [CommissionerPermission.CONTEST_CREATE],
@@ -162,12 +162,12 @@ describe('league permissions', () => {
     const repo = createMockMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });
-    const hook = requireCommissionerOrOwner(repo);
+    const hook = requireCommissioner(repo);
     const reply = createReply();
     await hook.call(
       {} as never,
       {
-        headers: { 'x-user-id': 'user-1' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
         params: { id: 'league-1' },
       } as never,
       reply as never,
@@ -177,17 +177,17 @@ describe('league permissions', () => {
     expect(reply.payload).toBeUndefined();
   });
 
-  it('rejects regular members on requireCommissionerOrOwner', async () => {
+  it('rejects regular members on requireCommissioner', async () => {
     const membership = buildMembership({ role: LeagueRole.MEMBER });
     const repo = createMockMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });
-    const hook = requireCommissionerOrOwner(repo);
+    const hook = requireCommissioner(repo);
     const reply = createReply();
     await hook.call(
       {} as never,
       {
-        headers: { 'x-user-id': 'user-1' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
         params: { id: 'league-1' },
       } as never,
       reply as never,

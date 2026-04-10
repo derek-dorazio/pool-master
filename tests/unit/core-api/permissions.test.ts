@@ -3,7 +3,7 @@ import {
   DEFAULT_COMMISSIONER_PERMISSIONS,
   hasPermission,
   hasAnyPermission,
-  isCommissionerOrOwner,
+  isCommissioner,
   canManageMembers,
 } from '../../../packages/core-api/src/core/permissions';
 import { CommissionerPermission, LeagueRole } from '@poolmaster/shared/domain';
@@ -34,11 +34,6 @@ describe('Commissioner Permissions', () => {
   });
 
   describe('hasPermission', () => {
-    it('returns true for OWNER regardless of permission', () => {
-      const owner = buildMembership({ role: LeagueRole.OWNER, permissions: [] });
-      expect(hasPermission(owner, CommissionerPermission.SCORING_OVERRIDE)).toBe(true);
-    });
-
     it('returns true for COMMISSIONER with the permission', () => {
       const commissioner = buildMembership({
         role: LeagueRole.COMMISSIONER,
@@ -86,25 +81,17 @@ describe('Commissioner Permissions', () => {
     });
   });
 
-  describe('isCommissionerOrOwner', () => {
-    it('returns true for OWNER', () => {
-      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.OWNER }))).toBe(true);
-    });
-
+  describe('isCommissioner', () => {
     it('returns true for COMMISSIONER', () => {
-      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.COMMISSIONER }))).toBe(true);
+      expect(isCommissioner(buildMembership({ role: LeagueRole.COMMISSIONER }))).toBe(true);
     });
 
     it('returns false for MEMBER', () => {
-      expect(isCommissionerOrOwner(buildMembership({ role: LeagueRole.MEMBER }))).toBe(false);
+      expect(isCommissioner(buildMembership({ role: LeagueRole.MEMBER }))).toBe(false);
     });
   });
 
   describe('canManageMembers', () => {
-    it('returns true for OWNER', () => {
-      expect(canManageMembers(buildMembership({ role: LeagueRole.OWNER }))).toBe(true);
-    });
-
     it('returns true for COMMISSIONER with invite permission', () => {
       const commissioner = buildMembership({
         role: LeagueRole.COMMISSIONER,

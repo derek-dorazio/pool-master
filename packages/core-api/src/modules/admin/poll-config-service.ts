@@ -55,15 +55,15 @@ export class PollConfigService {
    */
   async updateConfig(
     partial: Partial<PollIntervalConfig>,
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<PollIntervalConfig> {
     const before = { ...currentConfig };
     currentConfig = { ...currentConfig, ...partial };
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'UPDATE_POLL_CONFIG',
       resourceType: 'PLATFORM_CONFIG',
       resourceId: 'poll-intervals',
@@ -79,15 +79,15 @@ export class PollConfigService {
    * Resets all intervals to their hardcoded defaults.
    */
   async resetDefaults(
-    adminUserId: string,
-    adminUserEmail: string,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
   ): Promise<PollIntervalConfig> {
     const before = { ...currentConfig };
     currentConfig = { ...DEFAULT_POLL_CONFIG };
 
     await logAdminAction({
-      adminUserId,
-      adminUserEmail,
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
       action: 'RESET_POLL_CONFIG',
       resourceType: 'PLATFORM_CONFIG',
       resourceId: 'poll-intervals',

@@ -30,9 +30,6 @@ afterAll(async () => {
   await prisma.participant.deleteMany({
     where: { externalId: 'integration-participant-1' },
   });
-  await prisma.sport.deleteMany({
-    where: { name: Sport.GOLF },
-  });
   await teardownIntegrationTests();
 });
 

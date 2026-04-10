@@ -1,5 +1,4 @@
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   ContestConfigurationRequestSchema,
@@ -19,11 +18,12 @@ import {
 import { requirePermission } from '../../core/require-permission';
 import { createContestManagementHandlers } from './handler';
 import { ContestManagementService } from './service';
+import { getAppPrisma } from '../../core/prisma-context';
 
 export async function contestManagementModule(
   fastify: FastifyInstance,
 ): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const contestManagementService = new ContestManagementService(
     new PrismaContestCoreRepository(prisma),

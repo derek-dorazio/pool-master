@@ -12,7 +12,7 @@ import {
 import type { AuditListQuery } from './audit-query-service';
 
 interface AuditLogQuerystring {
-  adminUserId?: string;
+  actorUserId?: string;
   action?: string;
   resourceType?: string;
   resourceId?: string;
@@ -37,7 +37,7 @@ export async function listAuditLog(
 ): Promise<void> {
   const qs = request.query;
   const query: AuditListQuery = {
-    adminUserId: qs.adminUserId,
+    actorUserId: qs.actorUserId,
     action: qs.action,
     resourceType: qs.resourceType,
     resourceId: qs.resourceId,
@@ -87,7 +87,7 @@ export async function exportAuditLog(
 ): Promise<void> {
   const qs = request.query;
   const query: AuditListQuery = {
-    adminUserId: qs.adminUserId,
+    actorUserId: qs.actorUserId,
     action: qs.action,
     resourceType: qs.resourceType,
     resourceId: qs.resourceId,

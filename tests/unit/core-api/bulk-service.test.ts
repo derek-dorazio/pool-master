@@ -24,7 +24,6 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: jest.fn().mockResolvedValue(buildLeague({ maxMembers: 20 })),
-    findByTenant: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
     delete: jest.fn().mockResolvedValue(undefined),
@@ -68,7 +67,7 @@ describe('BulkService', () => {
         createMockMembershipRepo(), createMockInvitationRepo(),
       );
       const result = await service.copyLastSeason({
-        leagueId: 'league-1', tenantId: 'tenant-1', createdBy: 'user-1',
+        leagueId: 'league-1', createdBy: 'user-1',
         sourceContestIds: ['c-1', 'c-2'],
       });
       expect(result.created).toHaveLength(2);

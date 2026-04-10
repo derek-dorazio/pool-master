@@ -25,6 +25,7 @@ import {
   PrismaContestEntryRepository,
 } from '../../adapters';
 import { createErrorEnvelope } from '../../core/error-handler';
+import { getAppPrisma } from '../../core/prisma-context';
 import crypto from 'node:crypto';
 import { SnakeDraftEngine } from './engine/snake-draft-engine';
 import type { DraftState } from './engine/snake-draft-engine';
@@ -117,7 +118,7 @@ function draftErrorResponses(...statuses: number[]) {
 }
 
 function isCommissionerRole(role: unknown): boolean {
-  return role === 'OWNER' || role === 'COMMISSIONER';
+  return role === 'COMMISSIONER';
 }
 
 function getRequestMembership(
@@ -681,7 +682,7 @@ async function buildDraftStateResponse(
 }
 
 export async function draftsModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
 
   fastify.get('/:contestId', {
     schema: {
@@ -700,7 +701,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
+      const requestUserId = request.authUser?.userId;
       const result = await buildDraftStateResponse(prisma, contestId, requestUserId);
       if (result.kind === 'error') {
         return sendWithStatus(reply, result.statusCode, result.payload);
@@ -774,7 +775,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       await draftStore.setState(contestId, initialState);
       await draftStore.setAvailableParticipants(contestId, availableParticipantIds);
 
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
+      const requestUserId = request.authUser?.userId;
       const context = await loadDraftContext(prisma, contestId);
       if (!context) {
         return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
@@ -810,7 +811,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         entryId: string;
         participantId: string;
       };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
+      const requestUserId = request.authUser?.userId;
       const context = await loadDraftContext(prisma, contestId);
 
       if (!context) {
@@ -1058,7 +1059,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
+      const requestUserId = request.authUser?.userId;
       const context = await loadDraftContext(prisma, contestId);
 
       if (!context) {
@@ -1110,7 +1111,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
+      const requestUserId = request.authUser?.userId;
       const context = await loadDraftContext(prisma, contestId);
 
       if (!context) {
@@ -1164,7 +1165,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
       const { additionalSeconds } = request.body as { additionalSeconds: number };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
+      const requestUserId = request.authUser?.userId;
       const context = await loadDraftContext(prisma, contestId);
 
       if (!context) {
@@ -1214,7 +1215,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
+      const requestUserId = request.authUser?.userId;
       const context = await loadDraftContext(prisma, contestId);
 
       if (!context) {
@@ -1277,7 +1278,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.headers['x-user-id'] as string | undefined;
+      const requestUserId = request.authUser?.userId;
       const context = await loadDraftContext(prisma, contestId);
 
       if (!context) {

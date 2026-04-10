@@ -23,7 +23,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<{ leagues: unknown[] }> {
-    const userId = request.headers['x-user-id'] as string | undefined;
+    const userId = request.authUser?.userId;
     if (!userId) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
@@ -43,7 +43,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId;
     if (!userId) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
@@ -69,9 +69,8 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = (request.authUser?.userId
-      ?? request.headers['x-user-id']) as string | undefined;
-    const result = await leagueService.getLeagueWithMembers(request.params.id, '');
+    const userId = request.authUser?.userId;
+    const result = await leagueService.getLeagueWithMembers(request.params.id);
     if (!result) {
       return sendError(reply, 404, 'NOT_FOUND', 'League not found');
     }
@@ -97,8 +96,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     try {
       const league = await leagueService.updateSettings(
         request.params.id,
-        '',
-        request.body as Parameters<LeagueService['updateSettings']>[2],
+        request.body as Parameters<LeagueService['updateSettings']>[1],
       );
       return reply.send({
         league: toLeagueDetailDto(league),

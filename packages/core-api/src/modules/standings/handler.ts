@@ -80,9 +80,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
   ): Promise<void> {
     const { contestId } = request.params;
 
-    // Get userId from auth context or header fallback
-    const userId = (request.authUser?.userId
-      ?? request.headers['x-user-id']) as string | undefined;
+    const userId = request.authUser?.userId;
 
     if (!userId) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');

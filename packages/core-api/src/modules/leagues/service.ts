@@ -10,6 +10,7 @@ import type {
   LeagueVisibility,
 } from '@poolmaster/shared/domain';
 import { InvitePolicy, LeagueMembershipStatus, LeagueRole, WeekDay } from '@poolmaster/shared/domain';
+import { ALL_COMMISSIONER_PERMISSIONS } from '../../core/permissions';
 
 export interface CreateLeagueInput {
   createdBy: string;
@@ -39,7 +40,7 @@ export class LeagueService {
     private readonly membershipRepo: LeagueMembershipRepository,
   ) {}
 
-  /** Creates a new league and adds the creator as OWNER. */
+  /** Creates a new league and adds the creator as a commissioner. */
   async createLeague(input: CreateLeagueInput): Promise<{ league: League; membership: LeagueMembership }> {
     const mergedSettings: LeagueSettings = {
       ...DEFAULT_LEAGUE_SETTINGS,
@@ -58,7 +59,7 @@ export class LeagueService {
       userId: input.createdBy,
       role: LeagueRole.COMMISSIONER,
       status: LeagueMembershipStatus.ACTIVE,
-      permissions: [],
+      permissions: [...ALL_COMMISSIONER_PERMISSIONS],
       joinedAt: new Date(),
     });
     return { league, membership };
@@ -79,7 +80,6 @@ export class LeagueService {
   /** Partially updates the league settings JSONB, merging with existing values. */
   async updateSettings(
     leagueId: string,
-    _tenantId: string,
     updates: Partial<LeagueSettings>,
   ): Promise<League> {
     const league = await this.leagueRepo.findById(leagueId);
@@ -96,7 +96,6 @@ export class LeagueService {
   /** Returns the league together with its member list. */
   async getLeagueWithMembers(
     leagueId: string,
-    _tenantId: string,
   ): Promise<{ league: League; members: LeagueMembership[] } | null> {
     const league = await this.leagueRepo.findById(leagueId);
     if (!league) {

@@ -12,15 +12,13 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { AuthService } from './auth-service';
 import { createAuthHandlers } from './handler';
+import { getAppPrisma } from '../../core/prisma-context';
 import {
   zodToJsonSchema,
   RegisterRequestSchema,
   LoginRequestSchema,
-  RefreshRequestSchema,
-  LogoutRequestSchema,
   AuthResponseSchema,
   TokenRefreshResponseSchema,
   MeResponseSchema,
@@ -33,7 +31,7 @@ import {
 } from '@poolmaster/shared/dto';
 
 export async function authModule(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getAppPrisma(fastify);
   const authService = new AuthService(prisma);
   const handlers = createAuthHandlers(authService);
 
@@ -74,7 +72,6 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Auth'],
       summary: 'Exchange refresh token for new access token',
       operationId: 'refreshToken',
-      body: zodToJsonSchema(RefreshRequestSchema),
       response: {
         200: zodToJsonSchema(TokenRefreshResponseSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -89,7 +86,6 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Auth'],
       summary: 'Revoke refresh token',
       operationId: 'logoutUser',
-      body: zodToJsonSchema(LogoutRequestSchema),
       response: {
         200: zodToJsonSchema(SuccessSchema),
         400: zodToJsonSchema(ErrorEnvelopeSchema),

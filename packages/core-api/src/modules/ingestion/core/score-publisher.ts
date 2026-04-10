@@ -17,7 +17,6 @@ export async function publishStatEvents(scores: ProviderStatEvent[]): Promise<vo
       type: 'stat.received',
       sourceService: 'ingestion-worker',
       timestamp: new Date().toISOString(),
-      tenantId: 'system',
       eventId: score.eventExternalId,
       participantExternalId: score.participantExternalId,
       statKey: score.statKey,

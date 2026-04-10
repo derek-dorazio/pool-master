@@ -73,7 +73,6 @@ export interface ErrorLogQuery {
   severity?: 'ERROR' | 'CRITICAL' | 'WARNING';
   startDate?: string;
   endDate?: string;
-  tenant?: string;
   page?: number;
   pageSize?: number;
 }
@@ -85,7 +84,6 @@ export interface ErrorLogEntry {
   message: string;
   errorType: string;
   requestId: string;
-  tenantId?: string;
   userId?: string;
   stackTrace: string;
   metadata: Record<string, unknown>;

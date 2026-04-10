@@ -116,7 +116,7 @@ See `.env.example` for the full list of variables.
 
 ## 4. Quick Start (Recommended)
 
-Start everything — Docker containers, database migrations, seed data, and all services — with one command:
+Start everything — Docker containers, database migrations, the minimal bootstrap seed step, and all services — with one command:
 
 ```bash
 npm run dev:start
@@ -149,7 +149,7 @@ npm run dev:infra:all      # Start all containers (+ Mailpit, LocalStack, Push M
 npm run dev:infra:stop     # Stop all containers
 
 npm run db:migrate         # Run Prisma migrations
-npm run db:seed            # Seed database
+npm run db:seed            # Run minimal bootstrap seed step
 npm run db:reset           # Reset database (drops all data)
 npm run db:studio          # Open Prisma Studio (visual DB browser)
 ```

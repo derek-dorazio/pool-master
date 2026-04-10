@@ -439,7 +439,6 @@ export interface IntermediatePrize {
 // --- Admin & Platform Operations ---
 
 export type AdminPermission =
-  | 'tenant.view' | 'tenant.edit' | 'tenant.suspend' | 'tenant.delete' | 'tenant.impersonate'
   | 'user.view' | 'user.edit' | 'user.reset_password' | 'user.force_logout' | 'user.merge'
   | 'contest.view' | 'contest.override' | 'contest.recalculate' | 'contest.close'
   | 'sportsdata.view' | 'sportsdata.configure' | 'sportsdata.re_ingest'
@@ -448,8 +447,8 @@ export type AdminPermission =
 
 export interface AdminAuditEntry {
   id: string;
-  adminUserId: string;
-  adminUserEmail: string;
+  actorUserId: string;
+  actorEmail: string;
   action: string;
   resourceType: string;
   resourceId: string;

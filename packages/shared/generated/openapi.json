@@ -96,9 +96,6 @@
                             "apple"
                           ]
                         },
-                        "tenantId": {
-                          "type": "string"
-                        },
                         "timezone": {
                           "type": "string"
                         },
@@ -130,6 +127,9 @@
                         "refreshToken": {
                           "type": "string"
                         },
+                        "csrfToken": {
+                          "type": "string"
+                        },
                         "expiresIn": {
                           "type": "number"
                         }
@@ -137,6 +137,7 @@
                       "required": [
                         "accessToken",
                         "refreshToken",
+                        "csrfToken",
                         "expiresIn"
                       ],
                       "additionalProperties": false
@@ -279,9 +280,6 @@
                             "apple"
                           ]
                         },
-                        "tenantId": {
-                          "type": "string"
-                        },
                         "timezone": {
                           "type": "string"
                         },
@@ -313,6 +311,9 @@
                         "refreshToken": {
                           "type": "string"
                         },
+                        "csrfToken": {
+                          "type": "string"
+                        },
                         "expiresIn": {
                           "type": "number"
                         }
@@ -320,6 +321,7 @@
                       "required": [
                         "accessToken",
                         "refreshToken",
+                        "csrfToken",
                         "expiresIn"
                       ],
                       "additionalProperties": false
@@ -377,25 +379,6 @@
         "tags": [
           "Auth"
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "refreshToken": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "refreshToken"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -410,6 +393,9 @@
                     "refreshToken": {
                       "type": "string"
                     },
+                    "csrfToken": {
+                      "type": "string"
+                    },
                     "expiresIn": {
                       "type": "number"
                     }
@@ -417,6 +403,7 @@
                   "required": [
                     "accessToken",
                     "refreshToken",
+                    "csrfToken",
                     "expiresIn"
                   ],
                   "additionalProperties": false
@@ -467,25 +454,6 @@
         "tags": [
           "Auth"
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "refreshToken": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "refreshToken"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -696,9 +664,6 @@
                             "google",
                             "apple"
                           ]
-                        },
-                        "tenantId": {
-                          "type": "string"
                         },
                         "timezone": {
                           "type": "string"
@@ -2367,230 +2332,6 @@
             }
           },
           "401": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "details": {}
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "details": {}
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/leagues/{id}/transfer-ownership": {
-      "post": {
-        "operationId": "transferOwnership",
-        "summary": "Transfer league ownership to another member",
-        "tags": [
-          "Leagues"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "newOwnerId": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "newOwnerId"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "previousOwner": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "leagueId": {
-                          "type": "string"
-                        },
-                        "userId": {
-                          "type": "string"
-                        },
-                        "role": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "permissions": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "joinedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "userId",
-                        "role",
-                        "status",
-                        "permissions",
-                        "joinedAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "newOwner": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "leagueId": {
-                          "type": "string"
-                        },
-                        "userId": {
-                          "type": "string"
-                        },
-                        "role": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "permissions": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "joinedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "userId",
-                        "role",
-                        "status",
-                        "permissions",
-                        "joinedAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "previousOwner",
-                    "newOwner"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
             "description": "Default Response",
             "content": {
               "application/json": {
@@ -12183,14 +11924,6 @@
           },
           {
             "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "tenant",
-            "required": false
-          },
-          {
-            "schema": {
               "type": "string",
               "enum": [
                 "active",
@@ -12243,7 +11976,7 @@
                           "displayName": {
                             "type": "string"
                           },
-                          "tenants": {
+                          "leagues": {
                             "type": "array",
                             "items": {
                               "type": "object",
@@ -12286,7 +12019,7 @@
                           "id",
                           "email",
                           "displayName",
-                          "tenants",
+                          "leagues",
                           "status",
                           "createdAt"
                         ],
@@ -12496,38 +12229,6 @@
                       "type": "string",
                       "format": "date-time"
                     },
-                    "tenants": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "slug": {
-                            "type": "string"
-                          },
-                          "role": {
-                            "type": "string"
-                          },
-                          "joinedAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "slug",
-                          "role",
-                          "joinedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
                     "leagues": {
                       "type": "array",
                       "items": {
@@ -12545,16 +12246,16 @@
                           "role": {
                             "type": "string"
                           },
-                          "tenantName": {
-                            "type": "string"
+                          "joinedAt": {
+                            "type": "string",
+                            "format": "date-time"
                           }
                         },
                         "required": [
                           "id",
                           "name",
                           "sport",
-                          "role",
-                          "tenantName"
+                          "role"
                         ],
                         "additionalProperties": false
                       }
@@ -12651,7 +12352,6 @@
                     "displayName",
                     "status",
                     "createdAt",
-                    "tenants",
                     "leagues",
                     "activeContests",
                     "devices",
@@ -13091,14 +12791,6 @@
               "type": "string"
             },
             "in": "query",
-            "name": "tenant",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
             "name": "league",
             "required": false
           },
@@ -13176,9 +12868,6 @@
                           "leagueName": {
                             "type": "string"
                           },
-                          "tenantName": {
-                            "type": "string"
-                          },
                           "sport": {
                             "type": "string"
                           },
@@ -13203,7 +12892,6 @@
                           "id",
                           "name",
                           "leagueName",
-                          "tenantName",
                           "sport",
                           "contestType",
                           "selectionType",
@@ -13313,12 +13001,6 @@
                       "type": "string"
                     },
                     "leagueId": {
-                      "type": "string"
-                    },
-                    "tenantName": {
-                      "type": "string"
-                    },
-                    "tenantId": {
                       "type": "string"
                     },
                     "entryCount": {
@@ -13513,8 +13195,6 @@
                     "status",
                     "leagueName",
                     "leagueId",
-                    "tenantName",
-                    "tenantId",
                     "entryCount",
                     "createdAt",
                     "standings",
@@ -16224,14 +15904,6 @@
           },
           {
             "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "tenant",
-            "required": false
-          },
-          {
-            "schema": {
               "type": "integer",
               "minimum": 1
             },
@@ -16284,9 +15956,6 @@
                             "type": "string"
                           },
                           "requestId": {
-                            "type": "string"
-                          },
-                          "tenantId": {
                             "type": "string"
                           },
                           "userId": {
@@ -16425,9 +16094,6 @@
                       "type": "string"
                     },
                     "requestId": {
-                      "type": "string"
-                    },
-                    "tenantId": {
                       "type": "string"
                     },
                     "userId": {
@@ -17736,12 +17402,6 @@
                   "batchSize": {
                     "type": "integer",
                     "minimum": 1
-                  },
-                  "tenantIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   }
                 },
                 "required": [
@@ -18519,7 +18179,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "adminUserId",
+            "name": "actorUserId",
             "required": false
           },
           {
@@ -18661,7 +18321,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "adminUserId",
+            "name": "actorUserId",
             "required": false
           },
           {
@@ -18747,10 +18407,10 @@
                           "id": {
                             "type": "string"
                           },
-                          "adminUserEmail": {
+                          "actorEmail": {
                             "type": "string"
                           },
-                          "adminUserName": {
+                          "actorName": {
                             "type": "string"
                           },
                           "action": {
@@ -18781,8 +18441,8 @@
                         },
                         "required": [
                           "id",
-                          "adminUserEmail",
-                          "adminUserName",
+                          "actorEmail",
+                          "actorName",
                           "action",
                           "resourceType",
                           "resourceId",
@@ -18881,10 +18541,10 @@
                         "id": {
                           "type": "string"
                         },
-                        "adminUserEmail": {
+                        "actorEmail": {
                           "type": "string"
                         },
-                        "adminUserName": {
+                        "actorName": {
                           "type": "string"
                         },
                         "action": {
@@ -18915,8 +18575,8 @@
                       },
                       "required": [
                         "id",
-                        "adminUserEmail",
-                        "adminUserName",
+                        "actorEmail",
+                        "actorName",
                         "action",
                         "resourceType",
                         "resourceId",

@@ -121,7 +121,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     try {
       const result = await overrideService.recalculateStandings(
         request.params.contestId,
-        '',
       );
       return reply.send(result);
     } catch (err) {
@@ -139,7 +138,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     try {
       const contest = await overrideService.reopenContest(
         request.params.contestId,
-        '',
         request.body.reason,
       );
       return reply.send(toContestResponse(contest, null));
@@ -158,7 +156,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     try {
       const contest = await overrideService.closeContest(
         request.params.contestId,
-        '',
         request.body.reason,
       );
       return reply.send(toContestResponse(contest, null));
@@ -177,7 +174,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     try {
       const contest = await overrideService.extendDeadline(
         request.params.contestId,
-        '',
         new Date(request.body.newEnd),
         request.body.reason,
       );
@@ -197,7 +193,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     try {
       const contest = await overrideService.updateLockTime(
         request.params.contestId,
-        '',
         new Date(request.body.newLock),
         request.body.reason,
       );

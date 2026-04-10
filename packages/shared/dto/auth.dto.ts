@@ -21,13 +21,13 @@ export const LoginRequestSchema = z.object({
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
 export const RefreshRequestSchema = z.object({
-  refreshToken: z.string(),
-});
+  refreshToken: z.string().optional(),
+}).optional();
 export type RefreshRequest = z.infer<typeof RefreshRequestSchema>;
 
 export const LogoutRequestSchema = z.object({
-  refreshToken: z.string(),
-});
+  refreshToken: z.string().optional(),
+}).optional();
 export type LogoutRequest = z.infer<typeof LogoutRequestSchema>;
 
 export const ForgotPasswordRequestSchema = z.object({
@@ -46,6 +46,7 @@ export type OAuthCallbackRequest = z.infer<typeof OAuthCallbackRequestSchema>;
 export const AuthTokensDtoSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
+  csrfToken: z.string(),
   expiresIn: z.number(),
 });
 export type AuthTokensDto = z.infer<typeof AuthTokensDtoSchema>;

@@ -5,5 +5,4 @@ export interface DomainEvent {
   type: string;
   sourceService: string;
   timestamp: string; // ISO 8601
-  tenantId: string;
 }

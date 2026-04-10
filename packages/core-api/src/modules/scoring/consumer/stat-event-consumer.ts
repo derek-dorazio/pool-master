@@ -75,7 +75,6 @@ export async function handleStatEvent(
         type: 'score.updated',
         sourceService: 'scoring-service',
         timestamp: event.ingestedAt ?? new Date().toISOString(),
-        tenantId: event.tenantId,
         contestId: contest.contestId,
         teamId: change.entryId,
         oldScore: change.oldScore,

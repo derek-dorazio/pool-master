@@ -113,7 +113,7 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId;
     if (!userId) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }
@@ -122,7 +122,6 @@ export function createContestHandlers(contestService: ContestService) {
       validateCreateContestBody(body);
       const result = await contestService.createContest({
         leagueId: request.params.id,
-        tenantId: '',
         createdBy: userId,
         sportEventId: body.eventId,
         name: body.name,
@@ -158,7 +157,7 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const result = await contestService.getContest(request.params.contestId, '');
+    const result = await contestService.getContest(request.params.contestId);
     if (!result) {
       return sendError(reply, 404, 'NOT_FOUND', 'Contest not found');
     }
@@ -169,9 +168,9 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId as string;
     try {
-      const result = await contestService.listEntries(request.params.contestId, '', userId);
+      const result = await contestService.listEntries(request.params.contestId, userId);
       return reply.send(toContestEntryListResponse({
         contestId: request.params.contestId,
         entries: result.entries,
@@ -194,9 +193,9 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId as string;
     try {
-      const entry = await contestService.getMyEntry(request.params.contestId, '', userId);
+      const entry = await contestService.getMyEntry(request.params.contestId, userId);
       return reply.send(toMyContestEntryResponse(request.params.contestId, entry));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
@@ -213,9 +212,9 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId as string;
     try {
-      const result = await contestService.createEntry(request.params.contestId, '', userId);
+      const result = await contestService.createEntry(request.params.contestId, userId);
       return reply.status(result.created ? 201 : 200).send(
         toContestEntryResponse(request.params.contestId, result.entry),
       );
@@ -234,9 +233,9 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId as string;
     try {
-      await contestService.deleteMyEntry(request.params.contestId, '', userId);
+      await contestService.deleteMyEntry(request.params.contestId, userId);
       return reply.send({
         contestId: request.params.contestId,
         deleted: true as const,
@@ -263,7 +262,6 @@ export function createContestHandlers(contestService: ContestService) {
       const body = UpdateContestBodySchema.parse(request.body);
       const contest = await contestService.updateContest(
         request.params.contestId,
-        '',
         {
           name: body.name,
           startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
@@ -289,7 +287,7 @@ export function createContestHandlers(contestService: ContestService) {
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      await contestService.deleteContest(request.params.contestId, '');
+      await contestService.deleteContest(request.params.contestId);
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {

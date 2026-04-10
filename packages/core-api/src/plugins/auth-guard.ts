@@ -10,6 +10,11 @@ import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { sendError } from '../core/error-handler';
+import {
+  isStateChangingMethod,
+  readAccessCookie,
+  readCsrfCookie,
+} from '../core/session-cookies';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,13 +36,18 @@ declare module 'fastify' {
 // Public route prefixes (these skip JWT validation)
 // ---------------------------------------------------------------------------
 
-const PUBLIC_PREFIXES = [
-  '/health',
-  '/api/v1/auth/',
-];
+const PUBLIC_ROUTES = new Set([
+  'POST /api/v1/auth/register',
+  'POST /api/v1/auth/login',
+  'POST /api/v1/auth/refresh',
+  'POST /api/v1/auth/logout',
+  'POST /api/v1/auth/forgot-password',
+  'POST /api/v1/auth/callback',
+]);
 
-function isPublicRoute(url: string): boolean {
-  return PUBLIC_PREFIXES.some((prefix) => url.startsWith(prefix));
+function isPublicRoute(method: string, url: string): boolean {
+  const path = url.split('?')[0] ?? url;
+  return path.startsWith('/health') || PUBLIC_ROUTES.has(`${method.toUpperCase()} ${path}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -50,29 +60,38 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
   fastify.decorateRequest('authUser', undefined);
 
   fastify.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
-    if (isPublicRoute(request.url)) {
+    if (isPublicRoute(request.method, request.url)) {
       return;
     }
 
     const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing or malformed authorization header');
+    const accessToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : readAccessCookie(request.headers.cookie);
+    if (!accessToken) {
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing authenticated session');
     }
 
-    const token = authHeader.slice(7);
     try {
-      const payload = jwt.verify(token, jwtSecret) as {
+      const payload = jwt.verify(accessToken, jwtSecret) as {
         sub: string;
         email: string;
       };
+
+      const usingCookieSession = !authHeader?.startsWith('Bearer ');
+      if (usingCookieSession && isStateChangingMethod(request.method)) {
+        const csrfCookie = readCsrfCookie(request.headers.cookie);
+        const csrfHeader = request.headers['x-csrf-token'];
+        if (!csrfCookie || csrfHeader !== csrfCookie) {
+          return sendError(reply, 403, 'FORBIDDEN', 'Missing or invalid CSRF token');
+        }
+      }
 
       request.authUser = {
         userId: payload.sub,
         email: payload.email,
       };
 
-      // Also set x-user-id header for backward compatibility with existing handlers
-      (request.headers as Record<string, string>)['x-user-id'] = payload.sub;
     } catch {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired access token');
     }

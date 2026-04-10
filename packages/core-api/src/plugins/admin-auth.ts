@@ -1,10 +1,9 @@
 /**
- * Admin authentication plugin.
+ * Root-admin authorization plugin.
  *
- * Extracts and validates admin JWT from the Authorization header, looks up
- * the admin user in the database, and attaches the admin context to the
- * request. Returns 401 for missing/invalid tokens and 403 for inactive
- * admin users.
+ * Resolves the unified authenticated user from either a Bearer token or the
+ * backend-owned access cookie, then verifies root-admin capability before
+ * attaching root-admin context to the request.
  *
  * This is registered as a Fastify plugin so it can be scoped to admin routes.
  */
@@ -14,15 +13,16 @@ import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
 import { sendError } from '../core/error-handler';
+import { readAccessCookie } from '../core/session-cookies';
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET ?? 'poolmaster-dev-secret-change-in-production';
 
 // ---------------------------------------------------------------------------
 // Admin context interface
 // ---------------------------------------------------------------------------
 
-export interface AdminContext {
-  adminUser: {
+export interface RootAdminContext {
+  rootAdminUser: {
     id: string;
     email: string;
     name: string;
@@ -36,7 +36,7 @@ export interface AdminContext {
 
 declare module 'fastify' {
   interface FastifyRequest {
-    adminContext?: AdminContext;
+    rootAdminContext?: RootAdminContext;
   }
 }
 
@@ -45,18 +45,16 @@ declare module 'fastify' {
 // ---------------------------------------------------------------------------
 
 async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
-  // Decorate request with adminContext (undefined by default)
-  fastify.decorateRequest('adminContext', undefined);
+  // Decorate request with rootAdminContext (undefined by default)
+  fastify.decorateRequest('rootAdminContext', undefined);
 
   fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
     const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing or malformed Authorization header');
-    }
-
-    const token = authHeader.slice(7);
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : readAccessCookie(request.headers.cookie);
     if (!token) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Empty bearer token');
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing authenticated root-admin session');
     }
 
     let userId: string;
@@ -67,11 +65,11 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
         throw new Error('Missing user ID in token payload');
       }
     } catch {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired root-admin token');
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired root-admin session');
     }
 
     const prisma = (fastify as unknown as { prisma: PrismaClient }).prisma;
-    const adminUser = await prisma.user.findUnique({
+    const rootAdminUser = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -81,19 +79,19 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
       },
     });
 
-    if (!adminUser) {
+    if (!rootAdminUser) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'User not found');
     }
 
-    if (!adminUser.isRootAdmin) {
+    if (!rootAdminUser.isRootAdmin) {
       return sendError(reply, 403, 'FORBIDDEN', 'Root-admin access required');
     }
 
-    request.adminContext = {
-      adminUser: {
-        id: adminUser.id,
-        email: adminUser.email,
-        name: adminUser.displayName,
+    request.rootAdminContext = {
+      rootAdminUser: {
+        id: rootAdminUser.id,
+        email: rootAdminUser.email,
+        name: rootAdminUser.displayName,
         isRootAdmin: true,
       },
     };

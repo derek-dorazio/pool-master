@@ -22,7 +22,7 @@ export function createInvitationHandlers(invitationService: InvitationService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId as string;
     const result = await invitationService.sendEmailInvitations({
       leagueId: request.params.id,
       emails: request.body.emails,
@@ -39,7 +39,7 @@ export function createInvitationHandlers(invitationService: InvitationService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId as string;
     const invitation = await invitationService.generateInviteLink({
       leagueId: request.params.id,
       invitedBy: userId,
@@ -68,7 +68,7 @@ export function createInvitationHandlers(invitationService: InvitationService) {
     request: FastifyRequest<{ Body: { inviteCode: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const userId = request.headers['x-user-id'] as string;
+    const userId = request.authUser?.userId;
     if (!userId) {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
     }

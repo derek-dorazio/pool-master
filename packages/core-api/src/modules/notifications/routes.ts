@@ -31,7 +31,7 @@ export async function notificationsModule(
       },
     },
     async (request) => {
-      const userId = request.headers['x-user-id'] as string;
+      const userId = request.authUser?.userId as string;
       const result = await inAppChannel.getNotifications(userId, {
         limit: request.query.limit ? parseInt(request.query.limit, 10) : undefined,
         offset: request.query.offset ? parseInt(request.query.offset, 10) : undefined,
@@ -54,7 +54,7 @@ export async function notificationsModule(
       response: { 200: zodToJsonSchema(NotificationUnreadCountResponseSchema) },
     },
     handler: async (request) => {
-      const userId = request.headers['x-user-id'] as string;
+      const userId = request.authUser?.userId as string;
       return { unreadCount: await inAppChannel.getUnreadCount(userId) };
     },
   });
@@ -80,7 +80,7 @@ export async function notificationsModule(
       response: { 200: zodToJsonSchema(NotificationMarkAllReadResponseSchema) },
     },
     handler: async (request) => {
-      const userId = request.headers['x-user-id'] as string;
+      const userId = request.authUser?.userId as string;
       return { markedRead: await inAppChannel.markAllAsRead(userId) };
     },
   });
