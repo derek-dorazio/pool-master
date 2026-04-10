@@ -18,7 +18,7 @@ export function createDashboardHandlers(dashboardService: DashboardService) {
   ): Promise<void> {
     const dashboard = await dashboardService.getDashboard(request.params.id);
     if (!dashboard) {
-      return sendError(reply, 404, 'NOT_FOUND', 'League not found');
+      return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
     return reply.send(dashboard);
   }

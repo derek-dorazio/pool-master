@@ -156,5 +156,6 @@ describe('API contracts (root admin)', () => {
 
     expect(res.statusCode).toBe(401);
     expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
+    expect(res.json().error.code).toBe('ROOT_ADMIN_SESSION_REQUIRED');
   });
 });

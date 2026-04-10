@@ -31,7 +31,10 @@ export class MemberService {
       throw new MemberNotFoundError(input.targetUserId, input.leagueId);
     }
     if (membership.status !== LeagueMembershipStatus.ACTIVE) {
-      throw new MemberOperationError('Cannot change the role of an inactive league member');
+      throw new MemberOperationError(
+        'Cannot change the role of an inactive league member',
+        'LEAGUE_MEMBER_INACTIVE',
+      );
     }
     const updates: Partial<LeagueMembership> = {
       role: input.newRole,
@@ -52,7 +55,7 @@ export class MemberService {
       throw new MemberNotFoundError(userId, leagueId);
     }
     if (membership.status !== LeagueMembershipStatus.ACTIVE) {
-      throw new MemberOperationError('Member is already inactive');
+      throw new MemberOperationError('Member is already inactive', 'LEAGUE_MEMBER_ALREADY_INACTIVE');
     }
     await this.membershipRepo.update(membership.id, {
       status: LeagueMembershipStatus.INACTIVE,
@@ -76,8 +79,11 @@ export class MemberNotFoundError extends Error {
 }
 
 export class MemberOperationError extends Error {
-  constructor(reason: string) {
+  code: string;
+
+  constructor(reason: string, code = 'BAD_REQUEST') {
     super(reason);
     this.name = 'MemberOperationError';
+    this.code = code;
   }
 }

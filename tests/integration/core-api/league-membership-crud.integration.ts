@@ -14,6 +14,7 @@ import {
   LeagueRole,
   LeagueVisibility,
 } from '@poolmaster/shared/domain';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -126,5 +127,14 @@ describe('League membership CRUD integration', () => {
       where: { id: createdMembership.id },
     });
     expect(afterLeaveMembership.status).toBe(LeagueMembershipStatus.INACTIVE);
+
+    const secondLeaveRes = await getApp().inject({
+      method: 'DELETE',
+      url: API_ROUTES.leagues.leave(leagueId),
+      headers: withoutJsonBodyHeaders(member.headers),
+    });
+    expect(secondLeaveRes.statusCode).toBe(400);
+    expect(ErrorEnvelopeSchema.safeParse(secondLeaveRes.json()).success).toBe(true);
+    expect(secondLeaveRes.json().error.code).toBe('LEAGUE_MEMBER_ALREADY_INACTIVE');
   });
 });

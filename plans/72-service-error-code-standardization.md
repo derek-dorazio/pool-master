@@ -48,9 +48,9 @@ Out of scope:
 | Done | Standardize league and invitation error codes | Shared league permission/membership gates plus invitation accept/revoke semantics now use stable membership and invitation-state codes |
 | In Progress | Standardize squad error codes | Active squad membership/not-found/co-manager conflict cases now use specific codes; remaining generic squad-paths should be reviewed after the next slice |
 | In Progress | Standardize contest and entry error codes | Contest not-found, membership-required, lock, limit, and selection-exists cases are standardized; additional contest admin/override paths remain |
-| In Progress | Standardize standings/history read error codes | Shared standings session failure and history missing-resource cases are standardized; broader read-path sweep remains |
+| In Progress | Standardize standings/history read error codes | Shared standings session failure, history missing-resource cases, and core league/dashboard/member read semantics are standardized; broader participant and older admin read paths remain |
 | In Progress | Update functional API suites to assert the new error codes | Existing auth, consent, leagues, contests, squads, and standings/history functional suites now assert the first standardized codes; remaining slices should extend that pattern as more modules are converted |
-| In Progress | Add or update representative contract/integration assertions for standardized error codes | Added invitation contract and CRUD assertions for the new invitation-state codes; broader admin and remaining read surfaces still need representative assertions |
+| In Progress | Add or update representative contract/integration assertions for standardized error codes | Added invitation contract/CRUD assertions plus root-admin session and member-lifecycle assertions for the new codes; broader provider/user/admin read surfaces still need representative assertions |
 | Pending | Refresh OpenAPI/generated artifacts after route/schema changes | Run `npm run api:refresh` and `npm run api:validate` |
 
 ## Guardrails

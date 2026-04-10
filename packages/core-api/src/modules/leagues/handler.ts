@@ -25,7 +25,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
   ): Promise<{ leagues: unknown[] }> {
     const userId = request.authUser?.userId;
     if (!userId) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
     const leagues = await leagueService.findByUser(userId);
     return {
@@ -49,7 +49,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
   ): Promise<void> {
     const userId = request.authUser?.userId;
     if (!userId) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
     const body = request.body;
     const input: CreateLeagueInput = {
@@ -77,7 +77,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     const userId = request.authUser?.userId;
     const result = await leagueService.getLeagueWithMembers(request.params.id);
     if (!result) {
-      return sendError(reply, 404, 'NOT_FOUND', 'League not found');
+      return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
     const membership = userId
       ? result.members.find((member) => member.userId === userId)
@@ -108,7 +108,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
       }
       throw err;
     }
