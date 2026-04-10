@@ -48,7 +48,12 @@ export function requireAdminPermission(
   ): Promise<void> {
     const ctx = request.rootAdminContext;
     if (!ctx) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Root-admin authentication required');
+      return sendError(
+        reply,
+        401,
+        'ROOT_ADMIN_SESSION_REQUIRED',
+        'Authenticated root-admin session required',
+      );
     }
   };
 }

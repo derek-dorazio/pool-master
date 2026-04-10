@@ -69,7 +69,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
       ? authHeader.slice(7)
       : readAccessCookie(request.headers.cookie);
     if (!accessToken) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing authenticated session');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
 
     try {
@@ -83,7 +83,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
         const csrfCookie = readCsrfCookie(request.headers.cookie);
         const csrfHeader = request.headers['x-csrf-token'];
         if (!csrfCookie || csrfHeader !== csrfCookie) {
-          return sendError(reply, 403, 'FORBIDDEN', 'Missing or invalid CSRF token');
+          return sendError(reply, 403, 'AUTH_CSRF_INVALID', 'Missing or invalid CSRF token');
         }
       }
 
@@ -93,7 +93,12 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
       };
 
     } catch {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired access token');
+      return sendError(
+        reply,
+        401,
+        'AUTH_ACCESS_TOKEN_INVALID',
+        'Invalid or expired access token',
+      );
     }
   });
 }

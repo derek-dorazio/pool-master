@@ -128,7 +128,7 @@ export function createAuthHandlers(authService: AuthService) {
   ): Promise<void> {
     try {
       if (!request.authUser?.userId) {
-        return sendError(reply, 401, 'UNAUTHORIZED', 'Authenticated session required');
+        return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
       }
       const profile = await authService.getProfile(request.authUser.userId);
       return reply.send({ user: profile });

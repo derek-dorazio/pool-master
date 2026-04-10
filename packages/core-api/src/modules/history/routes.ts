@@ -35,7 +35,12 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const summary = await historyService.getContestSummary(request.params.id);
       if (!summary) {
-        return sendError(reply, 404, 'NOT_FOUND', 'No history for this contest');
+        return sendError(
+          reply,
+          404,
+          'CONTEST_HISTORY_NOT_FOUND',
+          'No history exists for this contest',
+        );
       }
       return reply.send(summary);
     },
@@ -76,7 +81,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
         request.params.entryId,
       );
       if (!roster) {
-        return sendError(reply, 404, 'NOT_FOUND', 'Roster history not found');
+        return sendError(reply, 404, 'ROSTER_HISTORY_NOT_FOUND', 'Roster history not found');
       }
       return reply.send({ rosterHistory: roster });
     },

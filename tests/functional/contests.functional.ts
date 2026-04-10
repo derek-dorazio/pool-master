@@ -97,7 +97,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expectFunctionalError(deletedContest, {
       status: 404,
-      code: 'NOT_FOUND',
+      code: 'CONTEST_NOT_FOUND',
     });
   });
 
@@ -224,7 +224,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expectFunctionalError(deletedContest, {
       status: 404,
-      code: 'NOT_FOUND',
+      code: 'CONTEST_NOT_FOUND',
     });
   });
 
@@ -262,7 +262,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expectFunctionalError(enterResponse, {
       status: 400,
-      code: 'BAD_REQUEST',
+      code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
 
     const cleanupDeleteResponse = await deleteContest({

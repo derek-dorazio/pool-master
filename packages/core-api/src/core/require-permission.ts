@@ -29,24 +29,39 @@ export function requirePermission(
   ): Promise<void> {
     const userId = request.authUser?.userId;
     if (!userId) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
     const leagueId = (request.params as { id: string }).id;
     if (!leagueId) {
-      return sendError(reply, 400, 'BAD_REQUEST', 'Missing league id');
+      return sendError(reply, 400, 'LEAGUE_ID_REQUIRED', 'League id is required');
     }
     const membership: LeagueMembership | null = await membershipRepo.findByLeagueAndUser(
       leagueId,
       userId,
     );
     if (!membership) {
-      return sendError(reply, 403, 'FORBIDDEN', 'You are not a member of this league');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_MEMBERSHIP_REQUIRED',
+        'You must be an active member of this league to perform this action',
+      );
     }
     if (membership.status !== ('ACTIVE' satisfies LeagueMembershipStatus)) {
-      return sendError(reply, 403, 'FORBIDDEN', 'Your membership in this league is inactive');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_MEMBERSHIP_INACTIVE',
+        'Your membership in this league is inactive',
+      );
     }
     if (!hasPermission(membership, permission)) {
-      return sendError(reply, 403, 'FORBIDDEN', 'You do not have permission for this action');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_PERMISSION_DENIED',
+        'You do not have permission for this action',
+      );
     }
   };
 }

@@ -54,7 +54,12 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
       ? authHeader.slice(7)
       : readAccessCookie(request.headers.cookie);
     if (!token) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing authenticated root-admin session');
+      return sendError(
+        reply,
+        401,
+        'ROOT_ADMIN_SESSION_REQUIRED',
+        'Authenticated root-admin session required',
+      );
     }
 
     let userId: string;
@@ -65,7 +70,12 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
         throw new Error('Missing user ID in token payload');
       }
     } catch {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired root-admin session');
+      return sendError(
+        reply,
+        401,
+        'ROOT_ADMIN_SESSION_INVALID',
+        'Invalid or expired root-admin session',
+      );
     }
 
     const prisma = (fastify as unknown as { prisma: PrismaClient }).prisma;
@@ -80,11 +90,11 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
     });
 
     if (!rootAdminUser) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'User not found');
+      return sendError(reply, 401, 'ROOT_ADMIN_USER_NOT_FOUND', 'Root-admin user not found');
     }
 
     if (!rootAdminUser.isRootAdmin) {
-      return sendError(reply, 403, 'FORBIDDEN', 'Root-admin access required');
+      return sendError(reply, 403, 'ROOT_ADMIN_ACCESS_REQUIRED', 'Root-admin access required');
     }
 
     request.rootAdminContext = {

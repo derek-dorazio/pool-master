@@ -94,7 +94,10 @@ export class SquadService {
     const existingLeagueMembership = await this.squadMembershipRepo.findByLeagueAndUser(leagueId, targetUserId);
     if (existingLeagueMembership) {
       if (existingLeagueMembership.squadId !== squadId) {
-        throw new SquadOperationError('User already belongs to another squad in this league');
+        throw new SquadOperationError(
+          'User already belongs to another squad in this league',
+          'SQUAD_MEMBERSHIP_CONFLICT',
+        );
       }
 
       if (existingLeagueMembership.status === SquadMembershipStatus.ACTIVE) {
@@ -193,7 +196,10 @@ export class SquadService {
   private async requireActiveLeagueMembership(leagueId: string, userId: string) {
     const membership = await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, userId);
     if (!membership || membership.status !== LeagueMembershipStatus.ACTIVE) {
-      throw new SquadOperationError('You must be an active league member to manage squads');
+      throw new SquadOperationError(
+        'You must be an active league member to manage squads',
+        'LEAGUE_MEMBERSHIP_REQUIRED',
+      );
     }
     return membership;
   }
@@ -202,10 +208,16 @@ export class SquadService {
     await this.requireLeagueScopedSquad(leagueId, squadId);
     const membership = await this.squadMembershipRepo.findBySquadAndUser(squadId, userId);
     if (!membership || membership.status !== SquadMembershipStatus.ACTIVE) {
-      throw new SquadOperationError('You must be an active squad co-manager to perform this action');
+      throw new SquadOperationError(
+        'You must be an active squad co-manager to perform this action',
+        'SQUAD_CO_MANAGER_REQUIRED',
+      );
     }
     if (membership.leagueId !== leagueId) {
-      throw new SquadOperationError('Squad membership does not match the requested league');
+      throw new SquadOperationError(
+        'Squad membership does not match the requested league',
+        'SQUAD_LEAGUE_MISMATCH',
+      );
     }
     return membership;
   }
@@ -213,10 +225,16 @@ export class SquadService {
   private async ensureUserCanJoinLeagueSquad(leagueId: string, userId: string): Promise<void> {
     const existing = await this.squadMembershipRepo.findByLeagueAndUser(leagueId, userId);
     if (existing && existing.status === SquadMembershipStatus.ACTIVE) {
-      throw new SquadOperationError('User already belongs to a squad in this league');
+      throw new SquadOperationError(
+        'User already belongs to a squad in this league',
+        'SQUAD_MEMBERSHIP_CONFLICT',
+      );
     }
     if (existing && existing.status === SquadMembershipStatus.INACTIVE) {
-      throw new SquadOperationError('User already has a squad history in this league');
+      throw new SquadOperationError(
+        'User already has a squad history in this league',
+        'SQUAD_HISTORY_EXISTS',
+      );
     }
   }
 
@@ -226,16 +244,19 @@ export class SquadService {
       select: { id: true, displayName: true },
     });
     if (!user) {
-      throw new SquadOperationError(`User not found: ${userId}`);
+      throw new SquadOperationError(`User not found: ${userId}`, 'USER_NOT_FOUND');
     }
     return user;
   }
 }
 
 export class SquadOperationError extends Error {
-  constructor(message: string) {
+  code: string;
+
+  constructor(message: string, code = 'BAD_REQUEST') {
     super(message);
     this.name = 'SquadOperationError';
+    this.code = code;
   }
 }
 

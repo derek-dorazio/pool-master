@@ -136,7 +136,7 @@ describe('SDK Functional: Squads', () => {
 
     expectFunctionalError(outsiderResponse, {
       status: 400,
-      code: 'BAD_REQUEST',
+      code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
   });
 });

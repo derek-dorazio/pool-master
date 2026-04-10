@@ -88,7 +88,7 @@ describe('SDK Functional: Auth', () => {
 
     expectFunctionalError(forbiddenCreate, {
       status: 403,
-      code: 'FORBIDDEN',
+      code: 'AUTH_CSRF_INVALID',
     });
 
     const cookieClient = createCookieSessionClient(user.login.tokens);

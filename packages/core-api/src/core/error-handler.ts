@@ -33,13 +33,19 @@ function inferErrorCode(error: ErrorLike, statusCode: number): string {
 
   switch (error.name) {
     case 'ContestNotFoundError':
+      return 'CONTEST_NOT_FOUND';
     case 'ContestEntryNotFoundError':
+      return 'CONTEST_ENTRY_NOT_FOUND';
     case 'LeagueNotFoundError':
+      return 'LEAGUE_NOT_FOUND';
     case 'ParticipantNotFoundError':
+      return 'PARTICIPANT_NOT_FOUND';
     case 'InvitationNotFoundError':
+      return 'LEAGUE_INVITATION_NOT_FOUND';
     case 'MemberNotFoundError':
+      return 'LEAGUE_MEMBER_NOT_FOUND';
     case 'SquadNotFoundError':
-      return 'NOT_FOUND';
+      return 'SQUAD_NOT_FOUND';
     case 'ContestOperationError':
     case 'ContestEntryOperationError':
     case 'InvitationInvalidError':

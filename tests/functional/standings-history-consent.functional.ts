@@ -382,7 +382,7 @@ describe('SDK Functional: Standings, History, and Consent', () => {
 
     expectFunctionalError(standingsResponse, {
       status: 401,
-      code: 'UNAUTHORIZED',
+      code: 'AUTH_SESSION_REQUIRED',
     });
 
     const missingHistoryResponse = await getContestHistorySummary({
@@ -394,7 +394,7 @@ describe('SDK Functional: Standings, History, and Consent', () => {
 
     expectFunctionalError(missingHistoryResponse, {
       status: 404,
-      code: 'NOT_FOUND',
+      code: 'CONTEST_HISTORY_NOT_FOUND',
     });
   });
 });

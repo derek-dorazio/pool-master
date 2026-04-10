@@ -21,20 +21,30 @@ async function loadMembership(
 ) {
   const { userId, leagueId } = extractLeagueContext(request);
   if (!userId) {
-    await sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
+    await sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     return null;
   }
   if (!leagueId) {
-    await sendError(reply, 400, 'BAD_REQUEST', 'Missing league id');
+    await sendError(reply, 400, 'LEAGUE_ID_REQUIRED', 'League id is required');
     return null;
   }
   const membership = await membershipRepo.findByLeagueAndUser(leagueId, userId);
   if (!membership) {
-    await sendError(reply, 403, 'FORBIDDEN', 'You are not a member of this league');
+    await sendError(
+      reply,
+      403,
+      'LEAGUE_MEMBERSHIP_REQUIRED',
+      'You must be an active member of this league to perform this action',
+    );
     return null;
   }
   if (membership.status !== LeagueMembershipStatus.ACTIVE) {
-    await sendError(reply, 403, 'FORBIDDEN', 'Your membership in this league is inactive');
+    await sendError(
+      reply,
+      403,
+      'LEAGUE_MEMBERSHIP_INACTIVE',
+      'Your membership in this league is inactive',
+    );
     return null;
   }
   return membership;
@@ -59,7 +69,12 @@ export function requireCommissioner(
       return;
     }
     if (!isCommissioner(membership)) {
-      return sendError(reply, 403, 'FORBIDDEN', 'You do not have permission for this action');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_PERMISSION_DENIED',
+        'You do not have permission for this action',
+      );
     }
   };
 }

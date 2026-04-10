@@ -83,7 +83,7 @@ export function createStandingsHandlers(standingsService: StandingsService) {
     const userId = request.authUser?.userId;
 
     if (!userId) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
 
     try {

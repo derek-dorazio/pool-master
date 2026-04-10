@@ -65,7 +65,7 @@ describe('SDK Functional: Consent', () => {
     });
     expectFunctionalError(writeResponse, {
       status: 401,
-      code: 'UNAUTHORIZED',
+      code: 'AUTH_SESSION_REQUIRED',
     });
 
     const readResponse = await getConsentHistory({
@@ -73,7 +73,7 @@ describe('SDK Functional: Consent', () => {
     });
     expectFunctionalError(readResponse, {
       status: 401,
-      code: 'UNAUTHORIZED',
+      code: 'AUTH_SESSION_REQUIRED',
     });
   });
 });

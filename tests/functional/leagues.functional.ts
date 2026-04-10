@@ -201,7 +201,7 @@ describe('SDK Functional: Leagues', () => {
 
     expectFunctionalError(forbiddenResponse, {
       status: 403,
-      code: 'FORBIDDEN',
+      code: 'LEAGUE_PERMISSION_DENIED',
     });
   });
 });

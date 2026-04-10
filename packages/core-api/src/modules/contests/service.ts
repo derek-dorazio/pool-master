@@ -74,7 +74,7 @@ export class ContestService {
   ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration }> {
     const league = await this.leagueRepo.findById(input.leagueId);
     if (!league) {
-      throw new ContestOperationError('League not found');
+      throw new ContestOperationError('League not found', 'LEAGUE_NOT_FOUND');
     }
     const contest = await this.contestRepo.create({
       leagueId: input.leagueId,
@@ -127,7 +127,10 @@ export class ContestService {
       throw new ContestNotFoundError(contestId);
     }
     if (contest.status !== ContestStatus.DRAFT) {
-      throw new ContestOperationError('Contest can only be edited in DRAFT status');
+      throw new ContestOperationError(
+        'Contest can only be edited in DRAFT status',
+        'CONTEST_EDIT_STATUS_INVALID',
+      );
     }
     return this.contestRepo.update(contestId, updates as Partial<Contest>);
   }
@@ -139,7 +142,10 @@ export class ContestService {
       throw new ContestNotFoundError(contestId);
     }
     if (contest.status !== ContestStatus.DRAFT) {
-      throw new ContestOperationError('Contest can only be deleted in DRAFT status');
+      throw new ContestOperationError(
+        'Contest can only be deleted in DRAFT status',
+        'CONTEST_DELETE_STATUS_INVALID',
+      );
     }
     await this.contestRepo.delete(contestId);
   }
@@ -192,10 +198,16 @@ export class ContestService {
     const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
     if (!membership) {
-      throw new ContestEntryOperationError('You must be a league member to enter this contest');
+      throw new ContestEntryOperationError(
+        'You must be an active league member to enter this contest',
+        'LEAGUE_MEMBERSHIP_REQUIRED',
+      );
     }
     if (!isContestJoinable(context.contest.status)) {
-      throw new ContestEntryOperationError('Contest entries can only be changed before the contest starts');
+      throw new ContestEntryOperationError(
+        'Contest entries can only be changed before the contest starts',
+        'CONTEST_ENTRY_LOCKED',
+      );
     }
 
     const squad = await this.resolveOrCreateSquadForEntry(
@@ -211,7 +223,10 @@ export class ContestService {
         const dto = await this.loadEntryDtoById(existingEntries[0].id);
         return { entry: dto, created: false };
       }
-      throw new ContestEntryOperationError('This squad has already reached the entry limit for the contest');
+      throw new ContestEntryOperationError(
+        'This squad has already reached the entry limit for the contest',
+        'CONTEST_ENTRY_LIMIT_REACHED',
+      );
     }
 
     const nextEntryNumber = existingEntries.length + 1;
@@ -236,13 +251,22 @@ export class ContestService {
     const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
     if (!membership) {
-      throw new ContestEntryOperationError('You must be a league member to leave this contest');
+      throw new ContestEntryOperationError(
+        'You must be an active league member to leave this contest',
+        'LEAGUE_MEMBERSHIP_REQUIRED',
+      );
     }
     if (!isContestJoinable(context.contest.status)) {
-      throw new ContestEntryOperationError('Contest entries can only be changed before the contest starts');
+      throw new ContestEntryOperationError(
+        'Contest entries can only be changed before the contest starts',
+        'CONTEST_ENTRY_LOCKED',
+      );
     }
     if (!context.squadMembership) {
-      throw new ContestEntryOperationError('You do not manage a squad in this league');
+      throw new ContestEntryOperationError(
+        'You do not manage a squad in this league',
+        'SQUAD_MANAGER_REQUIRED',
+      );
     }
 
     const existing = await this.findPrimaryEntryBySquad(contestId, context.squadMembership.squadId);
@@ -252,7 +276,10 @@ export class ContestService {
 
     const hasSelections = await this.entryHasSelections(existing.id);
     if (hasSelections) {
-      throw new ContestEntryOperationError('Cannot leave a contest after making picks or draft selections');
+      throw new ContestEntryOperationError(
+        'Cannot leave a contest after making picks or draft selections',
+        'CONTEST_ENTRY_SELECTIONS_EXIST',
+      );
     }
 
     await this.requireEntryRepo().delete(existing.id);
@@ -326,7 +353,10 @@ export class ContestService {
     });
 
     if (!row) {
-      throw new ContestEntryOperationError(`Contest entry not found: ${entryId}`);
+      throw new ContestEntryOperationError(
+        `Contest entry not found: ${entryId}`,
+        'CONTEST_ENTRY_NOT_FOUND',
+      );
     }
 
     return toContestEntryDto(row, {
@@ -357,7 +387,10 @@ export class ContestService {
     }
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.displayName) {
-      throw new ContestEntryOperationError('Unable to resolve the squad owner');
+      throw new ContestEntryOperationError(
+        'Unable to resolve the squad owner',
+        'SQUAD_OWNER_RESOLUTION_FAILED',
+      );
     }
     const squad = await this.requireSquadRepo().create({
       leagueId,
@@ -387,28 +420,37 @@ export class ContestService {
 
   private requireEntryRepo(): ContestEntryRepository {
     if (!this.entryRepo) {
-      throw new ContestEntryOperationError('Contest entry repository is unavailable');
+      throw new ContestEntryOperationError(
+        'Contest entry repository is unavailable',
+        'CONTEST_ENTRY_REPOSITORY_UNAVAILABLE',
+      );
     }
     return this.entryRepo;
   }
 
   private requireSquadRepo(): SquadRepository {
     if (!this.squadRepo) {
-      throw new ContestEntryOperationError('Squad repository is unavailable');
+      throw new ContestEntryOperationError(
+        'Squad repository is unavailable',
+        'SQUAD_REPOSITORY_UNAVAILABLE',
+      );
     }
     return this.squadRepo;
   }
 
   private requireSquadMembershipRepo(): SquadMembershipRepository {
     if (!this.squadMembershipRepo) {
-      throw new ContestEntryOperationError('Squad membership repository is unavailable');
+      throw new ContestEntryOperationError(
+        'Squad membership repository is unavailable',
+        'SQUAD_MEMBERSHIP_REPOSITORY_UNAVAILABLE',
+      );
     }
     return this.squadMembershipRepo;
   }
 
   private requirePrisma(): PrismaClient {
     if (!this.prisma) {
-      throw new ContestEntryOperationError('Prisma client is unavailable');
+      throw new ContestEntryOperationError('Prisma client is unavailable', 'PRISMA_UNAVAILABLE');
     }
     return this.prisma;
   }
@@ -422,16 +464,22 @@ export class ContestNotFoundError extends Error {
 }
 
 export class ContestOperationError extends Error {
-  constructor(reason: string) {
+  code: string;
+
+  constructor(reason: string, code = 'BAD_REQUEST') {
     super(reason);
     this.name = 'ContestOperationError';
+    this.code = code;
   }
 }
 
 export class ContestEntryOperationError extends Error {
-  constructor(reason: string) {
+  code: string;
+
+  constructor(reason: string, code = 'BAD_REQUEST') {
     super(reason);
     this.name = 'ContestEntryOperationError';
+    this.code = code;
   }
 }
 

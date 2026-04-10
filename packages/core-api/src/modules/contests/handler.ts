@@ -115,7 +115,7 @@ export function createContestHandlers(contestService: ContestService) {
   ): Promise<void> {
     const userId = request.authUser?.userId;
     if (!userId) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
     const body = CreateContestBodySchema.parse(request.body);
     try {
@@ -139,7 +139,7 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.status(201).send(toContestResponse(result.contest, result.contestConfiguration));
     } catch (err) {
       if (err instanceof ContestOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        return sendError(reply, 400, err.code, err.message);
       }
       throw err;
     }
@@ -159,7 +159,7 @@ export function createContestHandlers(contestService: ContestService) {
   ): Promise<void> {
     const result = await contestService.getContest(request.params.contestId);
     if (!result) {
-      return sendError(reply, 404, 'NOT_FOUND', 'Contest not found');
+      return sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
     }
     return reply.send(toContestResponse(result.contest, result.contestConfiguration));
   }
@@ -180,10 +180,10 @@ export function createContestHandlers(contestService: ContestService) {
       }));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        return sendError(reply, 400, err.code, err.message);
       }
       throw err;
     }
@@ -199,10 +199,10 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.send(toMyContestEntryResponse(request.params.contestId, entry));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        return sendError(reply, 400, err.code, err.message);
       }
       throw err;
     }
@@ -220,10 +220,10 @@ export function createContestHandlers(contestService: ContestService) {
       );
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        return sendError(reply, 400, err.code, err.message);
       }
       throw err;
     }
@@ -242,10 +242,10 @@ export function createContestHandlers(contestService: ContestService) {
       });
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        return sendError(reply, 400, err.code, err.message);
       }
       throw err;
     }

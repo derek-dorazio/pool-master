@@ -42,14 +42,14 @@ Out of scope:
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Inventory active routes still returning generic application codes | Focus on generic `BAD_REQUEST`, `FORBIDDEN`, `NOT_FOUND`, `UNAUTHORIZED` usages where the domain reason is actually known |
-| Pending | Define the canonical domain-specific code set for the active product surface | Cover auth/session, leagues/invitations, squads, contests/entries, standings/history, consent, and active root-admin flows |
-| Pending | Standardize auth/session error codes | Replace generic auth/CSRF/session codes with stable auth-specific codes where needed |
-| Pending | Standardize league and invitation error codes | Cover membership required, invalid invite, exhausted invite, invite revoked, invite expired, permission denials, etc. |
-| Pending | Standardize squad error codes | Cover not-league-member, squad-not-found, co-manager lifecycle conflicts, and permission denials |
-| Pending | Standardize contest and entry error codes | Cover contest not found, entry locked, membership required, no-manageable-squad, duplicate/limit conflicts, and leave restrictions |
-| Pending | Standardize standings/history read error codes | Replace generic not-found/forbidden variants where the domain reason is known |
-| Pending | Update functional API suites to assert the new error codes | Revise existing functional tests first, including auth, leagues, squads, contests, and standings/history slices |
+| Done | Inventory active routes still returning generic application codes | Completed first-pass inventory across shared auth/permission layers and the active leagues, squads, contests, standings, history, and root-admin surfaces |
+| In Progress | Define the canonical domain-specific code set for the active product surface | First active set now includes `AUTH_*`, `ROOT_ADMIN_*`, `LEAGUE_*`, `CONTEST_*`, `SQUAD_*`, and history-specific not-found codes |
+| Done | Standardize auth/session error codes | Shared auth/session and CSRF handling now use specific auth codes instead of generic `UNAUTHORIZED` and `FORBIDDEN` |
+| In Progress | Standardize league and invitation error codes | Shared league permission/membership gates are standardized; invitation accept/revoke semantics still need the same treatment |
+| In Progress | Standardize squad error codes | Active squad membership/not-found/co-manager conflict cases now use specific codes; remaining generic squad-paths should be reviewed after the next slice |
+| In Progress | Standardize contest and entry error codes | Contest not-found, membership-required, lock, limit, and selection-exists cases are standardized; additional contest admin/override paths remain |
+| In Progress | Standardize standings/history read error codes | Shared standings session failure and history missing-resource cases are standardized; broader read-path sweep remains |
+| In Progress | Update functional API suites to assert the new error codes | Updated existing auth, consent, leagues, contests, squads, and standings/history functional suites to match the new codes |
 | Pending | Add or update representative contract/integration assertions for standardized error codes | Keep coverage focused on public service semantics rather than duplicating every functional assertion |
 | Pending | Refresh OpenAPI/generated artifacts after route/schema changes | Run `npm run api:refresh` and `npm run api:validate` |
 

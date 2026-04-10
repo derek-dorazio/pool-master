@@ -116,10 +116,10 @@ export function createSquadHandlers(service: SquadService) {
 
 function handleSquadError(reply: FastifyReply, error: unknown) {
   if (error instanceof SquadNotFoundError) {
-    return sendError(reply, 404, 'NOT_FOUND', error.message);
+    return sendError(reply, 404, 'SQUAD_NOT_FOUND', error.message);
   }
   if (error instanceof SquadOperationError) {
-    return sendError(reply, 400, 'BAD_REQUEST', error.message);
+    return sendError(reply, 400, error.code, error.message);
   }
   throw error;
 }
