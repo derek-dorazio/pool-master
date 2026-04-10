@@ -9,25 +9,16 @@ import type { League } from '@poolmaster/shared/domain';
 export class PrismaLeagueRepository implements LeagueRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findById(id: string, tenantId: string): Promise<League | null> {
+  async findById(id: string): Promise<League | null> {
     const row = await this.prisma.league.findFirst({
-      where: { id, ...(tenantId ? { tenantId } : {}) },
+      where: { id },
     });
     return row ? mapToLeague(row) : null;
-  }
-
-  async findByTenant(tenantId: string): Promise<League[]> {
-    const rows = await this.prisma.league.findMany({
-      where: { tenantId },
-      orderBy: { createdAt: 'desc' },
-    });
-    return rows.map(mapToLeague);
   }
 
   async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League> {
     const row = await this.prisma.league.create({
       data: {
-        tenantId: league.tenantId,
         name: league.name,
         description: league.description,
         createdBy: league.createdBy,
@@ -60,7 +51,6 @@ export class PrismaLeagueRepository implements LeagueRepository {
 
 function mapToLeague(row: {
   id: string;
-  tenantId: string;
   name: string;
   description: string | null;
   createdBy: string;
@@ -72,7 +62,6 @@ function mapToLeague(row: {
 }): League {
   return {
     id: row.id,
-    tenantId: row.tenantId,
     name: row.name,
     description: row.description ?? undefined,
     createdBy: row.createdBy,

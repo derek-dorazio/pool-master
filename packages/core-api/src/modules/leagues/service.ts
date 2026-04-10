@@ -12,7 +12,6 @@ import type {
 import { InvitePolicy, LeagueMembershipStatus, LeagueRole, WeekDay } from '@poolmaster/shared/domain';
 
 export interface CreateLeagueInput {
-  tenantId: string;
   createdBy: string;
   name: string;
   description?: string;
@@ -47,7 +46,6 @@ export class LeagueService {
       ...input.settings,
     };
     const league = await this.leagueRepo.create({
-      tenantId: input.tenantId,
       name: input.name,
       description: input.description,
       createdBy: input.createdBy,
@@ -58,7 +56,7 @@ export class LeagueService {
     const membership = await this.membershipRepo.create({
       leagueId: league.id,
       userId: input.createdBy,
-      role: LeagueRole.OWNER,
+      role: LeagueRole.COMMISSIONER,
       status: LeagueMembershipStatus.ACTIVE,
       permissions: [],
       joinedAt: new Date(),
@@ -66,29 +64,25 @@ export class LeagueService {
     return { league, membership };
   }
 
-  async findById(leagueId: string, tenantId: string): Promise<League | null> {
-    return this.leagueRepo.findById(leagueId, tenantId);
+  async findById(leagueId: string): Promise<League | null> {
+    return this.leagueRepo.findById(leagueId);
   }
 
   async findByUser(userId: string): Promise<League[]> {
     const memberships = await this.membershipRepo.findByUser(userId);
     const leagues = await Promise.all(
-      memberships.map((membership) => this.leagueRepo.findById(membership.leagueId, '')),
+      memberships.map((membership) => this.leagueRepo.findById(membership.leagueId)),
     );
     return leagues.filter((league): league is League => league !== null);
-  }
-
-  async findByTenant(tenantId: string): Promise<League[]> {
-    return this.leagueRepo.findByTenant(tenantId);
   }
 
   /** Partially updates the league settings JSONB, merging with existing values. */
   async updateSettings(
     leagueId: string,
-    tenantId: string,
+    _tenantId: string,
     updates: Partial<LeagueSettings>,
   ): Promise<League> {
-    const league = await this.leagueRepo.findById(leagueId, tenantId);
+    const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
       throw new LeagueNotFoundError(leagueId);
     }
@@ -102,9 +96,9 @@ export class LeagueService {
   /** Returns the league together with its member list. */
   async getLeagueWithMembers(
     leagueId: string,
-    tenantId: string,
+    _tenantId: string,
   ): Promise<{ league: League; members: LeagueMembership[] } | null> {
-    const league = await this.leagueRepo.findById(leagueId, tenantId);
+    const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
       return null;
     }

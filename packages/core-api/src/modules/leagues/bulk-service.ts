@@ -55,7 +55,7 @@ export class BulkService {
     const errors: { eventName: string; reason: string }[] = [];
     for (const sourceId of input.sourceContestIds) {
       try {
-        const source = await this.contestRepo.findById(sourceId, input.tenantId);
+        const source = await this.contestRepo.findById(sourceId);
         if (!source) {
           errors.push({ eventName: sourceId, reason: 'Source contest not found' });
           continue;
@@ -85,7 +85,7 @@ export class BulkService {
     invitedBy: string,
     rows: CsvImportRow[],
   ): Promise<CsvImportResult> {
-    const league = await this.leagueRepo.findById(leagueId, '');
+    const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
       throw new BulkOperationError('League not found');
     }

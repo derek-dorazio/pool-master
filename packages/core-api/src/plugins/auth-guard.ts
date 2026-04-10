@@ -18,7 +18,6 @@ import { sendError } from '../core/error-handler';
 export interface AuthUser {
   userId: string;
   email: string;
-  tenantId?: string;
 }
 
 // Extend Fastify request to carry auth context
@@ -65,13 +64,11 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
       const payload = jwt.verify(token, jwtSecret) as {
         sub: string;
         email: string;
-        tenantId?: string;
       };
 
       request.authUser = {
         userId: payload.sub,
         email: payload.email,
-        tenantId: payload.tenantId,
       };
 
       // Also set x-user-id header for backward compatibility with existing handlers

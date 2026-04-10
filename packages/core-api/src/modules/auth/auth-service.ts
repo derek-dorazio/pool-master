@@ -23,7 +23,6 @@ export interface TokenPair {
 export interface JwtPayload {
   sub: string;
   email: string;
-  tenantId: string;
   iat: number;
   exp: number;
 }
@@ -33,7 +32,6 @@ export interface UserProfile {
   email: string;
   displayName: string;
   authProvider?: 'email' | 'google' | 'apple';
-  tenantId: string;
   timezone?: string | null;
   locale?: string | null;
   createdAt: Date;
@@ -74,8 +72,7 @@ export class AuthService {
   }
 
   /**
-   * Registers a new user with email/password. Creates a default tenant if the
-   * user has no tenant association. Returns a token pair.
+   * Registers a new user with email/password and returns a token pair.
    */
   async register(
     email: string,
@@ -89,26 +86,16 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    // Create a default tenant for the user
-    const tenant = await this.prisma.tenant.create({
-      data: {
-        name: `${displayName}'s Workspace`,
-        slug: `user-${uuidv4().slice(0, 8)}`,
-        settings: {},
-      },
-    });
-
     const user = await this.prisma.user.create({
       data: {
         email,
         passwordHash,
         displayName,
         authProvider: 'local',
-        tenantId: tenant.id,
       },
     });
 
-    const tokens = await this.issueTokens(user.id, user.email, tenant.id);
+    const tokens = await this.issueTokens(user.id, user.email);
 
     return {
       user: mapUserProfile(user),
@@ -130,7 +117,7 @@ export class AuthService {
       throw new AuthError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
-    const tokens = await this.issueTokens(user.id, user.email, user.tenantId);
+    const tokens = await this.issueTokens(user.id, user.email);
 
     return {
       user: mapUserProfile(user),
@@ -157,7 +144,7 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    return this.issueTokens(stored.user.id, stored.user.email, stored.user.tenantId);
+    return this.issueTokens(stored.user.id, stored.user.email);
   }
 
   /**
@@ -196,11 +183,11 @@ export class AuthService {
   // Private helpers
   // -------------------------------------------------------------------------
 
-  private async issueTokens(userId: string, email: string, tenantId: string): Promise<TokenPair> {
+  private async issueTokens(userId: string, email: string): Promise<TokenPair> {
     const now = Math.floor(Date.now() / 1000);
 
     const accessToken = jwt.sign(
-      { sub: userId, email, tenantId, iat: now, exp: now + ACCESS_TOKEN_EXPIRY },
+      { sub: userId, email, iat: now, exp: now + ACCESS_TOKEN_EXPIRY },
       this.jwtSecret,
     );
 
@@ -231,7 +218,6 @@ function mapUserProfile(user: {
   id: string;
   email: string;
   displayName: string;
-  tenantId: string;
   authProvider: string | null;
   timezone: string | null;
   locale: string | null;
@@ -242,9 +228,8 @@ function mapUserProfile(user: {
     email: user.email,
     displayName: user.displayName,
     authProvider: mapAuthProvider(user.authProvider),
-    tenantId: user.tenantId,
-    timezone: user.timezone,
-    locale: user.locale,
+    timezone: user.timezone ?? undefined,
+    locale: user.locale ?? undefined,
     createdAt: user.createdAt,
   };
 }

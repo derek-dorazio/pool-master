@@ -10,22 +10,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ProviderService } from './provider-service';
 import { ProviderConfigUnsupportedError, ProviderNotFoundError } from './provider-service';
 import { sendError } from '../../core/error-handler';
-
-// ---------------------------------------------------------------------------
-// Admin context helper
-// ---------------------------------------------------------------------------
-
-interface AdminContext {
-  adminUserId: string;
-  adminUserEmail: string;
-}
-
-function extractAdminContext(request: FastifyRequest): AdminContext {
-  // TODO: Extract from verified admin JWT / session
-  const adminUserId = request.headers['x-admin-user-id'] as string ?? '';
-  const adminUserEmail = request.headers['x-admin-user-email'] as string ?? '';
-  return { adminUserId, adminUserEmail };
-}
+import { extractAdminContext } from './request-admin-context';
 
 // ---------------------------------------------------------------------------
 // Handler factory

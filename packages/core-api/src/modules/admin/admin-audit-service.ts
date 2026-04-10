@@ -88,8 +88,8 @@ export async function logAdminAction(params: AuditLogParams): Promise<void> {
 
   await _prisma.adminAuditEntry.create({
     data: {
-      adminUserId: params.adminUserId,
-      adminUserEmail: params.adminUserEmail,
+      actorId: params.adminUserId,
+      actorEmail: params.adminUserEmail,
       action: params.action,
       resourceType: params.resourceType,
       resourceId: params.resourceId,
@@ -124,7 +124,7 @@ export async function listAuditEntries(
   const where: Record<string, unknown> = {};
 
   if (filters.adminUserId) {
-    where.adminUserId = filters.adminUserId;
+    where.actorId = filters.adminUserId;
   }
   if (filters.action) {
     where.action = filters.action;
@@ -157,8 +157,8 @@ export async function listAuditEntries(
 
   const items: AdminAuditEntry[] = rows.map((r) => ({
     id: r.id,
-    adminUserId: r.adminUserId,
-    adminUserEmail: r.adminUserEmail,
+    adminUserId: r.actorId,
+    adminUserEmail: r.actorEmail,
     action: r.action,
     resourceType: r.resourceType,
     resourceId: r.resourceId,

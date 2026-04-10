@@ -9,22 +9,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ContestService } from './contest-service';
 import { ContestNotFoundError } from './contest-service';
 import { sendError } from '../../core/error-handler';
-
-// ---------------------------------------------------------------------------
-// Admin context helper
-// ---------------------------------------------------------------------------
-
-interface AdminContext {
-  adminUserId: string;
-  adminUserEmail: string;
-}
-
-function extractAdminContext(request: FastifyRequest): AdminContext {
-  // TODO: Extract from verified admin JWT / session
-  const adminUserId = request.headers['x-admin-user-id'] as string ?? '';
-  const adminUserEmail = request.headers['x-admin-user-email'] as string ?? '';
-  return { adminUserId, adminUserEmail };
-}
+import { extractAdminContext } from './request-admin-context';
 
 // ---------------------------------------------------------------------------
 // Handler factory
@@ -61,7 +46,6 @@ export function createContestHandlers(contestService: ContestService) {
   ) {
     const query = request.query;
     const result = await contestService.searchContests({
-      tenantId: query.tenant,
       leagueId: query.league,
       sport: query.sport,
       status: query.status,

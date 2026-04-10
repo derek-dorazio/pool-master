@@ -17,7 +17,6 @@ import { logAdminAction } from './admin-audit-service';
 
 export interface UserSearchQuery {
   search?: string;
-  tenantId?: string;
   status?: 'active' | 'disabled';
   page?: number;
   pageSize?: number;
@@ -72,7 +71,7 @@ export class UserService {
   constructor(private readonly prisma: PrismaClient) {}
 
   /**
-   * Searches users across all tenants with filtering and pagination.
+ * Searches users with filtering and pagination.
    */
   async searchUsers(
     query: UserSearchQuery,
@@ -89,10 +88,6 @@ export class UserService {
         { displayName: { contains: query.search, mode: 'insensitive' } },
       ];
     }
-    if (query.tenantId) {
-      where.tenantId = query.tenantId;
-    }
-
     const [rows, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
@@ -100,11 +95,10 @@ export class UserService {
         skip,
         take: pageSize,
         include: {
-          tenant: { select: { id: true, name: true } },
           memberships: {
             select: {
               role: true,
-              league: { select: { tenant: { select: { id: true, name: true } } } },
+              league: { select: { id: true, name: true } },
             },
           },
         },
@@ -113,25 +107,11 @@ export class UserService {
     ]);
 
     const items: UserListItem[] = rows.map((row) => {
-      // Build tenant list: primary tenant + any additional tenants from league memberships
-      const tenantMap = new Map<string, { id: string; name: string; role: string }>();
-      tenantMap.set(row.tenant.id, {
-        id: row.tenant.id,
-        name: row.tenant.name,
-        role: 'member',
-      });
-      for (const m of row.memberships) {
-        const t = m.league.tenant;
-        if (!tenantMap.has(t.id)) {
-          tenantMap.set(t.id, { id: t.id, name: t.name, role: m.role.toLowerCase() });
-        }
-      }
-
       return {
         id: row.id,
         email: row.email,
         displayName: row.displayName,
-        tenants: Array.from(tenantMap.values()),
+        tenants: [],
         lastLoginAt: undefined, // User model has no lastLoginAt column yet
         status: 'active' as const,
         createdAt: row.createdAt,
@@ -153,14 +133,12 @@ export class UserService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
-        tenant: { select: { id: true, name: true, slug: true } },
         memberships: {
           include: {
             league: {
               select: {
                 id: true,
                 name: true,
-                tenant: { select: { name: true } },
               },
             },
           },
@@ -172,16 +150,6 @@ export class UserService {
       throw new UserNotFoundError(userId);
     }
 
-    // Build tenants
-    const tenantMap = new Map<string, { id: string; name: string; slug: string; role: string; joinedAt: Date }>();
-    tenantMap.set(user.tenant.id, {
-      id: user.tenant.id,
-      name: user.tenant.name,
-      slug: user.tenant.slug,
-      role: 'member',
-      joinedAt: user.createdAt,
-    });
-
     // Build leagues from memberships
     const leagues: UserDetailView['leagues'] = [];
     const activeContests: UserDetailView['activeContests'] = [];
@@ -192,7 +160,7 @@ export class UserService {
         name: m.league.name,
         sport: '',
         role: m.role.toLowerCase(),
-        tenantName: m.league.tenant.name,
+        tenantName: '',
       });
     }
 
@@ -243,7 +211,7 @@ export class UserService {
       status: 'active',
       createdAt: user.createdAt,
       lastLoginAt: undefined,
-      tenants: Array.from(tenantMap.values()),
+      tenants: [],
       leagues,
       activeContests,
       devices: [],

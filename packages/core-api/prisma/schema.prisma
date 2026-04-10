@@ -24,28 +24,8 @@ datasource db {
 // =============================================================================
 
 // =============================================================================
-// Tenant & Identity
+// Identity
 // =============================================================================
-
-model Tenant {
-  id              String   @id @default(uuid()) @db.Uuid
-  name            String
-  slug            String   @unique
-  settings        Json     @default("{}")
-  defaultLocale   String   @default("en-US") @map("default_locale") @db.VarChar(10)
-  defaultTimezone String   @default("America/New_York") @map("default_timezone") @db.VarChar(50)
-  defaultCurrency String   @default("USD") @map("default_currency") @db.VarChar(3)
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  users   User[]
-  leagues League[]
-  seasons Season[]
-
-  impersonationSessions ImpersonationSession[]
-
-  @@map("tenants")
-}
 
 model User {
   id           String   @id @default(uuid()) @db.Uuid
@@ -54,7 +34,7 @@ model User {
   displayName  String   @map("display_name")
   authProvider String?  @map("auth_provider")
   authId       String?  @map("auth_id")
-  tenantId     String   @map("tenant_id") @db.Uuid
+  isRootAdmin  Boolean  @default(false) @map("is_root_admin")
   timezone     String?  @db.VarChar(50)
   locale       String?  @default("en-US") @db.VarChar(10)
   timeFormat   String?  @default("12H") @map("time_format") @db.VarChar(5)
@@ -62,13 +42,14 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant              Tenant             @relation(fields: [tenantId], references: [id])
   memberships         LeagueMembership[]
   createdSquads       Squad[]            @relation("SquadCreatedBy")
   squadMemberships    SquadMembership[]
   invitationsSent     LeagueInvitation[] @relation("InvitedBy")
   invitationsAccepted LeagueInvitation[] @relation("AcceptedBy")
   auditActions        CommissionerAuditLog[] @relation("AuditActor")
+  rootAdminAuditEntries AdminAuditEntry[]    @relation("RootAdminAuditActor")
+  migrationRunsStarted  MigrationRun[]       @relation("MigrationStartedBy")
   notifications       Notification[]
   localePreference    UserLocalePreference?
 
@@ -97,7 +78,6 @@ model RefreshToken {
 
 model League {
   id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
   name        String
   description String?
   createdBy   String   @map("created_by") @db.Uuid
@@ -107,7 +87,6 @@ model League {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant      Tenant             @relation(fields: [tenantId], references: [id])
   memberships      LeagueMembership[]
   squads           Squad[]
   squadMemberships SquadMembership[]
@@ -264,7 +243,6 @@ model Sport {
 model Season {
   id        String   @id @default(uuid()) @db.Uuid
   sportId   String   @map("sport_id") @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
   name      String
   year      Int
   startDate DateTime @map("start_date") @db.Date
@@ -273,7 +251,6 @@ model Season {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   sport    Sport     @relation(fields: [sportId], references: [id])
-  tenant   Tenant    @relation(fields: [tenantId], references: [id])
 
   @@map("seasons")
 }
@@ -813,34 +790,13 @@ model ConsentRecord {
 }
 
 // =============================================================================
-// Admin & Platform Operations
+// Root Admin & Platform Operations
 // =============================================================================
 
-model AdminUser {
-  id            String    @id @default(uuid()) @db.Uuid
-  email         String    @unique @db.VarChar(255)
-  name          String    @db.VarChar(255)
-  role          String    @default("VIEWER") @db.VarChar(50)
-  permissions   String[]  @default([])
-  ssoProviderId String?   @map("sso_provider_id") @db.VarChar(255)
-  mfaEnabled    Boolean   @default(false) @map("mfa_enabled")
-  mfaSecret     String?   @map("mfa_secret") @db.VarChar(255)
-  lastLoginAt   DateTime? @map("last_login_at") @db.Timestamptz
-  isActive      Boolean   @default(true) @map("is_active")
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  auditEntries          AdminAuditEntry[]
-  impersonationSessions ImpersonationSession[]
-  migrationRuns         MigrationRun[]
-
-  @@map("admin_users")
-}
-
 model AdminAuditEntry {
-  id             String   @id @default(uuid()) @db.Uuid
-  adminUserId    String   @map("admin_user_id") @db.Uuid
-  adminUserEmail String   @map("admin_user_email") @db.VarChar(255)
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String   @map("actor_id") @db.Uuid
+  actorEmail String   @map("actor_email") @db.VarChar(255)
   action         String   @db.VarChar(100)
   resourceType   String   @map("resource_type") @db.VarChar(50)
   resourceId     String   @map("resource_id") @db.VarChar(255)
@@ -852,26 +808,12 @@ model AdminAuditEntry {
   userAgent      String?  @map("user_agent")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
+  actor User @relation("RootAdminAuditActor", fields: [actorId], references: [id])
 
   @@index([createdAt(sort: Desc)])
   @@index([resourceType, resourceId])
-  @@index([adminUserId, createdAt(sort: Desc)])
+  @@index([actorId, createdAt(sort: Desc)])
   @@map("admin_audit_log")
-}
-
-model ImpersonationSession {
-  id          String    @id @default(uuid()) @db.Uuid
-  adminUserId String    @map("admin_user_id") @db.Uuid
-  tenantId    String    @map("tenant_id") @db.Uuid
-  startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz
-  endedAt     DateTime? @map("ended_at") @db.Timestamptz
-  isActive    Boolean   @default(true) @map("is_active")
-
-  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
-  tenant    Tenant    @relation(fields: [tenantId], references: [id])
-
-  @@map("impersonation_sessions")
 }
 
 model MigrationRun {
@@ -885,7 +827,7 @@ model MigrationRun {
   completedAt DateTime? @map("completed_at") @db.Timestamptz
   startedById String    @map("started_by") @db.Uuid
 
-  startedBy AdminUser @relation(fields: [startedById], references: [id])
+  startedBy User @relation("MigrationStartedBy", fields: [startedById], references: [id])
 
   @@index([status])
   @@map("migration_runs")

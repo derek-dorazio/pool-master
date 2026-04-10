@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       isAuthenticated: Boolean(tokens?.accessToken && user),
       isLoading: Boolean(tokens?.accessToken) && meQuery.isLoading,
-      isRootAdmin: mode === 'root-admin',
+      isRootAdmin: false,
       user,
       clearSession: async () => {
         if (tokens?.refreshToken) {

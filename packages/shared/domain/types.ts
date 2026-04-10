@@ -40,23 +40,14 @@ export interface DomainEntity {
   updatedAt: Date;
 }
 
-// --- Tenant & Identity ---
-
-export interface Tenant extends DomainEntity {
-  name: string;
-  slug: string;
-  settings: Record<string, unknown>;
-  defaultLocale: string;
-  defaultTimezone: string;
-  defaultCurrency: string;
-}
+// --- Identity ---
 
 export interface User extends DomainEntity {
   email: string;
   displayName: string;
   authProvider?: string;
   authId?: string;
-  tenantId?: string;
+  isRootAdmin?: boolean;
   timezone?: string;
   locale?: string;
   timeFormat?: '12H' | '24H';
@@ -81,7 +72,6 @@ export interface UserLocalePreference {
 // --- League ---
 
 export interface League extends DomainEntity {
-  tenantId: string;
   name: string;
   description?: string;
   createdBy: string;
@@ -153,7 +143,6 @@ export interface SportConfig extends DomainEntity {
 
 export interface Season extends DomainEntity {
   sportId: string;
-  tenantId: string;
   name: string;
   year: number;
   startDate: string;
@@ -449,8 +438,6 @@ export interface IntermediatePrize {
 
 // --- Admin & Platform Operations ---
 
-export type AdminRole = 'SUPER_ADMIN' | 'OPERATIONS' | 'SUPPORT' | 'DATA_OPS' | 'VIEWER';
-
 export type AdminPermission =
   | 'tenant.view' | 'tenant.edit' | 'tenant.suspend' | 'tenant.delete' | 'tenant.impersonate'
   | 'user.view' | 'user.edit' | 'user.reset_password' | 'user.force_logout' | 'user.merge'
@@ -458,18 +445,6 @@ export type AdminPermission =
   | 'sportsdata.view' | 'sportsdata.configure' | 'sportsdata.re_ingest'
   | 'platform.health' | 'platform.migrations'
   | 'audit.view';
-
-export interface AdminUser extends DomainEntity {
-  email: string;
-  name: string;
-  role: AdminRole;
-  permissions: AdminPermission[];
-  ssoProviderId?: string;
-  mfaEnabled: boolean;
-  mfaSecret?: string;
-  lastLoginAt?: Date;
-  isActive: boolean;
-}
 
 export interface AdminAuditEntry {
   id: string;
@@ -485,15 +460,6 @@ export interface AdminAuditEntry {
   ipAddress?: string;
   userAgent?: string;
   createdAt: Date;
-}
-
-export interface ImpersonationSession {
-  id: string;
-  adminUserId: string;
-  tenantId: string;
-  startedAt: Date;
-  endedAt?: Date;
-  isActive: boolean;
 }
 
 export interface MigrationRun {

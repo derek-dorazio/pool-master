@@ -41,9 +41,6 @@ import { historyModule } from '../../packages/core-api/src/modules/history/route
 import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
-const TEST_TENANT_ID = randomUUID();
-const TEST_TENANT_SLUG = `integration-test-${TEST_TENANT_ID.slice(0, 8)}`;
-const TEST_TENANT_NAME = `Integration Test Tenant ${TEST_TENANT_ID.slice(0, 8)}`;
 
 let app: FastifyInstance;
 let prisma: PrismaClient;
@@ -56,11 +53,6 @@ export function getApp(): FastifyInstance {
 /** Get the shared Prisma client. */
 export function getPrisma(): PrismaClient {
   return prisma;
-}
-
-/** Test tenant ID used across all integration tests. */
-export function getTestTenantId(): string {
-  return TEST_TENANT_ID;
 }
 
 /** Build the Fastify app with real plugins and modules (no background jobs). */
@@ -109,24 +101,10 @@ async function buildTestApp(): Promise<FastifyInstance> {
   return testApp;
 }
 
-/** Create the test tenant if it doesn't exist. */
-async function ensureTestTenant(): Promise<void> {
-  await prisma.tenant.upsert({
-    where: { id: TEST_TENANT_ID },
-    create: {
-      id: TEST_TENANT_ID,
-      name: TEST_TENANT_NAME,
-      slug: TEST_TENANT_SLUG,
-    },
-    update: {},
-  });
-}
-
 /** Set up the Fastify app and Prisma client. Called once before all tests. */
 export async function setupIntegrationTests(): Promise<void> {
   prisma = new PrismaClient();
   await prisma.$connect();
-  await ensureTestTenant();
   app = await buildTestApp();
 }
 
@@ -141,7 +119,7 @@ export async function teardownIntegrationTests(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 interface TestUserResult {
-  user: { id: string; email: string; displayName: string; tenantId: string };
+  user: { id: string; email: string; displayName: string; isRootAdmin: boolean };
   headers: Record<string, string>;
   accessToken: string;
 }
@@ -153,6 +131,7 @@ export async function createTestUser(overrides: {
   email?: string;
   displayName?: string;
   password?: string;
+  isRootAdmin?: boolean;
 } = {}): Promise<TestUserResult> {
   const id = randomUUID();
   const email = overrides.email ?? `test-${id.slice(0, 8)}@integration.test`;
@@ -165,18 +144,23 @@ export async function createTestUser(overrides: {
       email,
       displayName,
       passwordHash,
-      tenantId: TEST_TENANT_ID,
+      isRootAdmin: overrides.isRootAdmin ?? false,
     },
   });
 
   const accessToken = jwt.sign(
-    { sub: user.id, email: user.email, tenantId: TEST_TENANT_ID },
+    { sub: user.id, email: user.email },
     JWT_SECRET,
     { expiresIn: '15m' },
   );
 
   return {
-    user: { id: user.id, email: user.email, displayName: user.displayName, tenantId: TEST_TENANT_ID },
+    user: {
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      isRootAdmin: user.isRootAdmin,
+    },
     headers: {
       authorization: `Bearer ${accessToken}`,
       'content-type': 'application/json',
@@ -190,7 +174,7 @@ export async function createTestUser(overrides: {
  */
 export function authHeaders(userId: string, email: string): Record<string, string> {
   const accessToken = jwt.sign(
-    { sub: userId, email, tenantId: TEST_TENANT_ID },
+    { sub: userId, email },
     JWT_SECRET,
     { expiresIn: '15m' },
   );
@@ -216,7 +200,36 @@ export function withoutJsonBodyHeaders(headers: Record<string, string>): Record<
  * Deletes in reverse dependency order using raw SQL for reliability.
  */
 export async function cleanupTestData(): Promise<void> {
-  const tid = TEST_TENANT_ID;
+  const users = await prisma.user.findMany({
+    where: {
+      email: {
+        endsWith: '@integration.test',
+      },
+    },
+    select: { id: true },
+  });
+  const userIds = users.map((user) => user.id);
+
+  const leagues = userIds.length
+    ? await prisma.league.findMany({
+        where: {
+          OR: [
+            { createdBy: { in: userIds } },
+            { memberships: { some: { userId: { in: userIds } } } },
+          ],
+        },
+        select: { id: true },
+      })
+    : [];
+  const leagueIds = leagues.map((league) => league.id);
+  const contests = leagueIds.length
+    ? await prisma.contest.findMany({
+        where: { leagueId: { in: leagueIds } },
+        select: { id: true },
+      })
+    : [];
+  const contestIds = contests.map((contest) => contest.id);
+
   // Tables that reference contests
   const contestChildTables = [
     'contest_entry_participant_score_events', 'contest_entry_participant_scores', 'contest_entry_prize_awards',
@@ -233,15 +246,17 @@ export async function cleanupTestData(): Promise<void> {
   ];
 
   for (const table of contestChildTables) {
+    if (contestIds.length === 0) break;
     await prisma.$executeRawUnsafe(
-      `DELETE FROM "${table}" WHERE contest_id IN (SELECT id FROM contests WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1::uuid))`,
-      tid,
+      `DELETE FROM "${table}" WHERE contest_id = ANY($1::uuid[])`,
+      contestIds,
     ).catch(() => {});
   }
-  await prisma.$executeRawUnsafe(
-    'DELETE FROM contests WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1::uuid)',
-    tid,
-  ).catch(() => {});
+  if (contestIds.length > 0) {
+    await prisma.contest.deleteMany({
+      where: { id: { in: contestIds } },
+    }).catch(() => {});
+  }
 
   await prisma.$executeRawUnsafe(
     "DELETE FROM sport_event_participant_source_data WHERE sport_event_participant_id IN (SELECT id FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test'))",
@@ -257,27 +272,33 @@ export async function cleanupTestData(): Promise<void> {
   ).catch(() => {});
 
   for (const table of leagueChildTables) {
+    if (leagueIds.length === 0) break;
     await prisma.$executeRawUnsafe(
-      `DELETE FROM "${table}" WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1::uuid)`,
-      tid,
+      `DELETE FROM "${table}" WHERE league_id = ANY($1::uuid[])`,
+      leagueIds,
     ).catch(() => {});
   }
-  await prisma.$executeRawUnsafe(
-    'DELETE FROM league_invitations WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1::uuid)',
-    tid,
-  ).catch(() => {});
-  await prisma.$executeRawUnsafe(
-    'DELETE FROM league_memberships WHERE league_id IN (SELECT id FROM leagues WHERE tenant_id = $1::uuid)',
-    tid,
-  ).catch(() => {});
-  await prisma.$executeRawUnsafe('DELETE FROM leagues WHERE tenant_id = $1::uuid', tid).catch(() => {});
+  if (leagueIds.length > 0) {
+    await prisma.leagueInvitation.deleteMany({
+      where: { leagueId: { in: leagueIds } },
+    }).catch(() => {});
+    await prisma.leagueMembership.deleteMany({
+      where: { leagueId: { in: leagueIds } },
+    }).catch(() => {});
+    await prisma.league.deleteMany({
+      where: { id: { in: leagueIds } },
+    }).catch(() => {});
+  }
 
   // Participants created during tests (name starts with test pattern)
   await prisma.$executeRawUnsafe(`DELETE FROM participant_season_records WHERE participant_id IN (SELECT id FROM participants WHERE name LIKE 'Tiger%' OR name LIKE 'Eldrick%')`).catch(() => {});
   await prisma.$executeRawUnsafe(`DELETE FROM participants WHERE name LIKE 'Tiger%' OR name LIKE 'Eldrick%'`).catch(() => {});
-  await prisma.$executeRawUnsafe(
-    'DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE tenant_id = $1::uuid)',
-    tid,
-  ).catch(() => {});
-  await prisma.$executeRawUnsafe('DELETE FROM users WHERE tenant_id = $1::uuid', tid).catch(() => {});
+  if (userIds.length > 0) {
+    await prisma.refreshToken.deleteMany({
+      where: { userId: { in: userIds } },
+    }).catch(() => {});
+    await prisma.user.deleteMany({
+      where: { id: { in: userIds } },
+    }).catch(() => {});
+  }
 }

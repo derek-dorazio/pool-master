@@ -73,7 +73,7 @@ export class ContestService {
   async createContest(
     input: CreateContestInput,
   ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration }> {
-    const league = await this.leagueRepo.findById(input.leagueId, input.tenantId);
+    const league = await this.leagueRepo.findById(input.leagueId);
     if (!league) {
       throw new ContestOperationError('League not found');
     }
@@ -105,9 +105,9 @@ export class ContestService {
 
   async getContest(
     contestId: string,
-    tenantId: string,
+    _tenantId: string,
   ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration | null } | null> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       return null;
     }
@@ -125,7 +125,7 @@ export class ContestService {
     tenantId: string,
     updates: UpdateContestInput,
   ): Promise<Contest> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new ContestNotFoundError(contestId);
     }
@@ -136,8 +136,8 @@ export class ContestService {
   }
 
   /** Deletes a contest. Only allowed when status is DRAFT. */
-  async deleteContest(contestId: string, tenantId: string): Promise<void> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+  async deleteContest(contestId: string, _tenantId: string): Promise<void> {
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new ContestNotFoundError(contestId);
     }
@@ -149,7 +149,7 @@ export class ContestService {
 
   async listEntries(
     contestId: string,
-    tenantId: string,
+    _tenantId: string,
     userId: string,
   ): Promise<{
     entries: ContestEntryDto[];
@@ -157,7 +157,7 @@ export class ContestService {
     myEntryId: string | null;
     myEntryIds: string[];
   }> {
-    const context = await this.getEntryContext(contestId, tenantId, userId);
+    const context = await this.getEntryContext(contestId, _tenantId, userId);
     const squadId = context.squadMembership?.squadId ?? null;
     const entries = await this.loadEntryDtos(contestId);
     const myEntries = squadId
@@ -179,10 +179,10 @@ export class ContestService {
 
   async getMyEntry(
     contestId: string,
-    tenantId: string,
+    _tenantId: string,
     userId: string,
   ): Promise<ContestEntryDto | null> {
-    const context = await this.getEntryContext(contestId, tenantId, userId);
+    const context = await this.getEntryContext(contestId, _tenantId, userId);
     if (!context.squadMembership) {
       return null;
     }
@@ -192,10 +192,10 @@ export class ContestService {
 
   async createEntry(
     contestId: string,
-    tenantId: string,
+    _tenantId: string,
     userId: string,
   ): Promise<{ entry: ContestEntryDto; created: boolean }> {
-    const context = await this.getEntryContext(contestId, tenantId, userId);
+    const context = await this.getEntryContext(contestId, _tenantId, userId);
     const membership = context.membership;
     if (!membership) {
       throw new ContestEntryOperationError('You must be a league member to enter this contest');
@@ -237,10 +237,10 @@ export class ContestService {
 
   async deleteMyEntry(
     contestId: string,
-    tenantId: string,
+    _tenantId: string,
     userId: string,
   ): Promise<void> {
-    const context = await this.getEntryContext(contestId, tenantId, userId);
+    const context = await this.getEntryContext(contestId, _tenantId, userId);
     const membership = context.membership;
     if (!membership) {
       throw new ContestEntryOperationError('You must be a league member to leave this contest');
@@ -274,7 +274,7 @@ export class ContestService {
     membership: Awaited<ReturnType<LeagueMembershipRepository['findByLeagueAndUser']>>;
     squadMembership: Awaited<ReturnType<SquadMembershipRepository['findByLeagueAndUser']>>;
   }> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new ContestNotFoundError(contestId);
     }

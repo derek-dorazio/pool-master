@@ -10,7 +10,6 @@ import type { LeagueSettings } from '@poolmaster/shared/domain';
 
 interface LeagueRow {
   id: string;
-  tenantId: string;
   name: string;
   description?: string | null;
   createdBy: string;

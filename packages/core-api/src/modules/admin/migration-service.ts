@@ -83,7 +83,7 @@ export class MigrationAlreadyRunningError extends Error {
 
 export class AdminUserNotFoundError extends Error {
   constructor(adminUserId: string) {
-    super(`Admin user not found: ${adminUserId}`);
+    super(`Root admin user not found: ${adminUserId}`);
     this.name = 'AdminUserNotFoundError';
   }
 }
@@ -169,10 +169,16 @@ export class MigrationService {
     const migration = AVAILABLE_MIGRATIONS.find((m) => m.id === input.migrationId);
     if (!migration) throw new MigrationNotFoundError(input.migrationId);
 
-    const adminUser = await this.prisma.adminUser.findUnique({
+    const adminUser = await this.prisma.user.findUnique({
       where: { id: adminUserId },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        isRootAdmin: true,
+      },
     });
-    if (!adminUser) {
+    if (!adminUser || !adminUser.isRootAdmin) {
       throw new AdminUserNotFoundError(adminUserId);
     }
 
@@ -292,7 +298,7 @@ export class MigrationService {
     startedAt: Date;
     completedAt: Date | null;
     startedById: string;
-    startedBy: { id: string; email: string; name: string };
+    startedBy: { id: string; email: string; displayName: string };
   }): MigrationRun {
     const options = this.asRecord(row.options);
     const progressRecord = this.asRecord(row.progress);
@@ -323,7 +329,7 @@ export class MigrationService {
       startedBy: row.startedById,
       startedByUser: {
         email: row.startedBy.email,
-        name: row.startedBy.name,
+        name: row.startedBy.displayName,
       },
       errors,
     };

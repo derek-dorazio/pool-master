@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type PoolmasterSessionMode = 'member' | 'root-admin';
+export type PoolmasterSessionMode = 'member';
 
 export type PoolmasterSessionUser = {
   id: string;

@@ -9,22 +9,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { UserService } from './user-service';
 import { UserNotFoundError } from './user-service';
 import { sendError } from '../../core/error-handler';
-
-// ---------------------------------------------------------------------------
-// Admin context helper
-// ---------------------------------------------------------------------------
-
-interface AdminContext {
-  adminUserId: string;
-  adminUserEmail: string;
-}
-
-function extractAdminContext(request: FastifyRequest): AdminContext {
-  // TODO: Extract from verified admin JWT / session
-  const adminUserId = request.headers['x-admin-user-id'] as string ?? '';
-  const adminUserEmail = request.headers['x-admin-user-email'] as string ?? '';
-  return { adminUserId, adminUserEmail };
-}
+import { extractAdminContext } from './request-admin-context';
 
 // ---------------------------------------------------------------------------
 // Handler factory
@@ -57,7 +42,6 @@ export function createUserHandlers(userService: UserService) {
     const query = request.query;
     const result = await userService.searchUsers({
       search: query.search,
-      tenantId: query.tenant,
       status: query.status,
       page: query.page,
       pageSize: query.pageSize,

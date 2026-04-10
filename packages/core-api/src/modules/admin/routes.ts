@@ -5,7 +5,7 @@
  * Mounted at /api/v1/admin by the application root.
  */
 
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryPrisma } from './audit-query-service';
@@ -48,19 +48,7 @@ import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import { sendError } from '../../core/error-handler';
-
-// ---------------------------------------------------------------------------
-// Admin auth preHandler (placeholder — will be replaced with real SSO check)
-// ---------------------------------------------------------------------------
-
-async function adminAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  const adminUserId = request.headers['x-admin-user-id'] as string | undefined;
-  if (!adminUserId) {
-    return sendError(reply, 401, 'UNAUTHORIZED', 'Admin authentication required');
-  }
-  // TODO: Verify admin JWT / SSO session and load admin user + permissions
-}
+import adminAuth from '../../plugins/admin-auth';
 
 function withAdminErrorResponses(
   successResponses: Record<number, unknown>,
@@ -80,8 +68,7 @@ function withAdminErrorResponses(
 // ---------------------------------------------------------------------------
 
 export async function adminModule(fastify: FastifyInstance): Promise<void> {
-  // Apply admin auth to every route in this module
-  fastify.addHook('preHandler', adminAuth);
+  await fastify.register(adminAuth);
 
   // --- Shared Prisma client for all admin services ---
   const prisma = new PrismaClient();

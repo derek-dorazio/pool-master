@@ -110,7 +110,6 @@ export async function cleanupFunctionalData(): Promise<void> {
     },
     select: {
       id: true,
-      tenantId: true,
     },
   });
 
@@ -119,7 +118,6 @@ export async function cleanupFunctionalData(): Promise<void> {
   }
 
   const userIds = users.map((user) => user.id);
-  const tenantIds = Array.from(new Set(users.map((user) => user.tenantId).filter(Boolean)));
 
   await database.consentRecord.deleteMany({
     where: {
@@ -142,15 +140,6 @@ export async function cleanupFunctionalData(): Promise<void> {
       },
     },
   });
-  if (tenantIds.length > 0) {
-    await database.tenant.deleteMany({
-      where: {
-        id: {
-          in: tenantIds,
-        },
-      },
-    });
-  }
 }
 
 export function expectFunctionalError(

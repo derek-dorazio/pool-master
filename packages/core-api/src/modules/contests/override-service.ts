@@ -116,8 +116,8 @@ export class OverrideService {
   }
 
   /** Forces a recalculation of standings based on current entry scores. */
-  async recalculateStandings(contestId: string, tenantId: string): Promise<RecalculationResult> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+  async recalculateStandings(contestId: string, _tenantId: string): Promise<RecalculationResult> {
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new OverrideError('Contest not found');
     }
@@ -127,8 +127,8 @@ export class OverrideService {
   // --- Contest Lifecycle Overrides (08-023) ---
 
   /** Re-opens a completed contest. */
-  async reopenContest(contestId: string, tenantId: string, _reason: string): Promise<Contest> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+  async reopenContest(contestId: string, _tenantId: string, _reason: string): Promise<Contest> {
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new OverrideError('Contest not found');
     }
@@ -139,8 +139,8 @@ export class OverrideService {
   }
 
   /** Force-closes a contest. */
-  async closeContest(contestId: string, tenantId: string, _reason: string): Promise<Contest> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+  async closeContest(contestId: string, _tenantId: string, _reason: string): Promise<Contest> {
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new OverrideError('Contest not found');
     }
@@ -155,11 +155,11 @@ export class OverrideService {
   /** Extends the contest end date. */
   async extendDeadline(
     contestId: string,
-    tenantId: string,
+    _tenantId: string,
     newEnd: Date,
     _reason: string,
   ): Promise<Contest> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new OverrideError('Contest not found');
     }
@@ -169,11 +169,11 @@ export class OverrideService {
   /** Updates the lock time for a contest. */
   async updateLockTime(
     contestId: string,
-    tenantId: string,
+    _tenantId: string,
     newLock: Date,
     _reason: string,
   ): Promise<Contest> {
-    const contest = await this.contestRepo.findById(contestId, tenantId);
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new OverrideError('Contest not found');
     }

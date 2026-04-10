@@ -58,7 +58,7 @@ function requirePrisma(): PrismaClient {
 
 function toAuditEntryView(row: {
   id: string;
-  adminUserEmail: string;
+  actorEmail: string;
   action: string;
   resourceType: string;
   resourceId: string;
@@ -68,12 +68,12 @@ function toAuditEntryView(row: {
   createdAt: Date;
   beforeState: unknown;
   afterState: unknown;
-  adminUser?: { name: string } | null;
+  actor?: { displayName: string } | null;
 }): AuditEntryView {
   return {
     id: row.id,
-    adminUserEmail: row.adminUserEmail,
-    adminUserName: row.adminUser?.name ?? row.adminUserEmail,
+    adminUserEmail: row.actorEmail,
+    adminUserName: row.actor?.displayName ?? row.actorEmail,
     action: row.action,
     resourceType: row.resourceType,
     resourceId: row.resourceId,
@@ -92,7 +92,7 @@ export async function queryAuditLog(query: AuditListQuery): Promise<AuditListRes
   const skip = (page - 1) * pageSize;
 
   const where: Record<string, unknown> = {};
-  if (query.adminUserId) where.adminUserId = query.adminUserId;
+  if (query.adminUserId) where.actorId = query.adminUserId;
   if (query.action) where.action = query.action;
   if (query.resourceType) where.resourceType = query.resourceType;
   if (query.resourceId) where.resourceId = query.resourceId;
@@ -106,7 +106,7 @@ export async function queryAuditLog(query: AuditListQuery): Promise<AuditListRes
     where.OR = [
       { description: { contains: query.search, mode: 'insensitive' } },
       { reason: { contains: query.search, mode: 'insensitive' } },
-      { adminUserEmail: { contains: query.search, mode: 'insensitive' } },
+      { actorEmail: { contains: query.search, mode: 'insensitive' } },
       { resourceId: { contains: query.search, mode: 'insensitive' } },
     ];
   }
@@ -115,8 +115,8 @@ export async function queryAuditLog(query: AuditListQuery): Promise<AuditListRes
     db.adminAuditEntry.findMany({
       where,
       include: {
-        adminUser: {
-          select: { name: true },
+        actor: {
+          select: { displayName: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -139,8 +139,8 @@ export async function getAuditEntryById(entryId: string): Promise<AuditEntryView
   const row = await db.adminAuditEntry.findUnique({
     where: { id: entryId },
     include: {
-      adminUser: {
-        select: { name: true },
+      actor: {
+        select: { displayName: true },
       },
     },
   });

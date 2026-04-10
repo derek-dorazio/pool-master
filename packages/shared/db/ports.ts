@@ -22,25 +22,16 @@ import type {
   SportConfig,
   Squad,
   SquadMembership,
-  Tenant,
   User,
 } from '../domain';
 
 import type { ParticipantStatus, Sport } from '../domain';
 
-// --- Tenant & Identity ---
-
-export interface TenantRepository {
-  findById(id: string): Promise<Tenant | null>;
-  findBySlug(slug: string): Promise<Tenant | null>;
-  create(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Tenant>;
-  update(id: string, updates: Partial<Tenant>): Promise<Tenant>;
-}
+// --- Identity ---
 
 export interface UserRepository {
-  findById(id: string, tenantId: string): Promise<User | null>;
+  findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
-  findByTenant(tenantId: string): Promise<User[]>;
   create(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
   update(id: string, updates: Partial<User>): Promise<User>;
   delete(id: string): Promise<void>;
@@ -49,8 +40,7 @@ export interface UserRepository {
 // --- League ---
 
 export interface LeagueRepository {
-  findById(id: string, tenantId: string): Promise<League | null>;
-  findByTenant(tenantId: string): Promise<League[]>;
+  findById(id: string): Promise<League | null>;
   create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
   delete(id: string): Promise<void>;
@@ -143,7 +133,7 @@ export interface ParticipantProviderMappingRepository {
 // --- Contest ---
 
 export interface ContestRepository {
-  findById(id: string, tenantId: string): Promise<Contest | null>;
+  findById(id: string): Promise<Contest | null>;
   findByLeague(leagueId: string): Promise<Contest[]>;
   create(contest: Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>): Promise<Contest>;
   update(id: string, updates: Partial<Contest>): Promise<Contest>;

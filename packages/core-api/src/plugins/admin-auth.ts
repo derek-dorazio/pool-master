@@ -13,7 +13,6 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
-import type { AdminRole, AdminPermission } from '../core/admin-permissions';
 import { sendError } from '../core/error-handler';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
@@ -27,8 +26,7 @@ export interface AdminContext {
     id: string;
     email: string;
     name: string;
-    role: AdminRole;
-    permissions: AdminPermission[];
+    isRootAdmin: true;
   };
 }
 
@@ -61,40 +59,42 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
       return sendError(reply, 401, 'UNAUTHORIZED', 'Empty bearer token');
     }
 
-    // Verify JWT token and extract admin user ID
-    let adminUserId: string;
+    let userId: string;
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { sub?: string; adminUserId?: string };
-      adminUserId = decoded.sub ?? decoded.adminUserId ?? '';
-      if (!adminUserId) {
+      const decoded = jwt.verify(token, JWT_SECRET) as { sub?: string };
+      userId = decoded.sub ?? '';
+      if (!userId) {
         throw new Error('Missing user ID in token payload');
       }
     } catch {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired admin token');
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Invalid or expired root-admin token');
     }
 
-    // Look up admin user
     const prisma = (fastify as unknown as { prisma: PrismaClient }).prisma;
-    const adminUser = await prisma.adminUser.findUnique({
-      where: { id: adminUserId },
+    const adminUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        isRootAdmin: true,
+      },
     });
 
     if (!adminUser) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Admin user not found');
+      return sendError(reply, 401, 'UNAUTHORIZED', 'User not found');
     }
 
-    if (!adminUser.isActive) {
-      return sendError(reply, 403, 'FORBIDDEN', 'Admin account is inactive');
+    if (!adminUser.isRootAdmin) {
+      return sendError(reply, 403, 'FORBIDDEN', 'Root-admin access required');
     }
 
-    // Attach admin context to request
     request.adminContext = {
       adminUser: {
         id: adminUser.id,
         email: adminUser.email,
-        name: adminUser.name,
-        role: adminUser.role as AdminRole,
-        permissions: adminUser.permissions as AdminPermission[],
+        name: adminUser.displayName,
+        isRootAdmin: true,
       },
     };
   });

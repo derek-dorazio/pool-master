@@ -16,7 +16,6 @@ import { logAdminAction } from './admin-audit-service';
 // ---------------------------------------------------------------------------
 
 export interface ContestSearchQuery {
-  tenantId?: string;
   leagueId?: string;
   sport?: string;
   status?: string;
@@ -137,9 +136,6 @@ export class ContestService {
     if (query.contestType) where.contestType = query.contestType;
     if (query.selectionType) where.selectionType = query.selectionType;
     if (query.leagueId) where.leagueId = query.leagueId;
-    if (query.tenantId) {
-      where.league = { tenantId: query.tenantId };
-    }
 
     const [rows, total] = await Promise.all([
       this.prisma.contest.findMany({
@@ -151,7 +147,6 @@ export class ContestService {
           league: {
             select: {
               name: true,
-              tenant: { select: { name: true } },
             },
           },
           sportEvent: {
@@ -167,7 +162,7 @@ export class ContestService {
       id: row.id,
       name: row.name,
       leagueName: row.league.name,
-      tenantName: row.league.tenant.name,
+      tenantName: '',
       sport: row.sportEvent?.sport ?? '',
       contestType: row.contestType,
       selectionType: row.selectionType,
@@ -190,8 +185,6 @@ export class ContestService {
           select: {
             id: true,
             name: true,
-            tenantId: true,
-            tenant: { select: { name: true } },
           },
         },
         sportEvent: {
@@ -286,8 +279,8 @@ export class ContestService {
       status: contest.status.toLowerCase(),
       leagueName: contest.league.name,
       leagueId: contest.league.id,
-      tenantName: contest.league.tenant.name,
-      tenantId: contest.league.tenantId,
+      tenantName: '',
+      tenantId: '',
       entryCount: contest.entries.length,
       startsAt: contest.startsAt ?? undefined,
       endsAt: contest.endsAt ?? undefined,

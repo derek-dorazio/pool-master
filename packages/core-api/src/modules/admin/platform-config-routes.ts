@@ -10,21 +10,7 @@ import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
-
-// ---------------------------------------------------------------------------
-// Admin context helper
-// ---------------------------------------------------------------------------
-
-interface AdminContext {
-  adminUserId: string;
-  adminUserEmail: string;
-}
-
-function extractAdminContext(request: FastifyRequest): AdminContext {
-  const adminUserId = request.headers['x-admin-user-id'] as string ?? '';
-  const adminUserEmail = request.headers['x-admin-user-email'] as string ?? '';
-  return { adminUserId, adminUserEmail };
-}
+import { extractAdminContext } from './request-admin-context';
 
 // ---------------------------------------------------------------------------
 // Route registration

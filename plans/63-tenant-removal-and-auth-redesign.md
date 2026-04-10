@@ -66,7 +66,30 @@ Reshape auth so the backend authenticates a global user identity without tenant
 - ensure league/scoped authorization is always DB-backed from:
   - `LeagueMembership`
   - `SquadMembership`
-  - admin role/permission state
+  - unified root-admin capability state on the global `User` model
+
+### 2A. Unified User / Role / Root-Admin Model
+
+Replace the parallel admin identity model with one global account model aligned
+to Plan 37:
+
+- remove `AdminUser` as a separate identity table
+- attach root-admin capability to the same global `User` model used for normal auth
+- model root-admin capability as `User.isRootAdmin: boolean` with default `false`
+- keep league roles league-scoped:
+  - `COMMISSIONER`
+  - `MEMBER`
+- remove browser/server trust paths that depend on `x-admin-user-id` and
+  `x-admin-user-email`
+- ensure root-admin acts as a super-commissioner through the unified auth
+  context, not through a separate browser app identity
+- do not expose `isRootAdmin` as a writable application field:
+  - not in API request bodies
+  - not in normal entity/DTO write paths
+  - not in self-service account mutation flows
+- `isRootAdmin` may only be consumed on read for root-admin feature gating
+- root-admin users must be created only through bootstrap migration/seed mechanisms,
+  not through normal application runtime behavior
 
 ### 3. Session Model Modernization
 
@@ -170,8 +193,9 @@ This should likely be the final slice because it impacts clients most directly.
 - no `Tenant` model remains in the active backend schema
 - no authenticated principal requires or exposes `tenantId`
 - no product-facing service/repository API requires tenant context
-- league and squad membership remain the sole product authorization boundary
-- admin identity is enforced without browser-supplied identity headers
+- league and squad membership remain the sole normal product authorization boundary
+- root-admin capability is enforced through the unified global `User` model,
+  not through `AdminUser` or browser-supplied identity headers
 - auth/session contracts are internally consistent and fully tested
 - OpenAPI and generated clients reflect the tenant-free model
 
@@ -188,14 +212,15 @@ This should likely be the final slice because it impacts clients most directly.
 
 | ID | Workstream | Task | Status | Notes |
 | --- | --- | --- | --- | --- |
-| 63-001 | 1 | Lock the final tenant-free authenticated principal shape | Pending | Must align Plan 36 and Plan 37 before implementation |
-| 63-002 | 1 | Inventory every remaining `tenantId` field, JWT claim, DTO field, repository parameter, and Prisma relation still active in code | Pending | Use this to define exact migration scope |
-| 63-003 | 2 | Remove `Tenant` and tenant foreign keys from the Prisma schema and baseline migrations | Pending | Includes `User`, `League`, `Season`, and any admin/session leftovers |
-| 63-004 | 2 | Remove tenant-owned seed/bootstrap assumptions | Pending | Demo/bootstrap seed data is now removed; this slice must finish the tenant-free bootstrap policy and any remaining schema/runtime cleanup. |
-| 63-005 | 3 | Rewrite repository ports and adapters to remove tenant-scoped lookup signatures | Pending | Avoid compatibility shims |
-| 63-006 | 3 | Remove tenant compatibility parameters from league/contest/auth services and handlers | Pending | Product services should be league/global only |
-| 63-007 | 4 | Remove `tenantId` from JWT/session issuance, validation, and `AuthUser` | Pending | Must include auth unit/integration coverage |
-| 63-008 | 4 | Update auth DTOs, mappers, `/auth/me`, and integration helpers to the tenant-free identity model | Pending | Generated clients must stay in sync |
-| 63-009 | 5 | Implement the unified cookie/session browser auth model from Plan 36 on top of the tenant-free identity boundary | Pending | Web/admin follow-through likely required |
-| 63-010 | 5 | Run full backend validation and regenerate OpenAPI/client artifacts for the tenant-free auth boundary | Pending | Include unit, integration, contract, and migration checks |
-| 63-011 | 5 | Add one tenant-free root bootstrap user only if still required after the final auth model is implemented | Pending | Do not reintroduce `AdminUser`; use the final unified identity model and keep bootstrap data minimal. |
+| 63-001 | 1 | Lock the final tenant-free authenticated principal shape and unified root-admin capability model on `User` | Done | `User.isRootAdmin` is the agreed global capability; no writable DTO/API path may set it. |
+| 63-002 | 1 | Inventory every remaining `tenantId` field, JWT claim, DTO field, repository parameter, Prisma relation, `AdminUser` reference, and header-based admin trust path still active in code | In Progress | Core runtime/schema inventory is complete; remaining long-tail cleanup is now mostly contests, tests, generated artifacts, and stale shared/event surfaces. |
+| 63-003 | 2 | Rebuild the global user/role model so root-admin capability attaches to `User.isRootAdmin` and league roles remain league-scoped | In Progress | Root-admin request context now resolves from `User.isRootAdmin`; league creation now grants `COMMISSIONER` instead of `OWNER`. |
+| 63-004 | 2 | Remove `Tenant`, `AdminUser`, and all tenant/admin foreign keys from the Prisma schema and baseline migrations | In Progress | Prisma schema is tenant/admin-user free and migration `20260409180000_remove_tenant_and_admin_user` has been added and applied to `poolmaster_test`. |
+| 63-005 | 2 | Remove tenant-owned seed/bootstrap assumptions | In Progress | App seed is already no-op; test/bootstrap helpers are being rewritten to stop manufacturing tenant-bound users. |
+| 63-006 | 3 | Rewrite repository ports and adapters to remove tenant-scoped lookup signatures and `AdminUser`-based lookup paths | In Progress | Core league/contest repository interfaces are being collapsed to league/global lookups. |
+| 63-007 | 3 | Remove tenant and `AdminUser` compatibility parameters from league/contest/auth/admin services and handlers | In Progress | Auth, admin routes, league creation, and core admin services are now on the unified root-admin/user path; remaining long-tail signatures still need cleanup. |
+| 63-008 | 4 | Remove `tenantId` from JWT/session issuance, validation, `AuthUser`, and admin auth context; replace header-based admin trust with unified auth context | In Progress | Active JWT/auth payloads are tenant-free and header-based admin trust is removed from the runtime path; browser/session modernization still remains. |
+| 63-009 | 4 | Update auth DTOs, mappers, `/auth/me`, root-admin identity reads, and integration helpers to the tenant-free unified identity model | Pending | Generated clients must stay in sync; `isRootAdmin` must not appear in writable API/entity paths. |
+| 63-010 | 5 | Implement the unified cookie/session browser auth model from Plan 36 on top of the tenant-free unified identity boundary | Pending | No browser-managed token storage or parallel admin trust path remains. |
+| 63-011 | 5 | Add one tenant-free root bootstrap user only if still required after the final auth model is implemented | Pending | Do not reintroduce `AdminUser`; use the final unified identity model, set `isRootAdmin` only through bootstrap/migration, and keep bootstrap data minimal. |
+| 63-012 | 5 | Run full backend validation and regenerate OpenAPI/client artifacts for the tenant-free auth and unified user/role model | Pending | Include unit, integration, contract, migration, and deploy-seed checks. |

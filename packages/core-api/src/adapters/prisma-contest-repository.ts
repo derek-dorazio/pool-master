@@ -9,9 +9,9 @@ import type { Contest } from '@poolmaster/shared/domain';
 export class PrismaContestRepository implements ContestRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findById(id: string, tenantId: string): Promise<Contest | null> {
+  async findById(id: string): Promise<Contest | null> {
     const row = await this.prisma.contest.findFirst({
-      where: { id, ...(tenantId ? { league: { tenantId } } : {}) },
+      where: { id },
       include: {
         sportEvent: { select: { sport: true } },
       },

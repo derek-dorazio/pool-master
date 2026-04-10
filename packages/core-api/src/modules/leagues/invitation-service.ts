@@ -140,7 +140,7 @@ export class InvitationService {
         throw new InvitationInvalidError('You are already a member of this league');
       }
     }
-    const league = await this.leagueRepo.findById(invitation.leagueId, '');
+    const league = await this.leagueRepo.findById(invitation.leagueId);
     if (!league) {
       throw new InvitationInvalidError('League no longer exists');
     }

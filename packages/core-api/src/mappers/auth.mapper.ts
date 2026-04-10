@@ -7,7 +7,6 @@ interface UserRow {
   id: string;
   email: string;
   displayName: string;
-  tenantId: string;
   timezone?: string | null;
   locale?: string | null;
   avatarUrl?: string | null;
@@ -25,7 +24,6 @@ export function toUserProfileDto(user: UserRow): UserProfileDto {
     id: user.id,
     email: user.email,
     displayName: user.displayName,
-    tenantId: user.tenantId,
     timezone: user.timezone ?? undefined,
     locale: user.locale ?? undefined,
     avatarUrl: user.avatarUrl ?? null,

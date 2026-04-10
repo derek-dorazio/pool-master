@@ -55,7 +55,6 @@ export const UserProfileDtoSchema = z.object({
   email: z.string(),
   displayName: z.string(),
   authProvider: z.enum(['email', 'google', 'apple']).optional(),
-  tenantId: z.string().optional(),
   timezone: z.string().optional(),
   locale: z.string().optional(),
   avatarUrl: z.string().nullable().optional(),

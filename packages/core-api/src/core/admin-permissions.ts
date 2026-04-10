@@ -1,8 +1,8 @@
 /**
- * Admin role and permission model.
+ * Root-admin permission model.
  *
- * Defines the five admin roles (SUPER_ADMIN through VIEWER) and the
- * permission matrix that maps each role to its allowed operations.
+ * The active backend now uses a single unified global root-admin capability
+ * on User rather than a separate AdminUser role matrix.
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -11,8 +11,6 @@ import { sendError } from './error-handler';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-export type AdminRole = 'SUPER_ADMIN' | 'OPERATIONS' | 'SUPPORT' | 'DATA_OPS' | 'VIEWER';
 
 export type AdminPermission =
   // Tenant operations
@@ -42,104 +40,13 @@ export type AdminPermission =
   // Audit
   | 'audit.view';
 
-// ---------------------------------------------------------------------------
-// Role → Permission matrix
-// ---------------------------------------------------------------------------
-
-export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
-  SUPER_ADMIN: [
-    'tenant.view',
-    'tenant.edit',
-    'tenant.suspend',
-    'tenant.delete',
-    'tenant.impersonate',
-    'user.view',
-    'user.edit',
-    'user.reset_password',
-    'user.force_logout',
-    'user.merge',
-    'contest.view',
-    'contest.override',
-    'contest.recalculate',
-    'contest.close',
-    'sportsdata.view',
-    'sportsdata.configure',
-    'sportsdata.re_ingest',
-    'platform.health',
-    'platform.migrations',
-    'audit.view',
-  ],
-  OPERATIONS: [
-    'tenant.view',
-    'tenant.edit',
-    'tenant.suspend',
-    'user.view',
-    'contest.view',
-    'contest.override',
-    'contest.recalculate',
-    'sportsdata.view',
-    'sportsdata.configure',
-    'platform.health',
-    'audit.view',
-  ],
-  SUPPORT: [
-    'tenant.view',
-    'tenant.edit',
-    'tenant.impersonate',
-    'user.view',
-    'user.edit',
-    'user.reset_password',
-    'user.force_logout',
-    'user.merge',
-    'contest.view',
-    'audit.view',
-  ],
-  DATA_OPS: [
-    'tenant.view',
-    'contest.view',
-    'contest.recalculate',
-    'sportsdata.view',
-    'sportsdata.configure',
-    'sportsdata.re_ingest',
-    'platform.health',
-    'platform.migrations',
-  ],
-  VIEWER: [
-    'tenant.view',
-    'user.view',
-    'contest.view',
-    'sportsdata.view',
-    'platform.health',
-  ],
-};
-
-// ---------------------------------------------------------------------------
-// Permission checking utilities
-// ---------------------------------------------------------------------------
-
-/**
- * Returns true if the given admin role grants the specified permission,
- * considering both the role's base permissions and any extra permissions.
- */
-export function hasAdminPermission(
-  role: AdminRole,
-  permission: AdminPermission,
-  extraPermissions: AdminPermission[] = [],
-): boolean {
-  const rolePerms = ROLE_PERMISSIONS[role];
-  if (!rolePerms) {
-    return false;
-  }
-  return rolePerms.includes(permission) || extraPermissions.includes(permission);
-}
-
 /**
  * Fastify preHandler hook factory that checks whether the admin user on the
  * request has the required permission. Returns 401 if no admin context and
- * 403 if the permission is not granted.
+ * otherwise allows the request through for unified root-admin access.
  */
 export function requireAdminPermission(
-  permission: AdminPermission,
+  _permission: AdminPermission,
 ): (request: FastifyRequest, reply: FastifyReply) => Promise<void> {
   return async function checkAdminPermission(
     request: FastifyRequest,
@@ -147,10 +54,7 @@ export function requireAdminPermission(
   ): Promise<void> {
     const ctx = request.adminContext;
     if (!ctx) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Admin authentication required');
-    }
-    if (!hasAdminPermission(ctx.adminUser.role, permission, ctx.adminUser.permissions)) {
-      return sendError(reply, 403, 'FORBIDDEN', `Missing admin permission: ${permission}`);
+      return sendError(reply, 401, 'UNAUTHORIZED', 'Root-admin authentication required');
     }
   };
 }

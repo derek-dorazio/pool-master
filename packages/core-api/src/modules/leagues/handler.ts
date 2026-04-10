@@ -49,7 +49,6 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     }
     const body = request.body;
     const input: CreateLeagueInput = {
-      tenantId: request.authUser?.tenantId ?? '',
       createdBy: userId,
       name: body.name,
       description: body.description,
