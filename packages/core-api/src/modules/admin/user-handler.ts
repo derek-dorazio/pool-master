@@ -92,7 +92,7 @@ export function createUserHandlers(userService: UserService) {
       });
     } catch (err) {
       if (err instanceof UserNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -112,7 +112,7 @@ export function createUserHandlers(userService: UserService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -136,7 +136,7 @@ export function createUserHandlers(userService: UserService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -156,7 +156,7 @@ export function createUserHandlers(userService: UserService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof UserNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
       }
       throw err;
     }

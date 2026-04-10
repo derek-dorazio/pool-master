@@ -81,7 +81,7 @@ export class MemberNotFoundError extends Error {
 export class MemberOperationError extends Error {
   code: string;
 
-  constructor(reason: string, code = 'BAD_REQUEST') {
+  constructor(reason: string, code = 'LEAGUE_MEMBER_OPERATION_INVALID') {
     super(reason);
     this.name = 'MemberOperationError';
     this.code = code;

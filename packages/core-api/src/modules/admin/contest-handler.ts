@@ -67,7 +67,7 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.send(detail);
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -91,7 +91,7 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -115,7 +115,7 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -139,7 +139,7 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -159,7 +159,7 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.send(result);
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -179,7 +179,7 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -203,7 +203,7 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.send(result);
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       throw err;
     }

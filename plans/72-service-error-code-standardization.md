@@ -43,15 +43,15 @@ Out of scope:
 | Status | Task | Notes |
 | --- | --- | --- |
 | Done | Inventory active routes still returning generic application codes | Completed first-pass inventory across shared auth/permission layers and the active leagues, squads, contests, standings, history, and root-admin surfaces |
-| In Progress | Define the canonical domain-specific code set for the active product surface | First active set now includes `AUTH_*`, `ROOT_ADMIN_*`, `LEAGUE_*`, `CONTEST_*`, `SQUAD_*`, and history-specific not-found codes |
+| Done | Define the canonical domain-specific code set for the active product surface | Active set now covers `AUTH_*`, `ROOT_ADMIN_*`, `LEAGUE_*`, `CONTEST_*`, `SQUAD_*`, `PARTICIPANT_*`, `PROVIDER_*`, `MIGRATION_*`, and history-specific read errors |
 | Done | Standardize auth/session error codes | Shared auth/session and CSRF handling now use specific auth codes instead of generic `UNAUTHORIZED` and `FORBIDDEN` |
 | Done | Standardize league and invitation error codes | Shared league permission/membership gates plus invitation accept/revoke semantics now use stable membership and invitation-state codes |
-| In Progress | Standardize squad error codes | Active squad membership/not-found/co-manager conflict cases now use specific codes; remaining generic squad-paths should be reviewed after the next slice |
-| In Progress | Standardize contest and entry error codes | Contest not-found, membership-required, lock, limit, and selection-exists cases are standardized; additional contest admin/override paths remain |
-| In Progress | Standardize standings/history read error codes | Shared standings session failure, history missing-resource cases, and core league/dashboard/member read semantics are standardized; broader participant and older admin read paths remain |
-| In Progress | Update functional API suites to assert the new error codes | Existing auth, consent, leagues, contests, squads, and standings/history functional suites now assert the first standardized codes; remaining slices should extend that pattern as more modules are converted |
-| In Progress | Add or update representative contract/integration assertions for standardized error codes | Added invitation contract/CRUD assertions plus root-admin session and member-lifecycle assertions for the new codes; broader provider/user/admin read surfaces still need representative assertions |
-| Pending | Refresh OpenAPI/generated artifacts after route/schema changes | Run `npm run api:refresh` and `npm run api:validate` |
+| Done | Standardize squad error codes | Active squad membership, co-manager, history-conflict, and not-found paths now use stable domain-specific codes with non-generic class defaults |
+| Done | Standardize contest and entry error codes | Contest, entry, and override paths now use stable contest/draft-specific codes with non-generic class defaults |
+| Done | Standardize standings/history read error codes | Standings, history, participant, dashboard, member lifecycle, and root-admin read paths now use specific not-found and permission codes instead of transport-only fallbacks |
+| Done | Update functional API suites to assert the new error codes | Functional API suites now assert the standardized auth, league, invitation, contest, squad, standings, history, and consent error codes |
+| Done | Add or update representative contract/integration assertions for standardized error codes | Representative web and root-admin contract suites plus invitation/member CRUD integration coverage now assert the standardized codes |
+| Done | Refresh OpenAPI/generated artifacts after route/schema changes | Refresh and validation completed after the final route/schema cleanup |
 
 ## Guardrails
 

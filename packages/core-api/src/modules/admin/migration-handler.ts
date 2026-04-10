@@ -55,13 +55,13 @@ export function createMigrationHandlers(service: MigrationService) {
       return reply.status(201).send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'MIGRATION_NOT_FOUND', err.message);
       }
       if (err instanceof MigrationAlreadyRunningError) {
         return sendError(reply, 409, 'ALREADY_RUNNING', err.message);
       }
       if (err instanceof RootAdminUserNotFoundError) {
-        return sendError(reply, 403, 'FORBIDDEN', err.message);
+        return sendError(reply, 403, 'ROOT_ADMIN_USER_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -78,7 +78,7 @@ export function createMigrationHandlers(service: MigrationService) {
       return reply.send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationRunNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'MIGRATION_RUN_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -101,10 +101,10 @@ export function createMigrationHandlers(service: MigrationService) {
       return reply.send(toMigrationRunResponse(run));
     } catch (err) {
       if (err instanceof MigrationRunNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'MIGRATION_RUN_NOT_FOUND', err.message);
       }
       if (err instanceof RootAdminUserNotFoundError) {
-        return sendError(reply, 403, 'FORBIDDEN', err.message);
+        return sendError(reply, 403, 'ROOT_ADMIN_USER_NOT_FOUND', err.message);
       }
       throw err;
     }

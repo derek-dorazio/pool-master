@@ -86,7 +86,7 @@ export class BulkService {
   ): Promise<CsvImportResult> {
     const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
-      throw new BulkOperationError('League not found');
+      throw new BulkOperationError('League not found', 'LEAGUE_NOT_FOUND');
     }
     const members = await this.membershipRepo.findByLeague(leagueId);
     const currentCount = members.length;
@@ -139,8 +139,11 @@ export interface TeamReassignmentInput {
 }
 
 export class BulkOperationError extends Error {
-  constructor(reason: string) {
+  code: string;
+
+  constructor(reason: string, code = 'LEAGUE_BULK_OPERATION_INVALID') {
     super(reason);
     this.name = 'BulkOperationError';
+    this.code = code;
   }
 }

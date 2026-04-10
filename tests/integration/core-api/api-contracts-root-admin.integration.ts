@@ -9,6 +9,7 @@ import { ingestionModule } from '../../../packages/core-api/src/modules/ingestio
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
   cleanupTestData,
+  createTestUser,
   getApp,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -157,5 +158,39 @@ describe('API contracts (root admin)', () => {
     expect(res.statusCode).toBe(401);
     expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
     expect(res.json().error.code).toBe('ROOT_ADMIN_SESSION_REQUIRED');
+  });
+
+  it('root-admin routes expose stable not-found error codes', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Contract User',
+      isRootAdmin: true,
+    });
+
+    const userRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000',
+      headers: rootAdmin.headers,
+    });
+    expect(userRes.statusCode).toBe(404);
+    expect(ErrorEnvelopeSchema.safeParse(userRes.json()).success).toBe(true);
+    expect(userRes.json().error.code).toBe('USER_NOT_FOUND');
+
+    const providerRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/providers/missing-provider',
+      headers: rootAdmin.headers,
+    });
+    expect(providerRes.statusCode).toBe(404);
+    expect(ErrorEnvelopeSchema.safeParse(providerRes.json()).success).toBe(true);
+    expect(providerRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
+
+    const migrationRunRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/migrations/runs/00000000-0000-0000-0000-000000000000',
+      headers: rootAdmin.headers,
+    });
+    expect(migrationRunRes.statusCode).toBe(404);
+    expect(ErrorEnvelopeSchema.safeParse(migrationRunRes.json()).success).toBe(true);
+    expect(migrationRunRes.json().error.code).toBe('MIGRATION_RUN_NOT_FOUND');
   });
 });

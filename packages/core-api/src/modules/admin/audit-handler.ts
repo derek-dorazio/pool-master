@@ -67,7 +67,7 @@ export async function getAuditEntry(
 ): Promise<void> {
   const entry = await getAuditEntryById(request.params.entryId);
   if (!entry) {
-    return sendError(reply, 404, 'NOT_FOUND', 'Audit entry not found');
+    return sendError(reply, 404, 'AUDIT_ENTRY_NOT_FOUND', 'Audit entry not found');
   }
   return reply.send({
     entry: {

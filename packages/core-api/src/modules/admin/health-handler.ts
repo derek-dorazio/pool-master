@@ -133,7 +133,7 @@ export function createHealthHandlers(healthService: HealthService) {
       });
     } catch (err) {
       if (err instanceof ErrorLogEntryNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'ERROR_LOG_ENTRY_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -192,7 +192,7 @@ export function createHealthHandlers(healthService: HealthService) {
       });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'ALERT_RULE_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -231,7 +231,7 @@ export function createHealthHandlers(healthService: HealthService) {
       });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'ALERT_RULE_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -258,7 +258,7 @@ export function createHealthHandlers(healthService: HealthService) {
       });
     } catch (err) {
       if (err instanceof AlertRuleNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'ALERT_RULE_NOT_FOUND', err.message);
       }
       throw err;
     }

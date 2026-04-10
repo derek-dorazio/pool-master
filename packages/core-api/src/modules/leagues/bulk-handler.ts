@@ -46,7 +46,8 @@ export function createBulkHandlers(bulkService: BulkService) {
       return reply.status(201).send(result);
     } catch (err) {
       if (err instanceof BulkOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        const statusCode = err.code.endsWith('_NOT_FOUND') ? 404 : 400;
+        return sendError(reply, statusCode, err.code, err.message);
       }
       throw err;
     }

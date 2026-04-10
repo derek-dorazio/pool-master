@@ -273,10 +273,10 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.send(toContestResponse(contest, null));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        return sendError(reply, 400, err.code, err.message);
       }
       throw err;
     }
@@ -291,10 +291,10 @@ export function createContestHandlers(contestService: ContestService) {
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestOperationError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        return sendError(reply, 400, err.code, err.message);
       }
       throw err;
     }
@@ -305,7 +305,10 @@ function validateCreateContestBody(body: z.infer<typeof CreateContestBodySchema>
   if (body.selectionType === SelectionType.TIERED) {
     const tiers = body.contestConfiguration?.tierConfig;
     if (!tiers || tiers.length === 0) {
-      throw new ContestOperationError('Tiered contests require tier configuration');
+      throw new ContestOperationError(
+        'Tiered contests require tier configuration',
+        'CONTEST_TIER_CONFIGURATION_REQUIRED',
+      );
     }
   }
 }

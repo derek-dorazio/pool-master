@@ -64,7 +64,7 @@ export function createParticipantHandlers(participantService: ParticipantService
   ): Promise<void> {
     const participant = await participantService.findById(request.params.id);
     if (!participant) {
-      return sendError(reply, 404, 'NOT_FOUND', 'Participant not found');
+      return sendError(reply, 404, 'PARTICIPANT_NOT_FOUND', 'Participant not found');
     }
     return reply.send({ participant: mapParticipantToDto(participant) });
   }
@@ -118,7 +118,7 @@ export function createParticipantHandlers(participantService: ParticipantService
       return reply.send({ participant: mapParticipantToDto(participant) });
     } catch (err) {
       if (err instanceof ParticipantNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'PARTICIPANT_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -133,7 +133,12 @@ export function createParticipantHandlers(participantService: ParticipantService
       request.params.season,
     );
     if (!record) {
-      return sendError(reply, 404, 'NOT_FOUND', 'Season record not found');
+      return sendError(
+        reply,
+        404,
+        'PARTICIPANT_SEASON_RECORD_NOT_FOUND',
+        'Season record not found',
+      );
     }
     return reply.send({ seasonRecord: mapParticipantSeasonRecordToDto(record) });
   }

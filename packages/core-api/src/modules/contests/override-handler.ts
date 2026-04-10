@@ -24,7 +24,8 @@ export function createOverrideHandlers(overrideService: OverrideService) {
 
   function handleOverrideError(err: unknown, reply: FastifyReply): void {
     if (err instanceof OverrideError) {
-      sendError(reply, 400, 'BAD_REQUEST', err.message);
+      const statusCode = err.code.endsWith('_NOT_FOUND') ? 404 : 400;
+      sendError(reply, statusCode, err.code, err.message);
       return;
     }
     throw err;

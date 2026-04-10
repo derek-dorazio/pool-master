@@ -8,7 +8,11 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ProviderService } from './provider-service';
-import { ProviderConfigUnsupportedError, ProviderNotFoundError } from './provider-service';
+import {
+  ProviderConfigUnsupportedError,
+  ProviderEventNotFoundError,
+  ProviderNotFoundError,
+} from './provider-service';
 import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
 
@@ -49,7 +53,7 @@ export function createProviderHandlers(providerService: ProviderService) {
       return reply.send(detail);
     } catch (err) {
       if (err instanceof ProviderNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -77,7 +81,7 @@ export function createProviderHandlers(providerService: ProviderService) {
       return reply.send(config);
     } catch (err) {
       if (err instanceof ProviderNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
       }
       if (err instanceof ProviderConfigUnsupportedError) {
         return sendError(reply, 501, 'CONFIG_UNAVAILABLE', err.message);
@@ -104,7 +108,7 @@ export function createProviderHandlers(providerService: ProviderService) {
       return reply.send(result);
     } catch (err) {
       if (err instanceof ProviderNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -140,8 +144,11 @@ export function createProviderHandlers(providerService: ProviderService) {
       );
       return reply.status(201).send(job);
     } catch (err) {
+      if (err instanceof ProviderEventNotFoundError) {
+        return sendError(reply, 404, 'PROVIDER_EVENT_NOT_FOUND', err.message);
+      }
       if (err instanceof ProviderNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
       }
       throw err;
     }

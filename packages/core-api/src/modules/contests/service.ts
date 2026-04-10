@@ -466,7 +466,7 @@ export class ContestNotFoundError extends Error {
 export class ContestOperationError extends Error {
   code: string;
 
-  constructor(reason: string, code = 'BAD_REQUEST') {
+  constructor(reason: string, code = 'CONTEST_OPERATION_INVALID') {
     super(reason);
     this.name = 'ContestOperationError';
     this.code = code;
@@ -476,7 +476,7 @@ export class ContestOperationError extends Error {
 export class ContestEntryOperationError extends Error {
   code: string;
 
-  constructor(reason: string, code = 'BAD_REQUEST') {
+  constructor(reason: string, code = 'CONTEST_ENTRY_OPERATION_INVALID') {
     super(reason);
     this.name = 'ContestEntryOperationError';
     this.code = code;

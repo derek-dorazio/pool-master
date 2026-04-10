@@ -46,11 +46,14 @@ export class OverrideService {
     const pickHistories = await this.draftSessionRepo.getPickHistories(session.id);
     const pickHistory = pickHistories.find((history) => history.id === pickId);
     if (!pickHistory) {
-      throw new OverrideError('Pick not found in this draft session');
+      throw new OverrideError('Pick not found in this draft session', 'DRAFT_PICK_NOT_FOUND');
     }
     const elapsed = Date.now() - pickHistory.createdAt.getTime();
     if (elapsed > UNDO_WINDOW_MS) {
-      throw new OverrideError('Undo window has expired (5 minutes)');
+      throw new OverrideError(
+        'Undo window has expired (5 minutes)',
+        'DRAFT_PICK_UNDO_WINDOW_EXPIRED',
+      );
     }
     // Reset current pick to the undone pick's position
     await this.draftSessionRepo.update(session.id, {
@@ -62,7 +65,7 @@ export class OverrideService {
   async pauseDraft(contestId: string, _reason: string): Promise<void> {
     const session = await this.requireDraftSession(contestId);
     if (session.status !== DraftStatus.LIVE) {
-      throw new OverrideError('Draft can only be paused when live');
+      throw new OverrideError('Draft can only be paused when live', 'DRAFT_PAUSE_STATUS_INVALID');
     }
     await this.draftSessionRepo.update(session.id, {
       status: DraftStatus.PAUSED,
@@ -73,7 +76,10 @@ export class OverrideService {
   async resumeDraft(contestId: string): Promise<void> {
     const session = await this.requireDraftSession(contestId);
     if (session.status !== DraftStatus.PAUSED) {
-      throw new OverrideError('Draft can only be resumed when paused');
+      throw new OverrideError(
+        'Draft can only be resumed when paused',
+        'DRAFT_RESUME_STATUS_INVALID',
+      );
     }
     await this.draftSessionRepo.update(session.id, {
       status: DraftStatus.LIVE,
@@ -87,7 +93,7 @@ export class OverrideService {
   ): Promise<void> {
     const session = await this.requireDraftSession(contestId);
     if (!session.currentTurnStartedAt) {
-      throw new OverrideError('No active current turn to extend');
+      throw new OverrideError('No active current turn to extend', 'DRAFT_TURN_NOT_ACTIVE');
     }
     const shiftedTurnStart = new Date(
       session.currentTurnStartedAt.getTime() + additionalSeconds * 1000,
@@ -108,7 +114,7 @@ export class OverrideService {
   ): Promise<void> {
     const entry = await this.entryRepo.findById(entryId);
     if (!entry || entry.contestId !== contestId) {
-      throw new OverrideError('Entry not found in this contest');
+      throw new OverrideError('Entry not found in this contest', 'CONTEST_ENTRY_NOT_FOUND');
     }
     await this.entryRepo.update(entryId, {
       totalScore: entry.totalScore + adjustment,
@@ -119,7 +125,7 @@ export class OverrideService {
   async recalculateStandings(contestId: string): Promise<RecalculationResult> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
-      throw new OverrideError('Contest not found');
+      throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
     }
     return this.contestScoringRecalculationService.recalculateContest(contestId);
   }
@@ -130,10 +136,13 @@ export class OverrideService {
   async reopenContest(contestId: string, _reason: string): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
-      throw new OverrideError('Contest not found');
+      throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
     }
     if (contest.status !== ContestStatus.COMPLETED) {
-      throw new OverrideError('Only completed contests can be reopened');
+      throw new OverrideError(
+        'Only completed contests can be reopened',
+        'CONTEST_REOPEN_STATUS_INVALID',
+      );
     }
     return this.contestRepo.update(contestId, { status: ContestStatus.ACTIVE } as Partial<Contest>);
   }
@@ -142,10 +151,10 @@ export class OverrideService {
   async closeContest(contestId: string, _reason: string): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
-      throw new OverrideError('Contest not found');
+      throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
     }
     if (contest.status === ContestStatus.COMPLETED || contest.status === ContestStatus.CANCELLED) {
-      throw new OverrideError('Contest is already closed');
+      throw new OverrideError('Contest is already closed', 'CONTEST_ALREADY_CLOSED');
     }
     return this.contestRepo.update(contestId, {
       status: ContestStatus.COMPLETED,
@@ -160,7 +169,7 @@ export class OverrideService {
   ): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
-      throw new OverrideError('Contest not found');
+      throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
     }
     return this.contestRepo.update(contestId, { endsAt: newEnd } as Partial<Contest>);
   }
@@ -173,7 +182,7 @@ export class OverrideService {
   ): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
-      throw new OverrideError('Contest not found');
+      throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
     }
     return this.contestRepo.update(contestId, { lockAt: newLock } as Partial<Contest>);
   }
@@ -183,15 +192,18 @@ export class OverrideService {
   private async requireDraftSession(contestId: string): Promise<DraftSession> {
     const session = await this.draftSessionRepo.findByContest(contestId);
     if (!session) {
-      throw new OverrideError('No draft session found for this contest');
+      throw new OverrideError('No draft session found for this contest', 'DRAFT_SESSION_NOT_FOUND');
     }
     return session;
   }
 }
 
 export class OverrideError extends Error {
-  constructor(reason: string) {
+  code: string;
+
+  constructor(reason: string, code = 'CONTEST_OVERRIDE_INVALID') {
     super(reason);
     this.name = 'OverrideError';
+    this.code = code;
   }
 }

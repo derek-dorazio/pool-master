@@ -253,7 +253,7 @@ export class SquadService {
 export class SquadOperationError extends Error {
   code: string;
 
-  constructor(message: string, code = 'BAD_REQUEST') {
+  constructor(message: string, code = 'SQUAD_OPERATION_INVALID') {
     super(message);
     this.name = 'SquadOperationError';
     this.code = code;

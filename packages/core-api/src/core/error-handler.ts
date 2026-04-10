@@ -20,6 +20,13 @@ function inferStatusCode(error: ErrorLike): number {
     case 'InvitationNotFoundError':
     case 'MemberNotFoundError':
     case 'SquadNotFoundError':
+    case 'UserNotFoundError':
+    case 'ProviderNotFoundError':
+    case 'ProviderEventNotFoundError':
+    case 'ErrorLogEntryNotFoundError':
+    case 'AlertRuleNotFoundError':
+    case 'MigrationNotFoundError':
+    case 'MigrationRunNotFoundError':
       return 404;
     default:
       return 500;
@@ -46,6 +53,20 @@ function inferErrorCode(error: ErrorLike, statusCode: number): string {
       return 'LEAGUE_MEMBER_NOT_FOUND';
     case 'SquadNotFoundError':
       return 'SQUAD_NOT_FOUND';
+    case 'UserNotFoundError':
+      return 'USER_NOT_FOUND';
+    case 'ProviderNotFoundError':
+      return 'PROVIDER_NOT_FOUND';
+    case 'ProviderEventNotFoundError':
+      return 'PROVIDER_EVENT_NOT_FOUND';
+    case 'ErrorLogEntryNotFoundError':
+      return 'ERROR_LOG_ENTRY_NOT_FOUND';
+    case 'AlertRuleNotFoundError':
+      return 'ALERT_RULE_NOT_FOUND';
+    case 'MigrationNotFoundError':
+      return 'MIGRATION_NOT_FOUND';
+    case 'MigrationRunNotFoundError':
+      return 'MIGRATION_RUN_NOT_FOUND';
     case 'ContestOperationError':
     case 'ContestEntryOperationError':
     case 'InvitationInvalidError':
