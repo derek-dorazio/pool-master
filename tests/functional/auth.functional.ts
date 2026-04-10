@@ -1,6 +1,16 @@
-import { getCurrentUser } from '@poolmaster/shared/generated/hey-api';
+import {
+  createLeague,
+  getCurrentUser,
+  logoutUser,
+  refreshToken,
+} from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser } from './builders';
-import { cleanupFunctionalData, disconnectFunctionalPrisma } from './setup';
+import {
+  cleanupFunctionalData,
+  createCookieSessionClient,
+  disconnectFunctionalPrisma,
+  expectFunctionalError,
+} from './setup';
 
 afterEach(async () => {
   await cleanupFunctionalData();
@@ -29,5 +39,93 @@ describe('SDK Functional: Auth', () => {
     expect(currentUser?.user.id).toBe(user.userId);
     expect(currentUser?.user.email).toBe(user.email);
     expect(currentUser?.user.displayName).toBe(user.displayName);
+  });
+
+  it('supports cookie-session auth for reads and refresh rotation through the SDK', async () => {
+    const user = await buildRegisteredUser({
+      displayName: 'Cookie Session User',
+    });
+
+    const cookieClient = createCookieSessionClient(user.login.tokens);
+
+    const currentUser = await getCurrentUser({
+      client: cookieClient,
+    });
+
+    expect(currentUser.data?.user.id).toBe(user.userId);
+    expect(currentUser.data?.user.email).toBe(user.email);
+
+    const refreshResponse = await refreshToken({
+      client: cookieClient,
+    });
+
+    expect(refreshResponse.data).toBeDefined();
+    expect(refreshResponse.data?.accessToken).toBeTruthy();
+    expect(refreshResponse.data?.refreshToken).toBeTruthy();
+    expect(refreshResponse.data?.csrfToken).toBeTruthy();
+    expect(refreshResponse.data?.refreshToken).not.toBe(user.login.tokens.refreshToken);
+  });
+
+  it('requires a matching CSRF header for cookie-session state-changing requests', async () => {
+    const user = await buildRegisteredUser({
+      displayName: 'Cookie CSRF User',
+    });
+
+    const cookieClientWithoutCsrf = createCookieSessionClient(user.login.tokens, {
+      includeCsrfHeader: false,
+    });
+
+    const forbiddenCreate = await createLeague({
+      client: cookieClientWithoutCsrf,
+      body: {
+        name: 'Cookie Session League',
+        visibility: 'PRIVATE',
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    expectFunctionalError(forbiddenCreate, {
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+
+    const cookieClient = createCookieSessionClient(user.login.tokens);
+    const successfulCreate = await createLeague({
+      client: cookieClient,
+      body: {
+        name: 'Cookie Session League',
+        visibility: 'PRIVATE',
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    expect(successfulCreate.data?.league.id).toBeTruthy();
+    expect(successfulCreate.data?.league.role).toBe('COMMISSIONER');
+  });
+
+  it('revokes the refresh token on logout and rejects subsequent refresh attempts', async () => {
+    const user = await buildRegisteredUser({
+      displayName: 'Logout Session User',
+    });
+    const cookieClient = createCookieSessionClient(user.login.tokens);
+
+    const logoutResponse = await logoutUser({
+      client: cookieClient,
+    });
+
+    expect(logoutResponse.data?.success).toBe(true);
+
+    const refreshResponse = await refreshToken({
+      client: cookieClient,
+    });
+
+    expectFunctionalError(refreshResponse, {
+      status: 401,
+      code: 'INVALID_REFRESH_TOKEN',
+    });
   });
 });

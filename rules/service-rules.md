@@ -181,6 +181,10 @@ All error responses must follow a consistent envelope so frontend clients can ha
 - Validation errors (400) should include `details` with per-field errors when available.
 - Not-found errors (404) should use domain-specific codes (e.g., `CONTEST_NOT_FOUND`, not generic `NOT_FOUND`).
 - Permission errors (403) should use codes that distinguish the denial reason (e.g., `INSUFFICIENT_PERMISSION`, `NOT_LEAGUE_MEMBER`).
+- Intentional application errors must use stable, descriptive, domain-specific codes rather than transport-only placeholders such as `BAD_REQUEST`, `FORBIDDEN`, or `NOT_FOUND` when the domain reason is known.
+- Error codes must be specific enough for clients and tests to distinguish materially different failures that share the same HTTP status.
+- Human-readable messages must explain the real failure clearly without exposing unsafe internals.
+- When useful, `details` should carry structured machine-readable context rather than ad hoc string blobs.
 - Define a shared DTO/schema for the standard error envelope in `packages/shared/dto/`.
 - Fastify's global error handler should format unhandled errors into this envelope where practical, and new route work should not bypass that standard.
 - Route schemas must declare error response shapes for the most relevant statuses such as `400`, `401`, `403`, and `404`.

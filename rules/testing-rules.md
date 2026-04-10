@@ -187,6 +187,8 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
 - Functional tests must create all the data they need through real routes or approved test builders.
 - Do not rely on seed data, ambient discovery data, fake UUIDs, or preexisting state.
 - Each functional test file should use isolated setup and must not depend on data from other test files.
+- Functional cleanup helpers must delete child records before parent records; for contest flows, remove contest entries and contest descendants before squads and leagues.
+- Functional builders and setup helpers must fail descriptively. When an SDK setup call fails, include the response status and error payload in the thrown error so review and debugging do not stop at a vague \"register failed\" message.
 
 **Assertion rules:**
 - Assertions must be strong and intentional. Do not accept broad fallback status ranges like `200 | 400 | 500`.
@@ -194,6 +196,8 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
 - Use shared route constants from `@poolmaster/shared/api-routes`.
 - Use shared domain enums from `@poolmaster/shared/domain` for status values, sport types, etc.
 - When endpoint contracts change, functional tests must change with them.
+- When a slice introduces or standardizes intentional error conditions, functional API coverage must include explicit negative-path cases for those errors and assert the expected application error codes, not just the HTTP status.
+- Do not stop at a single generic failure case when the route exposes multiple meaningful denial reasons; cover the distinct error conditions that the frontend or other clients need to handle differently.
 
 Functional suites should prioritize durable critical-path journeys covering:
 

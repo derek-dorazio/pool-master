@@ -2,6 +2,16 @@ import { createLeague, loginUser, registerUser } from '@poolmaster/shared/genera
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { createAuthenticatedClient, createFunctionalEmail, getSdkClient } from './setup';
 
+function describeSdkFailure(result: {
+  response?: Response | undefined;
+  error?: unknown;
+}): string {
+  const status = result.response?.status;
+  const payload = result.error;
+  const details = payload ? JSON.stringify(payload) : 'no error payload';
+  return `status=${status ?? 'unknown'} payload=${details}`;
+}
+
 export interface RegisteredUserContext {
   client: Client;
   displayName: string;
@@ -10,6 +20,7 @@ export interface RegisteredUserContext {
     tokens: {
       accessToken: string;
       refreshToken: string;
+      csrfToken: string;
       expiresIn: number;
     };
     user: {
@@ -23,6 +34,7 @@ export interface RegisteredUserContext {
     tokens: {
       accessToken: string;
       refreshToken: string;
+      csrfToken: string;
       expiresIn: number;
     };
     user: {
@@ -54,7 +66,7 @@ export async function buildRegisteredUser(overrides?: {
   });
 
   if (!registration.data) {
-    throw new Error(`Builder: registerUser failed for ${email}`);
+    throw new Error(`Builder: registerUser failed for ${email} (${describeSdkFailure(registration)})`);
   }
 
   const login = await loginUser({
@@ -66,7 +78,7 @@ export async function buildRegisteredUser(overrides?: {
   });
 
   if (!login.data) {
-    throw new Error(`Builder: loginUser failed for ${email}`);
+    throw new Error(`Builder: loginUser failed for ${email} (${describeSdkFailure(login)})`);
   }
 
   const token = login.data.tokens.accessToken;
@@ -124,7 +136,10 @@ export async function buildLeagueWithCommissioner(overrides?: {
   });
 
   if (!leagueResponse.data) {
-    throw new Error(`Builder: createLeague failed for commissioner ${commissioner.userId}`);
+    throw new Error(
+      `Builder: createLeague failed for commissioner ${commissioner.userId} `
+      + `(${describeSdkFailure(leagueResponse)})`,
+    );
   }
 
   return {

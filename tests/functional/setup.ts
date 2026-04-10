@@ -83,6 +83,36 @@ export function createAuthenticatedClient(accessToken: string): Client {
   return client;
 }
 
+export function createCookieSessionClient(session: {
+  accessToken: string;
+  refreshToken: string;
+  csrfToken: string;
+}, options?: {
+  includeCsrfHeader?: boolean;
+}): Client {
+  const client = createClient(
+    createConfig({
+      baseUrl: getFunctionalBaseUrl(),
+    }),
+  );
+
+  const cookieHeader = [
+    `poolmaster_access=${encodeURIComponent(session.accessToken)}`,
+    `poolmaster_refresh=${encodeURIComponent(session.refreshToken)}`,
+    `poolmaster_csrf=${encodeURIComponent(session.csrfToken)}`,
+  ].join('; ');
+
+  client.interceptors.request.use((request: Request) => {
+    request.headers.set('Cookie', cookieHeader);
+    if (options?.includeCsrfHeader !== false) {
+      request.headers.set('X-CSRF-Token', session.csrfToken);
+    }
+    return request;
+  });
+
+  return client;
+}
+
 export function getFunctionalPrisma(): PrismaClient {
   if (!prisma) {
     prisma = new PrismaClient();
@@ -152,6 +182,47 @@ export async function cleanupFunctionalData(): Promise<void> {
         },
       },
     });
+    const contests = await database.contest.findMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    const contestIds = contests.map((contest) => contest.id);
+    if (contestIds.length > 0) {
+      await database.contestEntry.deleteMany({
+        where: {
+          contestId: {
+            in: contestIds,
+          },
+        },
+      });
+      await database.contestConfiguration.deleteMany({
+        where: {
+          contestId: {
+            in: contestIds,
+          },
+        },
+      });
+      await database.draftSession.deleteMany({
+        where: {
+          contestId: {
+            in: contestIds,
+          },
+        },
+      });
+      await database.contest.deleteMany({
+        where: {
+          id: {
+            in: contestIds,
+          },
+        },
+      });
+    }
     await database.squadMembership.deleteMany({
       where: {
         leagueId: {
