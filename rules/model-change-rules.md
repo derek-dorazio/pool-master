@@ -57,7 +57,7 @@ intentionally stale.
 ### 5. Tests
 
 - [ ] Update backend unit/integration tests.
-- [ ] Update contract tests.
+- [ ] Update contract-verification suites.
 - [ ] Update functional tests if the changed field/shape is on a critical path.
 - [ ] Update browser E2E or MSW handlers if request/response shape changed and those layers are active for the affected flow.
 - [ ] Remove or replace stale tests that were enforcing old architecture.

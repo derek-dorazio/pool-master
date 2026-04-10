@@ -188,7 +188,7 @@ All error responses must follow a consistent envelope so frontend clients can ha
 - Define a shared DTO/schema for the standard error envelope in `packages/shared/dto/`.
 - Fastify's global error handler should format unhandled errors into this envelope where practical, and new route work should not bypass that standard.
 - Route schemas must declare error response shapes for the most relevant statuses such as `400`, `401`, `403`, and `404`.
-- Functional, contract, or integration tests must validate representative error response shapes, not just success paths.
+- Functional API, contract-verification, or data integration tests must validate representative error response shapes, not just success paths.
 
 ---
 
@@ -196,9 +196,9 @@ All error responses must follow a consistent envelope so frontend clients can ha
 
 - Unit-test service logic.
 - Integration-test request/response behavior with Fastify `inject` where appropriate.
-- Add/update contract tests for API response shapes.
+- Add/update contract-verification suites for API response shapes.
 - When API schema changes, verify:
-  - contract tests
+  - contract verification
   - `api:refresh`
   - `api:validate`
 
@@ -206,7 +206,7 @@ All error responses must follow a consistent envelope so frontend clients can ha
 
 - Do not keep tests that only lock in outdated manual wrapper behavior.
 - Do not keep tests that validate copied path strings without exercising real request construction.
-- Replace stale tests with contract/integration coverage where that provides better signal.
+- Replace stale tests with contract verification, data integration, or FAPI coverage where that provides better signal.
 
 ---
 

@@ -104,7 +104,7 @@ The functional API suite should cover, at minimum:
 | Done | Integrate functional suite into local build/test flow | Root scripts now expose `test:service:functional-api` and `test:coverage:service:merged`, and active setup docs use those names. |
 | Done | Integrate functional suite into CI | CI now reports `service-coverage-report` and `poolmaster-unit-tests` with the renamed service coverage buckets and artifacts. |
 | Done | Own cross-rule/docs updates for the new test strategy | Updated workflow/testing rules, AGENTS, README, developer setup, and Plan 64 naming references. |
-| In Progress | Define and execute redundant-test pruning after coverage is in place | Removed the now-duplicative `auth-session.integration.ts` and `consent.integration.ts` suites after the functional auth/session and consent slices fully replaced their signal; leave contest, draft, history, scoring, and repository-heavy persistence suites in place until their remaining unique signal is explicitly replaced |
+| In Progress | Define and execute redundant-test pruning after coverage is in place | Removed the now-duplicative `auth-session.integration.ts` and `consent.integration.ts` suites after the functional auth/session and consent slices fully replaced their signal; leave contest, draft, history, scoring, and repository-heavy data integration suites in place until their remaining unique signal is explicitly replaced |
 
 ## Worker-Safe Rollout Slices
 

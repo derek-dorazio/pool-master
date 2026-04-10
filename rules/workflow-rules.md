@@ -69,7 +69,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 **Tests:**
 - [ ] Unit test exists for service logic
 - [ ] DB integration test covers create, read, update, delete/inactivate, findById for new/changed domain objects
-- [ ] Contract test case added to `api-contracts-web.integration.ts`, `api-contracts-root-admin.integration.ts`, or an equivalent contract suite for every new/changed endpoint
+- [ ] Contract-verification case added to `contract-verification-web.integration.ts`, `contract-verification-root-admin.integration.ts`, or an equivalent contract-verification suite for every new/changed endpoint
 - [ ] Coverage on changed files ≥ 80% statements
 
 **OpenAPI:**
@@ -90,7 +90,7 @@ When plans break work into slices (e.g., Plan 59's A–I slices), each slice sho
 | D.5 | Route schemas (zodToJsonSchema, operationId, tags) | Not Started |
 | D.6 | Unit tests | In Progress |
 | D.7 | Integration tests (CRUD + negative paths) | Not Started |
-| D.8 | Contract tests | Not Started |
+| D.8 | Contract verification | Not Started |
 ```
 
 Or confirm all layers pass the Slice Completion Checklist above before marking the slice `Done`. A slice is only complete when all applicable layers are done — not when the "hard part" (schema + service) lands.

@@ -48,7 +48,7 @@ class ContractProvider implements SportDataProvider {
   }
 }
 
-describe('API contracts (root admin)', () => {
+describe('Contract verification (root admin)', () => {
   beforeAll(async () => {
     await setupIntegrationTests();
   });

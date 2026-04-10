@@ -1,6 +1,6 @@
 # PoolMaster — Testing Rules
 
-All services and clients must follow these testing standards. This document defines the testing strategy, contract validation rules, functional test expectations, and when old tests should be removed rather than preserved.
+All services and clients must follow these testing standards. This document defines the testing strategy, contract verification rules, functional test expectations, and when old tests should be removed rather than preserved.
 
 > **Architecture dependency:** This document assumes the stack in [architecture-rules.md](architecture-rules.md): Fastify + TypeScript backend, the single React PoolMaster web client, native iOS/Android clients, DTO-driven OpenAPI, and shared generated `hey-api` clients.
 
@@ -14,7 +14,7 @@ All services and clients must follow these testing standards. This document defi
 |---|---|
 | Jest | unit and integration test runner |
 | Fastify `inject` | request/response integration testing |
-| Prisma test DB / local infra | persistence-backed integration tests |
+| Prisma test DB / local infra | persistence-backed data integration tests |
 | `nock` / service mocks | external dependency isolation where needed |
 
 ### Frontend — PoolMaster Web
@@ -39,12 +39,12 @@ All services and clients must follow these testing standards. This document defi
 
 ### Backend
 
-| Layer | Scope | Real DB | Notes |
+| Suite | Scope | Real DB | Notes |
 |---|---|---|---|
-| Unit | function/service behavior | no | mock dependencies intentionally |
-| Integration | Fastify + services + persistence | yes | validates real behavior; if the test needs a local Postgres instance that is not reachable from the sandbox/container, run it outside the sandbox with explicit user permission |
-| Contract | response/request shape vs DTO schema | yes | catches drift |
-| Functional | full service-stack verification through the generated SDK | yes | active backend acceptance gate |
+| Unit | function/service behavior in isolation | no | mock dependencies intentionally; prove business logic here |
+| Data Integration | persistence-layer behavior through real DB queries, repositories, and lower-level route/service reads/writes | yes | persistence-layer unit proof: CRUD, query correctness, filtering, sorting, joins, aggregations, fallback queries, and integrity constraints |
+| Contract Verification | live response/request shape vs DTO schema on representative endpoints | yes | thin API-boundary schema-alignment gate; implemented as integration-style suites |
+| Functional API (FAPI) | full service-stack verification through the generated SDK and real HTTP | yes | emulates real web/mobile SDK consumers and proves API-exposed flows, not exhaustive branch/query permutations |
 
 ### Frontend
 
@@ -67,7 +67,7 @@ These are the default required checks before commit:
 5. `npm run test:poolmaster:unit`
 6. `npm run test:coverage:service:merged`
 
-Contract-specific commands:
+Contract-verification-specific commands:
 
 7. `npm run api:refresh` when API schemas change
 8. `npm run api:validate` when OpenAPI output changes
@@ -80,25 +80,25 @@ Notes:
 
 ---
 
-## 4. Contract Testing Rules
+## 4. Contract Verification Rules
 
-PoolMaster treats API contracts as first-class test surfaces. Contract test existence is an **execution gate**, not a follow-up task.
+PoolMaster treats API contracts as first-class test surfaces. Contract verification is an **execution gate**, not a follow-up task.
 
-- Contract tests must validate live responses against DTO Zod schemas using `.safeParse()`.
+- Contract verification suites must validate live responses against DTO Zod schemas using `.safeParse()`.
 - New or changed endpoints must update:
-  - `tests/integration/core-api/api-contracts-web.integration.ts`
-  - `tests/integration/core-api/api-contracts-root-admin.integration.ts`
-  - or a clearly equivalent contract suite
-- If response shape changes, update the contract test in the same change.
+  - `tests/integration/core-api/contract-verification-web.integration.ts`
+  - `tests/integration/core-api/contract-verification-root-admin.integration.ts`
+  - or a clearly equivalent contract-verification suite
+- If response shape changes, update the contract-verification case in the same change.
 - Do not rely on TypeScript alone to prove runtime payload shape correctness.
 
-### Contract Test Gate
+### Contract Verification Gate
 
-A backend slice that adds or changes an API endpoint is **not complete** until a contract test case exists for that endpoint.
+A backend slice that adds or changes an API endpoint is **not complete** until a contract-verification case exists for that endpoint.
 
-If the contract test suite files do not yet exist, the first slice that adds or changes an endpoint must create them. Subsequent slices add cases to the existing suites.
+If the contract-verification suite files do not yet exist, the first slice that adds or changes an endpoint must create them. Subsequent slices add cases to the existing suites.
 
-**Minimum contract test per endpoint:**
+**Minimum contract-verification case per endpoint:**
 
 ```typescript
 it('GET /api/v1/<resource> matches <Resource>ResponseSchema', async () => {
@@ -109,7 +109,17 @@ it('GET /api/v1/<resource> matches <Resource>ResponseSchema', async () => {
 });
 ```
 
-Do not defer contract tests to a "testing cleanup slice." They are part of the slice that changes the contract.
+Do not defer contract verification to a "testing cleanup slice." It is part of the slice that changes the contract.
+
+### Contract Verification Heuristics
+
+Use contract verification when the goal is to prove exported DTO/OpenAPI alignment, not to re-run whole user journeys.
+
+- Keep these suites small and representative.
+- Validate endpoints that are new, materially changed, or especially likely to drift.
+- Prefer one focused schema assertion over a second broad behavioral workflow.
+- Do not turn contract verification into a duplicate FAPI suite.
+- Do not keep a contract-verification case once it only repeats behavior already better proved elsewhere and adds no schema-drift signal.
 
 ---
 
@@ -145,7 +155,7 @@ Remove tests if they are:
 
 - enforcing obsolete manual API wrappers
 - built around fake application fallback data that no longer exists
-- lower-signal duplicates of stronger MSW/contract coverage
+- lower-signal duplicates of stronger MSW/contract verification coverage
 
 Do not keep bad tests just because they already exist.
 Before deleting an existing test suite for architecture/strategy reasons, confirm with the user first unless they already explicitly asked for that deletion category in the current thread.
@@ -183,6 +193,18 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
 - Treat functional tests as full service-stack validation through the generated SDK and real backend behavior.
 - Functional tests are part of the required local and CI backend gate.
 
+**When a backend behavior belongs in FAPI:**
+- the behavior should be proven from the perspective of a real SDK client
+- real HTTP serialization or cookie/session handling matters
+- the flow is a documented API use case or client journey
+- the frontend or a mobile client would rely on the behavior as a product capability
+- the test should verify positive flow, negative/error flow, permission behavior, or representative parameter handling at the API layer
+
+**Do not use FAPI when:**
+- the only value is proving a DTO shape on a representative endpoint
+- the assertion is mainly about DB persistence internals rather than a client-visible workflow
+- the goal is exhaustive logic-branch or query-permutation coverage that belongs in unit or data integration tests
+
 **Data strategy:**
 - Functional tests must create all the data they need through real routes or approved test builders.
 - Do not rely on seed data, ambient discovery data, fake UUIDs, or preexisting state.
@@ -211,6 +233,71 @@ Functional suites should prioritize durable critical-path journeys covering:
 - consent and account essentials
 
 The exact set of required flows may evolve with the active product scope and should follow the current plans.
+
+### Backend Data Integration Tests
+
+Data integration tests live under `tests/integration/core-api/*.integration.ts`.
+
+Treat data integration as the persistence-layer unit suite.
+
+Use data integration when the test needs to prove something that should be validated at the persistence or lower-level runtime boundary:
+
+- repository and persistence correctness
+- CRUD behavior
+- query correctness
+- filtering, sorting, joins/includes, and aggregation behavior
+- DB-backed fallback behavior
+- lower-level state transitions that are not meaningful product journeys on their own
+- persistence-edge constraints such as uniqueness, cascade/delete behavior, recalculation persistence, or read-model materialization
+- route behavior that is still best exercised with `Fastify.inject()` and direct DB inspection
+
+Do not keep a data integration test if:
+- FAPI now proves the same workflow, error behavior, and client-visible outcome with equal or better confidence
+- the test exists only because a weaker pre-SDK strategy once needed it
+
+Prefer to keep data integration tests for:
+- scoring persistence/recalculation
+- repository-heavy ingestion persistence
+- history fallback logic
+- draft/roster persistence details that are more about stored state than client workflow
+- query/read-model correctness where the main proof is “this returns the correct data from the real DB”
+
+### Backend Suite Placement Heuristics
+
+When choosing a backend suite, use this order:
+
+1. `Unit`
+- isolated logic
+- no DB
+- deterministic business-rule branches
+- exhaustive business-logic coverage should live here when the logic can be proven without the DB
+
+2. `Data Integration`
+- persistence-layer unit proof
+- CRUD and query behavior
+- DB-backed edge cases
+- lower-level route/service transitions that are not primary client journeys
+
+3. `Contract Verification`
+- DTO/OpenAPI alignment on representative endpoints
+- response schema drift detection
+- thin request/response shape checks
+
+4. `Functional API (FAPI)`
+- generated SDK
+- real HTTP
+- real product workflows
+- auth/session behavior
+- cross-endpoint business journeys
+- client-visible error handling
+- representative parameter combinations
+- not exhaustive permutations already proven by unit/data integration
+
+If a test could fit in both `Data Integration` and `FAPI`, prefer:
+- `FAPI` for user/client workflows
+- `Data Integration` for persistence edges, query correctness, and lower-level state invariants
+
+Redundancy between suites is acceptable when each suite is true to its purpose. Do not delete a test merely because another layer also touches the same feature area. Remove a test only when it no longer serves its intended suite role.
 
 ### Browser E2E Tests (Playwright)
 
@@ -420,7 +507,7 @@ Do not rely on `prisma migrate reset` between test runs. Tests must be idempoten
 - Do not keep around tests that verify bad architecture.
 - Do not preserve tests for no-op UI.
 - Do not update mocks without checking whether the real contract changed.
-- Do not hand-wave broken contract tests as “just generated client issues.”
+- Do not hand-wave broken contract verification as “just generated client issues.”
 - Do not skip OpenAPI validation after changing route schemas.
 
 ---

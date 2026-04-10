@@ -34,7 +34,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 
-describe('API contracts (web)', () => {
+describe('Contract verification (web)', () => {
   it('auth routes expose the shared error envelope on negative responses', async () => {
     const loginRes = await getApp().inject({
       method: 'POST',
