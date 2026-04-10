@@ -258,6 +258,19 @@ Do not keep a data integration test if:
 Prefer to keep data integration tests for:
 - scoring persistence/recalculation
 - repository-heavy ingestion persistence
+
+### Data Integration Depth Requirement
+
+Data integration files should prove a meaningful slice of persistence or lower-level runtime behavior, not stop at a single happy-path stub.
+
+- Prefer `3-5` substantial cases per file when the surface naturally supports it.
+- Cover the relevant mix of:
+  - happy path
+  - negative validation path
+  - permission/authorization path where applicable
+  - not-found or missing-state path where applicable
+- It is acceptable for a highly focused persistence file to have fewer cases when the subject is intentionally narrow, but that should be the exception rather than the default.
+- Do not create placeholder data-integration files that only prove one trivial success path and leave the real persistence/query behavior untested.
 - history fallback logic
 - draft/roster persistence details that are more about stored state than client workflow
 - query/read-model correctness where the main proof is “this returns the correct data from the real DB”
