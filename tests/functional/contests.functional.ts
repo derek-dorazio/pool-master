@@ -7,16 +7,96 @@ import {
   leaveContest,
   listContestEntries,
   listContests,
+  updateContest,
+  submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestType, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import {
+  ContestStatus,
+  ContestType,
+  ParticipantType,
+  ScoringEngine,
+  SelectionType,
+  Sport,
+  TierAssignmentMethod,
+} from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
   expectFunctionalError,
+  getFunctionalPrisma,
 } from './setup';
+import { randomUUID } from 'node:crypto';
+
+const createdSportIds: string[] = [];
+const createdParticipantIds: string[] = [];
+const createdSportEventIds: string[] = [];
+const createdSportEventParticipantIds: string[] = [];
+
+async function cleanupContestArtifacts(): Promise<void> {
+  const prisma = getFunctionalPrisma();
+
+  if (createdSportEventParticipantIds.length > 0) {
+    await prisma.rosterPick.deleteMany({
+      where: {
+        sportEventParticipantId: {
+          in: createdSportEventParticipantIds,
+        },
+      },
+    });
+    await prisma.sportEventParticipantValuation.deleteMany({
+      where: {
+        sportEventParticipantId: {
+          in: createdSportEventParticipantIds,
+        },
+      },
+    });
+    await prisma.sportEventParticipant.deleteMany({
+      where: {
+        id: {
+          in: createdSportEventParticipantIds,
+        },
+      },
+    });
+    createdSportEventParticipantIds.length = 0;
+  }
+
+  if (createdSportEventIds.length > 0) {
+    await prisma.sportEvent.deleteMany({
+      where: {
+        id: {
+          in: createdSportEventIds,
+        },
+      },
+    });
+    createdSportEventIds.length = 0;
+  }
+
+  if (createdParticipantIds.length > 0) {
+    await prisma.participant.deleteMany({
+      where: {
+        id: {
+          in: createdParticipantIds,
+        },
+      },
+    });
+    createdParticipantIds.length = 0;
+  }
+
+  if (createdSportIds.length > 0) {
+    await prisma.sport.deleteMany({
+      where: {
+        id: {
+          in: createdSportIds,
+        },
+      },
+    });
+    createdSportIds.length = 0;
+  }
+}
 
 afterEach(async () => {
+  await cleanupContestArtifacts();
   await cleanupFunctionalData();
 });
 
@@ -25,7 +105,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Contests and Entries', () => {
-  it('creates, lists, and reads a contest through the generated SDK', async () => {
+  it('creates, lists, reads, updates, and deletes a contest through the generated SDK', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Contest Commissioner',
       leagueName: 'Contest Functional League',
@@ -78,6 +158,22 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(detailResponse.data?.contest.id).toBe(contestId);
     expect(detailResponse.data?.contest.name).toBe('Functional Contest');
     expect(detailResponse.data?.contest.status).toBe('DRAFT');
+
+    const updateResponse = await updateContest({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+      },
+      body: {
+        name: 'Functional Contest Updated',
+        isExclusive: true,
+      },
+    });
+
+    expect(updateResponse.data).toBeDefined();
+    expect(updateResponse.data?.contest.id).toBe(contestId);
+    expect(updateResponse.data?.contest.name).toBe('Functional Contest Updated');
+    expect(updateResponse.data?.contest.isExclusive).toBe(true);
 
     const deleteResponse = await deleteContest({
       client: commissioner.client,
@@ -273,5 +369,227 @@ describe('SDK Functional: Contests and Entries', () => {
     });
 
     expect(cleanupDeleteResponse.response.status).toBe(204);
+  });
+
+  it('rejects locked contest entry creation and leaving after selections exist', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Negative Contest Commissioner',
+      leagueName: 'Negative Contest League',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'Negative Contest Member',
+    });
+
+    const { acceptInvitation, generateInviteLink } = await import('@poolmaster/shared/generated/hey-api');
+
+    const inviteLinkResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        maxUses: 1,
+      },
+    });
+
+    const acceptResponse = await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: inviteLinkResponse.data?.invitation.inviteCode as string,
+      },
+    });
+    expect(acceptResponse.data?.membership.userId).toBe(member.userId);
+
+    const lockedContestResponse = await createContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: 'Locked Contest',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.TIERED,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+        contestConfiguration: {
+          rounds: 1,
+          tierAssignmentMethod: TierAssignmentMethod.ODDS,
+          tierConfig: [
+            {
+              tierId: 'tier-1',
+              tierName: 'Tier 1',
+              tierNumber: 1,
+              picksFromTier: 1,
+              participantIds: [],
+            },
+          ],
+        },
+      },
+    });
+
+    const selectableContestResponse = await createContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: 'Selection Contest',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.TIERED,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+        contestConfiguration: {
+          rounds: 1,
+          tierAssignmentMethod: TierAssignmentMethod.ODDS,
+          tierConfig: [
+            {
+              tierId: 'tier-1',
+              tierName: 'Tier 1',
+              tierNumber: 1,
+              picksFromTier: 1,
+              participantIds: [],
+            },
+          ],
+        },
+      },
+    });
+
+    const lockedContestId = lockedContestResponse.data?.contest.id;
+    const selectableContestId = selectableContestResponse.data?.contest.id;
+    expect(lockedContestId).toBeTruthy();
+    expect(selectableContestId).toBeTruthy();
+
+    const prisma = getFunctionalPrisma();
+    await prisma.contest.update({
+      where: {
+        id: lockedContestId as string,
+      },
+      data: {
+        status: ContestStatus.LOCKED,
+      },
+    });
+
+    const sport = await prisma.sport.create({
+      data: {
+        name: `FunctionalContestSport-${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        statSchema: {},
+      },
+    });
+    createdSportIds.push(sport.id);
+
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `Functional Contest Player ${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        externalIds: {},
+        metadata: {},
+        position: 'GOLFER',
+        teamAffiliation: null,
+      },
+    });
+    createdParticipantIds.push(participant.id);
+
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `functional-contest-event-${randomUUID().slice(0, 8)}`,
+        providerId: 'functional-test',
+        sport: Sport.GOLF,
+        name: 'Functional Contest Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+    createdSportEventIds.push(sportEvent.id);
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+      },
+    });
+    createdSportEventParticipantIds.push(sportEventParticipant.id);
+
+    await prisma.sportEventParticipantValuation.create({
+      data: {
+        sportEventParticipantId: sportEventParticipant.id,
+        price: 1000,
+        tier: 'tier-1',
+        orderIndex: 1,
+        valuationSource: 'functional-test',
+      },
+    });
+
+    await prisma.contest.update({
+      where: {
+        id: selectableContestId as string,
+      },
+      data: {
+        sportEventId: sportEvent.id,
+      },
+    });
+
+    await prisma.contestConfiguration.update({
+      where: {
+        contestId: selectableContestId as string,
+      },
+      data: {
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [participant.id],
+          },
+        ],
+      },
+    });
+
+    const lockedEntryResponse = await enterContest({
+      client: member.client,
+      path: {
+        contestId: lockedContestId as string,
+      },
+    });
+
+    expectFunctionalError(lockedEntryResponse, {
+      status: 400,
+      code: 'CONTEST_ENTRY_LOCKED',
+    });
+
+    const entryResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId: selectableContestId as string,
+      },
+    });
+
+    expect(entryResponse.data?.entry.id).toBeTruthy();
+
+    const selectionResponse = await submitContestSelection({
+      client: commissioner.client,
+      path: {
+        contestId: selectableContestId as string,
+      },
+      body: {
+        entryId: entryResponse.data?.entry.id as string,
+        participantId: sportEventParticipant.id,
+      },
+    });
+
+    expect(selectionResponse.data).toBeDefined();
+
+    const leaveAfterSelectionResponse = await leaveContest({
+      client: commissioner.client,
+      path: {
+        contestId: selectableContestId as string,
+      },
+    });
+
+    expectFunctionalError(leaveAfterSelectionResponse, {
+      status: 400,
+      code: 'CONTEST_ENTRY_SELECTIONS_EXIST',
+    });
   });
 });
