@@ -122,14 +122,20 @@ export class InvitationService {
       throw new InvitationNotFoundError(inviteCode);
     }
     if (invitation.status !== InvitationStatus.PENDING) {
-      throw new InvitationInvalidError(`Invitation is ${invitation.status.toLowerCase()}`);
+      throw new InvitationInvalidError(
+        `Invitation is ${invitation.status.toLowerCase()}`,
+        mapInvitationStatusCode(invitation.status),
+      );
     }
     if (invitation.expiresAt && new Date() > invitation.expiresAt) {
       await this.invitationRepo.update(invitation.id, { status: InvitationStatus.EXPIRED });
-      throw new InvitationInvalidError('Invitation has expired');
+      throw new InvitationInvalidError('Invitation has expired', 'LEAGUE_INVITATION_EXPIRED');
     }
     if (invitation.maxUses > 0 && invitation.currentUses >= invitation.maxUses) {
-      throw new InvitationInvalidError('Invitation has reached maximum uses');
+      throw new InvitationInvalidError(
+        'Invitation has reached maximum uses',
+        'LEAGUE_INVITATION_EXHAUSTED',
+      );
     }
     const existingMembership = await this.membershipRepo.findByLeagueAndUser(
       invitation.leagueId,
@@ -137,16 +143,22 @@ export class InvitationService {
     );
     if (existingMembership) {
       if (existingMembership.status === LeagueMembershipStatus.ACTIVE) {
-        throw new InvitationInvalidError('You are already a member of this league');
+        throw new InvitationInvalidError(
+          'You are already a member of this league',
+          'LEAGUE_ALREADY_MEMBER',
+        );
       }
     }
     const league = await this.leagueRepo.findById(invitation.leagueId);
     if (!league) {
-      throw new InvitationInvalidError('League no longer exists');
+      throw new InvitationInvalidError('League no longer exists', 'LEAGUE_NOT_FOUND');
     }
     const members = await this.membershipRepo.findByLeague(invitation.leagueId);
     if (members.length >= league.maxMembers) {
-      throw new InvitationInvalidError('League has reached its member limit');
+      throw new InvitationInvalidError(
+        'League has reached its member limit',
+        'LEAGUE_MEMBER_LIMIT_REACHED',
+      );
     }
     const membership = existingMembership
       ? await this.membershipRepo.update(existingMembership.id, {
@@ -187,8 +199,24 @@ export class InvitationNotFoundError extends Error {
 }
 
 export class InvitationInvalidError extends Error {
-  constructor(reason: string) {
+  code: string;
+
+  constructor(reason: string, code = 'LEAGUE_INVITATION_INVALID') {
     super(reason);
     this.name = 'InvitationInvalidError';
+    this.code = code;
+  }
+}
+
+function mapInvitationStatusCode(status: InvitationStatus): string {
+  switch (status) {
+    case InvitationStatus.ACCEPTED:
+      return 'LEAGUE_INVITATION_ALREADY_ACCEPTED';
+    case InvitationStatus.REVOKED:
+      return 'LEAGUE_INVITATION_REVOKED';
+    case InvitationStatus.EXPIRED:
+      return 'LEAGUE_INVITATION_EXPIRED';
+    default:
+      return 'LEAGUE_INVITATION_INVALID';
   }
 }

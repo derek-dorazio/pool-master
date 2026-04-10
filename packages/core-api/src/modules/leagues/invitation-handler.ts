@@ -58,7 +58,7 @@ export function createInvitationHandlers(invitationService: InvitationService) {
       return reply.send({ success: true });
     } catch (err) {
       if (err instanceof InvitationNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'LEAGUE_INVITATION_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -70,7 +70,7 @@ export function createInvitationHandlers(invitationService: InvitationService) {
   ): Promise<void> {
     const userId = request.authUser?.userId;
     if (!userId) {
-      return sendError(reply, 401, 'UNAUTHORIZED', 'Missing user identity');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
     try {
       const membership = await invitationService.acceptInvitation(
@@ -80,10 +80,10 @@ export function createInvitationHandlers(invitationService: InvitationService) {
       return reply.status(201).send({ membership });
     } catch (err) {
       if (err instanceof InvitationNotFoundError) {
-        return sendError(reply, 404, 'NOT_FOUND', err.message);
+        return sendError(reply, 404, 'LEAGUE_INVITATION_NOT_FOUND', err.message);
       }
       if (err instanceof InvitationInvalidError) {
-        return sendError(reply, 400, 'BAD_REQUEST', err.message);
+        return sendError(reply, 400, err.code, err.message);
       }
       throw err;
     }

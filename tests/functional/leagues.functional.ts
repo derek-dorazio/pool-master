@@ -204,4 +204,64 @@ describe('SDK Functional: Leagues', () => {
       code: 'LEAGUE_PERMISSION_DENIED',
     });
   });
+
+  it('rejects reusing an already accepted invite link with a stable invitation error code', async () => {
+    const commissioner = await buildRegisteredUser({
+      displayName: 'League Commissioner',
+    });
+    const firstInvitee = await buildRegisteredUser({
+      displayName: 'First Invitee',
+    });
+    const secondInvitee = await buildRegisteredUser({
+      displayName: 'Second Invitee',
+    });
+
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: {
+        name: 'Exhausted Invite League',
+        visibility: 'PRIVATE',
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    const leagueId = createResponse.data?.league.id;
+    expect(leagueId).toBeTruthy();
+
+    const invitationResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+      body: {
+        maxUses: 1,
+      },
+    });
+
+    const inviteCode = invitationResponse.data?.invitation.inviteCode;
+    expect(inviteCode).toBeTruthy();
+
+    const firstAcceptResponse = await acceptInvitation({
+      client: firstInvitee.client,
+      body: {
+        inviteCode: inviteCode as string,
+      },
+    });
+
+    expect(firstAcceptResponse.data?.membership.leagueId).toBe(leagueId);
+
+    const secondAcceptResponse = await acceptInvitation({
+      client: secondInvitee.client,
+      body: {
+        inviteCode: inviteCode as string,
+      },
+    });
+
+    expectFunctionalError(secondAcceptResponse, {
+      status: 400,
+      code: 'LEAGUE_INVITATION_ALREADY_ACCEPTED',
+    });
+  });
 });

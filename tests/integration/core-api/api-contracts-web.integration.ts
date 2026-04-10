@@ -316,5 +316,6 @@ describe('API contracts (web)', () => {
     });
     expect(missingInviteRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(missingInviteRes.json()).success).toBe(true);
+    expect(missingInviteRes.json().error.code).toBe('LEAGUE_INVITATION_NOT_FOUND');
   });
 });

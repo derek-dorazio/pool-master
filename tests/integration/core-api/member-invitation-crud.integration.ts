@@ -120,6 +120,18 @@ describe('Member and Invitation CRUD Integration', () => {
     expect(linkMembership.userId).toBe(linkInvitee.user.id);
     expect(linkMembership.role).toBe(LeagueRole.MEMBER);
 
+    const reusedInviteRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.invitations.accept,
+      headers: emailInvitee.headers,
+      payload: {
+        inviteCode: inviteLink.inviteCode,
+      },
+    });
+
+    expect(reusedInviteRes.statusCode).toBe(400);
+    expect(reusedInviteRes.json().error.code).toBe('LEAGUE_INVITATION_ALREADY_ACCEPTED');
+
     const membersRes = await getApp().inject({
       method: 'GET',
       url: API_ROUTES.leagues.members(leagueId),

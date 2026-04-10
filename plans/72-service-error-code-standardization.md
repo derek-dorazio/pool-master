@@ -45,12 +45,12 @@ Out of scope:
 | Done | Inventory active routes still returning generic application codes | Completed first-pass inventory across shared auth/permission layers and the active leagues, squads, contests, standings, history, and root-admin surfaces |
 | In Progress | Define the canonical domain-specific code set for the active product surface | First active set now includes `AUTH_*`, `ROOT_ADMIN_*`, `LEAGUE_*`, `CONTEST_*`, `SQUAD_*`, and history-specific not-found codes |
 | Done | Standardize auth/session error codes | Shared auth/session and CSRF handling now use specific auth codes instead of generic `UNAUTHORIZED` and `FORBIDDEN` |
-| In Progress | Standardize league and invitation error codes | Shared league permission/membership gates are standardized; invitation accept/revoke semantics still need the same treatment |
+| Done | Standardize league and invitation error codes | Shared league permission/membership gates plus invitation accept/revoke semantics now use stable membership and invitation-state codes |
 | In Progress | Standardize squad error codes | Active squad membership/not-found/co-manager conflict cases now use specific codes; remaining generic squad-paths should be reviewed after the next slice |
 | In Progress | Standardize contest and entry error codes | Contest not-found, membership-required, lock, limit, and selection-exists cases are standardized; additional contest admin/override paths remain |
 | In Progress | Standardize standings/history read error codes | Shared standings session failure and history missing-resource cases are standardized; broader read-path sweep remains |
-| In Progress | Update functional API suites to assert the new error codes | Updated existing auth, consent, leagues, contests, squads, and standings/history functional suites to match the new codes |
-| Pending | Add or update representative contract/integration assertions for standardized error codes | Keep coverage focused on public service semantics rather than duplicating every functional assertion |
+| In Progress | Update functional API suites to assert the new error codes | Existing auth, consent, leagues, contests, squads, and standings/history functional suites now assert the first standardized codes; remaining slices should extend that pattern as more modules are converted |
+| In Progress | Add or update representative contract/integration assertions for standardized error codes | Added invitation contract and CRUD assertions for the new invitation-state codes; broader admin and remaining read surfaces still need representative assertions |
 | Pending | Refresh OpenAPI/generated artifacts after route/schema changes | Run `npm run api:refresh` and `npm run api:validate` |
 
 ## Guardrails
