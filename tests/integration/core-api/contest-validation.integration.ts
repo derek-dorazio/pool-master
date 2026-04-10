@@ -62,7 +62,7 @@ describe('Contest Validation Integration', () => {
     expect(createRes.statusCode).toBe(400);
     const body = createRes.json();
     expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
-    expect(body.error.code).toBe('BAD_REQUEST');
+    expect(body.error.code).toBe('CONTEST_TIER_CONFIGURATION_REQUIRED');
     expect(body.error.message).toBe('Tiered contests require tier configuration');
 
     const listRes = await getApp().inject({
