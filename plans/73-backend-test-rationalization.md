@@ -71,7 +71,7 @@ Out of scope:
 | Done | Rename backend suite terminology to `unit`, `data integration`, `contract verification`, and `functional API` | Rules and live suite filenames now use the aligned taxonomy |
 | Done | Inventory remaining backend data integration files and classify each as `keep`, `replace-first`, or `remove-now` | The remaining `tests/integration/core-api/*.integration.ts` files are now explicitly classified below against the refined suite heuristics |
 | Done | Remove files classified `remove-now` | Removed duplicated `contest-entry-crud.integration.ts` and `squad-management.integration.ts` after validating the remaining FAPI and data-integration suites |
-| In Progress | Add missing FAPI coverage before deleting any `replace-first` data integration file | League settings/member lifecycle plus contest update and entry-state negative coverage are now in FAPI and the matching data-integration files were removed; the next gaps are broader permission denial coverage and fuller draft room journeys |
+| In Progress | Add missing FAPI coverage before deleting any `replace-first` data integration file | League settings/member lifecycle, commissioner dashboard/action-item denial coverage, and contest update plus entry-state negative coverage are now in FAPI and the matching data-integration files were removed; the next gaps are fuller draft room journeys |
 | Not Started | Mark permanent `keep` files as persistence-edge or lower-level runtime coverage in notes/docs | Make the reason for keeping them explicit |
 | Not Started | Update docs/rules/plans after the final pruning pass | Close the loop so the taxonomy stays stable |
 
@@ -129,8 +129,6 @@ These files still add useful signal today, but their primary workflow confidence
 | `tests/integration/core-api/budget-pick-room.integration.ts` | Draft room workflow belongs in FAPI, but the current draft FAPI slice does not yet fully replace the budget room journey |
 | `tests/integration/core-api/draft-session-crud.integration.ts` | Draft creation/state/duplicate rejection should become FAPI-owned, but current FAPI coverage is not yet feature-complete enough to remove it |
 | `tests/integration/core-api/draft-session-flow.integration.ts` | Tiered draft room flow belongs in FAPI, but the current draft FAPI slice is not yet a complete replacement |
-| `tests/integration/core-api/permission-negative.integration.ts` | Negative permission matrix should eventually live in FAPI where it is client-visible, but the representative cases are not broad enough yet |
-
 ### Remove-Now
 
 These files are already materially replaced by FAPI and do not appear to add unique persistence-layer signal.
@@ -143,6 +141,7 @@ These files are already materially replaced by FAPI and do not appear to add uni
 | `tests/integration/core-api/league-crud.integration.ts` | Removed. FAPI now covers league create/list/read plus settings updates through the generated SDK |
 | `tests/integration/core-api/league-membership-crud.integration.ts` | Removed. FAPI now covers role change, remove, reactivation, leave, and repeat-leave error behavior through the generated SDK |
 | `tests/integration/core-api/member-invitation-crud.integration.ts` | Removed. FAPI now covers invitation create/accept, member listing, member removal, and self-leave through the generated SDK |
+| `tests/integration/core-api/permission-negative.integration.ts` | Removed. FAPI now covers outsider/member commissioner-permission denials for invitations, member management, dashboard access, action-item resolution, contest entry, and root-admin access through the generated SDK |
 | `tests/integration/core-api/squad-management.integration.ts` | Removed. FAPI now covers squad create/update/list/co-manager management through the generated SDK |
 
 ## Validation

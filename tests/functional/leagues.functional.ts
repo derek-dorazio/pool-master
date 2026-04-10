@@ -3,11 +3,13 @@ import {
   changeMemberRole,
   createLeague,
   generateInviteLink,
+  getLeagueDashboard,
   getLeague,
   leaveLeague,
   listLeagueMembers,
   listLeagues,
   removeMember,
+  resolveActionItem,
   updateLeagueSettings,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser } from './builders';
@@ -15,6 +17,7 @@ import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
   expectFunctionalError,
+  getFunctionalPrisma,
 } from './setup';
 
 afterEach(async () => {
@@ -520,6 +523,99 @@ describe('SDK Functional: Leagues', () => {
     expectFunctionalError(outsiderRemoveResponse, {
       status: 403,
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
+    });
+  });
+
+  it('rejects non-commissioners from commissioner dashboard and action-item flows', async () => {
+    const commissioner = await buildRegisteredUser({
+      displayName: 'Dashboard Commissioner',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'Dashboard Member',
+    });
+    const outsider = await buildRegisteredUser({
+      displayName: 'Dashboard Outsider',
+    });
+
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: {
+        name: 'League Dashboard Negative Flow',
+        visibility: 'PRIVATE',
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    const leagueId = createResponse.data?.league.id;
+    expect(leagueId).toBeTruthy();
+
+    const invitationResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+      body: {
+        maxUses: 1,
+      },
+    });
+
+    const acceptResponse = await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: invitationResponse.data?.invitation.inviteCode as string,
+      },
+    });
+
+    expect(acceptResponse.data?.membership.userId).toBe(member.userId);
+
+    const actionItem = await getFunctionalPrisma().commissionerActionItem.create({
+      data: {
+        leagueId: leagueId as string,
+        type: 'JOIN_REQUEST',
+        priority: 'MEDIUM',
+        title: 'Review pending request',
+        description: 'A member action requires commissioner review.',
+        actionUrl: `/leagues/${leagueId}`,
+      },
+    });
+
+    const memberDashboardResponse = await getLeagueDashboard({
+      client: member.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expectFunctionalError(memberDashboardResponse, {
+      status: 403,
+      code: 'LEAGUE_PERMISSION_DENIED',
+    });
+
+    const outsiderDashboardResponse = await getLeagueDashboard({
+      client: outsider.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expectFunctionalError(outsiderDashboardResponse, {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_REQUIRED',
+    });
+
+    const memberResolveResponse = await resolveActionItem({
+      client: member.client,
+      path: {
+        id: leagueId as string,
+        itemId: actionItem.id,
+      },
+    });
+
+    expectFunctionalError(memberResolveResponse, {
+      status: 403,
+      code: 'LEAGUE_PERMISSION_DENIED',
     });
   });
 });
