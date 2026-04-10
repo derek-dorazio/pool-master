@@ -2,12 +2,24 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const rootDir = path.join(process.cwd());
-const stateFilePath = path.join(
+const invocationId = process.env.FUNCTIONAL_INVOCATION_ID;
+const coverageRoot = path.join(
   rootDir,
   'coverage',
   'service-functional-api',
+);
+const stateDir = process.env.FUNCTIONAL_STATE_DIR || (
+  invocationId
+    ? path.join(coverageRoot, 'runs', invocationId)
+    : coverageRoot
+);
+const stateFilePath = process.env.FUNCTIONAL_SERVER_STATE_FILE || path.join(
+  stateDir,
   'server-state.json',
 );
+const runsDir = path.join(coverageRoot, 'runs');
+const daemonDir = path.join(coverageRoot, 'daemon');
+const daemonStateFilePath = path.join(daemonDir, 'server-state.json');
 
 function readState() {
   if (!fs.existsSync(stateFilePath)) {
@@ -19,6 +31,19 @@ function readState() {
   } catch {
     return null;
   }
+}
+
+function hasActiveRunStateFiles() {
+  if (!fs.existsSync(runsDir)) {
+    return false;
+  }
+
+  return fs.readdirSync(runsDir, { withFileTypes: true }).some((entry) => {
+    if (!entry.isDirectory()) {
+      return false;
+    }
+    return fs.existsSync(path.join(runsDir, entry.name, 'server-state.json'));
+  });
 }
 
 function sleep(ms) {
@@ -57,12 +82,28 @@ async function terminatePid(pid) {
 }
 
 module.exports = async () => {
-  const state = readState();
-  if (state?.pid) {
-    await terminatePid(state.pid);
-  }
-
   if (fs.existsSync(stateFilePath)) {
     fs.rmSync(stateFilePath, { force: true });
+  }
+
+  if (process.env.FUNCTIONAL_STATE_DIR && fs.existsSync(stateDir)) {
+    fs.rmSync(stateDir, { recursive: true, force: true });
+  }
+
+  if (hasActiveRunStateFiles()) {
+    return;
+  }
+
+  const daemonState = readState(daemonStateFilePath);
+  if (daemonState?.pid) {
+    await terminatePid(daemonState.pid);
+  }
+
+  if (fs.existsSync(daemonStateFilePath)) {
+    fs.rmSync(daemonStateFilePath, { force: true });
+  }
+
+  if (fs.existsSync(daemonDir)) {
+    fs.rmSync(daemonDir, { recursive: true, force: true });
   }
 };

@@ -1,5 +1,5 @@
-import fs from 'node:fs';
 import path from 'node:path';
+import fs from 'node:fs';
 import { PrismaClient } from '@prisma/client';
 import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
@@ -16,16 +16,36 @@ export interface FunctionalErrorExpectation {
   code: string;
 }
 
-const stateFilePath = path.join(
-  process.cwd(),
-  'coverage',
-  'service-functional-api',
-  'server-state.json',
-);
+function getStateFilePath(): string {
+  const configuredPath = process.env.FUNCTIONAL_SERVER_STATE_FILE;
+  if (configuredPath) {
+    return configuredPath;
+  }
+
+  const invocationId = process.env.FUNCTIONAL_INVOCATION_ID;
+  if (invocationId) {
+    return path.join(
+      process.cwd(),
+      'coverage',
+      'service-functional-api',
+      'runs',
+      invocationId,
+      'server-state.json',
+    );
+  }
+
+  return path.join(
+    process.cwd(),
+    'coverage',
+    'service-functional-api',
+    'server-state.json',
+  );
+}
 
 let prisma: PrismaClient | undefined;
 
 function readState(): FunctionalServerState {
+  const stateFilePath = getStateFilePath();
   if (!fs.existsSync(stateFilePath)) {
     throw new Error(
       `Functional server state file not found at ${stateFilePath}. ` +

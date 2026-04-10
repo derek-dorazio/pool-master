@@ -1,5 +1,5 @@
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
 
 export interface FunctionalServerState {
   pid: number;
@@ -8,14 +8,34 @@ export interface FunctionalServerState {
   runId: string;
 }
 
-export const functionalStateFilePath = path.join(
-  process.cwd(),
-  'coverage',
-  'service-functional-api',
-  'server-state.json',
-);
+export function getFunctionalStateFilePath(): string {
+  const configuredPath = process.env.FUNCTIONAL_SERVER_STATE_FILE;
+  if (configuredPath) {
+    return configuredPath;
+  }
+
+  const invocationId = process.env.FUNCTIONAL_INVOCATION_ID;
+  if (invocationId) {
+    return path.join(
+      process.cwd(),
+      'coverage',
+      'service-functional-api',
+      'runs',
+      invocationId,
+      'server-state.json',
+    );
+  }
+
+  return path.join(
+    process.cwd(),
+    'coverage',
+    'service-functional-api',
+    'server-state.json',
+  );
+}
 
 export function readFunctionalServerState(): FunctionalServerState {
+  const functionalStateFilePath = getFunctionalStateFilePath();
   if (!fs.existsSync(functionalStateFilePath)) {
     throw new Error(
       `Functional server state file not found at ${functionalStateFilePath}. ` +
