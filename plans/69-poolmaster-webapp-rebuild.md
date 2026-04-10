@@ -33,7 +33,7 @@ This app becomes the single go-forward web frontend for PoolMaster.
   - member and commissioner flows through the normal app-auth model
   - root-admin flows with the current admin-auth model
   - role-aware navigation and session handling inside one app shell
-- Inventory `clients/shared` early and decide whether it remains a useful shared frontend package or should be absorbed/simplified as the app landscape reduces to one active webapp.
+- Do not keep a separate `clients/shared` frontend package; frontend shared contract/types come from `packages/shared` and the generated SDK only.
 
 ## Task List
 
@@ -41,7 +41,7 @@ This app becomes the single go-forward web frontend for PoolMaster.
 | --- | --- | --- |
 | In Progress | Define the initial route map from active use-case plans | Initial route-map skeleton added for member, commissioner, and root-admin surfaces; detailed use-case pages still to be built |
 | In Progress | Decide the single-app auth/session model for member, commissioner, and root-admin flows | Member/commissioner session scaffolding now uses generated SDK auth inside `clients/poolmaster`; root-admin remains a reserved mode to formalize once replacement admin pages are built |
-| Pending | Inventory and decide the future of `clients/shared` | Keep, simplify, or absorb as the frontend landscape reduces to one active webapp |
+| Done | Remove `clients/shared` and standardize on `packages/shared` + generated SDK exports | `clients/shared` was unused placeholder scaffolding and has been removed; frontend contract sharing now comes only from `packages/shared` and the generated SDK |
 | In Progress | Scaffold `clients/poolmaster` shell and base stack (69-A) | React, Vite, TypeScript, Tailwind, React Router, TanStack Query, generated SDK re-export, and initial app shell scaffolded; shadcn/component primitives still to be added |
 | In Progress | Build auth/session, configured SDK client, query provider, and router shell (69-B) | Session store, auth provider, explicit generated-SDK token wiring, and protected member routing are now scaffolded |
 | In Progress | Build layout primitives and role-aware navigation (69-C) | App shell now hides protected routes while signed out and reflects current session state; commissioner/root-admin navigation remains placeholder-only for now |
