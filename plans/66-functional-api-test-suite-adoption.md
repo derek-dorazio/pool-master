@@ -99,6 +99,7 @@ The functional API suite should cover, at minimum:
 | Done | Finalize the functional-suite naming and scope | Service-facing scripts, coverage directories, CI jobs, artifact names, and docs now use the `service-*` / `poolmaster-*` naming consistently. |
 | Done | Adopt Plan 64 Slice 64-A as the required pilot gate | Functional harness, pilot auth/consent coverage, CI wiring, renamed service coverage surfaces, and child-process coverage attribution are all in place and green |
 | Done | Expand the functional server from the pilot surface to the full live service app before delegating broader domain slices | The shared functional server now boots the full live service app, and the first league/invitation slice validates against real routes without test-only wiring |
+| Done | Add squads-and-memberships functional coverage on the live service surface | The squads slice now covers create, add co-manager, remove co-manager, and non-member rejection against the current generated SDK and live routes |
 | Pending | Execute the domain coverage slices from Plan 64 | Auth, consent, and leagues/invitations are now covered; continue the remaining domain slices without reintroducing retired model assumptions |
 | Done | Integrate functional suite into local build/test flow | Root scripts now expose `test:service:functional-api` and `test:coverage:service:merged`, and active setup docs use those names. |
 | Done | Integrate functional suite into CI | CI now reports `service-coverage-report` and `poolmaster-unit-tests` with the renamed service coverage buckets and artifacts. |
@@ -151,6 +152,7 @@ Use only the live post-refactor model and contracts when expanding coverage:
 - Use the generated SDK and current exported DTO/domain types only.
 - When a historical plan example conflicts with the live model, the live service model wins.
 - Do not implement domain slices against a partial functional harness; expand the shared functional server to the relevant live service surface first.
+- When a functional slice creates contests or squads, clear contest descendants before squad cleanup to avoid foreign-key cleanup failures.
 
 ## Relationship To Plan 64
 
