@@ -151,8 +151,27 @@ npm run dev:infra:stop     # Stop all containers
 npm run db:migrate         # Run Prisma migrations
 npm run db:seed            # Run minimal bootstrap seed step
 npm run db:reset           # Reset database (drops all data)
+npm run db:test:migrate    # Apply migrations to disposable test DB
+npm run db:test:reset      # Reset disposable test DB and reapply migrations
+npm run db:test:recreate   # Alias for db:test:reset
 npm run db:studio          # Open Prisma Studio (visual DB browser)
 ```
+
+### Local Database Roles
+
+- `poolmaster`
+  - persistent local development database
+  - keep working state here while building features manually
+- `poolmaster_test`
+  - disposable local test database
+  - used for data integration, functional API, and merged service coverage runs
+  - safe to reset or recreate at any time
+
+Recommended rule:
+
+- do not preserve manual development state in `poolmaster_test`
+- if test migrations drift or a validation run wedges the schema, run
+  `npm run db:test:reset`
 
 ### Run the Development Server
 
@@ -191,6 +210,9 @@ npm run test:integration
 # Service functional API tests
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:functional-api
 
+# Same run, but first recreate the disposable test DB
+npm run test:service:functional-api:fresh
+
 # Specific test file
 npx jest tests/unit/core-api/permissions.test.ts
 ```
@@ -205,8 +227,14 @@ The active local gate now centers on:
 # Merged service coverage
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:coverage:service:merged
 
+# Same merged coverage run, but first recreate the disposable test DB
+npm run test:coverage:service:fresh
+
 # Service functional API tests
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:functional-api
+
+# Data integration against a freshly recreated disposable test DB
+npm run test:service:integration:fresh
 
 # PoolMaster unit tests
 npm run test:poolmaster:unit

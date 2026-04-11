@@ -77,6 +77,9 @@ Notes:
 - DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
 - In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
 - If a DB-backed integration command fails with a local connection error in the sandbox but local database commands such as `prisma migrate deploy` or `psql` succeed, retry the exact test command outside the sandbox before assuming the failure is in application code.
+- Treat `poolmaster_test` as an always-disposable local test database. It is
+  acceptable to reset or recreate it before an integration, FAPI, or merged
+  coverage run.
 - When a slice changes the backend model, rerun and repair every impacted suite
   in the local gate set as part of that slice. Stale mocks, factories,
   builders, or setup helpers are not separate cleanup work; they are part of
@@ -483,7 +486,13 @@ afterAll(async () => {
 });
 ```
 
-Do not rely on `prisma migrate reset` between test runs. Tests must be idempotent against a persistent database.
+Do not rely on `prisma migrate reset` to compensate for hidden inter-test
+dependencies or bad cleanup. Tests must still be idempotent against a reused
+database within normal local and CI execution.
+
+However, the local `poolmaster_test` database is intentionally disposable. It
+is acceptable to reset or recreate `poolmaster_test` before a validation run
+when you need a clean migrated schema.
 
 ---
 
