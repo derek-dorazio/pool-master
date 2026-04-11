@@ -240,6 +240,7 @@ export function LeagueDetailPage() {
               membersQuery.data?.map((member) => (
                 <div
                   className="flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-4"
+                  data-testid={`league-member-${member.id}`}
                   key={member.id}
                 >
                   <div>
@@ -278,6 +279,7 @@ export function LeagueDetailPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <button
                       className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                      data-testid="league-generate-invite-link"
                       disabled={inviteLinkMutation.isPending}
                       onClick={() => void handleGenerateInviteLink()}
                       type="button"
@@ -286,6 +288,7 @@ export function LeagueDetailPage() {
                     </button>
                     <button
                       className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+                      data-testid="league-copy-invite-link"
                       disabled={!inviteLink}
                       onClick={() => void handleCopyInviteLink()}
                       type="button"
@@ -295,6 +298,7 @@ export function LeagueDetailPage() {
                   </div>
                   <input
                     className="mt-3 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm"
+                    data-testid="league-invite-link"
                     readOnly
                     value={inviteLink}
                   />
@@ -311,6 +315,7 @@ export function LeagueDetailPage() {
                     <div className="flex gap-3">
                       <input
                         className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm"
+                        data-testid="league-invite-email"
                         onChange={(event) => setInviteEmail(event.target.value)}
                         placeholder="member@example.com"
                         type="email"
@@ -318,6 +323,7 @@ export function LeagueDetailPage() {
                       />
                       <button
                         className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                        data-testid="league-send-invite"
                         disabled={sendInviteMutation.isPending || !inviteEmail.trim()}
                         onClick={() => void handleSendInvite()}
                         type="button"

@@ -1,3 +1,4 @@
+import * as Dialog from '@radix-ui/react-dialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -84,6 +85,10 @@ export function CreateLeagueModal({
   });
 
   function handleClose() {
+    if (createLeagueMutation.isPending) {
+      return;
+    }
+
     form.reset();
     createLeagueMutation.reset();
     onClose();
@@ -98,38 +103,54 @@ export function CreateLeagueModal({
   }
 
   return (
-    <div
-      aria-labelledby="create-league-modal-title"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 px-4 py-6 backdrop-blur-sm"
-      data-testid="create-league-modal"
-      role="dialog"
+    <Dialog.Root
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose();
+        }
+      }}
+      open={isOpen}
     >
-      <div className="w-full max-w-xl rounded-[2rem] border border-border bg-card p-6 shadow-2xl">
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
+        <Dialog.Content
+          aria-describedby="create-league-modal-description"
+          className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
+          data-testid="create-league-modal"
+        >
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
             <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
               Commissioner setup
             </span>
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight" id="create-league-modal-title">
+              <Dialog.Title
+                className="text-2xl font-semibold tracking-tight"
+                id="create-league-modal-title"
+              >
                 Create your league
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              </Dialog.Title>
+              <Dialog.Description
+                className="mt-1 text-sm text-muted-foreground"
+                id="create-league-modal-description"
+              >
                 Start with the essentials now. You can configure invites, contests, and the rest of
                 your league setup after creation.
-              </p>
+              </Dialog.Description>
             </div>
           </div>
 
-          <button
-            aria-label="Close create league modal"
-            className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50"
-            onClick={handleClose}
-            type="button"
-          >
-            Close
-          </button>
+          <Dialog.Close asChild>
+            <button
+              aria-label="Close create league modal"
+              className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={createLeagueMutation.isPending}
+              onClick={handleClose}
+              type="button"
+            >
+              Close
+            </button>
+          </Dialog.Close>
         </div>
 
         <form className="mt-6 space-y-5" onSubmit={form.handleSubmit(handleSubmit)}>
@@ -139,6 +160,7 @@ export function CreateLeagueModal({
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
               {...form.register('name')}
               data-testid="create-league-name"
+              disabled={createLeagueMutation.isPending}
               placeholder="Big Dawgs"
               type="text"
             />
@@ -167,13 +189,21 @@ export function CreateLeagueModal({
                   key={option.value}
                 >
                   <input
+                    aria-describedby={`create-league-visibility-${option.value}-description`}
+                    aria-label={option.label}
                     className="sr-only"
+                    disabled={createLeagueMutation.isPending}
                     type="radio"
                     value={option.value}
                     {...form.register('visibility')}
                   />
                   <div className="text-sm font-semibold">{option.label}</div>
-                  <div className="mt-2 text-xs text-muted-foreground">{option.description}</div>
+                  <div
+                    className="mt-2 text-xs text-muted-foreground"
+                    id={`create-league-visibility-${option.value}-description`}
+                  >
+                    {option.description}
+                  </div>
                 </label>
               ))}
             </div>
@@ -185,7 +215,10 @@ export function CreateLeagueModal({
           </fieldset>
 
           {createLeagueMutation.isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div
+              className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              role="alert"
+            >
               {extractErrorMessage(createLeagueMutation.error)}
             </div>
           ) : null}
@@ -193,6 +226,7 @@ export function CreateLeagueModal({
           <div className="flex flex-wrap justify-end gap-3">
             <button
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+              disabled={createLeagueMutation.isPending}
               onClick={handleClose}
               type="button"
             >
@@ -208,8 +242,9 @@ export function CreateLeagueModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

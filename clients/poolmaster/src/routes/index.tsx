@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { AppShell } from '@/features/app-shell/app-shell';
+import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
@@ -75,6 +76,10 @@ export const router = createBrowserRouter([
             ),
           },
         ],
+      },
+      {
+        path: '*',
+        element: <NotFoundPage />,
       },
     ],
   },

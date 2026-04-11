@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useEffect } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser, logoutUser, refreshToken } from '@/lib/api';
 import { useSessionStore } from './session-store';
@@ -17,6 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useSessionStore((state) => state.user);
   const setSession = useSessionStore((state) => state.setSession);
   const clearSessionState = useSessionStore((state) => state.clearSession);
+  const attemptedRefreshRef = useRef(false);
 
   const meQuery = useQuery({
     queryKey: ['poolmaster', 'auth', 'me'],
@@ -45,25 +46,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    attemptedRefreshRef.current = false;
     setSession(meQuery.data);
   }, [meQuery.data, setSession]);
 
   useEffect(() => {
     if (!meQuery.error) {
+      attemptedRefreshRef.current = false;
       return;
     }
-    refreshQuery.refetch()
+    if (attemptedRefreshRef.current) {
+      return;
+    }
+
+    attemptedRefreshRef.current = true;
+    let cancelled = false;
+
+    void refreshQuery
+      .refetch()
       .then(async (result) => {
-        if (result.data) {
-          await meQuery.refetch();
+        if (cancelled) {
           return;
         }
-        clearSessionState();
+
+        if (!result.data) {
+          clearSessionState();
+          return;
+        }
+
+        const meResult = await meQuery.refetch();
+        if (cancelled) {
+          return;
+        }
+
+        if (!meResult.data) {
+          clearSessionState();
+        }
       })
       .catch(() => {
-        clearSessionState();
+        if (!cancelled) {
+          clearSessionState();
+        }
       });
-  }, [clearSessionState, meQuery, meQuery.error, refreshQuery]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clearSessionState, meQuery.error, meQuery.refetch, refreshQuery.refetch]);
 
   const value: AuthContextValue = {
     isAuthenticated: Boolean(user),

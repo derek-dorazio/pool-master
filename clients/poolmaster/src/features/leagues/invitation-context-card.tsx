@@ -23,10 +23,10 @@ export function InvitationContextCard({
           {getLeagueInitials(leagueName)}
         </div>
         <div className="min-w-0">
-          <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{title}</div>
+          <h3 className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{title}</h3>
           <div className="truncate text-base font-semibold text-foreground">{leagueName}</div>
           {inviteCode ? (
-            <div className="truncate text-xs uppercase tracking-[0.22em] text-muted-foreground">
+            <div className="truncate font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground">
               Invite code {inviteCode}
             </div>
           ) : null}

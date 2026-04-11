@@ -1,10 +1,14 @@
 import { useMemo } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { acceptInvitation, getInvitationPreview } from '@/lib/api';
+import { acceptInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { InvitationContextCard } from './invitation-context-card';
 import { buildInvitePath, buildLeaguePath, setRecentLeagueCode } from './league-routing';
+import {
+  fetchInvitationPreview,
+  getInvitationPreviewQueryKey,
+} from './invitation-preview';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -30,16 +34,11 @@ function getErrorMessage(error: unknown) {
 export function JoinLeaguePage() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const invitationQuery = useQuery({
-    queryKey: ['poolmaster', 'invitation-preview', inviteCode],
-    queryFn: async () => {
-      const response = await getInvitationPreview({ path: { inviteCode } });
-      if (!response.data?.invitation) {
-        throw response.error ?? new Error('Invitation preview is missing data.');
-      }
-      return response.data.invitation;
-    },
+    queryKey: getInvitationPreviewQueryKey(inviteCode),
+    queryFn: () => fetchInvitationPreview(inviteCode),
     enabled: Boolean(inviteCode),
     retry: false,
   });
@@ -57,6 +56,7 @@ export function JoinLeaguePage() {
     onSuccess: () => {
       const leagueCode = invitationQuery.data?.league.leagueCode;
       if (leagueCode) {
+        void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
         setRecentLeagueCode(leagueCode);
         navigate(buildLeaguePath(leagueCode));
       }
@@ -95,6 +95,7 @@ export function JoinLeaguePage() {
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
             className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+            data-testid="invite-sign-in"
             state={{ from: buildInvitePath(inviteCode) }}
             to="/"
           >
@@ -102,6 +103,7 @@ export function JoinLeaguePage() {
           </Link>
           <Link
             className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+            data-testid="invite-create-account"
             state={{ authMode: 'register', from: buildInvitePath(inviteCode) }}
             to="/"
           >
@@ -147,6 +149,7 @@ export function JoinLeaguePage() {
         <div className="mt-5 flex gap-3">
           <button
             className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+            data-testid="invite-accept"
             disabled={acceptMutation.isPending}
             onClick={() => acceptMutation.mutate()}
             type="button"

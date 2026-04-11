@@ -35,7 +35,7 @@ export function WelcomePage() {
     return (
       <section
         className="rounded-[2rem] border border-border bg-card p-8"
-        data-testid="authenticated-landing"
+        data-testid="authenticated-landing-loading"
       >
         <p className="text-sm text-muted-foreground">Loading your leagues...</p>
       </section>
@@ -46,7 +46,7 @@ export function WelcomePage() {
     return (
       <section
         className="rounded-[2rem] border border-border bg-card p-8"
-        data-testid="authenticated-landing"
+        data-testid="authenticated-landing-error"
       >
         <h2 className="text-xl font-semibold">We couldn&apos;t load your leagues.</h2>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -63,6 +63,7 @@ export function WelcomePage() {
         className="rounded-[2rem] border border-border bg-card p-8"
         data-testid="authenticated-landing"
       >
+        <div data-testid="authenticated-landing-empty" />
         <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
           Welcome
         </span>

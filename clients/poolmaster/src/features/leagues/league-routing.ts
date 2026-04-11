@@ -1,4 +1,5 @@
 import type { ListLeaguesResponses } from '@/lib/api';
+import { readCookie } from '@/lib/cookies';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -13,18 +14,7 @@ export function buildInvitePath(inviteCode: string) {
 }
 
 export function getRecentLeagueCode() {
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
-  const raw = document.cookie
-    .split('; ')
-    .find((value) => value.startsWith(`${RECENT_LEAGUE_COOKIE}=`))
-    ?.split('=')
-    .slice(1)
-    .join('=');
-
-  return raw ? decodeURIComponent(raw) : null;
+  return readCookie(RECENT_LEAGUE_COOKIE);
 }
 
 export function setRecentLeagueCode(leagueCode: string) {

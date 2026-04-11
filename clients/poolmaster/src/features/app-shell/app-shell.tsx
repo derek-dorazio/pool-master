@@ -72,6 +72,7 @@ export function AppShell() {
                 <button
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
                   disabled
+                  title="Profile tools will be designed next."
                   type="button"
                 >
                   Profile
@@ -79,6 +80,7 @@ export function AppShell() {
                 <button
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
                   disabled
+                  title="League and account settings will be designed next."
                   type="button"
                 >
                   Settings
@@ -87,6 +89,7 @@ export function AppShell() {
                   aria-label="Notifications"
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
                   disabled
+                  title="Notifications will be designed next."
                   type="button"
                 >
                   Notifications
@@ -94,6 +97,7 @@ export function AppShell() {
                 <button
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
                   disabled
+                  title="Help content will be designed next."
                   type="button"
                 >
                   Help
@@ -122,6 +126,7 @@ export function AppShell() {
             <button
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
               disabled
+              title="League home navigation will become active as the shell grows."
               type="button"
             >
               League Home
@@ -129,6 +134,7 @@ export function AppShell() {
             <button
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
               disabled
+              title="Contest creation will be implemented in a later slice."
               type="button"
             >
               Create Contest
@@ -136,6 +142,7 @@ export function AppShell() {
             <button
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
               disabled
+              title="Contest list routing will be implemented in a later slice."
               type="button"
             >
               Contest List
@@ -143,6 +150,7 @@ export function AppShell() {
             <button
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
               disabled
+              title="Standings and history navigation will be implemented in a later slice."
               type="button"
             >
               Standings &amp; History

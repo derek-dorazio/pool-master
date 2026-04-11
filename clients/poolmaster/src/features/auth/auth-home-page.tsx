@@ -5,8 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LoginRequestSchema, RegisterRequestSchema } from '@poolmaster/shared/dto';
-import { getInvitationPreview, loginUser, registerUser } from '@/lib/api';
+import { loginUser, registerUser } from '@/lib/api';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
+import {
+  fetchInvitationPreview,
+  getInvitationPreviewQueryKey,
+} from '@/features/leagues/invitation-preview';
+import { parseRouteState } from '@/routes/route-state';
 import { useSessionStore } from './session-store';
 
 const loginFormSchema = LoginRequestSchema.extend({
@@ -27,7 +32,11 @@ const registerFormSchema = z.object({
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
-function parseInviteCode(path: string) {
+function parseInviteCode(path: string | undefined) {
+  if (!path) {
+    return null;
+  }
+
   const match = path.match(/^\/invite\/([^/?#]+)/);
   return match?.[1] ?? null;
 }
@@ -56,29 +65,17 @@ function extractErrorMessage(error: unknown): string {
 export function AuthHomePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const authPreference =
-    (location.state as { authMode?: unknown } | null)?.authMode === 'register'
-      ? 'register'
-      : 'login';
+  const routeState = useMemo(() => parseRouteState(location.state), [location.state]);
+  const authPreference = routeState.authMode === 'register' ? 'register' : 'login';
   const [mode, setMode] = useState<'login' | 'register'>(authPreference);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useSessionStore((state) => state.user);
   const setSession = useSessionStore((state) => state.setSession);
-  const destination =
-    typeof (location.state as { from?: unknown } | null)?.from === 'string'
-      ? ((location.state as { from: string }).from)
-      : '/welcome';
+  const destination = routeState.from ?? '/welcome';
   const inviteCode = useMemo(() => parseInviteCode(destination), [destination]);
   const invitePreviewQuery = useQuery({
-    queryKey: ['poolmaster', 'auth', 'invite-preview', inviteCode],
-    queryFn: async () => {
-      const response = await getInvitationPreview({ path: { inviteCode: inviteCode ?? '' } });
-      if (!response.data?.invitation) {
-        throw response.error ?? new Error('Invitation preview is missing data.');
-      }
-      return response.data.invitation;
-    },
+    queryKey: getInvitationPreviewQueryKey(inviteCode ?? ''),
+    queryFn: () => fetchInvitationPreview(inviteCode ?? ''),
     enabled: Boolean(inviteCode),
     retry: false,
   });
@@ -102,10 +99,10 @@ export function AuthHomePage() {
       confirmPassword: '',
     },
   });
+  const isSubmitting = loginForm.formState.isSubmitting || registerForm.formState.isSubmitting;
 
   async function handleLogin(values: LoginFormValues) {
     setServerError(null);
-    setIsSubmitting(true);
 
     try {
       const response = await loginUser({
@@ -120,14 +117,11 @@ export function AuthHomePage() {
       navigate(destination, { replace: true });
     } catch (error) {
       setServerError(extractErrorMessage(error));
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
   async function handleRegister(values: RegisterFormValues) {
     setServerError(null);
-    setIsSubmitting(true);
 
     try {
       const response = await registerUser({
@@ -146,8 +140,6 @@ export function AuthHomePage() {
       navigate(destination, { replace: true });
     } catch (error) {
       setServerError(extractErrorMessage(error));
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
@@ -182,12 +174,6 @@ export function AuthHomePage() {
                 message="This invitation is scoped to a specific league. After you sign in or create your account, you’ll review the invite and explicitly choose to join."
                 title="League invite"
               />
-              {invitePreviewQuery.isError ? (
-                <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-                  We couldn&apos;t load the invitation preview. You can still try signing in, then
-                  return to the invitation link.
-                </div>
-              ) : null}
             </>
           ) : (
             <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
@@ -201,6 +187,12 @@ export function AuthHomePage() {
               </div>
             </div>
           )}
+          {inviteCode && invitePreviewQuery.isError ? (
+            <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+              We couldn&apos;t load the invitation preview. You can still sign in or create an
+              account, then return to the invitation link.
+            </div>
+          ) : null}
         </div>
 
         <div className="rounded-[2rem] border border-border bg-background p-6">
@@ -229,7 +221,10 @@ export function AuthHomePage() {
           </div>
 
           {serverError ? (
-            <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div
+              className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              role="alert"
+            >
               {serverError}
             </div>
           ) : null}
@@ -377,8 +372,11 @@ export function AuthHomePage() {
               ? 'Registration signs you in first, then returns you to this league invitation so you can confirm the join explicitly.'
               : 'Registration signs you in and lands you on your normal app home. If you have no leagues yet, that landing page becomes your first-time commissioner welcome state.'}
           </p>
-          <Link className="mt-3 inline-block text-sm font-medium text-primary hover:underline" to={inviteContext ? destination : '/welcome'}>
-            {inviteContext ? 'Back to invitation' : 'Continue to welcome'}
+          <Link
+            className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+            to={inviteCode ? destination : '/welcome'}
+          >
+            {inviteCode ? 'Back to invitation' : 'Continue to welcome'}
           </Link>
         </div>
       </div>

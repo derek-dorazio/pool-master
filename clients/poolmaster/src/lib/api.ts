@@ -1,5 +1,6 @@
 import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { ClientOptions } from '@poolmaster/shared/generated/hey-api';
+import { readCookie } from './cookies';
 
 const resolvedBaseUrl =
   typeof window !== 'undefined' && window.location?.origin !== 'null'
@@ -18,14 +19,9 @@ client.interceptors.request.use((request: Request) => {
     typeof document !== 'undefined'
     && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method.toUpperCase())
   ) {
-    const csrfToken = document.cookie
-      .split('; ')
-      .find((value) => value.startsWith('poolmaster_csrf='))
-      ?.split('=')
-      .slice(1)
-      .join('=');
+    const csrfToken = readCookie('poolmaster_csrf');
     if (csrfToken) {
-      request.headers.set('X-CSRF-Token', decodeURIComponent(csrfToken));
+      request.headers.set('X-CSRF-Token', csrfToken);
     }
   }
   return request;

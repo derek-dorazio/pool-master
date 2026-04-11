@@ -8,6 +8,7 @@ import {
   type GetContestResponses,
 } from '@/lib/api';
 import { buildLeaguePath } from '@/features/leagues/league-routing';
+import { parseRouteState } from '@/routes/route-state';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type LeaderboardEntry = GetContestLeaderboardResponses[200]['leaderboard'][number];
@@ -15,10 +16,7 @@ type LeaderboardEntry = GetContestLeaderboardResponses[200]['leaderboard'][numbe
 export function ContestDetailPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
   const location = useLocation();
-  const hintedLeagueCode =
-    typeof (location.state as { leagueCode?: unknown } | null)?.leagueCode === 'string'
-      ? (location.state as { leagueCode: string }).leagueCode
-      : null;
+  const hintedLeagueCode = parseRouteState(location.state).leagueCode ?? null;
 
   const contestQuery = useQuery({
     queryKey: ['poolmaster', 'contest', contestId],
@@ -107,6 +105,7 @@ export function ContestDetailPage() {
           </div>
           <Link
             className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+            data-testid="contest-back-to-league"
             to={backToLeaguePath}
           >
             Back to league
@@ -139,7 +138,7 @@ export function ContestDetailPage() {
 
         <div className="rounded-[2rem] border border-border bg-card p-6">
           <h3 className="text-xl font-semibold">Leaderboard</h3>
-          <div className="mt-5 space-y-3">
+          <div className="mt-5 space-y-3" data-testid="contest-leaderboard">
             {leaderboardQuery.isLoading ? (
               <p className="text-sm text-muted-foreground">Loading leaderboard...</p>
             ) : leaderboardQuery.isError ? (
@@ -150,10 +149,13 @@ export function ContestDetailPage() {
               leaderboardQuery.data.map((entry) => (
                 <div
                   className="flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-4"
+                  data-testid={`contest-leaderboard-entry-${entry.entryId}`}
                   key={entry.entryId}
                 >
                   <div>
-                    <div className="font-medium">Entry {entry.entryId.slice(0, 8)}</div>
+                    <div className="font-medium" title={entry.entryId}>
+                      Entry {entry.entryId.slice(0, 8)}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {entry.isTied ? 'Tied' : 'Solo'} leaderboard position
                     </div>
