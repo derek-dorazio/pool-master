@@ -11,6 +11,8 @@ The core principle is:
 - authenticated users land in a league context when one exists
 - the app shell is league-scoped by default
 - bookmarked league home routes should be stable and shareable
+- invite entry should use a dedicated public route:
+  - `/invite/<inviteCode>`
 
 This document should guide the route map, header design, onboarding flow,
 league selector behavior, and invite entry flow before deeper webapp
@@ -108,7 +110,7 @@ Flow:
 1. Visitor opens the login/register page.
 2. Visitor registers with first name, last name, email, password, and confirm password.
 3. Backend creates the account and starts the session.
-4. App routes to the authenticated home.
+4. App routes to `/welcome`.
 5. Because the user belongs to no leagues yet, the home page renders a welcome
    state with a create-league prompt.
 
@@ -129,7 +131,7 @@ Flow:
 2. User launches the create-league wizard from that page.
 3. Backend creates the league and commissioner membership.
 4. Backend returns the league code and active membership context.
-5. App routes to `/<leagueCode>/home`.
+5. App routes to `/league/<leagueCode>`.
 
 Notes:
 - create-league wizard details are handled in the separate wizard discovery plan
@@ -200,7 +202,7 @@ Goal:
 - sign up and land directly inside the invited league
 
 Flow:
-1. Visitor opens an invite link for a specific league.
+1. Visitor opens `/invite/<inviteCode>` for a specific league.
 2. App presents login/register in invite context.
 3. Visitor registers.
 4. Backend creates the account, validates the invite, and creates/reactivates
@@ -220,7 +222,7 @@ Goal:
 - add another league to an existing account and land in that league context
 
 Flow:
-1. Existing user opens invite link.
+1. Existing user opens `/invite/<inviteCode>`.
 2. User logs in if needed.
 3. Backend validates invite and adds/reactivates league membership as `MEMBER`.
 4. App lands the user on `/league/<leagueCode>` for that invited league.

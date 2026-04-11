@@ -10,6 +10,7 @@ import type { LeagueSettings } from '@poolmaster/shared/domain';
 
 interface LeagueRow {
   id: string;
+  leagueCode: string;
   name: string;
   description?: string | null;
   createdBy: string;
@@ -26,6 +27,7 @@ export function toLeagueSummaryDto(
 ): LeagueSummaryDto {
   return {
     id: league.id,
+    leagueCode: league.leagueCode,
     name: league.name,
     description: league.description ?? null,
     visibility: league.visibility,

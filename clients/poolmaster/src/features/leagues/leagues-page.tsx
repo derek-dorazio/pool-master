@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { listLeagues, type ListLeaguesResponses } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { buildLeaguePath, resolveDefaultLeagueCode } from './league-routing';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -16,7 +17,7 @@ function roleLabel(role: string | undefined) {
     .join(' ');
 }
 
-export function LeaguesPage() {
+export function WelcomePage() {
   const auth = useAuth();
   const leaguesQuery = useQuery({
     queryKey: ['poolmaster', 'leagues'],
@@ -82,6 +83,11 @@ export function LeaguesPage() {
     );
   }
 
+  const defaultLeagueCode = resolveDefaultLeagueCode(leaguesQuery.data);
+  if (defaultLeagueCode) {
+    return <Navigate replace to={buildLeaguePath(defaultLeagueCode)} />;
+  }
+
   return (
     <section className="space-y-5" data-testid="authenticated-landing">
       <div className="flex items-end justify-between gap-4">
@@ -126,7 +132,7 @@ export function LeaguesPage() {
             </dl>
             <Link
               className="mt-5 inline-flex text-sm font-medium text-primary hover:underline"
-              to={`/leagues/${league.id}`}
+              to={buildLeaguePath(league.leagueCode)}
             >
               Open league
             </Link>

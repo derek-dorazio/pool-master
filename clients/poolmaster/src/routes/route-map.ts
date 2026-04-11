@@ -10,15 +10,21 @@ export type RouteMapItem = {
 export const routeMap: RouteMapItem[] = [
   {
     path: '/',
-    label: 'Home',
+    label: 'Auth',
     role: 'PUBLIC',
     description: 'Entry point for the rebuilt PoolMaster web app.',
   },
   {
-    path: '/leagues',
-    label: 'Leagues',
+    path: '/welcome',
+    label: 'Welcome',
     role: 'MEMBER',
-    description: 'Member-facing league list and league home surface.',
+    description: 'Zero-league authenticated home and create-league entry point.',
+  },
+  {
+    path: '/league/:leagueCode',
+    label: 'League Home',
+    role: 'MEMBER',
+    description: 'League-scoped home route for members and commissioners.',
   },
   {
     path: '/contests',

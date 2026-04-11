@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LoginRequestSchema, RegisterRequestSchema } from '@poolmaster/shared/dto';
 import { loginUser, registerUser } from '@/lib/api';
 import { useSessionStore } from './session-store';
@@ -48,11 +48,16 @@ function extractErrorMessage(error: unknown): string {
 
 export function AuthHomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useSessionStore((state) => state.user);
   const setSession = useSessionStore((state) => state.setSession);
+  const destination =
+    typeof (location.state as { from?: unknown } | null)?.from === 'string'
+      ? ((location.state as { from: string }).from)
+      : '/welcome';
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -87,7 +92,7 @@ export function AuthHomePage() {
       }
 
       setSession(response.data.user);
-      navigate('/leagues', { replace: true });
+      navigate(destination, { replace: true });
     } catch (error) {
       setServerError(extractErrorMessage(error));
     } finally {
@@ -113,7 +118,7 @@ export function AuthHomePage() {
       }
 
       setSession(response.data.user);
-      navigate('/leagues', { replace: true });
+      navigate(destination, { replace: true });
     } catch (error) {
       setServerError(extractErrorMessage(error));
     } finally {
@@ -122,7 +127,7 @@ export function AuthHomePage() {
   }
 
   if (user) {
-    return <Navigate replace to="/leagues" />;
+    return <Navigate replace to={destination} />;
   }
 
   return (
@@ -325,8 +330,8 @@ export function AuthHomePage() {
             Registration signs you in and lands you on your normal app home. If you have no
             leagues yet, that landing page becomes your first-time commissioner welcome state.
           </p>
-          <Link className="mt-3 inline-block text-sm font-medium text-primary hover:underline" to="/leagues">
-            Continue to leagues
+          <Link className="mt-3 inline-block text-sm font-medium text-primary hover:underline" to="/welcome">
+            Continue to welcome
           </Link>
         </div>
       </div>

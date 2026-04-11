@@ -1,5 +1,5 @@
 /**
- * Invitations module — non-league-scoped invitation acceptance.
+ * Invitations module — non-league-scoped invitation preview and acceptance.
  *
  * Users accepting an invite only have the code, not the league ID,
  * so this endpoint lives outside the /leagues/:id prefix.
@@ -7,7 +7,10 @@
 
 import type { FastifyInstance } from 'fastify';
 import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
-import { LeagueMembershipResponseSchema } from '@poolmaster/shared/dto/leagues.dto';
+import {
+  InvitationPreviewResponseSchema,
+  LeagueMembershipResponseSchema,
+} from '@poolmaster/shared/dto/leagues.dto';
 import {
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
@@ -25,6 +28,20 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
 
   const invitationService = new InvitationService(invitationRepo, membershipRepo, leagueRepo);
   const handlers = createInvitationHandlers(invitationService);
+
+  fastify.get('/:inviteCode', {
+    schema: {
+      tags: ['Invitations'],
+      summary: 'Preview a league invitation by invite code',
+      operationId: 'getInvitationPreview',
+      response: {
+        200: zodToJsonSchema(InvitationPreviewResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.getInvitationPreview,
+  });
 
   fastify.post('/accept', {
     schema: {

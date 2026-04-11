@@ -126,6 +126,19 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     handler: league.getLeague,
   });
 
+  fastify.get('/code/:leagueCode', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Get league details by league code',
+      operationId: 'getLeagueByCode',
+      response: {
+        200: zodToJsonSchema(LeagueResponseSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: league.getLeagueByCode,
+  });
+
   fastify.put('/:id/settings', {
     schema: {
       tags: ['Leagues'],

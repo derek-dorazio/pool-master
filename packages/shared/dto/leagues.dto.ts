@@ -83,6 +83,7 @@ export type ImportLeagueMembersRequest = z.infer<typeof ImportLeagueMembersReque
 
 export const LeagueSummaryDtoSchema = z.object({
   id: z.string(),
+  leagueCode: z.string(),
   name: z.string(),
   description: z.string().nullable().optional(),
   visibility: z.string(),
@@ -138,6 +139,19 @@ export const LeagueInvitationDtoSchema = z.object({
   updatedAt: DateTimeSchema,
 });
 export type LeagueInvitationDto = z.infer<typeof LeagueInvitationDtoSchema>;
+
+export const InvitationPreviewResponseSchema = z.object({
+  invitation: z.object({
+    inviteCode: z.string(),
+    status: z.string(),
+    league: z.object({
+      id: z.string(),
+      leagueCode: z.string(),
+      name: z.string(),
+    }),
+  }),
+});
+export type InvitationPreviewResponse = z.infer<typeof InvitationPreviewResponseSchema>;
 
 export const LeagueActionItemDtoSchema = z.object({
   id: z.string(),

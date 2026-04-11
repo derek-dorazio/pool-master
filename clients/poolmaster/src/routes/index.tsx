@@ -1,11 +1,11 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
-import { LeaguesPage } from '@/features/leagues/leagues-page';
+import { WelcomePage } from '@/features/leagues/leagues-page';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
 export const router = createBrowserRouter([
@@ -18,6 +18,10 @@ export const router = createBrowserRouter([
         element: <AuthHomePage />,
       },
       {
+        path: 'invite/:inviteCode',
+        element: <JoinLeaguePage />,
+      },
+      {
         path: 'join/:inviteCode',
         element: <JoinLeaguePage />,
       },
@@ -25,11 +29,15 @@ export const router = createBrowserRouter([
         element: <MemberRouteGuard />,
         children: [
           {
-            path: 'leagues',
-            element: <LeaguesPage />,
+            path: 'welcome',
+            element: <WelcomePage />,
           },
           {
-            path: 'leagues/:leagueId',
+            path: 'leagues',
+            element: <Navigate replace to="/welcome" />,
+          },
+          {
+            path: 'league/:leagueCode',
             element: <LeagueDetailPage />,
           },
           {

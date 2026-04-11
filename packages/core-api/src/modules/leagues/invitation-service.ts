@@ -36,6 +36,16 @@ export interface SendInvitationsResult {
   skippedDuplicates: string[];
 }
 
+export interface InvitationPreview {
+  inviteCode: string;
+  status: InvitationStatus;
+  league: {
+    id: string;
+    leagueCode: string;
+    name: string;
+  };
+}
+
 const DEFAULT_INVITE_EXPIRY_DAYS = 7;
 
 export class InvitationService {
@@ -183,6 +193,28 @@ export class InvitationService {
       ...(isFullyUsed && { status: InvitationStatus.ACCEPTED }),
     });
     return membership;
+  }
+
+  async getInvitationPreview(inviteCode: string): Promise<InvitationPreview> {
+    const invitation = await this.invitationRepo.findByCode(inviteCode);
+    if (!invitation) {
+      throw new InvitationNotFoundError(inviteCode);
+    }
+
+    const league = await this.leagueRepo.findById(invitation.leagueId);
+    if (!league) {
+      throw new InvitationInvalidError('League no longer exists', 'LEAGUE_NOT_FOUND');
+    }
+
+    return {
+      inviteCode: invitation.inviteCode,
+      status: invitation.status,
+      league: {
+        id: league.id,
+        leagueCode: league.leagueCode,
+        name: league.name,
+      },
+    };
   }
 }
 

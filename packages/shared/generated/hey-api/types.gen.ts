@@ -319,6 +319,7 @@ export type ListLeaguesResponses = {
     200: {
         leagues: Array<{
             id: string;
+            leagueCode: string;
             name: string;
             description?: string;
             visibility: string;
@@ -370,6 +371,7 @@ export type CreateLeagueResponses = {
     201: {
         league: {
             id: string;
+            leagueCode: string;
             name: string;
             description?: string;
             visibility: string;
@@ -419,6 +421,7 @@ export type GetLeagueResponses = {
     200: {
         league: {
             id: string;
+            leagueCode: string;
             name: string;
             description?: string;
             visibility: string;
@@ -436,6 +439,56 @@ export type GetLeagueResponses = {
 };
 
 export type GetLeagueResponse = GetLeagueResponses[keyof GetLeagueResponses];
+
+export type GetLeagueByCodeData = {
+    body?: never;
+    path: {
+        leagueCode: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/code/{leagueCode}';
+};
+
+export type GetLeagueByCodeErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetLeagueByCodeError = GetLeagueByCodeErrors[keyof GetLeagueByCodeErrors];
+
+export type GetLeagueByCodeResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        league: {
+            id: string;
+            leagueCode: string;
+            name: string;
+            description?: string;
+            visibility: string;
+            memberCount: number;
+            activeContestCount: number;
+            role?: string;
+            createdAt?: string;
+            maxMembers?: number;
+            settings?: {
+                [key: string]: unknown;
+            };
+            invitePolicy?: string;
+        };
+    };
+};
+
+export type GetLeagueByCodeResponse = GetLeagueByCodeResponses[keyof GetLeagueByCodeResponses];
 
 export type UpdateLeagueSettingsData = {
     body: {
@@ -477,6 +530,7 @@ export type UpdateLeagueSettingsResponses = {
     200: {
         league: {
             id: string;
+            leagueCode: string;
             name: string;
             description?: string;
             visibility: string;
@@ -1623,6 +1677,59 @@ export type RemoveSquadCoManagerResponses = {
 };
 
 export type RemoveSquadCoManagerResponse = RemoveSquadCoManagerResponses[keyof RemoveSquadCoManagerResponses];
+
+export type GetInvitationPreviewData = {
+    body?: never;
+    path: {
+        inviteCode: string;
+    };
+    query?: never;
+    url: '/api/v1/invitations/{inviteCode}';
+};
+
+export type GetInvitationPreviewErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+    /**
+     * Default Response
+     */
+    404: {
+        error: {
+            code: string;
+            message: string;
+            details?: unknown;
+        };
+    };
+};
+
+export type GetInvitationPreviewError = GetInvitationPreviewErrors[keyof GetInvitationPreviewErrors];
+
+export type GetInvitationPreviewResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        invitation: {
+            inviteCode: string;
+            status: string;
+            league: {
+                id: string;
+                leagueCode: string;
+                name: string;
+            };
+        };
+    };
+};
+
+export type GetInvitationPreviewResponse = GetInvitationPreviewResponses[keyof GetInvitationPreviewResponses];
 
 export type AcceptInvitationData = {
     body: {

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('new commissioner registration lands on the authenticated landing page', async ({ page }) => {
+test('new commissioner registration lands on welcome and can log out', async ({ page }) => {
   const timestamp = Date.now();
   const email = `playwright-commissioner-${timestamp}@example.test`;
   const password = 'Playwright123!';
@@ -19,7 +19,9 @@ test('new commissioner registration lands on the authenticated landing page', as
   await page.getByTestId('auth-register-confirm-password').fill(password);
   await page.getByTestId('auth-register-submit').click();
 
-  await expect(page).toHaveURL(/\/leagues$/);
+  await expect(page).toHaveURL(/\/welcome$/);
   await expect(page.getByTestId('authenticated-landing')).toBeVisible();
   await expect(page.getByRole('heading', { name: /welcome to ultimate office pool manager/i })).toBeVisible();
+  await page.getByTestId('app-logout').click();
+  await expect(page).toHaveURL(/\/$/);
 });

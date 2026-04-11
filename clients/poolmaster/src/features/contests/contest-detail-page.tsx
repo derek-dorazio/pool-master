@@ -1,12 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
-import { getContest, getContestLeaderboard, type GetContestLeaderboardResponses, type GetContestResponses } from '@/lib/api';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import {
+  getContest,
+  getContestLeaderboard,
+  getLeague,
+  type GetContestLeaderboardResponses,
+  type GetContestResponses,
+} from '@/lib/api';
+import { buildLeaguePath } from '@/features/leagues/league-routing';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type LeaderboardEntry = GetContestLeaderboardResponses[200]['leaderboard'][number];
 
 export function ContestDetailPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
+  const location = useLocation();
+  const hintedLeagueCode =
+    typeof (location.state as { leagueCode?: unknown } | null)?.leagueCode === 'string'
+      ? (location.state as { leagueCode: string }).leagueCode
+      : null;
 
   const contestQuery = useQuery({
     queryKey: ['poolmaster', 'contest', contestId],
@@ -37,6 +49,26 @@ export function ContestDetailPage() {
     enabled: Boolean(contestId),
     retry: false,
   });
+
+  const leagueCodeQuery = useQuery({
+    queryKey: ['poolmaster', 'contest-league-code', contestQuery.data?.leagueId],
+    queryFn: async () => {
+      const response = await getLeague({ path: { id: contestQuery.data!.leagueId } });
+
+      if (!response.data?.league?.leagueCode) {
+        throw response.error ?? new Error('League response is missing a league code.');
+      }
+
+      return response.data.league.leagueCode;
+    },
+    enabled: Boolean(contestQuery.data?.leagueId && !hintedLeagueCode),
+    retry: false,
+  });
+  const backToLeaguePath = hintedLeagueCode
+    ? buildLeaguePath(hintedLeagueCode)
+    : leagueCodeQuery.data
+      ? buildLeaguePath(leagueCodeQuery.data)
+      : '/welcome';
 
   if (contestQuery.isLoading) {
     return (
@@ -75,7 +107,7 @@ export function ContestDetailPage() {
           </div>
           <Link
             className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
-            to={`/leagues/${contestQuery.data.leagueId}`}
+            to={backToLeaguePath}
           >
             Back to league
           </Link>

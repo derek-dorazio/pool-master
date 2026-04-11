@@ -16,9 +16,17 @@ export class PrismaLeagueRepository implements LeagueRepository {
     return row ? mapToLeague(row) : null;
   }
 
+  async findByCode(code: string): Promise<League | null> {
+    const row = await this.prisma.league.findFirst({
+      where: { leagueCode: code },
+    });
+    return row ? mapToLeague(row) : null;
+  }
+
   async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League> {
     const row = await this.prisma.league.create({
       data: {
+        leagueCode: league.leagueCode,
         name: league.name,
         description: league.description,
         createdBy: league.createdBy,
@@ -34,6 +42,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
     const row = await this.prisma.league.update({
       where: { id },
       data: {
+        ...(updates.leagueCode !== undefined && { leagueCode: updates.leagueCode }),
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.description !== undefined && { description: updates.description }),
         ...(updates.visibility !== undefined && { visibility: updates.visibility }),
@@ -51,6 +60,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
 
 function mapToLeague(row: {
   id: string;
+  leagueCode: string;
   name: string;
   description: string | null;
   createdBy: string;
@@ -62,6 +72,7 @@ function mapToLeague(row: {
 }): League {
   return {
     id: row.id,
+    leagueCode: row.leagueCode,
     name: row.name,
     description: row.description ?? undefined,
     createdBy: row.createdBy,

@@ -767,6 +767,9 @@
                           "id": {
                             "type": "string"
                           },
+                          "leagueCode": {
+                            "type": "string"
+                          },
                           "name": {
                             "type": "string"
                           },
@@ -793,6 +796,7 @@
                         },
                         "required": [
                           "id",
+                          "leagueCode",
                           "name",
                           "visibility",
                           "memberCount",
@@ -911,6 +915,9 @@
                         "id": {
                           "type": "string"
                         },
+                        "leagueCode": {
+                          "type": "string"
+                        },
                         "name": {
                           "type": "string"
                         },
@@ -947,6 +954,7 @@
                       },
                       "required": [
                         "id",
+                        "leagueCode",
                         "name",
                         "visibility",
                         "memberCount",
@@ -1030,6 +1038,9 @@
                         "id": {
                           "type": "string"
                         },
+                        "leagueCode": {
+                          "type": "string"
+                        },
                         "name": {
                           "type": "string"
                         },
@@ -1066,6 +1077,130 @@
                       },
                       "required": [
                         "id",
+                        "leagueCode",
+                        "name",
+                        "visibility",
+                        "memberCount",
+                        "activeContestCount"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "league"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/code/{leagueCode}": {
+      "get": {
+        "operationId": "getLeagueByCode",
+        "summary": "Get league details by league code",
+        "tags": [
+          "Leagues"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "leagueCode",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "league": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "leagueCode": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "visibility": {
+                          "type": "string"
+                        },
+                        "memberCount": {
+                          "type": "number"
+                        },
+                        "activeContestCount": {
+                          "type": "number"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "maxMembers": {
+                          "type": "number"
+                        },
+                        "settings": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        "invitePolicy": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueCode",
                         "name",
                         "visibility",
                         "memberCount",
@@ -1200,6 +1335,9 @@
                         "id": {
                           "type": "string"
                         },
+                        "leagueCode": {
+                          "type": "string"
+                        },
                         "name": {
                           "type": "string"
                         },
@@ -1236,6 +1374,7 @@
                       },
                       "required": [
                         "id",
+                        "leagueCode",
                         "name",
                         "visibility",
                         "memberCount",
@@ -4601,6 +4740,146 @@
             }
           },
           "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invitations/{inviteCode}": {
+      "get": {
+        "operationId": "getInvitationPreview",
+        "summary": "Preview a league invitation by invite code",
+        "tags": [
+          "Invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "inviteCode",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invitation": {
+                      "type": "object",
+                      "properties": {
+                        "inviteCode": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "league": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "leagueCode": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "leagueCode",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "inviteCode",
+                        "status",
+                        "league"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "invitation"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
             "description": "Default Response",
             "content": {
               "application/json": {

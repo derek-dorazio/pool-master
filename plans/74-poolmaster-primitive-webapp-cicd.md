@@ -34,8 +34,8 @@ Out of scope:
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Done | Define the minimal deploy-gate browser journey and required stable selectors | Journey is: load `/`, self-register as a new commissioner, land on authenticated PoolMaster page, assert one landing `data-testid` only |
-| Done | Add the authenticated landing marker and redirect behavior to the primitive PoolMaster app | `/leagues` is now the authenticated landing target, login/register redirect there, and the page exposes `data-testid="authenticated-landing"` across loading/empty/success/error states |
+| Done | Define the minimal deploy-gate browser journey and required stable selectors | Journey is: load `/`, self-register as a new commissioner, land on `/welcome`, assert one landing `data-testid`, and log out cleanly |
+| Done | Add the authenticated landing marker and redirect behavior to the primitive PoolMaster app | The primitive authenticated landing marker exists on the zero-league welcome route, login/register now reach the authenticated app surface, and the page exposes `data-testid="authenticated-landing"` across loading/empty/success/error states |
 | Done | Add Playwright config, one browser spec, and app-local scripts for PoolMaster | `clients/poolmaster/playwright.config.ts`, one Chromium spec, and app/root scripts are in place; the browser file uses a dedicated `.e2e.ts` suffix so it does not collide with Vitest |
 | Done | Remove browser-lane dependency on QA bootstrap credentials | The browser proof now self-registers through the real UI with a unique email and no longer depends on seed/bootstrap secrets |
 | Done | Add post-deploy PoolMaster browser E2E job to CI | `poolmaster-browser-e2e` now runs after `migrate-qa` on push to `main` |

@@ -1,91 +1,136 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-provider';
-import { routeMap } from '@/routes/route-map';
-
-function roleLabel(role: string) {
-  return role.replace('_', ' ');
-}
+import { listLeagues } from '@/lib/api';
+import { LeagueSelector } from './league-selector';
 
 export function AppShell() {
   const location = useLocation();
+  const navigate = useNavigate();
   const auth = useAuth();
-  const visibleRoutes = routeMap.filter((item) => {
-    if (item.role === 'PUBLIC') {
-      return true;
-    }
-
-    if (!auth.isAuthenticated) {
-      return false;
-    }
-
-    if (item.role === 'ROOT_ADMIN') {
-      return auth.isRootAdmin;
-    }
-
-    return true;
+  const leaguesQuery = useQuery({
+    queryKey: ['poolmaster', 'leagues'],
+    queryFn: async () => {
+      const response = await listLeagues();
+      if (!response.data) {
+        throw response.error ?? new Error('League list response is missing data.');
+      }
+      return response.data.leagues;
+    },
+    enabled: auth.isAuthenticated,
+    retry: false,
   });
+  const activeLeagueCode = useMemo(() => {
+    const match = location.pathname.match(/^\/league\/([^/]+)/);
+    return match?.[1] ?? null;
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-              PoolMaster
-            </span>
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight">Single role-based web app</h1>
-              <p className="max-w-2xl text-sm text-muted-foreground">
-                Members, commissioners, and root admins will all operate inside one app shell.
-              </p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-            <div>
-              Session:{' '}
-              <span className="font-medium text-foreground">
-                {auth.user ? auth.user.displayName : 'Signed out'}
+              <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                Ultimate Office Pool Manager
               </span>
+              <h1 className="text-2xl font-semibold tracking-tight">League-first web app</h1>
             </div>
-            <div className="mt-1">
-              Current route: <span className="font-medium text-foreground">{location.pathname}</span>
-            </div>
+
+            {auth.isAuthenticated ? (
+              <LeagueSelector
+                activeLeagueCode={activeLeagueCode}
+                leagues={leaguesQuery.data ?? []}
+                onCreateLeague={() => navigate('/welcome')}
+                onNavigate={(path) => navigate(path)}
+              />
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {auth.isAuthenticated ? (
+              <>
+                <button
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+                  disabled
+                  type="button"
+                >
+                  Profile
+                </button>
+                <button
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+                  disabled
+                  type="button"
+                >
+                  Settings
+                </button>
+                <button
+                  aria-label="Notifications"
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+                  disabled
+                  type="button"
+                >
+                  Notifications
+                </button>
+                <button
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+                  disabled
+                  type="button"
+                >
+                  Help
+                </button>
+                <button
+                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                  data-testid="app-logout"
+                  onClick={() => void auth.clearSession().then(() => navigate('/', { replace: true }))}
+                  type="button"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
+                Current route: <span className="font-medium text-foreground">{location.pathname}</span>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="space-y-4">
-          <div className="rounded-3xl border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              Route Map
-            </h2>
-            <nav className="mt-4 space-y-3">
-              {visibleRoutes.map((item) => {
-                const active = item.path === location.pathname;
-                return (
-                  <Link
-                    key={item.path}
-                    className={`block rounded-2xl border px-4 py-3 transition ${
-                      active
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/40 hover:bg-muted/40'
-                    }`}
-                    to={item.path}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium">{item.label}</span>
-                      <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                        {roleLabel(item.role)}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        {auth.isAuthenticated ? (
+          <nav className="mb-8 flex flex-wrap gap-3">
+            <button
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+              disabled
+              type="button"
+            >
+              League Home
+            </button>
+            <button
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+              disabled
+              type="button"
+            >
+              Create Contest
+            </button>
+            <button
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+              disabled
+              type="button"
+            >
+              Contest List
+            </button>
+            <button
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+              disabled
+              type="button"
+            >
+              Standings &amp; History
+            </button>
+          </nav>
+        ) : null}
 
         <main>
           <Outlet />

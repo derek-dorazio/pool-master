@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   generateInviteLink,
-  getLeague,
+  getLeagueByCode,
   listContests,
   listLeagueMembers,
   sendLeagueInvitations,
@@ -11,6 +11,7 @@ import {
   type ListContestsResponses,
   type ListLeagueMembersResponses,
 } from '@/lib/api';
+import { buildInvitePath, setRecentLeagueCode } from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -28,14 +29,14 @@ function formatRole(role: string | undefined) {
 }
 
 export function LeagueDetailPage() {
-  const { leagueId = '' } = useParams<{ leagueId: string }>();
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
 
   const leagueQuery = useQuery({
-    queryKey: ['poolmaster', 'league', leagueId],
+    queryKey: ['poolmaster', 'league', leagueCode],
     queryFn: async (): Promise<LeagueDetail> => {
-      const response = await getLeague({ path: { id: leagueId } });
+      const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
         throw response.error ?? new Error('League detail response is missing data.');
@@ -43,9 +44,17 @@ export function LeagueDetailPage() {
 
       return response.data.league;
     },
-    enabled: Boolean(leagueId),
+    enabled: Boolean(leagueCode),
     retry: false,
   });
+
+  useEffect(() => {
+    if (leagueQuery.data?.leagueCode) {
+      setRecentLeagueCode(leagueQuery.data.leagueCode);
+    }
+  }, [leagueQuery.data?.leagueCode]);
+
+  const leagueId = leagueQuery.data?.id ?? '';
 
   const membersQuery = useQuery({
     queryKey: ['poolmaster', 'league-members', leagueId],
@@ -89,7 +98,7 @@ export function LeagueDetailPage() {
         throw response.error ?? new Error('Invite link generation did not return an invite code.');
       }
 
-      return `${window.location.origin}/join/${inviteCode}`;
+      return `${window.location.origin}${buildInvitePath(inviteCode)}`;
     },
   });
 
@@ -152,11 +161,11 @@ export function LeagueDetailPage() {
       <section className="rounded-[2rem] border border-border bg-card p-8">
         <h2 className="text-2xl font-semibold">We couldn&apos;t load this league.</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          This page is wired to the current backend contract, so errors here usually mean the
-          session expired or the league id is invalid.
+          This league is no longer active. Use the league selector in the header to switch to one
+          of your other active leagues.
         </p>
-        <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/leagues">
-          Back to leagues
+        <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
+          Back to welcome
         </Link>
       </section>
     );
@@ -215,8 +224,8 @@ export function LeagueDetailPage() {
                 state from the backend.
               </p>
             </div>
-            <Link className="text-sm font-medium text-primary hover:underline" to="/leagues">
-              All leagues
+            <Link className="text-sm font-medium text-primary hover:underline" to="/welcome">
+              Welcome
             </Link>
           </div>
 
@@ -355,6 +364,7 @@ export function LeagueDetailPage() {
                   <Link
                     className="block rounded-2xl border border-border bg-background px-4 py-4 transition hover:border-primary/40"
                     key={contest.id}
+                    state={{ leagueCode: leagueQuery.data.leagueCode }}
                     to={`/contests/${contest.id}`}
                   >
                     <div className="flex items-center justify-between gap-4">

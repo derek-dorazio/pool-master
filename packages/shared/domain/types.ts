@@ -72,6 +72,7 @@ export interface UserLocalePreference {
 // --- League ---
 
 export interface League extends DomainEntity {
+  leagueCode: string;
   name: string;
   description?: string;
   createdBy: string;

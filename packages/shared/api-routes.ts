@@ -60,6 +60,7 @@ export const API_ROUTES = {
     list: '/api/v1/leagues',
     create: '/api/v1/leagues',
     detail: (id: string) => `/api/v1/leagues/${id}`,
+    byCode: (leagueCode: string) => `/api/v1/leagues/code/${leagueCode}`,
     members: (id: string) => `/api/v1/leagues/${id}/members`,
     leave: (id: string) => `/api/v1/leagues/${id}/members/me`,
     memberRole: (leagueId: string, memberId: string) =>
@@ -87,6 +88,7 @@ export const API_ROUTES = {
 
   // Invitations
   invitations: {
+    preview: (inviteCode: string) => `/api/v1/invitations/${inviteCode}`,
     accept: '/api/v1/invitations/accept',
   },
 

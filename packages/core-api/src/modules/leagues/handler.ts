@@ -16,6 +16,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     listLeagues,
     createLeague,
     getLeague,
+    getLeagueByCode,
     updateSettings,
   };
 
@@ -76,6 +77,27 @@ export function createLeagueHandlers(leagueService: LeagueService) {
   ): Promise<void> {
     const userId = request.authUser?.userId;
     const result = await leagueService.getLeagueWithMembers(request.params.id);
+    if (!result) {
+      return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
+    }
+    const membership = userId
+      ? result.members.find((member) => member.userId === userId)
+      : undefined;
+    return reply.send({
+      league: toLeagueDetailDto(result.league, {
+        memberCount: result.members.length,
+        activeContestCount: 0,
+        role: membership?.role,
+      }),
+    });
+  }
+
+  async function getLeagueByCode(
+    request: FastifyRequest<{ Params: { leagueCode: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const userId = request.authUser?.userId;
+    const result = await leagueService.getLeagueWithMembersByCode(request.params.leagueCode);
     if (!result) {
       return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }

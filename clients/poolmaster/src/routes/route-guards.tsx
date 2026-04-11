@@ -14,7 +14,7 @@ export function MemberRouteGuard() {
   }
 
   if (!auth.isAuthenticated) {
-    return <Navigate replace state={{ from: location.pathname }} to="/" />;
+    return <Navigate replace state={{ from: `${location.pathname}${location.search}` }} to="/" />;
   }
 
   return <Outlet />;
@@ -33,11 +33,11 @@ export function RootAdminRouteGuard() {
   }
 
   if (!auth.isAuthenticated) {
-    return <Navigate replace state={{ from: location.pathname }} to="/" />;
+    return <Navigate replace state={{ from: `${location.pathname}${location.search}` }} to="/" />;
   }
 
   if (!auth.isRootAdmin) {
-    return <Navigate replace to="/leagues" />;
+    return <Navigate replace to="/welcome" />;
   }
 
   return <Outlet />;

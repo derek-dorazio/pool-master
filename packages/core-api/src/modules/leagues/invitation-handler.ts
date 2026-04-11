@@ -9,6 +9,7 @@ import { sendError } from '../../core/error-handler';
 
 export function createInvitationHandlers(invitationService: InvitationService) {
   return {
+    getInvitationPreview,
     sendInvitations,
     generateInviteLink,
     revokeInviteLink,
@@ -78,6 +79,24 @@ export function createInvitationHandlers(invitationService: InvitationService) {
         userId,
       );
       return reply.status(201).send({ membership });
+    } catch (err) {
+      if (err instanceof InvitationNotFoundError) {
+        return sendError(reply, 404, 'LEAGUE_INVITATION_NOT_FOUND', err.message);
+      }
+      if (err instanceof InvitationInvalidError) {
+        return sendError(reply, 400, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function getInvitationPreview(
+    request: FastifyRequest<{ Params: { inviteCode: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const invitation = await invitationService.getInvitationPreview(request.params.inviteCode);
+      return reply.send({ invitation });
     } catch (err) {
       if (err instanceof InvitationNotFoundError) {
         return sendError(reply, 404, 'LEAGUE_INVITATION_NOT_FOUND', err.message);

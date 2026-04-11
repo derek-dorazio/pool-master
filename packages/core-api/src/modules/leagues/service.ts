@@ -11,6 +11,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import { InvitePolicy, LeagueMembershipStatus, LeagueRole, WeekDay } from '@poolmaster/shared/domain';
 import { ALL_COMMISSIONER_PERMISSIONS } from '../../core/permissions';
+import { randomUUID } from 'node:crypto';
 
 export interface CreateLeagueInput {
   createdBy: string;
@@ -51,7 +52,9 @@ export class LeagueService {
       ...DEFAULT_LEAGUE_SETTINGS,
       ...input.settings,
     };
+    const leagueCode = await this.generateLeagueCode(input.name);
     const league = await this.leagueRepo.create({
+      leagueCode,
       name: input.name,
       description: input.description,
       createdBy: input.createdBy,
@@ -72,6 +75,10 @@ export class LeagueService {
 
   async findById(leagueId: string): Promise<League | null> {
     return this.leagueRepo.findById(leagueId);
+  }
+
+  async findByCode(leagueCode: string): Promise<League | null> {
+    return this.leagueRepo.findByCode(leagueCode.toUpperCase());
   }
 
   async findByUser(userId: string): Promise<UserLeagueView[]> {
@@ -118,6 +125,35 @@ export class LeagueService {
     }
     const members = await this.membershipRepo.findByLeague(leagueId);
     return { league, members };
+  }
+
+  async getLeagueWithMembersByCode(
+    leagueCode: string,
+  ): Promise<{ league: League; members: LeagueMembership[] } | null> {
+    const league = await this.findByCode(leagueCode);
+    if (!league) {
+      return null;
+    }
+    const members = await this.membershipRepo.findByLeague(league.id);
+    return { league, members };
+  }
+
+  private async generateLeagueCode(name: string): Promise<string> {
+    const normalizedBase = name.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'LEAGUE';
+    const firstAttempt = normalizedBase.slice(0, 16);
+    if (!(await this.leagueRepo.findByCode(firstAttempt))) {
+      return firstAttempt;
+    }
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const suffix = randomUUID().replace(/-/g, '').slice(0, 4).toUpperCase();
+      const candidate = `${normalizedBase.slice(0, 12)}${suffix}`.slice(0, 16);
+      if (!(await this.leagueRepo.findByCode(candidate))) {
+        return candidate;
+      }
+    }
+
+    throw new Error('Unable to generate a unique league code');
   }
 }
 
