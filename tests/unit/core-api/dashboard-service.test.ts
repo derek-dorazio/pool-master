@@ -12,6 +12,7 @@ import { buildContest, buildInvitation, buildLeague, buildMembership } from '../
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
+    findByCode: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
     delete: jest.fn().mockResolvedValue(undefined),

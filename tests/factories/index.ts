@@ -51,6 +51,7 @@ export function buildLeague(overrides: Partial<League> = {}): League {
   const id = nextId();
   return {
     id,
+    leagueCode: `LEAGUE${id.slice(-4)}`,
     name: `League ${id}`,
     createdBy: 'owner-1',
     visibility: LeagueVisibility.PRIVATE,

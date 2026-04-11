@@ -24,6 +24,7 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: jest.fn().mockResolvedValue(buildLeague({ maxMembers: 20 })),
+    findByCode: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
     delete: jest.fn().mockResolvedValue(undefined),

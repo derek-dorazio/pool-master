@@ -6,6 +6,7 @@ import { buildLeague, buildMembership } from '../../factories';
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
     findById: jest.fn().mockResolvedValue(null),
+    findByCode: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
       id: 'new-league-id',
@@ -43,7 +44,9 @@ function createMockMembershipRepo(
 describe('LeagueService', () => {
   describe('createLeague', () => {
     it('creates a league and a COMMISSIONER membership', async () => {
-      const leagueRepo = createMockLeagueRepo();
+      const leagueRepo = createMockLeagueRepo({
+        findByCode: jest.fn().mockResolvedValue(null),
+      });
       const membershipRepo = createMockMembershipRepo();
       const service = new LeagueService(leagueRepo, membershipRepo);
       const result = await service.createLeague({
@@ -57,6 +60,8 @@ describe('LeagueService', () => {
       expect(membershipInput.role).toBe(LeagueRole.COMMISSIONER);
       expect(membershipInput.userId).toBe('user-1');
       expect(result.league.id).toBe('new-league-id');
+      expect(result.league.leagueCode).toBe('MYLEAGUE');
+      expect(leagueRepo.findByCode).toHaveBeenCalledWith('MYLEAGUE');
     });
 
     it('merges default settings with provided overrides', async () => {
