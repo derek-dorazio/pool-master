@@ -13,6 +13,8 @@ The first-time commissioner journey is now:
 
 We intentionally stopped before implementing league creation so the wizard can be designed deliberately instead of growing ad hoc out of the current scaffold.
 
+This plan assumes the broader home-shell and routing model from [plans/76-league-home-and-league-context-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/76-league-home-and-league-context-user-cases.md).
+
 ## Scope
 
 In scope:

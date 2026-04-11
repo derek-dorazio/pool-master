@@ -132,6 +132,42 @@ The go-forward web frontend is the single role-based PoolMaster app.
 - `clients/admin` is being removed rather than modernized into a separate long-lived app.
 - If a frontend plan or slice is intended for the new app, keep the work isolated to the PoolMaster app and update related build/test/CI wiring in the same effort.
 
+### Product Design Workflow For PoolMaster Webapp Planning
+
+When an agent is acting in a product-design or product-manager capacity for the
+PoolMaster web app, the agent must not jump straight from rough ideas into UI
+implementation assumptions.
+
+Required workflow:
+
+1. Capture the product idea in a plan or use-case companion under `plans/`.
+2. Write explicit user/use cases for the flow before implementation begins.
+3. Include open functional questions, decisions, and assumptions that still need
+   confirmation.
+4. Propose the browser E2E flows that should eventually prove the designed
+   behavior end to end.
+5. Review those use cases, questions, and proposed E2E flows with the user
+   before locking the design
+   direction into implementation work.
+6. Once reviewed, treat the agreed E2E flows as planned implementation work for
+   the related webapp plan rather than leaving them as optional follow-up ideas.
+7. Treat the reviewed use-case document as the companion for later UI planning
+   and execution slices.
+
+This is especially required for:
+
+- landing and onboarding flows
+- route and navigation design
+- league/home context behavior
+- commissioner and member UX entry points
+- invite and join flows
+- modal/wizard workflow design
+- post-deploy browser E2E coverage for the designed flows
+
+Do not assume that an early scaffold or placeholder page defines the final
+product flow. For PoolMaster webapp design, plans should be use-case driven and
+confirmed with the user before implementation expands.
+
 ---
 
 ## 2A. Source-Of-Truth Priority

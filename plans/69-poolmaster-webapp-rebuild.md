@@ -34,12 +34,13 @@ This app becomes the single go-forward web frontend for PoolMaster.
   - root-admin flows with the current admin-auth model
   - role-aware navigation and session handling inside one app shell
 - Do not keep a separate `clients/shared` frontend package; frontend shared contract/types come from `packages/shared` and the generated SDK only.
+- Treat [plans/76-league-home-and-league-context-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/76-league-home-and-league-context-user-cases.md) as the companion for the authenticated landing/home route, league selector, default-league routing, and invite-entry behavior.
 
 ## Task List
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| In Progress | Define the initial route map from active use-case plans | Initial route-map skeleton added for member, commissioner, and root-admin surfaces; detailed use-case pages still to be built |
+| In Progress | Define the initial route map from active use-case plans | Initial route-map skeleton added for member, commissioner, and root-admin surfaces; next route-map revision should pivot around the league-home companion in Plan 76 before more page implementation continues |
 | In Progress | Decide the single-app auth/session model for member, commissioner, and root-admin flows | Member/commissioner session scaffolding now uses generated SDK auth inside `clients/poolmaster`; alignment audit removed the earlier hardcoded root-admin false path and switched the app to the backend-owned `isRootAdmin` contract, while broader root-admin surface design still remains future work |
 | Done | Remove `clients/shared` and standardize on `packages/shared` + generated SDK exports | `clients/shared` was unused placeholder scaffolding and has been removed; frontend contract sharing now comes only from `packages/shared` and the generated SDK |
 | In Progress | Scaffold `clients/poolmaster` shell and base stack (69-A) | React, Vite, TypeScript, Tailwind, React Router, TanStack Query, generated SDK re-export, and initial app shell scaffolded; shadcn/component primitives still to be added |
@@ -49,7 +50,7 @@ This app becomes the single go-forward web frontend for PoolMaster.
 | Done | Wire the new app into local build/test commands | Root build, lint, typecheck, and active frontend test commands now target PoolMaster rather than the retired web/admin apps |
 | Done | Wire the new app into CI | CI frontend gates, coverage summary, and QA web deployment now target PoolMaster only |
 | In Progress | Build the first core product flows | Auth, self-registration, landing, league list/detail, invitation acceptance, and contest list/detail foundation are in place; entry creation, standings/history reads, create-league modal flow, and broader commissioner/root-admin flows are deferred pending the next planning phase |
-| Pending | Add PoolMaster-specific frontend tests | unit + frontend-layer functional tests aligned with the new rules |
+| Pending | Add PoolMaster-specific frontend tests and reviewed browser E2E flows | unit + frontend-layer functional tests aligned with the new rules, plus the agreed league-home browser flows from Plan 76 as those product slices are implemented |
 | Pending | Update docs/rules/README references | Make PoolMaster the single active web app in repo guidance |
 
 ## Validation
