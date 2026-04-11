@@ -368,6 +368,7 @@ Current implementation status:
 - browser E2E now covers:
   - commissioner self-register -> create first league -> logout
   - invited new user register -> explicit join -> invited league home -> logout
+  - existing multi-league user deep-link -> selector switch -> recent-league login resolution -> logout
 - legacy `/join/<inviteCode>` now redirects into canonical `/invite/<inviteCode>`
 
 ## Suggested Browser E2E Flows

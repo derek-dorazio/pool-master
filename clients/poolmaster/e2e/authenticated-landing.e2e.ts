@@ -18,6 +18,39 @@ async function registerUser(
   await page.getByTestId('auth-register-submit').click();
 }
 
+async function loginUser(
+  page: Parameters<typeof test>[0]['page'],
+  user: {
+    email: string;
+    password: string;
+  },
+) {
+  await page.getByTestId('auth-login-email').fill(user.email);
+  await page.getByTestId('auth-login-password').fill(user.password);
+  await page.getByTestId('auth-login-submit').click();
+}
+
+async function createLeagueFromWelcome(
+  page: Parameters<typeof test>[0]['page'],
+  leagueName: string,
+) {
+  await page.getByTestId('welcome-create-league').click();
+  await expect(page.getByTestId('create-league-modal')).toBeVisible();
+  await page.getByTestId('create-league-name').fill(leagueName);
+  await page.getByTestId('create-league-submit').click();
+}
+
+async function createLeagueFromSelector(
+  page: Parameters<typeof test>[0]['page'],
+  leagueName: string,
+) {
+  await page.getByTestId('league-selector-toggle').click();
+  await page.getByTestId('league-selector-create').click();
+  await expect(page.getByTestId('create-league-modal')).toBeVisible();
+  await page.getByTestId('create-league-name').fill(leagueName);
+  await page.getByTestId('create-league-submit').click();
+}
+
 test('new commissioner registration creates a league and can log out', async ({ page }) => {
   const timestamp = Date.now();
   const email = `playwright-commissioner-${timestamp}@example.test`;
@@ -41,10 +74,7 @@ test('new commissioner registration creates a league and can log out', async ({ 
   await expect(page.getByTestId('authenticated-landing')).toBeVisible();
   await expect(page.getByRole('heading', { name: /welcome to ultimate office pool manager/i })).toBeVisible();
 
-  await page.getByTestId('welcome-create-league').click();
-  await expect(page.getByTestId('create-league-modal')).toBeVisible();
-  await page.getByTestId('create-league-name').fill(leagueName);
-  await page.getByTestId('create-league-submit').click();
+  await createLeagueFromWelcome(page, leagueName);
 
   await expect(page).toHaveURL(/\/league\/[A-Z0-9]+$/);
   await expect(page.getByTestId('league-home')).toBeVisible();
@@ -70,9 +100,7 @@ test('invited new user registers, joins the league, and can log out', async ({ p
   });
 
   await expect(page).toHaveURL(/\/welcome$/);
-  await page.getByTestId('welcome-create-league').click();
-  await page.getByTestId('create-league-name').fill(leagueName);
-  await page.getByTestId('create-league-submit').click();
+  await createLeagueFromWelcome(page, leagueName);
 
   await expect(page).toHaveURL(/\/league\/[A-Z0-9]+$/);
   await expect(page.getByTestId('league-home')).toBeVisible();
@@ -105,6 +133,57 @@ test('invited new user registers, joins the league, and can log out', async ({ p
   await expect(page).toHaveURL(/\/league\/[A-Z0-9]+$/);
   await expect(page.getByTestId('league-home')).toBeVisible();
   await expect(page.getByRole('heading', { name: leagueName })).toBeVisible();
+
+  await page.getByTestId('app-logout').click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test('existing multi-league user can deep link, switch leagues, and return to the recent league', async ({ page }) => {
+  const timestamp = Date.now();
+  const email = `playwright-multileague-${timestamp}@example.test`;
+  const password = 'Playwright123!';
+  const firstLeagueName = `Alpha League ${timestamp}`;
+  const secondLeagueName = `Bravo League ${timestamp}`;
+
+  await page.goto('/');
+  await registerUser(page, {
+    firstName: 'Multi',
+    lastName: 'League',
+    email,
+    password,
+  });
+
+  await expect(page).toHaveURL(/\/welcome$/);
+  await createLeagueFromWelcome(page, firstLeagueName);
+
+  await expect(page).toHaveURL(/\/league\/[A-Z0-9]+$/);
+  const firstLeagueUrl = page.url();
+
+  await createLeagueFromSelector(page, secondLeagueName);
+  await expect(page).toHaveURL(/\/league\/[A-Z0-9]+$/);
+  const secondLeagueUrl = page.url();
+  const secondLeagueCode = new URL(secondLeagueUrl).pathname.split('/').at(-1);
+
+  await page.goto(firstLeagueUrl);
+  await expect(page).toHaveURL(firstLeagueUrl);
+  await expect(page.getByRole('heading', { name: firstLeagueName })).toBeVisible();
+
+  if (!secondLeagueCode) {
+    throw new Error('Second league code was not available from the URL.');
+  }
+
+  await page.getByTestId('league-selector-toggle').click();
+  await page.getByTestId(`league-selector-option-${secondLeagueCode}`).click();
+
+  await expect(page).toHaveURL(secondLeagueUrl);
+  await expect(page.getByRole('heading', { name: secondLeagueName })).toBeVisible();
+
+  await page.getByTestId('app-logout').click();
+  await expect(page).toHaveURL(/\/$/);
+
+  await loginUser(page, { email, password });
+  await expect(page).toHaveURL(secondLeagueUrl);
+  await expect(page.getByRole('heading', { name: secondLeagueName })).toBeVisible();
 
   await page.getByTestId('app-logout').click();
   await expect(page).toHaveURL(/\/$/);

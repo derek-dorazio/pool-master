@@ -50,7 +50,7 @@ This app becomes the single go-forward web frontend for PoolMaster.
 | Done | Wire the new app into local build/test commands | Root build, lint, typecheck, and active frontend test commands now target PoolMaster rather than the retired web/admin apps |
 | Done | Wire the new app into CI | CI frontend gates, coverage summary, and QA web deployment now target PoolMaster only |
 | In Progress | Build the first core product flows | The primitive commissioner/member experience is now partially aligned to the reviewed `/welcome`, `/league/<leagueCode>`, and `/invite/<inviteCode>` model; create-league modal launch + submit is in place, while richer league home, invite-flow polish, and broader commissioner/root-admin flows still remain |
-| In Progress | Add PoolMaster-specific frontend tests and reviewed browser E2E flows | frontend test work has started with the create-league modal test plus browser coverage for commissioner self-register/create-league and invited new-user register/join flows from Plan 76; broader route/component coverage still remains |
+| In Progress | Add PoolMaster-specific frontend tests and reviewed browser E2E flows | frontend test work has started with the create-league modal test plus all three reviewed Plan 76 browser flows: commissioner self-register/create-league, invited new-user register/join, and multi-league bookmark/selector/default-league routing; broader route/component coverage still remains |
 | Pending | Update docs/rules/README references | Make PoolMaster the single active web app in repo guidance |
 
 ## Validation
