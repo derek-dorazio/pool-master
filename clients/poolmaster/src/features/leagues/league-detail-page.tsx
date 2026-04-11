@@ -172,7 +172,7 @@ export function LeagueDetailPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" data-testid="league-home">
       <div className="rounded-[2rem] border border-border bg-card p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">

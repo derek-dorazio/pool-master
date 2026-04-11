@@ -1,13 +1,18 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-provider';
 import { listLeagues } from '@/lib/api';
+import {
+  CreateLeagueModal,
+  buildCreateLeagueDestination,
+} from '@/features/leagues/create-league-modal';
 import { LeagueSelector } from './league-selector';
 
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const auth = useAuth();
   const leaguesQuery = useQuery({
     queryKey: ['poolmaster', 'leagues'],
@@ -25,6 +30,19 @@ export function AppShell() {
     const match = location.pathname.match(/^\/league\/([^/]+)/);
     return match?.[1] ?? null;
   }, [location.pathname]);
+  const isCreateLeagueOpen = searchParams.get('createLeague') === '1';
+
+  function openCreateLeague() {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('createLeague', '1');
+    setSearchParams(nextParams, { replace: true });
+  }
+
+  function closeCreateLeague() {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('createLeague');
+    setSearchParams(nextParams, { replace: true });
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -42,7 +60,7 @@ export function AppShell() {
               <LeagueSelector
                 activeLeagueCode={activeLeagueCode}
                 leagues={leaguesQuery.data ?? []}
-                onCreateLeague={() => navigate('/welcome')}
+                onCreateLeague={openCreateLeague}
                 onNavigate={(path) => navigate(path)}
               />
             ) : null}
@@ -136,6 +154,17 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      {auth.isAuthenticated ? (
+        <CreateLeagueModal
+          isOpen={isCreateLeagueOpen}
+          onClose={closeCreateLeague}
+          onCreated={(leagueCode) => {
+            closeCreateLeague();
+            navigate(buildCreateLeagueDestination(leagueCode), { replace: true });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

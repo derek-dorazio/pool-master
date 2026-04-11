@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-test('new commissioner registration lands on welcome and can log out', async ({ page }) => {
+test('new commissioner registration creates a league and can log out', async ({ page }) => {
   const timestamp = Date.now();
   const email = `playwright-commissioner-${timestamp}@example.test`;
   const password = 'Playwright123!';
+  const leagueName = `Playwright League ${timestamp}`;
 
   await page.goto('/');
 
@@ -22,6 +23,16 @@ test('new commissioner registration lands on welcome and can log out', async ({ 
   await expect(page).toHaveURL(/\/welcome$/);
   await expect(page.getByTestId('authenticated-landing')).toBeVisible();
   await expect(page.getByRole('heading', { name: /welcome to ultimate office pool manager/i })).toBeVisible();
+
+  await page.getByTestId('welcome-create-league').click();
+  await expect(page.getByTestId('create-league-modal')).toBeVisible();
+  await page.getByTestId('create-league-name').fill(leagueName);
+  await page.getByTestId('create-league-submit').click();
+
+  await expect(page).toHaveURL(/\/league\/[A-Z0-9]+$/);
+  await expect(page.getByTestId('league-home')).toBeVisible();
+  await expect(page.getByRole('heading', { name: leagueName })).toBeVisible();
+
   await page.getByTestId('app-logout').click();
   await expect(page).toHaveURL(/\/$/);
 });

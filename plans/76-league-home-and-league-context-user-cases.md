@@ -153,12 +153,9 @@ Current default-resolution direction:
 - use most-recent league from a cookie if present
 - otherwise fall back to a deterministic league selection rule
 
-Open decision:
-- whether the non-cookie fallback should be:
-  - most recently created league membership
-  - most recently joined league
-  - alphabetic first league
-  - some later “favorite/default league” concept
+Resolved decision:
+- if there is no recent-league cookie, fall back to the most recently created
+  league membership
 
 ### LH-004: User opens a bookmarked league home directly
 
@@ -317,20 +314,29 @@ Current planning direction:
   - notifications
   - help
 
-## Functional Questions To Review
+## Resolved Immediate-Scope Decisions
 
-1. Should the invite pre-auth route use a stable shape such as `/invite/<code>`?
-2. How much league branding/context should the invite screen show before auth
-   beyond league name and avatar?
-3. Should the post-acceptance invite screen immediately transition into the
-   league home, or show a brief success banner first?
-4. Should the league selector open with the current active league pinned at the
-   top, or is simple list ordering enough for the first version?
-5. What additional routing rules do we want for future league subpages such as:
+1. Invite pre-auth route uses the stable shape `/invite/<inviteCode>`.
+2. Invite screen should show:
+   - league avatar
+   - league name
+   - welcome/invite messaging
+3. After invite acceptance, the app should transition directly into
+   `/league/<leagueCode>` without an extra success page.
+4. First-version selector ordering can stay simple as long as:
+   - the current league is visibly marked active
+   - the recent-league cookie updates on switch
+
+## Deferred Questions
+
+These remain intentionally open because they are not required to complete the
+next implementation slices:
+
+1. What additional routing rules do we want for future league subpages such as:
    - `/league/<leagueCode>/contests`
    - `/league/<leagueCode>/members`
    - `/league/<leagueCode>/settings`
-6. How should the eventual league home page itself behave:
+2. How should the eventual league home page itself behave:
    - summary/dashboard
    - action hub
    - mixed overview
@@ -346,6 +352,16 @@ flows before deeper league-home content design:
 - league-scoped invite entry
 - login/register-invite join flow
 - invite acceptance
+
+Current implementation status:
+
+- self-registration is active
+- zero-league `/welcome` is active
+- create-league modal launch path is active from `/welcome` and the header
+  league selector
+- invite acceptance already routes directly into `/league/<leagueCode>` and now
+  updates the recent-league cookie
+- legacy `/join/<inviteCode>` now redirects into canonical `/invite/<inviteCode>`
 
 ## Suggested Browser E2E Flows
 

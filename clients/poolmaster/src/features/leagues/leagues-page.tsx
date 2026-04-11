@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { listLeagues, type ListLeaguesResponses } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { buildLeaguePath, resolveDefaultLeagueCode } from './league-routing';
@@ -19,6 +19,7 @@ function roleLabel(role: string | undefined) {
 
 export function WelcomePage() {
   const auth = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const leaguesQuery = useQuery({
     queryKey: ['poolmaster', 'leagues'],
     queryFn: async (): Promise<LeagueSummary[]> => {
@@ -75,9 +76,21 @@ export function WelcomePage() {
         <div className="mt-6 rounded-[1.5rem] border border-dashed border-border bg-background p-5">
           <h3 className="text-lg font-semibold">Create your first league</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            The league-creation wizard is the next planned slice. We&apos;ll open it from this
-            landing page as a modal so commissioners can create a league without leaving home.
+            Start by creating a private or public league. Once it exists, this home flow will
+            route you directly into that league context.
           </p>
+          <button
+            className="mt-5 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+            data-testid="welcome-create-league"
+            onClick={() => {
+              const nextParams = new URLSearchParams(searchParams);
+              nextParams.set('createLeague', '1');
+              setSearchParams(nextParams, { replace: true });
+            }}
+            type="button"
+          >
+            Create league
+          </button>
         </div>
       </section>
     );

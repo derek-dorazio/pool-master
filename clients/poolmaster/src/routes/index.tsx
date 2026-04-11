@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
@@ -7,6 +7,11 @@ import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
+
+function LegacyJoinInviteRedirect() {
+  const { inviteCode = '' } = useParams<{ inviteCode: string }>();
+  return <Navigate replace to={`/invite/${inviteCode}`} />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -23,7 +28,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'join/:inviteCode',
-        element: <JoinLeaguePage />,
+        element: <LegacyJoinInviteRedirect />,
       },
       {
         element: <MemberRouteGuard />,

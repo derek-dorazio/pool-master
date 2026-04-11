@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { acceptInvitation, getInvitationPreview } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { buildLeaguePath, getLeagueInitials } from './league-routing';
+import { buildInvitePath, buildLeaguePath, getLeagueInitials, setRecentLeagueCode } from './league-routing';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -56,6 +56,7 @@ export function JoinLeaguePage() {
     onSuccess: () => {
       const leagueCode = invitationQuery.data?.league.leagueCode;
       if (leagueCode) {
+        setRecentLeagueCode(leagueCode);
         navigate(buildLeaguePath(leagueCode));
       }
     },
@@ -96,7 +97,7 @@ export function JoinLeaguePage() {
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
             className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
-            state={{ from: `/invite/${inviteCode}` }}
+            state={{ from: buildInvitePath(inviteCode) }}
             to="/"
           >
             Go to sign-in

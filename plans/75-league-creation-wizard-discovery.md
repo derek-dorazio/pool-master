@@ -30,37 +30,80 @@ Out of scope:
 - implementing additional league-management flows
 - invitation/member onboarding flows after league creation
 
-## Questions To Resolve
+## Resolved Decisions
 
-1. What is the minimum first-release field set for league creation?
-   - likely candidates: league name, sport, visibility
-2. Is season selection part of the first wizard, or deferred until later setup?
-3. Should the commissioner choose invite policy during creation, or should that stay on a later settings screen?
-4. Should the wizard be a single modal step at first, or explicitly multi-step even if the first version has few fields?
-5. Should the authenticated landing page remain visible behind the modal, or should the wizard take over focus more fully?
-6. What is the success destination after creation?
-   - stay on landing and show the new league card
-   - or route directly into the new league home/detail page
-7. Should the wizard support cancel/reopen behavior with draft-value persistence, or can the first version reset on close?
-8. Which empty-state and success-state messages best support the first-time commissioner journey without sounding like placeholder copy?
+1. First-release field set:
+   - league name
+   - visibility
+2. `sport` is explicitly deferred.
+   - reason: the active backend `League` model does not persist sport today, so
+     adding sport to the first wizard would either be misleading UI or a hidden
+     backend-model expansion
+3. Season selection is deferred until later setup.
+4. Invite policy is deferred to league settings.
+5. First version is a single-step modal that is visually structured so it can
+   evolve into a multi-step wizard later.
+6. The modal launches over the current authenticated page and leaves the page
+   visible behind it.
+7. Success routes directly into `/league/<leagueCode>`.
+8. Closing the modal resets its draft values in the first version.
+9. Commissioner membership is created automatically as part of league creation.
 
-## Initial Recommendation
+## First-Release UX Shape
 
-- launch from the authenticated landing page as a modal
-- start with a small wizard that can grow into multiple steps without changing the mental model
-- first-release fields:
-  - league name
-  - sport
-  - visibility
-- commissioner becomes `COMMISSIONER` automatically on create
-- invitations, contest creation, and deeper settings remain downstream flows
-- success should most likely route into the newly created league page, but this remains open for review
+- launch path:
+  - zero-league `/welcome` empty state
+  - header league-selector `Create league` action
+- modal title:
+  - `Create your league`
+- supporting copy:
+  - concise commissioner-first guidance, not placeholder or fake preview text
+- fields:
+  - `League name`
+  - `Visibility`
+- primary CTA:
+  - `Create league`
+- secondary CTA:
+  - `Cancel`
+
+## Validation Rules
+
+- `League name`
+  - required
+  - trimmed
+  - client-side validation should mirror backend contract bounds
+- `Visibility`
+  - required
+  - default to `PRIVATE`
+- submit is disabled while the mutation is pending
+- server errors render inside the modal using the shared error message extractor
+- on success:
+  - invalidate/refetch league list state
+  - update recent-league cookie to the created league
+  - route to `/league/<leagueCode>`
+
+## Backend / API Implications
+
+- no new backend model change is required for the first version
+- first-release implementation should use the existing `createLeague` contract
+- `sport` remains a future product/model decision and must not be represented as
+  persisted truth until the backend model supports it
 
 ## Task List
 
 | Status | Task | Notes |
 | --- | --- | --- |
-| Pending | Review the commissioner-first create-league journey against active product goals | Confirm that self-register -> landing -> create league remains the primary first-run path |
-| Pending | Define the wizard steps, fields, and validation rules | Keep first version minimal but extensible |
-| Pending | Decide the success destination and the empty-state-to-wizard transition | Landing-page continuity vs direct league-home routing is still open |
-| Pending | Write the implementation-ready UX and API assumptions | This should be ready before the next webapp implementation slice starts |
+| Done | Review the commissioner-first create-league journey against active product goals | Self-register -> `/welcome` -> create league remains the primary first-run path |
+| Done | Define the wizard steps, fields, and validation rules | First release is a single-step modal with `name` + `visibility`, pending-state handling, inline validation, and reset-on-close |
+| Done | Decide the success destination and the empty-state-to-wizard transition | Launch from `/welcome` empty state and header selector; success routes directly to `/league/<leagueCode>` |
+| Done | Write the implementation-ready UX and API assumptions | First release intentionally avoids adding `sport` until the backend model supports it |
+
+## First Implementation Slice Status
+
+The first implementation slice based on this plan is now in place:
+
+- global create-league modal wired into the authenticated shell
+- launch path from `/welcome`
+- launch path from the header league selector
+- submit through the existing backend `createLeague` contract
+- success routing into `/league/<leagueCode>`
