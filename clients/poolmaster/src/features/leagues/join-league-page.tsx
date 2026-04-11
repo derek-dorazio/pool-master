@@ -3,7 +3,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { acceptInvitation, getInvitationPreview } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { buildInvitePath, buildLeaguePath, getLeagueInitials, setRecentLeagueCode } from './league-routing';
+import { InvitationContextCard } from './invitation-context-card';
+import { buildInvitePath, buildLeaguePath, setRecentLeagueCode } from './league-routing';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -82,16 +83,13 @@ export function JoinLeaguePage() {
         </h2>
         <p className="mt-3 text-sm text-muted-foreground">{redirectMessage}</p>
         {invitationQuery.data ? (
-          <div className="mt-5 flex items-center gap-3 rounded-[1.5rem] border border-border bg-background p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-              {getLeagueInitials(invitationQuery.data.league.name)}
-            </div>
-            <div>
-              <div className="font-semibold">{invitationQuery.data.league.name}</div>
-              <div className="text-sm text-muted-foreground">
-                You&apos;ve been invited to join this league.
-              </div>
-            </div>
+          <div className="mt-5">
+            <InvitationContextCard
+              inviteCode={invitationQuery.data.inviteCode}
+              leagueName={invitationQuery.data.league.name}
+              message="You've been invited to join this league. Sign in with your existing account, or create a new account and then come back here to accept the invite."
+              title="League invite"
+            />
           </div>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
@@ -100,7 +98,14 @@ export function JoinLeaguePage() {
             state={{ from: buildInvitePath(inviteCode) }}
             to="/"
           >
-            Go to sign-in
+            Sign in to continue
+          </Link>
+          <Link
+            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+            state={{ authMode: 'register', from: buildInvitePath(inviteCode) }}
+            to="/"
+          >
+            Create account
           </Link>
           <Link className="rounded-2xl border border-border px-4 py-3 text-sm font-medium" to="/">
             Back to home
@@ -126,17 +131,12 @@ export function JoinLeaguePage() {
         {invitationQuery.isLoading ? 'Loading invitation...' : null}
         {invitationQuery.isError ? 'We could not load this invitation.' : null}
         {invitationQuery.data ? (
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-              {getLeagueInitials(invitationQuery.data.league.name)}
-            </div>
-            <div>
-              <div className="font-semibold text-foreground">{invitationQuery.data.league.name}</div>
-              <div className="text-sm text-muted-foreground">
-                Invite code {invitationQuery.data.inviteCode} · status {invitationQuery.data.status}
-              </div>
-            </div>
-          </div>
+          <InvitationContextCard
+            inviteCode={invitationQuery.data.inviteCode}
+            leagueName={invitationQuery.data.league.name}
+            message={`You are signed in. Review this invite and choose Join League when you're ready. Current status: ${invitationQuery.data.status}.`}
+            title="Ready to join"
+          />
         ) : null}
         {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
         {acceptMutation.isError ? <p>{getErrorMessage(acceptMutation.error)}</p> : null}

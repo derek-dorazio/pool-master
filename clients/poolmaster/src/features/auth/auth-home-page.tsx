@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LoginRequestSchema, RegisterRequestSchema } from '@poolmaster/shared/dto';
-import { loginUser, registerUser } from '@/lib/api';
+import { getInvitationPreview, loginUser, registerUser } from '@/lib/api';
+import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import { useSessionStore } from './session-store';
 
 const loginFormSchema = LoginRequestSchema.extend({
@@ -24,6 +26,11 @@ const registerFormSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 type RegisterFormValues = z.infer<typeof registerFormSchema>;
+
+function parseInviteCode(path: string) {
+  const match = path.match(/^\/invite\/([^/?#]+)/);
+  return match?.[1] ?? null;
+}
 
 function extractErrorMessage(error: unknown): string {
   if (!error || typeof error !== 'object') {
@@ -49,7 +56,11 @@ function extractErrorMessage(error: unknown): string {
 export function AuthHomePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const authPreference =
+    (location.state as { authMode?: unknown } | null)?.authMode === 'register'
+      ? 'register'
+      : 'login';
+  const [mode, setMode] = useState<'login' | 'register'>(authPreference);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useSessionStore((state) => state.user);
@@ -58,6 +69,20 @@ export function AuthHomePage() {
     typeof (location.state as { from?: unknown } | null)?.from === 'string'
       ? ((location.state as { from: string }).from)
       : '/welcome';
+  const inviteCode = useMemo(() => parseInviteCode(destination), [destination]);
+  const invitePreviewQuery = useQuery({
+    queryKey: ['poolmaster', 'auth', 'invite-preview', inviteCode],
+    queryFn: async () => {
+      const response = await getInvitationPreview({ path: { inviteCode: inviteCode ?? '' } });
+      if (!response.data?.invitation) {
+        throw response.error ?? new Error('Invitation preview is missing data.');
+      }
+      return response.data.invitation;
+    },
+    enabled: Boolean(inviteCode),
+    retry: false,
+  });
+  const inviteContext = invitePreviewQuery.data ?? null;
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -139,22 +164,43 @@ export function AuthHomePage() {
           </span>
           <div className="space-y-3">
             <h2 className="max-w-xl text-4xl font-semibold tracking-tight">
-              Ultimate Office Pool Manager starts with one simple choice: sign in or register.
+              {inviteContext
+                ? `You're almost inside ${inviteContext.league.name}.`
+                : 'Ultimate Office Pool Manager starts with one simple choice: sign in or register.'}
             </h2>
             <p className="max-w-xl text-base text-muted-foreground">
-              New to Ultimate Office Pool Manager? Register and create your first league now.
+              {inviteContext
+                ? 'Sign in to join with your existing account, or create a new account and continue to the invitation confirmation step.'
+                : 'New to Ultimate Office Pool Manager? Register and create your first league now.'}
             </p>
           </div>
-          <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-            <div className="rounded-2xl border border-border bg-background p-4">
-              Commissioners start by registering themselves, landing in the app, and creating
-              their first league.
+          {inviteContext ? (
+            <>
+              <InvitationContextCard
+                inviteCode={inviteContext.inviteCode}
+                leagueName={inviteContext.league.name}
+                message="This invitation is scoped to a specific league. After you sign in or create your account, you’ll review the invite and explicitly choose to join."
+                title="League invite"
+              />
+              {invitePreviewQuery.isError ? (
+                <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                  We couldn&apos;t load the invitation preview. You can still try signing in, then
+                  return to the invitation link.
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+              <div className="rounded-2xl border border-border bg-background p-4">
+                Commissioners start by registering themselves, landing in the app, and creating
+                their first league.
+              </div>
+              <div className="rounded-2xl border border-border bg-background p-4">
+                Members most often join later by invitation after a commissioner has created the
+                league.
+              </div>
             </div>
-            <div className="rounded-2xl border border-border bg-background p-4">
-              Members most often join later by invitation after a commissioner has created the
-              league.
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="rounded-[2rem] border border-border bg-background p-6">
@@ -327,11 +373,12 @@ export function AuthHomePage() {
           )}
 
           <p className="mt-5 text-sm text-muted-foreground">
-            Registration signs you in and lands you on your normal app home. If you have no
-            leagues yet, that landing page becomes your first-time commissioner welcome state.
+            {inviteContext
+              ? 'Registration signs you in first, then returns you to this league invitation so you can confirm the join explicitly.'
+              : 'Registration signs you in and lands you on your normal app home. If you have no leagues yet, that landing page becomes your first-time commissioner welcome state.'}
           </p>
-          <Link className="mt-3 inline-block text-sm font-medium text-primary hover:underline" to="/welcome">
-            Continue to welcome
+          <Link className="mt-3 inline-block text-sm font-medium text-primary hover:underline" to={inviteContext ? destination : '/welcome'}>
+            {inviteContext ? 'Back to invitation' : 'Continue to welcome'}
           </Link>
         </div>
       </div>

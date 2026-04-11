@@ -359,6 +359,10 @@ Current implementation status:
 - zero-league `/welcome` is active
 - create-league modal launch path is active from `/welcome` and the header
   league selector
+- auth entry now preserves invite context and can open directly in register mode
+  for invited new users
+- invite route now presents explicit sign-in and create-account actions while
+  preserving the target invite destination
 - invite acceptance already routes directly into `/league/<leagueCode>` and now
   updates the recent-league cookie
 - legacy `/join/<inviteCode>` now redirects into canonical `/invite/<inviteCode>`
