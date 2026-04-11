@@ -11,8 +11,15 @@ const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, 'Password is required'),
 });
 
-const registerFormSchema = RegisterRequestSchema.extend({
-  displayName: z.string().min(1, 'Display name is required'),
+const registerFormSchema = z.object({
+  firstName: z.string().trim().min(1, 'First name is required').max(50, 'First name is too long'),
+  lastName: z.string().trim().min(1, 'Last name is required').max(50, 'Last name is too long'),
+  email: RegisterRequestSchema.shape.email,
+  password: RegisterRequestSchema.shape.password,
+  confirmPassword: z.string().min(8, 'Please confirm your password'),
+}).refine((values) => values.password === values.confirmPassword, {
+  path: ['confirmPassword'],
+  message: 'Passwords must match',
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
@@ -60,7 +67,9 @@ export function AuthHomePage() {
     defaultValues: {
       email: '',
       password: '',
-      displayName: '',
+      firstName: '',
+      lastName: '',
+      confirmPassword: '',
     },
   });
 
@@ -92,7 +101,11 @@ export function AuthHomePage() {
 
     try {
       const response = await registerUser({
-        body: values,
+        body: {
+          email: values.email,
+          password: values.password,
+          displayName: `${values.firstName.trim()} ${values.lastName.trim()}`.trim(),
+        },
       });
 
       if (!response.data) {
@@ -121,20 +134,20 @@ export function AuthHomePage() {
           </span>
           <div className="space-y-3">
             <h2 className="max-w-xl text-4xl font-semibold tracking-tight">
-              One web app for members, commissioners, and future root admins.
+              Ultimate Office Pool Manager starts with one simple choice: sign in or register.
             </h2>
             <p className="max-w-xl text-base text-muted-foreground">
-              The rebuilt PoolMaster client stays aligned to generated SDK contracts and the
-              refactored backend model from day one.
+              New to Ultimate Office Pool Manager? Register and create your first league now.
             </p>
           </div>
           <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
             <div className="rounded-2xl border border-border bg-background p-4">
-              Member flows start with league browsing, invitations, contests, and entries.
+              Commissioners start by registering themselves, landing in the app, and creating
+              their first league.
             </div>
             <div className="rounded-2xl border border-border bg-background p-4">
-              Commissioner and root-admin surfaces will live in this same shell with role-aware
-              navigation.
+              Members most often join later by invitation after a commissioner has created the
+              league.
             </div>
           </div>
         </div>
@@ -151,6 +164,7 @@ export function AuthHomePage() {
               Sign in
             </button>
             <button
+              data-testid="auth-register-tab"
               className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition ${
                 mode === 'register'
                   ? 'bg-card text-foreground shadow-sm'
@@ -176,6 +190,7 @@ export function AuthHomePage() {
                 <input
                   className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
                   {...loginForm.register('email')}
+                  data-testid="auth-login-email"
                   placeholder="you@example.com"
                   type="email"
                 />
@@ -191,6 +206,7 @@ export function AuthHomePage() {
                 <input
                   className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
                   {...loginForm.register('password')}
+                  data-testid="auth-login-password"
                   placeholder="Enter your password"
                   type="password"
                 />
@@ -203,6 +219,7 @@ export function AuthHomePage() {
 
               <button
                 className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+                data-testid="auth-login-submit"
                 disabled={isSubmitting}
                 type="submit"
               >
@@ -211,26 +228,46 @@ export function AuthHomePage() {
             </form>
           ) : (
             <form className="mt-6 space-y-4" onSubmit={registerForm.handleSubmit(handleRegister)}>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium">Display name</span>
-                <input
-                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
-                  {...registerForm.register('displayName')}
-                  placeholder="League commissioner"
-                  type="text"
-                />
-                {registerForm.formState.errors.displayName ? (
-                  <span className="text-sm text-destructive">
-                    {registerForm.formState.errors.displayName.message}
-                  </span>
-                ) : null}
-              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium">First name</span>
+                  <input
+                    className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
+                    {...registerForm.register('firstName')}
+                    data-testid="auth-register-first-name"
+                    placeholder="Taylor"
+                    type="text"
+                  />
+                  {registerForm.formState.errors.firstName ? (
+                    <span className="text-sm text-destructive">
+                      {registerForm.formState.errors.firstName.message}
+                    </span>
+                  ) : null}
+                </label>
+
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium">Last name</span>
+                  <input
+                    className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
+                    {...registerForm.register('lastName')}
+                    data-testid="auth-register-last-name"
+                    placeholder="Commissioner"
+                    type="text"
+                  />
+                  {registerForm.formState.errors.lastName ? (
+                    <span className="text-sm text-destructive">
+                      {registerForm.formState.errors.lastName.message}
+                    </span>
+                  ) : null}
+                </label>
+              </div>
 
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Email</span>
                 <input
                   className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
                   {...registerForm.register('email')}
+                  data-testid="auth-register-email"
                   placeholder="you@example.com"
                   type="email"
                 />
@@ -242,11 +279,12 @@ export function AuthHomePage() {
               </label>
 
               <label className="block space-y-2">
-                <span className="text-sm font-medium">Password</span>
+                <span className="text-sm font-medium">Create password</span>
                 <input
                   className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
                   {...registerForm.register('password')}
-                  placeholder="Choose a password"
+                  data-testid="auth-register-password"
+                  placeholder="Create a password"
                   type="password"
                 />
                 {registerForm.formState.errors.password ? (
@@ -256,19 +294,36 @@ export function AuthHomePage() {
                 ) : null}
               </label>
 
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Confirm password</span>
+                <input
+                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  {...registerForm.register('confirmPassword')}
+                  data-testid="auth-register-confirm-password"
+                  placeholder="Re-enter your password"
+                  type="password"
+                />
+                {registerForm.formState.errors.confirmPassword ? (
+                  <span className="text-sm text-destructive">
+                    {registerForm.formState.errors.confirmPassword.message}
+                  </span>
+                ) : null}
+              </label>
+
               <button
                 className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+                data-testid="auth-register-submit"
                 disabled={isSubmitting}
                 type="submit"
               >
-                {isSubmitting ? 'Creating account...' : 'Create account'}
+                {isSubmitting ? 'Creating account...' : 'Register and continue'}
               </button>
             </form>
           )}
 
           <p className="mt-5 text-sm text-muted-foreground">
-            Role-specific navigation appears after sign-in. Root-admin pages will be rebuilt in
-            this same app instead of returning to the retired admin frontend.
+            Registration signs you in and lands you on your normal app home. If you have no
+            leagues yet, that landing page becomes your first-time commissioner welcome state.
           </p>
           <Link className="mt-3 inline-block text-sm font-medium text-primary hover:underline" to="/leagues">
             Continue to leagues

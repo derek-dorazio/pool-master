@@ -599,103 +599,6 @@ jobs:
           echo "Migration task timed out after 10 minutes"
           exit 1
 
-      - name: Run QA seed task
-        if: steps.run-migration.outputs.skipped != 'true'
-        id: run-seed
-        env:
-          QA_ROOT_ADMIN_EMAIL: ${{ secrets.QA_ROOT_ADMIN_EMAIL }}
-          QA_ROOT_ADMIN_PASSWORD: ${{ secrets.QA_ROOT_ADMIN_PASSWORD }}
-          QA_ROOT_ADMIN_DISPLAY_NAME: ${{ secrets.QA_ROOT_ADMIN_DISPLAY_NAME }}
-        run: |
-          SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
-          SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
-          MIGRATE_TASK_DEFINITION=$(aws ecs describe-task-definition \
-            --task-definition poolmaster-qa-migrate \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text 2>/dev/null || echo "")
-
-          if [ -z "$QA_ROOT_ADMIN_EMAIL" ] || [ -z "$QA_ROOT_ADMIN_PASSWORD" ]; then
-            echo "QA bootstrap browser-login secrets are not configured — skipping QA seed bootstrap user creation."
-            echo "task_arn=" >> $GITHUB_OUTPUT
-            echo "### QA Seed" >> $GITHUB_STEP_SUMMARY
-            echo "- Browser-login bootstrap user was skipped because \`QA_ROOT_ADMIN_EMAIL\` / \`QA_ROOT_ADMIN_PASSWORD\` are not configured." >> $GITHUB_STEP_SUMMARY
-            exit 0
-          fi
-
-          echo "Starting QA seed task in ECS..."
-          TASK_ARN=$(aws ecs run-task \
-            --cluster poolmaster-qa-cluster \
-            --task-definition "$MIGRATE_TASK_DEFINITION" \
-            --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
-            --overrides "$(jq -cn \
-              --arg email "$QA_ROOT_ADMIN_EMAIL" \
-              --arg password "$QA_ROOT_ADMIN_PASSWORD" \
-              --arg displayName "${QA_ROOT_ADMIN_DISPLAY_NAME:-QA Root Admin}" \
-              '{
-                containerOverrides: [
-                  {
-                    name: "migrate",
-                    command: ["node", "--import", "tsx", "prisma/seed.ts"],
-                    environment: [
-                      { name: "ROOT_ADMIN_EMAIL", value: $email },
-                      { name: "ROOT_ADMIN_PASSWORD", value: $password },
-                      { name: "ROOT_ADMIN_DISPLAY_NAME", value: $displayName }
-                    ]
-                  }
-                ]
-              }')" \
-            --query 'tasks[0].taskArn' \
-            --output text)
-
-          if [ "$TASK_ARN" = "None" ] || [ -z "$TASK_ARN" ]; then
-            echo "::warning::Failed to start QA seed task"
-            exit 1
-          fi
-
-          echo "task_arn=${TASK_ARN}" >> $GITHUB_OUTPUT
-          echo "Seed task started: ${TASK_ARN}"
-
-      - name: Wait for QA seed to complete
-        if: steps.run-seed.outputs.task_arn != ''
-        run: |
-          TASK_ARN="${{ steps.run-seed.outputs.task_arn }}"
-          CLUSTER="poolmaster-qa-cluster"
-
-          echo "Waiting for seed task to complete..."
-          for i in $(seq 1 40); do
-            STATUS=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
-              --query 'tasks[0].lastStatus' --output text)
-            echo "  Status: $STATUS (attempt $i/40)"
-
-            if [ "$STATUS" = "STOPPED" ]; then
-              EXIT_CODE=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
-                --query 'tasks[0].containers[0].exitCode' --output text)
-              REASON=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
-                --query 'tasks[0].containers[0].reason' --output text 2>/dev/null || echo "")
-
-              if [ "$EXIT_CODE" = "0" ]; then
-                echo "✅ QA seed completed successfully"
-                exit 0
-              else
-                echo "❌ QA seed failed with exit code: $EXIT_CODE"
-                [ -n "$REASON" ] && [ "$REASON" != "None" ] && echo "  Reason: $REASON"
-                TASK_ID=$(echo $TASK_ARN | awk -F'/' '{print $NF}')
-                echo "--- Seed Logs ---"
-                aws logs get-log-events \
-                  --log-group-name /ecs/poolmaster-qa/migrate \
-                  --log-stream-name "ecs/migrate/${TASK_ID}" \
-                  --query 'events[].message' --output text 2>/dev/null || echo "(no logs available)"
-                exit 1
-              fi
-            fi
-
-            sleep 15
-          done
-
-          echo "Seed task timed out after 10 minutes"
-          exit 1
-
       - name: Capture QA service rollout target
         id: qa-service-target
         run: |
@@ -911,8 +814,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       POOLMASTER_E2E_BASE_URL: https://qa.ultimateofficepoolmanager.com
-      POOLMASTER_E2E_EMAIL: ${{ secrets.QA_ROOT_ADMIN_EMAIL }}
-      POOLMASTER_E2E_PASSWORD: ${{ secrets.QA_ROOT_ADMIN_PASSWORD }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -920,23 +821,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - name: Detect deployed browser E2E readiness
-        id: browser-e2e-ready
-        run: |
-          if [ -z "$POOLMASTER_E2E_EMAIL" ] || [ -z "$POOLMASTER_E2E_PASSWORD" ]; then
-            echo "ready=false" >> $GITHUB_OUTPUT
-            echo "PoolMaster browser E2E secrets are not configured — skipping post-deploy browser validation."
-          else
-            echo "ready=true" >> $GITHUB_OUTPUT
-          fi
       - name: Install Playwright Chromium
-        if: steps.browser-e2e-ready.outputs.ready == 'true'
         run: cd clients/poolmaster && npx playwright install --with-deps chromium
       - name: Run PoolMaster browser E2E
-        if: steps.browser-e2e-ready.outputs.ready == 'true'
         run: cd clients/poolmaster && npx playwright test
       - name: Upload PoolMaster browser E2E artifacts
-        if: always() && steps.browser-e2e-ready.outputs.ready == 'true'
+        if: always()
         uses: actions/upload-artifact@v5
         with:
           name: poolmaster-browser-e2e
@@ -950,9 +840,5 @@ jobs:
           echo "### PoolMaster Browser E2E" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Base URL: \`$POOLMASTER_E2E_BASE_URL\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Journey: login page -> sign in -> authenticated landing selector" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.browser-e2e-ready.outputs.ready }}" != "true" ]; then
-            echo "- Status: skipped because \`QA_ROOT_ADMIN_EMAIL\` / \`QA_ROOT_ADMIN_PASSWORD\` are not configured." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Status: executed" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "- Journey: login page -> self-registration -> authenticated landing selector" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: executed" >> $GITHUB_STEP_SUMMARY

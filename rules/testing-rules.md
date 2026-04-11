@@ -317,9 +317,8 @@ Redundancy between suites is acceptable when each suite is true to its purpose. 
 ### Browser E2E Tests (Playwright)
 
 - Browser E2E should target only the PoolMaster web app.
-- The current active browser lane is intentionally tiny and should block the deploy pipeline once the QA browser-login secrets are configured.
-- The current deploy-gate journey is limited to: login page -> sign in -> authenticated landing selector.
-- Until `QA_ROOT_ADMIN_EMAIL` and `QA_ROOT_ADMIN_PASSWORD` are configured in CI, the browser lane should skip explicitly with a clear summary instead of failing migration or deploy jobs.
+- The current active browser lane is intentionally tiny and does block the deploy pipeline once QA deploy succeeds.
+- The current deploy-gate journey is limited to: login page -> self-registration -> authenticated landing selector.
 - Do not expand this deploy-gate lane into deeper product coverage until those product surfaces are intentionally designed and stabilized.
 
 **Use-case-driven E2E:**

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { listLeagues, type ListLeaguesResponses } from '@/lib/api';
+import { useAuth } from '@/features/auth/auth-provider';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -16,6 +17,7 @@ function roleLabel(role: string | undefined) {
 }
 
 export function LeaguesPage() {
+  const auth = useAuth();
   const leaguesQuery = useQuery({
     queryKey: ['poolmaster', 'leagues'],
     queryFn: async (): Promise<LeagueSummary[]> => {
@@ -59,11 +61,23 @@ export function LeaguesPage() {
         className="rounded-[2rem] border border-border bg-card p-8"
         data-testid="authenticated-landing"
       >
-        <h2 className="text-2xl font-semibold">You&apos;re not in any leagues yet.</h2>
-        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-          The first PoolMaster member flow starts here: join leagues, accept invitations, and move
-          into contest and squad workflows from a single authenticated shell.
+        <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+          Welcome
+        </span>
+        <h2 className="mt-4 text-2xl font-semibold">
+          Welcome to Ultimate Office Pool Manager, {auth.user?.displayName ?? 'Commissioner'}.
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          This is your normal app home. Once you create leagues, they&apos;ll appear here. For a
+          brand-new commissioner account, the next step is creating your first league.
         </p>
+        <div className="mt-6 rounded-[1.5rem] border border-dashed border-border bg-background p-5">
+          <h3 className="text-lg font-semibold">Create your first league</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The league-creation wizard is the next planned slice. We&apos;ll open it from this
+            landing page as a modal so commissioners can create a league without leaving home.
+          </p>
+        </div>
       </section>
     );
   }

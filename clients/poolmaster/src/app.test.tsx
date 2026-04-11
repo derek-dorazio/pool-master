@@ -6,7 +6,7 @@ describe('App', () => {
     render(<App />);
 
     expect(
-      screen.getByText(/one web app for members, commissioners, and future root admins/i),
+      screen.getByText(/ultimate office pool manager starts with one simple choice/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();

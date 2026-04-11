@@ -212,8 +212,7 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm r
 npm run test:poolmaster:unit
 ```
 
-Legacy browser suites were intentionally removed during the PoolMaster cutover. The active browser lane is now a single minimal post-deploy PoolMaster login-to-authenticated-landing check; richer browser journeys are still deferred.
-That lane depends on `QA_ROOT_ADMIN_EMAIL` and `QA_ROOT_ADMIN_PASSWORD` being configured in CI. Until those secrets exist, the workflow skips the post-deploy browser check explicitly instead of failing migration or deploy.
+Legacy browser suites were intentionally removed during the PoolMaster cutover. The active browser lane is now a single minimal post-deploy PoolMaster registration-to-authenticated-landing check; richer browser journeys are still deferred.
 
 PoolMaster production builds also emit `clients/poolmaster/dist/version-info.json` so deployed environments can expose the webapp version, service version, git SHAs, and build metadata.
 
