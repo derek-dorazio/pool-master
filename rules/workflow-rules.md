@@ -236,6 +236,10 @@ Rules:
 
 - Treat these as pre-push gates, not optional follow-up checks.
 - Do not rely on GitHub CI to discover basic lint, unit, or integration failures that could have been caught locally.
+- Do not push backend changes on a "likely green" assumption. The local gate
+  must actually pass first.
+- Do not intentionally skip required backend gates and defer that validation to
+  CI.
 - Treat coverage threshold enforcement as part of the required local gate once thresholds are configured; do not defer coverage regressions to GitHub CI.
 - Retired smoke suites and browser E2E must not be reintroduced into the active gate set unless an active plan explicitly restores them.
 - If a gate is blocked by local environment constraints, state that clearly before pushing.
@@ -243,6 +247,13 @@ Rules:
   push is blocked until every impacted suite in the gate set has been rerun or
   otherwise explicitly accounted for, including failures caused by stale test
   infrastructure rather than production code.
+- For backend/service changes, the default is simple: no push until lint,
+  typecheck, unit, data integration, FAPI, and merged service coverage have
+  passed locally. If API contracts changed, `api:refresh` and `api:validate`
+  must also pass first.
+- If a DB-backed backend gate fails only because the Codex sandbox cannot reach
+  the local database, rerun that exact command outside the sandbox before
+  pushing. Do not treat the sandbox failure as permission to skip the gate.
 
 ---
 

@@ -80,6 +80,9 @@ Notes:
 - Treat `poolmaster_test` as an always-disposable local test database. It is
   acceptable to reset or recreate it before an integration, FAPI, or merged
   coverage run.
+- Backend work must not be pushed with required test gates intentionally
+  skipped. CI is confirmation, not the first place we discover missing local
+  validation.
 - When a slice changes the backend model, rerun and repair every impacted suite
   in the local gate set as part of that slice. Stale mocks, factories,
   builders, or setup helpers are not separate cleanup work; they are part of
