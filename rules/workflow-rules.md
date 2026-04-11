@@ -144,14 +144,23 @@ Required workflow:
 2. Write explicit user/use cases for the flow before implementation begins.
 3. Include open functional questions, decisions, and assumptions that still need
    confirmation.
-4. Propose the browser E2E flows that should eventually prove the designed
+4. At the end of the design review, explicitly surface any implied backend or
+   model changes required by the proposed webapp behavior, including:
+   - Prisma/model changes
+   - migrations or backfills
+   - new DTOs or API routes
+   - backend auth/session or invitation-flow changes
+   Confirm those backend implications with the user before implementation
+   begins.
+5. Propose the browser E2E flows that should eventually prove the designed
    behavior end to end.
-5. Review those use cases, questions, and proposed E2E flows with the user
+6. Review those use cases, questions, backend implications, and proposed E2E
+   flows with the user
    before locking the design
    direction into implementation work.
-6. Once reviewed, treat the agreed E2E flows as planned implementation work for
+7. Once reviewed, treat the agreed E2E flows as planned implementation work for
    the related webapp plan rather than leaving them as optional follow-up ideas.
-7. Treat the reviewed use-case document as the companion for later UI planning
+8. Treat the reviewed use-case document as the companion for later UI planning
    and execution slices.
 
 This is especially required for:
@@ -167,6 +176,23 @@ This is especially required for:
 Do not assume that an early scaffold or placeholder page defines the final
 product flow. For PoolMaster webapp design, plans should be use-case driven and
 confirmed with the user before implementation expands.
+
+### Persona Playbooks
+
+- Persona playbooks may live under `agents/` to scope role-specific workflows
+  such as product management, project management, backend implementation,
+  frontend implementation, architecture/platform work, and code review.
+- These playbooks are execution aids, not replacement policy sources.
+- `AGENTS.md` and `rules/` remain canonical.
+- Cross-cutting workflow requirements remain mandatory for all personas,
+  including:
+  - checking for active plans
+  - updating task rows for the exact slice worked
+  - validating work before marking slices done
+  - updating docs and rules when the change affects them
+- The `project-manager` persona may help with plan shaping, sequencing, and
+  progress reconciliation, but it is not the sole owner of task tracking.
+  Agents doing implementation work must still update plans themselves.
 
 ---
 

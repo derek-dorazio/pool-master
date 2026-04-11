@@ -6,7 +6,8 @@ All agents working in this repo should:
 
 1. Read this file first.
 2. Treat the files in `rules/` as the detailed source of truth for architecture, implementation, testing, and workflow requirements.
-3. Keep `CLAUDE.md` as a thin pointer to this file rather than maintaining duplicate policy text elsewhere.
+3. Treat persona playbooks in `agents/` as role-specific execution guides layered on top of the shared rules, not as competing policy sources.
+4. Keep `CLAUDE.md` as a thin pointer to this file rather than maintaining duplicate policy text elsewhere.
 
 ## Non-Negotiables
 
@@ -40,11 +41,30 @@ All agents working in this repo should:
 - `rules/swift-rules.md`: iOS guidance.
 - `rules/android-rules.md`: Android guidance.
 
+## Persona Playbooks
+
+The `agents/` directory contains optional role-scoped playbooks for common kinds of work:
+
+- `agents/product-manager.md`
+- `agents/project-manager.md`
+- `agents/frontend-developer.md`
+- `agents/backend-developer.md`
+- `agents/architect-platform.md`
+- `agents/code-reviewer.md`
+
+Use these playbooks to focus the workflow for that role.
+
+Important:
+
+- `AGENTS.md` and `rules/` remain the canonical shared contract.
+- `agents/` files must not redefine or contradict repo-wide policy.
+- Cross-cutting workflow requirements such as checking plans, updating task rows, and validating slices remain required for all agents, not just the project-manager persona.
+
 ## Workflow Expectations
 
 - Check whether the work is already tracked in `plans/`, and update the relevant task rows as work starts and finishes.
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
-- Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, and `rules/`.
+- Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, and `agents/`.
 
 ## Documentation Expectations
 
