@@ -412,7 +412,9 @@ jobs:
                   .registeredBy
                 )
                 | .containerDefinitions |= map(
-                    if .name == "migrate" then .image = $IMAGE else . end
+                    if .name == "migrate"
+                    then .image = $IMAGE | .command = ["node", "scripts/run-migrations.mjs"]
+                    else . end
                   )
               ' > /tmp/qa-migrate-task-def.json
 

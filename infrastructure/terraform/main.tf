@@ -521,7 +521,7 @@ resource "aws_ecs_task_definition" "migrate" {
     name      = "migrate"
     image     = "${aws_ecr_repository.services["core-api"].repository_url}:${var.core_api_bootstrap_image_tag}"
     essential = true
-    command   = ["npx", "prisma", "migrate", "deploy", "--schema", "prisma/schema.prisma"]
+    command   = ["node", "scripts/run-migrations.mjs"]
     environment = [
       { name = "DATABASE_URL", value = local.db_url },
     ]
