@@ -365,6 +365,9 @@ Current implementation status:
   preserving the target invite destination
 - invite acceptance already routes directly into `/league/<leagueCode>` and now
   updates the recent-league cookie
+- browser E2E now covers:
+  - commissioner self-register -> create first league -> logout
+  - invited new user register -> explicit join -> invited league home -> logout
 - legacy `/join/<inviteCode>` now redirects into canonical `/invite/<inviteCode>`
 
 ## Suggested Browser E2E Flows
