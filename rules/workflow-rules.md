@@ -78,6 +78,20 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 
 A slice that lands the schema and service logic correctly but skips DTOs, mappers, or tests is `In Progress`, not `Done`.
 
+For model-change slices, "tests" includes not only production-facing test files
+but also the support code that makes those suites truthful:
+
+- factories
+- builders
+- repository mocks
+- seeded test fixtures
+- route/setup helpers
+- SDK/client test helpers
+
+If CI or local validation shows those layers still encode the retired model
+shape, treat that as an incomplete implementation slice rather than unrelated
+test cleanup.
+
 ### Slice Deliverables
 
 When plans break work into slices (e.g., Plan 59's A–I slices), each slice should be tracked at layer granularity, not as a single monolithic task. Either expand the plan's task table to include per-layer rows:
@@ -225,6 +239,10 @@ Rules:
 - Treat coverage threshold enforcement as part of the required local gate once thresholds are configured; do not defer coverage regressions to GitHub CI.
 - Retired smoke suites and browser E2E must not be reintroduced into the active gate set unless an active plan explicitly restores them.
 - If a gate is blocked by local environment constraints, state that clearly before pushing.
+- When the slice includes a model change, a passing subset is not enough. The
+  push is blocked until every impacted suite in the gate set has been rerun or
+  otherwise explicitly accounted for, including failures caused by stale test
+  infrastructure rather than production code.
 
 ---
 

@@ -77,6 +77,10 @@ Notes:
 - DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
 - In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
 - If a DB-backed integration command fails with a local connection error in the sandbox but local database commands such as `prisma migrate deploy` or `psql` succeed, retry the exact test command outside the sandbox before assuming the failure is in application code.
+- When a slice changes the backend model, rerun and repair every impacted suite
+  in the local gate set as part of that slice. Stale mocks, factories,
+  builders, or setup helpers are not separate cleanup work; they are part of
+  the model-change fix.
 
 ---
 

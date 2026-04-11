@@ -18,9 +18,25 @@ A backend slice that changes the domain model is not done until all applicable l
 - OpenAPI refresh/validate
 - unit tests
 - DB integration tests
+- contract-verification tests
+- functional API tests
+- browser E2E or MSW-backed frontend tests when the changed model is on an
+  active client flow
 
 Do not mark a backend slice done if any of those applicable layers are still
 intentionally stale.
+
+Model-change slices must also update the supporting test infrastructure that
+depends on the model shape, including:
+
+- factories and builders
+- repository mocks
+- fixture creators
+- route setup helpers
+- SDK/client setup helpers
+
+If a model change leaves any affected suite failing because those test-support
+layers are still shaped like the old model, the slice remains `In Progress`.
 
 ### 1. Persistence and Domain
 
@@ -56,13 +72,26 @@ intentionally stale.
 
 ### 5. Tests
 
-- [ ] Update backend unit/integration tests.
+- [ ] Update backend unit/data-integration tests.
 - [ ] Update contract-verification suites.
 - [ ] Update functional tests if the changed field/shape is on a critical path.
 - [ ] Update browser E2E or MSW handlers if request/response shape changed and those layers are active for the affected flow.
+- [ ] Update factories, repository mocks, builders, fixture setup, and other test-support code that still assumes the retired model shape.
 - [ ] Remove or replace stale tests that were enforcing old architecture.
 - [ ] Add DB-backed CRUD coverage for new or materially redesigned domain objects, including `findById`.
 - [ ] Add use-case-driven tests that prove the backend supports the documented workflows for the changed domain area.
+
+### 5A. Test-Impact Rule For Model Changes
+
+- Any persisted field addition, removal, rename, or semantics change must
+  trigger an impact sweep across unit, data integration, contract
+  verification, FAPI, and active browser/MSW tests.
+- Treat failing test suites caused by stale model assumptions as part of the
+  production slice, not post-merge cleanup.
+- Do not push a model change while knowingly leaving broken mocks, factories,
+  or DB-backed tests that still reflect the old model.
+- If the affected suite list is not obvious, document the expected impacted
+  files in the plan notes before marking the task `Done`.
 
 ---
 
