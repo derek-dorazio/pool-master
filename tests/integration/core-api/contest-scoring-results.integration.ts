@@ -216,6 +216,7 @@ async function createScoringFixture() {
 
   const league = await prisma.league.create({
     data: {
+      leagueCode: `SCOR${randomUUID().replace(/-/g, '').slice(0, 4).toUpperCase()}`,
       name: `Scoring League ${randomUUID().slice(0, 8)}`,
       createdBy: owner.user.id,
       visibility: 'PRIVATE',
