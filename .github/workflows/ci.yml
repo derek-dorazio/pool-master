@@ -549,6 +549,7 @@ jobs:
             exit 0
           fi
 
+          echo "Resolved QA migrate task definition: $MIGRATE_TASK_DEFINITION"
           echo "Starting migration task in ECS..."
           TASK_ARN=$(aws ecs run-task \
             --cluster poolmaster-qa-cluster \

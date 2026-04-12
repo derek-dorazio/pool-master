@@ -100,6 +100,16 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 - Prefer a clean target schema over preserving obsolete table structures.
 - Do not contort the schema to preserve legacy naming or associations when the product model has clearly changed.
 - Keep migration files, ORM models, DTOs, and route contracts consistent with the new domain model names in the same slice.
+- For risky data migrations and repair scripts, add explicit verification of the
+  intended end state before marking the migration applied in metadata.
+- If a migration fix fails twice in a real environment, stop incremental
+  patching and inspect the live database state before authoring another code
+  change. At minimum, inspect:
+  - `_prisma_migrations` rows for the target migration
+  - duplicates/nulls in the affected data
+  - expected indexes/constraints
+- Do not keep editing a migration repair path without confirming that the code
+  path still runs for the target database state.
 
 ---
 

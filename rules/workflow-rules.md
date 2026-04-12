@@ -254,6 +254,9 @@ Rules:
 - If a DB-backed backend gate fails only because the Codex sandbox cannot reach
   the local database, rerun that exact command outside the sandbox before
   pushing. Do not treat the sandbox failure as permission to skip the gate.
+- For repeated migration incidents in shared environments, stop after two failed
+  repair attempts and inspect the real database/task state before pushing a
+  third code tweak. Do not use CI as a blind migration experiment loop.
 
 ---
 
