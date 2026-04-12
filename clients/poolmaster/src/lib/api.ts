@@ -1,5 +1,6 @@
-import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api/client';
+import { createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { ClientOptions } from '@poolmaster/shared/generated/hey-api';
+import { client } from '@poolmaster/shared/generated/hey-api/client.gen';
 import { readCookie } from './cookies';
 
 const resolvedBaseUrl =
@@ -7,7 +8,7 @@ const resolvedBaseUrl =
     ? window.location.origin
     : 'http://localhost';
 
-export const client = createClient(
+client.setConfig(
   createConfig<ClientOptions>({
     baseUrl: resolvedBaseUrl,
     credentials: 'include',
