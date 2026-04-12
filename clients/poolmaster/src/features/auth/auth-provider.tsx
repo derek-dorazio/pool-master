@@ -1,7 +1,6 @@
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser, logoutUser, refreshToken } from '@/lib/api';
-import { clearCookie, writeCookie } from '@/lib/cookies';
 import { useSessionStore } from './session-store';
 
 type AuthContextValue = {
@@ -13,15 +12,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const SESSION_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
-
-function persistCsrfToken(csrfToken: string | undefined) {
-  if (!csrfToken) {
-    return;
-  }
-
-  writeCookie('poolmaster_csrf', csrfToken, { maxAgeSeconds: SESSION_COOKIE_MAX_AGE_SECONDS });
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useSessionStore((state) => state.user);
@@ -80,12 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (!result.data) {
-          clearCookie('poolmaster_csrf');
           clearSessionState();
           return;
         }
 
-        persistCsrfToken(result.data.csrfToken);
         const meResult = await meQuery.refetch();
         if (cancelled) {
           return;
@@ -97,7 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (!cancelled) {
-          clearCookie('poolmaster_csrf');
           clearSessionState();
         }
       });
@@ -114,7 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     clearSession: async () => {
       await logoutUser().catch(() => undefined);
-      clearCookie('poolmaster_csrf');
       clearSessionState();
     },
   };

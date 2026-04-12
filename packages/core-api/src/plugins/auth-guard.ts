@@ -45,9 +45,16 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/auth/callback',
 ]);
 
+const PUBLIC_ROUTE_PATTERNS = [
+  /^GET \/api\/v1\/invitations\/[^/?#]+$/,
+];
+
 function isPublicRoute(method: string, url: string): boolean {
   const path = url.split('?')[0] ?? url;
-  return path.startsWith('/health') || PUBLIC_ROUTES.has(`${method.toUpperCase()} ${path}`);
+  const signature = `${method.toUpperCase()} ${path}`;
+  return path.startsWith('/health')
+    || PUBLIC_ROUTES.has(signature)
+    || PUBLIC_ROUTE_PATTERNS.some((pattern) => pattern.test(signature));
 }
 
 // ---------------------------------------------------------------------------

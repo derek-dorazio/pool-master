@@ -830,6 +830,24 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+      - name: Verify deployed PoolMaster frontend release
+        run: |
+          EXPECTED_RELEASE="releases/${{ github.sha }}"
+
+          for ATTEMPT in $(seq 1 24); do
+            HTML=$(curl -fsSL "$POOLMASTER_E2E_BASE_URL/" || true)
+
+            if printf '%s' "$HTML" | grep -q "$EXPECTED_RELEASE"; then
+              echo "Verified deployed PoolMaster frontend release: $EXPECTED_RELEASE"
+              exit 0
+            fi
+
+            echo "Attempt $ATTEMPT: deployed frontend release did not yet match $EXPECTED_RELEASE"
+            sleep 5
+          done
+
+          echo "Expected deployed PoolMaster frontend release $EXPECTED_RELEASE was not observed."
+          exit 1
       - run: npm ci
       - name: Install Playwright Chromium
         run: cd clients/poolmaster && npx playwright install --with-deps chromium
@@ -850,5 +868,5 @@ jobs:
           echo "### PoolMaster Browser E2E" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Base URL: \`$POOLMASTER_E2E_BASE_URL\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Journey: login page -> self-registration -> authenticated landing selector" >> $GITHUB_STEP_SUMMARY
-          echo "- Status: executed" >> $GITHUB_STEP_SUMMARY
+          echo "- Expected release prefix: \`releases/${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Journeys: commissioner create flow, invited-member join flow, multi-league recent selection" >> $GITHUB_STEP_SUMMARY

@@ -3,6 +3,7 @@ import {
   changeMemberRole,
   createLeague,
   generateInviteLink,
+  getInvitationPreview,
   getLeagueDashboard,
   getLeague,
   leaveLeague,
@@ -18,6 +19,7 @@ import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
+  getSdkClient,
 } from './setup';
 
 afterEach(async () => {
@@ -152,6 +154,55 @@ describe('SDK Functional: Leagues', () => {
     expect(inviteeDetail.data).toBeDefined();
     expect(inviteeDetail.data?.league.id).toBe(leagueId);
     expect(inviteeDetail.data?.league.role).toBe('MEMBER');
+  });
+
+  it('allows an unauthenticated user to preview a league invitation by invite code', async () => {
+    const commissioner = await buildRegisteredUser({
+      displayName: 'League Commissioner',
+    });
+
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: {
+        name: 'Public Invite Preview League',
+        visibility: 'PRIVATE',
+        settings: {
+          invitePolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    const leagueId = createResponse.data?.league.id;
+    const leagueCode = createResponse.data?.league.leagueCode;
+    expect(leagueId).toBeTruthy();
+    expect(leagueCode).toBeTruthy();
+
+    const invitationResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+      body: {
+        maxUses: 1,
+        expiresInDays: 7,
+      },
+    });
+
+    const inviteCode = invitationResponse.data?.invitation.inviteCode;
+    expect(inviteCode).toBeTruthy();
+
+    const previewResponse = await getInvitationPreview({
+      client: getSdkClient(),
+      path: {
+        inviteCode: inviteCode as string,
+      },
+    });
+
+    expect(previewResponse.data?.invitation.inviteCode).toBe(inviteCode);
+    expect(previewResponse.data?.invitation.status).toBe('PENDING');
+    expect(previewResponse.data?.invitation.league.id).toBe(leagueId);
+    expect(previewResponse.data?.invitation.league.leagueCode).toBe(leagueCode);
+    expect(previewResponse.data?.invitation.league.name).toBe('Public Invite Preview League');
   });
 
   it('rejects a non-commissioner from generating invite links', async () => {

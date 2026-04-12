@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LoginRequestSchema, RegisterRequestSchema } from '@poolmaster/shared/dto';
 import { loginUser, registerUser } from '@/lib/api';
-import { writeCookie } from '@/lib/cookies';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import {
   fetchInvitationPreview,
@@ -32,15 +31,6 @@ const registerFormSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 type RegisterFormValues = z.infer<typeof registerFormSchema>;
-const SESSION_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
-
-function persistCsrfToken(csrfToken: string | undefined) {
-  if (!csrfToken) {
-    return;
-  }
-
-  writeCookie('poolmaster_csrf', csrfToken, { maxAgeSeconds: SESSION_COOKIE_MAX_AGE_SECONDS });
-}
 
 function parseInviteCode(path: string | undefined) {
   if (!path) {
@@ -123,7 +113,6 @@ export function AuthHomePage() {
         throw response.error ?? new Error('Login response is missing data.');
       }
 
-      persistCsrfToken(response.data.tokens.csrfToken);
       setSession(response.data.user);
       navigate(destination, { replace: true });
     } catch (error) {
@@ -147,7 +136,6 @@ export function AuthHomePage() {
         throw response.error ?? new Error('Registration response is missing data.');
       }
 
-      persistCsrfToken(response.data.tokens.csrfToken);
       setSession(response.data.user);
       navigate(destination, { replace: true });
     } catch (error) {
