@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-provider';
 import { listLeagues } from '@/lib/api';
 import {
@@ -123,14 +123,12 @@ export function AppShell() {
       <div className="mx-auto max-w-6xl px-6 py-10">
         {auth.isAuthenticated ? (
           <nav className="mb-8 flex flex-wrap gap-3">
-            <button
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-              disabled
-              title="League home navigation will become active as the shell grows."
-              type="button"
+            <Link
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
+              to="/my-leagues"
             >
-              League Home
-            </button>
+              My Leagues
+            </Link>
             <button
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
               disabled

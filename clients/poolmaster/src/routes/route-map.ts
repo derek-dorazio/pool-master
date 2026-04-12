@@ -27,6 +27,12 @@ export const routeMap: RouteMapItem[] = [
     description: 'League-scoped home route for members and commissioners.',
   },
   {
+    path: '/my-leagues',
+    label: 'My Leagues',
+    role: 'MEMBER',
+    description: 'Richer league list and tile management surface for active and inactive states.',
+  },
+  {
     path: '/contests',
     label: 'Contests',
     role: 'MEMBER',

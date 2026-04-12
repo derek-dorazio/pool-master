@@ -54,3 +54,35 @@ export function getLeagueInitials(name: string) {
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
 }
+
+function getLeagueCreatedAtTime(league: LeagueSummary) {
+  return league.createdAt ? Date.parse(league.createdAt) : 0;
+}
+
+export function sortLeaguesNewestFirst(leagues: LeagueSummary[]) {
+  return [...leagues].sort((left, right) => getLeagueCreatedAtTime(right) - getLeagueCreatedAtTime(left));
+}
+
+export function sortLeaguesForOverview(leagues: LeagueSummary[]) {
+  return [...leagues].sort((left, right) => {
+    if (left.isActive !== right.isActive) {
+      return left.isActive ? -1 : 1;
+    }
+
+    if (left.role === 'COMMISSIONER' && right.role !== 'COMMISSIONER') {
+      return -1;
+    }
+
+    if (left.role !== 'COMMISSIONER' && right.role === 'COMMISSIONER') {
+      return 1;
+    }
+
+    return getLeagueCreatedAtTime(right) - getLeagueCreatedAtTime(left);
+  });
+}
+
+export function getLeagueSelectorOptions(leagues: LeagueSummary[]) {
+  return sortLeaguesNewestFirst(
+    leagues.filter((league) => league.isActive || league.role === 'COMMISSIONER'),
+  );
+}

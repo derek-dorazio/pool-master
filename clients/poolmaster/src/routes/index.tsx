@@ -6,7 +6,7 @@ import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
-import { WelcomePage } from '@/features/leagues/leagues-page';
+import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
 function LegacyJoinInviteRedirect() {
@@ -40,7 +40,11 @@ export const router = createBrowserRouter([
           },
           {
             path: 'leagues',
-            element: <Navigate replace to="/welcome" />,
+            element: <Navigate replace to="/my-leagues" />,
+          },
+          {
+            path: 'my-leagues',
+            element: <MyLeaguesPage />,
           },
           {
             path: 'league/:leagueCode',

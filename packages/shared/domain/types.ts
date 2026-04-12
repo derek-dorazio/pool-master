@@ -121,6 +121,7 @@ export interface LeagueInvitation extends DomainEntity {
 }
 
 export interface LeagueSettings {
+  isActive: boolean;
   invitePolicy: InvitePolicy;
   inviteLinkCode?: string;
   allowMidSeasonJoin: boolean;

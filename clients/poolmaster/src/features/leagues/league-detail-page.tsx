@@ -120,8 +120,13 @@ export function LeagueDetailPage() {
   });
 
   const isCommissioner = leagueQuery.data?.role === 'COMMISSIONER';
+  const isInactiveLeague = leagueQuery.data?.isActive === false;
 
   async function handleGenerateInviteLink() {
+    if (isInactiveLeague) {
+      return;
+    }
+
     const nextLink = await inviteLinkMutation.mutateAsync();
     setInviteLink(nextLink);
   }
@@ -140,7 +145,7 @@ export function LeagueDetailPage() {
 
   async function handleSendInvite() {
     const email = inviteEmail.trim();
-    if (!email) {
+    if (!email || isInactiveLeague) {
       return;
     }
 
@@ -161,8 +166,8 @@ export function LeagueDetailPage() {
       <section className="rounded-[2rem] border border-border bg-card p-8">
         <h2 className="text-2xl font-semibold">We couldn&apos;t load this league.</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          This league is no longer active. Use the league selector in the header to switch to one
-          of your other active leagues.
+          Use the league selector in the header to switch to one of your active leagues, or return
+          to your welcome page and try again.
         </p>
         <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
           Back to welcome
@@ -173,6 +178,45 @@ export function LeagueDetailPage() {
 
   return (
     <section className="space-y-6" data-testid="league-home">
+      {isInactiveLeague ? (
+        <div
+          className="rounded-[2rem] border border-amber-300 bg-amber-50 p-6 text-amber-950"
+          data-testid="league-inactive-banner"
+        >
+          <h2 className="text-xl font-semibold">This league is not currently active.</h2>
+          <p className="mt-2 text-sm text-amber-900/90">
+            The league home stays available in read-only mode so members can still review the
+            league context. Commissioner actions are disabled while this league remains inactive.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {isCommissioner ? (
+              <button
+                className="rounded-2xl border border-amber-300 bg-white px-4 py-3 text-sm font-medium text-amber-950 disabled:cursor-not-allowed disabled:opacity-70"
+                data-testid="league-reactivate"
+                disabled
+                title="Reactivation and renewal tools will be added in a later slice."
+                type="button"
+              >
+                Reactivate league
+              </button>
+            ) : (
+              <button
+                className="rounded-2xl border border-amber-300 bg-white px-4 py-3 text-sm font-medium text-amber-950 disabled:cursor-not-allowed disabled:opacity-70"
+                data-testid="league-message-commissioner"
+                disabled
+                title="Commissioner messaging will be added in a later slice."
+                type="button"
+              >
+                Message commissioner
+              </button>
+            )}
+            <p className="text-xs text-amber-900/80">
+              Renewal, reactivation, and notification flows are planned separately.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="rounded-[2rem] border border-border bg-card p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
@@ -224,8 +268,8 @@ export function LeagueDetailPage() {
                 state from the backend.
               </p>
             </div>
-            <Link className="text-sm font-medium text-primary hover:underline" to="/welcome">
-              Welcome
+            <Link className="text-sm font-medium text-primary hover:underline" to="/my-leagues">
+              My leagues
             </Link>
           </div>
 
@@ -270,26 +314,31 @@ export function LeagueDetailPage() {
             <div className="rounded-[2rem] border border-border bg-card p-6">
               <h3 className="text-xl font-semibold">Commissioner invitations</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Generate a shareable invite link or send an invitation email through the current
-                backend invitation flow.
+                {isInactiveLeague
+                  ? 'This league is inactive, so invitation actions stay visible but disabled until the league is reactivated.'
+                  : 'Generate a shareable invite link or send an invitation email through the current backend invitation flow.'}
               </p>
 
               <div className="mt-5 space-y-4">
                 <div className="rounded-2xl border border-border bg-background p-4">
                   <div className="flex flex-wrap items-center gap-3">
                     <button
-                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                       data-testid="league-generate-invite-link"
-                      disabled={inviteLinkMutation.isPending}
+                      disabled={inviteLinkMutation.isPending || isInactiveLeague}
                       onClick={() => void handleGenerateInviteLink()}
                       type="button"
                     >
-                      {inviteLinkMutation.isPending ? 'Generating...' : 'Generate invite link'}
+                      {isInactiveLeague
+                        ? 'League inactive'
+                        : inviteLinkMutation.isPending
+                          ? 'Generating...'
+                          : 'Generate invite link'}
                     </button>
                     <button
-                      className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+                      className="rounded-2xl border border-border px-4 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
                       data-testid="league-copy-invite-link"
-                      disabled={!inviteLink}
+                      disabled={!inviteLink || isInactiveLeague}
                       onClick={() => void handleCopyInviteLink()}
                       type="button"
                     >
@@ -297,8 +346,9 @@ export function LeagueDetailPage() {
                     </button>
                   </div>
                   <input
-                    className="mt-3 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm"
+                    className="mt-3 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-70"
                     data-testid="league-invite-link"
+                    disabled={isInactiveLeague}
                     readOnly
                     value={inviteLink}
                   />
@@ -314,21 +364,26 @@ export function LeagueDetailPage() {
                     <span className="text-sm font-medium">Invite by email</span>
                     <div className="flex gap-3">
                       <input
-                        className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm"
+                        className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-70"
                         data-testid="league-invite-email"
+                        disabled={isInactiveLeague}
                         onChange={(event) => setInviteEmail(event.target.value)}
                         placeholder="member@example.com"
                         type="email"
                         value={inviteEmail}
                       />
                       <button
-                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                         data-testid="league-send-invite"
-                        disabled={sendInviteMutation.isPending || !inviteEmail.trim()}
+                        disabled={sendInviteMutation.isPending || !inviteEmail.trim() || isInactiveLeague}
                         onClick={() => void handleSendInvite()}
                         type="button"
                       >
-                        {sendInviteMutation.isPending ? 'Sending...' : 'Send'}
+                        {isInactiveLeague
+                          ? 'League inactive'
+                          : sendInviteMutation.isPending
+                            ? 'Sending...'
+                            : 'Send'}
                       </button>
                     </div>
                   </label>

@@ -24,6 +24,7 @@ All agents working in this repo should:
 - `rules/poolmaster-webapp-rules.md`
 - `rules/service-rules.md`
 - `rules/react-ui-rules.md`
+- `rules/ux-rules.md`
 - `rules/testing-rules.md`
 - `rules/model-change-rules.md`
 - `rules/swift-rules.md`
@@ -36,6 +37,7 @@ All agents working in this repo should:
 - `rules/poolmaster-webapp-rules.md`: single-webapp product rules, role-based behavior, archived-app policy, and functional expectations for the go-forward PoolMaster web app.
 - `rules/service-rules.md`: backend Fastify, Prisma, DTO, mapper, and OpenAPI requirements.
 - `rules/react-ui-rules.md`: PoolMaster React conventions, generated-client usage, and prohibited frontend patterns.
+- `rules/ux-rules.md`: standard UX conventions, state communication defaults, and PoolMaster-specific interaction guidance for first-draft web implementation.
 - `rules/testing-rules.md`: unit, data integration, contract verification, functional API, frontend-layer, and CI expectations.
 - `rules/model-change-rules.md`: required checklist for schema/model changes across persistence, DTOs, services, routes, clients, and tests.
 - `rules/swift-rules.md`: iOS guidance.

@@ -35,6 +35,7 @@ This app becomes the single go-forward web frontend for PoolMaster.
   - role-aware navigation and session handling inside one app shell
 - Do not keep a separate `clients/shared` frontend package; frontend shared contract/types come from `packages/shared` and the generated SDK only.
 - Treat [plans/76-league-home-and-league-context-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/76-league-home-and-league-context-user-cases.md) as the companion for the authenticated landing/home route, league selector, default-league routing, and invite-entry behavior.
+- Treat [plans/77-paid-leagues-and-renewal-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/77-paid-leagues-and-renewal-user-cases.md) as the deferred companion for future renewal, reactivation, archive, and paid-league lifecycle behavior.
 
 ## Task List
 
@@ -49,7 +50,7 @@ This app becomes the single go-forward web frontend for PoolMaster.
 | In Progress | Build the first product flow slice (69-D) | Auth preserves deep-link intent, zero-league users route to `/welcome`, the first real create-league modal now routes commissioners into `/league/<leagueCode>`, invite entry is on `/invite/<inviteCode>` with explicit acceptance, and commissioner invite-link generation emits the new public route shape |
 | Done | Wire the new app into local build/test commands | Root build, lint, typecheck, and active frontend test commands now target PoolMaster rather than the retired web/admin apps |
 | Done | Wire the new app into CI | CI frontend gates, coverage summary, and QA web deployment now target PoolMaster only |
-| In Progress | Build the first core product flows | The primitive commissioner/member experience is now partially aligned to the reviewed `/welcome`, `/league/<leagueCode>`, and `/invite/<inviteCode>` model; create-league modal launch + submit is in place, while richer league home, invite-flow polish, and broader commissioner/root-admin flows still remain |
+| In Progress | Build the first core product flows | The primitive commissioner/member experience is now partially aligned to the reviewed `/welcome`, `/league/<leagueCode>`, `/my-leagues`, and `/invite/<inviteCode>` model; create-league modal launch + submit is in place, while richer league home, invite-flow polish, and broader commissioner/root-admin flows still remain |
 | In Progress | Add PoolMaster-specific frontend tests and reviewed browser E2E flows | frontend test work has started with the create-league modal test plus all three reviewed Plan 76 browser flows: commissioner self-register/create-league, invited new-user register/join, and multi-league bookmark/selector/default-league routing; broader route/component coverage still remains |
 | Pending | Update docs/rules/README references | Make PoolMaster the single active web app in repo guidance |
 

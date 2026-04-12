@@ -190,6 +190,11 @@ Flow:
 5. App persists that league as the latest active league for future default
    routing.
 
+Notes:
+- member selector should only show active leagues
+- commissioner selector should continue to show commissioner-owned inactive
+  leagues with a concise visual treatment
+
 ### LH-006: Invited visitor joins a league through an invite link
 
 Actor:
@@ -240,6 +245,77 @@ Flow:
    selector.
 5. User can switch to another active league from the selector.
 
+### LH-009: User opens an inactive league home
+
+Actor:
+- Existing League Member or Commissioner
+
+Goal:
+- preserve league context and history without pretending the league is still active
+
+Flow:
+1. User opens `/league/<leagueCode>` for a league they can still access.
+2. Backend returns the normal league home payload with `isActive = false`.
+3. App renders the same league home route and shell instead of redirecting to a
+   different page.
+4. App shows a clear inactive-league message at the top of the page.
+5. League home remains readable, but write actions become disabled/read-only.
+6. Member-facing inactive league home shows a `Message commissioner` action
+   placeholder for a later notification/email slice.
+7. Commissioner-facing inactive league home keeps the same route and shell, but
+   inactive-league control space should eventually support reactivation/renewal
+   actions from a future paid-league slice.
+
+Notes:
+- inactive and active leagues should use the same league home structure
+- paid renewal/reactivation behavior is intentionally deferred to the separate
+  paid-leagues companion plan
+- the immediate implementation only needs the basic read-only plumbing
+
+### LH-010: Member sees an inactive league in read-only mode
+
+Actor:
+- Existing League Member
+
+Goal:
+- understand that the league still exists, but is not currently active
+
+Flow:
+1. Member opens `/league/<leagueCode>` for an inactive league they still belong
+   to.
+2. App renders the same league home and header shell as an active league.
+3. App shows an inactive message using “not currently active” language.
+4. Any write actions on that surface remain disabled.
+5. Page shows `Message commissioner` as the member-facing next step.
+
+Notes:
+- this is structural only for now
+- notification/email implementation is deferred
+
+### LH-011: Commissioner sees inactive leagues in the selector and on the league home
+
+Actor:
+- Existing Commissioner
+
+Goal:
+- preserve access to inactive leagues so commissioners can manage them later
+
+Flow:
+1. Commissioner opens the app and uses the header league selector.
+2. Selector includes inactive leagues that the user commissions.
+3. Inactive commissioner leagues are visually marked as inactive in the
+   selector.
+4. Commissioner can navigate into `/league/<leagueCode>` for that inactive
+   league.
+5. The league home shows the same inactive message and read-only framing.
+6. The commissioner action area should reserve future space for reactivation or
+   renewal controls from the paid-league plan.
+
+Notes:
+- commissioners should continue to see inactive leagues
+- members should not see inactive leagues in the active-league selector
+- archive/hide/delete behavior is a later commissioner-management decision
+
 ## Header And Shell Expectations
 
 The authenticated shell should reserve space for:
@@ -271,10 +347,17 @@ Current planning direction:
 - selector rows should show:
   - league avatar/icon when available
   - league name
+- commissioner selector rows should eventually mark inactive leagues visually
+  instead of hiding them
+- compact selector rows should stay concise; richer active/inactive controls
+  belong on larger list, tile, or management surfaces rather than in the header
+  dropdown
 - the selector should switch league context immediately on click
 - no special selector-only empty-state behavior is needed for `/welcome`; when a
   user has zero leagues, the selector simply shows no active leagues plus
   `+ Create League`
+- a separate richer surface such as `/my-leagues` can show fuller active/
+  inactive state and management placeholders
 
 ## Resolved Product Decisions
 
@@ -306,6 +389,23 @@ Current planning direction:
 - When a bookmarked league is inaccessible, the app stays on that route and
   shows a message that the league is no longer active; the user can use the
   header league selector to move to another active league.
+- When a user can still access a league but the league itself is inactive, the
+  app stays on `/league/<leagueCode>` and renders the same league home in
+  read-only mode with an inactive message.
+- Inactive league state should disable current write actions on the league home
+  rather than redirecting to a different page.
+- Inactive member league home should reserve a `Message commissioner` action,
+  but notification/email implementation is deferred.
+- Commissioners should continue to see their inactive leagues in the selector
+  and should eventually get a reactivation/renewal control area from the
+  deferred paid-leagues plan.
+- In the compact header selector, inactive commissioner leagues should use a
+  concise visual treatment rather than an additional status icon by default.
+- Future grid/list/tile-based league-management pages can show fuller
+  active/inactive status details and explicit manage-league controls.
+- Members should not see inactive leagues in the active-league selector.
+- The inactive banner copy can stay at “not currently active” until future
+  renewal/reactivation states exist.
 - The header should include planning placeholders for:
   - league selector
   - profile
@@ -326,6 +426,13 @@ Current planning direction:
 4. First-version selector ordering can stay simple as long as:
    - the current league is visibly marked active
    - the recent-league cookie updates on switch
+5. Compact header selector behavior is:
+   - members see active leagues only
+   - commissioners also see their inactive commissioner leagues
+   - inactive commissioner rows should use concise visual treatment rather than
+     another compact status icon by default
+6. Richer active/inactive state treatment belongs on a larger league list/tile
+   surface rather than being forced entirely into the compact selector
 
 ## Deferred Questions
 
@@ -352,6 +459,8 @@ flows before deeper league-home content design:
 - league-scoped invite entry
 - login/register-invite join flow
 - invite acceptance
+- active/inactive league-home plumbing
+- richer selector + league tile review surface
 
 Current implementation status:
 
@@ -365,6 +474,19 @@ Current implementation status:
   preserving the target invite destination
 - invite acceptance already routes directly into `/league/<leagueCode>` and now
   updates the recent-league cookie
+- basic inactive league-home plumbing is active:
+  - league detail exposes `isActive`
+  - inactive leagues render the same league home route
+  - current invitation actions are disabled in read-only mode
+  - member-facing `Message commissioner` is structural only
+  - commissioner-specific inactive selector visibility and future reactivation
+    behavior remain deferred in this plan
+- `/my-leagues` now exists as the richer review surface for league tiles and
+  active/inactive state:
+  - active and inactive leagues render as larger cards
+  - commissioners see inactive leagues there and in the selector
+  - members use the same surface to understand inactive read-only state without
+    getting renewal controls
 - browser E2E now covers:
   - commissioner self-register -> create first league -> logout
   - invited new user register -> explicit join -> invited league home -> logout
@@ -454,3 +576,6 @@ Why this matters:
 - [plans/75-league-creation-wizard-discovery.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/75-league-creation-wizard-discovery.md)
   should treat this as the home-shell context that launches the create-league
   modal
+- [plans/77-paid-leagues-and-renewal-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/77-paid-leagues-and-renewal-user-cases.md)
+  should own the future reactivation, renewal, billing, and inactive-league
+  commissioner controls that are intentionally deferred here

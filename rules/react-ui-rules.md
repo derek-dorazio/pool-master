@@ -236,6 +236,8 @@ It is acceptable to remove or replace tests when they enforce old architecture, 
 
 ## 8. Accessibility and UX
 
+- Follow `rules/ux-rules.md` for first-draft UX decisions and PoolMaster-
+  specific interaction conventions.
 - Use semantic HTML.
 - Preserve keyboard accessibility.
 - Use accessible shadcn/Radix primitives correctly.

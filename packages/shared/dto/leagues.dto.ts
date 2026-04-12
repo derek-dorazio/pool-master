@@ -25,6 +25,7 @@ export const UpdateLeagueRequestSchema = z.object({
 export type UpdateLeagueRequest = z.infer<typeof UpdateLeagueRequestSchema>;
 
 export const UpdateLeagueSettingsRequestSchema = z.object({
+  isActive: z.boolean().optional(),
   invitePolicy: z.enum(['COMMISSIONER_ONLY', 'LINK_INVITE', 'OPEN']).optional(),
   allowMidSeasonJoin: z.boolean().optional(),
   requireApproval: z.boolean().optional(),
@@ -87,6 +88,7 @@ export const LeagueSummaryDtoSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   visibility: z.string(),
+  isActive: z.boolean(),
   memberCount: z.number(),
   activeContestCount: z.number(),
   role: z.string().optional(),

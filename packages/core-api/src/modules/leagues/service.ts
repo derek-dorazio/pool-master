@@ -28,6 +28,7 @@ export interface UserLeagueView {
 }
 
 const DEFAULT_LEAGUE_SETTINGS: LeagueSettings = {
+  isActive: true,
   invitePolicy: InvitePolicy.COMMISSIONER_ONLY,
   allowMidSeasonJoin: false,
   requireApproval: false,

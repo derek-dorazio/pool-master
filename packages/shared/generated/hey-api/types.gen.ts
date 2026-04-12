@@ -323,6 +323,7 @@ export type ListLeaguesResponses = {
             name: string;
             description?: string;
             visibility: string;
+            isActive: boolean;
             memberCount: number;
             activeContestCount: number;
             role?: string;
@@ -375,6 +376,7 @@ export type CreateLeagueResponses = {
             name: string;
             description?: string;
             visibility: string;
+            isActive: boolean;
             memberCount: number;
             activeContestCount: number;
             role?: string;
@@ -425,6 +427,7 @@ export type GetLeagueResponses = {
             name: string;
             description?: string;
             visibility: string;
+            isActive: boolean;
             memberCount: number;
             activeContestCount: number;
             role?: string;
@@ -475,6 +478,7 @@ export type GetLeagueByCodeResponses = {
             name: string;
             description?: string;
             visibility: string;
+            isActive: boolean;
             memberCount: number;
             activeContestCount: number;
             role?: string;
@@ -492,6 +496,7 @@ export type GetLeagueByCodeResponse = GetLeagueByCodeResponses[keyof GetLeagueBy
 
 export type UpdateLeagueSettingsData = {
     body: {
+        isActive?: boolean;
         invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         allowMidSeasonJoin?: boolean;
         requireApproval?: boolean;
@@ -534,6 +539,7 @@ export type UpdateLeagueSettingsResponses = {
             name: string;
             description?: string;
             visibility: string;
+            isActive: boolean;
             memberCount: number;
             activeContestCount: number;
             role?: string;

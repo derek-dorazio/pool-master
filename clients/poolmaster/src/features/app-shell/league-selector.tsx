@@ -1,6 +1,7 @@
 import type { ListLeaguesResponses } from '@/lib/api';
 import {
   buildLeaguePath,
+  getLeagueSelectorOptions,
   getLeagueInitials,
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
@@ -21,6 +22,7 @@ export function LeagueSelector({
   onNavigate,
 }: LeagueSelectorProps) {
   const activeLeague = leagues.find((league) => league.leagueCode === activeLeagueCode) ?? null;
+  const selectorLeagues = getLeagueSelectorOptions(leagues);
 
   return (
     <details className="relative">
@@ -41,10 +43,16 @@ export function LeagueSelector({
 
       <div className="absolute right-0 z-20 mt-3 w-72 rounded-[1.5rem] border border-border bg-card p-3 shadow-xl">
         <div className="space-y-2">
-          {leagues.map((league) => (
+          {selectorLeagues.map((league) => (
             <button
-              className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${
-                league.leagueCode === activeLeagueCode ? 'bg-primary/10' : 'hover:bg-muted/50'
+              className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                league.leagueCode === activeLeagueCode
+                  ? league.isActive
+                    ? 'border-primary/20 bg-primary/10'
+                    : 'border-amber-200 bg-amber-50'
+                  : league.isActive
+                    ? 'border-transparent hover:bg-muted/50'
+                    : 'border-amber-200/70 bg-amber-50/70 hover:bg-amber-100/70'
               }`}
               data-testid={`league-selector-option-${league.leagueCode}`}
               key={league.id}
@@ -60,7 +68,7 @@ export function LeagueSelector({
               <div className="min-w-0">
                 <div className="truncate font-medium text-foreground">{league.name}</div>
                 <div className="truncate text-xs uppercase tracking-[0.22em] text-muted-foreground">
-                  {league.leagueCode}
+                  {league.isActive ? league.leagueCode : 'Not currently active'}
                 </div>
               </div>
             </button>

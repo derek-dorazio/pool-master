@@ -780,6 +780,9 @@
                           "visibility": {
                             "type": "string"
                           },
+                          "isActive": {
+                            "type": "boolean"
+                          },
                           "memberCount": {
                             "type": "number"
                           },
@@ -799,6 +802,7 @@
                           "leagueCode",
                           "name",
                           "visibility",
+                          "isActive",
                           "memberCount",
                           "activeContestCount"
                         ],
@@ -928,6 +932,9 @@
                         "visibility": {
                           "type": "string"
                         },
+                        "isActive": {
+                          "type": "boolean"
+                        },
                         "memberCount": {
                           "type": "number"
                         },
@@ -957,6 +964,7 @@
                         "leagueCode",
                         "name",
                         "visibility",
+                        "isActive",
                         "memberCount",
                         "activeContestCount"
                       ],
@@ -1051,6 +1059,9 @@
                         "visibility": {
                           "type": "string"
                         },
+                        "isActive": {
+                          "type": "boolean"
+                        },
                         "memberCount": {
                           "type": "number"
                         },
@@ -1080,6 +1091,7 @@
                         "leagueCode",
                         "name",
                         "visibility",
+                        "isActive",
                         "memberCount",
                         "activeContestCount"
                       ],
@@ -1174,6 +1186,9 @@
                         "visibility": {
                           "type": "string"
                         },
+                        "isActive": {
+                          "type": "boolean"
+                        },
                         "memberCount": {
                           "type": "number"
                         },
@@ -1203,6 +1218,7 @@
                         "leagueCode",
                         "name",
                         "visibility",
+                        "isActive",
                         "memberCount",
                         "activeContestCount"
                       ],
@@ -1267,6 +1283,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "isActive": {
+                    "type": "boolean"
+                  },
                   "invitePolicy": {
                     "type": "string",
                     "enum": [
@@ -1348,6 +1367,9 @@
                         "visibility": {
                           "type": "string"
                         },
+                        "isActive": {
+                          "type": "boolean"
+                        },
                         "memberCount": {
                           "type": "number"
                         },
@@ -1377,6 +1399,7 @@
                         "leagueCode",
                         "name",
                         "visibility",
+                        "isActive",
                         "memberCount",
                         "activeContestCount"
                       ],

@@ -25,12 +25,14 @@ export function toLeagueSummaryDto(
   league: LeagueRow,
   opts?: { memberCount?: number; activeContestCount?: number; role?: string },
 ): LeagueSummaryDto {
+  const settings = league.settings as unknown as LeagueSettings | undefined;
   return {
     id: league.id,
     leagueCode: league.leagueCode,
     name: league.name,
     description: league.description ?? null,
     visibility: league.visibility,
+    isActive: settings?.isActive ?? true,
     memberCount: opts?.memberCount ?? 0,
     activeContestCount: opts?.activeContestCount ?? 0,
     role: opts?.role,
