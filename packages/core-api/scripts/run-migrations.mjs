@@ -40,6 +40,10 @@ async function repairLeagueCodeMigration(prisma) {
   console.log(`Attempting one-time repair for migration ${LEAGUE_CODE_MIGRATION}...`);
 
   await prisma.$executeRawUnsafe(`
+    DROP INDEX IF EXISTS "leagues_league_code_key";
+  `);
+
+  await prisma.$executeRawUnsafe(`
     ALTER TABLE "leagues"
     ADD COLUMN IF NOT EXISTS "league_code" VARCHAR(16);
   `);
@@ -49,11 +53,10 @@ async function repairLeagueCodeMigration(prisma) {
     SET "league_code" = CONCAT(
       LEFT(
         COALESCE(NULLIF(UPPER(REGEXP_REPLACE("name", '[^A-Za-z0-9]+', '', 'g')), ''), 'LEAGUE'),
-        11
+        8
       ),
-      RIGHT(REPLACE("id"::text, '-', ''), 5)
+      RIGHT(REPLACE("id"::text, '-', ''), 8)
     )
-    WHERE "league_code" IS NULL;
   `);
 
   await prisma.$executeRawUnsafe(`

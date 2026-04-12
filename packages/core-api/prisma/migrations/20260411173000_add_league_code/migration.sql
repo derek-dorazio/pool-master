@@ -5,9 +5,9 @@ UPDATE "leagues"
 SET "league_code" = CONCAT(
   LEFT(
     COALESCE(NULLIF(UPPER(REGEXP_REPLACE("name", '[^A-Za-z0-9]+', '', 'g')), ''), 'LEAGUE'),
-    11
+    8
   ),
-  RIGHT(REPLACE("id"::text, '-', ''), 5)
+  RIGHT(REPLACE("id"::text, '-', ''), 8)
 )
 WHERE "league_code" IS NULL;
 
