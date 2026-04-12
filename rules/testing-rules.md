@@ -83,6 +83,10 @@ Notes:
 - Backend work must not be pushed with required test gates intentionally
   skipped. CI is confirmation, not the first place we discover missing local
   validation.
+- Webapp work that changes shared domain types, DTOs, generated contract
+  outputs, backend mappers, or backend response shaping is not frontend-only
+  testing scope. Treat it as backend-impacting work and rerun the full backend
+  gate set before push.
 - When a slice changes the backend model, rerun and repair every impacted suite
   in the local gate set as part of that slice. Stale mocks, factories,
   builders, or setup helpers are not separate cleanup work; they are part of

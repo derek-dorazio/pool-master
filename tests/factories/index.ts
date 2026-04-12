@@ -65,6 +65,7 @@ export function buildLeague(overrides: Partial<League> = {}): League {
 
 export function buildLeagueSettings(overrides: Partial<LeagueSettings> = {}): LeagueSettings {
   return {
+    isActive: true,
     invitePolicy: InvitePolicy.COMMISSIONER_ONLY,
     allowMidSeasonJoin: false,
     requireApproval: false,

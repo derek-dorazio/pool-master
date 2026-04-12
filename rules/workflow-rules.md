@@ -255,6 +255,16 @@ Rules:
   typecheck, unit, data integration, FAPI, and merged service coverage have
   passed locally. If API contracts changed, `api:refresh` and `api:validate`
   must also pass first.
+- Do not classify a slice as “frontend only” if it changes any shared or
+  backend-owned contract layer, including:
+  - `packages/shared/domain/**`
+  - `packages/shared/dto/**`
+  - generated OpenAPI / generated `hey-api` outputs
+  - backend mappers
+  - backend route schemas
+  - backend services that shape client-facing payloads
+  Those slices are backend-impacting and must satisfy the full backend gate
+  before push even if the user-facing feature is primarily in the webapp.
 - If a DB-backed backend gate fails only because the Codex sandbox cannot reach
   the local database, rerun that exact command outside the sandbox before
   pushing. Do not treat the sandbox failure as permission to skip the gate.
