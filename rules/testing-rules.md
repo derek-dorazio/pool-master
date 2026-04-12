@@ -190,6 +190,18 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
 - Reference the plan companion and use-case ID in a comment at the top of the test file or in the `describe` block name (e.g., `// Proves: Plan 38 UC-003 — Member creates contest entry`).
 - If a test covers behavior not yet documented and the behavior is product-significant, document the use case before expanding that suite further.
 - When a use-case companion changes, update the corresponding functional or E2E tests in the same work.
+- As the PoolMaster web app grows, extend the existing reviewed Playwright
+  journeys to cover each newly delivered page, route, or meaningful user-facing
+  function when that behavior fits an established journey.
+- If a new webapp slice does not fit cleanly into an existing reviewed browser
+  journey, create a new focused journey tied to the relevant plan/use-case
+  companion instead of leaving the new behavior uncovered.
+- Browser E2E does not need exhaustive assertions for every new screen, but it
+  should exercise a basic truthful proof that each newly delivered page or
+  function can be reached and works in the intended user journey.
+- If it is unclear whether a new webapp behavior belongs in an existing browser
+  journey or needs a new one, stop and ask the user before finalizing the test
+  plan.
 
 ### Seed Data Rules (Applies to Functional and E2E)
 

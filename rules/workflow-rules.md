@@ -176,6 +176,10 @@ Required workflow:
    the related webapp plan rather than leaving them as optional follow-up ideas.
 8. Treat the reviewed use-case document as the companion for later UI planning
    and execution slices.
+9. As new PoolMaster webapp pages or functions are implemented, decide whether
+   the current reviewed Playwright journeys should be extended or whether the
+   new behavior needs a new browser journey. Do not leave newly delivered
+   user-facing webapp behavior outside the browser-journey plan by default.
 
 This is especially required for:
 

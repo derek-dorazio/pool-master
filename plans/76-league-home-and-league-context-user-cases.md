@@ -515,6 +515,8 @@ Flow:
 6. User creates a league.
 7. App lands on `/league/<leagueCode>`.
 8. Header league selector shows the new league as the active context.
+9. User can navigate to the richer `/my-leagues` surface and see the created
+   league tile there.
 9. User logs out.
 
 Why this matters:
@@ -558,11 +560,13 @@ Flow:
 3. User opens the header league selector.
 4. User switches to league B.
 5. App routes immediately to `/league/<leagueCodeB>`.
-6. User logs out.
-7. User logs back in without a bookmarked route.
-8. App resolves back into the most recent league context according to the
+6. User can navigate to `/my-leagues` and see the richer tile representation
+   for the active league context.
+7. User logs out.
+8. User logs back in without a bookmarked route.
+9. App resolves back into the most recent league context according to the
    cookie/default-league rule.
-9. User logs out.
+10. User logs out.
 
 Why this matters:
 - this proves the core multi-league navigation model and the bookmark/default
