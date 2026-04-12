@@ -2,12 +2,12 @@ ALTER TABLE "leagues"
 ADD COLUMN "league_code" VARCHAR(16);
 
 UPDATE "leagues"
-SET "league_code" = LEFT(
-  CONCAT(
-    NULLIF(UPPER(REGEXP_REPLACE("name", '[^A-Za-z0-9]+', '', 'g')), ''),
-    RIGHT(REPLACE("id"::text, '-', ''), 4)
+SET "league_code" = CONCAT(
+  LEFT(
+    COALESCE(NULLIF(UPPER(REGEXP_REPLACE("name", '[^A-Za-z0-9]+', '', 'g')), ''), 'LEAGUE'),
+    11
   ),
-  16
+  RIGHT(REPLACE("id"::text, '-', ''), 5)
 )
 WHERE "league_code" IS NULL;
 

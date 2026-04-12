@@ -46,12 +46,12 @@ async function repairLeagueCodeMigration(prisma) {
 
   await prisma.$executeRawUnsafe(`
     UPDATE "leagues"
-    SET "league_code" = LEFT(
-      CONCAT(
+    SET "league_code" = CONCAT(
+      LEFT(
         COALESCE(NULLIF(UPPER(REGEXP_REPLACE("name", '[^A-Za-z0-9]+', '', 'g')), ''), 'LEAGUE'),
-        RIGHT(REPLACE("id"::text, '-', ''), 4)
+        11
       ),
-      16
+      RIGHT(REPLACE("id"::text, '-', ''), 5)
     )
     WHERE "league_code" IS NULL;
   `);
