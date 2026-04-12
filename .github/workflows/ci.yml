@@ -537,7 +537,16 @@ jobs:
           fi
 
           if [ -z "$MIGRATE_TASK_DEFINITION" ] || [ "$MIGRATE_TASK_DEFINITION" = "None" ]; then
-            echo "::warning::No QA migrate task definition was published — skipping migrations"
+            MIGRATE_TASK_DEFINITION=$(aws ecs list-task-definitions \
+              --family-prefix poolmaster-qa-migrate \
+              --sort DESC \
+              --max-items 1 \
+              --query 'taskDefinitionArns[0]' \
+              --output text 2>/dev/null || echo "")
+          fi
+
+          if [ -z "$MIGRATE_TASK_DEFINITION" ] || [ "$MIGRATE_TASK_DEFINITION" = "None" ]; then
+            echo "::warning::No QA migrate task definition is available — skipping migrations"
             echo "skipped=true" >> $GITHUB_OUTPUT
             exit 0
           fi
