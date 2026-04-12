@@ -303,6 +303,9 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
+    outputs:
+      qa_core_api_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}
+      qa_migrate_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}
     steps:
       - uses: actions/checkout@v6
 
@@ -525,10 +528,7 @@ jobs:
         run: |
           SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
           SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
-          MIGRATE_TASK_DEFINITION=$(aws ecs describe-task-definition \
-            --task-definition poolmaster-qa-migrate \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text 2>/dev/null || echo "")
+          MIGRATE_TASK_DEFINITION="${{ needs.publish-images.outputs.qa_migrate_task_definition }}"
 
           if [ -z "$SUBNETS" ] || [ -z "$SG" ]; then
             echo "⚠️ QA_PRIVATE_SUBNETS or QA_ECS_SECURITY_GROUP secret not set — skipping migrations"
