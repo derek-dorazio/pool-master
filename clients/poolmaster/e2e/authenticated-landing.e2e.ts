@@ -37,6 +37,7 @@ async function createLeagueFromWelcome(
   await page.getByTestId('welcome-create-league').click();
   await expect(page.getByTestId('create-league-modal')).toBeVisible();
   await page.getByTestId('create-league-name').fill(leagueName);
+  await page.getByTestId('create-league-name').press('Tab');
   await page.getByTestId('create-league-submit').click();
 }
 
@@ -48,6 +49,7 @@ async function createLeagueFromSelector(
   await page.getByTestId('league-selector-create').click();
   await expect(page.getByTestId('create-league-modal')).toBeVisible();
   await page.getByTestId('create-league-name').fill(leagueName);
+  await page.getByTestId('create-league-name').press('Tab');
   await page.getByTestId('create-league-submit').click();
 }
 
