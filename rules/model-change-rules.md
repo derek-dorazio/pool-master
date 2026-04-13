@@ -1,6 +1,8 @@
 # Model Change Rules
 
-When a field or API-facing model changes, update every affected layer. Skipping one layer causes runtime drift, generated-client breakage, or stale UI assumptions.
+When a field or API-facing model changes, update every affected layer for every
+affected entity and DTO. Skipping one layer causes runtime drift,
+generated-client breakage, stale API docs, or stale UI assumptions.
 
 ---
 
@@ -63,14 +65,25 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 
 ### 2. DTO and API Contract
 
+- [ ] Explicitly review whether each domain-model change also requires DTO
+  changes. Default assumption: yes, DTOs and route contracts should stay in
+  sync with the active domain and product model unless there is a deliberate,
+  documented boundary reason not to.
 - [ ] Update or add the DTO Zod schema in `packages/shared/dto/`.
 - [ ] Update the backend mapper in `packages/core-api/src/mappers/`.
 - [ ] Update route request/response schemas in `routes.ts` using `zodToJsonSchema()`.
 - [ ] Ensure `operationId`, `summary`, and `tags` remain correct.
 - [ ] Add or refresh descriptions where field/object/endpoint meaning is not
   obvious from names alone.
+- [ ] Remove DTO/request fields that are no longer part of the active domain or
+  approved product model. Do not leave retired fields in place just because the
+  handler currently ignores them.
+- [ ] If a DTO intentionally differs from the domain model, document why in the
+  active plan notes or code comments instead of leaving the mismatch implicit.
 - [ ] Run `npm run api:refresh`.
 - [ ] Run `npm run api:validate`.
+- [ ] Confirm the regenerated OpenAPI and generated SDK/types no longer expose
+  removed properties.
 
 ### 3. Generated Client Consumers
 
@@ -159,6 +172,11 @@ Do not reverse that order.
 - Every API-facing model change is also an OpenAPI change unless proven otherwise.
 - If the handler returns a different envelope than before, treat it as a contract change.
 - The generated client is downstream of the backend contract. Fix the source, not just the consumer.
+- Contract sweeps must validate field-level correctness, not only descriptions.
+  A well-documented stale field is still a bug.
+- This rule applies repo-wide, not just to the feature currently being designed.
+  Every active entity/DTO pair must stay aligned with the current domain and
+  approved product behavior.
 
 ---
 

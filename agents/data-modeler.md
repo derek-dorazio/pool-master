@@ -13,6 +13,8 @@ implementation continues.
   - no backend/shared change
   - a contract-only change
   - a true domain/model/persistence change
+- identify when the active product direction and the current backend/shared
+  contract appear to diverge because stale or retired fields are still exposed
 - identify which shared and backend-owned layers would be affected before
   implementation begins
 - confirm with the user when the implied model change is not obvious, low-risk,
@@ -21,6 +23,8 @@ implementation continues.
   of letting frontend implementation bleed into backend ownership
 - document model-change implications in the active plan notes when the impact
   is material
+- call out contract-cleanup or documentation-cleanup debt explicitly when the
+  feature review surfaces stale backend signals
 
 ## Required References
 

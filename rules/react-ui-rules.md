@@ -67,6 +67,9 @@ Examples:
 - Use generated SDK functions and generated response/request types first.
 - Treat the generated SDK/types plus documented OpenAPI behavior as the normal
   frontend contract source of truth.
+- If a feature requires backend/shared contract changes, wait for the updated
+  exported SDK/types before implementing the frontend slice against that new
+  contract.
 - Keep app-specific API code thin:
   - auth token injection
   - base URL configuration

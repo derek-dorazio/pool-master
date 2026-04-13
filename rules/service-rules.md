@@ -113,6 +113,15 @@ If a frontend question reveals that the contract meaning was not clear from the
 documented API surface, treat that as a backend documentation defect and fix it
 in the contract source.
 
+Contract correctness comes before contract prose:
+
+- DTOs and route schemas must reflect the current domain model and approved
+  product behavior, not merely a broader set of technically accepted fields.
+- If a field is retired from the active domain or product model, remove it from
+  DTOs, route schemas, regenerated OpenAPI, and generated SDK/types.
+- Do not leave stale properties in the API contract just because handlers or
+  services currently ignore them.
+
 ### Contract Documentation Checklist
 
 Before finishing backend/shared contract work, explicitly verify:

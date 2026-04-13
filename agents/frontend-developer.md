@@ -26,6 +26,12 @@ frontend tests, and browser-flow delivery.
   engineering backend implementation details
 - stop and route potential shared/backend changes through the data-modeler and
   backend personas instead of authoring those changes directly
+- when a feature needs backend/shared contract changes, wait until the backend
+  persona has:
+  - completed the contract work
+  - run the required backend validation gates
+  - regenerated/exported SDK and types
+  before starting frontend implementation against that new contract
 
 ## Required References
 
@@ -45,6 +51,8 @@ frontend tests, and browser-flow delivery.
 - directly modify backend-owned contract layers such as shared domain types,
   shared DTOs, OpenAPI generation, backend mappers, backend route schemas, or
   backend service payload shaping
+- begin frontend implementation against an intended contract change before the
+  updated exported SDK/types actually exist
 - answer contract ambiguity by treating backend source code as the frontend
   source of truth
 - implement unreviewed product flows just because the scaffold makes them easy

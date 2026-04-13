@@ -56,6 +56,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] Shared domain types/enums updated in `packages/shared/domain/`
 
 **DTOs & Mappers:**
+- [ ] Explicitly confirm whether the domain/model changes require DTO/request/response updates. Default assumption: yes.
 - [ ] Zod request DTO exists in `packages/shared/dto/<module>.dto.ts` for every request body
 - [ ] Zod response DTO exists in `packages/shared/dto/<module>.dto.ts` for every response
 - [ ] Mapper file exists at `packages/core-api/src/mappers/<module>.mapper.ts` with named export functions
@@ -87,6 +88,8 @@ surface is complete enough for frontend consumption:
 - field semantics are described where names alone are not enough
 - any backend explanation that frontend needed has been pushed back into the
   contract source instead of left as one-off tribal knowledge
+- stale or retired request/response fields have been removed or explicitly
+  justified, not merely re-described
 
 For model-change slices, "tests" includes not only production-facing test files
 but also the support code that makes those suites truthful:
@@ -166,9 +169,19 @@ Required workflow:
 
 1. Capture the product idea in a plan or use-case companion under `plans/`.
 2. Write explicit user/use cases for the flow before implementation begins.
-3. Include open functional questions, decisions, and assumptions that still need
+3. Before proposing fields, steps, or page actions, perform a current-truth
+   review using:
+   - the active product plans for the feature
+   - current shared domain types
+   - current DTO/OpenAPI contract
+   - current implemented routes and role behavior
+   Distinguish clearly between:
+   - active product truth
+   - backend contract surface that is not yet approved product UX
+   - archived or superseded design ideas used only as historical reference.
+4. Include open functional questions, decisions, and assumptions that still need
    confirmation.
-4. At the end of the design review, explicitly surface any implied backend or
+5. At the end of the design review, explicitly surface any implied backend or
    model changes required by the proposed webapp behavior, including:
    - Prisma/model changes
    - migrations or backfills
@@ -176,17 +189,24 @@ Required workflow:
    - backend auth/session or invitation-flow changes
    Confirm those backend implications with the user before implementation
    begins.
-5. Propose the browser E2E flows that should eventually prove the designed
+6. If the current contract appears to expose retired, stale, or no-longer-valid
+   fields for the feature, do not design around them silently. Call out the
+   mismatch explicitly as:
+   - product scope differs from backend capability, or
+   - backend cleanup/documentation debt still exists.
+   Route that mismatch to the data-modeler/backend workflow instead of treating
+   it as approved UX input.
+7. Propose the browser E2E flows that should eventually prove the designed
    behavior end to end.
-6. Review those use cases, questions, backend implications, and proposed E2E
+8. Review those use cases, questions, backend implications, and proposed E2E
    flows with the user
    before locking the design
    direction into implementation work.
-7. Once reviewed, treat the agreed E2E flows as planned implementation work for
+9. Once reviewed, treat the agreed E2E flows as planned implementation work for
    the related webapp plan rather than leaving them as optional follow-up ideas.
-8. Treat the reviewed use-case document as the companion for later UI planning
+10. Treat the reviewed use-case document as the companion for later UI planning
    and execution slices.
-9. As new PoolMaster webapp pages or functions are implemented, decide whether
+11. As new PoolMaster webapp pages or functions are implemented, decide whether
    the current reviewed Playwright journeys should be extended or whether the
    new behavior needs a new browser journey. Do not leave newly delivered
    user-facing webapp behavior outside the browser-journey plan by default.
@@ -243,6 +263,14 @@ confirmed with the user before implementation expands.
   backend/model implication with the user before implementation continues.
 - Backend/shared changes discovered during frontend work must be implemented by
   the backend developer persona, not by the frontend developer persona.
+- For a feature slice that requires both backend/shared contract changes and
+  frontend changes, the required sequence is:
+  1. backend persona completes the contract/model/API work
+  2. backend persona runs the required backend validation gates
+  3. backend persona regenerates/exports OpenAPI, SDK, and types
+  4. frontend persona begins consuming the exported contract
+  Do not overlap those responsibilities in a way that makes frontend build
+  against an intended-but-not-yet-exported contract.
 - If the frontend developer has a contract question, ask the backend developer
   persona for the answer instead of reading backend code directly.
 - When such a question reveals a contract documentation gap, the backend

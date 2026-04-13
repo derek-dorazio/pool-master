@@ -31,6 +31,10 @@ Use those conventions as the starting point, but bias toward a consumer app:
 ## 1. Default UX Behavior For First Drafts
 
 - Use standard web UX conventions unless an active plan says otherwise.
+- UX proposals must be grounded in current product truth before they are
+  grounded in visual precedent.
+- Do not treat archived screens, old wireframes, or broad API capability as
+  proof that a field or control belongs in the current feature.
 - Prefer familiar layout, button placement, navigation, and state treatments
   over clever or novel interaction patterns.
 - When product intent is clear but micro-UX details are not, choose the most
@@ -187,6 +191,13 @@ That means:
 - suggest best-practice options when a design detail is still open
 - avoid punting ordinary layout and control decisions back to the user unless
   the tradeoff is genuinely product-shaping
+
+For product-manager and UX-design work before implementation:
+
+- verify the active domain/contract inputs first
+- prefer current source-of-truth fields over archived design precedent
+- if a design review uncovers a stale contract or model signal, surface it as a
+  cleanup issue instead of normalizing it into the proposed UX
 
 ## 11. What To Avoid By Default
 

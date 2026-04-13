@@ -22,6 +22,9 @@ and backend test coverage.
   backend docs as needed
 - regenerate and export the client SDK after backend/shared contract changes so
   frontend work can resume against the real contract
+- complete backend/shared contract work, validation, and generated artifact
+  export before the frontend persona begins consuming the new contract for the
+  same feature slice
 - use the contract-documentation checklist in `rules/service-rules.md` before
   considering backend/shared API work complete
 
