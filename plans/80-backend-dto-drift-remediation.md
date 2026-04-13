@@ -717,7 +717,7 @@ Out of scope:
 | 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | League, contest, participant, draft, event, scoring, ingestion, config, and root-admin enum-backed drift slices are now resolved; this stays open until the last audit confirmation pass. |
 | 80-010 | 2 | Remove or consolidate backend dead code that duplicates active contract-building paths | In Progress | `X-001` draft mapper cleanup and `X-002` audit read-surface cleanup are resolved; remaining dead-code cleanup is now limited. |
 | 80-011 | 2 | Resolve backend modules that still have competing sources of truth after contract cleanup | In Progress | Config/poll ownership is effectively unified; remaining work is the final documentation/rule pass so the repo guidance reflects that cleanup clearly. |
-| 80-012 | 3 | Review and update non-API backend documentation and rules after the drift cleanup lands | Not Started | Final pass should cover backend-facing docs and repo rules outside generated API artifacts so architecture, workflow, and implementation guidance match the cleaned backend. |
+| 80-012 | 3 | Review and update non-API backend documentation and rules after the drift cleanup lands | In Progress | Rules now explicitly forbid sentinel placeholder values in API-facing service output, require removal of orphaned DTO/schema exports, and require plan findings to be reconciled as cleanup slices land. |
 | 80-013 | 1 | Add and follow a Plan 80 pre-push gate that includes downstream PoolMaster consumer checks | Done | Added after CI failures on early slices showed that shared-contract changes must run PoolMaster typecheck/lint before push, not just backend-only gates. |
 
 ## Relationship To Other Plans

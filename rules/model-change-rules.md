@@ -78,6 +78,8 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 - [ ] Remove DTO/request fields that are no longer part of the active domain or
   approved product model. Do not leave retired fields in place just because the
   handler currently ignores them.
+- [ ] Remove orphaned DTOs/schemas that are no longer referenced by active
+  routes or handlers. Do not keep dead contract exports alive "just in case."
 - [ ] If a DTO intentionally differs from the domain model, document why in the
   active plan notes or code comments instead of leaving the mismatch implicit.
 - [ ] Run `npm run api:refresh`.
@@ -108,6 +110,8 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 - [ ] Remove or replace stale tests that were enforcing old architecture.
 - [ ] Add DB-backed CRUD coverage for new or materially redesigned domain objects, including `findById`.
 - [ ] Add use-case-driven tests that prove the backend supports the documented workflows for the changed domain area.
+- [ ] Remove invented placeholder values in service output paths that only
+  existed to satisfy stale DTOs or retired model assumptions.
 
 ### 5A. Test-Impact Rule For Model Changes
 

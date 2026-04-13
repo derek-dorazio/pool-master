@@ -20,6 +20,8 @@ These rules govern backend services in `packages/*/src`, especially Fastify modu
 - Returning raw Prisma entities directly from handlers
 - Defining a route without a real `schema.response`
 - Shipping mock data or development-only fallbacks in `packages/*/src`
+- Shipping sentinel fallback values such as `''`, `'UNKNOWN'`, or similar
+  invented placeholders in API-facing service output
 - Hand-editing generated OpenAPI/client output
 - Fixing generated-client problems with frontend casts instead of repairing backend schemas
 
@@ -121,6 +123,8 @@ Contract correctness comes before contract prose:
   DTOs, route schemas, regenerated OpenAPI, and generated SDK/types.
 - Do not leave stale properties in the API contract just because handlers or
   services currently ignore them.
+- If a DTO or schema is no longer used by any active route, remove it instead
+  of leaving it exported as orphaned contract surface.
 
 ### Contract Documentation Checklist
 

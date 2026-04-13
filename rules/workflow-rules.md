@@ -45,6 +45,9 @@ When finishing work:
 - Coverage threshold changes are main-thread coordination work. Worker slices must not raise or lower thresholds on their own.
 - Update plan rows only for the exact slice being worked. Do not mark unrelated queue items `In Progress` or `Done`.
 - Mark a slice `Done` only when the exact scoped work is complete and validated. Partial work stays `In Progress`.
+- If code cleanup resolves a previously logged plan finding, reconcile that plan
+  finding in the same or immediately following slice. Do not leave active plans
+  implying drift that no longer exists in the codebase.
 
 ### Slice Completion Checklist (Required Before Marking Done)
 
