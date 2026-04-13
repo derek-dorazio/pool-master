@@ -38,6 +38,19 @@ depends on the model shape, including:
 If a model change leaves any affected suite failing because those test-support
 layers are still shaped like the old model, the slice remains `In Progress`.
 
+## Ownership And Handoff Rules
+
+- Frontend agents must not directly implement backend-owned model or shared
+  contract changes as a convenience while doing UI work.
+- When frontend work reveals a possible model or shared-contract change, route
+  the question through the `data-modeler` persona first so the impact is
+  classified before implementation continues.
+- Backend developers own the implementation of approved model/shared changes,
+  including regeneration of the exported SDK/types used by frontend.
+- Contract documentation gaps exposed by frontend questions are backend-owned
+  defects. The backend developer must fix the documented contract, not merely
+  explain the answer out-of-band.
+
 ### 1. Persistence and Domain
 
 - [ ] Update Prisma schema if the database model changed.
@@ -54,6 +67,8 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 - [ ] Update the backend mapper in `packages/core-api/src/mappers/`.
 - [ ] Update route request/response schemas in `routes.ts` using `zodToJsonSchema()`.
 - [ ] Ensure `operationId`, `summary`, and `tags` remain correct.
+- [ ] Add or refresh descriptions where field/object/endpoint meaning is not
+  obvious from names alone.
 - [ ] Run `npm run api:refresh`.
 - [ ] Run `npm run api:validate`.
 

@@ -199,7 +199,8 @@ confirmed with the user before implementation expands.
 
 - Persona playbooks may live under `agents/` to scope role-specific workflows
   such as product management, project management, backend implementation,
-  frontend implementation, architecture/platform work, and code review.
+  data modeling, frontend implementation, architecture/platform work, and code
+  review.
 - These playbooks are execution aids, not replacement policy sources.
 - `AGENTS.md` and `rules/` remain canonical.
 - Cross-cutting workflow requirements remain mandatory for all personas,
@@ -211,6 +212,34 @@ confirmed with the user before implementation expands.
 - The `project-manager` persona may help with plan shaping, sequencing, and
   progress reconciliation, but it is not the sole owner of task tracking.
   Agents doing implementation work must still update plans themselves.
+
+### Frontend / Data Model / Backend Handoff Rules
+
+- Frontend implementation should normally work from:
+  - reviewed plans and use-case companions
+  - generated SDK operations
+  - generated request/response types
+  - documented OpenAPI summaries/descriptions
+- Frontend agents must not answer contract ambiguity by treating backend
+  implementation code as the working spec.
+- If frontend work reveals a possible shared-contract, DTO, or model change,
+  stop and route that question through the `data-modeler` persona first unless
+  the change is already explicitly reviewed and obviously backend-owned.
+- The `data-modeler` persona classifies whether the request is:
+  - UI-only
+  - contract-only
+  - a real model/domain/persistence change
+- If the change is not obvious and clear from the reviewed plan, confirm the
+  backend/model implication with the user before implementation continues.
+- Backend/shared changes discovered during frontend work must be implemented by
+  the backend developer persona, not by the frontend developer persona.
+- If the frontend developer has a contract question, ask the backend developer
+  persona for the answer instead of reading backend code directly.
+- When such a question reveals a contract documentation gap, the backend
+  developer must fix that documentation gap as part of the handoff, not merely
+  answer the question once.
+- Product ambiguity belongs with the user. Contract ambiguity belongs with the
+  backend developer. Model-impact classification belongs with the data-modeler.
 
 ---
 

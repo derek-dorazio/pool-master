@@ -70,7 +70,7 @@ For every API endpoint:
 1. Define or update the DTO Zod schema in `packages/shared/dto/`.
 2. Map domain/service results to that DTO in `packages/core-api/src/mappers/`.
 3. Use `zodToJsonSchema()` in the Fastify route schema for request/response payloads.
-4. Provide `tags`, `summary`, and unique `operationId`.
+4. Provide `tags`, `summary`, descriptive endpoint documentation, and unique `operationId`.
 5. Regenerate and validate the shared OpenAPI/client artifacts.
 
 ### Mapper File Requirement
@@ -89,9 +89,29 @@ Every route must include:
 
 - `tags`
 - `summary`
+- `description` when the endpoint behavior, audience, or lifecycle context is
+  not obvious from the path and summary alone
 - `operationId`
 - request schema where applicable (`body`, `params`, `querystring`)
 - `response` schema for every supported status returned by the handler
+
+### Contract Documentation Requirement
+
+Backend-owned API contracts must be documented well enough that frontend
+implementation can normally work from the generated SDK/types and OpenAPI docs
+without reading backend service code.
+
+That means:
+
+- add meaningful route summaries, descriptions, and tags
+- document DTO/object purpose when the type name alone is insufficient
+- document field meaning when a consumer could plausibly misread semantics
+- document enums/status values when names alone do not explain lifecycle or
+  behavior
+
+If a frontend question reveals that the contract meaning was not clear from the
+documented API surface, treat that as a backend documentation defect and fix it
+in the contract source.
 
 ### Response Rules
 

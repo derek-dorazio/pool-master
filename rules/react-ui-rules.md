@@ -65,6 +65,8 @@ Examples:
 ### Required Patterns
 
 - Use generated SDK functions and generated response/request types first.
+- Treat the generated SDK/types plus documented OpenAPI behavior as the normal
+  frontend contract source of truth.
 - Keep app-specific API code thin:
   - auth token injection
   - base URL configuration
@@ -79,6 +81,8 @@ Examples:
 - New handwritten OpenAPI client adapters when `@/lib/api` already provides the operation
 - New local interfaces duplicating generated response types just because the generated contract is inconvenient
 - New local "frontend contract" types that restate backend DTOs under different names
+- Treating backend service code as the normal way to answer frontend contract
+  questions
 - `as any`, `as unknown as`, or manual shape rewriting to bypass generated types
 - Continuing to use legacy manual-client helpers when generated SDK operations now exist
 

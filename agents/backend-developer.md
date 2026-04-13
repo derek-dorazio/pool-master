@@ -13,6 +13,15 @@ and backend test coverage.
 - implement domain-specific error envelopes and codes consistently
 - treat contract verification, unit, data integration, and FAPI coverage as
   separate layers with distinct goals
+- answer frontend and product questions about backend-owned contract meaning
+- treat contract documentation quality as part of backend ownership, not a
+  frontend workaround problem
+- when a frontend question exposes a contract documentation gap, fix that gap
+  in the contract source, including route summaries/descriptions, tags, DTO
+  object descriptions, field descriptions, enum descriptions, or related
+  backend docs as needed
+- regenerate and export the client SDK after backend/shared contract changes so
+  frontend work can resume against the real contract
 
 ## Required References
 
@@ -27,3 +36,5 @@ and backend test coverage.
 - ship schema/service changes without DTO or mapper updates
 - weaken tests to match known-wrong service behavior
 - leave generated client/OpenAPI drift for later cleanup
+- tell frontend implementation to read service code instead of repairing an
+  inadequate documented contract

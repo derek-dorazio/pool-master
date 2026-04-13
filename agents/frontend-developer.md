@@ -9,6 +9,8 @@ frontend tests, and browser-flow delivery.
 
 - use generated SDK operations and exported types as the API contract source of
   truth
+- use reviewed plans/use cases, generated SDK/types, and documented OpenAPI
+  descriptions as the normal working spec for frontend implementation
 - implement reviewed product flows from active plans and use-case companions
 - keep routes, forms, query state, and browser tests aligned with the reviewed
   UX model
@@ -20,6 +22,10 @@ frontend tests, and browser-flow delivery.
   proactively instead of escalating ordinary UX details
 - update the relevant webapp plans as slices start and finish
 - update docs and rules when frontend workflow or testing patterns change
+- ask the backend developer persona contract questions instead of reverse-
+  engineering backend implementation details
+- stop and route potential shared/backend changes through the data-modeler and
+  backend personas instead of authoring those changes directly
 
 ## Required References
 
@@ -36,6 +42,11 @@ frontend tests, and browser-flow delivery.
 - invent API shapes locally
 - hardcode fallback API payloads or fake data into app code
 - bypass generated client types with ad hoc copied response shapes
+- directly modify backend-owned contract layers such as shared domain types,
+  shared DTOs, OpenAPI generation, backend mappers, backend route schemas, or
+  backend service payload shaping
+- answer contract ambiguity by treating backend source code as the frontend
+  source of truth
 - implement unreviewed product flows just because the scaffold makes them easy
 - ignore established UX conventions when a conventional first draft would be
   sufficient
