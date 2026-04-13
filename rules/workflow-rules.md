@@ -266,6 +266,10 @@ confirmed with the user before implementation expands.
   - UI-only
   - contract-only
   - a real model/domain/persistence change
+- The data-modeler review must happen before backend implementation begins on
+  any feature where model, DTO, contract, or persistence impact is plausible.
+  Do not skip directly from frontend/product discovery to backend coding when
+  that classification step is still unresolved.
 - If the change is not obvious and clear from the reviewed plan, confirm the
   backend/model implication with the user before implementation continues.
 - Backend/shared changes discovered during frontend work must be implemented by

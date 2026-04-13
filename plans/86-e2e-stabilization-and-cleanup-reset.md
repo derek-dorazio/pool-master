@@ -36,10 +36,9 @@ land, expand the single commissioner journey again.
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 86-001 | 1 | Frontend developer: reduce browser E2E to one minimal deploy-gate script | Not Started | Keep only the stable login/signup → welcome proof |
-| 86-002 | 1 | Frontend developer: remove stale broader E2E flows from current CI scope | Not Started | Do not keep tests active that cannot clean up after themselves yet |
-| 86-003 | 1 | Update CI/testing plan references to the temporary minimum E2E lane | Not Started | Ensure docs and rules match the temporary strategy |
+| 86-001 | 1 | Frontend developer: reduce browser E2E to one minimal deploy-gate script | Done | `clients/poolmaster/e2e/authenticated-landing.e2e.ts` now keeps only a real sign-up → `/welcome` assertion. |
+| 86-002 | 1 | Frontend developer: remove stale broader E2E flows from current CI scope | Done | Removed the invite, multi-league, and create-league browser journeys from the active deploy-gate script until cleanup lifecycle exists. |
+| 86-003 | 1 | Update CI/testing plan references to the temporary minimum E2E lane | Done | The active E2E reset plan and testing/workflow rules now explicitly describe the temporary minimum deploy-gate lane and the longer-term commissioner/member lifecycle strategy. |
 | 86-004 | 2 | After league lifecycle lands, expand the commissioner journey again | Not Started | Create league → future commissioner flows → delete league |
 | 86-005 | 2 | After account lifecycle lands, add self-delete cleanup to the browser journey | Not Started | Member then commissioner account cleanup |
 | 86-006 | 2 | Remove existing QA residue after lifecycle flows exist | Not Started | Prefer API/user-flow cleanup, SQL only if still needed |
-
