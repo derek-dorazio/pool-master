@@ -184,13 +184,5 @@ describe('Contract verification (root admin)', () => {
     expect(ErrorEnvelopeSchema.safeParse(providerRes.json()).success).toBe(true);
     expect(providerRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
 
-    const migrationRunRes = await getApp().inject({
-      method: 'GET',
-      url: '/api/v1/admin/migrations/runs/00000000-0000-0000-0000-000000000000',
-      headers: rootAdmin.headers,
-    });
-    expect(migrationRunRes.statusCode).toBe(404);
-    expect(ErrorEnvelopeSchema.safeParse(migrationRunRes.json()).success).toBe(true);
-    expect(migrationRunRes.json().error.code).toBe('MIGRATION_RUN_NOT_FOUND');
   });
 });

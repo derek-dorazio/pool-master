@@ -25,8 +25,6 @@ function inferStatusCode(error: ErrorLike): number {
     case 'ProviderEventNotFoundError':
     case 'ErrorLogEntryNotFoundError':
     case 'AlertRuleNotFoundError':
-    case 'MigrationNotFoundError':
-    case 'MigrationRunNotFoundError':
       return 404;
     default:
       return 500;
@@ -63,10 +61,6 @@ function inferErrorCode(error: ErrorLike, statusCode: number): string {
       return 'ERROR_LOG_ENTRY_NOT_FOUND';
     case 'AlertRuleNotFoundError':
       return 'ALERT_RULE_NOT_FOUND';
-    case 'MigrationNotFoundError':
-      return 'MIGRATION_NOT_FOUND';
-    case 'MigrationRunNotFoundError':
-      return 'MIGRATION_RUN_NOT_FOUND';
     case 'ContestOperationError':
     case 'ContestEntryOperationError':
     case 'InvitationInvalidError':

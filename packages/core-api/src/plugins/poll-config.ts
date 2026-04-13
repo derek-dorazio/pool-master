@@ -9,7 +9,7 @@
  * - Draft state: 10000 (10s)
  * - Contest status: 30000 (30s)
  * - Notifications unread count: 30000 (30s)
- * - Discovery/search: 0 (no polling, on-demand only)
+ * Other GET routes are treated as on-demand and do not receive poll headers.
  */
 
 import fp from 'fastify-plugin';

@@ -17,6 +17,14 @@ revisions captured in:
 It is intentionally separate from the current-schema reference at
 [docs/DATABASE-SCHEMA.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/DATABASE-SCHEMA.md).
 
+Status note:
+
+- this is a target-state design reference, not an active implementation contract
+- some linked plans describe historical simplification work rather than current
+  first-pass feature commitments
+- current frontend/backend implementation truth should come from the Prisma
+  schema, exported DTO/OpenAPI contract, and active plans
+
 ## Scope And Conventions
 
 - This is a **target-state** design document, not a description of the current Prisma file.
@@ -42,7 +50,7 @@ It is intentionally separate from the current-schema reference at
 - primarily used by league-scoped commissioner tools
 
 `Site Admin`
-- small platform-ops surface outside league scope
+- small root-admin platform-ops surface outside league scope
 
 `Internal`
 - backend jobs, ingestion, scoring, or operational state
@@ -145,7 +153,7 @@ classDiagram
     ContestEntry "1" --> "0..1" BracketPrediction : placeholder
 ```
 
-### Notifications, Commissioner Audit, And Site Operations
+### Notifications, Commissioner Audit, And Root-Admin Operations
 
 ```mermaid
 classDiagram

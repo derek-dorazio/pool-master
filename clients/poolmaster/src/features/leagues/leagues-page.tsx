@@ -82,8 +82,8 @@ export function WelcomePage() {
         <div className="mt-6 rounded-[1.5rem] border border-dashed border-border bg-background p-5">
           <h3 className="text-lg font-semibold">Create your first league</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Start by creating a private or public league. Once it exists, this home flow will
-            route you directly into that league context.
+            Start by creating a private league with its own league code. Once it exists, this
+            home flow will route you directly into that league context.
           </p>
           <button
             className="mt-5 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"

@@ -16,8 +16,6 @@ import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
 import { createProviderHandlers } from './provider-handler';
-import { MigrationService } from './migration-service';
-import { createMigrationHandlers } from './migration-handler';
 import { PollConfigService } from './poll-config-service';
 import { IngestionConfigService } from './ingestion-config-service';
 import { registerPlatformConfigRoutes } from './platform-config-routes';
@@ -33,9 +31,6 @@ import {
   AdminContestListResponseSchema,
   ContestAdminDetailResponseSchema,
   ContestRecalculationResultDtoSchema,
-  MigrationListResponseSchema,
-  MigrationRunResponseSchema,
-  StartMigrationRunRequestSchema,
   ServiceHealthListResponseSchema,
   InfrastructureMetricsResponseSchema,
   BusinessMetricsResponseSchema,
@@ -83,7 +78,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const contestService = new ContestService(prisma);
   const healthService = new HealthService(prisma);
   const providerService = new ProviderService(prisma);
-  const migrationService = new MigrationService(prisma);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
 
@@ -92,7 +86,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   const contest = createContestHandlers(contestService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService);
-  const migration = createMigrationHandlers(migrationService);
 
   // --- User Management Routes ---
   // NOTE: /users/merge is registered before /users/:userId to avoid route collision.
@@ -565,54 +558,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       response: withAdminErrorResponses({ 200: zodToJsonSchema(AlertRuleDtoSchema) }, [404]),
     },
     handler: health.unmuteAlert,
-  });
-
-  // --- Migration Routes ---
-  // Permission: platform.migrations
-
-  fastify.get('/migrations', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List available data migrations',
-      description: 'Returns the catalog of administrative data migrations that may be run through the platform operations surface.',
-      operationId: 'adminListMigrations',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(MigrationListResponseSchema) }),
-    },
-    handler: migration.listMigrations,
-  });
-
-  fastify.post('/migrations/run', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Start a data migration run',
-      description: 'Starts an administrative data-migration run and returns the resulting run detail.',
-      operationId: 'adminStartMigrationRun',
-      response: withAdminErrorResponses({ 201: zodToJsonSchema(MigrationRunResponseSchema) }, [403, 404, 409]),
-      body: zodToJsonSchema(StartMigrationRunRequestSchema),
-    },
-    handler: migration.startRun,
-  });
-
-  fastify.get('/migrations/runs/:runId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get migration run detail',
-      description: 'Returns the administrative detail view for a specific migration run.',
-      operationId: 'adminGetMigrationRunDetail',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(MigrationRunResponseSchema) }, [404]),
-    },
-    handler: migration.getRunDetail,
-  });
-
-  fastify.post('/migrations/runs/:runId/cancel', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Cancel a migration run',
-      description: 'Cancels an in-progress administrative migration run when the migration system allows it.',
-      operationId: 'adminCancelMigrationRun',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(MigrationRunResponseSchema) }, [403, 404]),
-    },
-    handler: migration.cancelRun,
   });
 
   // --- Platform Configuration Routes ---

@@ -1,4 +1,4 @@
-// Ingestion routes — extracted from ingestion-worker/src/index.ts
+// Ingestion routes for provider sync, score refresh, and odds refresh operations.
 import type { FastifyInstance } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import {

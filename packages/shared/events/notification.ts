@@ -9,7 +9,6 @@ export type NotificationCategory =
   | 'SCORING'
   | 'CONTEST'
   | 'LEAGUE'
-  | 'SOCIAL'
   | 'ACCOUNT';
 
 export type NotificationPriority = 'HIGH' | 'NORMAL' | 'LOW';
@@ -80,17 +79,8 @@ export const NotificationEventType = {
   LEAGUE_ANNOUNCEMENT: 'league.announcement',
   LEAGUE_WEEKLY_RECAP: 'league.weekly_recap',
 
-  // Social
-  SOCIAL_REPLY: 'social.reply_to_your_post',
-  SOCIAL_REACTION: 'social.reaction_to_your_post',
-  SOCIAL_MENTIONED: 'social.mentioned',
-  SOCIAL_DIRECT_MESSAGE: 'social.direct_message',
-
   // Account
   ACCOUNT_WELCOME: 'account.welcome',
   ACCOUNT_PASSWORD_RESET: 'account.password_reset',
   ACCOUNT_EMAIL_CHANGED: 'account.email_changed',
-  ACCOUNT_PAYMENT_FAILED: 'account.payment_failed',
-  ACCOUNT_PLAN_CHANGED: 'account.plan_changed',
-  ACCOUNT_TRIAL_ENDING: 'account.trial_ending',
 } as const;

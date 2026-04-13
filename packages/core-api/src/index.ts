@@ -108,12 +108,12 @@ export function buildApp() {
   app.register(configModule, { prefix: '/api/v1/config' });
 
   // =========================================================================
-  // Draft module (from draft-service)
+  // Draft module
   // =========================================================================
   app.register(draftsModule, { prefix: '/api/v1/drafts' });
 
   // =========================================================================
-  // Scoring module (from scoring-service)
+  // Scoring module
   // =========================================================================
   app.register(scoringRoutes, { prefix: '/api/v1', scoringService });
 
@@ -128,7 +128,7 @@ export function buildApp() {
   }
 
   // =========================================================================
-  // Notification module (from notification-service)
+  // Notification module
   // =========================================================================
   app.register(notificationsModule, {
     prefix: '/api/v1',
@@ -136,7 +136,7 @@ export function buildApp() {
   });
 
   // =========================================================================
-  // Ingestion module (from ingestion-worker)
+  // Ingestion module
   // =========================================================================
   const ingestionCallbacks: IngestionCallbacks = {
     async onEvents(events: SportEvent[]) {

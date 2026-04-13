@@ -7,6 +7,17 @@ It has two goals:
 - provide an ERD-oriented view of the major relationships
 - provide a practical data dictionary with current application ownership
 
+Status note:
+
+- this document is grounded in the current Prisma schema, but some tables remain
+  broader than the first-pass PoolMaster product surface
+- active product/runtime truth should be read alongside:
+  - [rules/architecture-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/architecture-rules.md)
+  - [plans/archive/2026-04-backend-completion/80-backend-dto-drift-remediation.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-backend-completion/80-backend-dto-drift-remediation.md)
+- there is no active billing subsystem, no separate go-forward admin web app,
+  and no current public-league/search-discovery product surface in the PoolMaster
+  web app
+
 ## Scope And Conventions
 
 - Source of truth: Prisma schema at [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
@@ -20,7 +31,7 @@ It has two goals:
 - primarily used by the member-facing web app
 
 `Admin`
-- primarily used by the admin application
+- primarily used by root-admin/support backend flows rather than a separate active admin app
 
 `Both`
 - used by both the web app and admin/support flows
@@ -138,7 +149,7 @@ classDiagram
     User "1" --> "*" AccountEnforcement : receives
 ```
 
-### Admin, Platform, Billing, And Operations
+### Admin, Platform, Historical Billing, And Operations
 
 ```mermaid
 classDiagram
@@ -254,7 +265,7 @@ classDiagram
 | `scheduled_notifications` | Delayed notification jobs awaiting send time | `event_type`, `fire_at`, source identity, `status` | `Internal` |
 | `notification_delivery_log` | Channel delivery telemetry and failure history | event ID, `user_id`, `channel`, `status`, provider IDs, timing fields | `Admin` |
 
-## Search And Discovery
+## Historical / Deferred Search And Discovery
 
 | Table | Purpose | Key Columns | Primary Surface |
 |---|---|---|---|

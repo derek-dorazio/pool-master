@@ -34,7 +34,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | Concern | Choice | Details In |
 |---|---|---|
 | Web framework | React 18 + TypeScript | [React UI Rules](react-ui-rules.md) |
-| UI library | shadcn/ui + Radix UI + TailwindCSS | [React UI Rules](react-ui-rules.md) |
+| UI library | Radix primitives, shadcn-style components, and TailwindCSS utilities | [React UI Rules](react-ui-rules.md) |
 | Build tool | Vite | [React UI Rules](react-ui-rules.md) |
 | Server state | TanStack Query | [React UI Rules](react-ui-rules.md) |
 | Client state | Zustand | [React UI Rules](react-ui-rules.md) |
@@ -44,7 +44,7 @@ All plan documents and implementation work must conform to these rules. This is 
 
 The go-forward web frontend is a single role-based application: `clients/poolmaster`.
 
-- `clients/admin` is being retired and should not be treated as the future admin surface.
+- root-admin capability currently lives in the backend API rather than a separate go-forward admin web app.
 - `clients/_archived/web` is archived reference material only.
 - New web implementation work should target the single PoolMaster app rather than splitting functionality across multiple React apps.
 
@@ -87,7 +87,7 @@ PoolMaster is now explicitly **contract-first at the API boundary**.
 
 The source-of-truth chain is:
 
-`Zod DTO schema -> Fastify route schema.response/request schema -> exported OpenAPI spec -> generated hey-api client -> web/admin app usage`
+`Zod DTO schema -> Fastify route schema.response/request schema -> exported OpenAPI spec -> generated hey-api client -> PoolMaster app usage`
 
 Required implications:
 
@@ -139,13 +139,13 @@ Related anti-patterns that are banned:
 
 All backend services are TypeScript services with explicit module boundaries.
 
-| Service | Responsibility |
+| Module / Surface | Responsibility |
 |---|---|
-| Core API | Auth, leagues, contests, billing, admin, notifications, search, history, compliance |
-| Draft module/service | Draft session lifecycle and draft engines |
-| Scoring module/service | Scoring computation, standings rollups, event consumption |
-| Ingestion worker/module | Sports-data provider ingestion and stat publication |
-| Notification module/service | Push, email, in-app delivery orchestration |
+| Core API | Auth, leagues, invitations, contests, squads, participants, events, scoring, standings, notifications, history, config, consent, and root-admin operations |
+| Draft module | Draft session lifecycle and draft engines inside the monolith |
+| Scoring module | Scoring computation, standings rollups, and event-consumption logic inside the monolith |
+| Ingestion module | Sports-data provider ingestion and provider/status operations inside the monolith |
+| Notification module | In-app notification delivery orchestration inside the monolith |
 
 ### Architectural Rules
 
@@ -181,8 +181,8 @@ poolmaster/
 │       │   └── hey-api/
 │       └── domain/
 ├── clients/
-│   ├── web/
-│   ├── admin/
+│   ├── poolmaster/
+│   ├── _archived/
 │   ├── ios/
 │   └── android/
 ├── tests/

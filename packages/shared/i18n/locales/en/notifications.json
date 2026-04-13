@@ -25,11 +25,6 @@
     "invitation_accepted": "{{memberName}} accepted your invitation to {{leagueName}}",
     "settings_updated": "League settings updated for {{leagueName}}"
   },
-  "social": {
-    "mentioned": "{{memberName}} mentioned you in {{leagueName}}",
-    "new_message": "New message from {{memberName}}",
-    "post_reaction": "{{memberName}} reacted to your post in {{leagueName}}"
-  },
   "account": {
     "welcome": "Welcome to PoolMaster! Get started by creating or joining a league.",
     "password_changed": "Your password was successfully changed",

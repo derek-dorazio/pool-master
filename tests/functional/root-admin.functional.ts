@@ -1,6 +1,5 @@
 import {
-  adminGetMigrationRunDetail,
-  adminListMigrations,
+  adminGetUserDetail,
   adminListUsers,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser } from './builders';
@@ -53,29 +52,31 @@ describe('SDK Functional: Root Admin', () => {
     });
     expect(usersResponse.data?.items.some((item) => item.id === user.userId)).toBe(true);
 
-    const migrationsResponse = await adminListMigrations({
+    const detailResponse = await adminGetUserDetail({
       client: user.client,
+      path: {
+        userId: user.userId,
+      },
     });
-    expect(migrationsResponse.data?.available.length).toBeGreaterThan(0);
-    expect(Array.isArray(migrationsResponse.data?.recentHistory)).toBe(true);
+    expect(detailResponse.data?.id).toBe(user.userId);
   });
 
-  it('returns stable not-found codes for root-admin migration reads', async () => {
+  it('returns stable not-found codes for root-admin user detail reads', async () => {
     const user = await buildRegisteredUser({
-      displayName: 'Root Admin Migration User',
+      displayName: 'Root Admin Detail User',
     });
     await promoteToRootAdmin(user.userId);
 
-    const response = await adminGetMigrationRunDetail({
+    const response = await adminGetUserDetail({
       client: user.client,
       path: {
-        runId: '00000000-0000-0000-0000-000000000000',
+        userId: '00000000-0000-0000-0000-000000000000',
       },
     });
 
     expectFunctionalError(response, {
       status: 404,
-      code: 'MIGRATION_RUN_NOT_FOUND',
+      code: 'USER_NOT_FOUND',
     });
   });
 });

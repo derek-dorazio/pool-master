@@ -2,39 +2,12 @@
  * Canonical API route paths — single source of truth.
  *
  * Used by:
- *   - Backend route registration (packages/core-api/src/index.ts)
- *   - Frontend API client calls (clients/web, clients/admin)
- *   - Test suites (smoke tests, integration tests, MSW handlers)
+ *   - Active backend route registration reference
+ *   - Integration and contract-focused test suites
+ *   - Any remaining app code that still needs a stable manual route constant
  *
  * If you add or change a route, update it HERE. Everything else imports from this file.
  */
-
-// ---------------------------------------------------------------------------
-// Route prefixes (used by backend app.register)
-// ---------------------------------------------------------------------------
-
-export const API_PREFIXES = {
-  AUTH: '/api/v1/auth',
-  LEAGUES: '/api/v1/leagues',
-  SQUADS_BY_LEAGUE: '/api/v1/leagues/:id/squads',
-  INVITATIONS: '/api/v1/invitations',
-  CONTESTS_BY_LEAGUE: '/api/v1/leagues/:id/contests',
-  CONTEST_MANAGEMENT: '/api/v1/leagues/:id/contest-management/contests',
-  CONTESTS: '/api/v1/contests',
-  PARTICIPANTS: '/api/v1/participants',
-  CONTEST_POOL: '/api/v1/contests/:contestId/pool',
-  STANDINGS: '/api/v1/contests/:contestId/standings',
-  HISTORY: '/api/v1',
-  ACCOUNT: '/api/v1/account',
-  ADMIN: '/api/v1/admin',
-  CONFIG: '/api/v1/config',
-  BILLING: '/api/v1/billing',
-  WEBHOOKS: '/api/v1',
-  SOCIAL: '/api/v1',
-  DRAFTS: '/api/v1/drafts',
-  SCORING: '/api/v1',
-  NOTIFICATIONS: '/api/v1',
-} as const;
 
 // ---------------------------------------------------------------------------
 // Full endpoint paths (used by frontend + tests)
@@ -133,9 +106,7 @@ export const API_ROUTES = {
 
   // Config
   config: {
-    root: '/api/v1/config',
-    sports: '/api/v1/config/sports',
-    platform: '/api/v1/config/platform',
+    pollIntervals: '/api/v1/config/poll-intervals',
   },
 
   // Notifications
@@ -151,20 +122,3 @@ export const API_ROUTES = {
   // Health
   health: '/health',
 } as const;
-
-// ---------------------------------------------------------------------------
-// Helper: strip /api prefix for frontend api-client (which prepends /api)
-// ---------------------------------------------------------------------------
-
-/**
- * Returns the path portion after /api, for use with the frontend api-client
- * which already prepends API_BASE='/api'.
- *
- * Example: clientPath(API_ROUTES.auth.login) => '/v1/auth/login'
- */
-export function clientPath(fullPath: string): string {
-  if (fullPath.startsWith('/api')) {
-    return fullPath.slice(4); // remove '/api'
-  }
-  return fullPath;
-}
