@@ -422,6 +422,10 @@ Recommended fix:
 Isolation:
 - yes, especially if handled together with `A-002`
 
+Status update:
+- resolved by aligning the DTO and admin user-service output to the shared
+  contest-status enum instead of a lowercased generic string
+
 ### Remaining Smaller DTO Families
 
 #### D-010: Event summary DTOs still export constrained sport and status values as generic strings
@@ -442,6 +446,10 @@ Recommended fix:
 Isolation:
 - yes; clean event-contract slice
 
+Status update:
+- resolved by narrowing event `sport` to `Sport` and `status` to the active
+  event-status union used by providers
+
 #### D-011: Scoring health response still exports a fixed status as a generic string
 
 - `packages/shared/dto/scoring.dto.ts`
@@ -456,6 +464,9 @@ Recommended fix:
 
 Isolation:
 - yes; small scoring-contract slice
+
+Status update:
+- resolved by narrowing scoring health `status` to the literal `'ok'`
 
 #### D-012: `SportConfigDto` still exports enum-backed fields as generic strings
 
@@ -472,6 +483,10 @@ Recommended fix:
 
 Isolation:
 - not yet; this is blocked by the larger config-surface mismatch below
+
+Status update:
+- superseded by the config-contract cleanup; the stale platform-bootstrap DTO
+  family was removed in favor of shared poll-interval config schemas
 
 #### D-013: The active config route appears to advertise the wrong response schema
 
@@ -515,6 +530,10 @@ Recommended fix:
 
 Isolation:
 - yes; clean ingestion-contract slice
+
+Status update:
+- resolved by narrowing ingestion provider and job sport fields to the shared
+  `Sport` enum
 
 #### A-005: Root-admin provider DTOs still export sport-backed fields as generic strings
 
@@ -639,6 +658,11 @@ Recommended fix:
 Isolation:
 - partial; this is a small architecture cleanup rather than a one-file deletion
 
+Status update:
+- resolved in practice: the public poll-interval route and poll-config plugin
+  now both read from the same root-admin poll-config service, and the stale
+  platform-bootstrap contract surface has been removed
+
 ## Audit Scope
 
 In scope:
@@ -684,15 +708,15 @@ Out of scope:
 | --- | --- | --- | --- | --- |
 | 80-001 | 1 | Inventory the active domain entities and DTO families that still matter to the frontend-facing contract | Done | Initial audit already covered leagues, contests, participants, admin, events, and history surfaces. |
 | 80-002 | 1 | Confirm and document concrete DTO/domain drift findings | Done | `UserLeagueDetailDtoSchema.sport` and orphaned `UpdateLeagueRequestSchema` are confirmed issues. |
-| 80-003 | 1 | Sweep all active request/response DTOs for stale or placeholder fields | In Progress | First cleanup slice removes the stale admin league `sport` field and the orphaned history season DTO surface. |
-| 80-004 | 1 | Sweep all route schemas and handlers for request models that are exported but not actually wired to active routes | In Progress | First cleanup slice removes the orphaned `UpdateLeagueRequestSchema`. |
+| 80-003 | 1 | Sweep all active request/response DTOs for stale or placeholder fields | In Progress | Most confirmed DTO drift slices are now resolved; the remaining work is final verification that no stale findings remain in the plan or generated contract. |
+| 80-004 | 1 | Sweep all route schemas and handlers for request models that are exported but not actually wired to active routes | In Progress | The orphaned `UpdateLeagueRequestSchema` cleanup is done; remaining work is a final audit pass for any other orphaned route-backed request/response surfaces. |
 | 80-005 | 1 | Sweep mapper/service outputs for placeholder values that exist only to satisfy stale DTOs | In Progress | Placeholder cleanup now includes the removed admin user-detail `sport: ''` value and the removed provider re-ingest `'UNKNOWN'` sport fallback. |
-| 80-006 | 1 | Regenerate OpenAPI and SDK/types after each contract-aligned change set | In Progress | First cleanup slice already refreshed OpenAPI and generated types after removing stale admin/history/league DTO surface. |
-| 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | Backend slices must still prove downstream consumer safety when shared DTOs/enums change; early Plan 80 pushes failed `@poolmaster/poolmaster` typecheck because that consumer gate was skipped locally. |
-| 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | Not Started | This is the key decision point for `UpdateLeagueRequestSchema` and any similar drift found during the sweep. |
-| 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | Second cleanup slice narrowed league and invitation enum-backed DTO fields. Third cleanup slice narrowed contest summary/detail enum-backed fields. Fourth cleanup slice narrowed participant response enum-backed fields for participant detail and draft-search surfaces. |
-| 80-010 | 2 | Remove or consolidate backend dead code that duplicates active contract-building paths | In Progress | `X-001` draft mapper cleanup and `X-002` audit read-surface cleanup are resolved; remaining dead-code cleanup is limited and may collapse into the final review. |
-| 80-011 | 2 | Resolve backend modules that still have competing sources of truth after contract cleanup | In Progress | Config/poll contract drift is now aligned to shared poll-interval schemas; remaining work is deciding whether any broader platform-bootstrap config surface still belongs in the backend at all. |
+| 80-006 | 1 | Regenerate OpenAPI and SDK/types after each contract-aligned change set | In Progress | This has been followed on every implemented slice and remains open until the final Plan 80 slice is complete. |
+| 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | This has been followed on every implemented slice and remains open until the final Plan 80 slice is complete. |
+| 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | In Progress | `UpdateLeagueRequestSchema` and similar orphaned surfaces found so far have been removed; remaining work is the final orphaned-surface review. |
+| 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | League, contest, participant, draft, event, scoring, ingestion, config, and root-admin enum-backed drift slices are now resolved; this stays open until the last audit confirmation pass. |
+| 80-010 | 2 | Remove or consolidate backend dead code that duplicates active contract-building paths | In Progress | `X-001` draft mapper cleanup and `X-002` audit read-surface cleanup are resolved; remaining dead-code cleanup is now limited. |
+| 80-011 | 2 | Resolve backend modules that still have competing sources of truth after contract cleanup | In Progress | Config/poll ownership is effectively unified; remaining work is the final documentation/rule pass so the repo guidance reflects that cleanup clearly. |
 | 80-012 | 3 | Review and update non-API backend documentation and rules after the drift cleanup lands | Not Started | Final pass should cover backend-facing docs and repo rules outside generated API artifacts so architecture, workflow, and implementation guidance match the cleaned backend. |
 | 80-013 | 1 | Add and follow a Plan 80 pre-push gate that includes downstream PoolMaster consumer checks | Done | Added after CI failures on early slices showed that shared-contract changes must run PoolMaster typecheck/lint before push, not just backend-only gates. |
 
