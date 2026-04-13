@@ -13,7 +13,6 @@ Status note:
   broader than the first-pass PoolMaster product surface
 - active product/runtime truth should be read alongside:
   - [rules/architecture-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/architecture-rules.md)
-  - [plans/archive/2026-04-backend-completion/80-backend-dto-drift-remediation.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/archive/2026-04-backend-completion/80-backend-dto-drift-remediation.md)
 - there is no active billing subsystem, no separate go-forward admin web app,
   and no current public-league/search-discovery product surface in the PoolMaster
   web app

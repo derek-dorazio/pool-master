@@ -154,4 +154,3 @@ If reviewing the branch manually, prioritize:
 - [51-scoring-and-participant-data-review.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/51-scoring-and-participant-data-review.md)
 - [53-commissioner-tools-contest-management-use-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/53-commissioner-tools-contest-management-use-cases.md)
 - [59-backend-refactor-worker-slices.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/59-backend-refactor-worker-slices.md)
-- [DATABASE-SCHEMA-V2.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/DATABASE-SCHEMA-V2.md)

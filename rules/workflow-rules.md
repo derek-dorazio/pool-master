@@ -129,8 +129,8 @@ Or confirm all layers pass the Slice Completion Checklist above before marking t
 
 - Plans are execution tools, not long-lived policy documents. Durable rules belong in `rules/`, not in active plans.
 - When all remaining tasks in an umbrella plan are done, removed, or intentionally handed off to a newer active plan, close it out instead of leaving it in `plans/` indefinitely.
-- Archive completed or superseded plans under `plans/archive/` and add a short note explaining why they were archived.
-- Update any active plans that still reference the archived plan so they point to it only as historical context, not as active execution guidance.
+- Remove completed or superseded plans from the active planning surface once their useful execution life is over.
+- If historical context still matters, rely on git history or rewrite the needed background into current docs/rules instead of maintaining a large on-disk archive.
 - If a plan contained temporary guidance that has either served its purpose or become durable policy, remove it from the active plan during closeout. Only move it into `rules/` if it is genuinely long-lived guidance.
 
 ---
@@ -358,7 +358,7 @@ Do not protect obsolete architecture with inertia.
 
 ## 5. Finding Tasks
 
-Use the table below for active plan ranges still expected to receive execution updates. Completed plan ranges may live in `plans/archive/` as historical reference only.
+Use the table below for active plan ranges still expected to receive execution updates. Completed ranges should leave the active planning surface once they are no longer execution tools.
 
 | Prefix | Plan File | Area |
 |---|---|---|

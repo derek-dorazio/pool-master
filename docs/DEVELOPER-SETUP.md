@@ -301,7 +301,7 @@ After `terraform apply`, run migrations:
 DATABASE_URL=$(terraform output -raw database_url) npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 ```
 
-See [AWS Deployment Plan](../plans/archive/2026-04-completed-wave/16-aws-deployment.md) for the historical step-by-step guide and [Terraform Workflow](../infrastructure/terraform/README.md) for the current remote-state-only workflow.
+See [Terraform Workflow](../infrastructure/terraform/README.md) for the current remote-state-only workflow.
 
 ---
 

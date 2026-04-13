@@ -576,6 +576,5 @@ All survivor contests share these configurable options:
 
 - Launch scoring rules and aggregation rules are defined in `plans/51-scoring-and-participant-data-review.md`
 - Later rule expansion ideas are tracked in `plans/52-potential-rules-function-expansion.md`
-- Contest structures specification: `plans/archive/2026-04-completed-wave/02a-poolmaster-contest-structures.md`
 - Scoring config schemas: `packages/shared/domain/scoring-config.ts`
 - Domain enums: `packages/shared/domain/enums.ts`

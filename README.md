@@ -154,8 +154,6 @@ poolmaster/
 - [Standard Auth Model](docs/STANDARD-AUTH-MODEL.md) — Recommended conventional local-auth + Google OIDC + cookie-session target for PoolMaster
 - [Database Schema](docs/DATABASE-SCHEMA.md) — ERDs and a practical data dictionary for PostgreSQL tables and app ownership
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
-- [Honest Contract Remediation](docs/HONEST-CONTRACT-REMEDIATION.md) — Contract cleanup notes and follow-up context
-- [AWS Deployment Plan](plans/archive/2026-04-completed-wave/16-aws-deployment.md) — Historical deployment plan with action items and status
 
 ### Code READMEs
 - [Backend Services](packages/README.md) — Monolith modules, shared package, API routes, engines
@@ -204,7 +202,7 @@ See [Terraform Workflow](infrastructure/terraform/README.md) for the remote-stat
 | **Staging** | Manual workflow_dispatch | ECS Fargate | S3 + CloudFront |
 | **Prod** | Manual workflow_dispatch | ECS Fargate | S3 + CloudFront |
 
-See [AWS Deployment Plan](plans/archive/2026-04-completed-wave/16-aws-deployment.md) for historical details and [Architecture Simplification](plans/architecture/architecture-simplification.md) for the CloudFront migration rationale.
+See [Terraform Workflow](infrastructure/terraform/README.md) for the active deployment workflow and [Architecture Simplification](plans/architecture/architecture-simplification.md) for the CloudFront migration rationale.
 
 ---
 
