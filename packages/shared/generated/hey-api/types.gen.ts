@@ -10743,24 +10743,58 @@ export type AdminGetPollIntervalsError = AdminGetPollIntervalsErrors[keyof Admin
 
 export type AdminGetPollIntervalsResponses = {
     /**
-     * Minimal success response envelope.
+     * Poll-interval configuration payload exposed to clients and root-admin tools.
      */
     200: {
         /**
-         * Confirms that the requested operation succeeded.
+         * Recommended refresh interval for standings and leaderboard surfaces.
          */
-        success: true;
+        standings: number;
+        /**
+         * Recommended refresh interval for draft state and pick-clock surfaces.
+         */
+        draft: number;
+        /**
+         * Recommended refresh interval for contest status and lifecycle surfaces.
+         */
+        contestStatus: number;
+        /**
+         * Recommended refresh interval for unread notifications and similar badge counts.
+         */
+        notifications: number;
+        /**
+         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
+         */
+        default: number;
     };
 };
 
 export type AdminGetPollIntervalsResponse = AdminGetPollIntervalsResponses[keyof AdminGetPollIntervalsResponses];
 
 export type AdminUpdatePollIntervalsData = {
+    /**
+     * Partial poll-interval update payload used by root-admin configuration tools.
+     */
     body: {
+        /**
+         * Recommended refresh interval for standings and leaderboard surfaces.
+         */
         standings?: number;
+        /**
+         * Recommended refresh interval for draft state and pick-clock surfaces.
+         */
         draft?: number;
+        /**
+         * Recommended refresh interval for contest status and lifecycle surfaces.
+         */
         contestStatus?: number;
+        /**
+         * Recommended refresh interval for unread notifications and similar badge counts.
+         */
         notifications?: number;
+        /**
+         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
+         */
         default?: number;
     };
     path?: never;
@@ -10797,13 +10831,29 @@ export type AdminUpdatePollIntervalsError = AdminUpdatePollIntervalsErrors[keyof
 
 export type AdminUpdatePollIntervalsResponses = {
     /**
-     * Minimal success response envelope.
+     * Poll-interval configuration payload exposed to clients and root-admin tools.
      */
     200: {
         /**
-         * Confirms that the requested operation succeeded.
+         * Recommended refresh interval for standings and leaderboard surfaces.
          */
-        success: true;
+        standings: number;
+        /**
+         * Recommended refresh interval for draft state and pick-clock surfaces.
+         */
+        draft: number;
+        /**
+         * Recommended refresh interval for contest status and lifecycle surfaces.
+         */
+        contestStatus: number;
+        /**
+         * Recommended refresh interval for unread notifications and similar badge counts.
+         */
+        notifications: number;
+        /**
+         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
+         */
+        default: number;
     };
 };
 
@@ -10845,13 +10895,29 @@ export type AdminResetPollIntervalsError = AdminResetPollIntervalsErrors[keyof A
 
 export type AdminResetPollIntervalsResponses = {
     /**
-     * Minimal success response envelope.
+     * Poll-interval configuration payload exposed to clients and root-admin tools.
      */
     200: {
         /**
-         * Confirms that the requested operation succeeded.
+         * Recommended refresh interval for standings and leaderboard surfaces.
          */
-        success: true;
+        standings: number;
+        /**
+         * Recommended refresh interval for draft state and pick-clock surfaces.
+         */
+        draft: number;
+        /**
+         * Recommended refresh interval for contest status and lifecycle surfaces.
+         */
+        contestStatus: number;
+        /**
+         * Recommended refresh interval for unread notifications and similar badge counts.
+         */
+        notifications: number;
+        /**
+         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
+         */
+        default: number;
     };
 };
 
@@ -11045,36 +11111,29 @@ export type GetPollIntervalsData = {
 
 export type GetPollIntervalsResponses = {
     /**
-     * Platform-configuration payload used to bootstrap app capabilities.
+     * Poll-interval configuration payload exposed to clients and root-admin tools.
      */
     200: {
         /**
-         * Supported sports and their basic configuration metadata.
+         * Recommended refresh interval for standings and leaderboard surfaces.
          */
-        sports: Array<{
-            /**
-             * Sport configuration identifier.
-             */
-            id: string;
-            /**
-             * Canonical sport code or display name.
-             */
-            name: string;
-            /**
-             * Whether the sport primarily uses individual or team participants.
-             */
-            participantType: string;
-            /**
-             * Available season identifiers currently known for the sport.
-             */
-            seasons: Array<string>;
-        }>;
+        standings: number;
         /**
-         * Boolean platform feature flags exposed to clients.
+         * Recommended refresh interval for draft state and pick-clock surfaces.
          */
-        features: {
-            [key: string]: boolean;
-        };
+        draft: number;
+        /**
+         * Recommended refresh interval for contest status and lifecycle surfaces.
+         */
+        contestStatus: number;
+        /**
+         * Recommended refresh interval for unread notifications and similar badge counts.
+         */
+        notifications: number;
+        /**
+         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
+         */
+        default: number;
     };
 };
 

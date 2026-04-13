@@ -6,7 +6,12 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { zodToJsonSchema, SuccessSchema } from '@poolmaster/shared/dto';
+import {
+  PollIntervalConfigPatchSchema,
+  PollIntervalConfigSchema,
+  SuccessSchema,
+  zodToJsonSchema,
+} from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
@@ -37,7 +42,7 @@ export function registerPlatformConfigRoutes(
         'Returns the root-admin poll interval configuration that governs recommended client refresh timing.',
       operationId: 'adminGetPollIntervals',
       response: {
-        200: zodToJsonSchema(SuccessSchema),
+        200: zodToJsonSchema(PollIntervalConfigSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -54,19 +59,10 @@ export function registerPlatformConfigRoutes(
         'Updates the root-admin poll interval configuration used by client polling guidance.',
       operationId: 'adminUpdatePollIntervals',
       response: {
-        200: zodToJsonSchema(SuccessSchema),
+        200: zodToJsonSchema(PollIntervalConfigSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
-      body: {
-        type: 'object',
-        properties: {
-          standings: { type: 'integer', minimum: 1000 },
-          draft: { type: 'integer', minimum: 1000 },
-          contestStatus: { type: 'integer', minimum: 1000 },
-          notifications: { type: 'integer', minimum: 1000 },
-          default: { type: 'integer', minimum: 1000 },
-        },
-      },
+      body: zodToJsonSchema(PollIntervalConfigPatchSchema),
     },
     handler: async (
       request: FastifyRequest<{
@@ -92,7 +88,7 @@ export function registerPlatformConfigRoutes(
         'Resets poll interval configuration back to the platform defaults.',
       operationId: 'adminResetPollIntervals',
       response: {
-        200: zodToJsonSchema(SuccessSchema),
+        200: zodToJsonSchema(PollIntervalConfigSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },

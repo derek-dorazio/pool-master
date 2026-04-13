@@ -1,22 +1,35 @@
 /**
- * Config DTOs — request/response schemas for platform configuration endpoints.
+ * Config DTOs — request/response schemas for client poll guidance and related
+ * runtime configuration endpoints.
  */
 import { z } from 'zod';
 
-// --- Response Sub-schemas ---
+const PollIntervalMsSchema = z.number().int().min(1000).describe(
+  'Recommended poll interval in milliseconds.',
+);
 
-export const SportConfigDtoSchema = z.object({
-  id: z.string().describe('Sport configuration identifier.'),
-  name: z.string().describe('Canonical sport code or display name.'),
-  participantType: z.string().describe('Whether the sport primarily uses individual or team participants.'),
-  seasons: z.array(z.string()).describe('Available season identifiers currently known for the sport.'),
-}).describe('Frontend-facing sport configuration record.');
-export type SportConfigDto = z.infer<typeof SportConfigDtoSchema>;
+export const PollIntervalConfigSchema = z.object({
+  standings: PollIntervalMsSchema.describe(
+    'Recommended refresh interval for standings and leaderboard surfaces.',
+  ),
+  draft: PollIntervalMsSchema.describe(
+    'Recommended refresh interval for draft state and pick-clock surfaces.',
+  ),
+  contestStatus: PollIntervalMsSchema.describe(
+    'Recommended refresh interval for contest status and lifecycle surfaces.',
+  ),
+  notifications: PollIntervalMsSchema.describe(
+    'Recommended refresh interval for unread notifications and similar badge counts.',
+  ),
+  default: PollIntervalMsSchema.describe(
+    'Fallback refresh interval for pollable surfaces without a more specific recommendation.',
+  ),
+}).describe('Poll-interval configuration payload exposed to clients and root-admin tools.');
+export type PollIntervalConfig = z.infer<typeof PollIntervalConfigSchema>;
 
-// --- Responses ---
-
-export const PlatformConfigResponseSchema = z.object({
-  sports: z.array(SportConfigDtoSchema).describe('Supported sports and their basic configuration metadata.'),
-  features: z.record(z.boolean()).describe('Boolean platform feature flags exposed to clients.'),
-}).describe('Platform-configuration payload used to bootstrap app capabilities.');
-export type PlatformConfigResponse = z.infer<typeof PlatformConfigResponseSchema>;
+export const PollIntervalConfigPatchSchema = PollIntervalConfigSchema.partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: 'At least one poll interval must be provided.',
+  })
+  .describe('Partial poll-interval update payload used by root-admin configuration tools.');
+export type PollIntervalConfigPatch = z.infer<typeof PollIntervalConfigPatchSchema>;

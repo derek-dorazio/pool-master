@@ -8,7 +8,7 @@
 import type { FastifyInstance } from 'fastify';
 import { POLL_INTERVAL_CONFIG } from '../../plugins/poll-config';
 import {
-  PlatformConfigResponseSchema,
+  PollIntervalConfigSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 
@@ -35,7 +35,7 @@ export async function configModule(fastify: FastifyInstance): Promise<void> {
       description:
         'Returns runtime poll-interval guidance for client surfaces such as standings, drafts, notifications, and other refresh-driven views.',
       operationId: 'getPollIntervals',
-      response: { 200: zodToJsonSchema(PlatformConfigResponseSchema) },
+      response: { 200: zodToJsonSchema(PollIntervalConfigSchema) },
     },
     handler: async (_request, reply) => {
       return reply.send(POLL_INTERVAL_CONFIG);

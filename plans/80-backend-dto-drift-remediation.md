@@ -485,6 +485,11 @@ Recommended fix:
 Isolation:
 - no; this is broader contract drift, not just enum narrowing
 
+Status update:
+- completed by replacing the stale platform-bootstrap DTO surface with shared
+  poll-interval config schemas and wiring both the public config route and the
+  root-admin poll-config routes to that truthful contract family
+
 #### D-014: Ingestion provider and job DTOs still export sport-backed fields as generic strings
 
 - `packages/shared/dto/ingestion.dto.ts`
@@ -669,7 +674,7 @@ Out of scope:
 | 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | Not Started | This is the key decision point for `UpdateLeagueRequestSchema` and any similar drift found during the sweep. |
 | 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | Second cleanup slice narrowed league and invitation enum-backed DTO fields. Third cleanup slice narrowed contest summary/detail enum-backed fields. Fourth cleanup slice narrowed participant response enum-backed fields for participant detail and draft-search surfaces. |
 | 80-010 | 2 | Remove or consolidate backend dead code that duplicates active contract-building paths | Not Started | Includes `X-001` draft mapper cleanup and `X-002` overlapping admin audit query surface. |
-| 80-011 | 2 | Resolve backend modules that still have competing sources of truth after contract cleanup | Not Started | Includes `X-003` config/poll/platform config ownership cleanup after `D-012/D-013` are resolved. |
+| 80-011 | 2 | Resolve backend modules that still have competing sources of truth after contract cleanup | In Progress | Config/poll contract drift is now aligned to shared poll-interval schemas; remaining work is deciding whether any broader platform-bootstrap config surface still belongs in the backend at all. |
 | 80-012 | 3 | Review and update non-API backend documentation and rules after the drift cleanup lands | Not Started | Final pass should cover backend-facing docs and repo rules outside generated API artifacts so architecture, workflow, and implementation guidance match the cleaned backend. |
 | 80-013 | 1 | Add and follow a Plan 80 pre-push gate that includes downstream PoolMaster consumer checks | Done | Added after CI failures on early slices showed that shared-contract changes must run PoolMaster typecheck/lint before push, not just backend-only gates. |
 

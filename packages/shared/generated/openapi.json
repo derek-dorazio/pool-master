@@ -21803,25 +21803,47 @@
         "description": "Returns the root-admin poll interval configuration that governs recommended client refresh timing.",
         "responses": {
           "200": {
-            "description": "Minimal success response envelope.",
+            "description": "Poll-interval configuration payload exposed to clients and root-admin tools.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
+                    "standings": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for standings and leaderboard surfaces."
+                    },
+                    "draft": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for draft state and pick-clock surfaces."
+                    },
+                    "contestStatus": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for contest status and lifecycle surfaces."
+                    },
+                    "notifications": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for unread notifications and similar badge counts."
+                    },
+                    "default": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
                     }
                   },
                   "required": [
-                    "success"
+                    "standings",
+                    "draft",
+                    "contestStatus",
+                    "notifications",
+                    "default"
                   ],
                   "additionalProperties": false,
-                  "description": "Minimal success response envelope."
+                  "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
                 }
               }
             }
@@ -21883,50 +21905,80 @@
                 "properties": {
                   "standings": {
                     "type": "integer",
-                    "minimum": 1000
+                    "minimum": 1000,
+                    "description": "Recommended refresh interval for standings and leaderboard surfaces."
                   },
                   "draft": {
                     "type": "integer",
-                    "minimum": 1000
+                    "minimum": 1000,
+                    "description": "Recommended refresh interval for draft state and pick-clock surfaces."
                   },
                   "contestStatus": {
                     "type": "integer",
-                    "minimum": 1000
+                    "minimum": 1000,
+                    "description": "Recommended refresh interval for contest status and lifecycle surfaces."
                   },
                   "notifications": {
                     "type": "integer",
-                    "minimum": 1000
+                    "minimum": 1000,
+                    "description": "Recommended refresh interval for unread notifications and similar badge counts."
                   },
                   "default": {
                     "type": "integer",
-                    "minimum": 1000
+                    "minimum": 1000,
+                    "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
                   }
-                }
+                },
+                "additionalProperties": false,
+                "description": "Partial poll-interval update payload used by root-admin configuration tools."
               }
             }
-          }
+          },
+          "description": "Partial poll-interval update payload used by root-admin configuration tools."
         },
         "responses": {
           "200": {
-            "description": "Minimal success response envelope.",
+            "description": "Poll-interval configuration payload exposed to clients and root-admin tools.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
+                    "standings": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for standings and leaderboard surfaces."
+                    },
+                    "draft": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for draft state and pick-clock surfaces."
+                    },
+                    "contestStatus": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for contest status and lifecycle surfaces."
+                    },
+                    "notifications": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for unread notifications and similar badge counts."
+                    },
+                    "default": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
                     }
                   },
                   "required": [
-                    "success"
+                    "standings",
+                    "draft",
+                    "contestStatus",
+                    "notifications",
+                    "default"
                   ],
                   "additionalProperties": false,
-                  "description": "Minimal success response envelope."
+                  "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
                 }
               }
             }
@@ -21983,25 +22035,47 @@
         "description": "Resets poll interval configuration back to the platform defaults.",
         "responses": {
           "200": {
-            "description": "Minimal success response envelope.",
+            "description": "Poll-interval configuration payload exposed to clients and root-admin tools.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
+                    "standings": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for standings and leaderboard surfaces."
+                    },
+                    "draft": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for draft state and pick-clock surfaces."
+                    },
+                    "contestStatus": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for contest status and lifecycle surfaces."
+                    },
+                    "notifications": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for unread notifications and similar badge counts."
+                    },
+                    "default": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
                     }
                   },
                   "required": [
-                    "success"
+                    "standings",
+                    "draft",
+                    "contestStatus",
+                    "notifications",
+                    "default"
                   ],
                   "additionalProperties": false,
-                  "description": "Minimal success response envelope."
+                  "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
                 }
               }
             }
@@ -22391,62 +22465,47 @@
         "description": "Returns runtime poll-interval guidance for client surfaces such as standings, drafts, notifications, and other refresh-driven views.",
         "responses": {
           "200": {
-            "description": "Platform-configuration payload used to bootstrap app capabilities.",
+            "description": "Poll-interval configuration payload exposed to clients and root-admin tools.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "sports": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "Sport configuration identifier."
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Canonical sport code or display name."
-                          },
-                          "participantType": {
-                            "type": "string",
-                            "description": "Whether the sport primarily uses individual or team participants."
-                          },
-                          "seasons": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            },
-                            "description": "Available season identifiers currently known for the sport."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "participantType",
-                          "seasons"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Frontend-facing sport configuration record."
-                      },
-                      "description": "Supported sports and their basic configuration metadata."
+                    "standings": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for standings and leaderboard surfaces."
                     },
-                    "features": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "boolean"
-                      },
-                      "description": "Boolean platform feature flags exposed to clients."
+                    "draft": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for draft state and pick-clock surfaces."
+                    },
+                    "contestStatus": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for contest status and lifecycle surfaces."
+                    },
+                    "notifications": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Recommended refresh interval for unread notifications and similar badge counts."
+                    },
+                    "default": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
                     }
                   },
                   "required": [
-                    "sports",
-                    "features"
+                    "standings",
+                    "draft",
+                    "contestStatus",
+                    "notifications",
+                    "default"
                   ],
                   "additionalProperties": false,
-                  "description": "Platform-configuration payload used to bootstrap app capabilities."
+                  "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
                 }
               }
             }
