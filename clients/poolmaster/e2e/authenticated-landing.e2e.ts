@@ -38,6 +38,7 @@ async function createLeagueFromWelcome(
   await expect(page.getByTestId('create-league-modal')).toBeVisible();
   await page.getByTestId('create-league-name').fill(leagueName);
   await page.getByTestId('create-league-name').press('Tab');
+  await page.getByTestId('create-league-next').click();
   await page.getByTestId('create-league-submit').click();
 }
 
@@ -50,6 +51,7 @@ async function createLeagueFromSelector(
   await expect(page.getByTestId('create-league-modal')).toBeVisible();
   await page.getByTestId('create-league-name').fill(leagueName);
   await page.getByTestId('create-league-name').press('Tab');
+  await page.getByTestId('create-league-next').click();
   await page.getByTestId('create-league-submit').click();
 }
 

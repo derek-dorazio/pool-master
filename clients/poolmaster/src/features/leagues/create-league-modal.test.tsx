@@ -49,9 +49,12 @@ describe('CreateLeagueModal', () => {
       target: { value: 'Big Dawgs' },
     });
     fireEvent.blur(screen.getByTestId('create-league-name'));
+    await waitFor(() => expect(screen.getByTestId('create-league-code')).toHaveValue('BIGDAWGS'));
     fireEvent.change(screen.getByTestId('create-league-description'), {
       target: { value: 'Neighborhood commissioner league' },
     });
+    fireEvent.click(screen.getByTestId('create-league-next'));
+    await waitFor(() => expect(screen.getByTestId('create-league-submit')).toBeVisible());
     fireEvent.click(screen.getByTestId('create-league-submit'));
 
     await waitFor(() =>
@@ -86,7 +89,7 @@ describe('CreateLeagueModal', () => {
       target: { value: 'Big Dawgs' },
     });
     fireEvent.blur(screen.getByTestId('create-league-name'));
-    expect(screen.getByTestId('create-league-code')).toHaveValue('BIGDAWGS');
+    await waitFor(() => expect(screen.getByTestId('create-league-code')).toHaveValue('BIGDAWGS'));
 
     fireEvent.change(screen.getByTestId('create-league-code'), {
       target: { value: 'BIGDOGS26' },
@@ -96,6 +99,6 @@ describe('CreateLeagueModal', () => {
     });
     fireEvent.blur(screen.getByTestId('create-league-name'));
 
-    expect(screen.getByTestId('create-league-code')).toHaveValue('BIGDOGS26');
+    await waitFor(() => expect(screen.getByTestId('create-league-code')).toHaveValue('BIGDOGS26'));
   });
 });

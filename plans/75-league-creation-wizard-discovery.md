@@ -127,18 +127,18 @@ Post-create member-management follow-up lives in
 | Done | Define the wizard steps, fields, and validation rules | First release should become a 2-step wizard with `name`, explicit required `leagueCode`, optional `description`, review/confirmation, and no user-facing visibility choice in v1 |
 | Done | Decide the success destination and the empty-state-to-wizard transition | Launch from `/welcome` empty state and header selector; success routes directly to `/league/<leagueCode>` |
 | Done | Write the implementation-ready UX and API assumptions | `leagueCode` is explicit and frontend-suggested, `sport` is not a league property, and private/invite-led behavior is implicit for v1 |
-| Done | Clean the backend create-league contract so exported DTO/OpenAPI/SDK match the approved wizard fields | Removed stale request fields, added required `leagueCode`, refreshed OpenAPI/SDK, validated the full backend gate, and updated the existing frontend create flow to consume the exported contract. The dedicated 2-step wizard replacement remains a separate implementation task. |
-| Not Started | Replace the current single-step create-league modal with the approved 2-step wizard | Must wait for backend contract cleanup and regenerated SDK/types first |
+| Done | Clean the backend create-league contract so exported DTO/OpenAPI/SDK match the approved wizard fields | Removed stale request fields, added required `leagueCode`, refreshed OpenAPI/SDK, validated the full backend gate, and updated the existing frontend create flow to consume the exported contract. |
+| Done | Replace the current single-step create-league modal with the approved 2-step wizard | Frontend consumer slice now implements the actual wizard draft with seeded `leagueCode`, review step, and success routing; remaining polish can follow as a later UI slice. |
 
 ## First Implementation Slice Status
 
-The primitive first implementation slice is currently in place:
+The wizard implementation is now in place:
 
 - global create-league modal wired into the authenticated shell
 - launch path from `/welcome`
 - launch path from the header league selector
-- submit through the current backend `createLeague` contract
+- explicit required `leagueCode` with name-based suggestion on blur
+- review step before submit
 - success routing into `/league/<leagueCode>`
 
-This implementation is intentionally incomplete relative to the now-reviewed
-wizard design and should be replaced after the backend contract cleanup slice.
+The original flat single-step modal has been replaced.
