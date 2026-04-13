@@ -113,6 +113,28 @@ If a frontend question reveals that the contract meaning was not clear from the
 documented API surface, treat that as a backend documentation defect and fix it
 in the contract source.
 
+### Contract Documentation Checklist
+
+Before finishing backend/shared contract work, explicitly verify:
+
+1. Every changed route still has:
+   - `tags`
+   - `summary`
+   - `operationId`
+   - `description` when behavior, audience, lifecycle, or permissions are not obvious from the path and summary alone
+2. Every changed request and response schema in `packages/shared/dto/` has:
+   - an object-level description when the schema represents a meaningful payload or DTO
+   - field descriptions for any property whose semantics are not unmistakable from its name alone
+3. Any changed enum, status, lifecycle value, or role exposed to clients is documented when the value names alone do not explain how the client should interpret them.
+4. Any frontend question that required backend explanation is either:
+   - now answered by the documented contract source, or
+   - escalated as a product ambiguity rather than left as tribal knowledge.
+5. `npm run api:refresh` has been rerun after contract changes, and the generated artifacts still reflect the improved descriptions.
+
+Do not treat contract documentation as optional polish after the code is correct.
+For backend/shared API work, documentation completeness is part of the
+definition of done.
+
 ### Response Rules
 
 - Always describe the real response envelope.
@@ -241,6 +263,7 @@ Before finishing backend API work, verify:
 5. Does `npm run api:validate` succeed?
 6. Did generated files update as expected?
 7. Did any frontend casts/local API interfaces become removable?
+8. Did changed routes and DTOs pass the Contract Documentation Checklist above?
 
 ---
 

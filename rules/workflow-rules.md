@@ -65,6 +65,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] Every route uses `zodToJsonSchema()` for request and response schemas — no inline `{ type: 'object', properties: ... }` JSON objects
 - [ ] No route uses `SuccessSchema` or `passthroughResponseSchema` for endpoints returning domain data
 - [ ] Every route has `operationId`, `summary`, and `tags`
+- [ ] Changed backend/shared contract work also satisfies the contract-documentation checklist from `rules/service-rules.md`
 
 **Tests:**
 - [ ] Unit test exists for service logic
@@ -77,6 +78,15 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] `npm run api:validate` succeeds
 
 A slice that lands the schema and service logic correctly but skips DTOs, mappers, or tests is `In Progress`, not `Done`.
+
+For backend/shared contract slices, "complete" also means the documentation
+surface is complete enough for frontend consumption:
+
+- route descriptions are updated where behavior is not obvious
+- DTO/object descriptions exist for changed payloads
+- field semantics are described where names alone are not enough
+- any backend explanation that frontend needed has been pushed back into the
+  contract source instead of left as one-off tribal knowledge
 
 For model-change slices, "tests" includes not only production-facing test files
 but also the support code that makes those suites truthful:
@@ -238,6 +248,8 @@ confirmed with the user before implementation expands.
 - When such a question reveals a contract documentation gap, the backend
   developer must fix that documentation gap as part of the handoff, not merely
   answer the question once.
+- Backend slices that change API contracts must include that documentation-gap
+  repair in the same slice rather than leaving it as follow-up cleanup.
 - Product ambiguity belongs with the user. Contract ambiguity belongs with the
   backend developer. Model-impact classification belongs with the data-modeler.
 

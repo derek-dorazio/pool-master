@@ -22,6 +22,8 @@ and backend test coverage.
   backend docs as needed
 - regenerate and export the client SDK after backend/shared contract changes so
   frontend work can resume against the real contract
+- use the contract-documentation checklist in `rules/service-rules.md` before
+  considering backend/shared API work complete
 
 ## Required References
 
@@ -38,3 +40,5 @@ and backend test coverage.
 - leave generated client/OpenAPI drift for later cleanup
 - tell frontend implementation to read service code instead of repairing an
   inadequate documented contract
+- answer a frontend contract question once but leave the underlying
+  documentation gap unresolved
