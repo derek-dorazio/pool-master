@@ -9,6 +9,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import { ContestStatus } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -317,7 +318,7 @@ export class ContestService {
 
     await this.prisma.contest.update({
       where: { id: contestId },
-      data: { status: 'CLOSED' },
+      data: { status: ContestStatus.COMPLETED },
     });
 
     await logAdminAction({
@@ -328,7 +329,7 @@ export class ContestService {
       resourceId: contestId,
       description: `Force-closed contest — reason: ${reason}`,
       beforeState: { status: beforeStatus },
-      afterState: { status: 'CLOSED' },
+      afterState: { status: ContestStatus.COMPLETED },
       reason,
     });
   }
@@ -349,7 +350,7 @@ export class ContestService {
 
     await this.prisma.contest.update({
       where: { id: contestId },
-      data: { status: 'ACTIVE' },
+      data: { status: ContestStatus.ACTIVE },
     });
 
     await logAdminAction({
@@ -360,7 +361,7 @@ export class ContestService {
       resourceId: contestId,
       description: `Reopened contest — reason: ${reason}`,
       beforeState: { status: beforeStatus },
-      afterState: { status: 'ACTIVE' },
+      afterState: { status: ContestStatus.ACTIVE },
       reason,
     });
   }

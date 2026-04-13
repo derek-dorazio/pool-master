@@ -402,6 +402,10 @@ Recommended fix:
 Isolation:
 - no; this is a real behavior/domain decision, not just DTO tightening
 
+Status update:
+- resolved by reusing the commissioner lifecycle semantics: root-admin
+  force-close now maps to `COMPLETED`, and reopen continues to map to `ACTIVE`
+
 #### A-004: Root-admin user contest detail status is still too broad
 
 - `packages/shared/dto/admin.dto.ts`
