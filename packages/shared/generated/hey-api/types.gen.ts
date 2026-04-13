@@ -3480,10 +3480,10 @@ export type ListContestsResponses = {
         contests: Array<{
             id: string;
             name: string;
-            status: string;
-            contestType: string;
-            selectionType: string;
-            scoringEngine: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestType: 'SINGLE_EVENT';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
             sportEventId?: string;
             sport?: string;
@@ -3649,10 +3649,10 @@ export type CreateContestResponses = {
         contest: {
             id: string;
             name: string;
-            status: string;
-            contestType: string;
-            selectionType: string;
-            scoringEngine: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestType: 'SINGLE_EVENT';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
             sportEventId?: string;
             sport?: string;
@@ -4915,10 +4915,10 @@ export type GetContestResponses = {
         contest: {
             id: string;
             name: string;
-            status: string;
-            contestType: string;
-            selectionType: string;
-            scoringEngine: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestType: 'SINGLE_EVENT';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
             sportEventId?: string;
             sport?: string;
@@ -5025,10 +5025,10 @@ export type UpdateContestResponses = {
         contest: {
             id: string;
             name: string;
-            status: string;
-            contestType: string;
-            selectionType: string;
-            scoringEngine: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestType: 'SINGLE_EVENT';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
             sportEventId?: string;
             sport?: string;
@@ -5691,10 +5691,10 @@ export type ReopenContestResponses = {
         contest: {
             id: string;
             name: string;
-            status: string;
-            contestType: string;
-            selectionType: string;
-            scoringEngine: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestType: 'SINGLE_EVENT';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
             sportEventId?: string;
             sport?: string;
@@ -5748,10 +5748,10 @@ export type CloseContestResponses = {
         contest: {
             id: string;
             name: string;
-            status: string;
-            contestType: string;
-            selectionType: string;
-            scoringEngine: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestType: 'SINGLE_EVENT';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
             sportEventId?: string;
             sport?: string;
@@ -5809,10 +5809,10 @@ export type ExtendContestDeadlineResponses = {
         contest: {
             id: string;
             name: string;
-            status: string;
-            contestType: string;
-            selectionType: string;
-            scoringEngine: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestType: 'SINGLE_EVENT';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
             sportEventId?: string;
             sport?: string;
@@ -5870,10 +5870,10 @@ export type UpdateContestLockTimeResponses = {
         contest: {
             id: string;
             name: string;
-            status: string;
-            contestType: string;
-            selectionType: string;
-            scoringEngine: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestType: 'SINGLE_EVENT';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
             sportEventId?: string;
             sport?: string;

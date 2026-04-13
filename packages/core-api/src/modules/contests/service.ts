@@ -337,7 +337,10 @@ export class ContestService {
     });
 
     return rows.map((row) =>
-      toContestEntryDto(row, {
+      toContestEntryDto({
+        ...row,
+        status: row.status as ContestEntry['status'],
+      }, {
         name: row.squad.name,
       }),
     );
@@ -359,7 +362,10 @@ export class ContestService {
       );
     }
 
-    return toContestEntryDto(row, {
+    return toContestEntryDto({
+      ...row,
+      status: row.status as ContestEntry['status'],
+    }, {
       name: row.squad.name,
     });
   }

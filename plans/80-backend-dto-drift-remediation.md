@@ -108,6 +108,23 @@ Impact:
 - backend implementation code was still carrying a few generic-string
   assumptions in member-management paths
 
+### D-005: Contest summary/detail DTOs still type enum-backed fields as generic strings
+
+- `packages/shared/dto/contests.dto.ts`
+  - contest response fields for `status`, `contestType`, `selectionType`, and
+    `scoringEngine` were still exported as plain strings
+- `packages/shared/domain/types.ts`
+  - the active contest domain already constrains those fields to
+    `ContestStatus`, `ContestType`, `SelectionType`, and `ScoringEngine`
+
+Impact:
+- generated OpenAPI and generated SDK/types were looser than the real contest
+  domain
+- frontend consumers could not use the generated contract to discover valid
+  contest lifecycle and configuration values
+- backend mapper and service call sites still contained a few generic-string
+  assumptions for contest entry projection
+
 ## Audit Scope
 
 In scope:
@@ -153,7 +170,7 @@ Out of scope:
 | 80-006 | 1 | Regenerate OpenAPI and SDK/types after each contract-aligned change set | In Progress | First cleanup slice already refreshed OpenAPI and generated types after removing stale admin/history/league DTO surface. |
 | 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | First cleanup slice already passed shared/core typecheck, backend lint, and fresh merged service coverage. |
 | 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | Not Started | This is the key decision point for `UpdateLeagueRequestSchema` and any similar drift found during the sweep. |
-| 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | Second cleanup slice narrowed league and invitation enum-backed DTO fields from generic strings to shared enum unions and updated the exported contract artifacts. |
+| 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | Second cleanup slice narrowed league and invitation enum-backed DTO fields. Third cleanup slice narrowed contest summary/detail enum-backed fields and updated contest entry projection call sites to match. |
 
 ## Relationship To Other Plans
 

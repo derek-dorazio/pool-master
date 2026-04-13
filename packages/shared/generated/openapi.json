@@ -6097,16 +6097,45 @@
                             "type": "string"
                           },
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "DRAFT",
+                              "OPEN",
+                              "DRAFTING",
+                              "LOCKED",
+                              "ACTIVE",
+                              "COMPLETED",
+                              "CANCELLED"
+                            ]
                           },
                           "contestType": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "SINGLE_EVENT"
+                            ]
                           },
                           "selectionType": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "SNAKE_DRAFT",
+                              "TIERED",
+                              "BUDGET_PICK",
+                              "OPEN_SELECTION",
+                              "PICK_EM",
+                              "BRACKET_PICK_EM"
+                            ]
                           },
                           "scoringEngine": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "ADVANCEMENT",
+                              "STAT_ACCUMULATION",
+                              "STROKE_PLAY",
+                              "POSITION",
+                              "BRACKET",
+                              "FIGHT_RESULT",
+                              "CUMULATIVE"
+                            ]
                           },
                           "leagueId": {
                             "type": "string"
@@ -6409,16 +6438,45 @@
                           "type": "string"
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
                         },
                         "contestType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SINGLE_EVENT"
+                          ]
                         },
                         "selectionType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SNAKE_DRAFT",
+                            "TIERED",
+                            "BUDGET_PICK",
+                            "OPEN_SELECTION",
+                            "PICK_EM",
+                            "BRACKET_PICK_EM"
+                          ]
                         },
                         "scoringEngine": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "ADVANCEMENT",
+                            "STAT_ACCUMULATION",
+                            "STROKE_PLAY",
+                            "POSITION",
+                            "BRACKET",
+                            "FIGHT_RESULT",
+                            "CUMULATIVE"
+                          ]
                         },
                         "leagueId": {
                           "type": "string"
@@ -8830,16 +8888,45 @@
                           "type": "string"
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
                         },
                         "contestType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SINGLE_EVENT"
+                          ]
                         },
                         "selectionType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SNAKE_DRAFT",
+                            "TIERED",
+                            "BUDGET_PICK",
+                            "OPEN_SELECTION",
+                            "PICK_EM",
+                            "BRACKET_PICK_EM"
+                          ]
                         },
                         "scoringEngine": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "ADVANCEMENT",
+                            "STAT_ACCUMULATION",
+                            "STROKE_PLAY",
+                            "POSITION",
+                            "BRACKET",
+                            "FIGHT_RESULT",
+                            "CUMULATIVE"
+                          ]
                         },
                         "leagueId": {
                           "type": "string"
@@ -9023,16 +9110,45 @@
                           "type": "string"
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
                         },
                         "contestType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SINGLE_EVENT"
+                          ]
                         },
                         "selectionType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SNAKE_DRAFT",
+                            "TIERED",
+                            "BUDGET_PICK",
+                            "OPEN_SELECTION",
+                            "PICK_EM",
+                            "BRACKET_PICK_EM"
+                          ]
                         },
                         "scoringEngine": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "ADVANCEMENT",
+                            "STAT_ACCUMULATION",
+                            "STROKE_PLAY",
+                            "POSITION",
+                            "BRACKET",
+                            "FIGHT_RESULT",
+                            "CUMULATIVE"
+                          ]
                         },
                         "leagueId": {
                           "type": "string"
@@ -10590,16 +10706,45 @@
                           "type": "string"
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
                         },
                         "contestType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SINGLE_EVENT"
+                          ]
                         },
                         "selectionType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SNAKE_DRAFT",
+                            "TIERED",
+                            "BUDGET_PICK",
+                            "OPEN_SELECTION",
+                            "PICK_EM",
+                            "BRACKET_PICK_EM"
+                          ]
                         },
                         "scoringEngine": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "ADVANCEMENT",
+                            "STAT_ACCUMULATION",
+                            "STROKE_PLAY",
+                            "POSITION",
+                            "BRACKET",
+                            "FIGHT_RESULT",
+                            "CUMULATIVE"
+                          ]
                         },
                         "leagueId": {
                           "type": "string"
@@ -10732,16 +10877,45 @@
                           "type": "string"
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
                         },
                         "contestType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SINGLE_EVENT"
+                          ]
                         },
                         "selectionType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SNAKE_DRAFT",
+                            "TIERED",
+                            "BUDGET_PICK",
+                            "OPEN_SELECTION",
+                            "PICK_EM",
+                            "BRACKET_PICK_EM"
+                          ]
                         },
                         "scoringEngine": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "ADVANCEMENT",
+                            "STAT_ACCUMULATION",
+                            "STROKE_PLAY",
+                            "POSITION",
+                            "BRACKET",
+                            "FIGHT_RESULT",
+                            "CUMULATIVE"
+                          ]
                         },
                         "leagueId": {
                           "type": "string"
@@ -10880,16 +11054,45 @@
                           "type": "string"
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
                         },
                         "contestType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SINGLE_EVENT"
+                          ]
                         },
                         "selectionType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SNAKE_DRAFT",
+                            "TIERED",
+                            "BUDGET_PICK",
+                            "OPEN_SELECTION",
+                            "PICK_EM",
+                            "BRACKET_PICK_EM"
+                          ]
                         },
                         "scoringEngine": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "ADVANCEMENT",
+                            "STAT_ACCUMULATION",
+                            "STROKE_PLAY",
+                            "POSITION",
+                            "BRACKET",
+                            "FIGHT_RESULT",
+                            "CUMULATIVE"
+                          ]
                         },
                         "leagueId": {
                           "type": "string"
@@ -11028,16 +11231,45 @@
                           "type": "string"
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
                         },
                         "contestType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SINGLE_EVENT"
+                          ]
                         },
                         "selectionType": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "SNAKE_DRAFT",
+                            "TIERED",
+                            "BUDGET_PICK",
+                            "OPEN_SELECTION",
+                            "PICK_EM",
+                            "BRACKET_PICK_EM"
+                          ]
                         },
                         "scoringEngine": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "ADVANCEMENT",
+                            "STAT_ACCUMULATION",
+                            "STROKE_PLAY",
+                            "POSITION",
+                            "BRACKET",
+                            "FIGHT_RESULT",
+                            "CUMULATIVE"
+                          ]
                         },
                         "leagueId": {
                           "type": "string"

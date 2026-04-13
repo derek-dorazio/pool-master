@@ -3,6 +3,7 @@
  */
 import { z } from 'zod';
 import {
+  ContestStatus,
   ContestType,
   ScoringEngine,
   SelectionType,
@@ -128,10 +129,33 @@ export type UpdateContestLockTimeRequest = z.infer<typeof UpdateContestLockTimeR
 export const ContestSummaryDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
-  status: z.string(),
-  contestType: z.string(),
-  selectionType: z.string(),
-  scoringEngine: z.string(),
+  status: z.enum([
+    ContestStatus.DRAFT,
+    ContestStatus.OPEN,
+    ContestStatus.DRAFTING,
+    ContestStatus.LOCKED,
+    ContestStatus.ACTIVE,
+    ContestStatus.COMPLETED,
+    ContestStatus.CANCELLED,
+  ]),
+  contestType: z.enum([ContestType.SINGLE_EVENT]),
+  selectionType: z.enum([
+    SelectionType.SNAKE_DRAFT,
+    SelectionType.TIERED,
+    SelectionType.BUDGET_PICK,
+    SelectionType.OPEN_SELECTION,
+    SelectionType.PICK_EM,
+    SelectionType.BRACKET_PICK_EM,
+  ]),
+  scoringEngine: z.enum([
+    ScoringEngine.ADVANCEMENT,
+    ScoringEngine.STAT_ACCUMULATION,
+    ScoringEngine.STROKE_PLAY,
+    ScoringEngine.POSITION,
+    ScoringEngine.BRACKET,
+    ScoringEngine.FIGHT_RESULT,
+    ScoringEngine.CUMULATIVE,
+  ]),
   leagueId: z.string(),
   sportEventId: z.string().nullable().optional(),
   sport: z.string().nullable().optional(),

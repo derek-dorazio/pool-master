@@ -11,18 +11,26 @@ import type {
   ContestEntryResponse,
   MyContestEntryResponse,
 } from '@poolmaster/shared/dto';
-import type { ContestConfiguration } from '@poolmaster/shared/domain';
+import type {
+  Contest,
+  ContestConfiguration,
+  ContestEntry,
+  ContestStatus,
+  ContestType,
+  ScoringEngine,
+  SelectionType,
+} from '@poolmaster/shared/domain';
 
 interface ContestRow {
   id: string;
   leagueId: string;
   sportEventId?: string | null;
   name: string;
-  status: string;
-  contestType: string;
-  selectionType: string;
-  scoringEngine: string;
-  sport?: string | null;
+  status: ContestStatus;
+  contestType: ContestType;
+  selectionType: SelectionType;
+  scoringEngine: ScoringEngine;
+  sport?: Contest['sport'] | null;
   isExclusive: boolean;
   startsAt?: Date | null;
   endsAt?: Date | null;
@@ -37,7 +45,7 @@ interface ContestEntryRow {
   squadId: string;
   entryNumber: number;
   name: string;
-  status: string;
+  status: ContestEntry['status'];
   totalScore: number;
   standingsPosition?: number | null;
   isEliminated: boolean;
