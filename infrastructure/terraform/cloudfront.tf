@@ -157,9 +157,9 @@ resource "aws_cloudfront_distribution" "webapp" {
   aliases = local.app_domain != "" ? [local.app_domain] : []
 
   viewer_certificate {
-    acm_certificate_arn      = var.domain_name != "" ? aws_acm_certificate.cloudfront[0].arn : null
-    ssl_support_method       = var.domain_name != "" ? "sni-only" : null
-    minimum_protocol_version = var.domain_name != "" ? "TLSv1.2_2021" : null
+    acm_certificate_arn            = var.domain_name != "" ? aws_acm_certificate.cloudfront[0].arn : null
+    ssl_support_method             = var.domain_name != "" ? "sni-only" : null
+    minimum_protocol_version       = var.domain_name != "" ? "TLSv1.2_2021" : null
     cloudfront_default_certificate = var.domain_name == ""
   }
 
@@ -232,6 +232,28 @@ resource "aws_cloudfront_distribution" "webapp" {
     max_ttl     = 0
   }
 
+  # /apidoc* behavior: proxy API docs to ALB (no caching)
+  ordered_cache_behavior {
+    path_pattern           = "/apidoc*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "alb-api"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Content-Type"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
   # /health behavior: proxy to ALB
   ordered_cache_behavior {
     path_pattern           = "/health"
@@ -283,9 +305,9 @@ resource "aws_cloudfront_distribution" "admin" {
   aliases = local.app_domain != "" ? ["${var.environment}-admin.${var.domain_name}"] : []
 
   viewer_certificate {
-    acm_certificate_arn      = var.domain_name != "" ? aws_acm_certificate.cloudfront[0].arn : null
-    ssl_support_method       = var.domain_name != "" ? "sni-only" : null
-    minimum_protocol_version = var.domain_name != "" ? "TLSv1.2_2021" : null
+    acm_certificate_arn            = var.domain_name != "" ? aws_acm_certificate.cloudfront[0].arn : null
+    ssl_support_method             = var.domain_name != "" ? "sni-only" : null
+    minimum_protocol_version       = var.domain_name != "" ? "TLSv1.2_2021" : null
     cloudfront_default_certificate = var.domain_name == ""
   }
 

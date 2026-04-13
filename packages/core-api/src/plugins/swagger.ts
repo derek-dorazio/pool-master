@@ -2,7 +2,7 @@
  * Swagger / OpenAPI 3.2 plugin for Fastify.
  *
  * Registers @fastify/swagger to auto-generate an OpenAPI spec from route schemas,
- * and @fastify/swagger-ui to serve interactive docs at /docs.
+ * and @fastify/swagger-ui to serve interactive docs at /apidoc.
  */
 import fp from 'fastify-plugin';
 import swagger from '@fastify/swagger';
@@ -53,7 +53,7 @@ export const swaggerPlugin = fp(async (fastify) => {
   });
 
   await fastify.register(swaggerUi, {
-    routePrefix: '/docs',
+    routePrefix: '/apidoc',
     uiConfig: {
       docExpansion: 'list',
       deepLinking: true,

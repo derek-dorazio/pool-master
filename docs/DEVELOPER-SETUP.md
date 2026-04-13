@@ -244,6 +244,11 @@ Legacy browser suites were intentionally removed during the PoolMaster cutover. 
 
 PoolMaster production builds also emit `clients/poolmaster/dist/version-info.json` so deployed environments can expose the webapp version, service version, git SHAs, and build metadata.
 
+When the backend service is running, interactive API documentation is available
+at `/apidoc`. After Terraform is applied in deployed environments, CloudFront
+also forwards `/apidoc*` to the API origin so the same developer docs route is
+available on the app domain.
+
 ---
 
 ## 7. Type Checking and Linting
