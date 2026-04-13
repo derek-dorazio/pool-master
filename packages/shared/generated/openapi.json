@@ -22288,7 +22288,15 @@
                       "type": "string"
                     },
                     "selectionType": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
                     },
                     "isTurnBased": {
                       "type": "boolean"
@@ -22373,7 +22381,13 @@
                       "nullable": true
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
                     },
                     "currentPickNumber": {
                       "type": "number"
@@ -22895,7 +22909,15 @@
                       "type": "string"
                     },
                     "selectionType": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
                     },
                     "isTurnBased": {
                       "type": "boolean"
@@ -22980,7 +23002,13 @@
                       "nullable": true
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
                     },
                     "currentPickNumber": {
                       "type": "number"
@@ -23474,7 +23502,15 @@
                       "type": "string"
                     },
                     "selectionType": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
                     },
                     "isTurnBased": {
                       "type": "boolean"
@@ -23559,7 +23595,13 @@
                       "nullable": true
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
                     },
                     "currentPickNumber": {
                       "type": "number"
@@ -24143,7 +24185,15 @@
                       "type": "string"
                     },
                     "selectionType": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
                     },
                     "isTurnBased": {
                       "type": "boolean"
@@ -24228,7 +24278,13 @@
                       "nullable": true
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
                     },
                     "currentPickNumber": {
                       "type": "number"
@@ -24773,7 +24829,15 @@
                       "type": "string"
                     },
                     "selectionType": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
                     },
                     "isTurnBased": {
                       "type": "boolean"
@@ -24858,7 +24922,13 @@
                       "nullable": true
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
                     },
                     "currentPickNumber": {
                       "type": "number"
@@ -25427,7 +25497,15 @@
                       "type": "string"
                     },
                     "selectionType": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
                     },
                     "isTurnBased": {
                       "type": "boolean"
@@ -25512,7 +25590,13 @@
                       "nullable": true
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
                     },
                     "currentPickNumber": {
                       "type": "number"
@@ -26057,7 +26141,15 @@
                       "type": "string"
                     },
                     "selectionType": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
                     },
                     "isTurnBased": {
                       "type": "boolean"
@@ -26142,7 +26234,13 @@
                       "nullable": true
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
                     },
                     "currentPickNumber": {
                       "type": "number"
@@ -26687,7 +26785,15 @@
                       "type": "string"
                     },
                     "selectionType": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
                     },
                     "isTurnBased": {
                       "type": "boolean"
@@ -26772,7 +26878,13 @@
                       "nullable": true
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
                     },
                     "currentPickNumber": {
                       "type": "number"

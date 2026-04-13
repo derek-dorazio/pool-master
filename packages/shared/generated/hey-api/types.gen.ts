@@ -11145,7 +11145,7 @@ export type GetDraftStateResponses = {
     200: {
         contestId: string;
         contestName: string;
-        selectionType: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
@@ -11173,7 +11173,7 @@ export type GetDraftStateResponses = {
                 picksFromTier: number;
             }>;
         };
-        status: string;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
@@ -11367,7 +11367,7 @@ export type StartDraftResponses = {
     201: {
         contestId: string;
         contestName: string;
-        selectionType: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
@@ -11395,7 +11395,7 @@ export type StartDraftResponses = {
                 picksFromTier: number;
             }>;
         };
-        status: string;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
@@ -11643,7 +11643,7 @@ export type SubmitContestSelectionResponses = {
     200: {
         contestId: string;
         contestName: string;
-        selectionType: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
@@ -11671,7 +11671,7 @@ export type SubmitContestSelectionResponses = {
                 picksFromTier: number;
             }>;
         };
-        status: string;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
@@ -11885,7 +11885,7 @@ export type PauseDraftResponses = {
     200: {
         contestId: string;
         contestName: string;
-        selectionType: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
@@ -11913,7 +11913,7 @@ export type PauseDraftResponses = {
                 picksFromTier: number;
             }>;
         };
-        status: string;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
@@ -12127,7 +12127,7 @@ export type ResumeDraftResponses = {
     200: {
         contestId: string;
         contestName: string;
-        selectionType: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
@@ -12155,7 +12155,7 @@ export type ResumeDraftResponses = {
                 picksFromTier: number;
             }>;
         };
-        status: string;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
@@ -12377,7 +12377,7 @@ export type ExtendCurrentTurnResponses = {
     200: {
         contestId: string;
         contestName: string;
-        selectionType: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
@@ -12405,7 +12405,7 @@ export type ExtendCurrentTurnResponses = {
                 picksFromTier: number;
             }>;
         };
-        status: string;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
@@ -12619,7 +12619,7 @@ export type UndoSnakeDraftSelectionResponses = {
     200: {
         contestId: string;
         contestName: string;
-        selectionType: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
@@ -12647,7 +12647,7 @@ export type UndoSnakeDraftSelectionResponses = {
                 picksFromTier: number;
             }>;
         };
-        status: string;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
@@ -12861,7 +12861,7 @@ export type SkipSnakeDraftTurnResponses = {
     200: {
         contestId: string;
         contestName: string;
-        selectionType: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
@@ -12889,7 +12889,7 @@ export type SkipSnakeDraftTurnResponses = {
                 picksFromTier: number;
             }>;
         };
-        status: string;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;

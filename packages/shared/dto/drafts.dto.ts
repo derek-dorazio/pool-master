@@ -2,6 +2,7 @@
  * Draft DTOs — request/response schemas for draft endpoints.
  */
 import { z } from 'zod';
+import { DraftStatus, SelectionType } from '../domain/enums';
 
 // --- Requests ---
 
@@ -117,12 +118,24 @@ export type DraftBracketMatchupDto = z.infer<typeof DraftBracketMatchupDtoSchema
 export const DraftStateDtoSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
-  selectionType: z.string(),
+  selectionType: z.enum([
+    SelectionType.SNAKE_DRAFT,
+    SelectionType.TIERED,
+    SelectionType.BUDGET_PICK,
+    SelectionType.OPEN_SELECTION,
+    SelectionType.PICK_EM,
+    SelectionType.BRACKET_PICK_EM,
+  ]),
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
-  status: z.string(),
+  status: z.enum([
+    DraftStatus.PENDING,
+    DraftStatus.LIVE,
+    DraftStatus.PAUSED,
+    DraftStatus.COMPLETE,
+  ]),
   currentPickNumber: z.number(),
   currentRound: z.number(),
   totalPicks: z.number(),
@@ -146,12 +159,24 @@ export type DraftStateDto = z.infer<typeof DraftStateDtoSchema>;
 export const DraftStateResponseSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
-  selectionType: z.string(),
+  selectionType: z.enum([
+    SelectionType.SNAKE_DRAFT,
+    SelectionType.TIERED,
+    SelectionType.BUDGET_PICK,
+    SelectionType.OPEN_SELECTION,
+    SelectionType.PICK_EM,
+    SelectionType.BRACKET_PICK_EM,
+  ]),
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
-  status: z.string(),
+  status: z.enum([
+    DraftStatus.PENDING,
+    DraftStatus.LIVE,
+    DraftStatus.PAUSED,
+    DraftStatus.COMPLETE,
+  ]),
   currentPickNumber: z.number(),
   currentRound: z.number(),
   totalPicks: z.number(),
@@ -174,12 +199,24 @@ export type DraftStateResponse = z.infer<typeof DraftStateResponseSchema>;
 export const DraftPickResponseSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
-  selectionType: z.string(),
+  selectionType: z.enum([
+    SelectionType.SNAKE_DRAFT,
+    SelectionType.TIERED,
+    SelectionType.BUDGET_PICK,
+    SelectionType.OPEN_SELECTION,
+    SelectionType.PICK_EM,
+    SelectionType.BRACKET_PICK_EM,
+  ]),
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   contestConfiguration: DraftContestConfigurationDtoSchema.nullable().optional(),
-  status: z.string(),
+  status: z.enum([
+    DraftStatus.PENDING,
+    DraftStatus.LIVE,
+    DraftStatus.PAUSED,
+    DraftStatus.COMPLETE,
+  ]),
   currentPickNumber: z.number(),
   currentRound: z.number(),
   totalPicks: z.number(),

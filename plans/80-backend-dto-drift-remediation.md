@@ -143,6 +143,479 @@ Impact:
   discover the valid enum values for draft-search and participant-detail
   surfaces
 
+## Remaining Audit Findings
+
+These findings are confirmed enough to guide the next sequential remediation
+slices, but they have not all been implemented yet.
+
+### D-007: Draft response DTOs still type enum-backed state fields as generic strings
+
+- `packages/shared/dto/drafts.dto.ts`
+  - `DraftStateDtoSchema`, `DraftStateResponseSchema`, and
+    `DraftPickResponseSchema` still export `selectionType` and `status` as plain
+    strings
+- `packages/shared/domain/enums.ts`
+  - the active draft and contest domain already constrains those fields to
+    `SelectionType` and `DraftStatus`
+- `packages/core-api/src/mappers/drafts.mapper.ts`
+  - the draft mapper already carries `DraftStatus` in its session/state inputs
+- `packages/core-api/src/modules/drafts/routes.ts`
+  - route logic already imports and uses `DraftStatus` and `SelectionType`
+
+Recommended fix:
+- narrow draft DTO `selectionType` to `SelectionType`
+- narrow draft DTO `status` to `DraftStatus`
+- align any remaining draft mapper helper interfaces that still surface `string`
+  instead of the shared enum type
+
+Isolation:
+- yes, this looks like a clean sequential slice centered on the draft contract
+  family
+
+### A-001/A-002/A-004: Root-admin user and contest DTOs still expose overbroad role/status/type fields
+
+- `packages/shared/dto/admin.dto.ts`
+  - `UserLeagueMembershipSummaryDtoSchema.role` and
+    `UserLeagueDetailDtoSchema.role` are still plain strings
+  - `UserContestDetailDtoSchema.status` is still a plain string
+  - `ContestListItemDtoSchema` and `ContestAdminDetailResponseSchema` still
+    export contest `contestType`, `selectionType`, `scoringEngine`, and
+    `status` as plain strings
+  - `ContestDraftStatusDtoSchema.status` is still a plain string
+- `packages/core-api/src/modules/admin/user-service.ts`
+  - user-league role and contest status values are currently transformed to
+    lowercase strings, so the admin contract needs explicit lowercase unions if
+    that behavior is intentional
+- `packages/core-api/src/modules/admin/contest-service.ts`
+  - admin contest detail/list paths already pull constrained contest and draft
+    status values from the active backend model, but still expose them through
+    overly broad DTO fields
+
+Recommended fix:
+- split admin remediation into two slices:
+  - admin user detail/list role and contest-status unions
+  - admin contest list/detail and draft-status unions
+- decide explicitly whether lowercase admin role/status strings are intentional;
+  if yes, narrow them to explicit lowercase unions instead of leaving them as
+  generic strings
+
+Isolation:
+- partial; admin user and admin contest surfaces are each isolated enough for
+  separate sequential slices
+
+### D-010: Event summary DTO still exports constrained sport and status fields as generic strings
+
+- `packages/shared/dto/events.dto.ts`
+  - `EventSummaryDtoSchema.sport` and `EventSummaryDtoSchema.status` are still
+    plain strings
+- `packages/core-api/src/modules/ingestion/core/provider-interface.ts`
+  - the active event provider interface already constrains `sport` to `Sport`
+    and `status` to the event lifecycle union
+    `SCHEDULED | IN_PROGRESS | COMPLETED | CANCELLED | POSTPONED`
+- `packages/core-api/src/mappers/events.mapper.ts`
+  - the event mapper still types both fields as generic strings
+
+Recommended fix:
+- narrow event DTO `sport` to the shared `Sport` enum
+- narrow event DTO `status` to the provider-event status union
+- align the event mapper interface to those constrained values
+
+Isolation:
+- yes, this looks like a small, isolated sequential slice
+
+### D-011: Scoring health response exports a route-stable status as a generic string
+
+- `packages/shared/dto/scoring.dto.ts`
+  - `ScoringHealthResponseSchema.status` is still a plain string
+- `packages/core-api/src/modules/scoring/service.ts`
+  - scoring health currently returns `status: 'ok'`
+
+Recommended fix:
+- narrow the scoring health `status` field to a literal `ok` if that route is
+  intentionally stable at the moment, or introduce an explicit health union if
+  more states are expected soon
+
+Isolation:
+- yes, this is a very small DTO-only slice
+
+### D-012/D-013: Config DTO surface still appears misaligned with the active route payload
+
+- `packages/shared/dto/config.dto.ts`
+  - `SportConfigDto` still exports enum-backed `name` and `participantType`
+    fields as generic strings
+  - `PlatformConfigResponseSchema` advertises a platform-bootstrap payload with
+    `sports` and `features`
+- `packages/core-api/src/modules/config/routes.ts`
+  - the active `/api/v1/config/poll-intervals` route currently returns
+    `POLL_INTERVAL_CONFIG`, not the `PlatformConfigResponseSchema` payload
+
+Recommended fix:
+- resolve the route contract first:
+  - either return actual platform configuration that matches the current DTO, or
+  - change the route schema to the real poll-interval payload
+- only then tighten the remaining config DTO enum-backed fields
+
+Isolation:
+- no; this is a broader contract mismatch, not just enum narrowing
+
+### D-014: Ingestion provider and job DTOs still export sport-backed fields as generic strings
+
+- `packages/shared/dto/ingestion.dto.ts`
+  - `IngestionProviderSummaryDtoSchema.sportsCovered`
+  - `IngestionJobRecordDtoSchema.sport`
+  - `IngestSportOddsResponseSchema.sport`
+  - all still use generic strings
+- `packages/core-api/src/modules/ingestion/core/provider-interface.ts`
+  - the active ingestion-provider contract already constrains `sportsCovered`
+    and event/job sport values to `Sport`
+- `packages/core-api/src/modules/ingestion/routes.ts`
+  - active ingestion routes return provider `sportsCovered` and odds `sport`
+    directly from the typed provider and request flow
+
+Recommended fix:
+- narrow the ingestion DTO sport surfaces to the shared `Sport` enum
+- keep the job lifecycle `status` field as-is, since it is already explicitly
+  constrained
+
+Isolation:
+- yes; this is a clean ingestion-contract slice
+
+## Parallel Audit Findings
+
+This section captures domain-family audit findings that are ready to be turned
+into the next sequential remediation slices.
+
+### Drafts
+
+#### D-007: Draft response DTOs export enum-backed `selectionType` and `status` as generic strings
+
+- `packages/shared/dto/drafts.dto.ts`
+  - `DraftStateDtoSchema`, `DraftStateResponseSchema`, and
+    `DraftPickResponseSchema` type `selectionType` and `status` as plain
+    strings
+- `packages/core-api/src/modules/drafts/routes.ts`
+  - active draft routes populate those fields from the contest selection type
+    and derived draft status
+- the active domain already constrains these values to `SelectionType` and
+  `DraftStatus`
+
+Recommended fix:
+- narrow draft response schemas to the shared enum unions for
+  `selectionType` and `status`
+- tighten route-local draft/contest helper types in the draft routes so they
+  stop pretending those values are unconstrained strings
+
+Isolation:
+- yes; this is a clean draft-contract slice
+
+#### D-008: `DraftStateDtoSchema` appears to be an orphaned duplicate surface
+
+- `packages/shared/dto/drafts.dto.ts`
+  - `DraftStateDtoSchema` and `DraftStateDto` are exported
+- the active route surface uses:
+  - `DraftStateResponseSchema`
+  - `DraftPickResponseSchema`
+- search did not find an active consumer for `DraftStateDtoSchema`
+
+Recommended fix:
+- remove the orphaned schema if it is intentionally unused, or
+- refactor the draft response schemas to extend a shared base instead of
+  keeping an extra exported duplicate
+
+Isolation:
+- yes; DTO-module-only cleanup
+
+#### D-009: The draft mapper still carries stale broad local types
+
+- `packages/core-api/src/mappers/drafts.mapper.ts`
+  - local response types still include broad string status typing even though
+    the file already imports `DraftStatus`
+- active draft responses are built directly in the draft routes, not through
+  this mapper
+
+Recommended fix:
+- either remove the orphaned mapper if it is dead code, or
+- narrow its local interfaces to the real domain enums if we keep it
+
+Isolation:
+- yes, but secondary after `D-007`
+
+### Root-Admin Backend Surface
+
+These findings refer to the still-active root-admin API surface under
+`/api/v1/admin/*`, not to a separate admin app/client.
+
+#### A-001: Root-admin user league-role DTOs still drift from the real domain values
+
+- `packages/shared/dto/admin.dto.ts`
+  - `UserLeagueMembershipSummaryDtoSchema.role`
+  - `UserLeagueDetailDtoSchema.role`
+  - both are plain strings
+- `packages/core-api/src/modules/admin/user-service.ts`
+  - lowercases persisted league roles before returning them
+- the source domain field is `LeagueMembership.role: LeagueRole`
+
+Recommended fix:
+- narrow both DTO role fields to shared `LeagueRole` values
+- stop lowercasing league roles in the root-admin user service
+
+Isolation:
+- yes; small root-admin user slice
+
+#### A-002: Root-admin contest DTOs still export enum-backed contest fields as generic strings
+
+- `packages/shared/dto/admin.dto.ts`
+  - root-admin contest list/detail DTOs still export:
+    - `contestType`
+    - `selectionType`
+    - `scoringEngine`
+    - `status`
+    as plain strings
+- `packages/core-api/src/modules/admin/contest-service.ts`
+  - lowercases contest status before returning it
+- the active contest domain already constrains those fields to shared enums
+
+Recommended fix:
+- narrow the root-admin contest DTO fields to the same shared contest enums
+  where the semantics match
+- stop lowercasing emitted contest status
+- if root-admin needs a separate vocabulary, define it explicitly rather than
+  using `string`
+
+Isolation:
+- mostly yes; coherent root-admin contest slice
+
+#### A-003: `forceCloseContest()` currently uses `CLOSED`, which is not an active contest domain status
+
+- `packages/core-api/src/modules/admin/contest-service.ts`
+  - `forceCloseContest()` writes `status: 'CLOSED'`
+- the active contest domain enum does not include `CLOSED`
+  - it uses values such as `COMPLETED` and `CANCELLED`
+- the broad root-admin DTO status typing currently hides that mismatch
+
+Recommended fix:
+- resolve the semantic choice intentionally:
+  - map force-close to an existing contest domain status, or
+  - extend the domain model if `CLOSED` is truly required
+- only after that should the related root-admin contest DTO status be narrowed
+
+Isolation:
+- no; this is a real behavior/domain decision, not just DTO tightening
+
+#### A-004: Root-admin user contest detail status is still too broad
+
+- `packages/shared/dto/admin.dto.ts`
+  - `UserContestDetailDtoSchema.status` is a generic string
+- `packages/core-api/src/modules/admin/user-service.ts`
+  - lowercases contest status before returning it
+- the backing contest domain already has constrained status values
+
+Recommended fix:
+- narrow the field to the shared contest-status enum, or to an explicit
+  root-admin contest-status enum if semantics differ
+- stop lowercasing unless we intentionally introduce that separate enum
+
+Isolation:
+- yes, especially if handled together with `A-002`
+
+### Remaining Smaller DTO Families
+
+#### D-010: Event summary DTOs still export constrained sport and status values as generic strings
+
+- `packages/shared/dto/events.dto.ts`
+  - `sport` and `status` are generic strings
+- `packages/core-api/src/mappers/events.mapper.ts`
+- `packages/core-api/src/modules/ingestion/core/provider-interface.ts`
+  - the active ingestion/event contract already constrains:
+    - `sport` to `Sport`
+    - `status` to the current event-status union used by providers
+
+Recommended fix:
+- narrow `sport` to the shared `Sport` enum
+- narrow `status` to the real event-status union
+- align mapper/interface types to match
+
+Isolation:
+- yes; clean event-contract slice
+
+#### D-011: Scoring health response still exports a fixed status as a generic string
+
+- `packages/shared/dto/scoring.dto.ts`
+  - `ScoringHealthResponse.status` is a generic string
+- `packages/core-api/src/modules/scoring/service.ts`
+  - the service currently returns a fixed `'ok'` value
+
+Recommended fix:
+- narrow the field to a literal `'ok'` or a tiny explicit health union if
+  future expansion is intended
+- align the scoring service helper type to match
+
+Isolation:
+- yes; small scoring-contract slice
+
+#### D-012: `SportConfigDto` still exports enum-backed fields as generic strings
+
+- `packages/shared/dto/config.dto.ts`
+  - `SportConfigDto.name`
+  - `SportConfigDto.participantType`
+  - both are generic strings
+- `packages/shared/domain/types.ts`
+  - `SportConfig` already constrains those fields to `Sport` and
+    `ParticipantType`
+
+Recommended fix:
+- if this DTO remains active, narrow both fields to the shared enums
+
+Isolation:
+- not yet; this is blocked by the larger config-surface mismatch below
+
+#### D-013: The active config route appears to advertise the wrong response schema
+
+- `packages/core-api/src/modules/config/routes.ts`
+- `packages/shared/dto/config.dto.ts`
+  - the active config route advertises `PlatformConfigResponseSchema`
+  - but the handler currently returns `POLL_INTERVAL_CONFIG`
+
+Recommended fix:
+- resolve the route contract first:
+  - either return actual platform config, or
+  - change the route schema to the real poll-interval payload
+- only then tighten any remaining config DTO enums
+
+Isolation:
+- no; this is broader contract drift, not just enum narrowing
+
+#### D-014: Ingestion provider and job DTOs still export sport-backed fields as generic strings
+
+- `packages/shared/dto/ingestion.dto.ts`
+  - provider `sportsCovered`
+  - job `sport`
+  - odds response `sport`
+  - all are still generic strings
+- `packages/core-api/src/modules/ingestion/core/provider-interface.ts`
+  - the active provider interface already constrains covered sports to `Sport[]`
+    and event/job sport values to `Sport`
+- `packages/core-api/src/modules/ingestion/routes.ts`
+  - the active routes return those sport values directly from the typed provider
+    registry and request flow
+
+Recommended fix:
+- narrow ingestion provider and job sport fields to the shared `Sport` enum
+- keep the ingestion job lifecycle status as-is because it is already an
+  explicit enum
+
+Isolation:
+- yes; clean ingestion-contract slice
+
+#### A-005: Root-admin provider DTOs still export sport-backed fields as generic strings
+
+- `packages/shared/dto/admin.dto.ts`
+  - `ProviderSummaryDtoSchema.sportsCovered`
+  - `ProviderIngestionStatDtoSchema.sport`
+  - `ProviderIngestionJobDtoSchema.sport`
+  - `ProviderUnmappedParticipantDtoSchema.sport`
+  - all are still generic strings
+- `packages/core-api/src/modules/admin/provider-service.ts`
+  - the root-admin provider service currently converts provider sports to
+    strings with `map(String)` even though the backing provider interface uses
+    `Sport[]`
+
+Recommended fix:
+- narrow the root-admin provider DTO sport fields to the shared `Sport` enum
+- stop stringifying provider sport values in the root-admin provider service
+
+Isolation:
+- yes; coherent root-admin provider slice
+
+### Verified Stable Families
+
+The following active DTO families were re-reviewed during the full backend audit
+and do not currently show confirmed DTO-to-domain drift that should be remediated
+under Plan 80:
+
+- `packages/shared/dto/auth.dto.ts`
+  - active auth request and response fields are aligned with the current
+    service/domain behavior
+- `packages/shared/dto/account-consent.dto.ts`
+  - `consentType` remains broad, but the current service and persistence model
+    are also broad; there is no confirmed shared enum drift yet
+- `packages/shared/dto/notifications.dto.ts`
+  - notification event/category strings are still intentionally broad in the
+    active mapper and route flow
+- `packages/shared/dto/squads.dto.ts`
+  - squad status and membership status are already exported as explicit unions
+- `packages/shared/dto/standings.dto.ts`
+  - standings movement and related fields are already exported as explicit
+    unions where the active route behavior constrains them
+- `packages/shared/dto/contest-management.dto.ts`
+  - the remaining string-backed fields such as `autoPickPolicy` and
+    `pricingMethod` currently match the domain model, which is also still broad
+
+## Broader Backend Drift And Dead-Code Findings
+
+These findings go beyond DTO shape drift, but they are directly adjacent to the
+same cleanup effort because they create confusion about which backend surfaces
+are actually authoritative.
+
+### X-001: Draft mapper appears to be dead or redundant alongside the active draft routes
+
+- `packages/core-api/src/mappers/drafts.mapper.ts`
+  - exports `toDraftStateResponse`, `toDraftPickHistoryDto`, and local draft
+    response interfaces
+- search did not find any active route or service consumer of those exports
+- `packages/core-api/src/modules/drafts/routes.ts`
+  - builds the active draft responses directly instead of using the mapper
+- `packages/core-api/src/mappers/index.ts`
+  - still re-exports the draft mapper, which makes the dead surface look active
+
+Recommended fix:
+- decide whether the draft mapper should:
+  - be removed entirely as dead code, or
+  - become the single shared response builder used by the draft routes
+- do not keep both patterns active
+
+Isolation:
+- yes; clean draft-module cleanup slice
+
+### X-002: Admin audit functionality is split across two overlapping service layers
+
+- `packages/core-api/src/modules/admin/admin-audit-service.ts`
+  - owns audit logging and still exports `listAuditEntries`
+- `packages/core-api/src/modules/admin/audit-query-service.ts`
+  - separately owns audit-query read paths used by the active handlers
+- `packages/core-api/src/modules/admin/audit-handler.ts`
+  - reads only from `audit-query-service`
+- search did not find an active consumer of
+  `admin-audit-service.listAuditEntries`
+
+Recommended fix:
+- keep one authoritative read/query path for admin audit entries
+- either remove `listAuditEntries` from `admin-audit-service` or consolidate the
+  read/query implementation so the split is intentional and obvious
+
+Isolation:
+- yes; root-admin audit cleanup slice
+
+### X-003: Root-admin platform config has two competing sources of truth
+
+- `packages/core-api/src/modules/config/routes.ts`
+  - serves public `/api/v1/config/poll-intervals` from `POLL_INTERVAL_CONFIG`
+- `packages/core-api/src/modules/admin/poll-config-service.ts`
+  - separately owns root-admin poll-config behavior
+- `packages/core-api/src/modules/admin/platform-config-routes.ts`
+  - also participates in admin/platform configuration behavior
+
+Recommended fix:
+- document and simplify the intended ownership:
+  - public runtime poll intervals
+  - root-admin poll-config management
+  - broader platform config
+- remove or consolidate redundant helpers once the config contract mismatch
+  (`D-012/D-013`) is resolved
+
+Isolation:
+- partial; this is a small architecture cleanup rather than a one-file deletion
+
 ## Audit Scope
 
 In scope:
@@ -175,6 +648,12 @@ Out of scope:
 4. Regenerate OpenAPI and generated client/types after each aligned slice.
 5. Re-run the relevant backend validation gates to confirm the contract and the
    implementation still match.
+6. When a slice changes shared DTOs, generated types, or exported enums, also
+   run the downstream consumer checks before push:
+   - `npx turbo typecheck --filter=@poolmaster/shared --filter=@poolmaster/core-api --filter=@poolmaster/poolmaster --force`
+   - `npx eslint 'packages/*/src/**/*.ts' 'clients/poolmaster/src/**/*.{ts,tsx}' 'clients/poolmaster/e2e/**/*.ts' --max-warnings 0`
+   This is required even for "backend-first" slices because the first Plan 80
+   remediation pushes broke the PoolMaster consumer package at typecheck time.
 
 ## Remediation Checklist
 
@@ -186,9 +665,13 @@ Out of scope:
 | 80-004 | 1 | Sweep all route schemas and handlers for request models that are exported but not actually wired to active routes | In Progress | First cleanup slice removes the orphaned `UpdateLeagueRequestSchema`. |
 | 80-005 | 1 | Sweep mapper/service outputs for placeholder values that exist only to satisfy stale DTOs | In Progress | First cleanup slice removes the admin user-detail `sport: ''` placeholder. |
 | 80-006 | 1 | Regenerate OpenAPI and SDK/types after each contract-aligned change set | In Progress | First cleanup slice already refreshed OpenAPI and generated types after removing stale admin/history/league DTO surface. |
-| 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | First cleanup slice already passed shared/core typecheck, backend lint, and fresh merged service coverage. |
+| 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | Backend slices must still prove downstream consumer safety when shared DTOs/enums change; early Plan 80 pushes failed `@poolmaster/poolmaster` typecheck because that consumer gate was skipped locally. |
 | 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | Not Started | This is the key decision point for `UpdateLeagueRequestSchema` and any similar drift found during the sweep. |
 | 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | Second cleanup slice narrowed league and invitation enum-backed DTO fields. Third cleanup slice narrowed contest summary/detail enum-backed fields. Fourth cleanup slice narrowed participant response enum-backed fields for participant detail and draft-search surfaces. |
+| 80-010 | 2 | Remove or consolidate backend dead code that duplicates active contract-building paths | Not Started | Includes `X-001` draft mapper cleanup and `X-002` overlapping admin audit query surface. |
+| 80-011 | 2 | Resolve backend modules that still have competing sources of truth after contract cleanup | Not Started | Includes `X-003` config/poll/platform config ownership cleanup after `D-012/D-013` are resolved. |
+| 80-012 | 3 | Review and update non-API backend documentation and rules after the drift cleanup lands | Not Started | Final pass should cover backend-facing docs and repo rules outside generated API artifacts so architecture, workflow, and implementation guidance match the cleaned backend. |
+| 80-013 | 1 | Add and follow a Plan 80 pre-push gate that includes downstream PoolMaster consumer checks | Done | Added after CI failures on early slices showed that shared-contract changes must run PoolMaster typecheck/lint before push, not just backend-only gates. |
 
 ## Relationship To Other Plans
 

@@ -1,7 +1,7 @@
 /**
  * Draft mappers — convert internal draft session/state objects to DTOs.
  */
-import type { DraftStatus } from '@poolmaster/shared/domain';
+import type { DraftStatus, SelectionType } from '@poolmaster/shared/domain';
 
 interface SessionState {
   sessionId: string;
@@ -22,6 +22,7 @@ interface DraftState {
   currentPickNumber: number;
   picks: DraftPickHistoryRecord[];
   autoPickPolicy: string;
+  selectionType?: SelectionType;
 }
 
 interface DraftPickHistoryRecord {
@@ -36,7 +37,7 @@ interface DraftPickHistoryRecord {
 
 export interface DraftStateResponseDto {
   contestId: string;
-  status: string;
+  status: DraftStatus;
   currentPickNumber: number;
   currentEntryId: string | null;
   currentTurnStartedAt: string | null;
@@ -44,6 +45,7 @@ export interface DraftStateResponseDto {
   entryIds: string[];
   draftPickHistories: DraftPickHistoryDto[];
   isComplete: boolean;
+  selectionType?: SelectionType;
 }
 
 export interface DraftPickHistoryDto {
