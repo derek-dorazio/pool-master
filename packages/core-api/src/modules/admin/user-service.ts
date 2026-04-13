@@ -9,6 +9,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { ContestStatus, LeagueRole, Sport } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
 
 // ---------------------------------------------------------------------------
@@ -26,7 +27,7 @@ export interface UserListItem {
   id: string;
   email: string;
   displayName: string;
-  leagues: { id: string; name: string; role: string }[];
+  leagues: { id: string; name: string; role: LeagueRole }[];
   lastLoginAt?: Date;
   status: 'active' | 'disabled';
   createdAt: Date;
@@ -40,8 +41,8 @@ export interface UserDetailView {
   status: 'active' | 'disabled';
   createdAt: Date;
   lastLoginAt?: Date;
-  leagues: { id: string; name: string; role: string; joinedAt?: Date }[];
-  activeContests: { id: string; name: string; sport: string; status: string; rank?: number }[];
+  leagues: { id: string; name: string; role: LeagueRole; joinedAt?: Date }[];
+  activeContests: { id: string; name: string; sport: Sport; status: ContestStatus; rank?: number }[];
   devices: { id: string; platform: string; lastActiveAt: Date; tokenStatus: string }[];
   recentAuthEvents: { type: string; timestamp: Date; ipAddress?: string; success: boolean }[];
 }
@@ -113,7 +114,7 @@ export class UserService {
         leagues: row.memberships.map((membership) => ({
           id: membership.league.id,
           name: membership.league.name,
-          role: membership.role.toLowerCase(),
+          role: membership.role as LeagueRole,
         })),
         lastLoginAt: undefined, // User model has no lastLoginAt column yet
         status: 'active' as const,
@@ -161,7 +162,7 @@ export class UserService {
       leagues.push({
         id: m.league.id,
         name: m.league.name,
-        role: m.role.toLowerCase(),
+        role: m.role as LeagueRole,
         joinedAt: m.joinedAt,
       });
     }
@@ -196,11 +197,15 @@ export class UserService {
     });
 
     for (const entry of activeEntries) {
+      const sport = entry.contest.sportEvent?.sport;
+      if (!sport) {
+        continue;
+      }
       activeContests.push({
         id: entry.contest.id,
         name: entry.contest.name,
-        sport: entry.contest.sportEvent?.sport ?? '',
-        status: entry.contest.status.toLowerCase(),
+        sport: sport as Sport,
+        status: entry.contest.status as ContestStatus,
         rank: entry.standingsPosition ?? undefined,
       });
     }

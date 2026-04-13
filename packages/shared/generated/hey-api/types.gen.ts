@@ -7639,7 +7639,7 @@ export type AdminListUsersResponses = {
                 /**
                  * User role in the league.
                  */
-                role: string;
+                role: 'COMMISSIONER' | 'MEMBER';
             }>;
             lastLoginAt?: string;
             status: 'active' | 'disabled';
@@ -7790,14 +7790,14 @@ export type AdminGetUserDetailResponses = {
         leagues: Array<{
             id: string;
             name: string;
-            role: string;
+            role: 'COMMISSIONER' | 'MEMBER';
             joinedAt?: string;
         }>;
         activeContests: Array<{
             id: string;
             name: string;
-            sport: string;
-            status: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             rank?: number;
         }>;
         devices: Array<{
@@ -8723,7 +8723,7 @@ export type AdminListProvidersResponses = {
             errorRate: number;
             latencyMs: number;
             lastEventAt: string;
-            sportsCovered: Array<string>;
+            sportsCovered: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
             activeEventCount: number;
         }>;
     };
@@ -8771,7 +8771,7 @@ export type AdminGetIngestionDashboardResponses = {
      */
     200: {
         sportProviderStatus: Array<{
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             providerId: string;
             lastPollAt: string;
             lastEventReceivedAt: string;
@@ -8790,7 +8790,7 @@ export type AdminGetIngestionDashboardResponses = {
         activeJobs: Array<{
             id: string;
             providerId: string;
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             eventId: string;
             status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
             startedAt: string;
@@ -8801,7 +8801,7 @@ export type AdminGetIngestionDashboardResponses = {
         recentCompletedJobs: Array<{
             id: string;
             providerId: string;
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             eventId: string;
             status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
             startedAt: string;
@@ -8858,7 +8858,7 @@ export type AdminGetUnmappedParticipantsResponses = {
         providerName: string;
         externalId: string;
         externalName: string;
-        sport: string;
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
     }>;
 };
 
@@ -8985,7 +8985,7 @@ export type AdminGetProviderDetailResponses = {
         errorRate: number;
         latencyMs: number;
         lastEventAt: string;
-        sportsCovered: Array<string>;
+        sportsCovered: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
         activeEventCount: number;
         recentHealthChecks: Array<{
             providerId: string;
@@ -8997,7 +8997,7 @@ export type AdminGetProviderDetailResponses = {
             details: string;
         }>;
         ingestionStats: Array<{
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             providerId: string;
             lastPollAt: string;
             lastEventReceivedAt: string;
@@ -9016,7 +9016,7 @@ export type AdminGetProviderDetailResponses = {
         recentJobs: Array<{
             id: string;
             providerId: string;
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             eventId: string;
             status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
             startedAt: string;
@@ -9029,7 +9029,7 @@ export type AdminGetProviderDetailResponses = {
             providerName: string;
             externalId: string;
             externalName: string;
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
         }>;
         mappedParticipantCount: number;
     };

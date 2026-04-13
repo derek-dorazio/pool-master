@@ -14395,6 +14395,10 @@
                                 },
                                 "role": {
                                   "type": "string",
+                                  "enum": [
+                                    "COMMISSIONER",
+                                    "MEMBER"
+                                  ],
                                   "description": "User role in the league."
                                 }
                               },
@@ -14672,7 +14676,11 @@
                             "type": "string"
                           },
                           "role": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "COMMISSIONER",
+                              "MEMBER"
+                            ]
                           },
                           "joinedAt": {
                             "type": "string",
@@ -14700,10 +14708,35 @@
                             "type": "string"
                           },
                           "sport": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
                           },
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "DRAFT",
+                              "OPEN",
+                              "DRAFTING",
+                              "LOCKED",
+                              "ACTIVE",
+                              "COMPLETED",
+                              "CANCELLED"
+                            ]
                           },
                           "rank": {
                             "type": "number"
@@ -16737,7 +16770,23 @@
                           "sportsCovered": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "enum": [
+                                "GOLF",
+                                "NFL",
+                                "NBA",
+                                "F1",
+                                "NASCAR",
+                                "NCAA_BASKETBALL",
+                                "NCAA_HOCKEY",
+                                "NCAA_FOOTBALL",
+                                "TENNIS",
+                                "HORSE_RACING",
+                                "SOCCER",
+                                "NHL",
+                                "MLB",
+                                "UFC"
+                              ]
                             }
                           },
                           "activeEventCount": {
@@ -16832,7 +16881,23 @@
                         "type": "object",
                         "properties": {
                           "sport": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
                           },
                           "providerId": {
                             "type": "string"
@@ -16919,7 +16984,23 @@
                             "type": "string"
                           },
                           "sport": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
                           },
                           "eventId": {
                             "type": "string",
@@ -16978,7 +17059,23 @@
                             "type": "string"
                           },
                           "sport": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
                           },
                           "eventId": {
                             "type": "string",
@@ -17115,7 +17212,23 @@
                         "type": "string"
                       },
                       "sport": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                          "GOLF",
+                          "NFL",
+                          "NBA",
+                          "F1",
+                          "NASCAR",
+                          "NCAA_BASKETBALL",
+                          "NCAA_HOCKEY",
+                          "NCAA_FOOTBALL",
+                          "TENNIS",
+                          "HORSE_RACING",
+                          "SOCCER",
+                          "NHL",
+                          "MLB",
+                          "UFC"
+                        ]
                       }
                     },
                     "required": [
@@ -17332,7 +17445,23 @@
                     "sportsCovered": {
                       "type": "array",
                       "items": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                          "GOLF",
+                          "NFL",
+                          "NBA",
+                          "F1",
+                          "NASCAR",
+                          "NCAA_BASKETBALL",
+                          "NCAA_HOCKEY",
+                          "NCAA_FOOTBALL",
+                          "TENNIS",
+                          "HORSE_RACING",
+                          "SOCCER",
+                          "NHL",
+                          "MLB",
+                          "UFC"
+                        ]
                       }
                     },
                     "activeEventCount": {
@@ -17390,7 +17519,23 @@
                         "type": "object",
                         "properties": {
                           "sport": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
                           },
                           "providerId": {
                             "type": "string"
@@ -17477,7 +17622,23 @@
                             "type": "string"
                           },
                           "sport": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
                           },
                           "eventId": {
                             "type": "string",
@@ -17542,7 +17703,23 @@
                             "type": "string"
                           },
                           "sport": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
                           }
                         },
                         "required": [

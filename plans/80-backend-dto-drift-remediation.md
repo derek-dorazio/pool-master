@@ -696,6 +696,8 @@ Out of scope:
     health status fields so generated consumers track the active backend values
   - narrowing ingestion provider/job/odds sport fields so operational surfaces
     export the shared `Sport` enum instead of loose strings
+  - narrowing root-admin provider sport fields so admin ingestion tooling uses
+    the same shared `Sport` enum instead of stringified provider values
 - Removing a property from the active contract means removing it from:
   - DTOs
   - route schemas

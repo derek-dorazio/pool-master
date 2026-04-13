@@ -30,7 +30,7 @@ export interface ProviderSummary {
   errorRate: number;
   latencyMs: number;
   lastEventAt: Date | null;
-  sportsCovered: string[];
+  sportsCovered: Sport[];
   activeEventCount: number;
 }
 
@@ -45,7 +45,7 @@ export interface ProviderHealthCheck {
 }
 
 export interface ProviderIngestionStat {
-  sport: string;
+  sport: Sport;
   providerId: string;
   lastPollAt: Date | null;
   lastEventReceivedAt: Date | null;
@@ -58,7 +58,7 @@ export interface ProviderIngestionStat {
 export interface IngestionJob {
   id: string;
   providerId: string;
-  sport: string;
+  sport: Sport;
   eventId: string | null;
   status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
   startedAt: Date | null;
@@ -88,7 +88,7 @@ export interface UnmappedParticipant {
   providerName: string;
   externalId: string;
   externalName: string;
-  sport: string;
+  sport: Sport;
 }
 
 export interface ProviderDetail extends ProviderSummary {
@@ -242,7 +242,7 @@ export class ProviderService {
       errorRate: healthResult.health.errorRateLastHour,
       latencyMs: healthResult.health.latencyMsP95,
       lastEventAt: lastEvent?.updatedAt ?? lastEvent?.createdAt ?? healthResult.health.lastSuccessfulPoll ?? null,
-      sportsCovered: provider.sportsCovered.map(String),
+      sportsCovered: provider.sportsCovered,
       activeEventCount: activeEvents,
     };
   }
@@ -321,7 +321,7 @@ export class ProviderService {
     return {
       id: row.id,
       providerId: row.providerId,
-      sport: row.sport,
+      sport: row.sport as Sport,
       eventId: row.eventExternalId,
       status: row.status as IngestionJob['status'],
       startedAt: row.startedAt,

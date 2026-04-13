@@ -2,7 +2,38 @@
  * Admin DTOs — request/response schemas for admin panel endpoints.
  */
 import { z } from 'zod';
+import { ContestStatus, LeagueRole, Sport } from '@poolmaster/shared/domain';
 import { PaginatedSchema } from './common.dto';
+
+const SportSchema = z.enum([
+  Sport.GOLF,
+  Sport.NFL,
+  Sport.NBA,
+  Sport.F1,
+  Sport.NASCAR,
+  Sport.NCAA_BASKETBALL,
+  Sport.NCAA_HOCKEY,
+  Sport.NCAA_FOOTBALL,
+  Sport.TENNIS,
+  Sport.HORSE_RACING,
+  Sport.SOCCER,
+  Sport.NHL,
+  Sport.MLB,
+  Sport.UFC,
+]);
+const LeagueRoleSchema = z.enum([
+  LeagueRole.COMMISSIONER,
+  LeagueRole.MEMBER,
+]);
+const ContestStatusSchema = z.enum([
+  ContestStatus.DRAFT,
+  ContestStatus.OPEN,
+  ContestStatus.DRAFTING,
+  ContestStatus.LOCKED,
+  ContestStatus.ACTIVE,
+  ContestStatus.COMPLETED,
+  ContestStatus.CANCELLED,
+]);
 
 // --- Response Sub-schemas ---
 
@@ -24,7 +55,7 @@ export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSche
 export const UserLeagueMembershipSummaryDtoSchema = z.object({
   id: z.string().describe('League identifier.'),
   name: z.string().describe('League display name.'),
-  role: z.string().describe('User role in the league.'),
+  role: LeagueRoleSchema.describe('User role in the league.'),
 }).describe('Compact league summary included in admin user lists.');
 export type UserLeagueMembershipSummaryDto = z.infer<typeof UserLeagueMembershipSummaryDtoSchema>;
 
@@ -45,7 +76,7 @@ export type UserListResponse = z.infer<typeof UserListResponseSchema>;
 export const UserLeagueDetailDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
-  role: z.string(),
+  role: LeagueRoleSchema,
   joinedAt: z.string().datetime().optional(),
 }).describe('Expanded league detail embedded in admin user detail responses.');
 export type UserLeagueDetailDto = z.infer<typeof UserLeagueDetailDtoSchema>;
@@ -53,8 +84,8 @@ export type UserLeagueDetailDto = z.infer<typeof UserLeagueDetailDtoSchema>;
 export const UserContestDetailDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
-  sport: z.string(),
-  status: z.string(),
+  sport: SportSchema,
+  status: ContestStatusSchema,
   rank: z.number().optional(),
 }).describe('Active contest detail embedded in admin user detail responses.');
 export type UserContestDetailDto = z.infer<typeof UserContestDetailDtoSchema>;
@@ -242,7 +273,7 @@ export const ProviderSummaryDtoSchema = z.object({
   errorRate: z.number(),
   latencyMs: z.number(),
   lastEventAt: z.string().datetime().nullable(),
-  sportsCovered: z.array(z.string()),
+  sportsCovered: z.array(SportSchema),
   activeEventCount: z.number(),
 }).describe('Provider summary row used across admin ingestion tooling.');
 export type ProviderSummaryDto = z.infer<typeof ProviderSummaryDtoSchema>;
@@ -259,7 +290,7 @@ export const ProviderHealthCheckDtoSchema = z.object({
 export type ProviderHealthCheckDto = z.infer<typeof ProviderHealthCheckDtoSchema>;
 
 export const ProviderIngestionStatDtoSchema = z.object({
-  sport: z.string(),
+  sport: SportSchema,
   providerId: z.string(),
   lastPollAt: z.string().datetime().nullable(),
   lastEventReceivedAt: z.string().datetime().nullable(),
@@ -282,7 +313,7 @@ export type ProviderIngestionErrorDto = z.infer<typeof ProviderIngestionErrorDto
 export const ProviderIngestionJobDtoSchema = z.object({
   id: z.string(),
   providerId: z.string(),
-  sport: z.string(),
+  sport: SportSchema,
   eventId: z.string().nullable(),
   status: z.enum(['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED']),
   startedAt: z.string().datetime().nullable(),
@@ -297,7 +328,7 @@ export const ProviderUnmappedParticipantDtoSchema = z.object({
   providerName: z.string(),
   externalId: z.string(),
   externalName: z.string(),
-  sport: z.string(),
+  sport: SportSchema,
 }).describe('Provider participant record that has not yet been mapped to an internal participant.');
 export type ProviderUnmappedParticipantDto = z.infer<typeof ProviderUnmappedParticipantDtoSchema>;
 
