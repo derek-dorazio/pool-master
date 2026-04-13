@@ -207,6 +207,37 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
   journey or needs a new one, stop and ask the user before finalizing the test
   plan.
 
+### Long-Term Browser E2E Strategy
+
+- Prefer a small number of long-lived browser journeys over many overlapping
+  scripts.
+- Start with one primary commissioner-centric script and extend it as new
+  commissioner functionality is added.
+- Add additional browser scripts only when a different user role or a clearly
+  separate journey cannot be covered cleanly inside the primary script.
+- When additional scripts are needed, split by role or truly distinct journey,
+  not by arbitrary feature duplication.
+- Do not create multiple commissioner scripts unless there is a concrete reason
+  that one commissioner journey can no longer stay coherent.
+
+### Browser E2E Cleanup Rules
+
+- Browser E2E should not rely on application seed data, legacy QA state, or
+  ambient existing records.
+- Browser E2E should create the data it needs through truthful user-facing
+  flows whenever practical.
+- Prefer cleanup through real product lifecycle APIs and UI flows rather than
+  privileged backdoors.
+- Long-term target:
+  - commissioner journeys clean up league-owned data through real commissioner
+    lifecycle flows
+  - user accounts clean up through real self-service account lifecycle flows
+- If the real product lifecycle needed for cleanup does not yet exist, keep the
+  deploy-gate browser lane minimal rather than keeping broader residue-creating
+  journeys active.
+- Do not expand the deploy-gate browser suite with new residue-creating flows
+  unless the cleanup path for those flows is also designed and tracked.
+
 ### Seed Data Rules (Applies to Functional and E2E)
 
 - Application seed flows are never a place for test fixtures. No agent may add QA data, functional-test data, E2E data, fake contests, fake odds, or fake results to `prisma/seed.ts` or any other application seed path.

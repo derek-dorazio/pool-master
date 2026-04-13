@@ -213,6 +213,10 @@ Required workflow:
    the current reviewed Playwright journeys should be extended or whether the
    new behavior needs a new browser journey. Do not leave newly delivered
    user-facing webapp behavior outside the browser-journey plan by default.
+12. For browser-E2E planning, prefer commissioner/member/public lifecycle flows
+    over root-admin or test-only shortcuts. If cleanup or setup appears to need
+    privileged APIs, first ask whether the real product lifecycle should own
+    that behavior instead.
 
 This is especially required for:
 
