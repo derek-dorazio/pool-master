@@ -1,6 +1,10 @@
 import type { FastifyInstance } from 'fastify';
+import type { Sport } from '@poolmaster/shared/domain';
 import { zodToJsonSchema } from '@poolmaster/shared/dto';
-import { EventListResponseSchema } from '@poolmaster/shared/dto/events.dto';
+import {
+  EventListResponseSchema,
+  type EventStatusDto,
+} from '@poolmaster/shared/dto/events.dto';
 import { toEventListResponse } from '../../mappers';
 import { getAppPrisma } from '../../core/prisma-context';
 
@@ -35,7 +39,13 @@ export async function eventsModule(fastify: FastifyInstance): Promise<void> {
         take: query.limit ?? 25,
       });
 
-      return toEventListResponse(events);
+      return toEventListResponse(
+        events.map((event) => ({
+          ...event,
+          sport: event.sport as Sport,
+          status: event.status as EventStatusDto,
+        })),
+      );
     },
   });
 }

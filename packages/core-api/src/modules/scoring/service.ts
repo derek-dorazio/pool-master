@@ -64,7 +64,7 @@ export interface ParticipantScoreHistory {
 }
 
 export interface HealthDetail {
-  status: string;
+  status: 'ok';
   service: string;
   rollupRunning: boolean;
   activeContests: number;

@@ -692,6 +692,8 @@ Out of scope:
   - removal of stale admin/history/orphaned league DTO surface
   - narrowing of league and invitation enum-backed fields so the generated
     contract matches the active domain enums more closely
+  - narrowing of draft response enums plus event sport/status and scoring
+    health status fields so generated consumers track the active backend values
 - Removing a property from the active contract means removing it from:
   - DTOs
   - route schemas

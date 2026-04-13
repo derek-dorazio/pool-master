@@ -5963,7 +5963,7 @@ export type ListEventsResponses = {
             /**
              * Sport associated with the event.
              */
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             /**
              * Primary event name shown in contest and event selectors.
              */
@@ -5979,7 +5979,7 @@ export type ListEventsResponses = {
             /**
              * Provider-normalized event status.
              */
-            status: string;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
             /**
              * Scheduled or actual event start time.
              */
@@ -13438,7 +13438,7 @@ export type GetScoringHealthResponses = {
      * Scoring-service health response.
      */
     200: {
-        status: string;
+        status: 'ok';
         service: string;
         rollupRunning: boolean;
         activeContests: number;

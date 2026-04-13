@@ -11502,6 +11502,22 @@
                           },
                           "sport": {
                             "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ],
                             "description": "Sport associated with the event."
                           },
                           "name": {
@@ -11520,6 +11536,13 @@
                           },
                           "status": {
                             "type": "string",
+                            "enum": [
+                              "SCHEDULED",
+                              "IN_PROGRESS",
+                              "COMPLETED",
+                              "CANCELLED",
+                              "POSTPONED"
+                            ],
                             "description": "Provider-normalized event status."
                           },
                           "startDate": {
@@ -28253,7 +28276,10 @@
                   "type": "object",
                   "properties": {
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
                     },
                     "service": {
                       "type": "string"

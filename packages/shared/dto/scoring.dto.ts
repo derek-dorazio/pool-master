@@ -85,7 +85,7 @@ export const RollupResultResponseSchema = z.object({
 export type RollupResultResponse = z.infer<typeof RollupResultResponseSchema>;
 
 export const ScoringHealthResponseSchema = z.object({
-  status: z.string(),
+  status: z.literal('ok'),
   service: z.string(),
   rollupRunning: z.boolean(),
   activeContests: z.number(),

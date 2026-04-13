@@ -1,12 +1,15 @@
-import type { EventSummaryDto } from '@poolmaster/shared/dto/events.dto';
+import type { Sport } from '@poolmaster/shared/domain';
+import type { EventStatusDto, EventSummaryDto } from '@poolmaster/shared/dto/events.dto';
+
+type EventStatus = EventStatusDto;
 
 interface EventRow {
   id: string;
-  sport: string;
+  sport: Sport;
   name: string;
   venue: string | null;
   location: string | null;
-  status: string;
+  status: EventStatus;
   startDate: Date;
   endDate: Date | null;
   participantCount: number | null;
