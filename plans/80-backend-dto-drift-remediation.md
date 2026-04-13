@@ -694,6 +694,8 @@ Out of scope:
     contract matches the active domain enums more closely
   - narrowing of draft response enums plus event sport/status and scoring
     health status fields so generated consumers track the active backend values
+  - narrowing ingestion provider/job/odds sport fields so operational surfaces
+    export the shared `Sport` enum instead of loose strings
 - Removing a property from the active contract means removing it from:
   - DTOs
   - route schemas

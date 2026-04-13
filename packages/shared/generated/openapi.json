@@ -28653,7 +28653,23 @@
                           "sportsCovered": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "enum": [
+                                "GOLF",
+                                "NFL",
+                                "NBA",
+                                "F1",
+                                "NASCAR",
+                                "NCAA_BASKETBALL",
+                                "NCAA_HOCKEY",
+                                "NCAA_FOOTBALL",
+                                "TENNIS",
+                                "HORSE_RACING",
+                                "SOCCER",
+                                "NHL",
+                                "MLB",
+                                "UFC"
+                              ]
                             },
                             "description": "Sports currently covered by the provider integration."
                           }
@@ -28765,6 +28781,22 @@
                         },
                         "sport": {
                           "type": "string",
+                          "enum": [
+                            "GOLF",
+                            "NFL",
+                            "NBA",
+                            "F1",
+                            "NASCAR",
+                            "NCAA_BASKETBALL",
+                            "NCAA_HOCKEY",
+                            "NCAA_FOOTBALL",
+                            "TENNIS",
+                            "HORSE_RACING",
+                            "SOCCER",
+                            "NHL",
+                            "MLB",
+                            "UFC"
+                          ],
                           "description": "Sport being synchronized."
                         },
                         "eventExternalId": {
@@ -28927,6 +28959,22 @@
                         },
                         "sport": {
                           "type": "string",
+                          "enum": [
+                            "GOLF",
+                            "NFL",
+                            "NBA",
+                            "F1",
+                            "NASCAR",
+                            "NCAA_BASKETBALL",
+                            "NCAA_HOCKEY",
+                            "NCAA_FOOTBALL",
+                            "TENNIS",
+                            "HORSE_RACING",
+                            "SOCCER",
+                            "NHL",
+                            "MLB",
+                            "UFC"
+                          ],
                           "description": "Sport being synchronized."
                         },
                         "eventExternalId": {
@@ -29089,6 +29137,22 @@
                         },
                         "sport": {
                           "type": "string",
+                          "enum": [
+                            "GOLF",
+                            "NFL",
+                            "NBA",
+                            "F1",
+                            "NASCAR",
+                            "NCAA_BASKETBALL",
+                            "NCAA_HOCKEY",
+                            "NCAA_FOOTBALL",
+                            "TENNIS",
+                            "HORSE_RACING",
+                            "SOCCER",
+                            "NHL",
+                            "MLB",
+                            "UFC"
+                          ],
                           "description": "Sport being synchronized."
                         },
                         "eventExternalId": {
@@ -29225,6 +29289,22 @@
                   "properties": {
                     "sport": {
                       "type": "string",
+                      "enum": [
+                        "GOLF",
+                        "NFL",
+                        "NBA",
+                        "F1",
+                        "NASCAR",
+                        "NCAA_BASKETBALL",
+                        "NCAA_HOCKEY",
+                        "NCAA_FOOTBALL",
+                        "TENNIS",
+                        "HORSE_RACING",
+                        "SOCCER",
+                        "NHL",
+                        "MLB",
+                        "UFC"
+                      ],
                       "description": "Sport whose odds payload was requested."
                     },
                     "eventsWithOdds": {

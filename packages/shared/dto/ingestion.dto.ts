@@ -1,10 +1,28 @@
 import { z } from 'zod';
+import { Sport } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+
+const SportSchema = z.enum([
+  Sport.GOLF,
+  Sport.NFL,
+  Sport.NBA,
+  Sport.F1,
+  Sport.NASCAR,
+  Sport.NCAA_BASKETBALL,
+  Sport.NCAA_HOCKEY,
+  Sport.NCAA_FOOTBALL,
+  Sport.TENNIS,
+  Sport.HORSE_RACING,
+  Sport.SOCCER,
+  Sport.NHL,
+  Sport.MLB,
+  Sport.UFC,
+]);
 
 export const IngestionProviderSummaryDtoSchema = z.object({
   providerId: z.string().describe('Stable ingestion-provider identifier.'),
   providerName: z.string().describe('Human-readable provider name.'),
-  sportsCovered: z.array(z.string()).describe('Sports currently covered by the provider integration.'),
+  sportsCovered: z.array(SportSchema).describe('Sports currently covered by the provider integration.'),
 }).describe('Provider summary used by ingestion-management surfaces.');
 export type IngestionProviderSummaryDto = z.infer<typeof IngestionProviderSummaryDtoSchema>;
 
@@ -23,7 +41,7 @@ export const IngestionJobRecordDtoSchema = z.object({
     'HEALTH_CHECK',
   ]),
   providerId: z.string().describe('Provider that owns the ingestion job.'),
-  sport: z.string().describe('Sport being synchronized.'),
+  sport: SportSchema.describe('Sport being synchronized.'),
   eventExternalId: z.string().optional().describe('Provider event identifier when the job targets a single event.'),
   status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']).describe('Current ingestion job lifecycle state.'),
   startedAt: DateTimeSchema.optional().describe('When the job began processing.'),
@@ -40,7 +58,7 @@ export const IngestionJobResponseSchema = z.object({
 export type IngestionJobResponse = z.infer<typeof IngestionJobResponseSchema>;
 
 export const IngestSportOddsResponseSchema = z.object({
-  sport: z.string().describe('Sport whose odds payload was requested.'),
+  sport: SportSchema.describe('Sport whose odds payload was requested.'),
   eventsWithOdds: z.number().int().describe('How many events returned odds records.'),
   odds: z.array(JsonObjectSchema).describe('Provider-normalized odds payloads returned by the ingestion endpoint.'),
 }).describe('Odds-ingestion response payload.');

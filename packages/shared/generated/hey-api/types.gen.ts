@@ -13670,7 +13670,7 @@ export type ListIngestionProvidersResponses = {
             /**
              * Sports currently covered by the provider integration.
              */
-            sportsCovered: Array<string>;
+            sportsCovered: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
         }>;
     };
 };
@@ -13730,7 +13730,7 @@ export type SyncSportDataResponses = {
             /**
              * Sport being synchronized.
              */
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             /**
              * Provider event identifier when the job targets a single event.
              */
@@ -13821,7 +13821,7 @@ export type IngestEventScoresResponses = {
             /**
              * Sport being synchronized.
              */
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             /**
              * Provider event identifier when the job targets a single event.
              */
@@ -13912,7 +13912,7 @@ export type IngestEventResultsResponses = {
             /**
              * Sport being synchronized.
              */
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             /**
              * Provider event identifier when the job targets a single event.
              */
@@ -13993,7 +13993,7 @@ export type IngestSportOddsResponses = {
         /**
          * Sport whose odds payload was requested.
          */
-        sport: string;
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
         /**
          * How many events returned odds records.
          */
