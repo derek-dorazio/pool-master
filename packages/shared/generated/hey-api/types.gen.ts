@@ -43,22 +43,46 @@ export type RegisterUserData = {
 
 export type RegisterUserErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     409: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -159,12 +183,24 @@ export type LoginUserData = {
 
 export type LoginUserErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -253,12 +289,24 @@ export type RefreshTokenData = {
 
 export type RefreshTokenErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -301,12 +349,24 @@ export type LogoutUserData = {
 
 export type LogoutUserErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -316,9 +376,12 @@ export type LogoutUserError = LogoutUserErrors[keyof LogoutUserErrors];
 
 export type LogoutUserResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -375,12 +438,24 @@ export type OauthCallbackData = {
 
 export type OauthCallbackErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     501: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -397,12 +472,24 @@ export type GetCurrentUserData = {
 
 export type GetCurrentUserErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -470,12 +557,24 @@ export type ListLeaguesData = {
 
 export type ListLeaguesErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -485,7 +584,7 @@ export type ListLeaguesError = ListLeaguesErrors[keyof ListLeaguesErrors];
 
 export type ListLeaguesResponses = {
     /**
-     * Default Response
+     * League-list response.
      */
     200: {
         leagues: Array<{
@@ -574,12 +673,24 @@ export type CreateLeagueData = {
 
 export type CreateLeagueErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -589,7 +700,7 @@ export type CreateLeagueError = CreateLeagueErrors[keyof CreateLeagueErrors];
 
 export type CreateLeagueResponses = {
     /**
-     * Default Response
+     * Single-league detail response.
      */
     201: {
         /**
@@ -667,12 +778,24 @@ export type GetLeagueData = {
 
 export type GetLeagueErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -682,7 +805,7 @@ export type GetLeagueError = GetLeagueErrors[keyof GetLeagueErrors];
 
 export type GetLeagueResponses = {
     /**
-     * Default Response
+     * Single-league detail response.
      */
     200: {
         /**
@@ -760,12 +883,24 @@ export type GetLeagueByCodeData = {
 
 export type GetLeagueByCodeErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -775,7 +910,7 @@ export type GetLeagueByCodeError = GetLeagueByCodeErrors[keyof GetLeagueByCodeEr
 
 export type GetLeagueByCodeResponses = {
     /**
-     * Default Response
+     * Single-league detail response.
      */
     200: {
         /**
@@ -893,12 +1028,24 @@ export type UpdateLeagueSettingsData = {
 
 export type UpdateLeagueSettingsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -908,7 +1055,7 @@ export type UpdateLeagueSettingsError = UpdateLeagueSettingsErrors[keyof UpdateL
 
 export type UpdateLeagueSettingsResponses = {
     /**
-     * Default Response
+     * Single-league detail response.
      */
     200: {
         /**
@@ -998,12 +1145,24 @@ export type SendLeagueInvitationsData = {
 
 export type SendLeagueInvitationsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1013,9 +1172,12 @@ export type SendLeagueInvitationsError = SendLeagueInvitationsErrors[keyof SendL
 
 export type SendLeagueInvitationsResponses = {
     /**
-     * Default Response
+     * League invitation-send response.
      */
     201: {
+        /**
+         * Invitation records successfully created and sent.
+         */
         sent: Array<{
             /**
              * Invitation record identifier.
@@ -1074,7 +1236,13 @@ export type SendLeagueInvitationsResponses = {
              */
             updatedAt: string;
         }>;
+        /**
+         * Emails skipped because they already belong to the league.
+         */
         skippedMembers: Array<string>;
+        /**
+         * Emails skipped because they were duplicated in the request or invite set.
+         */
         skippedDuplicates: Array<string>;
     };
 };
@@ -1104,12 +1272,24 @@ export type GenerateInviteLinkData = {
 
 export type GenerateInviteLinkErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1119,7 +1299,7 @@ export type GenerateInviteLinkError = GenerateInviteLinkErrors[keyof GenerateInv
 
 export type GenerateInviteLinkResponses = {
     /**
-     * Default Response
+     * Generated invite-link response.
      */
     201: {
         /**
@@ -1200,22 +1380,46 @@ export type RevokeInviteLinkData = {
 
 export type RevokeInviteLinkErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1225,9 +1429,12 @@ export type RevokeInviteLinkError = RevokeInviteLinkErrors[keyof RevokeInviteLin
 
 export type RevokeInviteLinkResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -1245,22 +1452,46 @@ export type ListLeagueMembersData = {
 
 export type ListLeagueMembersErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1270,7 +1501,7 @@ export type ListLeagueMembersError = ListLeagueMembersErrors[keyof ListLeagueMem
 
 export type ListLeagueMembersResponses = {
     /**
-     * Default Response
+     * League-members response.
      */
     200: {
         members: Array<{
@@ -1324,32 +1555,68 @@ export type ChangeMemberRoleData = {
 
 export type ChangeMemberRoleErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1359,18 +1626,48 @@ export type ChangeMemberRoleError = ChangeMemberRoleErrors[keyof ChangeMemberRol
 
 export type ChangeMemberRoleResponses = {
     /**
-     * Default Response
+     * Single league-membership response.
      */
     200: {
+        /**
+         * Detailed league membership record.
+         */
         membership: {
+            /**
+             * Membership record identifier.
+             */
             id: string;
+            /**
+             * League that owns the membership.
+             */
             leagueId: string;
+            /**
+             * User account attached to the membership.
+             */
             userId: string;
+            /**
+             * Current league role for the user.
+             */
             role: string;
+            /**
+             * Membership lifecycle state.
+             */
             status: string;
+            /**
+             * Explicit commissioner permission overrides granted to the membership.
+             */
             permissions: Array<string>;
+            /**
+             * When the user joined the league.
+             */
             joinedAt: string;
+            /**
+             * When the membership record was created.
+             */
             createdAt: string;
+            /**
+             * When the membership record was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -1390,32 +1687,68 @@ export type RemoveMemberData = {
 
 export type RemoveMemberErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1425,9 +1758,12 @@ export type RemoveMemberError = RemoveMemberErrors[keyof RemoveMemberErrors];
 
 export type RemoveMemberResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -1445,32 +1781,68 @@ export type LeaveLeagueData = {
 
 export type LeaveLeagueErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1480,9 +1852,12 @@ export type LeaveLeagueError = LeaveLeagueErrors[keyof LeaveLeagueErrors];
 
 export type LeaveLeagueResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -1500,22 +1875,46 @@ export type GetLeagueDashboardData = {
 
 export type GetLeagueDashboardErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1525,12 +1924,18 @@ export type GetLeagueDashboardError = GetLeagueDashboardErrors[keyof GetLeagueDa
 
 export type GetLeagueDashboardResponses = {
     /**
-     * Default Response
+     * Commissioner dashboard response.
      */
     200: {
+        /**
+         * League summary payload driving the dashboard header.
+         */
         league: {
             [key: string]: unknown;
         };
+        /**
+         * Outstanding commissioner action items.
+         */
         actionItems: Array<{
             id: string;
             leagueId: string;
@@ -1541,24 +1946,63 @@ export type GetLeagueDashboardResponses = {
             description: string;
             actionUrl?: string;
             resolved: boolean;
+            /**
+             * When the action item was created.
+             */
             createdAt: string;
+            /**
+             * When the action item was last updated.
+             */
             updatedAt: string;
         }>;
+        /**
+         * Contest summaries included in the dashboard payload.
+         */
         contests: Array<{
             [key: string]: unknown;
         }>;
+        /**
+         * Current league member count.
+         */
         memberCount: number;
+        /**
+         * Current number of pending invitations.
+         */
         pendingInvites: number;
+        /**
+         * Recent member activity for the league.
+         */
         recentMemberActivity: Array<{
+            /**
+             * User involved in the activity event.
+             */
             userId: string;
+            /**
+             * Display name shown for the member activity event.
+             */
             displayName: string;
+            /**
+             * Normalized member activity action label.
+             */
             action: string;
+            /**
+             * When the member activity occurred.
+             */
             timestamp: string;
         }>;
+        /**
+         * Upcoming league events that should be surfaced on the dashboard.
+         */
         upcomingEvents: Array<{
             contestId?: string;
             title: string;
+            /**
+             * ISO 8601 datetime string.
+             */
             date: string;
+            /**
+             * Upcoming event category.
+             */
             eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
         }>;
     };
@@ -1578,12 +2022,24 @@ export type ResolveActionItemData = {
 
 export type ResolveActionItemErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1593,9 +2049,12 @@ export type ResolveActionItemError = ResolveActionItemErrors[keyof ResolveAction
 
 export type ResolveActionItemResponses = {
     /**
-     * Default Response
+     * Action-item resolution response.
      */
     200: {
+        /**
+         * Commissioner dashboard action item.
+         */
         actionItem: {
             id: string;
             leagueId: string;
@@ -1606,7 +2065,13 @@ export type ResolveActionItemResponses = {
             description: string;
             actionUrl?: string;
             resolved: boolean;
+            /**
+             * When the action item was created.
+             */
             createdAt: string;
+            /**
+             * When the action item was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -1625,12 +2090,24 @@ export type GetLeagueAuditLogData = {
 
 export type GetLeagueAuditLogErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1640,7 +2117,7 @@ export type GetLeagueAuditLogError = GetLeagueAuditLogErrors[keyof GetLeagueAudi
 
 export type GetLeagueAuditLogResponses = {
     /**
-     * Default Response
+     * League audit-log response.
      */
     200: {
         entries: Array<{
@@ -1662,22 +2139,46 @@ export type GetMemberAuditLogData = {
 
 export type GetMemberAuditLogErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1687,7 +2188,7 @@ export type GetMemberAuditLogError = GetMemberAuditLogErrors[keyof GetMemberAudi
 
 export type GetMemberAuditLogResponses = {
     /**
-     * Default Response
+     * League audit-log response.
      */
     200: {
         entries: Array<{
@@ -1699,7 +2200,13 @@ export type GetMemberAuditLogResponses = {
 export type GetMemberAuditLogResponse = GetMemberAuditLogResponses[keyof GetMemberAuditLogResponses];
 
 export type CopySeasonData = {
+    /**
+     * Commissioner request payload for copying a prior season into a new one.
+     */
     body: {
+        /**
+         * Contests from the source season that should be copied forward.
+         */
         sourceContestIds: Array<string>;
     };
     path: {
@@ -1711,12 +2218,24 @@ export type CopySeasonData = {
 
 export type CopySeasonErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1726,7 +2245,7 @@ export type CopySeasonError = CopySeasonErrors[keyof CopySeasonErrors];
 
 export type CopySeasonResponses = {
     /**
-     * Default Response
+     * Arbitrary JSON object payload.
      */
     201: {
         [key: string]: unknown;
@@ -1736,10 +2255,25 @@ export type CopySeasonResponses = {
 export type CopySeasonResponse = CopySeasonResponses[keyof CopySeasonResponses];
 
 export type ImportMembersData = {
+    /**
+     * Commissioner request payload for importing league members.
+     */
     body: {
+        /**
+         * Rows to import as league members.
+         */
         rows: Array<{
+            /**
+             * Email address for the imported member row.
+             */
             email: string;
+            /**
+             * Optional display name supplied in the import row.
+             */
             displayName?: string;
+            /**
+             * Optional requested league role for the imported member.
+             */
             role?: string;
         }>;
     };
@@ -1752,22 +2286,46 @@ export type ImportMembersData = {
 
 export type ImportMembersErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1777,7 +2335,7 @@ export type ImportMembersError = ImportMembersErrors[keyof ImportMembersErrors];
 
 export type ImportMembersResponses = {
     /**
-     * Default Response
+     * Arbitrary JSON object payload.
      */
     201: {
         [key: string]: unknown;
@@ -1797,32 +2355,68 @@ export type ListLeagueSquadsData = {
 
 export type ListLeagueSquadsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1832,28 +2426,64 @@ export type ListLeagueSquadsError = ListLeagueSquadsErrors[keyof ListLeagueSquad
 
 export type ListLeagueSquadsResponses = {
     /**
-     * Default Response
+     * Squad-list response.
      */
     200: {
         squads: Array<{
             id: string;
             leagueId: string;
             createdBy: string;
+            /**
+             * Squad display name.
+             */
             name: string;
+            /**
+             * Optional squad icon URL.
+             */
             iconUrl?: string;
+            /**
+             * Current squad lifecycle state.
+             */
             status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * Number of memberships attached to the squad.
+             */
             memberCount: number;
+            /**
+             * When the squad was created.
+             */
             createdAt: string;
+            /**
+             * When the squad was last updated.
+             */
             updatedAt: string;
+            /**
+             * Optional expanded squad membership list.
+             */
             members?: Array<{
                 id: string;
                 squadId: string;
                 leagueId: string;
                 userId: string;
+                /**
+                 * Display name for the squad member.
+                 */
                 displayName?: string;
+                /**
+                 * Squad membership status.
+                 */
                 status: 'ACTIVE' | 'INACTIVE';
+                /**
+                 * When the user joined the squad.
+                 */
                 joinedAt: string;
+                /**
+                 * When the squad membership record was created.
+                 */
                 createdAt: string;
+                /**
+                 * When the squad membership record was last updated.
+                 */
                 updatedAt: string;
             }>;
         }>;
@@ -1863,8 +2493,17 @@ export type ListLeagueSquadsResponses = {
 export type ListLeagueSquadsResponse = ListLeagueSquadsResponses[keyof ListLeagueSquadsResponses];
 
 export type CreateLeagueSquadData = {
+    /**
+     * Request payload for creating a squad within a league.
+     */
     body: {
+        /**
+         * Squad display name.
+         */
         name?: string;
+        /**
+         * Optional squad icon URL.
+         */
         iconUrl?: string;
     };
     path: {
@@ -1876,32 +2515,68 @@ export type CreateLeagueSquadData = {
 
 export type CreateLeagueSquadErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1911,28 +2586,67 @@ export type CreateLeagueSquadError = CreateLeagueSquadErrors[keyof CreateLeagueS
 
 export type CreateLeagueSquadResponses = {
     /**
-     * Default Response
+     * Single-squad response.
      */
     201: {
+        /**
+         * Squad detail returned from squad-management APIs.
+         */
         squad: {
             id: string;
             leagueId: string;
             createdBy: string;
+            /**
+             * Squad display name.
+             */
             name: string;
+            /**
+             * Optional squad icon URL.
+             */
             iconUrl?: string;
+            /**
+             * Current squad lifecycle state.
+             */
             status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * Number of memberships attached to the squad.
+             */
             memberCount: number;
+            /**
+             * When the squad was created.
+             */
             createdAt: string;
+            /**
+             * When the squad was last updated.
+             */
             updatedAt: string;
+            /**
+             * Optional expanded squad membership list.
+             */
             members?: Array<{
                 id: string;
                 squadId: string;
                 leagueId: string;
                 userId: string;
+                /**
+                 * Display name for the squad member.
+                 */
                 displayName?: string;
+                /**
+                 * Squad membership status.
+                 */
                 status: 'ACTIVE' | 'INACTIVE';
+                /**
+                 * When the user joined the squad.
+                 */
                 joinedAt: string;
+                /**
+                 * When the squad membership record was created.
+                 */
                 createdAt: string;
+                /**
+                 * When the squad membership record was last updated.
+                 */
                 updatedAt: string;
             }>;
         };
@@ -1953,32 +2667,68 @@ export type GetLeagueSquadData = {
 
 export type GetLeagueSquadErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -1988,28 +2738,67 @@ export type GetLeagueSquadError = GetLeagueSquadErrors[keyof GetLeagueSquadError
 
 export type GetLeagueSquadResponses = {
     /**
-     * Default Response
+     * Single-squad response.
      */
     200: {
+        /**
+         * Squad detail returned from squad-management APIs.
+         */
         squad: {
             id: string;
             leagueId: string;
             createdBy: string;
+            /**
+             * Squad display name.
+             */
             name: string;
+            /**
+             * Optional squad icon URL.
+             */
             iconUrl?: string;
+            /**
+             * Current squad lifecycle state.
+             */
             status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * Number of memberships attached to the squad.
+             */
             memberCount: number;
+            /**
+             * When the squad was created.
+             */
             createdAt: string;
+            /**
+             * When the squad was last updated.
+             */
             updatedAt: string;
+            /**
+             * Optional expanded squad membership list.
+             */
             members?: Array<{
                 id: string;
                 squadId: string;
                 leagueId: string;
                 userId: string;
+                /**
+                 * Display name for the squad member.
+                 */
                 displayName?: string;
+                /**
+                 * Squad membership status.
+                 */
                 status: 'ACTIVE' | 'INACTIVE';
+                /**
+                 * When the user joined the squad.
+                 */
                 joinedAt: string;
+                /**
+                 * When the squad membership record was created.
+                 */
                 createdAt: string;
+                /**
+                 * When the squad membership record was last updated.
+                 */
                 updatedAt: string;
             }>;
         };
@@ -2019,8 +2808,17 @@ export type GetLeagueSquadResponses = {
 export type GetLeagueSquadResponse = GetLeagueSquadResponses[keyof GetLeagueSquadResponses];
 
 export type UpdateLeagueSquadData = {
+    /**
+     * Patch payload for updating a squad.
+     */
     body: {
+        /**
+         * Updated squad display name.
+         */
         name?: string;
+        /**
+         * Updated squad icon URL.
+         */
         iconUrl?: string;
     };
     path: {
@@ -2033,32 +2831,68 @@ export type UpdateLeagueSquadData = {
 
 export type UpdateLeagueSquadErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2068,28 +2902,67 @@ export type UpdateLeagueSquadError = UpdateLeagueSquadErrors[keyof UpdateLeagueS
 
 export type UpdateLeagueSquadResponses = {
     /**
-     * Default Response
+     * Single-squad response.
      */
     200: {
+        /**
+         * Squad detail returned from squad-management APIs.
+         */
         squad: {
             id: string;
             leagueId: string;
             createdBy: string;
+            /**
+             * Squad display name.
+             */
             name: string;
+            /**
+             * Optional squad icon URL.
+             */
             iconUrl?: string;
+            /**
+             * Current squad lifecycle state.
+             */
             status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * Number of memberships attached to the squad.
+             */
             memberCount: number;
+            /**
+             * When the squad was created.
+             */
             createdAt: string;
+            /**
+             * When the squad was last updated.
+             */
             updatedAt: string;
+            /**
+             * Optional expanded squad membership list.
+             */
             members?: Array<{
                 id: string;
                 squadId: string;
                 leagueId: string;
                 userId: string;
+                /**
+                 * Display name for the squad member.
+                 */
                 displayName?: string;
+                /**
+                 * Squad membership status.
+                 */
                 status: 'ACTIVE' | 'INACTIVE';
+                /**
+                 * When the user joined the squad.
+                 */
                 joinedAt: string;
+                /**
+                 * When the squad membership record was created.
+                 */
                 createdAt: string;
+                /**
+                 * When the squad membership record was last updated.
+                 */
                 updatedAt: string;
             }>;
         };
@@ -2099,7 +2972,13 @@ export type UpdateLeagueSquadResponses = {
 export type UpdateLeagueSquadResponse = UpdateLeagueSquadResponses[keyof UpdateLeagueSquadResponses];
 
 export type AddSquadCoManagerData = {
+    /**
+     * Request payload for adding a user to a squad.
+     */
     body: {
+        /**
+         * User to add as a squad co-manager or member.
+         */
         userId: string;
     };
     path: {
@@ -2112,32 +2991,68 @@ export type AddSquadCoManagerData = {
 
 export type AddSquadCoManagerErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2147,18 +3062,36 @@ export type AddSquadCoManagerError = AddSquadCoManagerErrors[keyof AddSquadCoMan
 
 export type AddSquadCoManagerResponses = {
     /**
-     * Default Response
+     * Single squad-membership response.
      */
     201: {
+        /**
+         * Squad membership summary.
+         */
         membership: {
             id: string;
             squadId: string;
             leagueId: string;
             userId: string;
+            /**
+             * Display name for the squad member.
+             */
             displayName?: string;
+            /**
+             * Squad membership status.
+             */
             status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * When the user joined the squad.
+             */
             joinedAt: string;
+            /**
+             * When the squad membership record was created.
+             */
             createdAt: string;
+            /**
+             * When the squad membership record was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -2179,32 +3112,68 @@ export type RemoveSquadCoManagerData = {
 
 export type RemoveSquadCoManagerErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2214,18 +3183,36 @@ export type RemoveSquadCoManagerError = RemoveSquadCoManagerErrors[keyof RemoveS
 
 export type RemoveSquadCoManagerResponses = {
     /**
-     * Default Response
+     * Single squad-membership response.
      */
     200: {
+        /**
+         * Squad membership summary.
+         */
         membership: {
             id: string;
             squadId: string;
             leagueId: string;
             userId: string;
+            /**
+             * Display name for the squad member.
+             */
             displayName?: string;
+            /**
+             * Squad membership status.
+             */
             status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * When the user joined the squad.
+             */
             joinedAt: string;
+            /**
+             * When the squad membership record was created.
+             */
             createdAt: string;
+            /**
+             * When the squad membership record was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -2244,22 +3231,46 @@ export type GetInvitationPreviewData = {
 
 export type GetInvitationPreviewErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2324,32 +3335,68 @@ export type AcceptInvitationData = {
 
 export type AcceptInvitationErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2359,18 +3406,48 @@ export type AcceptInvitationError = AcceptInvitationErrors[keyof AcceptInvitatio
 
 export type AcceptInvitationResponses = {
     /**
-     * Default Response
+     * Single league-membership response.
      */
     201: {
+        /**
+         * Detailed league membership record.
+         */
         membership: {
+            /**
+             * Membership record identifier.
+             */
             id: string;
+            /**
+             * League that owns the membership.
+             */
             leagueId: string;
+            /**
+             * User account attached to the membership.
+             */
             userId: string;
+            /**
+             * Current league role for the user.
+             */
             role: string;
+            /**
+             * Membership lifecycle state.
+             */
             status: string;
+            /**
+             * Explicit commissioner permission overrides granted to the membership.
+             */
             permissions: Array<string>;
+            /**
+             * When the user joined the league.
+             */
             joinedAt: string;
+            /**
+             * When the membership record was created.
+             */
             createdAt: string;
+            /**
+             * When the membership record was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -2389,7 +3466,7 @@ export type ListContestsData = {
 
 export type ListContestsResponses = {
     /**
-     * Default Response
+     * Contest-list response.
      */
     200: {
         contests: Array<{
@@ -2402,6 +3479,9 @@ export type ListContestsResponses = {
             leagueId: string;
             sportEventId?: string;
             sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -2414,30 +3494,60 @@ export type ListContestsResponses = {
 export type ListContestsResponse = ListContestsResponses[keyof ListContestsResponses];
 
 export type CreateContestData = {
+    /**
+     * Request payload for creating a contest.
+     */
     body: {
         name: string;
         eventId?: string;
         contestType: 'SINGLE_EVENT';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
+        /**
+         * Contest-configuration payload used by contest create and update endpoints.
+         */
         contestConfiguration?: {
             draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
             autoPickPolicy?: string;
             tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
                 tierId: string;
+                /**
+                 * Tier label shown in commissioner and draft UI.
+                 */
                 tierName: string;
+                /**
+                 * Tier order number.
+                 */
                 tierNumber: number;
+                /**
+                 * How many picks each entry must make from the tier.
+                 */
                 picksFromTier: number;
+                /**
+                 * Optional ranking range that produced the tier.
+                 */
                 rankingRange?: [
                     unknown,
                     unknown
                 ];
+                /**
+                 * Optional pricing range that produced the tier.
+                 */
                 priceRange?: [
                     unknown,
                     unknown
                 ];
+                /**
+                 * Optional cap on how many participants can live in the tier.
+                 */
                 maxParticipants?: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
                 participantIds: Array<string>;
             }>;
             tierAssignmentMethod?: string;
@@ -2459,6 +3569,9 @@ export type CreateContestData = {
         endsAt?: string;
         lockAt?: string;
         isExclusive?: boolean;
+        /**
+         * Whether eliminated entries stop accumulating score events.
+         */
         scoringStopsOnElimination?: boolean;
     };
     path: {
@@ -2470,22 +3583,46 @@ export type CreateContestData = {
 
 export type CreateContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2495,9 +3632,12 @@ export type CreateContestError = CreateContestErrors[keyof CreateContestErrors];
 
 export type CreateContestResponses = {
     /**
-     * Default Response
+     * Single-contest response.
      */
     201: {
+        /**
+         * Contest detail returned by contest detail endpoints.
+         */
         contest: {
             id: string;
             name: string;
@@ -2508,6 +3648,9 @@ export type CreateContestResponses = {
             leagueId: string;
             sportEventId?: string;
             sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -2516,6 +3659,9 @@ export type CreateContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
+        /**
+         * Contest configuration payload when the client requested expanded detail.
+         */
         contestConfiguration?: {
             [key: string]: unknown;
         };
@@ -2525,20 +3671,47 @@ export type CreateContestResponses = {
 export type CreateContestResponse = CreateContestResponses[keyof CreateContestResponses];
 
 export type CreateManagedContestData = {
+    /**
+     * Commissioner request payload for creating a managed contest.
+     */
     body: {
+        /**
+         * Contest name shown to commissioners and members.
+         */
         name: string;
+        /**
+         * Sport-event identifier that anchors the contest.
+         */
         sportEventId: string;
         contestType?: 'SINGLE_EVENT';
+        /**
+         * Managed contest-configuration payload.
+         */
         configuration: {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
             rounds?: number;
             timePerPickSeconds?: number;
             autoPickPolicy?: string;
             tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
                 tierId: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
                 tierName: string;
+                /**
+                 * Ordered tier number used in draft and selection UX.
+                 */
                 tierNumber: number;
+                /**
+                 * How many selections each entry must make from the tier.
+                 */
                 picksFromTier: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
                 participantIds: Array<string>;
             }>;
             budget?: number;
@@ -2554,30 +3727,81 @@ export type CreateManagedContestData = {
             rosterSize?: number;
             totalPrizePoolAmount?: number;
             participantScoringRules: Array<{
+                /**
+                 * Scoring definition applied to each participant within the contest.
+                 */
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+                /**
+                 * Evaluation order for participant scoring rules.
+                 */
                 sortOrder: number;
+                /**
+                 * Rule-specific configuration payload consumed by the scoring engine.
+                 */
                 config?: {
                     [key: string]: unknown;
                 };
+                /**
+                 * Whether the scoring rule is currently active.
+                 */
                 active?: boolean;
             }>;
+            /**
+             * Contest-entry aggregation rule for managed-contest configuration.
+             */
             entryAggregationRule: {
+                /**
+                 * Aggregation strategy used to convert participant scores into an entry score.
+                 */
                 aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                /**
+                 * Aggregation-rule configuration payload.
+                 */
                 config?: {
                     [key: string]: unknown;
                 };
+                /**
+                 * Whether the aggregation rule is active.
+                 */
                 active?: boolean;
             };
+            /**
+             * Prize definitions attached to the contest configuration.
+             */
             prizeDefinitions?: Array<{
+                /**
+                 * Stable prize-definition identifier.
+                 */
                 prizeDefinitionId: string;
+                /**
+                 * Commissioner-facing display name for the prize.
+                 */
                 displayName: string;
+                /**
+                 * Display and evaluation order for the prize definition.
+                 */
                 sortOrder: number;
+                /**
+                 * Prize-award rule configuration payload.
+                 */
                 ruleConfig?: {
                     [key: string]: unknown;
                 };
+                /**
+                 * How the prize amount should be interpreted when a payout is attached.
+                 */
                 payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                /**
+                 * Fixed payout amount when payoutType is FIXED_AMOUNT.
+                 */
                 amount?: number;
+                /**
+                 * Prize-pool percentage when payoutType is PERCENTAGE.
+                 */
                 percentage?: number;
+                /**
+                 * Whether the prize definition is currently active.
+                 */
                 active?: boolean;
             }>;
         };
@@ -2591,42 +3815,90 @@ export type CreateManagedContestData = {
 
 export type CreateManagedContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     422: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2636,25 +3908,58 @@ export type CreateManagedContestError = CreateManagedContestErrors[keyof CreateM
 
 export type CreateManagedContestResponses = {
     /**
-     * Default Response
+     * Managed-contest detail response.
      */
     201: {
+        /**
+         * Contest-management detail returned to commissioner tooling.
+         */
         contest: {
+            /**
+             * Contest identifier.
+             */
             id: string;
+            /**
+             * League that owns the contest.
+             */
             leagueId: string;
+            /**
+             * Sport event attached to the contest.
+             */
             sportEventId: string;
+            /**
+             * Contest display name.
+             */
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * Current commissioner-managed contest configuration.
+             */
             configuration: {
                 selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
                 rounds?: number;
                 timePerPickSeconds?: number;
                 autoPickPolicy?: string;
                 tierConfig?: Array<{
+                    /**
+                     * Stable tier identifier.
+                     */
                     tierId: string;
+                    /**
+                     * Commissioner-facing tier label.
+                     */
                     tierName: string;
+                    /**
+                     * Ordered tier number used in draft and selection UX.
+                     */
                     tierNumber: number;
+                    /**
+                     * How many selections each entry must make from the tier.
+                     */
                     picksFromTier: number;
+                    /**
+                     * Participants assigned to the tier.
+                     */
                     participantIds: Array<string>;
                 }>;
                 budget?: number;
@@ -2670,39 +3975,108 @@ export type CreateManagedContestResponses = {
                 rosterSize?: number;
                 totalPrizePoolAmount?: number;
                 participantScoringRules: Array<{
+                    /**
+                     * Scoring definition applied to each participant within the contest.
+                     */
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+                    /**
+                     * Evaluation order for participant scoring rules.
+                     */
                     sortOrder: number;
+                    /**
+                     * Rule-specific configuration payload consumed by the scoring engine.
+                     */
                     config?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * Whether the scoring rule is currently active.
+                     */
                     active?: boolean;
+                    /**
+                     * Participant scoring-rule identifier.
+                     */
                     id: string;
                 }>;
+                /**
+                 * Persisted contest-entry aggregation rule.
+                 */
                 entryAggregationRule: {
+                    /**
+                     * Aggregation strategy used to convert participant scores into an entry score.
+                     */
                     aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    /**
+                     * Aggregation-rule configuration payload.
+                     */
                     config?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * Whether the aggregation rule is active.
+                     */
                     active?: boolean;
+                    /**
+                     * Contest-entry aggregation-rule identifier.
+                     */
                     id: string;
                 };
                 prizeDefinitions: Array<{
+                    /**
+                     * Stable prize-definition identifier.
+                     */
                     prizeDefinitionId: string;
+                    /**
+                     * Commissioner-facing display name for the prize.
+                     */
                     displayName: string;
+                    /**
+                     * Display and evaluation order for the prize definition.
+                     */
                     sortOrder: number;
+                    /**
+                     * Prize-award rule configuration payload.
+                     */
                     ruleConfig?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * How the prize amount should be interpreted when a payout is attached.
+                     */
                     payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    /**
+                     * Fixed payout amount when payoutType is FIXED_AMOUNT.
+                     */
                     amount?: number;
+                    /**
+                     * Prize-pool percentage when payoutType is PERCENTAGE.
+                     */
                     percentage?: number;
+                    /**
+                     * Whether the prize definition is currently active.
+                     */
                     active?: boolean;
+                    /**
+                     * Prize-definition record identifier.
+                     */
                     id: string;
                 }>;
+                /**
+                 * Contest-configuration identifier.
+                 */
                 id: string;
+                /**
+                 * Contest that owns the configuration.
+                 */
                 contestId: string;
             };
+            /**
+             * When the contest was created.
+             */
             createdAt: string;
+            /**
+             * When the contest was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -2722,42 +4096,90 @@ export type GetManagedContestData = {
 
 export type GetManagedContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2767,25 +4189,58 @@ export type GetManagedContestError = GetManagedContestErrors[keyof GetManagedCon
 
 export type GetManagedContestResponses = {
     /**
-     * Default Response
+     * Managed-contest detail response.
      */
     200: {
+        /**
+         * Contest-management detail returned to commissioner tooling.
+         */
         contest: {
+            /**
+             * Contest identifier.
+             */
             id: string;
+            /**
+             * League that owns the contest.
+             */
             leagueId: string;
+            /**
+             * Sport event attached to the contest.
+             */
             sportEventId: string;
+            /**
+             * Contest display name.
+             */
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * Current commissioner-managed contest configuration.
+             */
             configuration: {
                 selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
                 rounds?: number;
                 timePerPickSeconds?: number;
                 autoPickPolicy?: string;
                 tierConfig?: Array<{
+                    /**
+                     * Stable tier identifier.
+                     */
                     tierId: string;
+                    /**
+                     * Commissioner-facing tier label.
+                     */
                     tierName: string;
+                    /**
+                     * Ordered tier number used in draft and selection UX.
+                     */
                     tierNumber: number;
+                    /**
+                     * How many selections each entry must make from the tier.
+                     */
                     picksFromTier: number;
+                    /**
+                     * Participants assigned to the tier.
+                     */
                     participantIds: Array<string>;
                 }>;
                 budget?: number;
@@ -2801,39 +4256,108 @@ export type GetManagedContestResponses = {
                 rosterSize?: number;
                 totalPrizePoolAmount?: number;
                 participantScoringRules: Array<{
+                    /**
+                     * Scoring definition applied to each participant within the contest.
+                     */
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+                    /**
+                     * Evaluation order for participant scoring rules.
+                     */
                     sortOrder: number;
+                    /**
+                     * Rule-specific configuration payload consumed by the scoring engine.
+                     */
                     config?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * Whether the scoring rule is currently active.
+                     */
                     active?: boolean;
+                    /**
+                     * Participant scoring-rule identifier.
+                     */
                     id: string;
                 }>;
+                /**
+                 * Persisted contest-entry aggregation rule.
+                 */
                 entryAggregationRule: {
+                    /**
+                     * Aggregation strategy used to convert participant scores into an entry score.
+                     */
                     aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    /**
+                     * Aggregation-rule configuration payload.
+                     */
                     config?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * Whether the aggregation rule is active.
+                     */
                     active?: boolean;
+                    /**
+                     * Contest-entry aggregation-rule identifier.
+                     */
                     id: string;
                 };
                 prizeDefinitions: Array<{
+                    /**
+                     * Stable prize-definition identifier.
+                     */
                     prizeDefinitionId: string;
+                    /**
+                     * Commissioner-facing display name for the prize.
+                     */
                     displayName: string;
+                    /**
+                     * Display and evaluation order for the prize definition.
+                     */
                     sortOrder: number;
+                    /**
+                     * Prize-award rule configuration payload.
+                     */
                     ruleConfig?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * How the prize amount should be interpreted when a payout is attached.
+                     */
                     payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    /**
+                     * Fixed payout amount when payoutType is FIXED_AMOUNT.
+                     */
                     amount?: number;
+                    /**
+                     * Prize-pool percentage when payoutType is PERCENTAGE.
+                     */
                     percentage?: number;
+                    /**
+                     * Whether the prize definition is currently active.
+                     */
                     active?: boolean;
+                    /**
+                     * Prize-definition record identifier.
+                     */
                     id: string;
                 }>;
+                /**
+                 * Contest-configuration identifier.
+                 */
                 id: string;
+                /**
+                 * Contest that owns the configuration.
+                 */
                 contestId: string;
             };
+            /**
+             * When the contest was created.
+             */
             createdAt: string;
+            /**
+             * When the contest was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -2842,16 +4366,34 @@ export type GetManagedContestResponses = {
 export type GetManagedContestResponse = GetManagedContestResponses[keyof GetManagedContestResponses];
 
 export type UpdateManagedContestConfigurationData = {
+    /**
+     * Managed contest-configuration payload.
+     */
     body: {
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
         rounds?: number;
         timePerPickSeconds?: number;
         autoPickPolicy?: string;
         tierConfig?: Array<{
+            /**
+             * Stable tier identifier.
+             */
             tierId: string;
+            /**
+             * Commissioner-facing tier label.
+             */
             tierName: string;
+            /**
+             * Ordered tier number used in draft and selection UX.
+             */
             tierNumber: number;
+            /**
+             * How many selections each entry must make from the tier.
+             */
             picksFromTier: number;
+            /**
+             * Participants assigned to the tier.
+             */
             participantIds: Array<string>;
         }>;
         budget?: number;
@@ -2867,30 +4409,81 @@ export type UpdateManagedContestConfigurationData = {
         rosterSize?: number;
         totalPrizePoolAmount?: number;
         participantScoringRules: Array<{
+            /**
+             * Scoring definition applied to each participant within the contest.
+             */
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+            /**
+             * Evaluation order for participant scoring rules.
+             */
             sortOrder: number;
+            /**
+             * Rule-specific configuration payload consumed by the scoring engine.
+             */
             config?: {
                 [key: string]: unknown;
             };
+            /**
+             * Whether the scoring rule is currently active.
+             */
             active?: boolean;
         }>;
+        /**
+         * Contest-entry aggregation rule for managed-contest configuration.
+         */
         entryAggregationRule: {
+            /**
+             * Aggregation strategy used to convert participant scores into an entry score.
+             */
             aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+            /**
+             * Aggregation-rule configuration payload.
+             */
             config?: {
                 [key: string]: unknown;
             };
+            /**
+             * Whether the aggregation rule is active.
+             */
             active?: boolean;
         };
+        /**
+         * Prize definitions attached to the contest configuration.
+         */
         prizeDefinitions?: Array<{
+            /**
+             * Stable prize-definition identifier.
+             */
             prizeDefinitionId: string;
+            /**
+             * Commissioner-facing display name for the prize.
+             */
             displayName: string;
+            /**
+             * Display and evaluation order for the prize definition.
+             */
             sortOrder: number;
+            /**
+             * Prize-award rule configuration payload.
+             */
             ruleConfig?: {
                 [key: string]: unknown;
             };
+            /**
+             * How the prize amount should be interpreted when a payout is attached.
+             */
             payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+            /**
+             * Fixed payout amount when payoutType is FIXED_AMOUNT.
+             */
             amount?: number;
+            /**
+             * Prize-pool percentage when payoutType is PERCENTAGE.
+             */
             percentage?: number;
+            /**
+             * Whether the prize definition is currently active.
+             */
             active?: boolean;
         }>;
     };
@@ -2904,52 +4497,112 @@ export type UpdateManagedContestConfigurationData = {
 
 export type UpdateManagedContestConfigurationErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     422: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -2959,25 +4612,58 @@ export type UpdateManagedContestConfigurationError = UpdateManagedContestConfigu
 
 export type UpdateManagedContestConfigurationResponses = {
     /**
-     * Default Response
+     * Managed-contest detail response.
      */
     200: {
+        /**
+         * Contest-management detail returned to commissioner tooling.
+         */
         contest: {
+            /**
+             * Contest identifier.
+             */
             id: string;
+            /**
+             * League that owns the contest.
+             */
             leagueId: string;
+            /**
+             * Sport event attached to the contest.
+             */
             sportEventId: string;
+            /**
+             * Contest display name.
+             */
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * Current commissioner-managed contest configuration.
+             */
             configuration: {
                 selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
                 rounds?: number;
                 timePerPickSeconds?: number;
                 autoPickPolicy?: string;
                 tierConfig?: Array<{
+                    /**
+                     * Stable tier identifier.
+                     */
                     tierId: string;
+                    /**
+                     * Commissioner-facing tier label.
+                     */
                     tierName: string;
+                    /**
+                     * Ordered tier number used in draft and selection UX.
+                     */
                     tierNumber: number;
+                    /**
+                     * How many selections each entry must make from the tier.
+                     */
                     picksFromTier: number;
+                    /**
+                     * Participants assigned to the tier.
+                     */
                     participantIds: Array<string>;
                 }>;
                 budget?: number;
@@ -2993,39 +4679,108 @@ export type UpdateManagedContestConfigurationResponses = {
                 rosterSize?: number;
                 totalPrizePoolAmount?: number;
                 participantScoringRules: Array<{
+                    /**
+                     * Scoring definition applied to each participant within the contest.
+                     */
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
+                    /**
+                     * Evaluation order for participant scoring rules.
+                     */
                     sortOrder: number;
+                    /**
+                     * Rule-specific configuration payload consumed by the scoring engine.
+                     */
                     config?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * Whether the scoring rule is currently active.
+                     */
                     active?: boolean;
+                    /**
+                     * Participant scoring-rule identifier.
+                     */
                     id: string;
                 }>;
+                /**
+                 * Persisted contest-entry aggregation rule.
+                 */
                 entryAggregationRule: {
+                    /**
+                     * Aggregation strategy used to convert participant scores into an entry score.
+                     */
                     aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
+                    /**
+                     * Aggregation-rule configuration payload.
+                     */
                     config?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * Whether the aggregation rule is active.
+                     */
                     active?: boolean;
+                    /**
+                     * Contest-entry aggregation-rule identifier.
+                     */
                     id: string;
                 };
                 prizeDefinitions: Array<{
+                    /**
+                     * Stable prize-definition identifier.
+                     */
                     prizeDefinitionId: string;
+                    /**
+                     * Commissioner-facing display name for the prize.
+                     */
                     displayName: string;
+                    /**
+                     * Display and evaluation order for the prize definition.
+                     */
                     sortOrder: number;
+                    /**
+                     * Prize-award rule configuration payload.
+                     */
                     ruleConfig?: {
                         [key: string]: unknown;
                     };
+                    /**
+                     * How the prize amount should be interpreted when a payout is attached.
+                     */
                     payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+                    /**
+                     * Fixed payout amount when payoutType is FIXED_AMOUNT.
+                     */
                     amount?: number;
+                    /**
+                     * Prize-pool percentage when payoutType is PERCENTAGE.
+                     */
                     percentage?: number;
+                    /**
+                     * Whether the prize definition is currently active.
+                     */
                     active?: boolean;
+                    /**
+                     * Prize-definition record identifier.
+                     */
                     id: string;
                 }>;
+                /**
+                 * Contest-configuration identifier.
+                 */
                 id: string;
+                /**
+                 * Contest that owns the configuration.
+                 */
                 contestId: string;
             };
+            /**
+             * When the contest was created.
+             */
             createdAt: string;
+            /**
+             * When the contest was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -3044,22 +4799,46 @@ export type DeleteContestData = {
 
 export type DeleteContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -3069,9 +4848,12 @@ export type DeleteContestError = DeleteContestErrors[keyof DeleteContestErrors];
 
 export type DeleteContestResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -3089,12 +4871,24 @@ export type GetContestData = {
 
 export type GetContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -3104,9 +4898,12 @@ export type GetContestError = GetContestErrors[keyof GetContestErrors];
 
 export type GetContestResponses = {
     /**
-     * Default Response
+     * Single-contest response.
      */
     200: {
+        /**
+         * Contest detail returned by contest detail endpoints.
+         */
         contest: {
             id: string;
             name: string;
@@ -3117,6 +4914,9 @@ export type GetContestResponses = {
             leagueId: string;
             sportEventId?: string;
             sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -3125,6 +4925,9 @@ export type GetContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
+        /**
+         * Contest configuration payload when the client requested expanded detail.
+         */
         contestConfiguration?: {
             [key: string]: unknown;
         };
@@ -3134,11 +4937,17 @@ export type GetContestResponses = {
 export type GetContestResponse = GetContestResponses[keyof GetContestResponses];
 
 export type UpdateContestData = {
+    /**
+     * Patch payload for updating editable contest metadata.
+     */
     body: {
         name?: string;
         startsAt?: string;
         endsAt?: string;
         lockAt?: string;
+        /**
+         * Whether the contest should continue to enforce exclusive picks.
+         */
         isExclusive?: boolean;
     };
     path: {
@@ -3150,22 +4959,46 @@ export type UpdateContestData = {
 
 export type UpdateContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -3175,9 +5008,12 @@ export type UpdateContestError = UpdateContestErrors[keyof UpdateContestErrors];
 
 export type UpdateContestResponses = {
     /**
-     * Default Response
+     * Single-contest response.
      */
     200: {
+        /**
+         * Contest detail returned by contest detail endpoints.
+         */
         contest: {
             id: string;
             name: string;
@@ -3188,6 +5024,9 @@ export type UpdateContestResponses = {
             leagueId: string;
             sportEventId?: string;
             sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -3196,6 +5035,9 @@ export type UpdateContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
+        /**
+         * Contest configuration payload when the client requested expanded detail.
+         */
         contestConfiguration?: {
             [key: string]: unknown;
         };
@@ -3215,22 +5057,46 @@ export type ListContestEntriesData = {
 
 export type ListContestEntriesErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -3240,14 +5106,32 @@ export type ListContestEntriesError = ListContestEntriesErrors[keyof ListContest
 
 export type ListContestEntriesResponses = {
     /**
-     * Default Response
+     * Contest-entry list response.
      */
     200: {
+        /**
+         * Contest whose entries are being returned.
+         */
         contestId: string;
+        /**
+         * Total number of entries in the contest.
+         */
         total: number;
+        /**
+         * Whether the current user has at least one active entry in the contest.
+         */
         isJoined: boolean;
+        /**
+         * Primary current-user entry when the contest allows a single active entry.
+         */
         myEntryId: string;
+        /**
+         * All current-user entry identifiers when multiple entries are allowed.
+         */
         myEntryIds?: Array<string>;
+        /**
+         * Entry page or slice returned by the API.
+         */
         entries: Array<{
             id: string;
             contestId: string;
@@ -3259,7 +5143,13 @@ export type ListContestEntriesResponses = {
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
+            /**
+             * When the contest entry was created.
+             */
             createdAt: string;
+            /**
+             * When the contest entry was last updated.
+             */
             updatedAt: string;
         }>;
     };
@@ -3278,22 +5168,46 @@ export type LeaveContestData = {
 
 export type LeaveContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -3303,10 +5217,16 @@ export type LeaveContestError = LeaveContestErrors[keyof LeaveContestErrors];
 
 export type LeaveContestResponses = {
     /**
-     * Default Response
+     * Contest-entry deletion response.
      */
     200: {
+        /**
+         * Contest from which the entry was removed.
+         */
         contestId: string;
+        /**
+         * Confirms that the delete operation succeeded.
+         */
         deleted: true;
     };
 };
@@ -3324,22 +5244,46 @@ export type GetMyContestEntryData = {
 
 export type GetMyContestEntryErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -3349,10 +5293,16 @@ export type GetMyContestEntryError = GetMyContestEntryErrors[keyof GetMyContestE
 
 export type GetMyContestEntryResponses = {
     /**
-     * Default Response
+     * Current-user contest-entry response.
      */
     200: {
+        /**
+         * Contest being queried.
+         */
         contestId: string;
+        /**
+         * Current user entry, or null when the user has not joined the contest.
+         */
         entry: {
             id: string;
             contestId: string;
@@ -3364,7 +5314,13 @@ export type GetMyContestEntryResponses = {
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
+            /**
+             * When the contest entry was created.
+             */
             createdAt: string;
+            /**
+             * When the contest entry was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -3383,22 +5339,46 @@ export type EnterContestData = {
 
 export type EnterContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -3408,10 +5388,16 @@ export type EnterContestError = EnterContestErrors[keyof EnterContestErrors];
 
 export type EnterContestResponses = {
     /**
-     * Default Response
+     * Single contest-entry response.
      */
     200: {
+        /**
+         * Contest that owns the entry.
+         */
         contestId: string;
+        /**
+         * Contest entry summary.
+         */
         entry: {
             id: string;
             contestId: string;
@@ -3423,15 +5409,27 @@ export type EnterContestResponses = {
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
+            /**
+             * When the contest entry was created.
+             */
             createdAt: string;
+            /**
+             * When the contest entry was last updated.
+             */
             updatedAt: string;
         };
     };
     /**
-     * Default Response
+     * Single contest-entry response.
      */
     201: {
+        /**
+         * Contest that owns the entry.
+         */
         contestId: string;
+        /**
+         * Contest entry summary.
+         */
         entry: {
             id: string;
             contestId: string;
@@ -3443,7 +5441,13 @@ export type EnterContestResponses = {
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
+            /**
+             * When the contest entry was created.
+             */
             createdAt: string;
+            /**
+             * When the contest entry was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -3452,8 +5456,17 @@ export type EnterContestResponses = {
 export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
 
 export type UndoContestDraftSelectionData = {
+    /**
+     * Commissioner request payload for undoing a contest draft selection.
+     */
     body: {
+        /**
+         * Draft pick to undo.
+         */
         pickId: string;
+        /**
+         * Commissioner reason recorded for the undo action.
+         */
         reason: string;
     };
     path: {
@@ -3465,9 +5478,12 @@ export type UndoContestDraftSelectionData = {
 
 export type UndoContestDraftSelectionResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -3475,7 +5491,13 @@ export type UndoContestDraftSelectionResponses = {
 export type UndoContestDraftSelectionResponse = UndoContestDraftSelectionResponses[keyof UndoContestDraftSelectionResponses];
 
 export type PauseContestDraftData = {
+    /**
+     * Commissioner request payload for pausing a draft.
+     */
     body: {
+        /**
+         * Reason recorded for pausing the draft.
+         */
         reason: string;
     };
     path: {
@@ -3487,9 +5509,12 @@ export type PauseContestDraftData = {
 
 export type PauseContestDraftResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -3507,9 +5532,12 @@ export type ResumeContestDraftData = {
 
 export type ResumeContestDraftResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -3517,7 +5545,13 @@ export type ResumeContestDraftResponses = {
 export type ResumeContestDraftResponse = ResumeContestDraftResponses[keyof ResumeContestDraftResponses];
 
 export type ExtendPickClockData = {
+    /**
+     * Commissioner request payload for extending the current draft turn.
+     */
     body: {
+        /**
+         * How many seconds to add to the current draft pick clock.
+         */
         additionalSeconds: number;
     };
     path: {
@@ -3529,9 +5563,12 @@ export type ExtendPickClockData = {
 
 export type ExtendPickClockResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -3539,9 +5576,21 @@ export type ExtendPickClockResponses = {
 export type ExtendPickClockResponse = ExtendPickClockResponses[keyof ExtendPickClockResponses];
 
 export type AdjustScoreData = {
+    /**
+     * Admin or commissioner score-adjustment request.
+     */
     body: {
+        /**
+         * Entry whose score should be adjusted.
+         */
         entryId: string;
+        /**
+         * Positive or negative manual score adjustment.
+         */
         adjustment: number;
+        /**
+         * Reason recorded in audit history for the score adjustment.
+         */
         reason: string;
     };
     path: {
@@ -3553,9 +5602,12 @@ export type AdjustScoreData = {
 
 export type AdjustScoreResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -3573,12 +5625,24 @@ export type RecalculateStandingsData = {
 
 export type RecalculateStandingsResponses = {
     /**
-     * Default Response
+     * Contest recalculation result.
      */
     200: {
+        /**
+         * Contest that was recalculated.
+         */
         contestId: string;
+        /**
+         * How many entries were affected by the recalculation.
+         */
         teamsAffected: number;
+        /**
+         * Whether the recalculation changed at least one rank or score.
+         */
         standingsChanged: boolean;
+        /**
+         * Per-entry changes produced by the recalculation.
+         */
         changes: Array<{
             entryId: string;
             oldRank: number;
@@ -3592,7 +5656,13 @@ export type RecalculateStandingsResponses = {
 export type RecalculateStandingsResponse = RecalculateStandingsResponses[keyof RecalculateStandingsResponses];
 
 export type ReopenContestData = {
+    /**
+     * Request payload for reopening a closed contest.
+     */
     body: {
+        /**
+         * Reason recorded for reopening the contest.
+         */
         reason: string;
     };
     path: {
@@ -3604,9 +5674,12 @@ export type ReopenContestData = {
 
 export type ReopenContestResponses = {
     /**
-     * Default Response
+     * Single-contest response.
      */
     200: {
+        /**
+         * Contest detail returned by contest detail endpoints.
+         */
         contest: {
             id: string;
             name: string;
@@ -3617,6 +5690,9 @@ export type ReopenContestResponses = {
             leagueId: string;
             sportEventId?: string;
             sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -3625,6 +5701,9 @@ export type ReopenContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
+        /**
+         * Contest configuration payload when the client requested expanded detail.
+         */
         contestConfiguration?: {
             [key: string]: unknown;
         };
@@ -3634,7 +5713,13 @@ export type ReopenContestResponses = {
 export type ReopenContestResponse = ReopenContestResponses[keyof ReopenContestResponses];
 
 export type CloseContestData = {
+    /**
+     * Request payload for force-closing a contest.
+     */
     body: {
+        /**
+         * Reason recorded for closing the contest.
+         */
         reason: string;
     };
     path: {
@@ -3646,9 +5731,12 @@ export type CloseContestData = {
 
 export type CloseContestResponses = {
     /**
-     * Default Response
+     * Single-contest response.
      */
     200: {
+        /**
+         * Contest detail returned by contest detail endpoints.
+         */
         contest: {
             id: string;
             name: string;
@@ -3659,6 +5747,9 @@ export type CloseContestResponses = {
             leagueId: string;
             sportEventId?: string;
             sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -3667,6 +5758,9 @@ export type CloseContestResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
+        /**
+         * Contest configuration payload when the client requested expanded detail.
+         */
         contestConfiguration?: {
             [key: string]: unknown;
         };
@@ -3676,8 +5770,17 @@ export type CloseContestResponses = {
 export type CloseContestResponse = CloseContestResponses[keyof CloseContestResponses];
 
 export type ExtendContestDeadlineData = {
+    /**
+     * Request payload for extending a contest end time.
+     */
     body: {
+        /**
+         * Replacement contest end timestamp.
+         */
         newEnd: string;
+        /**
+         * Reason recorded for the deadline extension.
+         */
         reason: string;
     };
     path: {
@@ -3689,9 +5792,12 @@ export type ExtendContestDeadlineData = {
 
 export type ExtendContestDeadlineResponses = {
     /**
-     * Default Response
+     * Single-contest response.
      */
     200: {
+        /**
+         * Contest detail returned by contest detail endpoints.
+         */
         contest: {
             id: string;
             name: string;
@@ -3702,6 +5808,9 @@ export type ExtendContestDeadlineResponses = {
             leagueId: string;
             sportEventId?: string;
             sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -3710,6 +5819,9 @@ export type ExtendContestDeadlineResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
+        /**
+         * Contest configuration payload when the client requested expanded detail.
+         */
         contestConfiguration?: {
             [key: string]: unknown;
         };
@@ -3719,8 +5831,17 @@ export type ExtendContestDeadlineResponses = {
 export type ExtendContestDeadlineResponse = ExtendContestDeadlineResponses[keyof ExtendContestDeadlineResponses];
 
 export type UpdateContestLockTimeData = {
+    /**
+     * Request payload for updating a contest lock time.
+     */
     body: {
+        /**
+         * Replacement contest lock timestamp.
+         */
         newLock: string;
+        /**
+         * Reason recorded for changing the lock time.
+         */
         reason: string;
     };
     path: {
@@ -3732,9 +5853,12 @@ export type UpdateContestLockTimeData = {
 
 export type UpdateContestLockTimeResponses = {
     /**
-     * Default Response
+     * Single-contest response.
      */
     200: {
+        /**
+         * Contest detail returned by contest detail endpoints.
+         */
         contest: {
             id: string;
             name: string;
@@ -3745,6 +5869,9 @@ export type UpdateContestLockTimeResponses = {
             leagueId: string;
             sportEventId?: string;
             sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
             entryCount?: number;
             startsAt?: string;
             endsAt?: string;
@@ -3753,6 +5880,9 @@ export type UpdateContestLockTimeResponses = {
             lockAt?: string;
             isExclusive?: boolean;
         };
+        /**
+         * Contest configuration payload when the client requested expanded detail.
+         */
         contestConfiguration?: {
             [key: string]: unknown;
         };
@@ -3772,7 +5902,7 @@ export type GetContestAuditLogData = {
 
 export type GetContestAuditLogResponses = {
     /**
-     * Default Response
+     * Contest audit-log response.
      */
     200: {
         entries: Array<{
@@ -3791,6 +5921,9 @@ export type GetContestAuditLogResponses = {
             };
             reason?: string;
             ipAddress?: string;
+            /**
+             * When the audit entry was created.
+             */
             createdAt: string;
         }>;
     };
@@ -3811,19 +5944,49 @@ export type ListEventsData = {
 
 export type ListEventsResponses = {
     /**
-     * Default Response
+     * Event list response for the requested sport or filter set.
      */
     200: {
         events: Array<{
+            /**
+             * Sport-event identifier.
+             */
             id: string;
+            /**
+             * Sport associated with the event.
+             */
             sport: string;
+            /**
+             * Primary event name shown in contest and event selectors.
+             */
             name: string;
+            /**
+             * Venue name for the event, when known.
+             */
             venue?: string;
+            /**
+             * Human-readable event location, when known.
+             */
             location?: string;
+            /**
+             * Provider-normalized event status.
+             */
             status: string;
+            /**
+             * Scheduled or actual event start time.
+             */
             startDate: string;
+            /**
+             * Scheduled or actual event end time, when known.
+             */
             endDate?: string;
+            /**
+             * Participant count when the provider exposes field size.
+             */
             participantCount?: number;
+            /**
+             * Whether contest participant pools should be treated as locked for the event.
+             */
             fieldLocked: boolean;
         }>;
     };
@@ -3849,40 +6012,118 @@ export type ListParticipantsData = {
 
 export type ListParticipantsResponses = {
     /**
-     * Default Response
+     * Participant-list response.
      */
     200: {
+        /**
+         * Participant page or slice returned by the API.
+         */
         participants: Array<{
+            /**
+             * Participant identifier.
+             */
             id: string;
+            /**
+             * Owning sport identifier.
+             */
             sportId: string;
+            /**
+             * Primary participant display name.
+             */
             name: string;
+            /**
+             * Whether the participant is an individual or team.
+             */
             participantType: string;
+            /**
+             * Primary provider identifier when one exists.
+             */
             externalId?: string;
+            /**
+             * Provider-normalized metadata retained for the participant.
+             */
             metadata: {
                 [key: string]: unknown;
             };
+            /**
+             * First name when the participant is a person.
+             */
             firstName?: string;
+            /**
+             * Last name when the participant is a person.
+             */
             lastName?: string;
+            /**
+             * Short-form display name for compact UI surfaces.
+             */
             shortName?: string;
+            /**
+             * Participant nationality or country code when known.
+             */
             nationality?: string;
+            /**
+             * Position, role, or event classification when known.
+             */
             position?: string;
+            /**
+             * Current team affiliation when the participant is not itself a team.
+             */
             teamAffiliation?: string;
+            /**
+             * Current participant lifecycle or availability status.
+             */
             status: string;
+            /**
+             * Normalized participant injury or availability state.
+             */
             injuryStatus: {
+                /**
+                 * Current injury or availability status code.
+                 */
                 status: string;
+                /**
+                 * Optional injury-status detail or summary.
+                 */
                 detail?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
                 expectedReturn?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
                 updatedAt?: string;
+                /**
+                 * Source that provided the injury-status update.
+                 */
                 source?: string;
             };
+            /**
+             * Optional participant image URL.
+             */
             photoUrl?: string;
+            /**
+             * Expected return timestamp when known.
+             */
             photoLastUpdated?: string;
+            /**
+             * Map of provider identifiers keyed by provider code.
+             */
             externalIds: {
                 [key: string]: string;
             };
+            /**
+             * When the participant record was created.
+             */
             createdAt: string;
+            /**
+             * When the participant record was last updated.
+             */
             updatedAt: string;
         }>;
+        /**
+         * Total participants matching the current filters.
+         */
         total: number;
     };
 };
@@ -3915,38 +6156,113 @@ export type CreateParticipantData = {
 
 export type CreateParticipantResponses = {
     /**
-     * Default Response
+     * Single-participant detail response.
      */
     201: {
+        /**
+         * Participant summary returned by participant-search and detail APIs.
+         */
         participant: {
+            /**
+             * Participant identifier.
+             */
             id: string;
+            /**
+             * Owning sport identifier.
+             */
             sportId: string;
+            /**
+             * Primary participant display name.
+             */
             name: string;
+            /**
+             * Whether the participant is an individual or team.
+             */
             participantType: string;
+            /**
+             * Primary provider identifier when one exists.
+             */
             externalId?: string;
+            /**
+             * Provider-normalized metadata retained for the participant.
+             */
             metadata: {
                 [key: string]: unknown;
             };
+            /**
+             * First name when the participant is a person.
+             */
             firstName?: string;
+            /**
+             * Last name when the participant is a person.
+             */
             lastName?: string;
+            /**
+             * Short-form display name for compact UI surfaces.
+             */
             shortName?: string;
+            /**
+             * Participant nationality or country code when known.
+             */
             nationality?: string;
+            /**
+             * Position, role, or event classification when known.
+             */
             position?: string;
+            /**
+             * Current team affiliation when the participant is not itself a team.
+             */
             teamAffiliation?: string;
+            /**
+             * Current participant lifecycle or availability status.
+             */
             status: string;
+            /**
+             * Normalized participant injury or availability state.
+             */
             injuryStatus: {
+                /**
+                 * Current injury or availability status code.
+                 */
                 status: string;
+                /**
+                 * Optional injury-status detail or summary.
+                 */
                 detail?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
                 expectedReturn?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
                 updatedAt?: string;
+                /**
+                 * Source that provided the injury-status update.
+                 */
                 source?: string;
             };
+            /**
+             * Optional participant image URL.
+             */
             photoUrl?: string;
+            /**
+             * Expected return timestamp when known.
+             */
             photoLastUpdated?: string;
+            /**
+             * Map of provider identifiers keyed by provider code.
+             */
             externalIds: {
                 [key: string]: string;
             };
+            /**
+             * When the participant record was created.
+             */
             createdAt: string;
+            /**
+             * When the participant record was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -3965,12 +6281,24 @@ export type GetParticipantData = {
 
 export type GetParticipantErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -3980,38 +6308,113 @@ export type GetParticipantError = GetParticipantErrors[keyof GetParticipantError
 
 export type GetParticipantResponses = {
     /**
-     * Default Response
+     * Single-participant detail response.
      */
     200: {
+        /**
+         * Participant summary returned by participant-search and detail APIs.
+         */
         participant: {
+            /**
+             * Participant identifier.
+             */
             id: string;
+            /**
+             * Owning sport identifier.
+             */
             sportId: string;
+            /**
+             * Primary participant display name.
+             */
             name: string;
+            /**
+             * Whether the participant is an individual or team.
+             */
             participantType: string;
+            /**
+             * Primary provider identifier when one exists.
+             */
             externalId?: string;
+            /**
+             * Provider-normalized metadata retained for the participant.
+             */
             metadata: {
                 [key: string]: unknown;
             };
+            /**
+             * First name when the participant is a person.
+             */
             firstName?: string;
+            /**
+             * Last name when the participant is a person.
+             */
             lastName?: string;
+            /**
+             * Short-form display name for compact UI surfaces.
+             */
             shortName?: string;
+            /**
+             * Participant nationality or country code when known.
+             */
             nationality?: string;
+            /**
+             * Position, role, or event classification when known.
+             */
             position?: string;
+            /**
+             * Current team affiliation when the participant is not itself a team.
+             */
             teamAffiliation?: string;
+            /**
+             * Current participant lifecycle or availability status.
+             */
             status: string;
+            /**
+             * Normalized participant injury or availability state.
+             */
             injuryStatus: {
+                /**
+                 * Current injury or availability status code.
+                 */
                 status: string;
+                /**
+                 * Optional injury-status detail or summary.
+                 */
                 detail?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
                 expectedReturn?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
                 updatedAt?: string;
+                /**
+                 * Source that provided the injury-status update.
+                 */
                 source?: string;
             };
+            /**
+             * Optional participant image URL.
+             */
             photoUrl?: string;
+            /**
+             * Expected return timestamp when known.
+             */
             photoLastUpdated?: string;
+            /**
+             * Map of provider identifiers keyed by provider code.
+             */
             externalIds: {
                 [key: string]: string;
             };
+            /**
+             * When the participant record was created.
+             */
             createdAt: string;
+            /**
+             * When the participant record was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -4049,12 +6452,24 @@ export type UpdateParticipantData = {
 
 export type UpdateParticipantErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4064,38 +6479,113 @@ export type UpdateParticipantError = UpdateParticipantErrors[keyof UpdatePartici
 
 export type UpdateParticipantResponses = {
     /**
-     * Default Response
+     * Single-participant detail response.
      */
     200: {
+        /**
+         * Participant summary returned by participant-search and detail APIs.
+         */
         participant: {
+            /**
+             * Participant identifier.
+             */
             id: string;
+            /**
+             * Owning sport identifier.
+             */
             sportId: string;
+            /**
+             * Primary participant display name.
+             */
             name: string;
+            /**
+             * Whether the participant is an individual or team.
+             */
             participantType: string;
+            /**
+             * Primary provider identifier when one exists.
+             */
             externalId?: string;
+            /**
+             * Provider-normalized metadata retained for the participant.
+             */
             metadata: {
                 [key: string]: unknown;
             };
+            /**
+             * First name when the participant is a person.
+             */
             firstName?: string;
+            /**
+             * Last name when the participant is a person.
+             */
             lastName?: string;
+            /**
+             * Short-form display name for compact UI surfaces.
+             */
             shortName?: string;
+            /**
+             * Participant nationality or country code when known.
+             */
             nationality?: string;
+            /**
+             * Position, role, or event classification when known.
+             */
             position?: string;
+            /**
+             * Current team affiliation when the participant is not itself a team.
+             */
             teamAffiliation?: string;
+            /**
+             * Current participant lifecycle or availability status.
+             */
             status: string;
+            /**
+             * Normalized participant injury or availability state.
+             */
             injuryStatus: {
+                /**
+                 * Current injury or availability status code.
+                 */
                 status: string;
+                /**
+                 * Optional injury-status detail or summary.
+                 */
                 detail?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
                 expectedReturn?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
                 updatedAt?: string;
+                /**
+                 * Source that provided the injury-status update.
+                 */
                 source?: string;
             };
+            /**
+             * Optional participant image URL.
+             */
             photoUrl?: string;
+            /**
+             * Expected return timestamp when known.
+             */
             photoLastUpdated?: string;
+            /**
+             * Map of provider identifiers keyed by provider code.
+             */
             externalIds: {
                 [key: string]: string;
             };
+            /**
+             * When the participant record was created.
+             */
             createdAt: string;
+            /**
+             * When the participant record was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -4114,7 +6604,7 @@ export type GetParticipantSeasonRecordsData = {
 
 export type GetParticipantSeasonRecordsResponses = {
     /**
-     * Default Response
+     * Participant season-record list response.
      */
     200: {
         seasonRecords: Array<{
@@ -4122,28 +6612,88 @@ export type GetParticipantSeasonRecordsResponses = {
             participantId: string;
             sport: string;
             season: string;
+            /**
+             * Ranking snapshots associated with the season record.
+             */
             rankings: Array<{
+                /**
+                 * Ranking system name, such as world ranking or tour points.
+                 */
                 rankingType: string;
+                /**
+                 * Participant rank under the specified ranking system.
+                 */
                 rank: number;
+                /**
+                 * Optional ranking points associated with the ranking.
+                 */
                 points?: number;
+                /**
+                 * Date when the ranking snapshot was valid.
+                 */
                 asOfDate: string;
             }>;
+            /**
+             * Current budget-draft price for the participant.
+             */
             budgetPrice: number;
+            /**
+             * Optional price tier label derived for the participant.
+             */
             priceTier?: string;
+            /**
+             * When the participant price was last refreshed.
+             */
             priceUpdatedAt?: string;
+            /**
+             * How many events the participant entered in the season.
+             */
             eventsEntered: number;
+            /**
+             * How many events the participant completed in the season.
+             */
             eventsCompleted: number;
+            /**
+             * Season win count.
+             */
             wins: number;
+            /**
+             * Top-five finish count for the season.
+             */
             top5Finishes: number;
+            /**
+             * Top-ten finish count for the season.
+             */
             top10Finishes: number;
+            /**
+             * Top-twenty-five finish count for the season.
+             */
             top25Finishes: number;
+            /**
+             * Provider-normalized season statistics keyed by stat name.
+             */
             seasonStats: {
                 [key: string]: number;
             };
+            /**
+             * Derived form score used for participant valuation and sorting.
+             */
             formRating: number;
+            /**
+             * Trend direction for the participant recent form.
+             */
             formTrend: string;
+            /**
+             * When the season record source data was last refreshed.
+             */
             lastUpdated: string;
+            /**
+             * When the season record was created.
+             */
             createdAt: string;
+            /**
+             * When the season record was last updated.
+             */
             updatedAt: string;
         }>;
     };
@@ -4163,12 +6713,24 @@ export type GetParticipantSeasonRecordData = {
 
 export type GetParticipantSeasonRecordErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4178,36 +6740,99 @@ export type GetParticipantSeasonRecordError = GetParticipantSeasonRecordErrors[k
 
 export type GetParticipantSeasonRecordResponses = {
     /**
-     * Default Response
+     * Single participant season-record response.
      */
     200: {
+        /**
+         * Participant season record used by draft-search and participant detail APIs.
+         */
         seasonRecord: {
             id: string;
             participantId: string;
             sport: string;
             season: string;
+            /**
+             * Ranking snapshots associated with the season record.
+             */
             rankings: Array<{
+                /**
+                 * Ranking system name, such as world ranking or tour points.
+                 */
                 rankingType: string;
+                /**
+                 * Participant rank under the specified ranking system.
+                 */
                 rank: number;
+                /**
+                 * Optional ranking points associated with the ranking.
+                 */
                 points?: number;
+                /**
+                 * Date when the ranking snapshot was valid.
+                 */
                 asOfDate: string;
             }>;
+            /**
+             * Current budget-draft price for the participant.
+             */
             budgetPrice: number;
+            /**
+             * Optional price tier label derived for the participant.
+             */
             priceTier?: string;
+            /**
+             * When the participant price was last refreshed.
+             */
             priceUpdatedAt?: string;
+            /**
+             * How many events the participant entered in the season.
+             */
             eventsEntered: number;
+            /**
+             * How many events the participant completed in the season.
+             */
             eventsCompleted: number;
+            /**
+             * Season win count.
+             */
             wins: number;
+            /**
+             * Top-five finish count for the season.
+             */
             top5Finishes: number;
+            /**
+             * Top-ten finish count for the season.
+             */
             top10Finishes: number;
+            /**
+             * Top-twenty-five finish count for the season.
+             */
             top25Finishes: number;
+            /**
+             * Provider-normalized season statistics keyed by stat name.
+             */
             seasonStats: {
                 [key: string]: number;
             };
+            /**
+             * Derived form score used for participant valuation and sorting.
+             */
             formRating: number;
+            /**
+             * Trend direction for the participant recent form.
+             */
             formTrend: string;
+            /**
+             * When the season record source data was last refreshed.
+             */
             lastUpdated: string;
+            /**
+             * When the season record was created.
+             */
             createdAt: string;
+            /**
+             * When the season record was last updated.
+             */
             updatedAt: string;
         };
     };
@@ -4230,22 +6855,46 @@ export type GetStandingsData = {
 
 export type GetStandingsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4255,24 +6904,69 @@ export type GetStandingsError = GetStandingsErrors[keyof GetStandingsErrors];
 
 export type GetStandingsResponses = {
     /**
-     * Default Response
+     * Paginated standings response.
      */
     200: {
+        /**
+         * Requested standings page.
+         */
         standings: Array<{
+            /**
+             * Current standing rank for the entry.
+             */
             rank: number;
+            /**
+             * Contest entry identifier.
+             */
             entryId: string;
+            /**
+             * Display name for the entry.
+             */
             entryName: string;
+            /**
+             * Display name for the entry owner.
+             */
             ownerDisplayName: string;
+            /**
+             * Owner user or membership identifier associated with the entry.
+             */
             ownerId: string;
+            /**
+             * Current total score for the entry.
+             */
             totalScore: number;
+            /**
+             * Previous published rank when movement can be computed.
+             */
             previousRank: number;
+            /**
+             * Rank movement indicator since the last standings update.
+             */
             movement: 'up' | 'down' | 'same' | 'new';
+            /**
+             * Whether the entry can no longer improve because it has been eliminated.
+             */
             isEliminated: boolean;
+            /**
+             * When the standing entry was last recalculated.
+             */
             lastUpdatedAt: string;
         }>;
+        /**
+         * Total number of standings entries in the contest.
+         */
         total: number;
+        /**
+         * Current standings page number.
+         */
         page: number;
+        /**
+         * Current standings page size.
+         */
         pageSize: number;
+        /**
+         * Contest whose standings are being returned.
+         */
         contestId: string;
     };
 };
@@ -4292,22 +6986,46 @@ export type GetStandingsSummaryData = {
 
 export type GetStandingsSummaryErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4317,22 +7035,61 @@ export type GetStandingsSummaryError = GetStandingsSummaryErrors[keyof GetStandi
 
 export type GetStandingsSummaryResponses = {
     /**
-     * Default Response
+     * Condensed standings-summary response.
      */
     200: {
+        /**
+         * Top-ranked entries used for condensed leaderboard surfaces.
+         */
         topEntries: Array<{
+            /**
+             * Current standing rank for the entry.
+             */
             rank: number;
+            /**
+             * Contest entry identifier.
+             */
             entryId: string;
+            /**
+             * Display name for the entry.
+             */
             entryName: string;
+            /**
+             * Display name for the entry owner.
+             */
             ownerDisplayName: string;
+            /**
+             * Owner user or membership identifier associated with the entry.
+             */
             ownerId: string;
+            /**
+             * Current total score for the entry.
+             */
             totalScore: number;
+            /**
+             * Previous published rank when movement can be computed.
+             */
             previousRank: number;
+            /**
+             * Rank movement indicator since the last standings update.
+             */
             movement: 'up' | 'down' | 'same' | 'new';
+            /**
+             * Whether the entry can no longer improve because it has been eliminated.
+             */
             isEliminated: boolean;
+            /**
+             * When the standing entry was last recalculated.
+             */
             lastUpdatedAt: string;
         }>;
+        /**
+         * Total number of entries in the contest.
+         */
         totalEntries: number;
+        /**
+         * Contest whose standings summary is being returned.
+         */
         contestId: string;
     };
 };
@@ -4350,32 +7107,68 @@ export type GetMyStandingsEntryData = {
 
 export type GetMyStandingsEntryErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4385,22 +7178,61 @@ export type GetMyStandingsEntryError = GetMyStandingsEntryErrors[keyof GetMyStan
 
 export type GetMyStandingsEntryResponses = {
     /**
-     * Default Response
+     * Current-user standings-entry response.
      */
     200: {
+        /**
+         * Current user entry row within the contest standings.
+         */
         entry: {
+            /**
+             * Current standing rank for the entry.
+             */
             rank: number;
+            /**
+             * Contest entry identifier.
+             */
             entryId: string;
+            /**
+             * Display name for the entry.
+             */
             entryName: string;
+            /**
+             * Display name for the entry owner.
+             */
             ownerDisplayName: string;
+            /**
+             * Owner user or membership identifier associated with the entry.
+             */
             ownerId: string;
+            /**
+             * Current total score for the entry.
+             */
             totalScore: number;
+            /**
+             * Previous published rank when movement can be computed.
+             */
             previousRank: number;
+            /**
+             * Rank movement indicator since the last standings update.
+             */
             movement: 'up' | 'down' | 'same' | 'new';
+            /**
+             * Whether the entry can no longer improve because it has been eliminated.
+             */
             isEliminated: boolean;
+            /**
+             * When the standing entry was last recalculated.
+             */
             lastUpdatedAt: string;
         };
+        /**
+         * Total number of entries in the contest.
+         */
         totalEntries: number;
+        /**
+         * Contest whose personal standings entry is being returned.
+         */
         contestId: string;
     };
 };
@@ -4418,12 +7250,24 @@ export type GetContestHistorySummaryData = {
 
 export type GetContestHistorySummaryErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4433,7 +7277,7 @@ export type GetContestHistorySummaryError = GetContestHistorySummaryErrors[keyof
 
 export type GetContestHistorySummaryResponses = {
     /**
-     * Default Response
+     * Arbitrary JSON object payload.
      */
     200: {
         [key: string]: unknown;
@@ -4453,7 +7297,7 @@ export type GetContestHistoryStandingsData = {
 
 export type GetContestHistoryStandingsResponses = {
     /**
-     * Default Response
+     * Historical standings response.
      */
     200: {
         standings: Array<{
@@ -4476,12 +7320,24 @@ export type GetRosterHistoryData = {
 
 export type GetRosterHistoryErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4491,7 +7347,7 @@ export type GetRosterHistoryError = GetRosterHistoryErrors[keyof GetRosterHistor
 
 export type GetRosterHistoryResponses = {
     /**
-     * Default Response
+     * Arbitrary JSON object payload.
      */
     200: {
         [key: string]: unknown;
@@ -4511,7 +7367,7 @@ export type GetContestPayoutsData = {
 
 export type GetContestPayoutsResponses = {
     /**
-     * Default Response
+     * Historical payouts response.
      */
     200: {
         payouts: Array<{
@@ -4533,7 +7389,7 @@ export type GetLeagueResultsData = {
 
 export type GetLeagueResultsResponses = {
     /**
-     * Default Response
+     * Historical results response.
      */
     200: {
         results: Array<{
@@ -4556,7 +7412,7 @@ export type GetMemberResultsData = {
 
 export type GetMemberResultsResponses = {
     /**
-     * Default Response
+     * Historical results response.
      */
     200: {
         results: Array<{
@@ -4576,19 +7432,49 @@ export type GetConsentHistoryData = {
 
 export type GetConsentHistoryResponses = {
     /**
-     * Default Response
+     * Consent-history response for the authenticated user.
      */
     200: {
         consents: Array<{
+            /**
+             * Consent-record identifier.
+             */
             id: string;
+            /**
+             * User who recorded the consent decision.
+             */
             userId: string;
+            /**
+             * Consent category, such as terms acceptance or age affirmation.
+             */
             consentType: string;
+            /**
+             * Whether the user granted the consent at this point in time.
+             */
             granted: boolean;
+            /**
+             * Policy or consent-text version acknowledged by the user.
+             */
             version: string;
+            /**
+             * Minimum age that had to be affirmed when the consent required an age gate.
+             */
             minimumAgeThreshold?: number;
+            /**
+             * Whether the user affirmed they met the required age threshold.
+             */
             ageAffirmed?: boolean;
+            /**
+             * Captured request IP when the consent was recorded, if retained.
+             */
             ipAddress?: string;
+            /**
+             * Captured client user agent when the consent was recorded, if retained.
+             */
             userAgent?: string;
+            /**
+             * When the consent decision was recorded.
+             */
             createdAt: string;
         }>;
     };
@@ -4597,11 +7483,29 @@ export type GetConsentHistoryResponses = {
 export type GetConsentHistoryResponse = GetConsentHistoryResponses[keyof GetConsentHistoryResponses];
 
 export type RecordConsentData = {
+    /**
+     * Authenticated request payload for recording a consent decision.
+     */
     body: {
+        /**
+         * Consent category being recorded.
+         */
         consentType: string;
+        /**
+         * Whether the user accepts or declines the consent.
+         */
         granted: boolean;
+        /**
+         * Policy version presented to the user.
+         */
         version: string;
+        /**
+         * Optional age-gate threshold that the user was asked to affirm.
+         */
         minimumAgeThreshold?: number;
+        /**
+         * Optional age affirmation captured alongside the consent.
+         */
         ageAffirmed?: boolean;
     };
     path?: never;
@@ -4611,19 +7515,52 @@ export type RecordConsentData = {
 
 export type RecordConsentResponses = {
     /**
-     * Default Response
+     * Response returned after recording a consent decision.
      */
     201: {
+        /**
+         * Stored consent record returned from consent-history APIs.
+         */
         consent: {
+            /**
+             * Consent-record identifier.
+             */
             id: string;
+            /**
+             * User who recorded the consent decision.
+             */
             userId: string;
+            /**
+             * Consent category, such as terms acceptance or age affirmation.
+             */
             consentType: string;
+            /**
+             * Whether the user granted the consent at this point in time.
+             */
             granted: boolean;
+            /**
+             * Policy or consent-text version acknowledged by the user.
+             */
             version: string;
+            /**
+             * Minimum age that had to be affirmed when the consent required an age gate.
+             */
             minimumAgeThreshold?: number;
+            /**
+             * Whether the user affirmed they met the required age threshold.
+             */
             ageAffirmed?: boolean;
+            /**
+             * Captured request IP when the consent was recorded, if retained.
+             */
             ipAddress?: string;
+            /**
+             * Captured client user agent when the consent was recorded, if retained.
+             */
             userAgent?: string;
+            /**
+             * When the consent decision was recorded.
+             */
             createdAt: string;
         };
     };
@@ -4645,12 +7582,24 @@ export type AdminListUsersData = {
 
 export type AdminListUsersErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4660,25 +7609,49 @@ export type AdminListUsersError = AdminListUsersErrors[keyof AdminListUsersError
 
 export type AdminListUsersResponses = {
     /**
-     * Default Response
+     * Generic paginated response envelope.
      */
     200: {
+        /**
+         * Current result page items.
+         */
         items: Array<{
             id: string;
             email: string;
             displayName: string;
             leagues: Array<{
+                /**
+                 * League identifier.
+                 */
                 id: string;
+                /**
+                 * League display name.
+                 */
                 name: string;
+                /**
+                 * User role in the league.
+                 */
                 role: string;
             }>;
             lastLoginAt?: string;
             status: 'active' | 'disabled';
             createdAt: string;
         }>;
+        /**
+         * Total number of matching records.
+         */
         total: number;
+        /**
+         * Current page number.
+         */
         page: number;
+        /**
+         * Number of items requested per page.
+         */
         pageSize: number;
+        /**
+         * Total page count for the current query.
+         */
         totalPages: number;
     };
 };
@@ -4697,12 +7670,24 @@ export type AdminMergeUsersData = {
 
 export type AdminMergeUsersErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4712,9 +7697,12 @@ export type AdminMergeUsersError = AdminMergeUsersErrors[keyof AdminMergeUsersEr
 
 export type AdminMergeUsersResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -4732,22 +7720,46 @@ export type AdminGetUserDetailData = {
 
 export type AdminGetUserDetailErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4757,7 +7769,7 @@ export type AdminGetUserDetailError = AdminGetUserDetailErrors[keyof AdminGetUse
 
 export type AdminGetUserDetailResponses = {
     /**
-     * Default Response
+     * Admin user-detail response.
      */
     200: {
         id: string;
@@ -4809,22 +7821,46 @@ export type AdminForceLogoutData = {
 
 export type AdminForceLogoutErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4834,9 +7870,12 @@ export type AdminForceLogoutError = AdminForceLogoutErrors[keyof AdminForceLogou
 
 export type AdminForceLogoutResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -4856,22 +7895,46 @@ export type AdminDisableUserData = {
 
 export type AdminDisableUserErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4881,9 +7944,12 @@ export type AdminDisableUserError = AdminDisableUserErrors[keyof AdminDisableUse
 
 export type AdminDisableUserResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -4901,22 +7967,46 @@ export type AdminEnableUserData = {
 
 export type AdminEnableUserErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4926,9 +8016,12 @@ export type AdminEnableUserError = AdminEnableUserErrors[keyof AdminEnableUserEr
 
 export type AdminEnableUserResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -4952,12 +8045,24 @@ export type AdminListContestsData = {
 
 export type AdminListContestsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -4967,9 +8072,12 @@ export type AdminListContestsError = AdminListContestsErrors[keyof AdminListCont
 
 export type AdminListContestsResponses = {
     /**
-     * Default Response
+     * Admin contest-list response.
      */
     200: {
+        /**
+         * Contest page or slice returned by the API.
+         */
         items: Array<{
             id: string;
             name: string;
@@ -4981,6 +8089,9 @@ export type AdminListContestsResponses = {
             entryCount: number;
             createdAt: string;
         }>;
+        /**
+         * Total contests matching the admin query.
+         */
         total: number;
     };
 };
@@ -4998,22 +8109,46 @@ export type AdminGetContestDetailData = {
 
 export type AdminGetContestDetailErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5023,7 +8158,7 @@ export type AdminGetContestDetailError = AdminGetContestDetailErrors[keyof Admin
 
 export type AdminGetContestDetailResponses = {
     /**
-     * Default Response
+     * Expanded contest detail used by admin contest-management surfaces.
      */
     200: {
         id: string;
@@ -5047,6 +8182,9 @@ export type AdminGetContestDetailResponses = {
             standingsPosition: number;
             totalScore: number;
         }>;
+        /**
+         * Current draft status snapshot for a contest.
+         */
         draftStatus?: {
             status: string;
             currentPick: number;
@@ -5095,22 +8233,46 @@ export type AdminForceCloseContestData = {
 
 export type AdminForceCloseContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5120,9 +8282,12 @@ export type AdminForceCloseContestError = AdminForceCloseContestErrors[keyof Adm
 
 export type AdminForceCloseContestResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -5142,22 +8307,46 @@ export type AdminReopenContestData = {
 
 export type AdminReopenContestErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5167,9 +8356,12 @@ export type AdminReopenContestError = AdminReopenContestErrors[keyof AdminReopen
 
 export type AdminReopenContestResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -5191,22 +8383,46 @@ export type AdminOverrideScoreData = {
 
 export type AdminOverrideScoreErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5216,9 +8432,12 @@ export type AdminOverrideScoreError = AdminOverrideScoreErrors[keyof AdminOverri
 
 export type AdminOverrideScoreResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -5236,22 +8455,46 @@ export type AdminRecalculateStandingsData = {
 
 export type AdminRecalculateStandingsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5261,7 +8504,7 @@ export type AdminRecalculateStandingsError = AdminRecalculateStandingsErrors[key
 
 export type AdminRecalculateStandingsResponses = {
     /**
-     * Default Response
+     * Contest recalculation result summary.
      */
     200: {
         contestId: string;
@@ -5288,22 +8531,46 @@ export type AdminRecalculatePayoutsData = {
 
 export type AdminRecalculatePayoutsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5313,9 +8580,12 @@ export type AdminRecalculatePayoutsError = AdminRecalculatePayoutsErrors[keyof A
 
 export type AdminRecalculatePayoutsResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -5335,22 +8605,46 @@ export type AdminReIngestScoringData = {
 
 export type AdminReIngestScoringErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5360,7 +8654,7 @@ export type AdminReIngestScoringError = AdminReIngestScoringErrors[keyof AdminRe
 
 export type AdminReIngestScoringResponses = {
     /**
-     * Default Response
+     * Contest recalculation result summary.
      */
     200: {
         contestId: string;
@@ -5385,12 +8679,24 @@ export type AdminListProvidersData = {
 
 export type AdminListProvidersErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5400,7 +8706,7 @@ export type AdminListProvidersError = AdminListProvidersErrors[keyof AdminListPr
 
 export type AdminListProvidersResponses = {
     /**
-     * Default Response
+     * Provider-list response.
      */
     200: {
         items: Array<{
@@ -5427,12 +8733,24 @@ export type AdminGetIngestionDashboardData = {
 
 export type AdminGetIngestionDashboardErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5442,7 +8760,7 @@ export type AdminGetIngestionDashboardError = AdminGetIngestionDashboardErrors[k
 
 export type AdminGetIngestionDashboardResponses = {
     /**
-     * Default Response
+     * Admin provider-ingestion dashboard response.
      */
     200: {
         sportProviderStatus: Array<{
@@ -5499,12 +8817,24 @@ export type AdminGetUnmappedParticipantsData = {
 
 export type AdminGetUnmappedParticipantsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5540,12 +8870,24 @@ export type AdminMapParticipantData = {
 
 export type AdminMapParticipantErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5555,9 +8897,12 @@ export type AdminMapParticipantError = AdminMapParticipantErrors[keyof AdminMapP
 
 export type AdminMapParticipantResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -5575,22 +8920,46 @@ export type AdminGetProviderDetailData = {
 
 export type AdminGetProviderDetailErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5600,7 +8969,7 @@ export type AdminGetProviderDetailError = AdminGetProviderDetailErrors[keyof Adm
 
 export type AdminGetProviderDetailResponses = {
     /**
-     * Default Response
+     * Expanded provider detail response.
      */
     200: {
         providerId: string;
@@ -5683,32 +9052,68 @@ export type AdminUpdateProviderConfigData = {
 
 export type AdminUpdateProviderConfigErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     501: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5718,9 +9123,12 @@ export type AdminUpdateProviderConfigError = AdminUpdateProviderConfigErrors[key
 
 export type AdminUpdateProviderConfigResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -5738,22 +9146,46 @@ export type AdminTriggerHealthCheckData = {
 
 export type AdminTriggerHealthCheckErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5763,7 +9195,7 @@ export type AdminTriggerHealthCheckError = AdminTriggerHealthCheckErrors[keyof A
 
 export type AdminTriggerHealthCheckResponses = {
     /**
-     * Default Response
+     * Single provider health-check result.
      */
     200: {
         providerId: string;
@@ -5790,22 +9222,46 @@ export type AdminReIngestEventData = {
 
 export type AdminReIngestEventErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5815,9 +9271,12 @@ export type AdminReIngestEventError = AdminReIngestEventErrors[keyof AdminReInge
 
 export type AdminReIngestEventResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -5833,12 +9292,24 @@ export type AdminGetServiceHealthData = {
 
 export type AdminGetServiceHealthErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5848,7 +9319,7 @@ export type AdminGetServiceHealthError = AdminGetServiceHealthErrors[keyof Admin
 
 export type AdminGetServiceHealthResponses = {
     /**
-     * Default Response
+     * Admin service-health list response.
      */
     200: {
         services: Array<{
@@ -5880,12 +9351,24 @@ export type AdminGetInfrastructureMetricsData = {
 
 export type AdminGetInfrastructureMetricsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5895,7 +9378,7 @@ export type AdminGetInfrastructureMetricsError = AdminGetInfrastructureMetricsEr
 
 export type AdminGetInfrastructureMetricsResponses = {
     /**
-     * Default Response
+     * Infrastructure-metrics response for admin dashboards.
      */
     200: {
         postgres: {
@@ -5922,6 +9405,9 @@ export type AdminGetInfrastructureMetricsResponses = {
             errorRatePercent: number;
             storageUsedGb: number;
         };
+        /**
+         * When the infrastructure metrics snapshot was captured.
+         */
         checkedAt: string;
     };
 };
@@ -5937,12 +9423,24 @@ export type AdminGetBusinessMetricsData = {
 
 export type AdminGetBusinessMetricsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -5952,7 +9450,7 @@ export type AdminGetBusinessMetricsError = AdminGetBusinessMetricsErrors[keyof A
 
 export type AdminGetBusinessMetricsResponses = {
     /**
-     * Default Response
+     * Business-metrics response for admin dashboards.
      */
     200: {
         activeUsersLast24h: number;
@@ -5963,6 +9461,9 @@ export type AdminGetBusinessMetricsResponses = {
         notificationDeliveryRatePercent: number;
         activeContests: number;
         liveDrafts: number;
+        /**
+         * When the business metrics snapshot was captured.
+         */
         checkedAt: string;
     };
 };
@@ -5985,12 +9486,24 @@ export type AdminSearchErrorsData = {
 
 export type AdminSearchErrorsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6000,9 +9513,12 @@ export type AdminSearchErrorsError = AdminSearchErrorsErrors[keyof AdminSearchEr
 
 export type AdminSearchErrorsResponses = {
     /**
-     * Default Response
+     * Generic paginated response envelope.
      */
     200: {
+        /**
+         * Current result page items.
+         */
         items: Array<{
             id: string;
             service: string;
@@ -6017,9 +9533,21 @@ export type AdminSearchErrorsResponses = {
             };
             occurredAt: string;
         }>;
+        /**
+         * Total number of matching records.
+         */
         total: number;
+        /**
+         * Current page number.
+         */
         page: number;
+        /**
+         * Number of items requested per page.
+         */
         pageSize: number;
+        /**
+         * Total page count for the current query.
+         */
         totalPages: number;
     };
 };
@@ -6037,22 +9565,46 @@ export type AdminGetErrorDetailData = {
 
 export type AdminGetErrorDetailErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6062,7 +9614,7 @@ export type AdminGetErrorDetailError = AdminGetErrorDetailErrors[keyof AdminGetE
 
 export type AdminGetErrorDetailResponses = {
     /**
-     * Default Response
+     * Expanded error-log detail response.
      */
     200: {
         id: string;
@@ -6103,12 +9655,24 @@ export type AdminGetAlertRulesData = {
 
 export type AdminGetAlertRulesErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6118,7 +9682,7 @@ export type AdminGetAlertRulesError = AdminGetAlertRulesErrors[keyof AdminGetAle
 
 export type AdminGetAlertRulesResponses = {
     /**
-     * Default Response
+     * Alert-rules response.
      */
     200: {
         rules: Array<{
@@ -6163,22 +9727,46 @@ export type AdminUpdateAlertRuleData = {
 
 export type AdminUpdateAlertRuleErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6188,7 +9776,7 @@ export type AdminUpdateAlertRuleError = AdminUpdateAlertRuleErrors[keyof AdminUp
 
 export type AdminUpdateAlertRuleResponses = {
     /**
-     * Default Response
+     * Alert-rule configuration row used by admin monitoring surfaces.
      */
     200: {
         id: string;
@@ -6225,32 +9813,68 @@ export type AdminMuteAlertData = {
 
 export type AdminMuteAlertErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6260,7 +9884,7 @@ export type AdminMuteAlertError = AdminMuteAlertErrors[keyof AdminMuteAlertError
 
 export type AdminMuteAlertResponses = {
     /**
-     * Default Response
+     * Alert-rule configuration row used by admin monitoring surfaces.
      */
     200: {
         id: string;
@@ -6295,22 +9919,46 @@ export type AdminUnmuteAlertData = {
 
 export type AdminUnmuteAlertErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6320,7 +9968,7 @@ export type AdminUnmuteAlertError = AdminUnmuteAlertErrors[keyof AdminUnmuteAler
 
 export type AdminUnmuteAlertResponses = {
     /**
-     * Default Response
+     * Alert-rule configuration row used by admin monitoring surfaces.
      */
     200: {
         id: string;
@@ -6353,12 +10001,24 @@ export type AdminListMigrationsData = {
 
 export type AdminListMigrationsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6368,7 +10028,7 @@ export type AdminListMigrationsError = AdminListMigrationsErrors[keyof AdminList
 
 export type AdminListMigrationsResponses = {
     /**
-     * Default Response
+     * Admin migration overview response.
      */
     200: {
         available: Array<{
@@ -6385,6 +10045,9 @@ export type AdminListMigrationsResponses = {
             migrationName: string;
             status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
             dryRun: boolean;
+            /**
+             * Migration run progress snapshot.
+             */
             progress: {
                 totalRecords: number;
                 processed: number;
@@ -6394,6 +10057,9 @@ export type AdminListMigrationsResponses = {
             };
             startedAt: string;
             completedAt: string;
+            /**
+             * User that started a migration run.
+             */
             startedBy: {
                 id: string;
                 email: string;
@@ -6411,6 +10077,9 @@ export type AdminListMigrationsResponses = {
             migrationName: string;
             status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
             dryRun: boolean;
+            /**
+             * Migration run progress snapshot.
+             */
             progress: {
                 totalRecords: number;
                 processed: number;
@@ -6420,6 +10089,9 @@ export type AdminListMigrationsResponses = {
             };
             startedAt: string;
             completedAt: string;
+            /**
+             * User that started a migration run.
+             */
             startedBy: {
                 id: string;
                 email: string;
@@ -6437,6 +10109,9 @@ export type AdminListMigrationsResponses = {
 export type AdminListMigrationsResponse = AdminListMigrationsResponses[keyof AdminListMigrationsResponses];
 
 export type AdminStartMigrationRunData = {
+    /**
+     * Request payload for starting an admin migration run.
+     */
     body: {
         migrationId: string;
         dryRun?: boolean;
@@ -6449,42 +10124,90 @@ export type AdminStartMigrationRunData = {
 
 export type AdminStartMigrationRunErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     409: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6494,15 +10217,21 @@ export type AdminStartMigrationRunError = AdminStartMigrationRunErrors[keyof Adm
 
 export type AdminStartMigrationRunResponses = {
     /**
-     * Default Response
+     * Single migration-run response.
      */
     201: {
+        /**
+         * Migration run record returned by admin migration APIs.
+         */
         run: {
             id: string;
             migrationId: string;
             migrationName: string;
             status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
             dryRun: boolean;
+            /**
+             * Migration run progress snapshot.
+             */
             progress: {
                 totalRecords: number;
                 processed: number;
@@ -6512,6 +10241,9 @@ export type AdminStartMigrationRunResponses = {
             };
             startedAt: string;
             completedAt: string;
+            /**
+             * User that started a migration run.
+             */
             startedBy: {
                 id: string;
                 email: string;
@@ -6539,22 +10271,46 @@ export type AdminGetMigrationRunDetailData = {
 
 export type AdminGetMigrationRunDetailErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6564,15 +10320,21 @@ export type AdminGetMigrationRunDetailError = AdminGetMigrationRunDetailErrors[k
 
 export type AdminGetMigrationRunDetailResponses = {
     /**
-     * Default Response
+     * Single migration-run response.
      */
     200: {
+        /**
+         * Migration run record returned by admin migration APIs.
+         */
         run: {
             id: string;
             migrationId: string;
             migrationName: string;
             status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
             dryRun: boolean;
+            /**
+             * Migration run progress snapshot.
+             */
             progress: {
                 totalRecords: number;
                 processed: number;
@@ -6582,6 +10344,9 @@ export type AdminGetMigrationRunDetailResponses = {
             };
             startedAt: string;
             completedAt: string;
+            /**
+             * User that started a migration run.
+             */
             startedBy: {
                 id: string;
                 email: string;
@@ -6609,32 +10374,68 @@ export type AdminCancelMigrationRunData = {
 
 export type AdminCancelMigrationRunErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6644,15 +10445,21 @@ export type AdminCancelMigrationRunError = AdminCancelMigrationRunErrors[keyof A
 
 export type AdminCancelMigrationRunResponses = {
     /**
-     * Default Response
+     * Single migration-run response.
      */
     200: {
+        /**
+         * Migration run record returned by admin migration APIs.
+         */
         run: {
             id: string;
             migrationId: string;
             migrationName: string;
             status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
             dryRun: boolean;
+            /**
+             * Migration run progress snapshot.
+             */
             progress: {
                 totalRecords: number;
                 processed: number;
@@ -6662,6 +10469,9 @@ export type AdminCancelMigrationRunResponses = {
             };
             startedAt: string;
             completedAt: string;
+            /**
+             * User that started a migration run.
+             */
             startedBy: {
                 id: string;
                 email: string;
@@ -6697,12 +10507,24 @@ export type AdminExportAuditLogData = {
 
 export type AdminExportAuditLogErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6712,9 +10534,12 @@ export type AdminExportAuditLogError = AdminExportAuditLogErrors[keyof AdminExpo
 
 export type AdminExportAuditLogResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -6740,12 +10565,24 @@ export type AdminListAuditLogData = {
 
 export type AdminListAuditLogErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6755,7 +10592,7 @@ export type AdminListAuditLogError = AdminListAuditLogErrors[keyof AdminListAudi
 
 export type AdminListAuditLogResponses = {
     /**
-     * Default Response
+     * Admin audit-log list response.
      */
     200: {
         items: Array<{
@@ -6790,22 +10627,46 @@ export type AdminGetAuditEntryData = {
 
 export type AdminGetAuditEntryErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6815,9 +10676,12 @@ export type AdminGetAuditEntryError = AdminGetAuditEntryErrors[keyof AdminGetAud
 
 export type AdminGetAuditEntryResponses = {
     /**
-     * Default Response
+     * Single admin audit-entry response.
      */
     200: {
+        /**
+         * Admin audit-log entry.
+         */
         entry: {
             id: string;
             actorEmail: string;
@@ -6845,12 +10709,24 @@ export type AdminGetPollIntervalsData = {
 
 export type AdminGetPollIntervalsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6860,9 +10736,12 @@ export type AdminGetPollIntervalsError = AdminGetPollIntervalsErrors[keyof Admin
 
 export type AdminGetPollIntervalsResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -6884,12 +10763,24 @@ export type AdminUpdatePollIntervalsData = {
 
 export type AdminUpdatePollIntervalsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6899,9 +10790,12 @@ export type AdminUpdatePollIntervalsError = AdminUpdatePollIntervalsErrors[keyof
 
 export type AdminUpdatePollIntervalsResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -6917,12 +10811,24 @@ export type AdminResetPollIntervalsData = {
 
 export type AdminResetPollIntervalsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6932,9 +10838,12 @@ export type AdminResetPollIntervalsError = AdminResetPollIntervalsErrors[keyof A
 
 export type AdminResetPollIntervalsResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -6950,12 +10859,24 @@ export type AdminGetIngestionScheduleData = {
 
 export type AdminGetIngestionScheduleErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -6965,9 +10886,12 @@ export type AdminGetIngestionScheduleError = AdminGetIngestionScheduleErrors[key
 
 export type AdminGetIngestionScheduleResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -6989,12 +10913,24 @@ export type AdminUpdateIngestionScheduleData = {
 
 export type AdminUpdateIngestionScheduleErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -7004,9 +10940,12 @@ export type AdminUpdateIngestionScheduleError = AdminUpdateIngestionScheduleErro
 
 export type AdminUpdateIngestionScheduleResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -7030,12 +10969,24 @@ export type AdminSetSportIngestionOverrideData = {
 
 export type AdminSetSportIngestionOverrideErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -7045,9 +10996,12 @@ export type AdminSetSportIngestionOverrideError = AdminSetSportIngestionOverride
 
 export type AdminSetSportIngestionOverrideResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -7063,9 +11017,12 @@ export type AdminResetIngestionScheduleData = {
 
 export type AdminResetIngestionScheduleResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -7081,15 +11038,33 @@ export type GetPollIntervalsData = {
 
 export type GetPollIntervalsResponses = {
     /**
-     * Default Response
+     * Platform-configuration payload used to bootstrap app capabilities.
      */
     200: {
+        /**
+         * Supported sports and their basic configuration metadata.
+         */
         sports: Array<{
+            /**
+             * Sport configuration identifier.
+             */
             id: string;
+            /**
+             * Canonical sport code or display name.
+             */
             name: string;
+            /**
+             * Whether the sport primarily uses individual or team participants.
+             */
             participantType: string;
+            /**
+             * Available season identifiers currently known for the sport.
+             */
             seasons: Array<string>;
         }>;
+        /**
+         * Boolean platform feature flags exposed to clients.
+         */
         features: {
             [key: string]: boolean;
         };
@@ -7109,22 +11084,46 @@ export type GetDraftStateData = {
 
 export type GetDraftStateErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     501: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -7134,7 +11133,7 @@ export type GetDraftStateError = GetDraftStateErrors[keyof GetDraftStateErrors];
 
 export type GetDraftStateResponses = {
     /**
-     * Default Response
+     * Draft-state response.
      */
     200: {
         contestId: string;
@@ -7143,6 +11142,9 @@ export type GetDraftStateResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
         contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
@@ -7154,6 +11156,9 @@ export type GetDraftStateResponses = {
             picksPerPeriod?: number;
             roundValues?: Array<number>;
             startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
             tierConfig?: Array<{
                 tierId: string;
                 tierName: string;
@@ -7173,9 +11178,21 @@ export type GetDraftStateResponses = {
         timePerPickSeconds: number;
         currentTurnStartedAt: string;
         entries: Array<{
+            /**
+             * Entry identifier.
+             */
             id: string;
+            /**
+             * User that owns the entry.
+             */
             userId: string;
+            /**
+             * Entry display name.
+             */
             name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
             isOnClock: boolean;
         }>;
         draftPickHistories: Array<{
@@ -7193,6 +11210,9 @@ export type GetDraftStateResponses = {
             tierName?: string;
             autoPicked: boolean;
             isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
@@ -7211,24 +11231,39 @@ export type GetDraftStateResponses = {
             isLocked: boolean;
             myPickParticipantId: string;
             confidenceWeight: number;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
             label: string;
         }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
         bracketMatchups?: Array<{
             id: string;
             roundNumber: number;
             matchNumber: number;
             label: string;
             isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             topTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             bottomTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
             winnerId: string;
         }>;
     };
@@ -7237,11 +11272,29 @@ export type GetDraftStateResponses = {
 export type GetDraftStateResponse = GetDraftStateResponses[keyof GetDraftStateResponses];
 
 export type StartDraftData = {
+    /**
+     * Request payload for starting a draft.
+     */
     body: {
+        /**
+         * Entries that should participate in the draft.
+         */
         entryIds: Array<string>;
+        /**
+         * Optional total number of draft rounds.
+         */
         rounds?: number;
+        /**
+         * Seconds allowed per turn in a turn-based draft.
+         */
         timePerPickSeconds?: number;
+        /**
+         * Optional participant pool restriction for the draft.
+         */
         availableParticipantIds?: Array<string>;
+        /**
+         * Fallback policy used when the clock expires.
+         */
         autoPickPolicy?: 'QUEUE_THEN_BEST' | 'BEST_AVAILABLE' | 'RANDOM';
     };
     path: {
@@ -7253,22 +11306,46 @@ export type StartDraftData = {
 
 export type StartDraftErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     409: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -7278,7 +11355,7 @@ export type StartDraftError = StartDraftErrors[keyof StartDraftErrors];
 
 export type StartDraftResponses = {
     /**
-     * Default Response
+     * Draft-state response.
      */
     201: {
         contestId: string;
@@ -7287,6 +11364,9 @@ export type StartDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
         contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
@@ -7298,6 +11378,9 @@ export type StartDraftResponses = {
             picksPerPeriod?: number;
             roundValues?: Array<number>;
             startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
             tierConfig?: Array<{
                 tierId: string;
                 tierName: string;
@@ -7317,9 +11400,21 @@ export type StartDraftResponses = {
         timePerPickSeconds: number;
         currentTurnStartedAt: string;
         entries: Array<{
+            /**
+             * Entry identifier.
+             */
             id: string;
+            /**
+             * User that owns the entry.
+             */
             userId: string;
+            /**
+             * Entry display name.
+             */
             name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
             isOnClock: boolean;
         }>;
         draftPickHistories: Array<{
@@ -7337,6 +11432,9 @@ export type StartDraftResponses = {
             tierName?: string;
             autoPicked: boolean;
             isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
@@ -7355,24 +11453,39 @@ export type StartDraftResponses = {
             isLocked: boolean;
             myPickParticipantId: string;
             confidenceWeight: number;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
             label: string;
         }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
         bracketMatchups?: Array<{
             id: string;
             roundNumber: number;
             matchNumber: number;
             label: string;
             isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             topTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             bottomTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
             winnerId: string;
         }>;
     };
@@ -7381,8 +11494,17 @@ export type StartDraftResponses = {
 export type StartDraftResponse = StartDraftResponses[keyof StartDraftResponses];
 
 export type SubmitContestSelectionData = {
+    /**
+     * Request payload for submitting a draft pick.
+     */
     body: {
+        /**
+         * Entry making the pick.
+         */
         entryId: string;
+        /**
+         * Participant being selected.
+         */
         participantId: string;
     };
     path: {
@@ -7394,52 +11516,112 @@ export type SubmitContestSelectionData = {
 
 export type SubmitContestSelectionErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     501: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -7449,7 +11631,7 @@ export type SubmitContestSelectionError = SubmitContestSelectionErrors[keyof Sub
 
 export type SubmitContestSelectionResponses = {
     /**
-     * Default Response
+     * Draft response returned immediately after a pick mutation.
      */
     200: {
         contestId: string;
@@ -7458,6 +11640,9 @@ export type SubmitContestSelectionResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
         contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
@@ -7469,6 +11654,9 @@ export type SubmitContestSelectionResponses = {
             picksPerPeriod?: number;
             roundValues?: Array<number>;
             startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
             tierConfig?: Array<{
                 tierId: string;
                 tierName: string;
@@ -7488,9 +11676,21 @@ export type SubmitContestSelectionResponses = {
         timePerPickSeconds: number;
         currentTurnStartedAt: string;
         entries: Array<{
+            /**
+             * Entry identifier.
+             */
             id: string;
+            /**
+             * User that owns the entry.
+             */
             userId: string;
+            /**
+             * Entry display name.
+             */
             name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
             isOnClock: boolean;
         }>;
         draftPickHistories: Array<{
@@ -7508,6 +11708,9 @@ export type SubmitContestSelectionResponses = {
             tierName?: string;
             autoPicked: boolean;
             isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
@@ -7526,24 +11729,39 @@ export type SubmitContestSelectionResponses = {
             isLocked: boolean;
             myPickParticipantId: string;
             confidenceWeight: number;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
             label: string;
         }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
         bracketMatchups?: Array<{
             id: string;
             roundNumber: number;
             matchNumber: number;
             label: string;
             isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             topTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             bottomTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
             winnerId: string;
         }>;
     };
@@ -7562,42 +11780,90 @@ export type PauseDraftData = {
 
 export type PauseDraftErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -7607,7 +11873,7 @@ export type PauseDraftError = PauseDraftErrors[keyof PauseDraftErrors];
 
 export type PauseDraftResponses = {
     /**
-     * Default Response
+     * Draft-state response.
      */
     200: {
         contestId: string;
@@ -7616,6 +11882,9 @@ export type PauseDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
         contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
@@ -7627,6 +11896,9 @@ export type PauseDraftResponses = {
             picksPerPeriod?: number;
             roundValues?: Array<number>;
             startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
             tierConfig?: Array<{
                 tierId: string;
                 tierName: string;
@@ -7646,9 +11918,21 @@ export type PauseDraftResponses = {
         timePerPickSeconds: number;
         currentTurnStartedAt: string;
         entries: Array<{
+            /**
+             * Entry identifier.
+             */
             id: string;
+            /**
+             * User that owns the entry.
+             */
             userId: string;
+            /**
+             * Entry display name.
+             */
             name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
             isOnClock: boolean;
         }>;
         draftPickHistories: Array<{
@@ -7666,6 +11950,9 @@ export type PauseDraftResponses = {
             tierName?: string;
             autoPicked: boolean;
             isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
@@ -7684,24 +11971,39 @@ export type PauseDraftResponses = {
             isLocked: boolean;
             myPickParticipantId: string;
             confidenceWeight: number;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
             label: string;
         }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
         bracketMatchups?: Array<{
             id: string;
             roundNumber: number;
             matchNumber: number;
             label: string;
             isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             topTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             bottomTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
             winnerId: string;
         }>;
     };
@@ -7720,42 +12022,90 @@ export type ResumeDraftData = {
 
 export type ResumeDraftErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -7765,7 +12115,7 @@ export type ResumeDraftError = ResumeDraftErrors[keyof ResumeDraftErrors];
 
 export type ResumeDraftResponses = {
     /**
-     * Default Response
+     * Draft-state response.
      */
     200: {
         contestId: string;
@@ -7774,6 +12124,9 @@ export type ResumeDraftResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
         contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
@@ -7785,6 +12138,9 @@ export type ResumeDraftResponses = {
             picksPerPeriod?: number;
             roundValues?: Array<number>;
             startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
             tierConfig?: Array<{
                 tierId: string;
                 tierName: string;
@@ -7804,9 +12160,21 @@ export type ResumeDraftResponses = {
         timePerPickSeconds: number;
         currentTurnStartedAt: string;
         entries: Array<{
+            /**
+             * Entry identifier.
+             */
             id: string;
+            /**
+             * User that owns the entry.
+             */
             userId: string;
+            /**
+             * Entry display name.
+             */
             name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
             isOnClock: boolean;
         }>;
         draftPickHistories: Array<{
@@ -7824,6 +12192,9 @@ export type ResumeDraftResponses = {
             tierName?: string;
             autoPicked: boolean;
             isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
@@ -7842,24 +12213,39 @@ export type ResumeDraftResponses = {
             isLocked: boolean;
             myPickParticipantId: string;
             confidenceWeight: number;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
             label: string;
         }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
         bracketMatchups?: Array<{
             id: string;
             roundNumber: number;
             matchNumber: number;
             label: string;
             isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             topTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             bottomTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
             winnerId: string;
         }>;
     };
@@ -7868,7 +12254,13 @@ export type ResumeDraftResponses = {
 export type ResumeDraftResponse = ResumeDraftResponses[keyof ResumeDraftResponses];
 
 export type ExtendCurrentTurnData = {
+    /**
+     * Commissioner request payload for extending the active draft turn.
+     */
     body: {
+        /**
+         * How many seconds to add to the current draft turn.
+         */
         additionalSeconds: number;
     };
     path: {
@@ -7880,42 +12272,90 @@ export type ExtendCurrentTurnData = {
 
 export type ExtendCurrentTurnErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -7925,7 +12365,7 @@ export type ExtendCurrentTurnError = ExtendCurrentTurnErrors[keyof ExtendCurrent
 
 export type ExtendCurrentTurnResponses = {
     /**
-     * Default Response
+     * Draft-state response.
      */
     200: {
         contestId: string;
@@ -7934,6 +12374,9 @@ export type ExtendCurrentTurnResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
         contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
@@ -7945,6 +12388,9 @@ export type ExtendCurrentTurnResponses = {
             picksPerPeriod?: number;
             roundValues?: Array<number>;
             startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
             tierConfig?: Array<{
                 tierId: string;
                 tierName: string;
@@ -7964,9 +12410,21 @@ export type ExtendCurrentTurnResponses = {
         timePerPickSeconds: number;
         currentTurnStartedAt: string;
         entries: Array<{
+            /**
+             * Entry identifier.
+             */
             id: string;
+            /**
+             * User that owns the entry.
+             */
             userId: string;
+            /**
+             * Entry display name.
+             */
             name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
             isOnClock: boolean;
         }>;
         draftPickHistories: Array<{
@@ -7984,6 +12442,9 @@ export type ExtendCurrentTurnResponses = {
             tierName?: string;
             autoPicked: boolean;
             isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
@@ -8002,24 +12463,39 @@ export type ExtendCurrentTurnResponses = {
             isLocked: boolean;
             myPickParticipantId: string;
             confidenceWeight: number;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
             label: string;
         }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
         bracketMatchups?: Array<{
             id: string;
             roundNumber: number;
             matchNumber: number;
             label: string;
             isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             topTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             bottomTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
             winnerId: string;
         }>;
     };
@@ -8038,42 +12514,90 @@ export type UndoSnakeDraftSelectionData = {
 
 export type UndoSnakeDraftSelectionErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8083,7 +12607,7 @@ export type UndoSnakeDraftSelectionError = UndoSnakeDraftSelectionErrors[keyof U
 
 export type UndoSnakeDraftSelectionResponses = {
     /**
-     * Default Response
+     * Draft-state response.
      */
     200: {
         contestId: string;
@@ -8092,6 +12616,9 @@ export type UndoSnakeDraftSelectionResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
         contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
@@ -8103,6 +12630,9 @@ export type UndoSnakeDraftSelectionResponses = {
             picksPerPeriod?: number;
             roundValues?: Array<number>;
             startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
             tierConfig?: Array<{
                 tierId: string;
                 tierName: string;
@@ -8122,9 +12652,21 @@ export type UndoSnakeDraftSelectionResponses = {
         timePerPickSeconds: number;
         currentTurnStartedAt: string;
         entries: Array<{
+            /**
+             * Entry identifier.
+             */
             id: string;
+            /**
+             * User that owns the entry.
+             */
             userId: string;
+            /**
+             * Entry display name.
+             */
             name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
             isOnClock: boolean;
         }>;
         draftPickHistories: Array<{
@@ -8142,6 +12684,9 @@ export type UndoSnakeDraftSelectionResponses = {
             tierName?: string;
             autoPicked: boolean;
             isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
@@ -8160,24 +12705,39 @@ export type UndoSnakeDraftSelectionResponses = {
             isLocked: boolean;
             myPickParticipantId: string;
             confidenceWeight: number;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
             label: string;
         }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
         bracketMatchups?: Array<{
             id: string;
             roundNumber: number;
             matchNumber: number;
             label: string;
             isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             topTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             bottomTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
             winnerId: string;
         }>;
     };
@@ -8196,42 +12756,90 @@ export type SkipSnakeDraftTurnData = {
 
 export type SkipSnakeDraftTurnErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     400: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     403: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8241,7 +12849,7 @@ export type SkipSnakeDraftTurnError = SkipSnakeDraftTurnErrors[keyof SkipSnakeDr
 
 export type SkipSnakeDraftTurnResponses = {
     /**
-     * Default Response
+     * Draft-state response.
      */
     200: {
         contestId: string;
@@ -8250,6 +12858,9 @@ export type SkipSnakeDraftTurnResponses = {
         isTurnBased: boolean;
         isCommissioner?: boolean;
         rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
         contestConfiguration?: {
             isExclusive: boolean;
             rounds?: number;
@@ -8261,6 +12872,9 @@ export type SkipSnakeDraftTurnResponses = {
             picksPerPeriod?: number;
             roundValues?: Array<number>;
             startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
             tierConfig?: Array<{
                 tierId: string;
                 tierName: string;
@@ -8280,9 +12894,21 @@ export type SkipSnakeDraftTurnResponses = {
         timePerPickSeconds: number;
         currentTurnStartedAt: string;
         entries: Array<{
+            /**
+             * Entry identifier.
+             */
             id: string;
+            /**
+             * User that owns the entry.
+             */
             userId: string;
+            /**
+             * Entry display name.
+             */
             name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
             isOnClock: boolean;
         }>;
         draftPickHistories: Array<{
@@ -8300,6 +12926,9 @@ export type SkipSnakeDraftTurnResponses = {
             tierName?: string;
             autoPicked: boolean;
             isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
@@ -8318,24 +12947,39 @@ export type SkipSnakeDraftTurnResponses = {
             isLocked: boolean;
             myPickParticipantId: string;
             confidenceWeight: number;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
             label: string;
         }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
         bracketMatchups?: Array<{
             id: string;
             roundNumber: number;
             matchNumber: number;
             label: string;
             isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             topTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
             bottomTeam: {
                 id: string;
                 name: string;
                 seed: number;
             };
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
             winnerId: string;
         }>;
     };
@@ -8390,23 +13034,47 @@ export type ValidateScoringConfigData = {
 
 export type ValidateScoringConfigErrors = {
     /**
-     * Default Response
+     * Scoring-configuration validation response.
      */
     400: {
+        /**
+         * Whether the supplied scoring configuration passed validation.
+         */
         valid: boolean;
+        /**
+         * Normalized scoring configuration after validation, when available.
+         */
         config?: {
             [key: string]: unknown;
         };
+        /**
+         * Non-blocking warnings surfaced during validation.
+         */
         warnings?: Array<string>;
+        /**
+         * Validation errors returned when the config is invalid.
+         */
         errors?: Array<unknown>;
     };
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8416,14 +13084,26 @@ export type ValidateScoringConfigError = ValidateScoringConfigErrors[keyof Valid
 
 export type ValidateScoringConfigResponses = {
     /**
-     * Default Response
+     * Scoring-configuration validation response.
      */
     200: {
+        /**
+         * Whether the supplied scoring configuration passed validation.
+         */
         valid: boolean;
+        /**
+         * Normalized scoring configuration after validation, when available.
+         */
         config?: {
             [key: string]: unknown;
         };
+        /**
+         * Non-blocking warnings surfaced during validation.
+         */
         warnings?: Array<string>;
+        /**
+         * Validation errors returned when the config is invalid.
+         */
         errors?: Array<unknown>;
     };
 };
@@ -8441,12 +13121,24 @@ export type GetContestLeaderboardData = {
 
 export type GetContestLeaderboardErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8456,14 +13148,32 @@ export type GetContestLeaderboardError = GetContestLeaderboardErrors[keyof GetCo
 
 export type GetContestLeaderboardResponses = {
     /**
-     * Default Response
+     * Scoring leaderboard response.
      */
     200: {
+        /**
+         * Contest whose leaderboard is being returned.
+         */
         contestId: string;
+        /**
+         * Current contest leaderboard.
+         */
         leaderboard: Array<{
+            /**
+             * Entry identifier.
+             */
             entryId: string;
+            /**
+             * Current leaderboard rank.
+             */
             rank: number;
+            /**
+             * Current total score for the entry.
+             */
             totalScore: number;
+            /**
+             * Whether the rank is shared with another entry.
+             */
             isTied: boolean;
         }>;
     };
@@ -8483,12 +13193,24 @@ export type GetEntryScoreData = {
 
 export type GetEntryScoreErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8498,18 +13220,24 @@ export type GetEntryScoreError = GetEntryScoreErrors[keyof GetEntryScoreErrors];
 
 export type GetEntryScoreResponses = {
     /**
-     * Default Response
+     * Contest-entry score detail response.
      */
     200: {
         entryId: string;
         contestId: string;
         totalScore: number;
+        /**
+         * Score timeline for the contest entry.
+         */
         timeline: Array<{
             contestId: string;
             entryId: string;
             eventTimestamp: string;
             pointsEarned: number;
             runningTotal: number;
+            /**
+             * Per-participant contributions at this scoring event timestamp.
+             */
             participantBreakdowns: Array<{
                 participantId: string;
                 participantName?: string;
@@ -8520,6 +13248,9 @@ export type GetEntryScoreResponses = {
                 penaltyPoints: number;
                 multipliedTotal: number;
                 dnfAdjustment: number;
+                /**
+                 * Final score contribution after all components and adjustments.
+                 */
                 finalScore: number;
             }>;
         }>;
@@ -8540,12 +13271,24 @@ export type GetParticipantScoreData = {
 
 export type GetParticipantScoreErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8555,7 +13298,7 @@ export type GetParticipantScoreError = GetParticipantScoreErrors[keyof GetPartic
 
 export type GetParticipantScoreResponses = {
     /**
-     * Default Response
+     * Participant score-history response.
      */
     200: {
         participantId: string;
@@ -8568,6 +13311,9 @@ export type GetParticipantScoreResponses = {
                 [key: string]: number;
             };
             points: number;
+            /**
+             * Detailed point breakdown for the participant score event.
+             */
             breakdown: {
                 participantId: string;
                 participantName?: string;
@@ -8578,9 +13324,15 @@ export type GetParticipantScoreResponses = {
                 penaltyPoints: number;
                 multipliedTotal: number;
                 dnfAdjustment: number;
+                /**
+                 * Final score contribution after all components and adjustments.
+                 */
                 finalScore: number;
             };
         }>;
+        /**
+         * Total points accumulated by the participant in the contest.
+         */
         totalPoints: number;
     };
 };
@@ -8598,12 +13350,24 @@ export type TriggerStandingsRollupData = {
 
 export type TriggerStandingsRollupErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8613,12 +13377,15 @@ export type TriggerStandingsRollupError = TriggerStandingsRollupErrors[keyof Tri
 
 export type TriggerStandingsRollupResponses = {
     /**
-     * Default Response
+     * Standings-rollup response.
      */
     200: {
         contestId: string;
         entriesUpdated: number;
         rankChanges: number;
+        /**
+         * When the standings rollup completed.
+         */
         rolledUpAt: string;
     };
 };
@@ -8634,12 +13401,24 @@ export type GetScoringHealthData = {
 
 export type GetScoringHealthErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8649,13 +13428,16 @@ export type GetScoringHealthError = GetScoringHealthErrors[keyof GetScoringHealt
 
 export type GetScoringHealthResponses = {
     /**
-     * Default Response
+     * Scoring-service health response.
      */
     200: {
         status: string;
         service: string;
         rollupRunning: boolean;
         activeContests: number;
+        /**
+         * When the scoring-health snapshot was recorded.
+         */
         timestamp: string;
     };
 };
@@ -8671,26 +13453,71 @@ export type ListNotificationsData = {
 
 export type ListNotificationsResponses = {
     /**
-     * Default Response
+     * Notification-list response.
      */
     200: {
+        /**
+         * Notification page or slice returned by the API.
+         */
         notifications: Array<{
+            /**
+             * Notification identifier.
+             */
             id: string;
+            /**
+             * Target user when the payload is not implicitly scoped by auth.
+             */
             userId?: string;
+            /**
+             * Notification category or event type.
+             */
             eventType: string;
+            /**
+             * Short notification title.
+             */
             title: string;
+            /**
+             * Longer notification body copy.
+             */
             body: string;
+            /**
+             * Whether the user has marked the notification as read.
+             */
             read: boolean;
+            /**
+             * When the notification was marked as read, if applicable.
+             */
             readAt?: string;
+            /**
+             * Whether the notification has been dismissed from the feed.
+             */
             dismissed?: boolean;
+            /**
+             * Optional image shown alongside the notification.
+             */
             imageUrl?: string;
+            /**
+             * Optional client route or screen hint for notification deep linking.
+             */
             actionScreen?: string;
+            /**
+             * Optional routing parameters for the notification action target.
+             */
             actionParams?: {
                 [key: string]: unknown;
             };
+            /**
+             * Optional grouping key for bundling related notifications.
+             */
             groupKey?: string;
+            /**
+             * When the notification was created.
+             */
             createdAt: string;
         }>;
+        /**
+         * Total number of notifications matching the current query.
+         */
         total: number;
     };
 };
@@ -8706,9 +13533,12 @@ export type GetUnreadNotificationCountData = {
 
 export type GetUnreadNotificationCountResponses = {
     /**
-     * Default Response
+     * Unread-notification counter response.
      */
     200: {
+        /**
+         * Unread notification count for the current user.
+         */
         unreadCount: number;
     };
 };
@@ -8726,9 +13556,12 @@ export type MarkNotificationReadData = {
 
 export type MarkNotificationReadResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -8744,9 +13577,12 @@ export type MarkAllNotificationsReadData = {
 
 export type MarkAllNotificationsReadResponses = {
     /**
-     * Default Response
+     * Bulk mark-all-read response.
      */
     200: {
+        /**
+         * How many notifications were marked as read by the bulk operation.
+         */
         markedRead: number;
     };
 };
@@ -8764,9 +13600,12 @@ export type DismissNotificationData = {
 
 export type DismissNotificationResponses = {
     /**
-     * Default Response
+     * Minimal success response envelope.
      */
     200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
         success: true;
     };
 };
@@ -8782,12 +13621,24 @@ export type ListIngestionProvidersData = {
 
 export type ListIngestionProvidersErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8797,12 +13648,21 @@ export type ListIngestionProvidersError = ListIngestionProvidersErrors[keyof Lis
 
 export type ListIngestionProvidersResponses = {
     /**
-     * Default Response
+     * List of configured ingestion providers.
      */
     200: {
         providers: Array<{
+            /**
+             * Stable ingestion-provider identifier.
+             */
             providerId: string;
+            /**
+             * Human-readable provider name.
+             */
             providerName: string;
+            /**
+             * Sports currently covered by the provider integration.
+             */
             sportsCovered: Array<string>;
         }>;
     };
@@ -8821,12 +13681,24 @@ export type SyncSportDataData = {
 
 export type SyncSportDataErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8836,19 +13708,49 @@ export type SyncSportDataError = SyncSportDataErrors[keyof SyncSportDataErrors];
 
 export type SyncSportDataResponses = {
     /**
-     * Default Response
+     * Single ingestion-job response.
      */
     200: {
+        /**
+         * Ingestion job execution record.
+         */
         job: {
             jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            /**
+             * Provider that owns the ingestion job.
+             */
             providerId: string;
+            /**
+             * Sport being synchronized.
+             */
             sport: string;
+            /**
+             * Provider event identifier when the job targets a single event.
+             */
             eventExternalId?: string;
+            /**
+             * Current ingestion job lifecycle state.
+             */
             status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            /**
+             * When the job began processing.
+             */
             startedAt?: string;
+            /**
+             * When the job began processing.
+             */
             completedAt?: string;
+            /**
+             * How many records the job successfully processed.
+             */
             recordsProcessed: number;
+            /**
+             * How many processing errors occurred during the job.
+             */
             errors: number;
+            /**
+             * Opaque error payloads returned for diagnostics and admin tooling.
+             */
             errorLog: Array<{
                 [key: string]: unknown;
             }>;
@@ -8870,12 +13772,24 @@ export type IngestEventScoresData = {
 
 export type IngestEventScoresErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8885,19 +13799,49 @@ export type IngestEventScoresError = IngestEventScoresErrors[keyof IngestEventSc
 
 export type IngestEventScoresResponses = {
     /**
-     * Default Response
+     * Single ingestion-job response.
      */
     200: {
+        /**
+         * Ingestion job execution record.
+         */
         job: {
             jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            /**
+             * Provider that owns the ingestion job.
+             */
             providerId: string;
+            /**
+             * Sport being synchronized.
+             */
             sport: string;
+            /**
+             * Provider event identifier when the job targets a single event.
+             */
             eventExternalId?: string;
+            /**
+             * Current ingestion job lifecycle state.
+             */
             status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            /**
+             * When the job began processing.
+             */
             startedAt?: string;
+            /**
+             * When the job began processing.
+             */
             completedAt?: string;
+            /**
+             * How many records the job successfully processed.
+             */
             recordsProcessed: number;
+            /**
+             * How many processing errors occurred during the job.
+             */
             errors: number;
+            /**
+             * Opaque error payloads returned for diagnostics and admin tooling.
+             */
             errorLog: Array<{
                 [key: string]: unknown;
             }>;
@@ -8919,12 +13863,24 @@ export type IngestEventResultsData = {
 
 export type IngestEventResultsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8934,19 +13890,49 @@ export type IngestEventResultsError = IngestEventResultsErrors[keyof IngestEvent
 
 export type IngestEventResultsResponses = {
     /**
-     * Default Response
+     * Single ingestion-job response.
      */
     200: {
+        /**
+         * Ingestion job execution record.
+         */
         job: {
             jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            /**
+             * Provider that owns the ingestion job.
+             */
             providerId: string;
+            /**
+             * Sport being synchronized.
+             */
             sport: string;
+            /**
+             * Provider event identifier when the job targets a single event.
+             */
             eventExternalId?: string;
+            /**
+             * Current ingestion job lifecycle state.
+             */
             status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            /**
+             * When the job began processing.
+             */
             startedAt?: string;
+            /**
+             * When the job began processing.
+             */
             completedAt?: string;
+            /**
+             * How many records the job successfully processed.
+             */
             recordsProcessed: number;
+            /**
+             * How many processing errors occurred during the job.
+             */
             errors: number;
+            /**
+             * Opaque error payloads returned for diagnostics and admin tooling.
+             */
             errorLog: Array<{
                 [key: string]: unknown;
             }>;
@@ -8967,12 +13953,24 @@ export type IngestSportOddsData = {
 
 export type IngestSportOddsErrors = {
     /**
-     * Default Response
+     * Standard API error envelope.
      */
     500: {
+        /**
+         * Error payload object.
+         */
         error: {
+            /**
+             * Stable machine-readable error code.
+             */
             code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
             message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
             details?: unknown;
         };
     };
@@ -8982,11 +13980,20 @@ export type IngestSportOddsError = IngestSportOddsErrors[keyof IngestSportOddsEr
 
 export type IngestSportOddsResponses = {
     /**
-     * Default Response
+     * Odds-ingestion response payload.
      */
     200: {
+        /**
+         * Sport whose odds payload was requested.
+         */
         sport: string;
+        /**
+         * How many events returned odds records.
+         */
         eventsWithOdds: number;
+        /**
+         * Provider-normalized odds payloads returned by the ingestion endpoint.
+         */
         odds: Array<{
             [key: string]: unknown;
         }>;

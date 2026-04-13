@@ -33,6 +33,8 @@ export function registerPlatformConfigRoutes(
     schema: {
       tags: ['Admin'],
       summary: 'Get poll interval configuration',
+      description:
+        'Returns the root-admin poll interval configuration that governs recommended client refresh timing.',
       operationId: 'adminGetPollIntervals',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -48,6 +50,8 @@ export function registerPlatformConfigRoutes(
     schema: {
       tags: ['Admin'],
       summary: 'Update poll interval configuration',
+      description:
+        'Updates the root-admin poll interval configuration used by client polling guidance.',
       operationId: 'adminUpdatePollIntervals',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -84,6 +88,8 @@ export function registerPlatformConfigRoutes(
     schema: {
       tags: ['Admin'],
       summary: 'Reset poll intervals to defaults',
+      description:
+        'Resets poll interval configuration back to the platform defaults.',
       operationId: 'adminResetPollIntervals',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -104,6 +110,8 @@ export function registerPlatformConfigRoutes(
     schema: {
       tags: ['Admin'],
       summary: 'Get ingestion schedule configuration',
+      description:
+        'Returns the global ingestion scheduling configuration used by operational jobs.',
       operationId: 'adminGetIngestionSchedule',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -119,6 +127,8 @@ export function registerPlatformConfigRoutes(
     schema: {
       tags: ['Admin'],
       summary: 'Update ingestion schedule configuration',
+      description:
+        'Updates the global ingestion scheduling configuration for provider health checks and sync cadence.',
       operationId: 'adminUpdateIngestionSchedule',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -155,6 +165,8 @@ export function registerPlatformConfigRoutes(
     schema: {
       tags: ['Admin'],
       summary: 'Set per-sport ingestion schedule override',
+      description:
+        'Sets a per-sport ingestion schedule override that differs from the global ingestion cadence.',
       operationId: 'adminSetSportIngestionOverride',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -198,6 +210,8 @@ export function registerPlatformConfigRoutes(
     schema: {
       tags: ['Admin'],
       summary: 'Reset ingestion schedule to defaults',
+      description:
+        'Resets ingestion scheduling back to the platform defaults.',
       operationId: 'adminResetIngestionSchedule',
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },

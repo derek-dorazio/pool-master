@@ -74,6 +74,8 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Contests'],
       summary: 'List contests for a league',
+      description:
+        'Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests.',
       operationId: 'listContests',
       response: { 200: zodToJsonSchema(ContestListResponseSchema) },
     },
@@ -84,6 +86,8 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Contests'],
       summary: 'Create a new contest in a league',
+      description:
+        'Creates a contest inside the target league using the league-scoped contest creation flow for commissioners.',
       operationId: 'createContest',
       body: zodToJsonSchema(CreateContestRequestSchema),
       response: {
@@ -136,6 +140,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Get a contest by ID',
+      description:
+        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier.',
       operationId: 'getContest',
       response: {
         200: zodToJsonSchema(ContestResponseSchema),
@@ -149,6 +155,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'List contest entries',
+      description:
+        'Lists the contest entries currently registered for the contest, including data needed for administration and participant views.',
       operationId: 'listContestEntries',
       response: {
         200: zodToJsonSchema(ContestEntryListResponseSchema),
@@ -163,6 +171,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Get the current user contest entry',
+      description:
+        'Returns the contest entry owned by the authenticated user when one exists for the target contest.',
       operationId: 'getMyContestEntry',
       response: {
         200: zodToJsonSchema(MyContestEntryResponseSchema),
@@ -177,6 +187,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Create or return the current user contest entry',
+      description:
+        'Creates a contest entry for the authenticated user when needed, or returns the existing entry when the user has already entered.',
       operationId: 'enterContest',
       response: {
         200: zodToJsonSchema(ContestEntryResponseSchema),
@@ -192,6 +204,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Delete the current user contest entry',
+      description:
+        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest.',
       operationId: 'leaveContest',
       response: {
         200: zodToJsonSchema(ContestEntryDeletionResponseSchema),
@@ -206,6 +220,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Update a contest',
+      description:
+        'Updates mutable contest fields for the target contest and returns the refreshed contest payload.',
       operationId: 'updateContest',
       body: zodToJsonSchema(UpdateContestRequestSchema),
       response: {
@@ -221,6 +237,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Delete a contest',
+      description:
+        'Deletes the target contest when the contest state and permissions allow removal.',
       operationId: 'deleteContest',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -236,6 +254,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Undo a draft pick',
+      description:
+        'Undoes the most recent draft selection through the contest-level override surface used by commissioners and administrators.',
       operationId: 'undoContestDraftSelection',
       body: zodToJsonSchema(UndoContestDraftSelectionRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
@@ -246,6 +266,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Pause an active draft (contest override)',
+      description:
+        'Pauses an active draft through the contest override surface without requiring the dedicated draft-room route family.',
       operationId: 'pauseContestDraft',
       body: zodToJsonSchema(PauseContestDraftRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
@@ -256,6 +278,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Resume a paused draft (contest override)',
+      description:
+        'Resumes a paused draft through the contest override surface for commissioner or admin intervention.',
       operationId: 'resumeContestDraft',
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
@@ -265,6 +289,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Extend the pick clock for the current drafter',
+      description:
+        'Adds extra time to the current drafter turn through the contest override surface.',
       operationId: 'extendPickClock',
       body: zodToJsonSchema(ExtendPickClockRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
@@ -277,6 +303,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Manually adjust an entry score',
+      description:
+        'Applies a manual score adjustment to a contest entry when commissioner or admin scoring intervention is required.',
       operationId: 'adjustScore',
       body: zodToJsonSchema(AdjustContestScoreRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
@@ -287,6 +315,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Recalculate standings for a contest',
+      description:
+        'Triggers a standings recalculation for the contest after score or configuration corrections.',
       operationId: 'recalculateStandings',
       response: { 200: zodToJsonSchema(ContestRecalculationResponseSchema) },
     },
@@ -298,6 +328,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Reopen a closed contest',
+      description:
+        'Reopens a previously closed contest so commissioner workflows can resume or correct the contest lifecycle.',
       operationId: 'reopenContest',
       body: zodToJsonSchema(ReopenContestRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
@@ -308,6 +340,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Close a contest early',
+      description:
+        'Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop.',
       operationId: 'closeContest',
       body: zodToJsonSchema(CloseContestRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
@@ -318,6 +352,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Extend the contest end deadline',
+      description:
+        'Moves the contest deadline later to keep the contest open longer without recreating it.',
       operationId: 'extendContestDeadline',
       body: zodToJsonSchema(ExtendContestDeadlineRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
@@ -328,6 +364,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Update the contest lock time',
+      description:
+        'Changes the contest lock time that governs when picks or entries stop being editable.',
       operationId: 'updateContestLockTime',
       body: zodToJsonSchema(UpdateContestLockTimeRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
@@ -339,6 +377,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Get the audit log for a contest',
+      description:
+        'Returns the audit trail for contest-level actions so commissioner and admin surfaces can review what changed.',
       operationId: 'getContestAuditLog',
       response: { 200: zodToJsonSchema(ContestAuditLogResponseSchema) },
     },

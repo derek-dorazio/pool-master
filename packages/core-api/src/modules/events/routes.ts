@@ -11,6 +11,8 @@ export async function eventsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Events'],
       summary: 'List ingested sport events',
+      description:
+        'Returns ingested sport events so admin, scoring, and contest setup surfaces can browse the current event catalog.',
       operationId: 'listEvents',
       querystring: {
         type: 'object',

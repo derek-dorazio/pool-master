@@ -31,6 +31,8 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Standings'],
       summary: 'Get the full paginated leaderboard',
+      description:
+        'Returns the full contest leaderboard with pagination support for standings pages and deep leaderboard browsing.',
       operationId: 'getStandings',
       querystring: {
         type: 'object',
@@ -54,6 +56,8 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Standings'],
       summary: 'Get top N standings summary for dashboard widgets',
+      description:
+        'Returns a compact top-of-leaderboard summary intended for widgets and dashboard-style standings previews.',
       operationId: 'getStandingsSummary',
       querystring: {
         type: 'object',
@@ -75,6 +79,8 @@ export async function standingsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Standings'],
       summary: 'Get the current user\'s entry with rank context',
+      description:
+        'Returns the authenticated user entry plus surrounding rank context so the user can see their standing without loading the full leaderboard.',
       operationId: 'getMyStandingsEntry',
       response: {
         200: zodToJsonSchema(MyStandingsEntryResponseSchema),

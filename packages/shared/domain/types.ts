@@ -42,6 +42,7 @@ export interface DomainEntity {
 
 // --- Identity ---
 
+/** Core user-account record used across PoolMaster services. */
 export interface User extends DomainEntity {
   email: string;
   displayName: string;
@@ -71,6 +72,7 @@ export interface UserLocalePreference {
 
 // --- League ---
 
+/** Core league record that powers league-home, invites, and league settings. */
 export interface League extends DomainEntity {
   leagueCode: string;
   name: string;
@@ -81,6 +83,7 @@ export interface League extends DomainEntity {
   settings: Record<string, unknown>;
 }
 
+/** User membership within a league, including role and commissioner permissions. */
 export interface LeagueMembership extends DomainEntity {
   leagueId: string;
   userId: string;
@@ -90,6 +93,7 @@ export interface LeagueMembership extends DomainEntity {
   joinedAt: Date;
 }
 
+/** Team-like grouping owned inside a league for contests that need squad context. */
 export interface Squad extends DomainEntity {
   leagueId: string;
   createdBy: string;
@@ -98,6 +102,7 @@ export interface Squad extends DomainEntity {
   status: SquadStatus;
 }
 
+/** User membership within a squad. */
 export interface SquadMembership extends DomainEntity {
   squadId: string;
   leagueId: string;
@@ -106,6 +111,7 @@ export interface SquadMembership extends DomainEntity {
   joinedAt: Date;
 }
 
+/** Direct email or link-based invitation into a league. */
 export interface LeagueInvitation extends DomainEntity {
   leagueId: string;
   email?: string;
@@ -120,6 +126,7 @@ export interface LeagueInvitation extends DomainEntity {
   acceptedBy?: string;
 }
 
+/** Resolved league settings object after defaults have been applied. */
 export interface LeagueSettings {
   isActive: boolean;
   invitePolicy: InvitePolicy;
@@ -137,12 +144,14 @@ export interface LeagueSettings {
 
 // --- Sport & Participant ---
 
+/** Configured sport definition known to the platform. */
 export interface SportConfig extends DomainEntity {
   name: Sport;
   participantType: ParticipantType;
   statSchema: Record<string, unknown>;
 }
 
+/** Season metadata for a given sport. */
 export interface Season extends DomainEntity {
   sportId: string;
   name: string;
@@ -151,6 +160,7 @@ export interface Season extends DomainEntity {
   endDate: string;
 }
 
+/** Normalized participant record imported from one or more data providers. */
 export interface Participant extends DomainEntity {
   sportId: string;
   name: string;
@@ -172,6 +182,7 @@ export interface Participant extends DomainEntity {
   externalIds: Record<string, string>;
 }
 
+/** Injury or availability status captured for a participant. */
 export interface InjuryStatus {
   status: InjuryStatusCode;
   detail?: string;
@@ -180,6 +191,7 @@ export interface InjuryStatus {
   source?: string;
 }
 
+/** Season-long derived stats and rankings for a participant. */
 export interface ParticipantSeasonRecord extends DomainEntity {
   participantId: string;
   sport: Sport;
@@ -200,6 +212,7 @@ export interface ParticipantSeasonRecord extends DomainEntity {
   lastUpdated: Date;
 }
 
+/** Ranking snapshot for a participant during a given season. */
 export interface SeasonRanking {
   rankingType: string;
   rank: number;
@@ -207,6 +220,7 @@ export interface SeasonRanking {
   asOfDate: Date;
 }
 
+/** Mapping between a provider participant and an internal participant. */
 export interface ParticipantProviderMapping extends DomainEntity {
   participantId: string;
   providerId: string;
@@ -217,6 +231,7 @@ export interface ParticipantProviderMapping extends DomainEntity {
 
 // --- Contest ---
 
+/** Core contest record representing a pool or competition within a league. */
 export interface Contest extends DomainEntity {
   leagueId: string;
   sportEventId?: string;
@@ -235,6 +250,7 @@ export interface Contest extends DomainEntity {
   scoringStopsOnElimination: boolean;
 }
 
+/** Tier definition used for tiered contest-selection modes. */
 export interface TierDefinition {
   tierId: string;
   tierName: string;
@@ -262,6 +278,7 @@ export interface PricingConfig {
   manualOverrides: PriceOverride[];
 }
 
+/** Manual pricing override applied to a participant. */
 export interface PriceOverride {
   participantId: string;
   overridePrice: number;
@@ -272,6 +289,7 @@ export interface PriceOverride {
 
 export type TierAssignmentMode = 'AUTO_RANKING' | 'AUTO_PRICE' | 'AUTO_ODDS' | 'AUTO_SEED' | 'MANUAL';
 
+/** Tier assignment configuration for contests that use tier-based selection. */
 export interface TierConfig {
   contestId: string;
   sport: Sport;
@@ -320,6 +338,7 @@ export interface DraftSession extends DomainEntity {
   currentTurnStartedAt?: Date;
 }
 
+/** Historical record of a draft pick. */
 export interface DraftPickHistory extends DomainEntity {
   draftSessionId: string;
   rosterPickId: string;
@@ -372,12 +391,14 @@ export interface RosterHistoryEntry {
   draftPick?: number;
 }
 
+/** Tiered contest selections captured for history playback. */
 export interface TierSelection {
   tierId: string;
   tierName: string;
   participantIds: string[];
 }
 
+/** Prize or payout record associated with a historical contest result. */
 export interface ContestHistoryPayout {
   id: string;
   contestId: string;
@@ -395,6 +416,7 @@ export interface ContestHistoryPayout {
   createdAt: Date;
 }
 
+/** Full historical summary of a completed contest. */
 export interface ContestHistorySummary {
   contestId: string;
   contestName: string;
@@ -409,6 +431,7 @@ export interface ContestHistorySummary {
   highlights: ContestHighlights;
 }
 
+/** Headline contest-history highlight metrics. */
 export interface ContestHighlights {
   highestScore?: { entryId: string; entryName: string; score: number };
   lowestScore?: { entryId: string; entryName: string; score: number };
@@ -425,12 +448,14 @@ export interface PayoutConfig {
   intermediatePrizes: IntermediatePrize[];
 }
 
+/** Single payout slot for final standings. */
 export interface PayoutSlot {
   rank: number;
   percentage: number;
   fixedAmount?: number;
 }
 
+/** Intermediate prize configured outside the final standings table. */
 export interface IntermediatePrize {
   name: string;
   description?: string;
@@ -447,6 +472,7 @@ export type AdminPermission =
   | 'platform.health' | 'platform.migrations'
   | 'audit.view';
 
+/** Audit log entry written for an administrative action. */
 export interface AdminAuditEntry {
   id: string;
   actorUserId: string;
@@ -463,6 +489,7 @@ export interface AdminAuditEntry {
   createdAt: Date;
 }
 
+/** Runtime record for a platform migration initiated from admin tooling. */
 export interface MigrationRun {
   id: string;
   migrationId: string;
@@ -510,6 +537,7 @@ export interface CommissionerDashboard {
   upcomingEvents: UpcomingEvent[];
 }
 
+/** Member activity event surfaced in commissioner dashboards. */
 export interface MemberActivityEvent {
   userId: string;
   displayName: string;
@@ -517,6 +545,7 @@ export interface MemberActivityEvent {
   timestamp: Date;
 }
 
+/** Upcoming scheduled item surfaced in commissioner dashboards. */
 export interface UpcomingEvent {
   contestId?: string;
   title: string;

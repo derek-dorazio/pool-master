@@ -30,6 +30,8 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Squads'],
       summary: 'List squads in a league',
+      description:
+        'Returns the squads associated with the current league for squad management and contest-entry flows.',
       operationId: 'listLeagueSquads',
       response: {
         200: zodToJsonSchema(SquadListResponseSchema),
@@ -45,6 +47,8 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Squads'],
       summary: 'Create a squad in a league',
+      description:
+        'Creates a squad in the target league for commissioner or member-managed squad participation.',
       operationId: 'createLeagueSquad',
       body: zodToJsonSchema(CreateSquadRequestSchema),
       response: {
@@ -61,6 +65,8 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Squads'],
       summary: 'Get squad details',
+      description:
+        'Returns the detailed squad payload for the requested squad identifier.',
       operationId: 'getLeagueSquad',
       response: {
         200: zodToJsonSchema(SquadResponseSchema),
@@ -76,6 +82,8 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Squads'],
       summary: 'Update squad details',
+      description:
+        'Updates mutable squad fields such as naming and presentation detail.',
       operationId: 'updateLeagueSquad',
       body: zodToJsonSchema(UpdateSquadRequestSchema),
       response: {
@@ -92,6 +100,8 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Squads'],
       summary: 'Add or reactivate a squad co-manager',
+      description:
+        'Adds a co-manager to the squad or reactivates an existing inactive co-manager membership.',
       operationId: 'addSquadCoManager',
       body: zodToJsonSchema(AddSquadMemberRequestSchema),
       response: {
@@ -108,6 +118,8 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Squads'],
       summary: 'Remove a squad co-manager',
+      description:
+        'Removes the co-manager relationship between the target user and squad.',
       operationId: 'removeSquadCoManager',
       response: {
         200: zodToJsonSchema(SquadMembershipResponseSchema),

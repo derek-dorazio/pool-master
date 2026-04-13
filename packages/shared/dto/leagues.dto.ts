@@ -19,11 +19,11 @@ export const CreateLeagueRequestSchema = z.object({
 export type CreateLeagueRequest = z.infer<typeof CreateLeagueRequestSchema>;
 
 export const UpdateLeagueRequestSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).optional(),
-  visibility: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
-  maxMembers: z.number().int().min(2).max(1000).optional(),
-});
+  name: z.string().min(1).max(100).optional().describe('Updated league display name.'),
+  description: z.string().max(500).optional().describe('Updated league description.'),
+  visibility: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional().describe('Updated league visibility mode.'),
+  maxMembers: z.number().int().min(2).max(1000).optional().describe('Updated membership cap.'),
+}).describe('Commissioner patch payload for editable league metadata.');
 export type UpdateLeagueRequest = z.infer<typeof UpdateLeagueRequestSchema>;
 
 export const UpdateLeagueSettingsRequestSchema = z.object({
@@ -79,20 +79,20 @@ export const AcceptInvitationRequestSchema = z.object({
 export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationRequestSchema>;
 
 export const CopySeasonRequestSchema = z.object({
-  sourceContestIds: z.array(z.string()).min(1),
-});
+  sourceContestIds: z.array(z.string()).min(1).describe('Contests from the source season that should be copied forward.'),
+}).describe('Commissioner request payload for copying a prior season into a new one.');
 export type CopySeasonRequest = z.infer<typeof CopySeasonRequestSchema>;
 
 export const CsvImportRowSchema = z.object({
-  email: z.string(),
-  displayName: z.string().optional(),
-  role: z.string().optional(),
-});
+  email: z.string().describe('Email address for the imported member row.'),
+  displayName: z.string().optional().describe('Optional display name supplied in the import row.'),
+  role: z.string().optional().describe('Optional requested league role for the imported member.'),
+}).describe('Single CSV-style member import row.');
 export type CsvImportRow = z.infer<typeof CsvImportRowSchema>;
 
 export const ImportLeagueMembersRequestSchema = z.object({
-  rows: z.array(CsvImportRowSchema).min(1).max(500),
-});
+  rows: z.array(CsvImportRowSchema).min(1).max(500).describe('Rows to import as league members.'),
+}).describe('Commissioner request payload for importing league members.');
 export type ImportLeagueMembersRequest = z.infer<typeof ImportLeagueMembersRequestSchema>;
 
 // --- Response Sub-schemas ---
@@ -128,16 +128,16 @@ export const LeagueMemberDtoSchema = z.object({
 export type LeagueMemberDto = z.infer<typeof LeagueMemberDtoSchema>;
 
 export const LeagueMembershipDtoSchema = z.object({
-  id: z.string(),
-  leagueId: z.string(),
-  userId: z.string(),
-  role: z.string(),
-  status: z.string(),
-  permissions: z.array(z.string()),
-  joinedAt: DateTimeSchema,
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-});
+  id: z.string().describe('Membership record identifier.'),
+  leagueId: z.string().describe('League that owns the membership.'),
+  userId: z.string().describe('User account attached to the membership.'),
+  role: z.string().describe('Current league role for the user.'),
+  status: z.string().describe('Membership lifecycle state.'),
+  permissions: z.array(z.string()).describe('Explicit commissioner permission overrides granted to the membership.'),
+  joinedAt: DateTimeSchema.describe('When the user joined the league.'),
+  createdAt: DateTimeSchema.describe('When the membership record was created.'),
+  updatedAt: DateTimeSchema.describe('When the membership record was last updated.'),
+}).describe('Detailed league membership record.');
 
 export const LeagueInvitationDtoSchema = z.object({
   id: z.string().describe('Invitation record identifier.'),
@@ -180,25 +180,25 @@ export const LeagueActionItemDtoSchema = z.object({
   description: z.string(),
   actionUrl: z.string().nullable().optional(),
   resolved: z.boolean(),
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-});
+  createdAt: DateTimeSchema.describe('When the action item was created.'),
+  updatedAt: DateTimeSchema.describe('When the action item was last updated.'),
+}).describe('Commissioner dashboard action item.');
 export type LeagueActionItemDto = z.infer<typeof LeagueActionItemDtoSchema>;
 
 export const MemberActivityEventDtoSchema = z.object({
-  userId: z.string(),
-  displayName: z.string(),
-  action: z.string(),
-  timestamp: DateTimeSchema,
-});
+  userId: z.string().describe('User involved in the activity event.'),
+  displayName: z.string().describe('Display name shown for the member activity event.'),
+  action: z.string().describe('Normalized member activity action label.'),
+  timestamp: DateTimeSchema.describe('When the member activity occurred.'),
+}).describe('Recent member activity row used on commissioner dashboards.');
 export type MemberActivityEventDto = z.infer<typeof MemberActivityEventDtoSchema>;
 
 export const UpcomingEventDtoSchema = z.object({
   contestId: z.string().optional(),
   title: z.string(),
   date: DateTimeSchema,
-  eventType: z.enum(['DRAFT_START', 'CONTEST_START', 'CONTEST_END', 'LOCK_TIME']),
-});
+  eventType: z.enum(['DRAFT_START', 'CONTEST_START', 'CONTEST_END', 'LOCK_TIME']).describe('Upcoming event category.'),
+}).describe('Upcoming league event summary.');
 export type UpcomingEventDto = z.infer<typeof UpcomingEventDtoSchema>;
 
 export const LeagueAuditEntryDtoSchema = JsonObjectSchema;
@@ -207,53 +207,53 @@ export const LeagueAuditEntryDtoSchema = JsonObjectSchema;
 
 export const LeagueResponseSchema = z.object({
   league: LeagueDetailDtoSchema,
-});
+}).describe('Single-league detail response.');
 export type LeagueResponse = z.infer<typeof LeagueResponseSchema>;
 
 export const LeagueListResponseSchema = z.object({
   leagues: z.array(LeagueSummaryDtoSchema),
-});
+}).describe('League-list response.');
 export type LeagueListResponse = z.infer<typeof LeagueListResponseSchema>;
 
 export const LeagueMembersResponseSchema = z.object({
   members: z.array(LeagueMemberDtoSchema),
-});
+}).describe('League-members response.');
 export type LeagueMembersResponse = z.infer<typeof LeagueMembersResponseSchema>;
 
 export const LeagueMembershipResponseSchema = z.object({
   membership: LeagueMembershipDtoSchema,
-});
+}).describe('Single league-membership response.');
 
 export const SendLeagueInvitationsResponseSchema = z.object({
-  sent: z.array(LeagueInvitationDtoSchema),
-  skippedMembers: z.array(z.string()),
-  skippedDuplicates: z.array(z.string()),
-});
+  sent: z.array(LeagueInvitationDtoSchema).describe('Invitation records successfully created and sent.'),
+  skippedMembers: z.array(z.string()).describe('Emails skipped because they already belong to the league.'),
+  skippedDuplicates: z.array(z.string()).describe('Emails skipped because they were duplicated in the request or invite set.'),
+}).describe('League invitation-send response.');
 export type SendLeagueInvitationsResponse = z.infer<typeof SendLeagueInvitationsResponseSchema>;
 
 export const GenerateInviteLinkResponseSchema = z.object({
   invitation: LeagueInvitationDtoSchema,
-});
+}).describe('Generated invite-link response.');
 export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkResponseSchema>;
 
 export const LeagueAuditEntriesResponseSchema = z.object({
   entries: z.array(LeagueAuditEntryDtoSchema),
-});
+}).describe('League audit-log response.');
 
 export const LeagueDashboardResponseSchema = z.object({
-  league: JsonObjectSchema,
-  actionItems: z.array(LeagueActionItemDtoSchema),
-  contests: z.array(JsonObjectSchema),
-  memberCount: z.number().int(),
-  pendingInvites: z.number().int(),
-  recentMemberActivity: z.array(MemberActivityEventDtoSchema),
-  upcomingEvents: z.array(UpcomingEventDtoSchema),
-});
+  league: JsonObjectSchema.describe('League summary payload driving the dashboard header.'),
+  actionItems: z.array(LeagueActionItemDtoSchema).describe('Outstanding commissioner action items.'),
+  contests: z.array(JsonObjectSchema).describe('Contest summaries included in the dashboard payload.'),
+  memberCount: z.number().int().describe('Current league member count.'),
+  pendingInvites: z.number().int().describe('Current number of pending invitations.'),
+  recentMemberActivity: z.array(MemberActivityEventDtoSchema).describe('Recent member activity for the league.'),
+  upcomingEvents: z.array(UpcomingEventDtoSchema).describe('Upcoming league events that should be surfaced on the dashboard.'),
+}).describe('Commissioner dashboard response.');
 export type LeagueDashboardResponse = z.infer<typeof LeagueDashboardResponseSchema>;
 
 export const ResolveActionItemResponseSchema = z.object({
   actionItem: LeagueActionItemDtoSchema,
-});
+}).describe('Action-item resolution response.');
 export type ResolveActionItemResponse = z.infer<typeof ResolveActionItemResponseSchema>;
 
 export const LeagueBulkOperationResponseSchema = JsonObjectSchema;

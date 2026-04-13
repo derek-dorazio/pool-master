@@ -19,6 +19,8 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
       schema: {
         tags: ['Account'],
         summary: 'Record user consent for a policy type',
+        description:
+          'Records an authenticated user consent decision for a policy/version pair, including age-affirmation context when applicable.',
         operationId: 'recordConsent',
         response: { 201: zodToJsonSchema(ConsentRecordResponseSchema) },
         body: zodToJsonSchema(ConsentRecordRequestSchema),
@@ -46,6 +48,8 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
     schema: {
       tags: ['Account'],
       summary: 'Get consent history for current user',
+      description:
+        'Returns the authenticated user consent history so account and compliance surfaces can show what was agreed and when.',
       operationId: 'getConsentHistory',
       response: { 200: zodToJsonSchema(ConsentHistoryResponseSchema) },
     },

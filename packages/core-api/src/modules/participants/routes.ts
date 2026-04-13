@@ -42,6 +42,8 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Participants'],
       summary: 'Search and list participants',
+      description:
+        'Searches and lists participants so contest configuration, scoring, and ingestion-mapping flows can browse the participant catalog.',
       operationId: 'listParticipants',
       querystring: {
         type: 'object',
@@ -69,6 +71,8 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Participants'],
       summary: 'Get a participant by ID',
+      description:
+        'Returns participant detail for the target participant identifier.',
       operationId: 'getParticipant',
       response: {
         200: zodToJsonSchema(ParticipantResponseSchema),
@@ -82,6 +86,8 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Participants'],
       summary: 'Create a new participant',
+      description:
+        'Creates a participant record in the shared participant catalog.',
       operationId: 'createParticipant',
       body: {
         type: 'object',
@@ -112,6 +118,8 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Participants'],
       summary: 'Update a participant',
+      description:
+        'Updates mutable participant fields such as display metadata and identifiers.',
       operationId: 'updateParticipant',
       response: {
         200: zodToJsonSchema(ParticipantResponseSchema),
@@ -144,6 +152,8 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Participants'],
       summary: 'Get all season records for a participant',
+      description:
+        'Returns every stored season record for the participant so history and scoring surfaces can inspect longitudinal performance.',
       operationId: 'getParticipantSeasonRecords',
       response: { 200: zodToJsonSchema(ParticipantSeasonRecordListResponseSchema) },
     },
@@ -154,6 +164,8 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Participants'],
       summary: 'Get a specific season record for a participant',
+      description:
+        'Returns the participant season record for a specific season value.',
       operationId: 'getParticipantSeasonRecord',
       response: {
         200: zodToJsonSchema(ParticipantSeasonRecordResponseSchema),

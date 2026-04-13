@@ -26,6 +26,8 @@ export async function notificationsModule(
       schema: {
         tags: ['Notifications'],
         summary: 'List in-app notifications for current user',
+        description:
+          'Returns the authenticated user notification feed for in-app inbox and unread-state surfaces.',
         operationId: 'listNotifications',
         response: { 200: zodToJsonSchema(NotificationListResponseSchema) },
       },
@@ -50,6 +52,8 @@ export async function notificationsModule(
     schema: {
       tags: ['Notifications'],
       summary: 'Get unread notification count',
+      description:
+        'Returns the unread notification count used by shell badges and lightweight polling surfaces.',
       operationId: 'getUnreadNotificationCount',
       response: { 200: zodToJsonSchema(NotificationUnreadCountResponseSchema) },
     },
@@ -63,6 +67,8 @@ export async function notificationsModule(
     schema: {
       tags: ['Notifications'],
       summary: 'Mark a notification as read',
+      description:
+        'Marks the specified notification as read for the authenticated user.',
       operationId: 'markNotificationRead',
       response: { 200: zodToJsonSchema(NotificationMarkedReadResponseSchema) },
     },
@@ -76,6 +82,8 @@ export async function notificationsModule(
     schema: {
       tags: ['Notifications'],
       summary: 'Mark all notifications as read',
+      description:
+        'Marks every current notification as read for the authenticated user.',
       operationId: 'markAllNotificationsRead',
       response: { 200: zodToJsonSchema(NotificationMarkAllReadResponseSchema) },
     },
@@ -89,6 +97,8 @@ export async function notificationsModule(
     schema: {
       tags: ['Notifications'],
       summary: 'Dismiss a notification',
+      description:
+        'Dismisses a notification so it no longer appears in the active inbox feed.',
       operationId: 'dismissNotification',
       response: { 200: zodToJsonSchema(NotificationMarkedReadResponseSchema) },
     },

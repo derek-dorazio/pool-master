@@ -2,6 +2,7 @@ import type { ContestStatus, SelectionType, ScoringEngine } from './enums';
 import type { AggregationDefinitionId, ParticipantScoringDefinitionId } from './contest-scoring';
 import type { DomainEntity } from './types';
 
+/** Tier definition persisted inside a contest configuration for tiered contests. */
 export interface ContestConfigurationTier {
   tierId: string;
   tierName: string;
@@ -10,6 +11,7 @@ export interface ContestConfigurationTier {
   participantIds: string[];
 }
 
+/** Join record linking a provider event to a normalized participant. */
 export interface SportEventParticipant extends DomainEntity {
   sportEventId: string;
   participantId: string;
@@ -17,6 +19,7 @@ export interface SportEventParticipant extends DomainEntity {
   metadata: Record<string, unknown>;
 }
 
+/** Raw provider payload captured for a sport-event participant synchronization. */
 export interface SportEventParticipantSourceData extends DomainEntity {
   sportEventParticipantId: string;
   providerId: string;
@@ -26,6 +29,7 @@ export interface SportEventParticipantSourceData extends DomainEntity {
   receivedAt: Date;
 }
 
+/** Derived valuation metadata used by pricing and ordering logic. */
 export interface SportEventParticipantValuation extends DomainEntity {
   sportEventParticipantId: string;
   price?: number;
@@ -34,6 +38,7 @@ export interface SportEventParticipantValuation extends DomainEntity {
   valuationSource: string;
 }
 
+/** Commissioner-managed contest configuration persisted alongside the contest. */
 export interface ContestConfiguration extends DomainEntity {
   contestId: string;
   selectionType: SelectionType;
@@ -55,6 +60,7 @@ export interface ContestConfiguration extends DomainEntity {
   totalPrizePoolAmount?: number;
 }
 
+/** Participant scoring rule attached to a managed contest configuration. */
 export interface ParticipantContestScoringRule extends DomainEntity {
   contestConfigurationId: string;
   participantScoringDefinitionId: ParticipantScoringDefinitionId;
@@ -63,6 +69,7 @@ export interface ParticipantContestScoringRule extends DomainEntity {
   active: boolean;
 }
 
+/** Entry aggregation rule that converts participant points into entry points. */
 export interface ContestEntryAggregationRule extends DomainEntity {
   contestConfigurationId: string;
   aggregationDefinitionId: AggregationDefinitionId;
@@ -70,6 +77,7 @@ export interface ContestEntryAggregationRule extends DomainEntity {
   active: boolean;
 }
 
+/** Prize definition attached to a contest configuration. */
 export interface ContestPrizeDefinition extends DomainEntity {
   contestConfigurationId: string;
   prizeDefinitionId: string;
@@ -82,12 +90,14 @@ export interface ContestPrizeDefinition extends DomainEntity {
   active: boolean;
 }
 
+/** Aggregate participant score record for a contest entry. */
 export interface ContestEntryParticipantScore extends DomainEntity {
   entryId: string;
   rosterPickId: string;
   pointsEarned: number;
 }
 
+/** Fine-grained scoring-event record that explains part of a participant score. */
 export interface ContestEntryParticipantScoreEvent extends DomainEntity {
   contestEntryParticipantScoreId: string;
   participantContestScoringRuleId: string;
@@ -95,6 +105,7 @@ export interface ContestEntryParticipantScoreEvent extends DomainEntity {
   detailsJson: Record<string, unknown>;
 }
 
+/** Prize award issued to a contest entry after calculation or settlement. */
 export interface ContestEntryPrizeAward extends DomainEntity {
   entryId: string;
   contestPrizeDefinitionId: string;
@@ -105,6 +116,7 @@ export interface ContestEntryPrizeAward extends DomainEntity {
   awardedAt: Date;
 }
 
+/** Condensed contest summary used by contest-management flows. */
 export interface ContestCoreSummary extends DomainEntity {
   leagueId: string;
   sportEventId: string;

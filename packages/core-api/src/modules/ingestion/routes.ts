@@ -28,6 +28,8 @@ export async function ingestionModule(
     schema: {
       tags: ['Admin'],
       summary: 'List data ingestion providers',
+      description:
+        'Returns the configured ingestion providers and their current metadata for admin and diagnostics surfaces.',
       operationId: 'listIngestionProviders',
       response: {
         200: zodToJsonSchema(IngestionProvidersResponseSchema),
@@ -48,6 +50,8 @@ export async function ingestionModule(
     schema: {
       tags: ['Admin'],
       summary: 'Trigger data sync for a sport',
+      description:
+        'Triggers a provider sync for the requested sport so ingestion jobs can be run manually from operational tools.',
       operationId: 'syncSportData',
       response: {
         200: zodToJsonSchema(IngestionJobResponseSchema),
@@ -66,6 +70,8 @@ export async function ingestionModule(
       schema: {
         tags: ['Admin'],
         summary: 'Ingest scores for a sport event',
+        description:
+          'Triggers score ingestion for a specific sport event when manual or ad hoc score refresh is required.',
         operationId: 'ingestEventScores',
         response: {
           200: zodToJsonSchema(IngestionJobResponseSchema),
@@ -88,6 +94,8 @@ export async function ingestionModule(
       schema: {
         tags: ['Admin'],
         summary: 'Ingest results for a sport event',
+        description:
+          'Triggers result ingestion for a specific sport event when final or corrected event outcomes need to be pulled in.',
         operationId: 'ingestEventResults',
         response: {
           200: zodToJsonSchema(IngestionJobResponseSchema),
@@ -108,6 +116,8 @@ export async function ingestionModule(
     schema: {
       tags: ['Admin'],
       summary: 'Ingest odds for a sport',
+      description:
+        'Triggers odds ingestion for the requested sport so odds-driven contest flows can refresh market data.',
       operationId: 'ingestSportOdds',
       response: {
         200: zodToJsonSchema(IngestSportOddsResponseSchema),

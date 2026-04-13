@@ -316,6 +316,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Resolve a commissioner action item',
+      description:
+        'Marks a commissioner action item as resolved and returns the updated action-item record for the league dashboard.',
       operationId: 'resolveActionItem',
       response: {
         200: zodToJsonSchema(ResolveActionItemResponseSchema),
@@ -332,6 +334,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Get audit log for a league',
+      description:
+        'Returns the commissioner-visible audit log for league-level actions.',
       operationId: 'getLeagueAuditLog',
       response: {
         200: zodToJsonSchema(LeagueAuditEntriesResponseSchema),
@@ -346,6 +350,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Get audit log for a specific member',
+      description:
+        'Returns member-scoped audit information inside the league for commissioner or permitted member review surfaces.',
       operationId: 'getMemberAuditLog',
       response: {
         200: zodToJsonSchema(LeagueAuditEntriesResponseSchema),
@@ -363,6 +369,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Copy contests from a previous season',
+      description:
+        'Copies prior contest definitions into the current league so commissioners can bootstrap a new season from historical contests.',
       operationId: 'copySeason',
       body: zodToJsonSchema(CopySeasonRequestSchema),
       response: {
@@ -378,6 +386,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Bulk-import members via CSV rows',
+      description:
+        'Imports member rows for the league and creates invitations or memberships according to the validated bulk payload.',
       operationId: 'importMembers',
       body: zodToJsonSchema(ImportLeagueMembersRequestSchema),
       response: {

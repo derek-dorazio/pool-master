@@ -38,6 +38,8 @@ export async function contestManagementModule(
     schema: {
       tags: ['Contest Management'],
       summary: 'Create a commissioner-managed contest with configuration',
+      description:
+        'Creates a contest together with its commissioner-managed configuration so league administration surfaces can launch a fully configured contest in one flow.',
       operationId: 'createManagedContest',
       body: zodToJsonSchema(CreateContestManagementRequestSchema),
       response: {
@@ -59,6 +61,8 @@ export async function contestManagementModule(
     schema: {
       tags: ['Contest Management'],
       summary: 'Get commissioner contest-management detail',
+      description:
+        'Returns the commissioner-focused management detail for a contest, including the configuration needed by administration editors.',
       operationId: 'getManagedContest',
       response: {
         200: zodToJsonSchema(ContestManagementResponseSchema),
@@ -79,6 +83,8 @@ export async function contestManagementModule(
     schema: {
       tags: ['Contest Management'],
       summary: 'Update commissioner contest configuration',
+      description:
+        'Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload.',
       operationId: 'updateManagedContestConfiguration',
       body: zodToJsonSchema(ContestConfigurationRequestSchema),
       response: {

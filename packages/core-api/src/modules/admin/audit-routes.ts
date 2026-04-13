@@ -34,6 +34,8 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Admin'] as const,
       summary: 'Export audit log entries',
+      description:
+        'Exports audit log entries using the provided filters for administrative review or offline analysis.',
       operationId: 'adminExportAuditLog',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -46,6 +48,8 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Admin'] as const,
       summary: 'List audit log entries',
+      description:
+        'Returns the administrative audit log feed with filtering, pagination, and search support.',
       operationId: 'adminListAuditLog',
       response: {
         200: zodToJsonSchema(AuditListResponseSchema),
@@ -58,6 +62,8 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Admin'] as const,
       summary: 'Get audit log entry detail',
+      description:
+        'Returns the detail view for a single audit log entry.',
       operationId: 'adminGetAuditEntry',
       response: {
         200: zodToJsonSchema(AuditEntryResponseSchema),

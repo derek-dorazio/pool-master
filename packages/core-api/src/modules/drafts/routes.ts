@@ -688,6 +688,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Get current draft state for a contest',
+      description:
+        'Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability.',
       operationId: 'getDraftState',
       params: {
         type: 'object',
@@ -714,6 +716,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Start a new draft session',
+      description:
+        'Starts a draft session for the contest and returns the initial draft state used by the draft-room client.',
       operationId: 'startDraft',
       params: {
         type: 'object',
@@ -793,6 +797,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Submit a draft pick',
+      description:
+        'Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.',
       operationId: 'submitContestSelection',
       params: {
         type: 'object',
@@ -1049,6 +1055,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Pause an active draft',
+      description:
+        'Pauses an active draft session so the clock and turn progression stop until resumed.',
       operationId: 'pauseDraft',
       params: {
         type: 'object',
@@ -1104,6 +1112,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Resume a paused draft',
+      description:
+        'Resumes a paused draft session and returns the refreshed draft state.',
       operationId: 'resumeDraft',
       params: {
         type: 'object',
@@ -1159,6 +1169,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Shift the current turn start time',
+      description:
+        'Extends or shifts the current draft turn timing so commissioner or admin controls can grant more time.',
       operationId: 'extendCurrentTurn',
       params: {
         type: 'object',
@@ -1214,6 +1226,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Undo the most recent snake draft pick',
+      description:
+        'Removes the most recent snake-draft pick and rewinds the draft state when a commissioner override is required.',
       operationId: 'undoSnakeDraftSelection',
       params: {
         type: 'object',
@@ -1280,6 +1294,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Drafts'],
       summary: 'Skip the current snake draft pick',
+      description:
+        'Skips the current snake-draft pick and advances the draft when a drafter turn should be bypassed.',
       operationId: 'skipSnakeDraftTurn',
       params: {
         type: 'object',

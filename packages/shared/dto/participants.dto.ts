@@ -7,73 +7,73 @@ import { DateTimeSchema, JsonObjectSchema, StringRecordSchema } from './common.d
 // --- Response Sub-schemas ---
 
 export const ParticipantDtoSchema = z.object({
-  id: z.string(),
-  sportId: z.string(),
-  name: z.string(),
-  participantType: z.string(),
-  externalId: z.string().optional(),
-  metadata: JsonObjectSchema,
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  shortName: z.string().optional(),
-  nationality: z.string().optional(),
-  position: z.string().nullable().optional(),
-  teamAffiliation: z.string().nullable().optional(),
-  status: z.string(),
+  id: z.string().describe('Participant identifier.'),
+  sportId: z.string().describe('Owning sport identifier.'),
+  name: z.string().describe('Primary participant display name.'),
+  participantType: z.string().describe('Whether the participant is an individual or team.'),
+  externalId: z.string().optional().describe('Primary provider identifier when one exists.'),
+  metadata: JsonObjectSchema.describe('Provider-normalized metadata retained for the participant.'),
+  firstName: z.string().optional().describe('First name when the participant is a person.'),
+  lastName: z.string().optional().describe('Last name when the participant is a person.'),
+  shortName: z.string().optional().describe('Short-form display name for compact UI surfaces.'),
+  nationality: z.string().optional().describe('Participant nationality or country code when known.'),
+  position: z.string().nullable().optional().describe('Position, role, or event classification when known.'),
+  teamAffiliation: z.string().nullable().optional().describe('Current team affiliation when the participant is not itself a team.'),
+  status: z.string().describe('Current participant lifecycle or availability status.'),
   injuryStatus: z.object({
-    status: z.string(),
-    detail: z.string().optional(),
-    expectedReturn: DateTimeSchema.optional(),
-    updatedAt: DateTimeSchema.optional(),
-    source: z.string().optional(),
-  }),
-  photoUrl: z.string().nullable().optional(),
-  photoLastUpdated: DateTimeSchema.optional(),
-  externalIds: StringRecordSchema,
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-});
+    status: z.string().describe('Current injury or availability status code.'),
+    detail: z.string().optional().describe('Optional injury-status detail or summary.'),
+    expectedReturn: DateTimeSchema.optional().describe('Expected return timestamp when known.'),
+    updatedAt: DateTimeSchema.optional().describe('When the injury-status record was last updated.'),
+    source: z.string().optional().describe('Source that provided the injury-status update.'),
+  }).describe('Normalized participant injury or availability state.'),
+  photoUrl: z.string().nullable().optional().describe('Optional participant image URL.'),
+  photoLastUpdated: DateTimeSchema.optional().describe('When the participant image metadata was last refreshed.'),
+  externalIds: StringRecordSchema.describe('Map of provider identifiers keyed by provider code.'),
+  createdAt: DateTimeSchema.describe('When the participant record was created.'),
+  updatedAt: DateTimeSchema.describe('When the participant record was last updated.'),
+}).describe('Participant summary returned by participant-search and detail APIs.');
 export type ParticipantDto = z.infer<typeof ParticipantDtoSchema>;
 
 export const ParticipantSeasonRankingDtoSchema = z.object({
-  rankingType: z.string(),
-  rank: z.number(),
-  points: z.number().optional(),
-  asOfDate: DateTimeSchema,
-});
+  rankingType: z.string().describe('Ranking system name, such as world ranking or tour points.'),
+  rank: z.number().describe('Participant rank under the specified ranking system.'),
+  points: z.number().optional().describe('Optional ranking points associated with the ranking.'),
+  asOfDate: DateTimeSchema.describe('Date when the ranking snapshot was valid.'),
+}).describe('Single ranking snapshot for a participant season record.');
 
 export const ParticipantSeasonRecordDtoSchema = z.object({
   id: z.string(),
   participantId: z.string(),
   sport: z.string(),
   season: z.string(),
-  rankings: z.array(ParticipantSeasonRankingDtoSchema),
-  budgetPrice: z.number(),
-  priceTier: z.string().optional(),
-  priceUpdatedAt: DateTimeSchema.optional(),
-  eventsEntered: z.number(),
-  eventsCompleted: z.number(),
-  wins: z.number(),
-  top5Finishes: z.number(),
-  top10Finishes: z.number(),
-  top25Finishes: z.number(),
-  seasonStats: z.record(z.number()),
-  formRating: z.number(),
-  formTrend: z.string(),
-  lastUpdated: DateTimeSchema,
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-});
+  rankings: z.array(ParticipantSeasonRankingDtoSchema).describe('Ranking snapshots associated with the season record.'),
+  budgetPrice: z.number().describe('Current budget-draft price for the participant.'),
+  priceTier: z.string().optional().describe('Optional price tier label derived for the participant.'),
+  priceUpdatedAt: DateTimeSchema.optional().describe('When the participant price was last refreshed.'),
+  eventsEntered: z.number().describe('How many events the participant entered in the season.'),
+  eventsCompleted: z.number().describe('How many events the participant completed in the season.'),
+  wins: z.number().describe('Season win count.'),
+  top5Finishes: z.number().describe('Top-five finish count for the season.'),
+  top10Finishes: z.number().describe('Top-ten finish count for the season.'),
+  top25Finishes: z.number().describe('Top-twenty-five finish count for the season.'),
+  seasonStats: z.record(z.number()).describe('Provider-normalized season statistics keyed by stat name.'),
+  formRating: z.number().describe('Derived form score used for participant valuation and sorting.'),
+  formTrend: z.string().describe('Trend direction for the participant recent form.'),
+  lastUpdated: DateTimeSchema.describe('When the season record source data was last refreshed.'),
+  createdAt: DateTimeSchema.describe('When the season record was created.'),
+  updatedAt: DateTimeSchema.describe('When the season record was last updated.'),
+}).describe('Participant season record used by draft-search and participant detail APIs.');
 
 export const DraftSearchFacetBucketDtoSchema = z.object({
-  value: z.string(),
-  count: z.number(),
-});
+  value: z.string().describe('Facet value returned by the draft search.'),
+  count: z.number().describe('How many participants matched the facet value.'),
+}).describe('Facet bucket returned by participant draft-search endpoints.');
 
 export const DraftSearchItemDtoSchema = z.object({
   participantId: z.string(),
   displayName: z.string(),
-  photoUrl: z.string(),
+  photoUrl: z.string().describe('Participant image URL.'),
   sport: z.string(),
   position: z.string().optional(),
   teamAffiliation: z.string().optional(),
@@ -88,39 +88,39 @@ export const DraftSearchItemDtoSchema = z.object({
     updatedAt: DateTimeSchema.optional(),
     source: z.string().optional(),
   }),
-  isAvailable: z.boolean(),
-  unavailableReason: z.string().optional(),
-  isDrafted: z.boolean(),
-});
+  isAvailable: z.boolean().describe('Whether the participant can currently be selected.'),
+  unavailableReason: z.string().optional().describe('Reason the participant is unavailable, when applicable.'),
+  isDrafted: z.boolean().describe('Whether the participant has already been drafted in the contest.'),
+}).describe('Participant row used in draft-search and draft-room selection lists.');
 
 export const DraftSearchResponseSchema = z.object({
-  participants: z.array(DraftSearchItemDtoSchema),
-  total: z.number(),
+  participants: z.array(DraftSearchItemDtoSchema).describe('Draft-search result rows.'),
+  total: z.number().describe('Total participants matching the search filters.'),
   facets: z.object({
     positions: z.array(DraftSearchFacetBucketDtoSchema),
     teams: z.array(DraftSearchFacetBucketDtoSchema),
     nationalities: z.array(DraftSearchFacetBucketDtoSchema),
     tiers: z.array(DraftSearchFacetBucketDtoSchema),
     injuryStatuses: z.array(DraftSearchFacetBucketDtoSchema),
-  }),
-});
+  }).describe('Facet counts used to refine draft-search results.'),
+}).describe('Draft-search response payload.');
 
 // --- Responses ---
 
 export const ParticipantListResponseSchema = z.object({
-  participants: z.array(ParticipantDtoSchema),
-  total: z.number(),
-});
+  participants: z.array(ParticipantDtoSchema).describe('Participant page or slice returned by the API.'),
+  total: z.number().describe('Total participants matching the current filters.'),
+}).describe('Participant-list response.');
 export type ParticipantListResponse = z.infer<typeof ParticipantListResponseSchema>;
 
 export const ParticipantResponseSchema = z.object({
   participant: ParticipantDtoSchema,
-});
+}).describe('Single-participant detail response.');
 
 export const ParticipantSeasonRecordResponseSchema = z.object({
   seasonRecord: ParticipantSeasonRecordDtoSchema,
-});
+}).describe('Single participant season-record response.');
 
 export const ParticipantSeasonRecordListResponseSchema = z.object({
   seasonRecords: z.array(ParticipantSeasonRecordDtoSchema),
-});
+}).describe('Participant season-record list response.');

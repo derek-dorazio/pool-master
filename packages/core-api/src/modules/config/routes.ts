@@ -32,6 +32,8 @@ export async function configModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Config'],
       summary: 'Get recommended poll intervals for clients',
+      description:
+        'Returns runtime poll-interval guidance for client surfaces such as standings, drafts, notifications, and other refresh-driven views.',
       operationId: 'getPollIntervals',
       response: { 200: zodToJsonSchema(PlatformConfigResponseSchema) },
     },

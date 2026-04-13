@@ -25,6 +25,8 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['History'],
         summary: 'Get contest history summary',
+        description:
+          'Returns summary history for a completed or historical contest, including high-level context used by history landing views.',
         operationId: 'getContestHistorySummary',
         response: {
           200: zodToJsonSchema(HistoryObjectSchema),
@@ -52,6 +54,8 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['History'],
         summary: 'Get contest historical standings',
+        description:
+          'Returns historical standings for the contest so users can review prior leaderboard states and completed results.',
         operationId: 'getContestHistoryStandings',
         response: { 200: zodToJsonSchema(HistoryStandingsResponseSchema) },
       },
@@ -68,6 +72,8 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['History'],
         summary: 'Get roster history for an entry',
+        description:
+          'Returns the roster or pick history for a specific entry within a historical contest context.',
         operationId: 'getRosterHistory',
         response: {
           200: zodToJsonSchema(HistoryObjectSchema),
@@ -93,6 +99,8 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['History'],
         summary: 'Get contest payout history',
+        description:
+          'Returns the historical payout results for a completed contest when payout data is available.',
         operationId: 'getContestPayouts',
         response: { 200: zodToJsonSchema(HistoryPayoutsResponseSchema) },
       },
@@ -109,6 +117,8 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['History'],
         summary: 'Get league contest results',
+        description:
+          'Returns completed contest results for the league across its historical contests.',
         operationId: 'getLeagueResults',
         response: { 200: zodToJsonSchema(HistoryResultsResponseSchema) },
       },
@@ -125,6 +135,8 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['History'],
         summary: 'Get member contest results within a league',
+        description:
+          'Returns the target member results across league contests so member-history surfaces can show personal league performance.',
         operationId: 'getMemberResults',
         response: { 200: zodToJsonSchema(HistoryResultsResponseSchema) },
       },

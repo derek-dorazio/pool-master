@@ -80,6 +80,8 @@ export async function scoringRoutes(
     schema: {
       tags: ['Scoring'],
       summary: 'Validate a scoring configuration',
+      description:
+        'Validates a proposed scoring configuration and returns structured feedback before commissioners save it to a contest.',
       operationId: 'validateScoringConfig',
       body: scoringConfigValidationBodySchema,
       response: {
@@ -117,6 +119,8 @@ export async function scoringRoutes(
       schema: {
         tags: ['Scoring'],
         summary: 'Get contest leaderboard',
+        description:
+          'Returns the scoring leaderboard for the contest as computed by the scoring service.',
         operationId: 'getContestLeaderboard',
         response: {
           200: zodToJsonSchema(ScoringLeaderboardResponseSchema),
@@ -134,6 +138,8 @@ export async function scoringRoutes(
       schema: {
         tags: ['Scoring'],
         summary: 'Get entry score breakdown',
+        description:
+          'Returns the score breakdown for a specific entry so users or commissioners can inspect how the total score was calculated.',
         operationId: 'getEntryScore',
         response: {
           200: zodToJsonSchema(EntryScoreDetailResponseSchema),
@@ -151,6 +157,8 @@ export async function scoringRoutes(
       schema: {
         tags: ['Scoring'],
         summary: 'Get participant score history in a contest',
+        description:
+          'Returns participant-level score history for the contest so scoring and audit surfaces can inspect event-by-event contributions.',
         operationId: 'getParticipantScore',
         response: {
           200: zodToJsonSchema(ParticipantScoreHistoryResponseSchema),
@@ -168,6 +176,8 @@ export async function scoringRoutes(
       schema: {
         tags: ['Scoring'],
         summary: 'Trigger manual standings rollup',
+        description:
+          'Triggers a manual standings rollup for the contest when scoring data needs to be recomputed on demand.',
         operationId: 'triggerStandingsRollup',
         response: {
           200: zodToJsonSchema(RollupResultResponseSchema),
@@ -183,6 +193,8 @@ export async function scoringRoutes(
     schema: {
       tags: ['Scoring'],
       summary: 'Get scoring service health',
+      description:
+        'Returns health information for the scoring subsystem and its supporting rollup and processing concerns.',
       operationId: 'getScoringHealth',
       response: {
         200: zodToJsonSchema(ScoringHealthResponseSchema),
