@@ -1,4 +1,5 @@
 import {
+  buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
   getApp,
@@ -12,7 +13,6 @@ import {
   ContestType,
   InvitationStatus,
   LeagueRole,
-  LeagueVisibility,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -34,10 +34,7 @@ describe('History Read Fallback Integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: {
-        name: 'History Fallback League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('History Fallback League'),
     });
     expect(leagueRes.statusCode).toBe(201);
     const leagueId = leagueRes.json().league.id;

@@ -106,12 +106,13 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Create a new league',
       description:
-        'Creates a new league for the authenticated commissioner, generates the stable league code used in bookmarkable routes, and returns the initial league detail payload.',
+        'Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the initial league detail payload.',
       operationId: 'createLeague',
       body: zodToJsonSchema(CreateLeagueRequestSchema),
       response: {
         201: zodToJsonSchema(LeagueResponseSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: league.createLeague,

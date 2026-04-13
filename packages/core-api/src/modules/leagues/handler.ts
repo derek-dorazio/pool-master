@@ -40,10 +40,8 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     request: FastifyRequest<{
       Body: {
         name: string;
+        leagueCode: string;
         description?: string;
-        visibility: string;
-        maxMembers?: number;
-        settings?: Record<string, unknown>;
       };
     }>,
     reply: FastifyReply,
@@ -56,10 +54,8 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     const input: CreateLeagueInput = {
       createdBy: userId,
       name: body.name,
+      leagueCode: body.leagueCode,
       description: body.description,
-      visibility: body.visibility as CreateLeagueInput['visibility'],
-      maxMembers: body.maxMembers,
-      settings: body.settings as CreateLeagueInput['settings'],
     };
     const result = await leagueService.createLeague(input);
     return reply.status(201).send({

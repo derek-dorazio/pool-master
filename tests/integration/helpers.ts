@@ -198,6 +198,22 @@ export function withoutJsonBodyHeaders(headers: Record<string, string>): Record<
 }
 
 /**
+ * Build the canonical create-league payload used by integration tests.
+ * This mirrors the active public create contract rather than older implicit defaults.
+ */
+export function buildCreateLeaguePayload(name: string, description?: string): {
+  name: string;
+  leagueCode: string;
+  description?: string;
+} {
+  return {
+    name,
+    leagueCode: `INT${randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`,
+    ...(description ? { description } : {}),
+  };
+}
+
+/**
  * Clean up test data created during tests.
  * Deletes in reverse dependency order using raw SQL for reliability.
  */

@@ -1,4 +1,5 @@
 import {
+  buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
   getApp,
@@ -8,11 +9,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import {
-  ContestStatus,
-  LeagueVisibility,
-  Sport,
-} from '@poolmaster/shared/domain';
+import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 
 beforeAll(() => setupIntegrationTests());
@@ -37,10 +34,7 @@ describe('Contest management integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: ownerHeaders,
-      payload: {
-        name: 'Contest Management League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Contest Management League'),
     });
 
     expect(leagueRes.statusCode).toBe(201);

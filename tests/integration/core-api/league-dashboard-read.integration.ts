@@ -9,6 +9,7 @@
  *   upcoming events, and action items from the live persistence layer
  */
 import {
+  buildCreateLeaguePayload,
   setupIntegrationTests,
   teardownIntegrationTests,
   getApp,
@@ -19,7 +20,6 @@ import {
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
   ContestType,
-  LeagueVisibility,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -51,11 +51,7 @@ describe('League Dashboard Read Integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: ownerHeaders,
-      payload: {
-        name: 'Dashboard League',
-        visibility: LeagueVisibility.PRIVATE,
-        maxMembers: 12,
-      },
+      payload: buildCreateLeaguePayload('Dashboard League'),
     });
 
     expect(leagueRes.statusCode).toBe(201);

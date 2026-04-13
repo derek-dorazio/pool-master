@@ -13,6 +13,7 @@ import {
   resolveActionItem,
   updateLeagueSettings,
 } from '@poolmaster/shared/generated/hey-api';
+import { randomUUID } from 'node:crypto';
 import { buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
@@ -30,6 +31,14 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
+function buildCreateLeagueBody(name: string, description?: string) {
+  return {
+    name,
+    leagueCode: `FUNC${randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`,
+    ...(description ? { description } : {}),
+  };
+}
+
 describe('SDK Functional: Leagues', () => {
   it('creates, lists, and reads a league through the generated SDK', async () => {
     const commissioner = await buildRegisteredUser({
@@ -38,13 +47,7 @@ describe('SDK Functional: Leagues', () => {
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: {
-        name: 'Functional League',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
-      },
+      body: buildCreateLeagueBody('Functional League'),
     });
 
     expect(createResponse.data).toBeDefined();
@@ -91,13 +94,7 @@ describe('SDK Functional: Leagues', () => {
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: {
-        name: 'Invite Flow League',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
-      },
+      body: buildCreateLeagueBody('Invite Flow League'),
     });
 
     const leagueId = createResponse.data?.league.id;
@@ -163,13 +160,7 @@ describe('SDK Functional: Leagues', () => {
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: {
-        name: 'Public Invite Preview League',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
-      },
+      body: buildCreateLeagueBody('Public Invite Preview League'),
     });
 
     const leagueId = createResponse.data?.league.id;
@@ -215,13 +206,7 @@ describe('SDK Functional: Leagues', () => {
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: {
-        name: 'Negative Invite League',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
-      },
+      body: buildCreateLeagueBody('Negative Invite League'),
     });
 
     const leagueId = createResponse.data?.league.id;
@@ -277,13 +262,7 @@ describe('SDK Functional: Leagues', () => {
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: {
-        name: 'Exhausted Invite League',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
-      },
+      body: buildCreateLeagueBody('Exhausted Invite League'),
     });
 
     const leagueId = createResponse.data?.league.id;
@@ -334,13 +313,7 @@ describe('SDK Functional: Leagues', () => {
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: {
-        name: 'League Settings Flow',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
-      },
+      body: buildCreateLeagueBody('League Settings Flow'),
     });
 
     const leagueId = createResponse.data?.league.id;
@@ -501,13 +474,7 @@ describe('SDK Functional: Leagues', () => {
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: {
-        name: 'League Management Negative Flow',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
-      },
+      body: buildCreateLeagueBody('League Management Negative Flow'),
     });
 
     const leagueId = createResponse.data?.league.id;
@@ -590,13 +557,7 @@ describe('SDK Functional: Leagues', () => {
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: {
-        name: 'League Dashboard Negative Flow',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
-      },
+      body: buildCreateLeagueBody('League Dashboard Negative Flow'),
     });
 
     const leagueId = createResponse.data?.league.id;

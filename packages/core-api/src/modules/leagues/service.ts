@@ -7,19 +7,15 @@ import type {
   League,
   LeagueMembership,
   LeagueSettings,
-  LeagueVisibility,
 } from '@poolmaster/shared/domain';
-import { InvitePolicy, LeagueMembershipStatus, LeagueRole, WeekDay } from '@poolmaster/shared/domain';
+import { InvitePolicy, LeagueMembershipStatus, LeagueRole, LeagueVisibility, WeekDay } from '@poolmaster/shared/domain';
 import { ALL_COMMISSIONER_PERMISSIONS } from '../../core/permissions';
-import { randomUUID } from 'node:crypto';
 
 export interface CreateLeagueInput {
   createdBy: string;
   name: string;
+  leagueCode: string;
   description?: string;
-  visibility: LeagueVisibility;
-  maxMembers?: number;
-  settings?: Partial<LeagueSettings>;
 }
 
 export interface UserLeagueView {
@@ -49,19 +45,18 @@ export class LeagueService {
 
   /** Creates a new league and adds the creator as a commissioner. */
   async createLeague(input: CreateLeagueInput): Promise<{ league: League; membership: LeagueMembership }> {
-    const mergedSettings: LeagueSettings = {
-      ...DEFAULT_LEAGUE_SETTINGS,
-      ...input.settings,
-    };
-    const leagueCode = await this.generateLeagueCode(input.name);
+    const existingLeague = await this.leagueRepo.findByCode(input.leagueCode);
+    if (existingLeague) {
+      throw new LeagueCodeConflictError(input.leagueCode);
+    }
     const league = await this.leagueRepo.create({
-      leagueCode,
+      leagueCode: input.leagueCode,
       name: input.name,
       description: input.description,
       createdBy: input.createdBy,
-      visibility: input.visibility,
-      maxMembers: input.maxMembers ?? DEFAULT_MAX_MEMBERS,
-      settings: mergedSettings as unknown as Record<string, unknown>,
+      visibility: LeagueVisibility.PRIVATE,
+      maxMembers: DEFAULT_MAX_MEMBERS,
+      settings: DEFAULT_LEAGUE_SETTINGS as unknown as Record<string, unknown>,
     });
     const membership = await this.membershipRepo.create({
       leagueId: league.id,
@@ -139,28 +134,21 @@ export class LeagueService {
     return { league, members };
   }
 
-  private async generateLeagueCode(name: string): Promise<string> {
-    const normalizedBase = name.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'LEAGUE';
-    const firstAttempt = normalizedBase.slice(0, 16);
-    if (!(await this.leagueRepo.findByCode(firstAttempt))) {
-      return firstAttempt;
-    }
-
-    for (let attempt = 0; attempt < 10; attempt += 1) {
-      const suffix = randomUUID().replace(/-/g, '').slice(0, 4).toUpperCase();
-      const candidate = `${normalizedBase.slice(0, 12)}${suffix}`.slice(0, 16);
-      if (!(await this.leagueRepo.findByCode(candidate))) {
-        return candidate;
-      }
-    }
-
-    throw new Error('Unable to generate a unique league code');
-  }
 }
 
 export class LeagueNotFoundError extends Error {
   constructor(leagueId: string) {
     super(`League not found: ${leagueId}`);
     this.name = 'LeagueNotFoundError';
+  }
+}
+
+export class LeagueCodeConflictError extends Error {
+  code = 'LEAGUE_CODE_CONFLICT';
+  statusCode = 409;
+
+  constructor(leagueCode: string) {
+    super(`League code is already in use: ${leagueCode}`);
+    this.name = 'LeagueCodeConflictError';
   }
 }

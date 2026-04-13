@@ -995,7 +995,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Creates a new league for the authenticated commissioner, generates the stable league code used in bookmarkable routes, and returns the initial league detail payload.",
+        "description": "Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the initial league detail payload.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1009,46 +1009,27 @@
                     "maxLength": 100,
                     "description": "Primary league name shown in selectors, invites, and league home."
                   },
+                  "leagueCode": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{3,16}$",
+                    "description": "Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`."
+                  },
                   "description": {
                     "type": "string",
                     "maxLength": 500,
                     "description": "Optional short description or commissioner-facing summary for the league."
-                  },
-                  "visibility": {
-                    "type": "string",
-                    "enum": [
-                      "PUBLIC",
-                      "PRIVATE",
-                      "UNLISTED"
-                    ],
-                    "description": "Discovery mode for the league. Current web flows mostly assume private or invite-led leagues."
-                  },
-                  "maxMembers": {
-                    "type": "integer",
-                    "minimum": 2,
-                    "maximum": 1000,
-                    "description": "Optional league membership cap."
-                  },
-                  "sport": {
-                    "type": "string",
-                    "description": "Optional sport or category label used for future templates and filtering."
-                  },
-                  "settings": {
-                    "type": "object",
-                    "additionalProperties": {},
-                    "description": "Optional advanced settings payload merged into the default league settings."
                   }
                 },
                 "required": [
                   "name",
-                  "visibility"
+                  "leagueCode"
                 ],
                 "additionalProperties": false,
-                "description": "Commissioner request payload for creating a new league."
+                "description": "Commissioner request payload for creating a new private league."
               }
             }
           },
-          "description": "Commissioner request payload for creating a new league."
+          "description": "Commissioner request payload for creating a new private league."
         },
         "responses": {
           "201": {
@@ -1140,6 +1121,45 @@
             }
           },
           "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

@@ -8,6 +8,7 @@
  * - verifies live standings endpoints and first-pass history result endpoints
  */
 import {
+  buildCreateLeaguePayload,
   setupIntegrationTests,
   teardownIntegrationTests,
   getApp,
@@ -22,7 +23,6 @@ import {
   InvitationStatus,
   InviteType,
   LeagueRole,
-  LeagueVisibility,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -60,11 +60,7 @@ describe('Standings and Results Read Integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: ownerHeaders,
-      payload: {
-        name: 'Standings Read League',
-        visibility: LeagueVisibility.PRIVATE,
-        maxMembers: 12,
-      },
+      payload: buildCreateLeaguePayload('Standings Read League'),
     });
 
     expect(leagueRes.statusCode).toBe(201);

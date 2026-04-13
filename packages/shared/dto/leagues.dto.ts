@@ -8,14 +8,12 @@ import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 
 export const CreateLeagueRequestSchema = z.object({
   name: z.string().min(1).max(100).describe('Primary league name shown in selectors, invites, and league home.'),
+  leagueCode: z
+    .string()
+    .regex(/^[A-Z0-9]{3,16}$/)
+    .describe('Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`.'),
   description: z.string().max(500).optional().describe('Optional short description or commissioner-facing summary for the league.'),
-  visibility: z
-    .enum(['PUBLIC', 'PRIVATE', 'UNLISTED'])
-    .describe('Discovery mode for the league. Current web flows mostly assume private or invite-led leagues.'),
-  maxMembers: z.number().int().min(2).max(1000).optional().describe('Optional league membership cap.'),
-  sport: z.string().optional().describe('Optional sport or category label used for future templates and filtering.'),
-  settings: JsonObjectSchema.optional().describe('Optional advanced settings payload merged into the default league settings.'),
-}).describe('Commissioner request payload for creating a new league.');
+}).describe('Commissioner request payload for creating a new private league.');
 export type CreateLeagueRequest = z.infer<typeof CreateLeagueRequestSchema>;
 
 export const UpdateLeagueRequestSchema = z.object({

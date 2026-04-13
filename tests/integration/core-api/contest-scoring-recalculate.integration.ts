@@ -1,4 +1,5 @@
 import {
+  buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
   getApp,
@@ -8,7 +9,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { LeagueVisibility, Sport } from '@poolmaster/shared/domain';
+import { Sport } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -25,10 +26,7 @@ describe('Contest scoring recalculation integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: {
-        name: 'Contest Scoring Recalc League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Contest Scoring Recalc League'),
     });
 
     expect(leagueRes.statusCode).toBe(201);

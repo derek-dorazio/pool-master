@@ -1,4 +1,5 @@
 import {
+  buildCreateLeaguePayload,
   setupIntegrationTests,
   teardownIntegrationTests,
   getApp,
@@ -9,7 +10,6 @@ import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   ContestType,
-  LeagueVisibility,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -32,10 +32,7 @@ describe('Contest Validation Integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: ownerHeaders,
-      payload: {
-        name: 'Contest Validation League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Contest Validation League'),
     });
 
     expect(leagueRes.statusCode).toBe(201);

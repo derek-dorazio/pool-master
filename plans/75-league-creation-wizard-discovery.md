@@ -127,7 +127,7 @@ Post-create member-management follow-up lives in
 | Done | Define the wizard steps, fields, and validation rules | First release should become a 2-step wizard with `name`, explicit required `leagueCode`, optional `description`, review/confirmation, and no user-facing visibility choice in v1 |
 | Done | Decide the success destination and the empty-state-to-wizard transition | Launch from `/welcome` empty state and header selector; success routes directly to `/league/<leagueCode>` |
 | Done | Write the implementation-ready UX and API assumptions | `leagueCode` is explicit and frontend-suggested, `sport` is not a league property, and private/invite-led behavior is implicit for v1 |
-| Not Started | Clean the backend create-league contract so exported DTO/OpenAPI/SDK match the approved wizard fields | Remove stale request fields, add required `leagueCode`, refresh OpenAPI/SDK, and validate before frontend wizard work begins |
+| In Progress | Clean the backend create-league contract so exported DTO/OpenAPI/SDK match the approved wizard fields | Remove stale request fields, add required `leagueCode`, refresh OpenAPI/SDK, and validate before frontend wizard work begins. Active cleanup slice: backend contract first, frontend consumer update follows as a separate commit on the same branch so the exported contract can remain the handoff boundary. |
 | Not Started | Replace the current single-step create-league modal with the approved 2-step wizard | Must wait for backend contract cleanup and regenerated SDK/types first |
 
 ## First Implementation Slice Status

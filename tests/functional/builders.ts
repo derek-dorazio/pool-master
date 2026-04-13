@@ -1,5 +1,6 @@
 import { createLeague, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
+import { randomUUID } from 'node:crypto';
 import { createAuthenticatedClient, createFunctionalEmail, getSdkClient } from './setup';
 
 function describeSdkFailure(result: {
@@ -128,10 +129,7 @@ export async function buildLeagueWithCommissioner(overrides?: {
     client: commissioner.client,
     body: {
       name: overrides?.leagueName ?? 'Functional Pilot League',
-      visibility: 'PRIVATE',
-      settings: {
-        invitePolicy: 'COMMISSIONER_ONLY',
-      },
+      leagueCode: `FUNC${randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`,
     },
   });
 

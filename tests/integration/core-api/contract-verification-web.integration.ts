@@ -1,4 +1,5 @@
 import {
+  buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
   getApp,
@@ -21,7 +22,6 @@ import {
 } from '@poolmaster/shared/dto';
 import {
   ContestType,
-  LeagueVisibility,
   ScoringEngine,
   SelectionType,
   Sport,
@@ -64,10 +64,7 @@ describe('Contract verification (web)', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: {
-        name: 'Contract League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Contract League'),
     });
 
     expect(res.statusCode).toBe(201);
@@ -82,10 +79,7 @@ describe('Contract verification (web)', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: {
-        name: 'Contract Dashboard League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Contract Dashboard League'),
     });
     const leagueId = leagueRes.json().league.id as string;
 
@@ -134,10 +128,7 @@ describe('Contract verification (web)', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: {
-        name: 'Contract Contest League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Contract Contest League'),
     });
     const leagueId = leagueRes.json().league.id as string;
 
@@ -238,10 +229,7 @@ describe('Contract verification (web)', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: {
-        name: 'Contract Draft League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Contract Draft League'),
     });
     const leagueId = leagueRes.json().league.id as string;
 
@@ -302,10 +290,7 @@ describe('Contract verification (web)', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: {
-        name: 'Contract Error League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Contract Error League'),
     });
     const leagueId = leagueRes.json().league.id as string;
 

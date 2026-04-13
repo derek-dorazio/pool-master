@@ -636,7 +636,7 @@ export type ListLeaguesResponse = ListLeaguesResponses[keyof ListLeaguesResponse
 
 export type CreateLeagueData = {
     /**
-     * Commissioner request payload for creating a new league.
+     * Commissioner request payload for creating a new private league.
      */
     body: {
         /**
@@ -644,27 +644,13 @@ export type CreateLeagueData = {
          */
         name: string;
         /**
+         * Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`.
+         */
+        leagueCode: string;
+        /**
          * Optional short description or commissioner-facing summary for the league.
          */
         description?: string;
-        /**
-         * Discovery mode for the league. Current web flows mostly assume private or invite-led leagues.
-         */
-        visibility: 'PUBLIC' | 'PRIVATE' | 'UNLISTED';
-        /**
-         * Optional league membership cap.
-         */
-        maxMembers?: number;
-        /**
-         * Optional sport or category label used for future templates and filtering.
-         */
-        sport?: string;
-        /**
-         * Optional advanced settings payload merged into the default league settings.
-         */
-        settings?: {
-            [key: string]: unknown;
-        };
     };
     path?: never;
     query?: never;
@@ -676,6 +662,28 @@ export type CreateLeagueErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
         /**
          * Error payload object.
          */

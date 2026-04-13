@@ -8,6 +8,7 @@
  * - verifies retained history endpoints read from the core contest model
  */
 import {
+  buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
   getApp,
@@ -21,7 +22,6 @@ import {
   ContestType,
   InvitationStatus,
   LeagueRole,
-  LeagueVisibility,
   ParticipantType,
   ScoringEngine,
   SelectionType,
@@ -51,10 +51,7 @@ describe('History Read Integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: ownerHeaders,
-      payload: {
-        name: 'History League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('History League'),
     });
     expect(leagueRes.statusCode).toBe(201);
     leagueId = leagueRes.json().league.id;

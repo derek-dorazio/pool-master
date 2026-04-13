@@ -1,4 +1,5 @@
 import {
+  buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
   getApp,
@@ -11,7 +12,6 @@ import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
   ContestType,
   InvitationStatus,
-  LeagueVisibility,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -33,10 +33,7 @@ describe('Scoring Read Integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: {
-        name: 'Scoring Read League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Scoring Read League'),
     });
     expect(leagueRes.statusCode).toBe(201);
     const leagueId = leagueRes.json().league.id;

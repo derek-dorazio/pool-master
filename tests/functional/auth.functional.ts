@@ -4,6 +4,7 @@ import {
   logoutUser,
   refreshToken,
 } from '@poolmaster/shared/generated/hey-api';
+import { randomUUID } from 'node:crypto';
 import { buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
@@ -79,10 +80,7 @@ describe('SDK Functional: Auth', () => {
       client: cookieClientWithoutCsrf,
       body: {
         name: 'Cookie Session League',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
+        leagueCode: `COOKIE${randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()}`,
       },
     });
 
@@ -96,10 +94,7 @@ describe('SDK Functional: Auth', () => {
       client: cookieClient,
       body: {
         name: 'Cookie Session League',
-        visibility: 'PRIVATE',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-        },
+        leagueCode: `COOKIE${randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()}`,
       },
     });
 

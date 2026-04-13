@@ -1,6 +1,6 @@
 import { LeagueService, LeagueNotFoundError } from '../../../packages/core-api/src/modules/leagues/service';
 import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
-import { LeagueRole, LeagueVisibility, InvitePolicy, WeekDay } from '@poolmaster/shared/domain';
+import { LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
 import { buildLeague, buildMembership } from '../../factories';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
@@ -52,7 +52,7 @@ describe('LeagueService', () => {
       const result = await service.createLeague({
         createdBy: 'user-1',
         name: 'My League',
-        visibility: LeagueVisibility.PRIVATE,
+        leagueCode: 'MYLEAGUE',
       });
       expect(leagueRepo.create).toHaveBeenCalledTimes(1);
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
@@ -64,22 +64,22 @@ describe('LeagueService', () => {
       expect(leagueRepo.findByCode).toHaveBeenCalledWith('MYLEAGUE');
     });
 
-    it('merges default settings with provided overrides', async () => {
+    it('applies the default private visibility and default settings', async () => {
       const leagueRepo = createMockLeagueRepo();
       const membershipRepo = createMockMembershipRepo();
       const service = new LeagueService(leagueRepo, membershipRepo);
       await service.createLeague({
         createdBy: 'user-1',
         name: 'My League',
-        visibility: LeagueVisibility.PRIVATE,
-        settings: { timezone: 'Europe/London', invitePolicy: InvitePolicy.OPEN },
+        leagueCode: 'MYLEAGUE',
       });
       const createArg = (leagueRepo.create as jest.Mock).mock.calls[0][0];
       const settings = createArg.settings;
-      expect(settings.timezone).toBe('Europe/London');
-      expect(settings.invitePolicy).toBe('OPEN');
-      expect(settings.currency).toBe('USD'); // default preserved
-      expect(settings.weeklyRecapDay).toBe(WeekDay.MONDAY); // default preserved
+      expect(createArg.visibility).toBe(LeagueVisibility.PRIVATE);
+      expect(settings.timezone).toBe('America/New_York');
+      expect(settings.invitePolicy).toBe('COMMISSIONER_ONLY');
+      expect(settings.currency).toBe('USD');
+      expect(settings.weeklyRecapDay).toBe('MONDAY');
     });
 
     it('uses default maxMembers when not provided', async () => {
@@ -89,10 +89,32 @@ describe('LeagueService', () => {
       await service.createLeague({
         createdBy: 'user-1',
         name: 'My League',
-        visibility: LeagueVisibility.PRIVATE,
+        leagueCode: 'MYLEAGUE',
       });
       const createArg = (leagueRepo.create as jest.Mock).mock.calls[0][0];
       expect(createArg.maxMembers).toBe(20);
+    });
+
+    it('rejects duplicate league codes', async () => {
+      const leagueRepo = createMockLeagueRepo({
+        findByCode: jest.fn().mockResolvedValue(buildLeague({ leagueCode: 'MYLEAGUE' })),
+      });
+      const membershipRepo = createMockMembershipRepo();
+      const service = new LeagueService(leagueRepo, membershipRepo);
+
+      await expect(
+        service.createLeague({
+          createdBy: 'user-1',
+          name: 'My League',
+          leagueCode: 'MYLEAGUE',
+        }),
+      ).rejects.toMatchObject({
+        code: 'LEAGUE_CODE_CONFLICT',
+        statusCode: 409,
+      });
+
+      expect(leagueRepo.create).not.toHaveBeenCalled();
+      expect(membershipRepo.create).not.toHaveBeenCalled();
     });
   });
 

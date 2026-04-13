@@ -131,7 +131,7 @@ export const listLeagues = <ThrowOnError extends boolean = false>(options?: Opti
 /**
  * Create a new league
  *
- * Creates a new league for the authenticated commissioner, generates the stable league code used in bookmarkable routes, and returns the initial league detail payload.
+ * Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the initial league detail payload.
  */
 export const createLeague = <ThrowOnError extends boolean = false>(options: Options<CreateLeagueData, ThrowOnError>) => (options.client ?? client).post<CreateLeagueResponses, CreateLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

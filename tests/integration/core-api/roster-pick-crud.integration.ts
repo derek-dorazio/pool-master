@@ -8,6 +8,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import {
+  buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
   getApp,
@@ -17,7 +18,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { LeagueVisibility, ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType, Sport } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -40,10 +41,7 @@ describe('RosterPick CRUD integration', () => {
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: ownerHeaders,
-      payload: {
-        name: 'Roster Pick CRUD League',
-        visibility: LeagueVisibility.PRIVATE,
-      },
+      payload: buildCreateLeaguePayload('Roster Pick CRUD League'),
     });
 
     expect(leagueRes.statusCode).toBe(201);
