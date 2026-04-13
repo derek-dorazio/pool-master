@@ -80,7 +80,7 @@ test('new commissioner registration creates a league and can log out', async ({ 
   await expect(page.getByTestId('league-home')).toBeVisible();
   await expect(page.getByRole('heading', { name: leagueName })).toBeVisible();
 
-  await page.getByRole('link', { name: /my leagues/i }).click();
+  await page.getByTestId('app-nav-my-leagues').click();
   await expect(page).toHaveURL(/\/my-leagues$/);
   await expect(page.getByTestId('my-leagues-page')).toBeVisible();
   await expect(page.getByTestId(/league-tile-/)).toContainText(leagueName);
@@ -183,7 +183,7 @@ test('existing multi-league user can deep link, switch leagues, and return to th
   await expect(page).toHaveURL(secondLeagueUrl);
   await expect(page.getByRole('heading', { name: secondLeagueName })).toBeVisible();
 
-  await page.getByRole('link', { name: /my leagues/i }).click();
+  await page.getByTestId('app-nav-my-leagues').click();
   await expect(page).toHaveURL(/\/my-leagues$/);
   await expect(page.getByTestId(`league-tile-${secondLeagueCode}`)).toContainText(secondLeagueName);
 

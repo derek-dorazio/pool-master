@@ -125,6 +125,7 @@ export function AppShell() {
           <nav className="mb-8 flex flex-wrap gap-3">
             <Link
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
+              data-testid="app-nav-my-leagues"
               to="/my-leagues"
             >
               My Leagues
