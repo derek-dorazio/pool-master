@@ -44,8 +44,8 @@ async function createLeagueFromWelcome(
 ) {
   await page.getByTestId('welcome-create-league').click();
   await expect(page.getByTestId('create-league-modal')).toBeVisible();
-  await page.getByTestId('create-league-name').fill(leagueName);
   await page.getByTestId('create-league-code').fill(leagueCode);
+  await page.getByTestId('create-league-name').fill(leagueName);
   await page.getByTestId('create-league-next').click();
   await page.getByTestId('create-league-submit').click();
 }
@@ -58,8 +58,8 @@ async function createLeagueFromSelector(
   await page.getByTestId('league-selector-toggle').click();
   await page.getByTestId('league-selector-create').click();
   await expect(page.getByTestId('create-league-modal')).toBeVisible();
-  await page.getByTestId('create-league-name').fill(leagueName);
   await page.getByTestId('create-league-code').fill(leagueCode);
+  await page.getByTestId('create-league-name').fill(leagueName);
   await page.getByTestId('create-league-next').click();
   await page.getByTestId('create-league-submit').click();
 }
@@ -97,7 +97,7 @@ test('new commissioner registration creates a league and can log out', async ({ 
   await page.getByTestId('app-nav-my-leagues').click();
   await expect(page).toHaveURL(/\/my-leagues$/);
   await expect(page.getByTestId('my-leagues-page')).toBeVisible();
-  await expect(page.getByTestId(/league-tile-/)).toContainText(leagueName);
+  await expect(page.getByTestId(`league-tile-${leagueCode}`)).toContainText(leagueName);
 
   await page.getByTestId('app-logout').click();
   await expect(page).toHaveURL(/\/$/);
