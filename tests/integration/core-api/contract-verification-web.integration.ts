@@ -19,6 +19,7 @@ import {
   LeagueResponseSchema,
   ScoringConfigValidationResponseSchema,
   SendLeagueInvitationsResponseSchema,
+  SuccessSchema,
 } from '@poolmaster/shared/dto';
 import {
   ContestType,
@@ -119,6 +120,40 @@ describe('Contract verification (web)', () => {
     expect(
       LeagueDashboardResponseSchema.safeParse(dashboardRes.json()).success,
     ).toBe(true);
+  });
+
+  it('league lifecycle routes match the shared response DTOs', async () => {
+    const owner = await createTestUser({ displayName: 'Contract Lifecycle Owner' });
+
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: owner.headers,
+      payload: buildCreateLeaguePayload('Contract Lifecycle League'),
+    });
+    const leagueId = leagueRes.json().league.id as string;
+    const leagueCode = leagueRes.json().league.leagueCode as string;
+
+    const inactivateRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.inactivate(leagueId),
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+
+    expect(inactivateRes.statusCode).toBe(200);
+    expect(LeagueResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
+
+    const deleteRes = await getApp().inject({
+      method: 'DELETE',
+      url: API_ROUTES.leagues.detail(leagueId),
+      headers: owner.headers,
+      payload: {
+        leagueCode,
+      },
+    });
+
+    expect(deleteRes.statusCode).toBe(200);
+    expect(SuccessSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
   it('contest management routes match ContestManagementResponseSchema', async () => {

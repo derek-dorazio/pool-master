@@ -2,10 +2,12 @@ import {
   acceptInvitation,
   changeMemberRole,
   createLeague,
+  deleteLeague,
   generateInviteLink,
   getInvitationPreview,
   getLeagueDashboard,
   getLeague,
+  inactivateLeague,
   leaveLeague,
   listLeagueMembers,
   listLeagues,
@@ -628,6 +630,93 @@ describe('SDK Functional: Leagues', () => {
     expectFunctionalError(memberResolveResponse, {
       status: 403,
       code: 'LEAGUE_PERMISSION_DENIED',
+    });
+  });
+
+  it('requires inactive-first league delete with exact leagueCode confirmation and preserves user accounts', async () => {
+    const commissioner = await buildRegisteredUser({
+      displayName: 'Lifecycle Commissioner',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'Lifecycle Member',
+    });
+
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Lifecycle League'),
+    });
+
+    const leagueId = createResponse.data?.league.id as string;
+    const leagueCode = createResponse.data?.league.leagueCode as string;
+
+    const invitationResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { maxUses: 1 },
+    });
+
+    await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: invitationResponse.data?.invitation.inviteCode as string,
+      },
+    });
+
+    const activeDeleteResponse = await deleteLeague({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { leagueCode },
+    });
+
+    expectFunctionalError(activeDeleteResponse, {
+      status: 400,
+      code: 'LEAGUE_DELETE_REQUIRES_INACTIVE',
+    });
+
+    const inactivateResponse = await inactivateLeague({
+      client: commissioner.client,
+      path: { id: leagueId },
+    });
+
+    expect(inactivateResponse.data?.league.isActive).toBe(false);
+
+    const wrongCodeDeleteResponse = await deleteLeague({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { leagueCode: `${leagueCode}X` },
+    });
+
+    expectFunctionalError(wrongCodeDeleteResponse, {
+      status: 400,
+      code: 'LEAGUE_DELETE_CONFIRMATION_MISMATCH',
+    });
+
+    const deleteResponse = await deleteLeague({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { leagueCode },
+    });
+
+    expect(deleteResponse.data).toEqual({ success: true });
+
+    const commissionerLeagues = await listLeagues({
+      client: commissioner.client,
+    });
+    expect(commissionerLeagues.data?.leagues).toEqual([]);
+
+    const memberLeagues = await listLeagues({
+      client: member.client,
+    });
+    expect(memberLeagues.data?.leagues).toEqual([]);
+
+    const deletedLeagueResponse = await getLeague({
+      client: commissioner.client,
+      path: { id: leagueId },
+    });
+
+    expectFunctionalError(deletedLeagueResponse, {
+      status: 404,
+      code: 'LEAGUE_NOT_FOUND',
     });
   });
 });

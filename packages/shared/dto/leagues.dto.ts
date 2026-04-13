@@ -51,6 +51,14 @@ export const UpdateLeagueSettingsRequestSchema = z.object({
 }).describe('Commissioner-managed settings patch for a league.');
 export type UpdateLeagueSettingsRequest = z.infer<typeof UpdateLeagueSettingsRequestSchema>;
 
+export const DeleteLeagueRequestSchema = z.object({
+  leagueCode: z
+    .string()
+    .regex(/^[A-Z0-9]{3,16}$/)
+    .describe('Exact league code confirmation required before permanently deleting an inactive league.'),
+}).describe('Commissioner confirmation payload for permanently deleting an inactive league.');
+export type DeleteLeagueRequest = z.infer<typeof DeleteLeagueRequestSchema>;
+
 export const SendLeagueInvitationsRequestSchema = z.object({
   emails: z.array(z.string().email()).min(1).max(50).describe('Email recipients to invite into the league.'),
   message: z.string().max(500).optional().describe('Optional commissioner note included with the invitation email.'),

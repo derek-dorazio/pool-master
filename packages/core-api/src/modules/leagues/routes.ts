@@ -6,6 +6,7 @@ import type { FastifyInstance } from 'fastify';
 import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   CreateLeagueRequestSchema,
+  DeleteLeagueRequestSchema,
   LeagueAuditEntriesResponseSchema,
   LeagueBulkOperationResponseSchema,
   LeagueDashboardResponseSchema,
@@ -58,7 +59,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const contestRepo = new PrismaContestRepository(prisma);
   const actionItemRepo = new PrismaActionItemRepository(prisma);
 
-  const leagueService = new LeagueService(leagueRepo, membershipRepo);
+  const leagueService = new LeagueService(leagueRepo, membershipRepo, prisma);
   const invitationService = new InvitationService(invitationRepo, membershipRepo, leagueRepo);
   const memberService = new MemberService(membershipRepo);
   const memberDirectoryService = new MemberDirectoryService(prisma);
@@ -163,6 +164,41 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     },
     preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_SETTINGS_EDIT),
     handler: league.updateSettings,
+  });
+
+  fastify.post('/:id/inactivate', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Inactivate a league',
+      description:
+        'Allows a commissioner to mark a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.',
+      operationId: 'inactivateLeague',
+      response: {
+        200: zodToJsonSchema(LeagueResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_SETTINGS_EDIT),
+    handler: league.inactivateLeague,
+  });
+
+  fastify.delete('/:id', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Delete an inactive league permanently',
+      description:
+        'Allows a commissioner to permanently delete an inactive league after typing the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.',
+      operationId: 'deleteLeague',
+      body: zodToJsonSchema(DeleteLeagueRequestSchema),
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_SETTINGS_EDIT),
+    handler: league.deleteLeague,
   });
 
   // --- Invitations ---

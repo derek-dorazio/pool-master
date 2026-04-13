@@ -32,13 +32,28 @@ lifecycle:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 83-001 | 1 | Data-modeler review of current league lifecycle surface and exact delete cascade scope | Not Started | Confirm all league-owned tables and relationships that must be deleted |
-| 83-002 | 1 | Backend developer: add commissioner league-inactivate API contract and service behavior | Not Started | DTOs, route docs, service logic, mapper/handler updates |
-| 83-003 | 1 | Backend developer: add commissioner inactive-league delete API with `leagueCode` confirmation | Not Started | Reject active-league delete; require exact confirmation match |
-| 83-004 | 1 | Backend developer: implement league cascade-delete service | Not Started | Delete league-owned rows/relationships, preserve users |
-| 83-005 | 1 | Backend developer: add backend validation and contract coverage | Not Started | Unit, integration, functional API, contract verification, API regen |
+| 83-001 | 1 | Data-modeler review of current league lifecycle surface and exact delete cascade scope | Done | No required Prisma/schema change for the first slice. Use existing `league.settings.isActive` for inactivation. Backend work is API/service/cascade-focused. Confirmed cascade scope includes memberships, invitations, squads and squad memberships, contests and contest-owned descendants, commissioner action items, commissioner audit log, and other league-owned rows while preserving user accounts. |
+| 83-002 | 1 | Backend developer: add commissioner league-inactivate API contract and service behavior | Done | Added explicit commissioner inactivate route, OpenAPI docs, DTO export, service behavior, and handler wiring. |
+| 83-003 | 1 | Backend developer: add commissioner inactive-league delete API with `leagueCode` confirmation | Done | Added inactive-only delete route with typed `leagueCode` confirmation and stable error codes for active-league delete and confirmation mismatch. |
+| 83-004 | 1 | Backend developer: implement league cascade-delete service | Done | Implemented transaction-safe deletion of league-owned memberships, invitations, squads, contests and contest-owned descendants, commissioner action items, and commissioner audit log while preserving users. |
+| 83-005 | 1 | Backend developer: add backend validation and contract coverage | Done | Regenerated OpenAPI and Hey API artifacts. Passed shared/core/poolmaster typecheck, eslint, PoolMaster vitest/build, unit/integration/functional backend coverage, and contract verification. |
 | 83-006 | 2 | Frontend developer: add league management UI for inactivate action | Not Started | Commissioner-facing, prominent safe action |
 | 83-007 | 2 | Frontend developer: add inactive-league delete UX | Not Started | Warning dialog, typed `leagueCode` confirmation, disabled until inactive |
 | 83-008 | 2 | Frontend developer: add post-delete routing and truthful empty-state behavior | Not Started | Route user back to `/welcome` or equivalent |
 | 83-009 | 2 | Frontend developer: add UI tests and extend browser journey planning hooks | Not Started | Keep browser proof aligned with real lifecycle once available |
 
+## Data-Modeler Review Notes
+
+- Current league inactivation can be implemented without a schema migration.
+  The active domain already persists league activity via
+  `league.settings.isActive`, and that flag is already surfaced in DTOs,
+  mappers, and the PoolMaster UI.
+- The first lifecycle slice should therefore remain contract/service-focused:
+  commissioner routes, service behavior, delete-confirmation contract, and
+  cascade-delete orchestration.
+- Permanent league delete also does not require a schema change for the first
+  slice. It does require a transaction-safe cascade service that removes
+  league-owned data while preserving user accounts.
+- If we later want a richer first-class lifecycle state such as
+  `League.status`, that would be a future model change rather than a blocker
+  for this plan.

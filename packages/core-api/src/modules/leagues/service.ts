@@ -2,6 +2,7 @@
  * LeagueService — league creation, retrieval, and settings management.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
 import type {
   League,
@@ -41,6 +42,7 @@ export class LeagueService {
   constructor(
     private readonly leagueRepo: LeagueRepository,
     private readonly membershipRepo: LeagueMembershipRepository,
+    private readonly prisma?: PrismaClient,
   ) {}
 
   /** Creates a new league and adds the creator as a commissioner. */
@@ -111,6 +113,109 @@ export class LeagueService {
     });
   }
 
+  async inactivateLeague(leagueId: string): Promise<League> {
+    const league = await this.leagueRepo.findById(leagueId);
+    if (!league) {
+      throw new LeagueNotFoundError(leagueId);
+    }
+
+    const currentSettings = league.settings as unknown as LeagueSettings;
+    if (currentSettings?.isActive === false) {
+      throw new LeagueOperationError(
+        'League is already inactive',
+        'LEAGUE_ALREADY_INACTIVE',
+      );
+    }
+
+    return this.updateSettings(leagueId, { isActive: false });
+  }
+
+  async deleteInactiveLeague(leagueId: string, confirmationLeagueCode: string): Promise<void> {
+    const league = await this.leagueRepo.findById(leagueId);
+    if (!league) {
+      throw new LeagueNotFoundError(leagueId);
+    }
+
+    const currentSettings = league.settings as unknown as LeagueSettings;
+    if (currentSettings?.isActive ?? true) {
+      throw new LeagueOperationError(
+        'League must be inactive before it can be permanently deleted',
+        'LEAGUE_DELETE_REQUIRES_INACTIVE',
+      );
+    }
+
+    if (league.leagueCode !== confirmationLeagueCode) {
+      throw new LeagueOperationError(
+        'League code confirmation must match exactly before permanent delete',
+        'LEAGUE_DELETE_CONFIRMATION_MISMATCH',
+      );
+    }
+
+    if (!this.prisma) {
+      throw new Error('LeagueService deleteInactiveLeague requires Prisma access');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.contestEntryParticipantScoreEvent.deleteMany({
+        where: { participantScore: { entry: { contest: { leagueId } } } },
+      });
+      await tx.draftPickHistory.deleteMany({
+        where: { session: { contest: { leagueId } } },
+      });
+      await tx.contestEntryParticipantScore.deleteMany({
+        where: { entry: { contest: { leagueId } } },
+      });
+      await tx.contestEntryPrizeAward.deleteMany({
+        where: { entry: { contest: { leagueId } } },
+      });
+      await tx.rosterPick.deleteMany({
+        where: { entry: { contest: { leagueId } } },
+      });
+      await tx.contestEntry.deleteMany({
+        where: { contest: { leagueId } },
+      });
+      await tx.draftSession.deleteMany({
+        where: { contest: { leagueId } },
+      });
+      await tx.participantContestScoringRule.deleteMany({
+        where: { contestConfiguration: { contest: { leagueId } } },
+      });
+      await tx.contestEntryAggregationRule.deleteMany({
+        where: { contestConfiguration: { contest: { leagueId } } },
+      });
+      await tx.contestPrizeDefinition.deleteMany({
+        where: { contestConfiguration: { contest: { leagueId } } },
+      });
+      await tx.contestConfiguration.deleteMany({
+        where: { contest: { leagueId } },
+      });
+      await tx.contest.deleteMany({
+        where: { leagueId },
+      });
+      await tx.commissionerActionItem.deleteMany({
+        where: { leagueId },
+      });
+      await tx.commissionerAuditLog.deleteMany({
+        where: { leagueId },
+      });
+      await tx.leagueInvitation.deleteMany({
+        where: { leagueId },
+      });
+      await tx.squadMembership.deleteMany({
+        where: { leagueId },
+      });
+      await tx.leagueMembership.deleteMany({
+        where: { leagueId },
+      });
+      await tx.squad.deleteMany({
+        where: { leagueId },
+      });
+      await tx.league.delete({
+        where: { id: leagueId },
+      });
+    });
+  }
+
   /** Returns the league together with its member list. */
   async getLeagueWithMembers(
     leagueId: string,
@@ -150,5 +255,16 @@ export class LeagueCodeConflictError extends Error {
   constructor(leagueCode: string) {
     super(`League code is already in use: ${leagueCode}`);
     this.name = 'LeagueCodeConflictError';
+  }
+}
+
+export class LeagueOperationError extends Error {
+  statusCode = 400;
+  code: string;
+
+  constructor(reason: string, code = 'LEAGUE_OPERATION_INVALID') {
+    super(reason);
+    this.name = 'LeagueOperationError';
+    this.code = code;
   }
 }

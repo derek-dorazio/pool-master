@@ -1382,6 +1382,151 @@
             }
           }
         }
+      },
+      "delete": {
+        "operationId": "deleteLeague",
+        "summary": "Delete an inactive league permanently",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Allows a commissioner to permanently delete an inactive league after typing the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "leagueCode": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{3,16}$",
+                    "description": "Exact league code confirmation required before permanently deleting an inactive league."
+                  }
+                },
+                "required": [
+                  "leagueCode"
+                ],
+                "additionalProperties": false,
+                "description": "Commissioner confirmation payload for permanently deleting an inactive league."
+              }
+            }
+          },
+          "description": "Commissioner confirmation payload for permanently deleting an inactive league."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Minimal success response envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ],
+                      "description": "Confirms that the requested operation succeeded."
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Minimal success response envelope."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/leagues/code/{leagueCode}": {
@@ -1727,6 +1872,207 @@
                   ],
                   "additionalProperties": false,
                   "description": "Single-league detail response."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/inactivate": {
+      "post": {
+        "operationId": "inactivateLeague",
+        "summary": "Inactivate a league",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Allows a commissioner to mark a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league detail response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "league": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
+                        },
+                        "leagueCode": {
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Primary display name for the league."
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Optional short league description."
+                        },
+                        "visibility": {
+                          "type": "string",
+                          "enum": [
+                            "PRIVATE",
+                            "PUBLIC"
+                          ],
+                          "description": "Current league visibility mode."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
+                        },
+                        "memberCount": {
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
+                        },
+                        "activeContestCount": {
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
+                          "description": "Current user role in the league when the response is viewer-scoped."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
+                        },
+                        "maxMembers": {
+                          "type": "number",
+                          "description": "Optional maximum number of allowed league members."
+                        },
+                        "settings": {
+                          "type": "object",
+                          "additionalProperties": {},
+                          "description": "League settings object as currently persisted for commissioner-driven controls."
+                        },
+                        "invitePolicy": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER_ONLY",
+                            "LINK_INVITE",
+                            "OPEN"
+                          ],
+                          "description": "Current invitation policy resolved from league settings."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueCode",
+                        "name",
+                        "visibility",
+                        "isActive",
+                        "memberCount",
+                        "activeContestCount"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Detailed league payload used by league-home and league-settings surfaces."
+                    }
+                  },
+                  "required": [
+                    "league"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single-league detail response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }

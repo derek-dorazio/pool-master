@@ -9,7 +9,7 @@ import {
 } from '../../mappers/leagues.mapper';
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueService } from './service';
-import { LeagueNotFoundError } from './service';
+import { LeagueNotFoundError, LeagueOperationError } from './service';
 
 export function createLeagueHandlers(leagueService: LeagueService) {
   return {
@@ -18,6 +18,8 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     getLeague,
     getLeagueByCode,
     updateSettings,
+    inactivateLeague,
+    deleteLeague,
   };
 
   async function listLeagues(
@@ -127,6 +129,47 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
         return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function inactivateLeague(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const league = await leagueService.inactivateLeague(request.params.id);
+      return reply.send({
+        league: toLeagueDetailDto(league),
+      });
+    } catch (err) {
+      if (err instanceof LeagueNotFoundError) {
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      if (err instanceof LeagueOperationError) {
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function deleteLeague(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: { leagueCode: string };
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      await leagueService.deleteInactiveLeague(request.params.id, request.body.leagueCode);
+      return reply.send({ success: true as const });
+    } catch (err) {
+      if (err instanceof LeagueNotFoundError) {
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      if (err instanceof LeagueOperationError) {
+        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }

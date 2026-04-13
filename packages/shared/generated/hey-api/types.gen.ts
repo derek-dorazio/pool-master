@@ -775,6 +775,86 @@ export type CreateLeagueResponses = {
 
 export type CreateLeagueResponse = CreateLeagueResponses[keyof CreateLeagueResponses];
 
+export type DeleteLeagueData = {
+    /**
+     * Commissioner confirmation payload for permanently deleting an inactive league.
+     */
+    body: {
+        /**
+         * Exact league code confirmation required before permanently deleting an inactive league.
+         */
+        leagueCode: string;
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}';
+};
+
+export type DeleteLeagueErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type DeleteLeagueError = DeleteLeagueErrors[keyof DeleteLeagueErrors];
+
+export type DeleteLeagueResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
+        success: true;
+    };
+};
+
+export type DeleteLeagueResponse = DeleteLeagueResponses[keyof DeleteLeagueResponses];
+
 export type GetLeagueData = {
     body?: never;
     path: {
@@ -1129,6 +1209,133 @@ export type UpdateLeagueSettingsResponses = {
 };
 
 export type UpdateLeagueSettingsResponse = UpdateLeagueSettingsResponses[keyof UpdateLeagueSettingsResponses];
+
+export type InactivateLeagueData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/inactivate';
+};
+
+export type InactivateLeagueErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type InactivateLeagueError = InactivateLeagueErrors[keyof InactivateLeagueErrors];
+
+export type InactivateLeagueResponses = {
+    /**
+     * Single-league detail response.
+     */
+    200: {
+        /**
+         * Detailed league payload used by league-home and league-settings surfaces.
+         */
+        league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
+            id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
+            leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
+            name: string;
+            /**
+             * Optional short league description.
+             */
+            description?: string;
+            /**
+             * Current league visibility mode.
+             */
+            visibility: 'PRIVATE' | 'PUBLIC';
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
+            isActive: boolean;
+            /**
+             * Current number of memberships in the league.
+             */
+            memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
+            activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
+            role?: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+            /**
+             * Optional maximum number of allowed league members.
+             */
+            maxMembers?: number;
+            /**
+             * League settings object as currently persisted for commissioner-driven controls.
+             */
+            settings?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Current invitation policy resolved from league settings.
+             */
+            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+        };
+    };
+};
+
+export type InactivateLeagueResponse = InactivateLeagueResponses[keyof InactivateLeagueResponses];
 
 export type SendLeagueInvitationsData = {
     /**
