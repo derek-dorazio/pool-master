@@ -36,6 +36,7 @@
         "tags": [
           "Auth"
         ],
+        "description": "Creates a new email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.",
         "requestBody": {
           "required": true,
           "content": {
@@ -45,17 +46,20 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "format": "email"
+                    "format": "email",
+                    "description": "Email address used as the account sign-in identifier."
                   },
                   "password": {
                     "type": "string",
                     "minLength": 8,
-                    "maxLength": 128
+                    "maxLength": 128,
+                    "description": "Plaintext password chosen during registration."
                   },
                   "displayName": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "description": "Full display name shown across the product after account creation."
                   }
                 },
                 "required": [
@@ -63,14 +67,16 @@
                   "password",
                   "displayName"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Create-account payload for a new email/password user."
               }
             }
-          }
+          },
+          "description": "Create-account payload for a new email/password user."
         },
         "responses": {
           "201": {
-            "description": "Default Response",
+            "description": "Successful authentication response returned after registration or login.",
             "content": {
               "application/json": {
                 "schema": {
@@ -80,16 +86,20 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Stable user identifier."
                         },
                         "email": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Primary email address for the user account."
                         },
                         "displayName": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Name shown in league, contest, and profile surfaces."
                         },
                         "isRootAdmin": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the user has platform-level root-admin access."
                         },
                         "authProvider": {
                           "type": "string",
@@ -97,21 +107,26 @@
                             "email",
                             "google",
                             "apple"
-                          ]
+                          ],
+                          "description": "Authentication provider used for the account when known."
                         },
                         "timezone": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
                         },
                         "locale": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Preferred locale for formatting and localized copy."
                         },
                         "avatarUrl": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "Optional avatar image URL for profile and social surfaces."
                         },
                         "createdAt": {
                           "type": "string",
-                          "format": "date-time"
+                          "format": "date-time",
+                          "description": "Account creation timestamp in ISO 8601 format."
                         }
                       },
                       "required": [
@@ -120,22 +135,27 @@
                         "displayName",
                         "isRootAdmin"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Frontend-facing user profile summary derived from the authenticated account."
                     },
                     "tokens": {
                       "type": "object",
                       "properties": {
                         "accessToken": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Short-lived bearer token used for authenticated API requests."
                         },
                         "refreshToken": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Longer-lived token that can be exchanged for a fresh access token."
                         },
                         "csrfToken": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
                         },
                         "expiresIn": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Access-token lifetime in seconds from the time it was issued."
                         }
                       },
                       "required": [
@@ -144,14 +164,16 @@
                         "csrfToken",
                         "expiresIn"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Authentication token bundle returned after login or registration."
                     }
                   },
                   "required": [
                     "user",
                     "tokens"
                   ],
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "Successful authentication response returned after registration or login."
                 }
               }
             }
@@ -232,6 +254,7 @@
         "tags": [
           "Auth"
         ],
+        "description": "Authenticates an existing email/password account and returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.",
         "requestBody": {
           "required": true,
           "content": {
@@ -241,24 +264,28 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "format": "email"
+                    "format": "email",
+                    "description": "Email address previously used to register the account."
                   },
                   "password": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Existing password for the account."
                   }
                 },
                 "required": [
                   "email",
                   "password"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Login payload for an existing email/password account."
               }
             }
-          }
+          },
+          "description": "Login payload for an existing email/password account."
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful authentication response returned after registration or login.",
             "content": {
               "application/json": {
                 "schema": {
@@ -268,16 +295,20 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Stable user identifier."
                         },
                         "email": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Primary email address for the user account."
                         },
                         "displayName": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Name shown in league, contest, and profile surfaces."
                         },
                         "isRootAdmin": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the user has platform-level root-admin access."
                         },
                         "authProvider": {
                           "type": "string",
@@ -285,21 +316,26 @@
                             "email",
                             "google",
                             "apple"
-                          ]
+                          ],
+                          "description": "Authentication provider used for the account when known."
                         },
                         "timezone": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
                         },
                         "locale": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Preferred locale for formatting and localized copy."
                         },
                         "avatarUrl": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "Optional avatar image URL for profile and social surfaces."
                         },
                         "createdAt": {
                           "type": "string",
-                          "format": "date-time"
+                          "format": "date-time",
+                          "description": "Account creation timestamp in ISO 8601 format."
                         }
                       },
                       "required": [
@@ -308,22 +344,27 @@
                         "displayName",
                         "isRootAdmin"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Frontend-facing user profile summary derived from the authenticated account."
                     },
                     "tokens": {
                       "type": "object",
                       "properties": {
                         "accessToken": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Short-lived bearer token used for authenticated API requests."
                         },
                         "refreshToken": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Longer-lived token that can be exchanged for a fresh access token."
                         },
                         "csrfToken": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
                         },
                         "expiresIn": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Access-token lifetime in seconds from the time it was issued."
                         }
                       },
                       "required": [
@@ -332,14 +373,16 @@
                         "csrfToken",
                         "expiresIn"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Authentication token bundle returned after login or registration."
                     }
                   },
                   "required": [
                     "user",
                     "tokens"
                   ],
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "Successful authentication response returned after registration or login."
                 }
               }
             }
@@ -387,25 +430,30 @@
         "tags": [
           "Auth"
         ],
+        "description": "Rotates the refresh-token session forward and returns a new token bundle. Browser clients normally rely on the refresh cookie rather than sending a body payload.",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Authentication token bundle returned after login or registration.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "accessToken": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Short-lived bearer token used for authenticated API requests."
                     },
                     "refreshToken": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Longer-lived token that can be exchanged for a fresh access token."
                     },
                     "csrfToken": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
                     },
                     "expiresIn": {
-                      "type": "number"
+                      "type": "number",
+                      "description": "Access-token lifetime in seconds from the time it was issued."
                     }
                   },
                   "required": [
@@ -414,7 +462,8 @@
                     "csrfToken",
                     "expiresIn"
                   ],
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "Authentication token bundle returned after login or registration."
                 }
               }
             }
@@ -462,6 +511,7 @@
         "tags": [
           "Auth"
         ],
+        "description": "Revokes the current refresh-token session so the browser or client must authenticate again before making further authenticated requests.",
         "responses": {
           "200": {
             "description": "Default Response",
@@ -528,6 +578,7 @@
         "tags": [
           "Auth"
         ],
+        "description": "Begins the password-reset flow for an email/password account. This remains a placeholder-style capability in the current product surface.",
         "requestBody": {
           "required": true,
           "content": {
@@ -537,33 +588,38 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "format": "email"
+                    "format": "email",
+                    "description": "Email address that should receive password-reset instructions."
                   }
                 },
                 "required": [
                   "email"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Password-reset initiation payload."
               }
             }
-          }
+          },
+          "description": "Password-reset initiation payload."
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Password-reset initiation acknowledgement.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "message": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "User-safe confirmation message for the password-reset request."
                     }
                   },
                   "required": [
                     "message"
                   ],
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "Password-reset initiation acknowledgement."
                 }
               }
             }
@@ -578,6 +634,7 @@
         "tags": [
           "Auth"
         ],
+        "description": "Handles an OAuth callback payload from an upstream provider. This route is documented now for contract completeness but the product flow remains deferred.",
         "requestBody": {
           "required": true,
           "content": {
@@ -586,20 +643,24 @@
                 "type": "object",
                 "properties": {
                   "code": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Authorization code returned by the upstream OAuth provider."
                   },
                   "state": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Opaque anti-forgery state value returned from the OAuth initiation step."
                   }
                 },
                 "required": [
                   "code",
                   "state"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "OAuth callback payload passed back from a provider integration."
               }
             }
-          }
+          },
+          "description": "OAuth callback payload passed back from a provider integration."
         },
         "responses": {
           "501": {
@@ -645,9 +706,10 @@
         "tags": [
           "Auth"
         ],
+        "description": "Returns the authenticated user profile that drives role-aware app-shell behavior after the browser already has a valid access token.",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Authenticated current-user profile response.",
             "content": {
               "application/json": {
                 "schema": {
@@ -657,16 +719,20 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Stable user identifier."
                         },
                         "email": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Primary email address for the user account."
                         },
                         "displayName": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Name shown in league, contest, and profile surfaces."
                         },
                         "isRootAdmin": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the user has platform-level root-admin access."
                         },
                         "authProvider": {
                           "type": "string",
@@ -674,21 +740,26 @@
                             "email",
                             "google",
                             "apple"
-                          ]
+                          ],
+                          "description": "Authentication provider used for the account when known."
                         },
                         "timezone": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
                         },
                         "locale": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Preferred locale for formatting and localized copy."
                         },
                         "avatarUrl": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "Optional avatar image URL for profile and social surfaces."
                         },
                         "createdAt": {
                           "type": "string",
-                          "format": "date-time"
+                          "format": "date-time",
+                          "description": "Account creation timestamp in ISO 8601 format."
                         }
                       },
                       "required": [
@@ -697,13 +768,15 @@
                         "displayName",
                         "isRootAdmin"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Frontend-facing user profile summary derived from the authenticated account."
                     }
                   },
                   "required": [
                     "user"
                   ],
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "Authenticated current-user profile response."
                 }
               }
             }
@@ -751,6 +824,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Returns the league summaries visible to the authenticated user. This list powers the welcome page, header selector, and richer My Leagues overview.",
         "responses": {
           "200": {
             "description": "Default Response",
@@ -765,36 +839,46 @@
                         "type": "object",
                         "properties": {
                           "id": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Internal league identifier used for authenticated management APIs."
                           },
                           "leagueCode": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Stable short code used in bookmarkable league-home routes and invite context."
                           },
                           "name": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Primary display name for the league."
                           },
                           "description": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "description": "Optional short league description."
                           },
                           "visibility": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Current league visibility mode."
                           },
                           "isActive": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "description": "Whether the league is currently active for normal write interactions."
                           },
                           "memberCount": {
-                            "type": "number"
+                            "type": "number",
+                            "description": "Current number of memberships in the league."
                           },
                           "activeContestCount": {
-                            "type": "number"
+                            "type": "number",
+                            "description": "Number of currently active contests associated with the league."
                           },
                           "role": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Current user role in the league when the response is viewer-scoped."
                           },
                           "createdAt": {
                             "type": "string",
-                            "format": "date-time"
+                            "format": "date-time",
+                            "description": "League creation timestamp in ISO 8601 format."
                           }
                         },
                         "required": [
@@ -806,7 +890,8 @@
                           "memberCount",
                           "activeContestCount"
                         ],
-                        "additionalProperties": false
+                        "additionalProperties": false,
+                        "description": "League list item used for selectors, welcome screens, and league overviews."
                       }
                     }
                   },
@@ -859,6 +944,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Creates a new league for the authenticated commissioner, generates the stable league code used in bookmarkable routes, and returns the initial league detail payload.",
         "requestBody": {
           "required": true,
           "content": {
@@ -869,11 +955,13 @@
                   "name": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "description": "Primary league name shown in selectors, invites, and league home."
                   },
                   "description": {
                     "type": "string",
-                    "maxLength": 500
+                    "maxLength": 500,
+                    "description": "Optional short description or commissioner-facing summary for the league."
                   },
                   "visibility": {
                     "type": "string",
@@ -881,29 +969,35 @@
                       "PUBLIC",
                       "PRIVATE",
                       "UNLISTED"
-                    ]
+                    ],
+                    "description": "Discovery mode for the league. Current web flows mostly assume private or invite-led leagues."
                   },
                   "maxMembers": {
                     "type": "integer",
                     "minimum": 2,
-                    "maximum": 1000
+                    "maximum": 1000,
+                    "description": "Optional league membership cap."
                   },
                   "sport": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Optional sport or category label used for future templates and filtering."
                   },
                   "settings": {
                     "type": "object",
-                    "additionalProperties": {}
+                    "additionalProperties": {},
+                    "description": "Optional advanced settings payload merged into the default league settings."
                   }
                 },
                 "required": [
                   "name",
                   "visibility"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Commissioner request payload for creating a new league."
               }
             }
-          }
+          },
+          "description": "Commissioner request payload for creating a new league."
         },
         "responses": {
           "201": {
@@ -917,46 +1011,59 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
                         },
                         "leagueCode": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
                         },
                         "name": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Primary display name for the league."
                         },
                         "description": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "Optional short league description."
                         },
                         "visibility": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current league visibility mode."
                         },
                         "isActive": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
                         },
                         "memberCount": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
                         },
                         "activeContestCount": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
                         },
                         "role": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current user role in the league when the response is viewer-scoped."
                         },
                         "createdAt": {
                           "type": "string",
-                          "format": "date-time"
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
                         },
                         "maxMembers": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Optional maximum number of allowed league members."
                         },
                         "settings": {
                           "type": "object",
-                          "additionalProperties": {}
+                          "additionalProperties": {},
+                          "description": "League settings object as currently persisted for commissioner-driven controls."
                         },
                         "invitePolicy": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current invitation policy resolved from league settings."
                         }
                       },
                       "required": [
@@ -968,7 +1075,8 @@
                         "memberCount",
                         "activeContestCount"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Detailed league payload used by league-home and league-settings surfaces."
                     }
                   },
                   "required": [
@@ -1022,6 +1130,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Returns detailed league information by internal league ID for authenticated member or commissioner surfaces that already know the database identifier.",
         "parameters": [
           {
             "schema": {
@@ -1044,46 +1153,59 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
                         },
                         "leagueCode": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
                         },
                         "name": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Primary display name for the league."
                         },
                         "description": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "Optional short league description."
                         },
                         "visibility": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current league visibility mode."
                         },
                         "isActive": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
                         },
                         "memberCount": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
                         },
                         "activeContestCount": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
                         },
                         "role": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current user role in the league when the response is viewer-scoped."
                         },
                         "createdAt": {
                           "type": "string",
-                          "format": "date-time"
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
                         },
                         "maxMembers": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Optional maximum number of allowed league members."
                         },
                         "settings": {
                           "type": "object",
-                          "additionalProperties": {}
+                          "additionalProperties": {},
+                          "description": "League settings object as currently persisted for commissioner-driven controls."
                         },
                         "invitePolicy": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current invitation policy resolved from league settings."
                         }
                       },
                       "required": [
@@ -1095,7 +1217,8 @@
                         "memberCount",
                         "activeContestCount"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Detailed league payload used by league-home and league-settings surfaces."
                     }
                   },
                   "required": [
@@ -1149,6 +1272,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation.",
         "parameters": [
           {
             "schema": {
@@ -1171,46 +1295,59 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
                         },
                         "leagueCode": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
                         },
                         "name": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Primary display name for the league."
                         },
                         "description": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "Optional short league description."
                         },
                         "visibility": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current league visibility mode."
                         },
                         "isActive": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
                         },
                         "memberCount": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
                         },
                         "activeContestCount": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
                         },
                         "role": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current user role in the league when the response is viewer-scoped."
                         },
                         "createdAt": {
                           "type": "string",
-                          "format": "date-time"
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
                         },
                         "maxMembers": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Optional maximum number of allowed league members."
                         },
                         "settings": {
                           "type": "object",
-                          "additionalProperties": {}
+                          "additionalProperties": {},
+                          "description": "League settings object as currently persisted for commissioner-driven controls."
                         },
                         "invitePolicy": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current invitation policy resolved from league settings."
                         }
                       },
                       "required": [
@@ -1222,7 +1359,8 @@
                         "memberCount",
                         "activeContestCount"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Detailed league payload used by league-home and league-settings surfaces."
                     }
                   },
                   "required": [
@@ -1276,6 +1414,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Allows a commissioner to patch league settings such as activity state and invitation policy. The resulting league payload should drive read-only or active UI behavior.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1284,7 +1423,8 @@
                 "type": "object",
                 "properties": {
                   "isActive": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "League activity flag. Inactive leagues remain readable but should restrict write actions in the web app."
                   },
                   "invitePolicy": {
                     "type": "string",
@@ -1292,19 +1432,24 @@
                       "COMMISSIONER_ONLY",
                       "LINK_INVITE",
                       "OPEN"
-                    ]
+                    ],
+                    "description": "Invitation policy controlling whether members join only through commissioners, links, or open enrollment."
                   },
                   "allowMidSeasonJoin": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Whether members may join after the league has already started."
                   },
                   "requireApproval": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Whether commissioner approval is required before a join becomes active."
                   },
                   "activityFeedEnabled": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Whether league activity should appear in future feed surfaces."
                   },
                   "weeklyRecapEnabled": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Whether the league wants a recurring weekly recap delivery."
                   },
                   "weeklyRecapDay": {
                     "type": "string",
@@ -1316,19 +1461,24 @@
                       "FRIDAY",
                       "SATURDAY",
                       "SUNDAY"
-                    ]
+                    ],
+                    "description": "Day of week for future recap scheduling."
                   },
                   "timezone": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "League-level timezone override used for schedule-oriented displays."
                   },
                   "currency": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Default currency code for league-level money displays."
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Commissioner-managed settings patch for a league."
               }
             }
-          }
+          },
+          "description": "Commissioner-managed settings patch for a league."
         },
         "parameters": [
           {
@@ -1352,46 +1502,59 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
                         },
                         "leagueCode": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
                         },
                         "name": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Primary display name for the league."
                         },
                         "description": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "Optional short league description."
                         },
                         "visibility": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current league visibility mode."
                         },
                         "isActive": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
                         },
                         "memberCount": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
                         },
                         "activeContestCount": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
                         },
                         "role": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current user role in the league when the response is viewer-scoped."
                         },
                         "createdAt": {
                           "type": "string",
-                          "format": "date-time"
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
                         },
                         "maxMembers": {
-                          "type": "number"
+                          "type": "number",
+                          "description": "Optional maximum number of allowed league members."
                         },
                         "settings": {
                           "type": "object",
-                          "additionalProperties": {}
+                          "additionalProperties": {},
+                          "description": "League settings object as currently persisted for commissioner-driven controls."
                         },
                         "invitePolicy": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current invitation policy resolved from league settings."
                         }
                       },
                       "required": [
@@ -1403,7 +1566,8 @@
                         "memberCount",
                         "activeContestCount"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Detailed league payload used by league-home and league-settings surfaces."
                     }
                   },
                   "required": [
@@ -1457,6 +1621,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1471,20 +1636,24 @@
                       "format": "email"
                     },
                     "minItems": 1,
-                    "maxItems": 50
+                    "maxItems": 50,
+                    "description": "Email recipients to invite into the league."
                   },
                   "message": {
                     "type": "string",
-                    "maxLength": 500
+                    "maxLength": 500,
+                    "description": "Optional commissioner note included with the invitation email."
                   }
                 },
                 "required": [
                   "emails"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Commissioner request payload for sending direct email invites."
               }
             }
-          }
+          },
+          "description": "Commissioner request payload for sending direct email invites."
         },
         "parameters": [
           {
@@ -1510,61 +1679,74 @@
                         "type": "object",
                         "properties": {
                           "id": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Invitation record identifier."
                           },
                           "leagueId": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "League that owns the invitation."
                           },
                           "email": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "description": "Email recipient for direct email invites. Link invites omit this field."
                           },
                           "inviteCode": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Shareable invitation code used in URLs and acceptance requests."
                           },
                           "inviteType": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Invitation delivery mode, such as EMAIL or LINK."
                           },
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED."
                           },
                           "maxUses": {
-                            "type": "integer"
+                            "type": "integer",
+                            "description": "Maximum accepted joins allowed for the invitation."
                           },
                           "currentUses": {
-                            "type": "integer"
+                            "type": "integer",
+                            "description": "How many times the invitation has already been accepted."
                           },
                           "invitedBy": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "User ID of the commissioner or actor that issued the invite."
                           },
                           "expiresAt": {
                             "type": "string",
                             "format": "date-time",
-                            "nullable": true
+                            "nullable": true,
+                            "description": "When the invite stops being valid, if it expires."
                           },
                           "acceptedAt": {
                             "allOf": [
                               {
                                 "type": "string",
                                 "format": "date-time",
-                                "nullable": true
+                                "nullable": true,
+                                "description": "When the invite stops being valid, if it expires."
                               }
                             ],
-                            "nullable": true
+                            "nullable": true,
+                            "description": "When the invitation was accepted, if applicable."
                           },
                           "acceptedBy": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "description": "User ID that accepted the invite, when known."
                           },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
-                            "nullable": true
+                            "description": "Invitation creation timestamp."
                           },
                           "updatedAt": {
                             "type": "string",
                             "format": "date-time",
-                            "nullable": true
+                            "description": "Last invitation update timestamp."
                           }
                         },
                         "required": [
@@ -1579,7 +1761,8 @@
                           "createdAt",
                           "updatedAt"
                         ],
-                        "additionalProperties": false
+                        "additionalProperties": false,
+                        "description": "Invitation record returned from commissioner invite-management APIs."
                       }
                     },
                     "skippedMembers": {
@@ -1648,6 +1831,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1658,17 +1842,21 @@
                   "expiresInDays": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 90
+                    "maximum": 90,
+                    "description": "Optional invite-link lifetime in days."
                   },
                   "maxUses": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "description": "Optional maximum number of accepted joins. Zero means unlimited use."
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Commissioner request payload for creating a shareable invite link."
               }
             }
-          }
+          },
+          "description": "Commissioner request payload for creating a shareable invite link."
         },
         "parameters": [
           {
@@ -1692,61 +1880,74 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Invitation record identifier."
                         },
                         "leagueId": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "League that owns the invitation."
                         },
                         "email": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "Email recipient for direct email invites. Link invites omit this field."
                         },
                         "inviteCode": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Shareable invitation code used in URLs and acceptance requests."
                         },
                         "inviteType": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Invitation delivery mode, such as EMAIL or LINK."
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED."
                         },
                         "maxUses": {
-                          "type": "integer"
+                          "type": "integer",
+                          "description": "Maximum accepted joins allowed for the invitation."
                         },
                         "currentUses": {
-                          "type": "integer"
+                          "type": "integer",
+                          "description": "How many times the invitation has already been accepted."
                         },
                         "invitedBy": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "User ID of the commissioner or actor that issued the invite."
                         },
                         "expiresAt": {
                           "type": "string",
                           "format": "date-time",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "When the invite stops being valid, if it expires."
                         },
                         "acceptedAt": {
                           "allOf": [
                             {
                               "type": "string",
                               "format": "date-time",
-                              "nullable": true
+                              "nullable": true,
+                              "description": "When the invite stops being valid, if it expires."
                             }
                           ],
-                          "nullable": true
+                          "nullable": true,
+                          "description": "When the invitation was accepted, if applicable."
                         },
                         "acceptedBy": {
                           "type": "string",
-                          "nullable": true
+                          "nullable": true,
+                          "description": "User ID that accepted the invite, when known."
                         },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time",
-                          "nullable": true
+                          "description": "Invitation creation timestamp."
                         },
                         "updatedAt": {
                           "type": "string",
                           "format": "date-time",
-                          "nullable": true
+                          "description": "Last invitation update timestamp."
                         }
                       },
                       "required": [
@@ -1761,7 +1962,8 @@
                         "createdAt",
                         "updatedAt"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Invitation record returned from commissioner invite-management APIs."
                     }
                   },
                   "required": [
@@ -1815,6 +2017,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Revokes a previously created shareable invite link so the invite code can no longer be accepted by future users.",
         "parameters": [
           {
             "schema": {
@@ -1932,6 +2135,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Returns the current league membership list for authenticated members and commissioners. This powers member rosters and commissioner management surfaces.",
         "parameters": [
           {
             "schema": {
@@ -1956,20 +2160,25 @@
                         "type": "object",
                         "properties": {
                           "id": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Membership record identifier."
                           },
                           "userId": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "User account identifier for the member."
                           },
                           "displayName": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Display name shown in member-management surfaces."
                           },
                           "role": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "League role for the member, such as COMMISSIONER or MEMBER."
                           },
                           "joinedAt": {
                             "type": "string",
-                            "format": "date-time"
+                            "format": "date-time",
+                            "description": "When the user joined or was activated in the league."
                           }
                         },
                         "required": [
@@ -1978,7 +2187,8 @@
                           "displayName",
                           "role"
                         ],
-                        "additionalProperties": false
+                        "additionalProperties": false,
+                        "description": "League membership summary shown in member-management views."
                       }
                     }
                   },
@@ -2066,6 +2276,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Allows a commissioner to promote or demote a member and optionally adjust explicit permission overrides for that membership.",
         "requestBody": {
           "required": true,
           "content": {
@@ -2078,22 +2289,26 @@
                     "enum": [
                       "COMMISSIONER",
                       "MEMBER"
-                    ]
+                    ],
+                    "description": "Target membership role after the change. Commissioner grants league-administration access."
                   },
                   "permissions": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "description": "Optional explicit permission override list for the member."
                   }
                 },
                 "required": [
                   "role"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Commissioner-managed membership role update payload."
               }
             }
-          }
+          },
+          "description": "Commissioner-managed membership role update payload."
         },
         "parameters": [
           {
@@ -2289,6 +2504,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Removes a member from the target league. Commissioners use this to manage league membership directly.",
         "parameters": [
           {
             "schema": {
@@ -2439,6 +2655,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Allows the authenticated user to leave a league through their own membership rather than through a commissioner-managed removal flow.",
         "parameters": [
           {
             "schema": {
@@ -2581,6 +2798,7 @@
         "tags": [
           "Leagues"
         ],
+        "description": "Returns the commissioner-oriented dashboard payload for a league, including action items, member counts, pending invites, and upcoming events.",
         "parameters": [
           {
             "schema": {
@@ -4838,6 +5056,7 @@
         "tags": [
           "Invitations"
         ],
+        "description": "Returns the minimal league identity and invitation state needed to render the public `/invite/<inviteCode>` entry flow before or after authentication.",
         "parameters": [
           {
             "schema": {
@@ -4850,7 +5069,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Invitation preview payload used by `/invite/<inviteCode>` flows.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4860,22 +5079,27 @@
                       "type": "object",
                       "properties": {
                         "inviteCode": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Invitation code currently being previewed."
                         },
                         "status": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Current invitation lifecycle state."
                         },
                         "league": {
                           "type": "object",
                           "properties": {
                             "id": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "League ID associated with the invitation."
                             },
                             "leagueCode": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Bookmarkable short code for the invited league."
                             },
                             "name": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Display name for the invited league."
                             }
                           },
                           "required": [
@@ -4883,7 +5107,8 @@
                             "leagueCode",
                             "name"
                           ],
-                          "additionalProperties": false
+                          "additionalProperties": false,
+                          "description": "Minimal league identity shown before accepting the invite."
                         }
                       },
                       "required": [
@@ -4891,13 +5116,15 @@
                         "status",
                         "league"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "Public invitation preview shown before or after authentication."
                     }
                   },
                   "required": [
                     "invitation"
                   ],
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "Invitation preview payload used by `/invite/<inviteCode>` flows."
                 }
               }
             }
@@ -4978,24 +5205,29 @@
         "tags": [
           "Invitations"
         ],
+        "description": "Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "inviteCode"
-                ],
                 "properties": {
                   "inviteCode": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "description": "Invite code from the invite URL or invitation email."
                   }
-                }
+                },
+                "required": [
+                  "inviteCode"
+                ],
+                "additionalProperties": false,
+                "description": "Authenticated invitation-acceptance payload."
               }
             }
-          }
+          },
+          "description": "Authenticated invitation-acceptance payload."
         },
         "responses": {
           "201": {

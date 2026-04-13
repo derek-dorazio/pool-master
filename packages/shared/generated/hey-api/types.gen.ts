@@ -19,9 +19,21 @@ export type GetHealthResponses = {
 };
 
 export type RegisterUserData = {
+    /**
+     * Create-account payload for a new email/password user.
+     */
     body: {
+        /**
+         * Email address used as the account sign-in identifier.
+         */
         email: string;
+        /**
+         * Plaintext password chosen during registration.
+         */
         password: string;
+        /**
+         * Full display name shown across the product after account creation.
+         */
         displayName: string;
     };
     path?: never;
@@ -56,24 +68,69 @@ export type RegisterUserError = RegisterUserErrors[keyof RegisterUserErrors];
 
 export type RegisterUserResponses = {
     /**
-     * Default Response
+     * Successful authentication response returned after registration or login.
      */
     201: {
+        /**
+         * Frontend-facing user profile summary derived from the authenticated account.
+         */
         user: {
+            /**
+             * Stable user identifier.
+             */
             id: string;
+            /**
+             * Primary email address for the user account.
+             */
             email: string;
+            /**
+             * Name shown in league, contest, and profile surfaces.
+             */
             displayName: string;
+            /**
+             * Whether the user has platform-level root-admin access.
+             */
             isRootAdmin: boolean;
+            /**
+             * Authentication provider used for the account when known.
+             */
             authProvider?: 'email' | 'google' | 'apple';
+            /**
+             * Preferred IANA timezone for user-facing scheduling and reminders.
+             */
             timezone?: string;
+            /**
+             * Preferred locale for formatting and localized copy.
+             */
             locale?: string;
+            /**
+             * Optional avatar image URL for profile and social surfaces.
+             */
             avatarUrl?: string;
+            /**
+             * Account creation timestamp in ISO 8601 format.
+             */
             createdAt?: string;
         };
+        /**
+         * Authentication token bundle returned after login or registration.
+         */
         tokens: {
+            /**
+             * Short-lived bearer token used for authenticated API requests.
+             */
             accessToken: string;
+            /**
+             * Longer-lived token that can be exchanged for a fresh access token.
+             */
             refreshToken: string;
+            /**
+             * Anti-CSRF token that must be echoed on state-changing browser requests.
+             */
             csrfToken: string;
+            /**
+             * Access-token lifetime in seconds from the time it was issued.
+             */
             expiresIn: number;
         };
     };
@@ -82,8 +139,17 @@ export type RegisterUserResponses = {
 export type RegisterUserResponse = RegisterUserResponses[keyof RegisterUserResponses];
 
 export type LoginUserData = {
+    /**
+     * Login payload for an existing email/password account.
+     */
     body: {
+        /**
+         * Email address previously used to register the account.
+         */
         email: string;
+        /**
+         * Existing password for the account.
+         */
         password: string;
     };
     path?: never;
@@ -108,24 +174,69 @@ export type LoginUserError = LoginUserErrors[keyof LoginUserErrors];
 
 export type LoginUserResponses = {
     /**
-     * Default Response
+     * Successful authentication response returned after registration or login.
      */
     200: {
+        /**
+         * Frontend-facing user profile summary derived from the authenticated account.
+         */
         user: {
+            /**
+             * Stable user identifier.
+             */
             id: string;
+            /**
+             * Primary email address for the user account.
+             */
             email: string;
+            /**
+             * Name shown in league, contest, and profile surfaces.
+             */
             displayName: string;
+            /**
+             * Whether the user has platform-level root-admin access.
+             */
             isRootAdmin: boolean;
+            /**
+             * Authentication provider used for the account when known.
+             */
             authProvider?: 'email' | 'google' | 'apple';
+            /**
+             * Preferred IANA timezone for user-facing scheduling and reminders.
+             */
             timezone?: string;
+            /**
+             * Preferred locale for formatting and localized copy.
+             */
             locale?: string;
+            /**
+             * Optional avatar image URL for profile and social surfaces.
+             */
             avatarUrl?: string;
+            /**
+             * Account creation timestamp in ISO 8601 format.
+             */
             createdAt?: string;
         };
+        /**
+         * Authentication token bundle returned after login or registration.
+         */
         tokens: {
+            /**
+             * Short-lived bearer token used for authenticated API requests.
+             */
             accessToken: string;
+            /**
+             * Longer-lived token that can be exchanged for a fresh access token.
+             */
             refreshToken: string;
+            /**
+             * Anti-CSRF token that must be echoed on state-changing browser requests.
+             */
             csrfToken: string;
+            /**
+             * Access-token lifetime in seconds from the time it was issued.
+             */
             expiresIn: number;
         };
     };
@@ -157,12 +268,24 @@ export type RefreshTokenError = RefreshTokenErrors[keyof RefreshTokenErrors];
 
 export type RefreshTokenResponses = {
     /**
-     * Default Response
+     * Authentication token bundle returned after login or registration.
      */
     200: {
+        /**
+         * Short-lived bearer token used for authenticated API requests.
+         */
         accessToken: string;
+        /**
+         * Longer-lived token that can be exchanged for a fresh access token.
+         */
         refreshToken: string;
+        /**
+         * Anti-CSRF token that must be echoed on state-changing browser requests.
+         */
         csrfToken: string;
+        /**
+         * Access-token lifetime in seconds from the time it was issued.
+         */
         expiresIn: number;
     };
 };
@@ -203,7 +326,13 @@ export type LogoutUserResponses = {
 export type LogoutUserResponse = LogoutUserResponses[keyof LogoutUserResponses];
 
 export type ForgotPasswordData = {
+    /**
+     * Password-reset initiation payload.
+     */
     body: {
+        /**
+         * Email address that should receive password-reset instructions.
+         */
         email: string;
     };
     path?: never;
@@ -213,9 +342,12 @@ export type ForgotPasswordData = {
 
 export type ForgotPasswordResponses = {
     /**
-     * Default Response
+     * Password-reset initiation acknowledgement.
      */
     200: {
+        /**
+         * User-safe confirmation message for the password-reset request.
+         */
         message: string;
     };
 };
@@ -223,8 +355,17 @@ export type ForgotPasswordResponses = {
 export type ForgotPasswordResponse = ForgotPasswordResponses[keyof ForgotPasswordResponses];
 
 export type OauthCallbackData = {
+    /**
+     * OAuth callback payload passed back from a provider integration.
+     */
     body: {
+        /**
+         * Authorization code returned by the upstream OAuth provider.
+         */
         code: string;
+        /**
+         * Opaque anti-forgery state value returned from the OAuth initiation step.
+         */
         state: string;
     };
     path?: never;
@@ -271,18 +412,48 @@ export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserError
 
 export type GetCurrentUserResponses = {
     /**
-     * Default Response
+     * Authenticated current-user profile response.
      */
     200: {
+        /**
+         * Frontend-facing user profile summary derived from the authenticated account.
+         */
         user: {
+            /**
+             * Stable user identifier.
+             */
             id: string;
+            /**
+             * Primary email address for the user account.
+             */
             email: string;
+            /**
+             * Name shown in league, contest, and profile surfaces.
+             */
             displayName: string;
+            /**
+             * Whether the user has platform-level root-admin access.
+             */
             isRootAdmin: boolean;
+            /**
+             * Authentication provider used for the account when known.
+             */
             authProvider?: 'email' | 'google' | 'apple';
+            /**
+             * Preferred IANA timezone for user-facing scheduling and reminders.
+             */
             timezone?: string;
+            /**
+             * Preferred locale for formatting and localized copy.
+             */
             locale?: string;
+            /**
+             * Optional avatar image URL for profile and social surfaces.
+             */
             avatarUrl?: string;
+            /**
+             * Account creation timestamp in ISO 8601 format.
+             */
             createdAt?: string;
         };
     };
@@ -318,15 +489,45 @@ export type ListLeaguesResponses = {
      */
     200: {
         leagues: Array<{
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
             id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
             leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
             name: string;
+            /**
+             * Optional short league description.
+             */
             description?: string;
+            /**
+             * Current league visibility mode.
+             */
             visibility: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
             isActive: boolean;
+            /**
+             * Current number of memberships in the league.
+             */
             memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
             activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
             role?: string;
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
             createdAt?: string;
         }>;
     };
@@ -335,12 +536,33 @@ export type ListLeaguesResponses = {
 export type ListLeaguesResponse = ListLeaguesResponses[keyof ListLeaguesResponses];
 
 export type CreateLeagueData = {
+    /**
+     * Commissioner request payload for creating a new league.
+     */
     body: {
+        /**
+         * Primary league name shown in selectors, invites, and league home.
+         */
         name: string;
+        /**
+         * Optional short description or commissioner-facing summary for the league.
+         */
         description?: string;
+        /**
+         * Discovery mode for the league. Current web flows mostly assume private or invite-led leagues.
+         */
         visibility: 'PUBLIC' | 'PRIVATE' | 'UNLISTED';
+        /**
+         * Optional league membership cap.
+         */
         maxMembers?: number;
+        /**
+         * Optional sport or category label used for future templates and filtering.
+         */
         sport?: string;
+        /**
+         * Optional advanced settings payload merged into the default league settings.
+         */
         settings?: {
             [key: string]: unknown;
         };
@@ -370,21 +592,63 @@ export type CreateLeagueResponses = {
      * Default Response
      */
     201: {
+        /**
+         * Detailed league payload used by league-home and league-settings surfaces.
+         */
         league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
             id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
             leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
             name: string;
+            /**
+             * Optional short league description.
+             */
             description?: string;
+            /**
+             * Current league visibility mode.
+             */
             visibility: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
             isActive: boolean;
+            /**
+             * Current number of memberships in the league.
+             */
             memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
             activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
             role?: string;
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
             createdAt?: string;
+            /**
+             * Optional maximum number of allowed league members.
+             */
             maxMembers?: number;
+            /**
+             * League settings object as currently persisted for commissioner-driven controls.
+             */
             settings?: {
                 [key: string]: unknown;
             };
+            /**
+             * Current invitation policy resolved from league settings.
+             */
             invitePolicy?: string;
         };
     };
@@ -421,21 +685,63 @@ export type GetLeagueResponses = {
      * Default Response
      */
     200: {
+        /**
+         * Detailed league payload used by league-home and league-settings surfaces.
+         */
         league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
             id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
             leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
             name: string;
+            /**
+             * Optional short league description.
+             */
             description?: string;
+            /**
+             * Current league visibility mode.
+             */
             visibility: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
             isActive: boolean;
+            /**
+             * Current number of memberships in the league.
+             */
             memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
             activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
             role?: string;
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
             createdAt?: string;
+            /**
+             * Optional maximum number of allowed league members.
+             */
             maxMembers?: number;
+            /**
+             * League settings object as currently persisted for commissioner-driven controls.
+             */
             settings?: {
                 [key: string]: unknown;
             };
+            /**
+             * Current invitation policy resolved from league settings.
+             */
             invitePolicy?: string;
         };
     };
@@ -472,21 +778,63 @@ export type GetLeagueByCodeResponses = {
      * Default Response
      */
     200: {
+        /**
+         * Detailed league payload used by league-home and league-settings surfaces.
+         */
         league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
             id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
             leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
             name: string;
+            /**
+             * Optional short league description.
+             */
             description?: string;
+            /**
+             * Current league visibility mode.
+             */
             visibility: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
             isActive: boolean;
+            /**
+             * Current number of memberships in the league.
+             */
             memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
             activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
             role?: string;
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
             createdAt?: string;
+            /**
+             * Optional maximum number of allowed league members.
+             */
             maxMembers?: number;
+            /**
+             * League settings object as currently persisted for commissioner-driven controls.
+             */
             settings?: {
                 [key: string]: unknown;
             };
+            /**
+             * Current invitation policy resolved from league settings.
+             */
             invitePolicy?: string;
         };
     };
@@ -495,15 +843,45 @@ export type GetLeagueByCodeResponses = {
 export type GetLeagueByCodeResponse = GetLeagueByCodeResponses[keyof GetLeagueByCodeResponses];
 
 export type UpdateLeagueSettingsData = {
+    /**
+     * Commissioner-managed settings patch for a league.
+     */
     body: {
+        /**
+         * League activity flag. Inactive leagues remain readable but should restrict write actions in the web app.
+         */
         isActive?: boolean;
+        /**
+         * Invitation policy controlling whether members join only through commissioners, links, or open enrollment.
+         */
         invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+        /**
+         * Whether members may join after the league has already started.
+         */
         allowMidSeasonJoin?: boolean;
+        /**
+         * Whether commissioner approval is required before a join becomes active.
+         */
         requireApproval?: boolean;
+        /**
+         * Whether league activity should appear in future feed surfaces.
+         */
         activityFeedEnabled?: boolean;
+        /**
+         * Whether the league wants a recurring weekly recap delivery.
+         */
         weeklyRecapEnabled?: boolean;
+        /**
+         * Day of week for future recap scheduling.
+         */
         weeklyRecapDay?: 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+        /**
+         * League-level timezone override used for schedule-oriented displays.
+         */
         timezone?: string;
+        /**
+         * Default currency code for league-level money displays.
+         */
         currency?: string;
     };
     path: {
@@ -533,21 +911,63 @@ export type UpdateLeagueSettingsResponses = {
      * Default Response
      */
     200: {
+        /**
+         * Detailed league payload used by league-home and league-settings surfaces.
+         */
         league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
             id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
             leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
             name: string;
+            /**
+             * Optional short league description.
+             */
             description?: string;
+            /**
+             * Current league visibility mode.
+             */
             visibility: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
             isActive: boolean;
+            /**
+             * Current number of memberships in the league.
+             */
             memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
             activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
             role?: string;
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
             createdAt?: string;
+            /**
+             * Optional maximum number of allowed league members.
+             */
             maxMembers?: number;
+            /**
+             * League settings object as currently persisted for commissioner-driven controls.
+             */
             settings?: {
                 [key: string]: unknown;
             };
+            /**
+             * Current invitation policy resolved from league settings.
+             */
             invitePolicy?: string;
         };
     };
@@ -556,8 +976,17 @@ export type UpdateLeagueSettingsResponses = {
 export type UpdateLeagueSettingsResponse = UpdateLeagueSettingsResponses[keyof UpdateLeagueSettingsResponses];
 
 export type SendLeagueInvitationsData = {
+    /**
+     * Commissioner request payload for sending direct email invites.
+     */
     body: {
+        /**
+         * Email recipients to invite into the league.
+         */
         emails: Array<string>;
+        /**
+         * Optional commissioner note included with the invitation email.
+         */
         message?: string;
     };
     path: {
@@ -588,19 +1017,61 @@ export type SendLeagueInvitationsResponses = {
      */
     201: {
         sent: Array<{
+            /**
+             * Invitation record identifier.
+             */
             id: string;
+            /**
+             * League that owns the invitation.
+             */
             leagueId: string;
+            /**
+             * Email recipient for direct email invites. Link invites omit this field.
+             */
             email?: string;
+            /**
+             * Shareable invitation code used in URLs and acceptance requests.
+             */
             inviteCode: string;
+            /**
+             * Invitation delivery mode, such as EMAIL or LINK.
+             */
             inviteType: string;
+            /**
+             * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+             */
             status: string;
+            /**
+             * Maximum accepted joins allowed for the invitation.
+             */
             maxUses: number;
+            /**
+             * How many times the invitation has already been accepted.
+             */
             currentUses: number;
+            /**
+             * User ID of the commissioner or actor that issued the invite.
+             */
             invitedBy: string;
+            /**
+             * When the invite stops being valid, if it expires.
+             */
             expiresAt?: string;
+            /**
+             * When the invite stops being valid, if it expires.
+             */
             acceptedAt?: string;
+            /**
+             * User ID that accepted the invite, when known.
+             */
             acceptedBy?: string;
+            /**
+             * Invitation creation timestamp.
+             */
             createdAt: string;
+            /**
+             * Last invitation update timestamp.
+             */
             updatedAt: string;
         }>;
         skippedMembers: Array<string>;
@@ -611,8 +1082,17 @@ export type SendLeagueInvitationsResponses = {
 export type SendLeagueInvitationsResponse = SendLeagueInvitationsResponses[keyof SendLeagueInvitationsResponses];
 
 export type GenerateInviteLinkData = {
+    /**
+     * Commissioner request payload for creating a shareable invite link.
+     */
     body: {
+        /**
+         * Optional invite-link lifetime in days.
+         */
         expiresInDays?: number;
+        /**
+         * Optional maximum number of accepted joins. Zero means unlimited use.
+         */
         maxUses?: number;
     };
     path: {
@@ -642,20 +1122,65 @@ export type GenerateInviteLinkResponses = {
      * Default Response
      */
     201: {
+        /**
+         * Invitation record returned from commissioner invite-management APIs.
+         */
         invitation: {
+            /**
+             * Invitation record identifier.
+             */
             id: string;
+            /**
+             * League that owns the invitation.
+             */
             leagueId: string;
+            /**
+             * Email recipient for direct email invites. Link invites omit this field.
+             */
             email?: string;
+            /**
+             * Shareable invitation code used in URLs and acceptance requests.
+             */
             inviteCode: string;
+            /**
+             * Invitation delivery mode, such as EMAIL or LINK.
+             */
             inviteType: string;
+            /**
+             * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+             */
             status: string;
+            /**
+             * Maximum accepted joins allowed for the invitation.
+             */
             maxUses: number;
+            /**
+             * How many times the invitation has already been accepted.
+             */
             currentUses: number;
+            /**
+             * User ID of the commissioner or actor that issued the invite.
+             */
             invitedBy: string;
+            /**
+             * When the invite stops being valid, if it expires.
+             */
             expiresAt?: string;
+            /**
+             * When the invite stops being valid, if it expires.
+             */
             acceptedAt?: string;
+            /**
+             * User ID that accepted the invite, when known.
+             */
             acceptedBy?: string;
+            /**
+             * Invitation creation timestamp.
+             */
             createdAt: string;
+            /**
+             * Last invitation update timestamp.
+             */
             updatedAt: string;
         };
     };
@@ -749,10 +1274,25 @@ export type ListLeagueMembersResponses = {
      */
     200: {
         members: Array<{
+            /**
+             * Membership record identifier.
+             */
             id: string;
+            /**
+             * User account identifier for the member.
+             */
             userId: string;
+            /**
+             * Display name shown in member-management surfaces.
+             */
             displayName: string;
+            /**
+             * League role for the member, such as COMMISSIONER or MEMBER.
+             */
             role: string;
+            /**
+             * When the user joined or was activated in the league.
+             */
             joinedAt?: string;
         }>;
     };
@@ -761,8 +1301,17 @@ export type ListLeagueMembersResponses = {
 export type ListLeagueMembersResponse = ListLeagueMembersResponses[keyof ListLeagueMembersResponses];
 
 export type ChangeMemberRoleData = {
+    /**
+     * Commissioner-managed membership role update payload.
+     */
     body: {
+        /**
+         * Target membership role after the change. Commissioner grants league-administration access.
+         */
         role: 'COMMISSIONER' | 'MEMBER';
+        /**
+         * Optional explicit permission override list for the member.
+         */
         permissions?: Array<string>;
     };
     path: {
@@ -1720,15 +2269,36 @@ export type GetInvitationPreviewError = GetInvitationPreviewErrors[keyof GetInvi
 
 export type GetInvitationPreviewResponses = {
     /**
-     * Default Response
+     * Invitation preview payload used by `/invite/<inviteCode>` flows.
      */
     200: {
+        /**
+         * Public invitation preview shown before or after authentication.
+         */
         invitation: {
+            /**
+             * Invitation code currently being previewed.
+             */
             inviteCode: string;
+            /**
+             * Current invitation lifecycle state.
+             */
             status: string;
+            /**
+             * Minimal league identity shown before accepting the invite.
+             */
             league: {
+                /**
+                 * League ID associated with the invitation.
+                 */
                 id: string;
+                /**
+                 * Bookmarkable short code for the invited league.
+                 */
                 leagueCode: string;
+                /**
+                 * Display name for the invited league.
+                 */
                 name: string;
             };
         };
@@ -1738,7 +2308,13 @@ export type GetInvitationPreviewResponses = {
 export type GetInvitationPreviewResponse = GetInvitationPreviewResponses[keyof GetInvitationPreviewResponses];
 
 export type AcceptInvitationData = {
+    /**
+     * Authenticated invitation-acceptance payload.
+     */
     body: {
+        /**
+         * Invite code from the invite URL or invitation email.
+         */
         inviteCode: string;
     };
     path?: never;

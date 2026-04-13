@@ -26,6 +26,8 @@ export const getHealth = <ThrowOnError extends boolean = false>(options?: Option
 
 /**
  * Register a new user account
+ *
+ * Creates a new email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.
  */
 export const registerUser = <ThrowOnError extends boolean = false>(options: Options<RegisterUserData, ThrowOnError>) => (options.client ?? client).post<RegisterUserResponses, RegisterUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -39,6 +41,8 @@ export const registerUser = <ThrowOnError extends boolean = false>(options: Opti
 
 /**
  * Authenticate with email and password
+ *
+ * Authenticates an existing email/password account and returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.
  */
 export const loginUser = <ThrowOnError extends boolean = false>(options: Options<LoginUserData, ThrowOnError>) => (options.client ?? client).post<LoginUserResponses, LoginUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -52,6 +56,8 @@ export const loginUser = <ThrowOnError extends boolean = false>(options: Options
 
 /**
  * Exchange refresh token for new access token
+ *
+ * Rotates the refresh-token session forward and returns a new token bundle. Browser clients normally rely on the refresh cookie rather than sending a body payload.
  */
 export const refreshToken = <ThrowOnError extends boolean = false>(options?: Options<RefreshTokenData, ThrowOnError>) => (options?.client ?? client).post<RefreshTokenResponses, RefreshTokenErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -61,6 +67,8 @@ export const refreshToken = <ThrowOnError extends boolean = false>(options?: Opt
 
 /**
  * Revoke refresh token
+ *
+ * Revokes the current refresh-token session so the browser or client must authenticate again before making further authenticated requests.
  */
 export const logoutUser = <ThrowOnError extends boolean = false>(options?: Options<LogoutUserData, ThrowOnError>) => (options?.client ?? client).post<LogoutUserResponses, LogoutUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -70,6 +78,8 @@ export const logoutUser = <ThrowOnError extends boolean = false>(options?: Optio
 
 /**
  * Request password reset email
+ *
+ * Begins the password-reset flow for an email/password account. This remains a placeholder-style capability in the current product surface.
  */
 export const forgotPassword = <ThrowOnError extends boolean = false>(options: Options<ForgotPasswordData, ThrowOnError>) => (options.client ?? client).post<ForgotPasswordResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -83,6 +93,8 @@ export const forgotPassword = <ThrowOnError extends boolean = false>(options: Op
 
 /**
  * OAuth provider callback
+ *
+ * Handles an OAuth callback payload from an upstream provider. This route is documented now for contract completeness but the product flow remains deferred.
  */
 export const oauthCallback = <ThrowOnError extends boolean = false>(options: Options<OauthCallbackData, ThrowOnError>) => (options.client ?? client).post<unknown, OauthCallbackErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -96,6 +108,8 @@ export const oauthCallback = <ThrowOnError extends boolean = false>(options: Opt
 
 /**
  * Get current user profile from JWT
+ *
+ * Returns the authenticated user profile that drives role-aware app-shell behavior after the browser already has a valid access token.
  */
 export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>) => (options?.client ?? client).get<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -105,6 +119,8 @@ export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: O
 
 /**
  * List leagues for the current user
+ *
+ * Returns the league summaries visible to the authenticated user. This list powers the welcome page, header selector, and richer My Leagues overview.
  */
 export const listLeagues = <ThrowOnError extends boolean = false>(options?: Options<ListLeaguesData, ThrowOnError>) => (options?.client ?? client).get<ListLeaguesResponses, ListLeaguesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -114,6 +130,8 @@ export const listLeagues = <ThrowOnError extends boolean = false>(options?: Opti
 
 /**
  * Create a new league
+ *
+ * Creates a new league for the authenticated commissioner, generates the stable league code used in bookmarkable routes, and returns the initial league detail payload.
  */
 export const createLeague = <ThrowOnError extends boolean = false>(options: Options<CreateLeagueData, ThrowOnError>) => (options.client ?? client).post<CreateLeagueResponses, CreateLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -127,6 +145,8 @@ export const createLeague = <ThrowOnError extends boolean = false>(options: Opti
 
 /**
  * Get league details by ID
+ *
+ * Returns detailed league information by internal league ID for authenticated member or commissioner surfaces that already know the database identifier.
  */
 export const getLeague = <ThrowOnError extends boolean = false>(options: Options<GetLeagueData, ThrowOnError>) => (options.client ?? client).get<GetLeagueResponses, GetLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -136,6 +156,8 @@ export const getLeague = <ThrowOnError extends boolean = false>(options: Options
 
 /**
  * Get league details by league code
+ *
+ * Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation.
  */
 export const getLeagueByCode = <ThrowOnError extends boolean = false>(options: Options<GetLeagueByCodeData, ThrowOnError>) => (options.client ?? client).get<GetLeagueByCodeResponses, GetLeagueByCodeErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -145,6 +167,8 @@ export const getLeagueByCode = <ThrowOnError extends boolean = false>(options: O
 
 /**
  * Update league settings
+ *
+ * Allows a commissioner to patch league settings such as activity state and invitation policy. The resulting league payload should drive read-only or active UI behavior.
  */
 export const updateLeagueSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueSettingsData, ThrowOnError>) => (options.client ?? client).put<UpdateLeagueSettingsResponses, UpdateLeagueSettingsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -158,6 +182,8 @@ export const updateLeagueSettings = <ThrowOnError extends boolean = false>(optio
 
 /**
  * Send email invitations to join a league
+ *
+ * Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.
  */
 export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(options: Options<SendLeagueInvitationsData, ThrowOnError>) => (options.client ?? client).post<SendLeagueInvitationsResponses, SendLeagueInvitationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -171,6 +197,8 @@ export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(opti
 
 /**
  * Generate a shareable invite link
+ *
+ * Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.
  */
 export const generateInviteLink = <ThrowOnError extends boolean = false>(options: Options<GenerateInviteLinkData, ThrowOnError>) => (options.client ?? client).post<GenerateInviteLinkResponses, GenerateInviteLinkErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -184,6 +212,8 @@ export const generateInviteLink = <ThrowOnError extends boolean = false>(options
 
 /**
  * Revoke an invite link
+ *
+ * Revokes a previously created shareable invite link so the invite code can no longer be accepted by future users.
  */
 export const revokeInviteLink = <ThrowOnError extends boolean = false>(options: Options<RevokeInviteLinkData, ThrowOnError>) => (options.client ?? client).delete<RevokeInviteLinkResponses, RevokeInviteLinkErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -193,6 +223,8 @@ export const revokeInviteLink = <ThrowOnError extends boolean = false>(options: 
 
 /**
  * List league members
+ *
+ * Returns the current league membership list for authenticated members and commissioners. This powers member rosters and commissioner management surfaces.
  */
 export const listLeagueMembers = <ThrowOnError extends boolean = false>(options: Options<ListLeagueMembersData, ThrowOnError>) => (options.client ?? client).get<ListLeagueMembersResponses, ListLeagueMembersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -202,6 +234,8 @@ export const listLeagueMembers = <ThrowOnError extends boolean = false>(options:
 
 /**
  * Change a member role and permissions
+ *
+ * Allows a commissioner to promote or demote a member and optionally adjust explicit permission overrides for that membership.
  */
 export const changeMemberRole = <ThrowOnError extends boolean = false>(options: Options<ChangeMemberRoleData, ThrowOnError>) => (options.client ?? client).put<ChangeMemberRoleResponses, ChangeMemberRoleErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -215,6 +249,8 @@ export const changeMemberRole = <ThrowOnError extends boolean = false>(options: 
 
 /**
  * Remove a member from the league
+ *
+ * Removes a member from the target league. Commissioners use this to manage league membership directly.
  */
 export const removeMember = <ThrowOnError extends boolean = false>(options: Options<RemoveMemberData, ThrowOnError>) => (options.client ?? client).delete<RemoveMemberResponses, RemoveMemberErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -224,6 +260,8 @@ export const removeMember = <ThrowOnError extends boolean = false>(options: Opti
 
 /**
  * Leave a league as the current member
+ *
+ * Allows the authenticated user to leave a league through their own membership rather than through a commissioner-managed removal flow.
  */
 export const leaveLeague = <ThrowOnError extends boolean = false>(options: Options<LeaveLeagueData, ThrowOnError>) => (options.client ?? client).delete<LeaveLeagueResponses, LeaveLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -233,6 +271,8 @@ export const leaveLeague = <ThrowOnError extends boolean = false>(options: Optio
 
 /**
  * Get commissioner dashboard for a league
+ *
+ * Returns the commissioner-oriented dashboard payload for a league, including action items, member counts, pending invites, and upcoming events.
  */
 export const getLeagueDashboard = <ThrowOnError extends boolean = false>(options: Options<GetLeagueDashboardData, ThrowOnError>) => (options.client ?? client).get<GetLeagueDashboardResponses, GetLeagueDashboardErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -361,6 +401,8 @@ export const removeSquadCoManager = <ThrowOnError extends boolean = false>(optio
 
 /**
  * Preview a league invitation by invite code
+ *
+ * Returns the minimal league identity and invitation state needed to render the public `/invite/<inviteCode>` entry flow before or after authentication.
  */
 export const getInvitationPreview = <ThrowOnError extends boolean = false>(options: Options<GetInvitationPreviewData, ThrowOnError>) => (options.client ?? client).get<GetInvitationPreviewResponses, GetInvitationPreviewErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -370,6 +412,8 @@ export const getInvitationPreview = <ThrowOnError extends boolean = false>(optio
 
 /**
  * Accept a league invitation using an invite code
+ *
+ * Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league.
  */
 export const acceptInvitation = <ThrowOnError extends boolean = false>(options: Options<AcceptInvitationData, ThrowOnError>) => (options.client ?? client).post<AcceptInvitationResponses, AcceptInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

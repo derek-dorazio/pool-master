@@ -40,6 +40,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Auth'],
       summary: 'Register a new user account',
+      description:
+        'Creates a new email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.',
       operationId: 'registerUser',
       body: zodToJsonSchema(RegisterRequestSchema),
       response: {
@@ -56,6 +58,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Auth'],
       summary: 'Authenticate with email and password',
+      description:
+        'Authenticates an existing email/password account and returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.',
       operationId: 'loginUser',
       body: zodToJsonSchema(LoginRequestSchema),
       response: {
@@ -71,6 +75,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Auth'],
       summary: 'Exchange refresh token for new access token',
+      description:
+        'Rotates the refresh-token session forward and returns a new token bundle. Browser clients normally rely on the refresh cookie rather than sending a body payload.',
       operationId: 'refreshToken',
       response: {
         200: zodToJsonSchema(TokenRefreshResponseSchema),
@@ -85,6 +91,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Auth'],
       summary: 'Revoke refresh token',
+      description:
+        'Revokes the current refresh-token session so the browser or client must authenticate again before making further authenticated requests.',
       operationId: 'logoutUser',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -99,6 +107,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Auth'],
       summary: 'Request password reset email',
+      description:
+        'Begins the password-reset flow for an email/password account. This remains a placeholder-style capability in the current product surface.',
       operationId: 'forgotPassword',
       body: zodToJsonSchema(ForgotPasswordRequestSchema),
       response: { 200: zodToJsonSchema(ForgotPasswordResponseSchema) },
@@ -111,6 +121,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Auth'],
       summary: 'OAuth provider callback',
+      description:
+        'Handles an OAuth callback payload from an upstream provider. This route is documented now for contract completeness but the product flow remains deferred.',
       operationId: 'oauthCallback',
       body: zodToJsonSchema(OAuthCallbackRequestSchema),
       response: { 501: zodToJsonSchema(OAuthCallbackResponseSchema) },
@@ -123,6 +135,8 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Auth'],
       summary: 'Get current user profile from JWT',
+      description:
+        'Returns the authenticated user profile that drives role-aware app-shell behavior after the browser already has a valid access token.',
       operationId: 'getCurrentUser',
       response: {
         200: zodToJsonSchema(MeResponseSchema),

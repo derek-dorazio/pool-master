@@ -90,6 +90,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'List leagues for the current user',
+      description:
+        'Returns the league summaries visible to the authenticated user. This list powers the welcome page, header selector, and richer My Leagues overview.',
       operationId: 'listLeagues',
       response: {
         200: zodToJsonSchema(LeagueListResponseSchema),
@@ -103,6 +105,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Create a new league',
+      description:
+        'Creates a new league for the authenticated commissioner, generates the stable league code used in bookmarkable routes, and returns the initial league detail payload.',
       operationId: 'createLeague',
       body: zodToJsonSchema(CreateLeagueRequestSchema),
       response: {
@@ -117,6 +121,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Get league details by ID',
+      description:
+        'Returns detailed league information by internal league ID for authenticated member or commissioner surfaces that already know the database identifier.',
       operationId: 'getLeague',
       response: {
         200: zodToJsonSchema(LeagueResponseSchema),
@@ -130,6 +136,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Get league details by league code',
+      description:
+        'Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation.',
       operationId: 'getLeagueByCode',
       response: {
         200: zodToJsonSchema(LeagueResponseSchema),
@@ -143,6 +151,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Update league settings',
+      description:
+        'Allows a commissioner to patch league settings such as activity state and invitation policy. The resulting league payload should drive read-only or active UI behavior.',
       operationId: 'updateLeagueSettings',
       body: zodToJsonSchema(UpdateLeagueSettingsRequestSchema),
       response: {
@@ -160,6 +170,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Send email invitations to join a league',
+      description:
+        'Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.',
       operationId: 'sendLeagueInvitations',
       body: zodToJsonSchema(SendLeagueInvitationsRequestSchema),
       response: {
@@ -175,6 +187,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Generate a shareable invite link',
+      description:
+        'Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.',
       operationId: 'generateInviteLink',
       body: zodToJsonSchema(GenerateInviteLinkRequestSchema),
       response: {
@@ -190,6 +204,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Revoke an invite link',
+      description:
+        'Revokes a previously created shareable invite link so the invite code can no longer be accepted by future users.',
       operationId: 'revokeInviteLink',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -207,6 +223,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'List league members',
+      description:
+        'Returns the current league membership list for authenticated members and commissioners. This powers member rosters and commissioner management surfaces.',
       operationId: 'listLeagueMembers',
       response: {
         200: zodToJsonSchema(LeagueMembersResponseSchema),
@@ -222,6 +240,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Change a member role and permissions',
+      description:
+        'Allows a commissioner to promote or demote a member and optionally adjust explicit permission overrides for that membership.',
       operationId: 'changeMemberRole',
       body: zodToJsonSchema(ChangeLeagueMemberRoleRequestSchema),
       response: {
@@ -242,6 +262,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Remove a member from the league',
+      description:
+        'Removes a member from the target league. Commissioners use this to manage league membership directly.',
       operationId: 'removeMember',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -258,6 +280,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Leave a league as the current member',
+      description:
+        'Allows the authenticated user to leave a league through their own membership rather than through a commissioner-managed removal flow.',
       operationId: 'leaveLeague',
       response: {
         200: zodToJsonSchema(SuccessSchema),
@@ -275,6 +299,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Leagues'],
       summary: 'Get commissioner dashboard for a league',
+      description:
+        'Returns the commissioner-oriented dashboard payload for a league, including action items, member counts, pending invites, and upcoming events.',
       operationId: 'getLeagueDashboard',
       response: {
         200: zodToJsonSchema(LeagueDashboardResponseSchema),

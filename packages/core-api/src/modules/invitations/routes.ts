@@ -8,6 +8,7 @@
 import type { FastifyInstance } from 'fastify';
 import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
 import {
+  AcceptInvitationRequestSchema,
   InvitationPreviewResponseSchema,
   LeagueMembershipResponseSchema,
 } from '@poolmaster/shared/dto/leagues.dto';
@@ -33,6 +34,8 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
     schema: {
       tags: ['Invitations'],
       summary: 'Preview a league invitation by invite code',
+      description:
+        'Returns the minimal league identity and invitation state needed to render the public `/invite/<inviteCode>` entry flow before or after authentication.',
       operationId: 'getInvitationPreview',
       response: {
         200: zodToJsonSchema(InvitationPreviewResponseSchema),
@@ -47,19 +50,15 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
     schema: {
       tags: ['Invitations'],
       summary: 'Accept a league invitation using an invite code',
+      description:
+        'Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league.',
       operationId: 'acceptInvitation',
+      body: zodToJsonSchema(AcceptInvitationRequestSchema),
       response: {
         201: zodToJsonSchema(LeagueMembershipResponseSchema),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-      body: {
-        type: 'object',
-        required: ['inviteCode'],
-        properties: {
-          inviteCode: { type: 'string', minLength: 1 },
-        },
       },
     },
     handler: handlers.acceptInvitation,
