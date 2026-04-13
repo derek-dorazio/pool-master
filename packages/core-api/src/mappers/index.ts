@@ -1,7 +1,6 @@
 export * from './auth.mapper';
 export * from './leagues.mapper';
 export * from './contests.mapper';
-export * from './drafts.mapper';
 export * from './participants.mapper';
 export * from './standings.mapper';
 export * from './account-consent.mapper';
