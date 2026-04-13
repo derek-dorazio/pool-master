@@ -1,5 +1,9 @@
 # Model Change Rules
 
+For domain-model consistency conventions such as `isActive` vs `status`,
+soft-delete vs hard-delete semantics, and lifecycle naming defaults, see
+[domain-model-conventions-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/domain-model-conventions-rules.md).
+
 When a field or API-facing model changes, update every affected layer for every
 affected entity and DTO. Skipping one layer causes runtime drift,
 generated-client breakage, stale API docs, or stale UI assumptions.

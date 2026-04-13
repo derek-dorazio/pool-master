@@ -22,6 +22,7 @@ All agents working in this repo should:
 - `rules/workflow-rules.md`
 - `rules/architecture-rules.md`
 - `rules/poolmaster-webapp-rules.md`
+- `rules/domain-model-conventions-rules.md`
 - `rules/service-rules.md`
 - `rules/react-ui-rules.md`
 - `rules/ux-rules.md`
@@ -35,6 +36,7 @@ All agents working in this repo should:
 - `rules/workflow-rules.md`: plan tracking, execution protocol, and how to update plan task status.
 - `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
 - `rules/poolmaster-webapp-rules.md`: single-webapp product rules, role-based behavior, archived-app policy, and functional expectations for the go-forward PoolMaster web app.
+- `rules/domain-model-conventions-rules.md`: lifecycle naming, soft-delete vs hard-delete semantics, `status` vs `isActive`, and domain-model consistency conventions.
 - `rules/service-rules.md`: backend Fastify, Prisma, DTO, mapper, and OpenAPI requirements.
 - `rules/react-ui-rules.md`: PoolMaster React conventions, generated-client usage, and prohibited frontend patterns.
 - `rules/ux-rules.md`: standard UX conventions, state communication defaults, and PoolMaster-specific interaction guidance for first-draft web implementation.

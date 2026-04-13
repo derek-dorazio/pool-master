@@ -10,6 +10,7 @@ All plan documents and implementation work must conform to these rules. This is 
 - **[Android Rules](android-rules.md)** — Android Kotlin + Jetpack Compose rules
 - **[Testing Rules](testing-rules.md)** — unit, integration, contract, smoke, and browser E2E rules
 - **[Workflow Rules](workflow-rules.md)** — action-plan tracking and rule/documentation update requirements
+- **[Domain Model Conventions Rules](domain-model-conventions-rules.md)** — lifecycle naming, `status` vs `isActive`, and shared domain-model consistency defaults
 
 ---
 
