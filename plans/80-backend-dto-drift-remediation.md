@@ -129,11 +129,11 @@ Out of scope:
 | --- | --- | --- | --- | --- |
 | 80-001 | 1 | Inventory the active domain entities and DTO families that still matter to the frontend-facing contract | Done | Initial audit already covered leagues, contests, participants, admin, events, and history surfaces. |
 | 80-002 | 1 | Confirm and document concrete DTO/domain drift findings | Done | `UserLeagueDetailDtoSchema.sport` and orphaned `UpdateLeagueRequestSchema` are confirmed issues. |
-| 80-003 | 1 | Sweep all active request/response DTOs for stale or placeholder fields | Not Started | Includes league, admin, contest, participant, history, events, ingestion, and other currently active backend contract areas. |
-| 80-004 | 1 | Sweep all route schemas and handlers for request models that are exported but not actually wired to active routes | Not Started | Remove or intentionally reintroduce orphaned request shapes as part of a real route-backed behavior. |
-| 80-005 | 1 | Sweep mapper/service outputs for placeholder values that exist only to satisfy stale DTOs | Not Started | Example already found: `sport: ''` in admin user detail. |
-| 80-006 | 1 | Regenerate OpenAPI and SDK/types after each contract-aligned change set | Not Started | The generated artifacts must match the cleaned DTO surface. |
-| 80-007 | 1 | Re-run backend validation gates after each aligned slice | Not Started | Typecheck, lint, and service coverage gates should confirm the cleanup did not break the backend. |
+| 80-003 | 1 | Sweep all active request/response DTOs for stale or placeholder fields | In Progress | First cleanup slice removes the stale admin league `sport` field and the orphaned history season DTO surface. |
+| 80-004 | 1 | Sweep all route schemas and handlers for request models that are exported but not actually wired to active routes | In Progress | First cleanup slice removes the orphaned `UpdateLeagueRequestSchema`. |
+| 80-005 | 1 | Sweep mapper/service outputs for placeholder values that exist only to satisfy stale DTOs | In Progress | First cleanup slice removes the admin user-detail `sport: ''` placeholder. |
+| 80-006 | 1 | Regenerate OpenAPI and SDK/types after each contract-aligned change set | In Progress | First cleanup slice already refreshed OpenAPI and generated types after removing stale admin/history/league DTO surface. |
+| 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | First cleanup slice already passed shared/core typecheck, backend lint, and fresh merged service coverage. |
 | 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | Not Started | This is the key decision point for `UpdateLeagueRequestSchema` and any similar drift found during the sweep. |
 | 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | Not Started | Examples include contract fields that are still typed as plain strings even though the domain model already has a constrained enum. |
 

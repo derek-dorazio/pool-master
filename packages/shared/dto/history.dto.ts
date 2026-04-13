@@ -20,25 +20,6 @@ export const HistorySeasonHighlightsDtoSchema = z.object({
 }).describe('Lightweight highlight metrics for a season.');
 export type HistorySeasonHighlightsDto = z.infer<typeof HistorySeasonHighlightsDtoSchema>;
 
-export const HistorySeasonSummaryDtoSchema = z.object({
-  id: z.string(),
-  leagueId: z.string(),
-  seasonName: z.string(),
-  sport: z.string().nullable().optional(),
-  year: z.number().nullable().optional(),
-  numMembers: z.number(),
-  numContests: z.number(),
-  totalPrizePool: z.number(),
-  champions: z.array(HistorySeasonChampionDtoSchema),
-  highlights: HistorySeasonHighlightsDtoSchema.describe('Derived season highlights.'),
-  commissionerNote: z.string().nullable().optional().describe('Optional commissioner note retained with the season archive.'),
-  openedAt: DateTimeSchema.nullable().optional().describe('When the season opened, if tracked.'),
-  closedAt: DateTimeSchema.nullable().optional().describe('When the season closed, if tracked.'),
-  createdAt: DateTimeSchema.describe('When the season summary record was created.'),
-  updatedAt: DateTimeSchema.describe('When the season summary record was last updated.'),
-}).describe('League-history season summary.');
-export type HistorySeasonSummaryDto = z.infer<typeof HistorySeasonSummaryDtoSchema>;
-
 export const HistoryEntriesResponseSchema = z.object({
   entries: z.array(HistoryObjectSchema),
 }).describe('Historical contest-entry response.');
@@ -51,9 +32,6 @@ export const HistoryPayoutsResponseSchema = z.object({
 export const HistoryResultsResponseSchema = z.object({
   results: z.array(HistoryObjectSchema),
 }).describe('Historical results response.');
-export const HistorySeasonsResponseSchema = z.object({
-  seasons: z.array(HistorySeasonSummaryDtoSchema),
-}).describe('League-history seasons response.');
 export const HistoryChampionsResponseSchema = z.object({
   champions: z.array(HistoryObjectSchema),
 }).describe('Historical champions response.');

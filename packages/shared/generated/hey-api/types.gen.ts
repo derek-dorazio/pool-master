@@ -7790,7 +7790,6 @@ export type AdminGetUserDetailResponses = {
         leagues: Array<{
             id: string;
             name: string;
-            sport: string;
             role: string;
             joinedAt?: string;
         }>;

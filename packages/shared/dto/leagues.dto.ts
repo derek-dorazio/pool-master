@@ -16,14 +16,6 @@ export const CreateLeagueRequestSchema = z.object({
 }).describe('Commissioner request payload for creating a new private league.');
 export type CreateLeagueRequest = z.infer<typeof CreateLeagueRequestSchema>;
 
-export const UpdateLeagueRequestSchema = z.object({
-  name: z.string().min(1).max(100).optional().describe('Updated league display name.'),
-  description: z.string().max(500).optional().describe('Updated league description.'),
-  visibility: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional().describe('Updated league visibility mode.'),
-  maxMembers: z.number().int().min(2).max(1000).optional().describe('Updated membership cap.'),
-}).describe('Commissioner patch payload for editable league metadata.');
-export type UpdateLeagueRequest = z.infer<typeof UpdateLeagueRequestSchema>;
-
 export const UpdateLeagueSettingsRequestSchema = z.object({
   isActive: z
     .boolean()

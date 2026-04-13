@@ -45,7 +45,6 @@ export type UserListResponse = z.infer<typeof UserListResponseSchema>;
 export const UserLeagueDetailDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
-  sport: z.string(),
   role: z.string(),
   joinedAt: z.string().datetime().optional(),
 }).describe('Expanded league detail embedded in admin user detail responses.');

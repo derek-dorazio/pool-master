@@ -40,7 +40,7 @@ export interface UserDetailView {
   status: 'active' | 'disabled';
   createdAt: Date;
   lastLoginAt?: Date;
-  leagues: { id: string; name: string; sport: string; role: string; joinedAt?: Date }[];
+  leagues: { id: string; name: string; role: string; joinedAt?: Date }[];
   activeContests: { id: string; name: string; sport: string; status: string; rank?: number }[];
   devices: { id: string; platform: string; lastActiveAt: Date; tokenStatus: string }[];
   recentAuthEvents: { type: string; timestamp: Date; ipAddress?: string; success: boolean }[];
@@ -161,7 +161,6 @@ export class UserService {
       leagues.push({
         id: m.league.id,
         name: m.league.name,
-        sport: '',
         role: m.role.toLowerCase(),
         joinedAt: m.joinedAt,
       });

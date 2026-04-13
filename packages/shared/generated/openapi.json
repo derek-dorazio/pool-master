@@ -14188,9 +14188,6 @@
                           "name": {
                             "type": "string"
                           },
-                          "sport": {
-                            "type": "string"
-                          },
                           "role": {
                             "type": "string"
                           },
@@ -14202,7 +14199,6 @@
                         "required": [
                           "id",
                           "name",
-                          "sport",
                           "role"
                         ],
                         "additionalProperties": false,
