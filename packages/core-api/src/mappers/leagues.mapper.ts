@@ -6,7 +6,7 @@ import type {
   LeagueDetailDto,
   LeagueListResponse,
 } from '@poolmaster/shared/dto';
-import type { LeagueSettings } from '@poolmaster/shared/domain';
+import type { LeagueRole, LeagueSettings, LeagueVisibility } from '@poolmaster/shared/domain';
 
 interface LeagueRow {
   id: string;
@@ -14,7 +14,7 @@ interface LeagueRow {
   name: string;
   description?: string | null;
   createdBy: string;
-  visibility: string;
+  visibility: LeagueVisibility;
   maxMembers: number;
   settings: Record<string, unknown>;
   createdAt: Date;
@@ -23,7 +23,7 @@ interface LeagueRow {
 
 export function toLeagueSummaryDto(
   league: LeagueRow,
-  opts?: { memberCount?: number; activeContestCount?: number; role?: string },
+  opts?: { memberCount?: number; activeContestCount?: number; role?: LeagueRole },
 ): LeagueSummaryDto {
   const settings = league.settings as unknown as LeagueSettings | undefined;
   return {
@@ -42,7 +42,7 @@ export function toLeagueSummaryDto(
 
 export function toLeagueDetailDto(
   league: LeagueRow,
-  opts?: { memberCount?: number; activeContestCount?: number; role?: string },
+  opts?: { memberCount?: number; activeContestCount?: number; role?: LeagueRole },
 ): LeagueDetailDto {
   const settings = league.settings as unknown as LeagueSettings | undefined;
   return {

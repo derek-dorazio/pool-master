@@ -901,6 +901,10 @@
                           },
                           "visibility": {
                             "type": "string",
+                            "enum": [
+                              "PRIVATE",
+                              "PUBLIC"
+                            ],
                             "description": "Current league visibility mode."
                           },
                           "isActive": {
@@ -917,6 +921,10 @@
                           },
                           "role": {
                             "type": "string",
+                            "enum": [
+                              "COMMISSIONER",
+                              "MEMBER"
+                            ],
                             "description": "Current user role in the league when the response is viewer-scoped."
                           },
                           "createdAt": {
@@ -1061,6 +1069,10 @@
                         },
                         "visibility": {
                           "type": "string",
+                          "enum": [
+                            "PRIVATE",
+                            "PUBLIC"
+                          ],
                           "description": "Current league visibility mode."
                         },
                         "isActive": {
@@ -1077,6 +1089,10 @@
                         },
                         "role": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
                           "description": "Current user role in the league when the response is viewer-scoped."
                         },
                         "createdAt": {
@@ -1095,6 +1111,11 @@
                         },
                         "invitePolicy": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER_ONLY",
+                            "LINK_INVITE",
+                            "OPEN"
+                          ],
                           "description": "Current invitation policy resolved from league settings."
                         }
                       },
@@ -1249,6 +1270,10 @@
                         },
                         "visibility": {
                           "type": "string",
+                          "enum": [
+                            "PRIVATE",
+                            "PUBLIC"
+                          ],
                           "description": "Current league visibility mode."
                         },
                         "isActive": {
@@ -1265,6 +1290,10 @@
                         },
                         "role": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
                           "description": "Current user role in the league when the response is viewer-scoped."
                         },
                         "createdAt": {
@@ -1283,6 +1312,11 @@
                         },
                         "invitePolicy": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER_ONLY",
+                            "LINK_INVITE",
+                            "OPEN"
+                          ],
                           "description": "Current invitation policy resolved from league settings."
                         }
                       },
@@ -1398,6 +1432,10 @@
                         },
                         "visibility": {
                           "type": "string",
+                          "enum": [
+                            "PRIVATE",
+                            "PUBLIC"
+                          ],
                           "description": "Current league visibility mode."
                         },
                         "isActive": {
@@ -1414,6 +1452,10 @@
                         },
                         "role": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
                           "description": "Current user role in the league when the response is viewer-scoped."
                         },
                         "createdAt": {
@@ -1432,6 +1474,11 @@
                         },
                         "invitePolicy": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER_ONLY",
+                            "LINK_INVITE",
+                            "OPEN"
+                          ],
                           "description": "Current invitation policy resolved from league settings."
                         }
                       },
@@ -1612,6 +1659,10 @@
                         },
                         "visibility": {
                           "type": "string",
+                          "enum": [
+                            "PRIVATE",
+                            "PUBLIC"
+                          ],
                           "description": "Current league visibility mode."
                         },
                         "isActive": {
@@ -1628,6 +1679,10 @@
                         },
                         "role": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
                           "description": "Current user role in the league when the response is viewer-scoped."
                         },
                         "createdAt": {
@@ -1646,6 +1701,11 @@
                         },
                         "invitePolicy": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER_ONLY",
+                            "LINK_INVITE",
+                            "OPEN"
+                          ],
                           "description": "Current invitation policy resolved from league settings."
                         }
                       },
@@ -1796,10 +1856,20 @@
                           },
                           "inviteType": {
                             "type": "string",
+                            "enum": [
+                              "EMAIL",
+                              "LINK"
+                            ],
                             "description": "Invitation delivery mode, such as EMAIL or LINK."
                           },
                           "status": {
                             "type": "string",
+                            "enum": [
+                              "PENDING",
+                              "ACCEPTED",
+                              "EXPIRED",
+                              "REVOKED"
+                            ],
                             "description": "Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED."
                           },
                           "maxUses": {
@@ -2007,10 +2077,20 @@
                         },
                         "inviteType": {
                           "type": "string",
+                          "enum": [
+                            "EMAIL",
+                            "LINK"
+                          ],
                           "description": "Invitation delivery mode, such as EMAIL or LINK."
                         },
                         "status": {
                           "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "ACCEPTED",
+                            "EXPIRED",
+                            "REVOKED"
+                          ],
                           "description": "Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED."
                         },
                         "maxUses": {
@@ -2303,6 +2383,10 @@
                           },
                           "role": {
                             "type": "string",
+                            "enum": [
+                              "COMMISSIONER",
+                              "MEMBER"
+                            ],
                             "description": "League role for the member, such as COMMISSIONER or MEMBER."
                           },
                           "joinedAt": {
@@ -2496,10 +2580,18 @@
                         },
                         "role": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
                           "description": "Current league role for the user."
                         },
                         "status": {
                           "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE"
+                          ],
                           "description": "Membership lifecycle state."
                         },
                         "permissions": {
@@ -3763,6 +3855,10 @@
                         },
                         "role": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
                           "description": "Optional requested league role for the imported member."
                         }
                       },
@@ -5594,6 +5690,12 @@
                         },
                         "status": {
                           "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "ACCEPTED",
+                            "EXPIRED",
+                            "REVOKED"
+                          ],
                           "description": "Current invitation lifecycle state."
                         },
                         "league": {
@@ -5776,10 +5878,18 @@
                         },
                         "role": {
                           "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
                           "description": "Current league role for the user."
                         },
                         "status": {
                           "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE"
+                          ],
                           "description": "Membership lifecycle state."
                         },
                         "permissions": {

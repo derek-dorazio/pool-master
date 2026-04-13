@@ -90,6 +90,24 @@ Impact:
 - this should either be removed from the active contract surface or tied to a
   real route as part of a deliberate feature decision
 
+### D-004: League request and response DTOs still type enum-backed fields as generic strings
+
+- `packages/shared/dto/leagues.dto.ts`
+  - several request and response fields were still declared as plain strings
+    even though the active domain already constrains them to shared enums
+- `packages/shared/domain/enums.ts`
+  - the active domain already defines `LeagueVisibility`, `LeagueRole`,
+    `LeagueMembershipStatus`, `InvitePolicy`, `InviteType`, and
+    `InvitationStatus`
+
+Impact:
+- generated OpenAPI and generated SDK/types were broader than the real domain
+  behavior for league and invitation surfaces
+- frontend consumers could not rely on the exported contract to understand the
+  allowed values for these fields
+- backend implementation code was still carrying a few generic-string
+  assumptions in member-management paths
+
 ## Audit Scope
 
 In scope:
@@ -135,7 +153,7 @@ Out of scope:
 | 80-006 | 1 | Regenerate OpenAPI and SDK/types after each contract-aligned change set | In Progress | First cleanup slice already refreshed OpenAPI and generated types after removing stale admin/history/league DTO surface. |
 | 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | First cleanup slice already passed shared/core typecheck, backend lint, and fresh merged service coverage. |
 | 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | Not Started | This is the key decision point for `UpdateLeagueRequestSchema` and any similar drift found during the sweep. |
-| 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | Not Started | Examples include contract fields that are still typed as plain strings even though the domain model already has a constrained enum. |
+| 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | Second cleanup slice narrowed league and invitation enum-backed DTO fields from generic strings to shared enum unions and updated the exported contract artifacts. |
 
 ## Relationship To Other Plans
 
@@ -152,6 +170,10 @@ Out of scope:
     `leagueCode` field and no longer exposes stale create-league inputs.
   - The plan remains open because the repo still needs the broader
     domain-to-DTO audit beyond leagues.
+- Additional validated remediation slices now include:
+  - removal of stale admin/history/orphaned league DTO surface
+  - narrowing of league and invitation enum-backed fields so the generated
+    contract matches the active domain enums more closely
 - Removing a property from the active contract means removing it from:
   - DTOs
   - route schemas

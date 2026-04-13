@@ -2,6 +2,14 @@
  * League DTOs — request/response schemas for league endpoints.
  */
 import { z } from 'zod';
+import {
+  InvitationStatus,
+  InvitePolicy,
+  InviteType,
+  LeagueMembershipStatus,
+  LeagueRole,
+  LeagueVisibility,
+} from '../domain/enums';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 
 // --- Requests ---
@@ -22,7 +30,7 @@ export const UpdateLeagueSettingsRequestSchema = z.object({
     .optional()
     .describe('League activity flag. Inactive leagues remain readable but should restrict write actions in the web app.'),
   invitePolicy: z
-    .enum(['COMMISSIONER_ONLY', 'LINK_INVITE', 'OPEN'])
+    .enum([InvitePolicy.COMMISSIONER_ONLY, InvitePolicy.LINK_INVITE, InvitePolicy.OPEN])
     .optional()
     .describe('Invitation policy controlling whether members join only through commissioners, links, or open enrollment.'),
   allowMidSeasonJoin: z.boolean().optional().describe('Whether members may join after the league has already started.'),
@@ -57,7 +65,7 @@ export type GenerateInviteLinkRequest = z.infer<typeof GenerateInviteLinkRequest
 
 export const ChangeLeagueMemberRoleRequestSchema = z.object({
   role: z
-    .enum(['COMMISSIONER', 'MEMBER'])
+    .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
     .describe('Target membership role after the change. Commissioner grants league-administration access.'),
   permissions: z.array(z.string()).optional().describe('Optional explicit permission override list for the member.'),
 }).describe('Commissioner-managed membership role update payload.');
@@ -76,7 +84,10 @@ export type CopySeasonRequest = z.infer<typeof CopySeasonRequestSchema>;
 export const CsvImportRowSchema = z.object({
   email: z.string().describe('Email address for the imported member row.'),
   displayName: z.string().optional().describe('Optional display name supplied in the import row.'),
-  role: z.string().optional().describe('Optional requested league role for the imported member.'),
+  role: z
+    .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
+    .optional()
+    .describe('Optional requested league role for the imported member.'),
 }).describe('Single CSV-style member import row.');
 export type CsvImportRow = z.infer<typeof CsvImportRowSchema>;
 
@@ -92,11 +103,16 @@ export const LeagueSummaryDtoSchema = z.object({
   leagueCode: z.string().describe('Stable short code used in bookmarkable league-home routes and invite context.'),
   name: z.string().describe('Primary display name for the league.'),
   description: z.string().nullable().optional().describe('Optional short league description.'),
-  visibility: z.string().describe('Current league visibility mode.'),
+  visibility: z
+    .enum([LeagueVisibility.PRIVATE, LeagueVisibility.PUBLIC])
+    .describe('Current league visibility mode.'),
   isActive: z.boolean().describe('Whether the league is currently active for normal write interactions.'),
   memberCount: z.number().describe('Current number of memberships in the league.'),
   activeContestCount: z.number().describe('Number of currently active contests associated with the league.'),
-  role: z.string().optional().describe('Current user role in the league when the response is viewer-scoped.'),
+  role: z
+    .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
+    .optional()
+    .describe('Current user role in the league when the response is viewer-scoped.'),
   createdAt: z.string().datetime().optional().describe('League creation timestamp in ISO 8601 format.'),
 }).describe('League list item used for selectors, welcome screens, and league overviews.');
 export type LeagueSummaryDto = z.infer<typeof LeagueSummaryDtoSchema>;
@@ -104,7 +120,10 @@ export type LeagueSummaryDto = z.infer<typeof LeagueSummaryDtoSchema>;
 export const LeagueDetailDtoSchema = LeagueSummaryDtoSchema.extend({
   maxMembers: z.number().optional().describe('Optional maximum number of allowed league members.'),
   settings: z.record(z.unknown()).optional().describe('League settings object as currently persisted for commissioner-driven controls.'),
-  invitePolicy: z.string().optional().describe('Current invitation policy resolved from league settings.'),
+  invitePolicy: z
+    .enum([InvitePolicy.COMMISSIONER_ONLY, InvitePolicy.LINK_INVITE, InvitePolicy.OPEN])
+    .optional()
+    .describe('Current invitation policy resolved from league settings.'),
 }).describe('Detailed league payload used by league-home and league-settings surfaces.');
 export type LeagueDetailDto = z.infer<typeof LeagueDetailDtoSchema>;
 
@@ -112,7 +131,9 @@ export const LeagueMemberDtoSchema = z.object({
   id: z.string().describe('Membership record identifier.'),
   userId: z.string().describe('User account identifier for the member.'),
   displayName: z.string().describe('Display name shown in member-management surfaces.'),
-  role: z.string().describe('League role for the member, such as COMMISSIONER or MEMBER.'),
+  role: z
+    .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
+    .describe('League role for the member, such as COMMISSIONER or MEMBER.'),
   joinedAt: z.string().datetime().optional().describe('When the user joined or was activated in the league.'),
 }).describe('League membership summary shown in member-management views.');
 export type LeagueMemberDto = z.infer<typeof LeagueMemberDtoSchema>;
@@ -121,8 +142,12 @@ export const LeagueMembershipDtoSchema = z.object({
   id: z.string().describe('Membership record identifier.'),
   leagueId: z.string().describe('League that owns the membership.'),
   userId: z.string().describe('User account attached to the membership.'),
-  role: z.string().describe('Current league role for the user.'),
-  status: z.string().describe('Membership lifecycle state.'),
+  role: z
+    .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
+    .describe('Current league role for the user.'),
+  status: z
+    .enum([LeagueMembershipStatus.ACTIVE, LeagueMembershipStatus.INACTIVE])
+    .describe('Membership lifecycle state.'),
   permissions: z.array(z.string()).describe('Explicit commissioner permission overrides granted to the membership.'),
   joinedAt: DateTimeSchema.describe('When the user joined the league.'),
   createdAt: DateTimeSchema.describe('When the membership record was created.'),
@@ -134,8 +159,17 @@ export const LeagueInvitationDtoSchema = z.object({
   leagueId: z.string().describe('League that owns the invitation.'),
   email: z.string().nullable().optional().describe('Email recipient for direct email invites. Link invites omit this field.'),
   inviteCode: z.string().describe('Shareable invitation code used in URLs and acceptance requests.'),
-  inviteType: z.string().describe('Invitation delivery mode, such as EMAIL or LINK.'),
-  status: z.string().describe('Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.'),
+  inviteType: z
+    .enum([InviteType.EMAIL, InviteType.LINK])
+    .describe('Invitation delivery mode, such as EMAIL or LINK.'),
+  status: z
+    .enum([
+      InvitationStatus.PENDING,
+      InvitationStatus.ACCEPTED,
+      InvitationStatus.EXPIRED,
+      InvitationStatus.REVOKED,
+    ])
+    .describe('Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.'),
   maxUses: z.number().int().describe('Maximum accepted joins allowed for the invitation.'),
   currentUses: z.number().int().describe('How many times the invitation has already been accepted.'),
   invitedBy: z.string().describe('User ID of the commissioner or actor that issued the invite.'),
@@ -150,7 +184,14 @@ export type LeagueInvitationDto = z.infer<typeof LeagueInvitationDtoSchema>;
 export const InvitationPreviewResponseSchema = z.object({
   invitation: z.object({
     inviteCode: z.string().describe('Invitation code currently being previewed.'),
-    status: z.string().describe('Current invitation lifecycle state.'),
+    status: z
+      .enum([
+        InvitationStatus.PENDING,
+        InvitationStatus.ACCEPTED,
+        InvitationStatus.EXPIRED,
+        InvitationStatus.REVOKED,
+      ])
+      .describe('Current invitation lifecycle state.'),
     league: z.object({
       id: z.string().describe('League ID associated with the invitation.'),
       leagueCode: z.string().describe('Bookmarkable short code for the invited league.'),

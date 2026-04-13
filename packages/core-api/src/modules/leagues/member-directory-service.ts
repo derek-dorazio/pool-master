@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import type { LeagueRole } from '@poolmaster/shared/domain';
 import type { LeagueMemberDto } from '@poolmaster/shared/dto';
 
 export class MemberDirectoryService {
@@ -22,7 +23,7 @@ export class MemberDirectoryService {
       id: row.id,
       userId: row.userId,
       displayName: row.user.displayName,
-      role: row.role,
+      role: row.role as LeagueRole,
       joinedAt: row.joinedAt.toISOString(),
     }));
   }

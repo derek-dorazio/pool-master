@@ -607,7 +607,7 @@ export type ListLeaguesResponses = {
             /**
              * Current league visibility mode.
              */
-            visibility: string;
+            visibility: 'PRIVATE' | 'PUBLIC';
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -623,7 +623,7 @@ export type ListLeaguesResponses = {
             /**
              * Current user role in the league when the response is viewer-scoped.
              */
-            role?: string;
+            role?: 'COMMISSIONER' | 'MEMBER';
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -734,7 +734,7 @@ export type CreateLeagueResponses = {
             /**
              * Current league visibility mode.
              */
-            visibility: string;
+            visibility: 'PRIVATE' | 'PUBLIC';
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -750,7 +750,7 @@ export type CreateLeagueResponses = {
             /**
              * Current user role in the league when the response is viewer-scoped.
              */
-            role?: string;
+            role?: 'COMMISSIONER' | 'MEMBER';
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -768,7 +768,7 @@ export type CreateLeagueResponses = {
             /**
              * Current invitation policy resolved from league settings.
              */
-            invitePolicy?: string;
+            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         };
     };
 };
@@ -839,7 +839,7 @@ export type GetLeagueResponses = {
             /**
              * Current league visibility mode.
              */
-            visibility: string;
+            visibility: 'PRIVATE' | 'PUBLIC';
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -855,7 +855,7 @@ export type GetLeagueResponses = {
             /**
              * Current user role in the league when the response is viewer-scoped.
              */
-            role?: string;
+            role?: 'COMMISSIONER' | 'MEMBER';
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -873,7 +873,7 @@ export type GetLeagueResponses = {
             /**
              * Current invitation policy resolved from league settings.
              */
-            invitePolicy?: string;
+            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         };
     };
 };
@@ -944,7 +944,7 @@ export type GetLeagueByCodeResponses = {
             /**
              * Current league visibility mode.
              */
-            visibility: string;
+            visibility: 'PRIVATE' | 'PUBLIC';
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -960,7 +960,7 @@ export type GetLeagueByCodeResponses = {
             /**
              * Current user role in the league when the response is viewer-scoped.
              */
-            role?: string;
+            role?: 'COMMISSIONER' | 'MEMBER';
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -978,7 +978,7 @@ export type GetLeagueByCodeResponses = {
             /**
              * Current invitation policy resolved from league settings.
              */
-            invitePolicy?: string;
+            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         };
     };
 };
@@ -1089,7 +1089,7 @@ export type UpdateLeagueSettingsResponses = {
             /**
              * Current league visibility mode.
              */
-            visibility: string;
+            visibility: 'PRIVATE' | 'PUBLIC';
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -1105,7 +1105,7 @@ export type UpdateLeagueSettingsResponses = {
             /**
              * Current user role in the league when the response is viewer-scoped.
              */
-            role?: string;
+            role?: 'COMMISSIONER' | 'MEMBER';
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -1123,7 +1123,7 @@ export type UpdateLeagueSettingsResponses = {
             /**
              * Current invitation policy resolved from league settings.
              */
-            invitePolicy?: string;
+            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         };
     };
 };
@@ -1206,11 +1206,11 @@ export type SendLeagueInvitationsResponses = {
             /**
              * Invitation delivery mode, such as EMAIL or LINK.
              */
-            inviteType: string;
+            inviteType: 'EMAIL' | 'LINK';
             /**
              * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
              */
-            status: string;
+            status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
             /**
              * Maximum accepted joins allowed for the invitation.
              */
@@ -1333,11 +1333,11 @@ export type GenerateInviteLinkResponses = {
             /**
              * Invitation delivery mode, such as EMAIL or LINK.
              */
-            inviteType: string;
+            inviteType: 'EMAIL' | 'LINK';
             /**
              * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
              */
-            status: string;
+            status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
             /**
              * Maximum accepted joins allowed for the invitation.
              */
@@ -1528,7 +1528,7 @@ export type ListLeagueMembersResponses = {
             /**
              * League role for the member, such as COMMISSIONER or MEMBER.
              */
-            role: string;
+            role: 'COMMISSIONER' | 'MEMBER';
             /**
              * When the user joined or was activated in the league.
              */
@@ -1656,11 +1656,11 @@ export type ChangeMemberRoleResponses = {
             /**
              * Current league role for the user.
              */
-            role: string;
+            role: 'COMMISSIONER' | 'MEMBER';
             /**
              * Membership lifecycle state.
              */
-            status: string;
+            status: 'ACTIVE' | 'INACTIVE';
             /**
              * Explicit commissioner permission overrides granted to the membership.
              */
@@ -2282,7 +2282,7 @@ export type ImportMembersData = {
             /**
              * Optional requested league role for the imported member.
              */
-            role?: string;
+            role?: 'COMMISSIONER' | 'MEMBER';
         }>;
     };
     path: {
@@ -3302,7 +3302,7 @@ export type GetInvitationPreviewResponses = {
             /**
              * Current invitation lifecycle state.
              */
-            status: string;
+            status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
             /**
              * Minimal league identity shown before accepting the invite.
              */
@@ -3436,11 +3436,11 @@ export type AcceptInvitationResponses = {
             /**
              * Current league role for the user.
              */
-            role: string;
+            role: 'COMMISSIONER' | 'MEMBER';
             /**
              * Membership lifecycle state.
              */
-            status: string;
+            status: 'ACTIVE' | 'INACTIVE';
             /**
              * Explicit commissioner permission overrides granted to the membership.
              */

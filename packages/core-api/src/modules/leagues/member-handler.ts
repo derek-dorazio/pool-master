@@ -3,6 +3,7 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { ChangeLeagueMemberRoleRequest } from '@poolmaster/shared/dto';
 import type { MemberService } from './member-service';
 import type { MemberDirectoryService } from './member-directory-service';
 import { MemberNotFoundError, MemberOperationError } from './member-service';
@@ -31,7 +32,7 @@ export function createMemberHandlers(
   async function changeRole(
     request: FastifyRequest<{
       Params: { id: string; uid: string };
-      Body: { role: string; permissions?: string[] };
+      Body: ChangeLeagueMemberRoleRequest;
     }>,
     reply: FastifyReply,
   ): Promise<void> {
