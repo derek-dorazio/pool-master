@@ -1,5 +1,7 @@
 # Plan 78: Backend Contract Documentation Hardening
 
+> Archived on 2026-04-12 after the backend contract documentation sweep, durable checklist updates, and published `/apidoc` route all landed. Use this file only as historical implementation context.
+
 ## Purpose
 
 Raise the quality of backend API contract documentation so frontend developers
