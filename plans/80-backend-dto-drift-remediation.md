@@ -609,6 +609,11 @@ Recommended fix:
 Isolation:
 - yes; root-admin audit cleanup slice
 
+Status update:
+- resolved by removing the unused `listAuditEntries` read surface from the
+  write-side audit service; `audit-query-service` remains the single
+  authoritative read path
+
 ### X-003: Root-admin platform config has two competing sources of truth
 
 - `packages/core-api/src/modules/config/routes.ts`
@@ -681,7 +686,7 @@ Out of scope:
 | 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | Backend slices must still prove downstream consumer safety when shared DTOs/enums change; early Plan 80 pushes failed `@poolmaster/poolmaster` typecheck because that consumer gate was skipped locally. |
 | 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | Not Started | This is the key decision point for `UpdateLeagueRequestSchema` and any similar drift found during the sweep. |
 | 80-009 | 1 | Audit overbroad scalar fields and tighten them to the real domain enums/unions where appropriate | In Progress | Second cleanup slice narrowed league and invitation enum-backed DTO fields. Third cleanup slice narrowed contest summary/detail enum-backed fields. Fourth cleanup slice narrowed participant response enum-backed fields for participant detail and draft-search surfaces. |
-| 80-010 | 2 | Remove or consolidate backend dead code that duplicates active contract-building paths | In Progress | `X-001` draft mapper cleanup is resolved; `X-002` overlapping admin audit query surface remains. |
+| 80-010 | 2 | Remove or consolidate backend dead code that duplicates active contract-building paths | In Progress | `X-001` draft mapper cleanup and `X-002` audit read-surface cleanup are resolved; remaining dead-code cleanup is limited and may collapse into the final review. |
 | 80-011 | 2 | Resolve backend modules that still have competing sources of truth after contract cleanup | In Progress | Config/poll contract drift is now aligned to shared poll-interval schemas; remaining work is deciding whether any broader platform-bootstrap config surface still belongs in the backend at all. |
 | 80-012 | 3 | Review and update non-API backend documentation and rules after the drift cleanup lands | Not Started | Final pass should cover backend-facing docs and repo rules outside generated API artifacts so architecture, workflow, and implementation guidance match the cleaned backend. |
 | 80-013 | 1 | Add and follow a Plan 80 pre-push gate that includes downstream PoolMaster consumer checks | Done | Added after CI failures on early slices showed that shared-contract changes must run PoolMaster typecheck/lint before push, not just backend-only gates. |

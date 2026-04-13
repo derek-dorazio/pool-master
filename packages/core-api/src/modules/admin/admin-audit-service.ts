@@ -39,18 +39,6 @@ export interface AdminAuditEntry {
   timestamp: Date;
 }
 
-export interface AuditListQuery {
-  actorUserId?: string;
-  action?: string;
-  resourceType?: string;
-  resourceId?: string;
-  search?: string;
-  startDate?: Date;
-  endDate?: Date;
-  page?: number;
-  pageSize?: number;
-}
-
 // ---------------------------------------------------------------------------
 // Singleton Prisma reference (set once via AdminAuditService constructor)
 // ---------------------------------------------------------------------------
@@ -105,71 +93,4 @@ export async function logAdminAction(params: AuditLogParams): Promise<void> {
       userAgent: params.userAgent ?? null,
     },
   });
-}
-
-/**
- * Retrieves audit log entries with filtering and pagination.
- */
-export async function listAuditEntries(
-  filters: AuditListQuery,
-): Promise<{ items: AdminAuditEntry[]; total: number }> {
-  if (!_prisma) {
-    return { items: [], total: 0 };
-  }
-
-  const page = filters.page ?? 1;
-  const pageSize = filters.pageSize ?? 25;
-  const skip = (page - 1) * pageSize;
-
-  const where: Record<string, unknown> = {};
-
-  if (filters.actorUserId) {
-    where.actorId = filters.actorUserId;
-  }
-  if (filters.action) {
-    where.action = filters.action;
-  }
-  if (filters.resourceType) {
-    where.resourceType = filters.resourceType;
-  }
-  if (filters.resourceId) {
-    where.resourceId = filters.resourceId;
-  }
-  if (filters.startDate || filters.endDate) {
-    const createdAt: Record<string, Date> = {};
-    if (filters.startDate) createdAt.gte = filters.startDate;
-    if (filters.endDate) createdAt.lte = filters.endDate;
-    where.createdAt = createdAt;
-  }
-  if (filters.search) {
-    where.description = { contains: filters.search, mode: 'insensitive' };
-  }
-
-  const [rows, total] = await Promise.all([
-    _prisma.adminAuditEntry.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: pageSize,
-    }),
-    _prisma.adminAuditEntry.count({ where }),
-  ]);
-
-  const items: AdminAuditEntry[] = rows.map((r) => ({
-    id: r.id,
-    actorUserId: r.actorId,
-    actorEmail: r.actorEmail,
-    action: r.action,
-    resourceType: r.resourceType,
-    resourceId: r.resourceId,
-    description: r.description,
-    beforeState: r.beforeState as Record<string, unknown> | undefined,
-    afterState: r.afterState as Record<string, unknown> | undefined,
-    reason: r.reason ?? undefined,
-    ipAddress: r.ipAddress ?? '',
-    userAgent: r.userAgent ?? '',
-    timestamp: r.createdAt,
-  }));
-
-  return { items, total };
 }
