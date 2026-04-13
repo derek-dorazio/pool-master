@@ -1,5 +1,7 @@
 # Plan 80: Backend DTO / Domain Drift Remediation
 
+> Archived on 2026-04-13 after the backend DTO/domain drift sweep, dead-code cleanup, contract realignment, placeholder removal, and rule updates all landed. Use this file only as historical implementation context.
+
 ## Purpose
 
 Audit and remediate drift between the active backend domain model and the
