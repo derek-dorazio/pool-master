@@ -6042,7 +6042,7 @@ export type ListParticipantsResponses = {
             /**
              * Whether the participant is an individual or team.
              */
-            participantType: string;
+            participantType: 'INDIVIDUAL' | 'TEAM';
             /**
              * Primary provider identifier when one exists.
              */
@@ -6080,7 +6080,7 @@ export type ListParticipantsResponses = {
             /**
              * Current participant lifecycle or availability status.
              */
-            status: string;
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
             /**
              * Normalized participant injury or availability state.
              */
@@ -6088,7 +6088,7 @@ export type ListParticipantsResponses = {
                 /**
                  * Current injury or availability status code.
                  */
-                status: string;
+                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
                 /**
                  * Optional injury-status detail or summary.
                  */
@@ -6186,7 +6186,7 @@ export type CreateParticipantResponses = {
             /**
              * Whether the participant is an individual or team.
              */
-            participantType: string;
+            participantType: 'INDIVIDUAL' | 'TEAM';
             /**
              * Primary provider identifier when one exists.
              */
@@ -6224,7 +6224,7 @@ export type CreateParticipantResponses = {
             /**
              * Current participant lifecycle or availability status.
              */
-            status: string;
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
             /**
              * Normalized participant injury or availability state.
              */
@@ -6232,7 +6232,7 @@ export type CreateParticipantResponses = {
                 /**
                  * Current injury or availability status code.
                  */
-                status: string;
+                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
                 /**
                  * Optional injury-status detail or summary.
                  */
@@ -6338,7 +6338,7 @@ export type GetParticipantResponses = {
             /**
              * Whether the participant is an individual or team.
              */
-            participantType: string;
+            participantType: 'INDIVIDUAL' | 'TEAM';
             /**
              * Primary provider identifier when one exists.
              */
@@ -6376,7 +6376,7 @@ export type GetParticipantResponses = {
             /**
              * Current participant lifecycle or availability status.
              */
-            status: string;
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
             /**
              * Normalized participant injury or availability state.
              */
@@ -6384,7 +6384,7 @@ export type GetParticipantResponses = {
                 /**
                  * Current injury or availability status code.
                  */
-                status: string;
+                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
                 /**
                  * Optional injury-status detail or summary.
                  */
@@ -6509,7 +6509,7 @@ export type UpdateParticipantResponses = {
             /**
              * Whether the participant is an individual or team.
              */
-            participantType: string;
+            participantType: 'INDIVIDUAL' | 'TEAM';
             /**
              * Primary provider identifier when one exists.
              */
@@ -6547,7 +6547,7 @@ export type UpdateParticipantResponses = {
             /**
              * Current participant lifecycle or availability status.
              */
-            status: string;
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
             /**
              * Normalized participant injury or availability state.
              */
@@ -6555,7 +6555,7 @@ export type UpdateParticipantResponses = {
                 /**
                  * Current injury or availability status code.
                  */
-                status: string;
+                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
                 /**
                  * Optional injury-status detail or summary.
                  */
@@ -6618,7 +6618,7 @@ export type GetParticipantSeasonRecordsResponses = {
         seasonRecords: Array<{
             id: string;
             participantId: string;
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             season: string;
             /**
              * Ranking snapshots associated with the season record.
@@ -6690,7 +6690,7 @@ export type GetParticipantSeasonRecordsResponses = {
             /**
              * Trend direction for the participant recent form.
              */
-            formTrend: string;
+            formTrend: 'RISING' | 'STABLE' | 'FALLING';
             /**
              * When the season record source data was last refreshed.
              */
@@ -6757,7 +6757,7 @@ export type GetParticipantSeasonRecordResponses = {
         seasonRecord: {
             id: string;
             participantId: string;
-            sport: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             season: string;
             /**
              * Ranking snapshots associated with the season record.
@@ -6829,7 +6829,7 @@ export type GetParticipantSeasonRecordResponses = {
             /**
              * Trend direction for the participant recent form.
              */
-            formTrend: string;
+            formTrend: 'RISING' | 'STABLE' | 'FALLING';
             /**
              * When the season record source data was last refreshed.
              */

@@ -2,6 +2,13 @@
  * Participant DTOs — request/response schemas for participant endpoints.
  */
 import { z } from 'zod';
+import {
+  FormTrend,
+  InjuryStatusCode,
+  ParticipantStatus,
+  ParticipantType,
+  Sport,
+} from '../domain/enums';
 import { DateTimeSchema, JsonObjectSchema, StringRecordSchema } from './common.dto';
 
 // --- Response Sub-schemas ---
@@ -10,7 +17,9 @@ export const ParticipantDtoSchema = z.object({
   id: z.string().describe('Participant identifier.'),
   sportId: z.string().describe('Owning sport identifier.'),
   name: z.string().describe('Primary participant display name.'),
-  participantType: z.string().describe('Whether the participant is an individual or team.'),
+  participantType: z
+    .enum([ParticipantType.INDIVIDUAL, ParticipantType.TEAM])
+    .describe('Whether the participant is an individual or team.'),
   externalId: z.string().optional().describe('Primary provider identifier when one exists.'),
   metadata: JsonObjectSchema.describe('Provider-normalized metadata retained for the participant.'),
   firstName: z.string().optional().describe('First name when the participant is a person.'),
@@ -19,9 +28,26 @@ export const ParticipantDtoSchema = z.object({
   nationality: z.string().optional().describe('Participant nationality or country code when known.'),
   position: z.string().nullable().optional().describe('Position, role, or event classification when known.'),
   teamAffiliation: z.string().nullable().optional().describe('Current team affiliation when the participant is not itself a team.'),
-  status: z.string().describe('Current participant lifecycle or availability status.'),
+  status: z
+    .enum([
+      ParticipantStatus.ACTIVE,
+      ParticipantStatus.INACTIVE,
+      ParticipantStatus.RETIRED,
+      ParticipantStatus.SUSPENDED,
+    ])
+    .describe('Current participant lifecycle or availability status.'),
   injuryStatus: z.object({
-    status: z.string().describe('Current injury or availability status code.'),
+    status: z
+      .enum([
+        InjuryStatusCode.HEALTHY,
+        InjuryStatusCode.QUESTIONABLE,
+        InjuryStatusCode.DOUBTFUL,
+        InjuryStatusCode.OUT,
+        InjuryStatusCode.WITHDRAWN,
+        InjuryStatusCode.SUSPENDED,
+        InjuryStatusCode.SCRATCHED,
+      ])
+      .describe('Current injury or availability status code.'),
     detail: z.string().optional().describe('Optional injury-status detail or summary.'),
     expectedReturn: DateTimeSchema.optional().describe('Expected return timestamp when known.'),
     updatedAt: DateTimeSchema.optional().describe('When the injury-status record was last updated.'),
@@ -45,7 +71,22 @@ export const ParticipantSeasonRankingDtoSchema = z.object({
 export const ParticipantSeasonRecordDtoSchema = z.object({
   id: z.string(),
   participantId: z.string(),
-  sport: z.string(),
+  sport: z.enum([
+    Sport.GOLF,
+    Sport.NFL,
+    Sport.NBA,
+    Sport.F1,
+    Sport.NASCAR,
+    Sport.NCAA_BASKETBALL,
+    Sport.NCAA_HOCKEY,
+    Sport.NCAA_FOOTBALL,
+    Sport.TENNIS,
+    Sport.HORSE_RACING,
+    Sport.SOCCER,
+    Sport.NHL,
+    Sport.MLB,
+    Sport.UFC,
+  ]),
   season: z.string(),
   rankings: z.array(ParticipantSeasonRankingDtoSchema).describe('Ranking snapshots associated with the season record.'),
   budgetPrice: z.number().describe('Current budget-draft price for the participant.'),
@@ -59,7 +100,9 @@ export const ParticipantSeasonRecordDtoSchema = z.object({
   top25Finishes: z.number().describe('Top-twenty-five finish count for the season.'),
   seasonStats: z.record(z.number()).describe('Provider-normalized season statistics keyed by stat name.'),
   formRating: z.number().describe('Derived form score used for participant valuation and sorting.'),
-  formTrend: z.string().describe('Trend direction for the participant recent form.'),
+  formTrend: z
+    .enum([FormTrend.RISING, FormTrend.STABLE, FormTrend.FALLING])
+    .describe('Trend direction for the participant recent form.'),
   lastUpdated: DateTimeSchema.describe('When the season record source data was last refreshed.'),
   createdAt: DateTimeSchema.describe('When the season record was created.'),
   updatedAt: DateTimeSchema.describe('When the season record was last updated.'),
@@ -74,7 +117,22 @@ export const DraftSearchItemDtoSchema = z.object({
   participantId: z.string(),
   displayName: z.string(),
   photoUrl: z.string().describe('Participant image URL.'),
-  sport: z.string(),
+  sport: z.enum([
+    Sport.GOLF,
+    Sport.NFL,
+    Sport.NBA,
+    Sport.F1,
+    Sport.NASCAR,
+    Sport.NCAA_BASKETBALL,
+    Sport.NCAA_HOCKEY,
+    Sport.NCAA_FOOTBALL,
+    Sport.TENNIS,
+    Sport.HORSE_RACING,
+    Sport.SOCCER,
+    Sport.NHL,
+    Sport.MLB,
+    Sport.UFC,
+  ]),
   position: z.string().optional(),
   teamAffiliation: z.string().optional(),
   nationality: z.string().optional(),
@@ -82,7 +140,15 @@ export const DraftSearchItemDtoSchema = z.object({
   budgetPrice: z.number().optional(),
   tier: z.string().optional(),
   injuryStatus: z.object({
-    status: z.string(),
+    status: z.enum([
+      InjuryStatusCode.HEALTHY,
+      InjuryStatusCode.QUESTIONABLE,
+      InjuryStatusCode.DOUBTFUL,
+      InjuryStatusCode.OUT,
+      InjuryStatusCode.WITHDRAWN,
+      InjuryStatusCode.SUSPENDED,
+      InjuryStatusCode.SCRATCHED,
+    ]),
     detail: z.string().optional(),
     expectedReturn: DateTimeSchema.optional(),
     updatedAt: DateTimeSchema.optional(),
