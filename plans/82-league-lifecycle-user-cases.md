@@ -12,6 +12,8 @@ mechanism for browser E2E over time.
 
 - Keep commissioner lifecycle actions in commissioner-owned product flows, not
   root-admin-only tools.
+- Keep league management anchored to the existing tile-based league list rather
+  than hiding lifecycle behind unrelated admin surfaces.
 - Make inactivation the normal visible action.
 - Make hard delete possible only after the league is already inactive.
 - Require strong irreversible-delete confirmation.
@@ -33,6 +35,22 @@ mechanism for browser E2E over time.
   - commissioner audit log
   - other league-owned rows
 - League delete does **not** delete commissioner or member user accounts.
+
+## Placement And IA
+
+- The current tile-based league list remains the primary overview of a user's
+  leagues.
+- Each league tile should expose a commissioner-facing `Manage League` action.
+- `Manage League` opens a commissioner management modal, similar in spirit to
+  the create-league modal.
+- The modal should be structured for future growth with tabs such as:
+  - `Details`
+  - `Icon`
+  - `Settings`
+  - `Lifecycle`
+- The first lifecycle slice may implement only the management shell and the
+  `Lifecycle` tab, but the modal should be designed to grow into the full
+  league management surface.
 
 ## User Cases
 
@@ -119,11 +137,29 @@ mechanism for browser E2E over time.
 ## UX Guidance
 
 - `Inactivate league` should be the primary lifecycle-management action.
-- `Delete league permanently` should be visually more dangerous and only shown
-  after inactive state.
-- Confirmation copy should be plain and explicit:
-  - `Are you sure you want to permanently delete this league and all history? This process is irreversible.`
-- Confirmation input should use the real `leagueCode`, not a generic checkbox.
+- `Delete league permanently` should be visually distinct from
+  `Inactivate league` through color, iconography, and stronger warning styling.
+  It should feel more dangerous and more final.
+- Tooltips or adjacent helper copy may explain the difference between
+  inactivation and permanent deletion.
+- `Delete league permanently` should only be shown or enabled after inactive
+  state.
+- The delete interaction should use an inline mini-wizard inside the lifecycle
+  surface rather than a modal-on-top-of-a-modal.
+- The delete mini-wizard should follow this pattern:
+  1. Heading: `Delete league`
+  2. Warning text: `This action will delete this league and all related data. This action is irreversible. Are you sure you want to proceed?`
+  3. `DELETE` button is initially disabled
+  4. Second prompt asks the commissioner to enter the real `leagueCode`
+  5. Input validates exact `leagueCode` match
+  6. `DELETE` button becomes enabled only after exact match
+  7. Delete invokes the real backend delete API
+  8. Success state confirms the league was deleted
+  9. Exit action returns the user to the non-league context
+- Confirmation input should use the real `leagueCode`, not a generic checkbox
+  or generic confirmation phrase.
+- League home and related commissioner/member surfaces should present truthful
+  inactive/read-only state once a league is inactive.
 
 ## Browser E2E Implication
 
@@ -136,6 +172,15 @@ journey:
 4. inactivate league
 5. delete league with typed `leagueCode`
 
+## Future Follow-On Scope
+
+- The same `Manage League` modal is expected to expand later to support:
+  - editing league details
+  - updating league icon
+  - broader league settings
+  - future commissioner management actions beyond lifecycle
+
 ## Open Questions
 
-- None currently. The delete semantics and confirmation rule are now locked.
+- None currently. The delete semantics, placement, and confirmation pattern are
+  now locked for the first slice.

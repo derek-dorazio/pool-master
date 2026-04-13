@@ -12,6 +12,8 @@ provides the end-state cleanup path for browser E2E-created accounts.
 ## Design Goals
 
 - Users manage their own account lifecycle through `My Account`.
+- Account lifecycle belongs in a user-owned personal area, not in league
+  management.
 - Inactivation happens before deletion.
 - Permanent delete is irreversible and requires explicit confirmation.
 - League deletion does not delete users automatically.
@@ -23,6 +25,24 @@ provides the end-state cleanup path for browser E2E-created accounts.
 - Deleting a league does not delete the commissioner or member accounts.
 - Users with zero league memberships remain valid accounts until they choose to
   inactivate/delete them.
+
+## Placement And IA
+
+- The app header should show the signed-in user identity, such as
+  `Derek Dorazio`.
+- The header identity affordance should open a user menu or dropdown.
+- That menu may include options such as:
+  - `Settings`
+  - `Preferences`
+  - `My Account`
+  - future personal options
+- `My Account` is the dedicated home for user-owned account management.
+- `My Account` should grow into the surface for:
+  - profile management
+  - password changes
+  - email and personal identity fields
+  - account inactivation
+  - account deletion
 
 ## User Cases
 
@@ -57,14 +77,17 @@ provides the end-state cleanup path for browser E2E-created accounts.
 1. User opens `My Account`
 2. User chooses `Delete account permanently`
 3. System warns that the action is irreversible
-4. System requires explicit confirmation
-5. User confirms
-6. System deletes the account
+4. Delete interaction starts an inline mini-wizard
+5. System requires the user to enter their email address exactly
+6. Once the confirmation value matches, the delete action becomes enabled
+7. User confirms
+8. System deletes the account
 
 **Expected outcomes**
 - Account is removed
 - Auth/session data is removed
 - The account can no longer sign in
+- User is immediately logged out after successful delete
 
 ### UA-003: User attempts to delete an active account
 
@@ -90,6 +113,28 @@ This is the eventual cleanup path for browser-created users:
 - member later signs in and deletes their inactive account
 - commissioner later signs back in and deletes their inactive account
 
+## UX Guidance
+
+- `Inactivate account` and `Delete account permanently` must be visually
+  distinct.
+- `Delete account permanently` should use stronger destructive styling, such as
+  red color treatment and more ominous visual emphasis.
+- Tooltips or adjacent helper copy may explain the difference between
+  inactivation and permanent deletion.
+- The delete interaction should use an inline mini-wizard rather than a modal
+  on top of the `My Account` surface.
+- The delete mini-wizard should follow this pattern:
+  1. Heading: `Delete account`
+  2. Warning text: `This action will delete your account and all related data. This action is irreversible. Are you sure you want to proceed?`
+  3. `DELETE` button is initially disabled
+  4. Second prompt asks the user to enter their email address to continue
+  5. Input validates exact email match
+  6. `DELETE` button becomes enabled only after exact match
+  7. Delete invokes the real backend delete API
+  8. Success state confirms the account was deleted
+  9. The app logs the user out and returns them to signed-out context
+
 ## Open Questions
 
-- Exact confirmation UX for account delete can be finalized later in the `My Account` design slice.
+- None currently. The placement, confirmation pattern, and post-delete logout
+  behavior are now locked for the first slice.

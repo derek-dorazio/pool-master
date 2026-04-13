@@ -22,9 +22,12 @@ lifecycle:
 
 ## Frontend Deliverables
 
-- league management surface for inactivate
+- manage-league modal launched from league-list tiles
+- initial management shell that can grow into details/icon/settings/lifecycle
+  tabs
+- league lifecycle tab for inactivate
 - destructive delete flow only for inactive league
-- irreversible warning dialog
+- inline irreversible delete mini-wizard
 - typed `leagueCode` confirmation
 - post-delete navigation back to non-league context
 
@@ -37,10 +40,12 @@ lifecycle:
 | 83-003 | 1 | Backend developer: add commissioner inactive-league delete API with `leagueCode` confirmation | Done | Added inactive-only delete route with typed `leagueCode` confirmation and stable error codes for active-league delete and confirmation mismatch. |
 | 83-004 | 1 | Backend developer: implement league cascade-delete service | Done | Implemented transaction-safe deletion of league-owned memberships, invitations, squads, contests and contest-owned descendants, commissioner action items, and commissioner audit log while preserving users. |
 | 83-005 | 1 | Backend developer: add backend validation and contract coverage | Done | Regenerated OpenAPI and Hey API artifacts. Passed shared/core/poolmaster typecheck, eslint, PoolMaster vitest/build, unit/integration/functional backend coverage, and contract verification. |
-| 83-006 | 2 | Frontend developer: add league management UI for inactivate action | Not Started | Commissioner-facing, prominent safe action |
-| 83-007 | 2 | Frontend developer: add inactive-league delete UX | Not Started | Warning dialog, typed `leagueCode` confirmation, disabled until inactive |
-| 83-008 | 2 | Frontend developer: add post-delete routing and truthful empty-state behavior | Not Started | Route user back to `/welcome` or equivalent |
-| 83-009 | 2 | Frontend developer: add UI tests and extend browser journey planning hooks | Not Started | Keep browser proof aligned with real lifecycle once available |
+| 83-006 | 2 | Frontend developer: add `Manage League` entry point from league tiles | Not Started | Commissioner-facing action on the tile-based leagues list |
+| 83-007 | 2 | Frontend developer: add manage-league modal shell with future tab scaffolding | Not Started | Prepare `Details`, `Icon`, `Settings`, and `Lifecycle` information architecture even if only lifecycle is implemented first |
+| 83-008 | 2 | Frontend developer: implement lifecycle tab with inactivate action | Not Started | Commissioner-facing, prominent safer action |
+| 83-009 | 2 | Frontend developer: add inactive-league delete mini-wizard UX | Not Started | Inline flow, typed `leagueCode` confirmation, disabled delete until valid match |
+| 83-010 | 2 | Frontend developer: add post-delete routing and truthful empty-state behavior | Not Started | Route user back to `/welcome` or equivalent and reflect remaining leagues accurately |
+| 83-011 | 2 | Frontend developer: add UI tests and extend browser journey planning hooks | Not Started | Keep browser proof aligned with real lifecycle once available |
 
 ## Data-Modeler Review Notes
 
