@@ -536,6 +536,11 @@ Recommended fix:
 Isolation:
 - yes; coherent root-admin provider slice
 
+Status update:
+- DTO sport fields and service typings are already aligned to `Sport`; the
+  remaining placeholder fallback in `reIngestEvent()` is now removed so the
+  path fails explicitly instead of inventing `'UNKNOWN'`
+
 ### Verified Stable Families
 
 The following active DTO families were re-reviewed during the full backend audit
@@ -681,7 +686,7 @@ Out of scope:
 | 80-002 | 1 | Confirm and document concrete DTO/domain drift findings | Done | `UserLeagueDetailDtoSchema.sport` and orphaned `UpdateLeagueRequestSchema` are confirmed issues. |
 | 80-003 | 1 | Sweep all active request/response DTOs for stale or placeholder fields | In Progress | First cleanup slice removes the stale admin league `sport` field and the orphaned history season DTO surface. |
 | 80-004 | 1 | Sweep all route schemas and handlers for request models that are exported but not actually wired to active routes | In Progress | First cleanup slice removes the orphaned `UpdateLeagueRequestSchema`. |
-| 80-005 | 1 | Sweep mapper/service outputs for placeholder values that exist only to satisfy stale DTOs | In Progress | First cleanup slice removes the admin user-detail `sport: ''` placeholder. |
+| 80-005 | 1 | Sweep mapper/service outputs for placeholder values that exist only to satisfy stale DTOs | In Progress | Placeholder cleanup now includes the removed admin user-detail `sport: ''` value and the removed provider re-ingest `'UNKNOWN'` sport fallback. |
 | 80-006 | 1 | Regenerate OpenAPI and SDK/types after each contract-aligned change set | In Progress | First cleanup slice already refreshed OpenAPI and generated types after removing stale admin/history/league DTO surface. |
 | 80-007 | 1 | Re-run backend validation gates after each aligned slice | In Progress | Backend slices must still prove downstream consumer safety when shared DTOs/enums change; early Plan 80 pushes failed `@poolmaster/poolmaster` typecheck because that consumer gate was skipped locally. |
 | 80-008 | 1 | Decide whether orphaned request schemas should be removed or reintroduced behind real routes | Not Started | This is the key decision point for `UpdateLeagueRequestSchema` and any similar drift found during the sweep. |

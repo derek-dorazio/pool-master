@@ -125,6 +125,13 @@ export class ProviderEventNotFoundError extends Error {
   }
 }
 
+export class ProviderSportCoverageError extends Error {
+  constructor(providerId: string) {
+    super(`Provider ${providerId} does not expose any covered sports`);
+    this.name = 'ProviderSportCoverageError';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -561,11 +568,15 @@ export class ProviderService {
     rootAdminEmail: string,
   ): Promise<IngestionJob> {
     const provider = this.getProviderOrThrow(providerId);
+    const sport = provider.sportsCovered[0];
+    if (!sport) {
+      throw new ProviderSportCoverageError(providerId);
+    }
     const job = await this.prisma.ingestionJob.create({
       data: {
         jobType: 'MANUAL_REINGEST',
         providerId,
-        sport: provider.sportsCovered[0] ?? 'UNKNOWN',
+        sport,
         eventExternalId: eventId,
         status: 'RUNNING',
         startedAt: new Date(),
