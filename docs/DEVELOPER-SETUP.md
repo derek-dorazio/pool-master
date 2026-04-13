@@ -126,13 +126,14 @@ This will:
 1. Create `.env` from `.env.example` (if not present)
 2. Start Docker containers (PostgreSQL, DynamoDB, Mailpit)
 3. Run Prisma migrations
-4. Seed the database (users, leagues, sports, plan tiers)
+4. Run the minimal bootstrap seed step
 5. Launch the backend and active PoolMaster web app via Turborepo
 
 After startup you'll have:
 - **PoolMaster web app** at http://localhost:5173
 - **Mailpit (email viewer)** at http://localhost:8025
 - **Core API** at http://localhost:3000
+- **API docs** at http://localhost:3000/apidoc
 - **Prisma Studio** (optional) at `npm run db:studio`
 
 ---
@@ -149,7 +150,7 @@ npm run dev:infra:all      # Start all containers (+ Mailpit, LocalStack, Push M
 npm run dev:infra:stop     # Stop all containers
 
 npm run db:migrate         # Run Prisma migrations
-npm run db:seed            # Run minimal bootstrap seed step
+npm run db:seed            # Run minimal bootstrap seed step (root admin bootstrap only)
 npm run db:reset           # Reset database (drops all data)
 npm run db:test:migrate    # Apply migrations to disposable test DB
 npm run db:test:reset      # Reset disposable test DB and reapply migrations
@@ -240,7 +241,7 @@ npm run test:service:integration:fresh
 npm run test:poolmaster:unit
 ```
 
-Legacy browser suites were intentionally removed during the PoolMaster cutover. The active browser lane is now a single minimal post-deploy PoolMaster registration-to-authenticated-landing check; richer browser journeys are still deferred.
+The active browser lane is the deployed Playwright journey suite for PoolMaster onboarding and league flows. It currently covers registration, explicit league creation, league-list navigation, multi-league switching, and invite/join behavior on the deployed QA environment.
 
 PoolMaster production builds also emit `clients/poolmaster/dist/version-info.json` so deployed environments can expose the webapp version, service version, git SHAs, and build metadata.
 
@@ -293,7 +294,7 @@ terraform plan -var-file=envs/qa.tfvars
 terraform apply -var-file=envs/qa.tfvars
 ```
 
-This creates: ECS Fargate (1 backend service), RDS PostgreSQL, ALB, S3 + CloudFront (webapp + admin), ECR repository, CloudWatch alarms.
+This creates: ECS Fargate (1 backend service), RDS PostgreSQL, ALB, S3 + CloudFront (PoolMaster web), ECR repository, CloudWatch alarms.
 
 After `terraform apply`, run migrations:
 ```bash
@@ -310,13 +311,13 @@ See [AWS Deployment Plan](../plans/archive/2026-04-completed-wave/16-aws-deploym
 poolmaster/
 ├── packages/
 │   ├── core-api/            # Modular monolith (all backend modules on port 3000)
-│   │   └── src/modules/     # auth, leagues, contests, drafts, scoring,
-│   │                        # notifications, ingestion, admin, billing, ...
+│   │   └── src/modules/     # auth, leagues, invitations, contests,
+│   │                        # drafts, scoring, notifications, ingestion, admin, ...
 │   ├── push-mock-server/    # APNs/FCM mock for local dev (port 3099)
 │   └── shared/              # Domain types, DB ports, events, utils
 ├── clients/
-│   ├── web/                 # React + Vite + TailwindCSS
-│   ├── admin/               # Admin React app
+│   ├── poolmaster/          # React + Vite + MUI
+│   ├── _archived/           # Historical legacy web/admin references
 │   ├── ios/                 # Swift + SwiftUI (planned)
 │   └── android/             # Kotlin + Jetpack Compose (planned)
 ├── tests/                  # All tests (separate from app code)

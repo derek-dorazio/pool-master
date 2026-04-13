@@ -28,15 +28,19 @@ Modular monolith — all backend modules run in a single Fastify process on port
 | Module | Prefix | Responsibility |
 |--------|--------|----------------|
 | **auth** | `/api/v1/auth` | Register, login, refresh, logout, OAuth |
-| **leagues** | `/api/v1/leagues` | CRUD, members, invitations, dashboard, audit |
-| **contests** | `/api/v1/contests` | Contest CRUD, entries, standings, overrides, recalculation |
+| **leagues** | `/api/v1/leagues` | League creation, summaries, member directories, activity state, invite ownership |
+| **invitations** | `/api/v1/invitations` | Invitation preview and invite acceptance flows |
+| **contests** | `/api/v1/contests` | Contest CRUD, contest summaries, entries, standings, overrides, recalculation |
+| **contest-management** | `/api/v1/contests/:contestId/manage` | Commissioner-owned contest configuration and management workflows |
 | **participants** | `/api/v1/participants` | Search, CRUD, season records, provider mappings |
 | **standings** | `/api/v1/contests/:id/standings` | Leaderboards, rankings |
 | **history** | `/api/v1/` | Completed contest summaries, standings, payouts, roster history, league/member results |
-| **social** | `/api/v1/social` | League feed, contest chat, direct messages, recaps, share cards; DTO-backed contract with persistence follow-up tracked in plans |
 | **account-consent** | `/api/v1/account` | Consent and age-affirmation capture |
+| **events** | `/api/v1/events` | Provider event records, schedules, statuses, and event lookup APIs |
 | **admin** | `/api/v1/admin` | Platform admin operations for health, provider ingestion, migrations, audit, and contest administration |
-| **config** | `/api/v1/config` | Public configuration |
+| **config** | `/api/v1/config` | Public configuration and poll-interval guidance |
+| **notifications** | `/api/v1/notifications` | In-app notification reads, preferences, and delivery-oriented support APIs |
+| **squads** | `/api/v1/squads` | Squad roster and contest-entry support services |
 
 ### Draft Module (`modules/drafts/`)
 
@@ -51,7 +55,7 @@ Pure-function engines that take state + input and return new state (immutable).
 | `TieredPickEngine` | Pick N from defined tier groups (non-exclusive) | Tiered roster contests |
 | `BudgetPickEngine` | Build roster within cost budget (non-exclusive) | Budget roster contests |
 
-The active backend refactor lane only supports roster-based first-pass contest modes.
+The active backend-first pass centers on the current PoolMaster web flows while retaining the broader contest/scoring backbone behind the same monolith.
 
 ### Scoring Module (`modules/scoring/`)
 
@@ -78,7 +82,7 @@ Launch entry aggregation rules currently implemented on this branch:
 
 ### Notification Module (`modules/notifications/`)
 
-Full notification pipeline: events → preferences → templates → channels.
+Current active surface: in-app notification reads, preference updates, and delivery-support plumbing retained in the monolith.
 
 | Component | Description |
 |-----------|-------------|
@@ -133,7 +137,7 @@ Polls external sports data providers and publishes `stat.updated` events to the 
 |-----------|-------------|
 | **PostgreSQL 16** | Primary database via Prisma ORM (50+ models) |
 | **In-process EventBus** | Domain-event fan-out inside the monolith |
-| **DynamoDB** | High-volume event data (future) |
+| **DynamoDB** | Deferred/high-volume event support |
 | **In-process EventBus** | `stat.updated` → scoring → `score.updated` → `standings.updated` |
 
 ## Standalone Support Packages
@@ -153,5 +157,6 @@ npm run dev:start        # Start Docker + migrations + seed + all services
 npm run dev              # Start services only (Docker already running)
 npm run build            # Build all packages
 npm run typecheck        # TypeScript check
-npm run test:unit        # Run 468 unit tests
+npm run test:unit        # Run service unit tests
+npm run test:coverage:service:fresh  # Full backend validation lane
 ```

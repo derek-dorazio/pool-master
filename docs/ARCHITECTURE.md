@@ -1,28 +1,26 @@
 # PoolMaster Architecture Overview
 
-> Frontend note: the active web target is `clients/poolmaster`; `clients/admin` has been retired and `clients/_archived/web` is reference-only. Any remaining mentions of the old split frontend topology below are historical infrastructure context, not current implementation guidance.
+> Current-state note: the active web target is `clients/poolmaster`; `clients/admin` has been retired and `clients/_archived/web` is reference-only. This document describes the current PoolMaster production topology first, not the older split-frontend platform shape.
 
 ## System Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          CLIENTS                                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
-│  │  Webapp   │  │  Admin   │  │   iOS    │  │ Android  │           │
-│  │  (React)  │  │  (React) │  │ (Swift)  │  │ (Kotlin) │           │
-│  └─────┬─────┘  └─────┬────┘  └────┬─────┘  └────┬─────┘           │
-│        │S3+CloudFront  │S3+CF       │              │                │
-└────────┼───────────────┼────────────┼──────────────┼────────────────┘
-         │               │            │              │
-         └───────┬───────┘            └──────┬───────┘
-                 │ /api/*                    │ /api/*
-                 ▼                           ▼
-         ┌──────────────┐            ┌──────────────┐
-         │  CloudFront  │            │     ALB      │
-         │  (webapp/    │───/api/*──→│  (us-east-2) │
-         │   admin)     │            └──────┬───────┘
-         └──────────────┘                   │
-                                            ▼
+│  ┌──────────────┐  ┌──────────┐  ┌──────────┐                      │
+│  │ PoolMaster   │  │   iOS    │  │ Android  │                      │
+│  │ Web (React)  │  │ (Swift)  │  │ (Kotlin) │                      │
+│  └──────┬───────┘  └────┬─────┘  └────┬─────┘                      │
+└─────────┼───────────────┼──────────────┼────────────────────────────┘
+          │ S3+CloudFront │              │
+          │ /api/* /apidoc*              │ /api/*
+          ▼                              ▼
+    ┌──────────────┐               ┌──────────────┐
+    │  CloudFront  │──────────────→│     ALB      │
+    │ (poolmaster) │               │  (us-east-2) │
+    └──────────────┘               └──────┬───────┘
+                                          │
+                                          ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     ECS FARGATE (core-api :3000)                    │
 │                                                                     │
@@ -37,9 +35,9 @@
 │  │                                                               │   │
 │  │  ┌─────────┐ ┌──────────────┐ ┌──────────────┐ ┌─────────┐  │   │
 │  │  │ Drafts  │ │   Scoring    │ │ Notifications│ │Ingestion│  │   │
-│  │  │ 6 draft │ │ 7 engines    │ │ Push/Email/  │ │ ESPN    │  │   │
-│  │  │ engines │ │ 16 templates │ │ In-App       │ │ OpenF1  │  │   │
-│  │  │         │ │ Rollup (30s) │ │ Scheduler    │ │ PGA Tour│  │   │
+│  │  │ Engines │ │ Recalc +     │ │ In-App +     │ │ ESPN    │  │   │
+│  │  │         │ │ Standings    │ │ Delivery     │ │ OpenF1  │  │   │
+│  │  │         │ │ Rollups      │ │ Support      │ │ PGA Tour│  │   │
 │  │  └─────────┘ └──────┬───────┘ └──────────────┘ └────┬────┘  │   │
 │  │                      │                               │        │   │
 │  │              ┌───────┴───────────────────────────────┘        │   │
@@ -47,11 +45,11 @@
 │  │              │  stat.updated → score.updated → standings.*    │   │
 │  │              └────────────────────────────────────────────────│   │
 │  │                                                               │   │
-│  │  ┌─────────┐ ┌──────────┐ ┌──────────┐                      │   │
-│  │  │ Search  │ │  Admin   │ │ Billing  │                      │   │
-│  │  │ Discover│ │ Audit    │ │ Plans    │                      │   │
-│  │  │         │ │ Flags    │ │ Entitle. │                      │   │
-│  │  └─────────┘ └──────────┘ └──────────┘                      │   │
+│  │  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐     │   │
+│  │  │ Events  │ │  Admin   │ │ Config   │ │ Account      │     │   │
+│  │  │ Sched.  │ │ Root Ops │ │ Polling  │ │ Consent      │     │   │
+│  │  │ Lookup  │ │ Audit    │ │ Guidance │ │              │     │   │
+│  │  └─────────┘ └──────────┘ └──────────┘ └──────────────┘     │   │
 │  └──────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
          │              │              │              │
@@ -74,20 +72,22 @@ Single Fastify + TypeScript process running on port 3000. All domain modules are
 
 | Module | Prefix | Key Responsibilities |
 |--------|--------|---------------------|
-| **auth** | `/api/v1/auth` | JWT authentication, registration, login, OAuth |
-| **leagues** | `/api/v1/leagues` | League CRUD, members, invitations, dashboard, audit |
-| **contests** | `/api/v1/contests` | Contest CRUD, pool management, scoring/selection config |
+| **auth** | `/api/v1/auth` | JWT authentication, registration, login, refresh, logout |
+| **leagues** | `/api/v1/leagues` | League creation, summaries, member directories, invitations, activity state |
+| **invitations** | `/api/v1/invitations` | Invitation preview and acceptance flows |
+| **contests** | `/api/v1/contests` | Contest CRUD, summaries, scoring/selection configuration |
+| **contest-management** | `/api/v1/contests/:contestId/manage` | Commissioner-owned contest management workflows |
 | **participants** | `/api/v1/participants` | Player search, season records, provider mappings |
 | **standings** | `/api/v1/contests/:id/standings` | Leaderboards, rankings |
 | **history** | `/api/v1/` | Historical data, timelines, records, rivalries |
-| **search** | `/api/v1/search` | Full-text search, league/contest discovery |
 | **drafts** | `/api/v1/drafts` | draft-room runtime and selection workflows |
 | **scoring** | `/api/v1/scoring` | participant scoring rules, aggregation rules, stat validation |
-| **notifications** | `/api/v1/notifications` | Multi-channel dispatch, preferences, scheduling |
+| **notifications** | `/api/v1/notifications` | In-app notification reads, preferences, and delivery support |
 | **ingestion** | `/api/v1/ingestion` | Sports data polling, provider adapters |
-| **admin** | `/api/v1/admin` | Platform admin, feature flags, impersonation |
-| **billing** | `/api/v1/billing` | Plans, entitlements, usage tracking |
-| **account/privacy** | `/api/v1/account` | minimal consent and account-related flows retained for first pass |
+| **events** | `/api/v1/events` | Event schedule and status surfaces |
+| **admin** | `/api/v1/admin` | Root-admin platform operations retained in the service |
+| **config** | `/api/v1/config` | Public configuration and poll-interval guidance |
+| **account/privacy** | `/api/v1/account` | Minimal consent and account-related flows retained for first pass |
 
 ### Shared Package (packages/shared)
 
@@ -104,8 +104,7 @@ Cross-cutting types and interfaces shared between backend and tests.
 
 | App | Technology | Hosting |
 |-----|-----------|---------|
-| **Webapp** | React 18, Vite, TailwindCSS, shadcn/ui, TanStack Query, Zustand | S3 + CloudFront |
-| **Admin** | React 18, Vite, TailwindCSS | S3 + CloudFront |
+| **PoolMaster** | React 18, Vite, MUI, TanStack Query | S3 + CloudFront |
 | **iOS** | SwiftUI, Observation framework | App Store (planned) |
 | **Android** | Kotlin, Jetpack Compose, Hilt | Play Store (planned) |
 
@@ -254,10 +253,10 @@ core-api
 │  │                       └──────────────────────┘    │ │
 │  └─────────────────────────────────────────────────┘ │
 │                                                       │
-│  ┌──────────────────┐  ┌──────────────────┐          │
-│  │ S3 (webapp)      │  │ S3 (admin)       │          │
-│  │ + CloudFront CDN │  │ + CloudFront CDN │          │
-│  └──────────────────┘  └──────────────────┘          │
+│  ┌──────────────────┐                                 │
+│  │ S3 (poolmaster)  │                                 │
+│  │ + CloudFront CDN │                                 │
+│  └──────────────────┘                                 │
 │                                                       │
 │  ┌──────────────────┐  ┌──────────────────┐          │
 │  │ ECR (core-api)   │  │ CloudWatch       │          │
@@ -266,7 +265,7 @@ core-api
 └─────────────────────────────────────────────────────┘
 
 CloudFront (us-east-1):
-  qa.ultimateofficepoolmanager.com        → S3 PoolMaster app + ALB /api/*
+  qa.ultimateofficepoolmanager.com        → S3 PoolMaster app + ALB /api/* + /apidoc*
 ```
 
 ### Environments
@@ -283,13 +282,12 @@ CloudFront (us-east-1):
 Push to main
     │
     ├──→ Lint + Typecheck (turbo)
-    ├──→ Unit Tests (Jest, 468 tests)
+    ├──→ Unit Tests + backend merged coverage
     ├──→ Build (turbo)
     │
     └──→ Deploy (on merge to main):
          ├── Docker build → ECR push (core-api)
-         ├── Vite build → S3 sync (webapp)
-         ├── Vite build → S3 sync (admin)
+         ├── Vite build → S3 sync (poolmaster)
          ├── CloudFront invalidation
          └── ECS task-definition rollout
 ```

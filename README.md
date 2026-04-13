@@ -34,6 +34,9 @@ See [docs/DEVELOPER-SETUP.md](docs/DEVELOPER-SETUP.md) for full setup instructio
 # Service unit tests
 npx jest --config tests/jest.config.js --forceExit
 
+# Full backend validation lane
+npm run test:coverage:service:fresh
+
 # Service functional API tests
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:functional-api
 
@@ -66,39 +69,34 @@ Fastify + TypeScript modular monolith. All modules run in a single process on po
 
 | Module | Responsibility |
 |--------|----------------|
-| **auth, leagues, contests** | REST API -- leagues, contests, members, picks, standings |
-| **drafts** | Draft engines -- snake, tiered, budget, survivor, pick'em, bracket |
-| **scoring** | Score calculation -- 7 engines, 16 templates across 9 sports |
-| **ingestion** | Sports data polling from external providers (ESPN, OpenF1, PGA Tour) |
-| **notifications** | In-app notification reads and preferences |
+| **auth, leagues, invitations** | Current PoolMaster onboarding, membership, invite, and join flows |
+| **contests, contest-management, drafts** | Commissioner-owned contest setup and draft lifecycle services |
+| **scoring, standings, history** | Scoring calculation, standings projections, and historical result views |
+| **participants, events, ingestion** | Sports data entities, event feeds, and provider sync surfaces |
+| **notifications, account-consent, config** | User-facing support APIs retained for the active web app |
 | **admin** | Root-admin backend surfaces retained in the service |
 
 ---
 
-## Features
+## Current Product Surface
 
-### Leagues & Members
-- League creation with configurable settings (visibility, invite policy, member limits)
-- Email invitations, shareable invite links, CSV bulk import
-- Role hierarchy: Owner > Commissioner > Manager > Viewer
-- 25 granular commissioner permissions
+### PoolMaster Web
+- Registration, login, refresh, logout, and `/welcome` onboarding
+- League creation with explicit `leagueCode` routes
+- League home at `/league/<leagueCode>`
+- My Leagues list and active/inactive league handling
+- Invite and join entry points, including current invite-code routes
 
-### Account & Communication
-- Consent/account essentials use the live backend contract
-- In-app notification reads and preference management remain active
-- Legacy social, billing, and separate admin frontend surfaces have been removed or deferred
+### Backend Capabilities Already Present
+- League member directories, invitation preview, invite acceptance, and join-oriented APIs
+- Contest, draft, scoring, standings, history, participant, and ingestion services
+- Root-admin backend APIs retained in the monolith
+- Interactive backend API docs at `/apidoc`
 
-### Contests
-- Commissioner-managed contest configuration backed by live backend contracts
-- Squad-owned entries, roster picks, live standings, and persisted scoring results
-- Configurable participant scoring rules, aggregation rules, and prize definitions
-
-### Commissioner Tools
-- Dashboard with action items, contest summaries, member activity, upcoming events
-- Draft overrides: undo pick, pause/resume, extend clock
-- Scoring overrides: adjust scores, force recalculate standings
-- Contest lifecycle: reopen, close, extend deadline
-- Full audit trail with commissioner and member views
+### Deferred Or Historical Surface
+- Paid-league renewal/reactivation flows are deferred
+- Legacy separate admin frontend is retired
+- Legacy social and billing product surfaces are not part of the active PoolMaster web build
 
 ---
 
@@ -156,7 +154,7 @@ poolmaster/
 - [Standard Auth Model](docs/STANDARD-AUTH-MODEL.md) — Recommended conventional local-auth + Google OIDC + cookie-session target for PoolMaster
 - [Database Schema](docs/DATABASE-SCHEMA.md) — ERDs and a practical data dictionary for PostgreSQL tables and app ownership
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
-- [Scoring & Configuration Guide](docs/scoring-and-configuration-guide.md) — End-user scoring configuration
+- [Honest Contract Remediation](docs/HONEST-CONTRACT-REMEDIATION.md) — Contract cleanup notes and follow-up context
 - [AWS Deployment Plan](plans/archive/2026-04-completed-wave/16-aws-deployment.md) — Historical deployment plan with action items and status
 
 ### Code READMEs
