@@ -2,7 +2,7 @@
  * Admin DTOs — request/response schemas for admin panel endpoints.
  */
 import { z } from 'zod';
-import { ContestStatus, LeagueRole, Sport } from '@poolmaster/shared/domain';
+import { AuthProvider, ContestStatus, LeagueRole, Sport } from '@poolmaster/shared/domain';
 import { PaginatedSchema } from './common.dto';
 
 const SportSchema = z.enum([
@@ -33,6 +33,11 @@ const ContestStatusSchema = z.enum([
   ContestStatus.ACTIVE,
   ContestStatus.COMPLETED,
   ContestStatus.CANCELLED,
+]);
+const AuthProviderSchema = z.enum([
+  AuthProvider.EMAIL,
+  AuthProvider.GOOGLE,
+  AuthProvider.APPLE,
 ]);
 
 // --- Response Sub-schemas ---
@@ -110,7 +115,7 @@ export const UserDetailResponseSchema = z.object({
   id: z.string(),
   email: z.string(),
   displayName: z.string(),
-  authProvider: z.string().optional(),
+  authProvider: AuthProviderSchema.optional(),
   isActive: z.boolean().describe('Whether the account is currently active for normal sign-in and product usage.'),
   createdAt: z.string().datetime(),
   lastLoginAt: z.string().datetime().optional(),

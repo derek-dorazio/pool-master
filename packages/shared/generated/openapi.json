@@ -122,10 +122,22 @@
                           "type": "string",
                           "description": "Preferred locale for formatting and localized copy."
                         },
-                        "avatarUrl": {
+                        "timeFormat": {
                           "type": "string",
-                          "nullable": true,
-                          "description": "Optional avatar image URL for profile and social surfaces."
+                          "enum": [
+                            "12H",
+                            "24H"
+                          ],
+                          "description": "Preferred clock display used in account and scheduling surfaces."
+                        },
+                        "dateFormat": {
+                          "type": "string",
+                          "enum": [
+                            "MDY",
+                            "DMY",
+                            "YMD"
+                          ],
+                          "description": "Preferred date display format used in account and scheduling surfaces."
                         },
                         "createdAt": {
                           "type": "string",
@@ -348,10 +360,22 @@
                           "type": "string",
                           "description": "Preferred locale for formatting and localized copy."
                         },
-                        "avatarUrl": {
+                        "timeFormat": {
                           "type": "string",
-                          "nullable": true,
-                          "description": "Optional avatar image URL for profile and social surfaces."
+                          "enum": [
+                            "12H",
+                            "24H"
+                          ],
+                          "description": "Preferred clock display used in account and scheduling surfaces."
+                        },
+                        "dateFormat": {
+                          "type": "string",
+                          "enum": [
+                            "MDY",
+                            "DMY",
+                            "YMD"
+                          ],
+                          "description": "Preferred date display format used in account and scheduling surfaces."
                         },
                         "createdAt": {
                           "type": "string",
@@ -803,10 +827,22 @@
                           "type": "string",
                           "description": "Preferred locale for formatting and localized copy."
                         },
-                        "avatarUrl": {
+                        "timeFormat": {
                           "type": "string",
-                          "nullable": true,
-                          "description": "Optional avatar image URL for profile and social surfaces."
+                          "enum": [
+                            "12H",
+                            "24H"
+                          ],
+                          "description": "Preferred clock display used in account and scheduling surfaces."
+                        },
+                        "dateFormat": {
+                          "type": "string",
+                          "enum": [
+                            "MDY",
+                            "DMY",
+                            "YMD"
+                          ],
+                          "description": "Preferred date display format used in account and scheduling surfaces."
                         },
                         "createdAt": {
                           "type": "string",
@@ -14260,10 +14296,22 @@
                           "type": "string",
                           "description": "Preferred locale for formatting and localized copy."
                         },
-                        "avatarUrl": {
+                        "timeFormat": {
                           "type": "string",
-                          "nullable": true,
-                          "description": "Optional avatar image URL for profile and social surfaces."
+                          "enum": [
+                            "12H",
+                            "24H"
+                          ],
+                          "description": "Preferred clock display used in account and scheduling surfaces."
+                        },
+                        "dateFormat": {
+                          "type": "string",
+                          "enum": [
+                            "MDY",
+                            "DMY",
+                            "YMD"
+                          ],
+                          "description": "Preferred date display format used in account and scheduling surfaces."
                         },
                         "createdAt": {
                           "type": "string",
@@ -15180,7 +15228,12 @@
                       "type": "string"
                     },
                     "authProvider": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "email",
+                        "google",
+                        "apple"
+                      ]
                     },
                     "isActive": {
                       "type": "boolean",

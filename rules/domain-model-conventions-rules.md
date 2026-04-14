@@ -126,6 +126,26 @@ Lifecycle wording should stay consistent across:
 - route documentation
 - frontend UI copy where practical
 
+When a field is intentionally constrained to a closed set of values, model it
+as an enum/union rather than a broad string.
+
+Use enum-backed modeling for:
+
+- domain enums in `packages/shared/domain/enums.ts`
+- shared domain types
+- DTO schemas
+- mapper return types
+
+Do not use free-form `string` when the product meaning is actually:
+
+- a known provider set
+- a known format choice
+- a known policy choice
+- a known workflow state
+
+If persistence still stores a broad string temporarily, document that as
+transitional debt and keep the API/domain surface strongly typed.
+
 ---
 
 ## 4. Filtering Conventions

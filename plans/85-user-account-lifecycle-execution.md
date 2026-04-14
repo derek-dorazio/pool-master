@@ -43,6 +43,7 @@ lifecycle:
 | 85-009 | 2 | Frontend developer: add account delete mini-wizard | Done | Inline wizard uses exact email confirmation before enabling `DELETE`. |
 | 85-010 | 2 | Frontend developer: add post-delete logout and route handling | Done | Success path exits through signed-out routing after the user acknowledges delete completion. |
 | 85-011 | 2 | Frontend developer: add UI tests and future browser-journey hooks | Done | Added component tests for inactivate, email confirmation gating, and delete success behavior to support future no-residue E2E cleanup. |
+| 85-012 | 3 | Data-modeler/backend cleanup: align active account DTO/profile contract to the real user model | Done | Removed the synthetic `avatarUrl` field from the active user profile DTO, exposed the actually persisted `timeFormat` and `dateFormat` fields, and aligned constrained account/profile choices to shared enums across auth, account, and root-admin user detail surfaces. |
 
 ## Data-Modeler Review Notes
 

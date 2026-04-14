@@ -2,6 +2,7 @@
  * Auth mappers — convert internal domain/Prisma objects to DTOs.
  */
 import type { AuthResponse, UserProfileDto, MeResponse } from '@poolmaster/shared/dto';
+import type { DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 
 interface UserRow {
   id: string;
@@ -11,7 +12,8 @@ interface UserRow {
   isRootAdmin: boolean;
   timezone?: string | null;
   locale?: string | null;
-  avatarUrl?: string | null;
+  timeFormat?: TimeFormat | null;
+  dateFormat?: DateFormat | null;
   createdAt: Date;
 }
 
@@ -31,7 +33,8 @@ export function toUserProfileDto(user: UserRow): UserProfileDto {
     isRootAdmin: user.isRootAdmin,
     timezone: user.timezone ?? undefined,
     locale: user.locale ?? undefined,
-    avatarUrl: user.avatarUrl ?? null,
+    timeFormat: user.timeFormat ?? undefined,
+    dateFormat: user.dateFormat ?? undefined,
     createdAt: user.createdAt.toISOString(),
   };
 }

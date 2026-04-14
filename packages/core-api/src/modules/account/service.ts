@@ -9,6 +9,8 @@ type AccountUserRow = {
   authProvider: string | null;
   timezone: string | null;
   locale: string | null;
+  timeFormat: string | null;
+  dateFormat: string | null;
   createdAt: Date;
 };
 

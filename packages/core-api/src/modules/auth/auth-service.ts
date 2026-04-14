@@ -9,6 +9,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import type { PrismaClient } from '@prisma/client';
+import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,9 +35,11 @@ export interface UserProfile {
   displayName: string;
   isActive: boolean;
   isRootAdmin: boolean;
-  authProvider?: 'email' | 'google' | 'apple';
+  authProvider?: AuthProvider;
   timezone?: string | null;
   locale?: string | null;
+  timeFormat?: TimeFormat | null;
+  dateFormat?: DateFormat | null;
   createdAt: Date;
 }
 
@@ -241,6 +244,8 @@ function mapUserProfile(user: {
   authProvider: string | null;
   timezone: string | null;
   locale: string | null;
+  timeFormat: string | null;
+  dateFormat: string | null;
   createdAt: Date;
 }): UserProfile {
   return {
@@ -252,13 +257,25 @@ function mapUserProfile(user: {
     authProvider: mapAuthProvider(user.authProvider),
     timezone: user.timezone ?? undefined,
     locale: user.locale ?? undefined,
+    timeFormat: mapTimeFormat(user.timeFormat),
+    dateFormat: mapDateFormat(user.dateFormat),
     createdAt: user.createdAt,
   };
 }
 
 function mapAuthProvider(provider: string | null): UserProfile['authProvider'] {
-  if (provider === 'local') return 'email';
-  if (provider === 'google') return 'google';
-  if (provider === 'apple') return 'apple';
+  if (provider === 'local') return AuthProvider.EMAIL;
+  if (provider === 'google') return AuthProvider.GOOGLE;
+  if (provider === 'apple') return AuthProvider.APPLE;
+  return undefined;
+}
+
+function mapTimeFormat(format: string | null): UserProfile['timeFormat'] {
+  if (format === TimeFormat.TWELVE_HOUR || format === TimeFormat.TWENTY_FOUR_HOUR) return format;
+  return undefined;
+}
+
+function mapDateFormat(format: string | null): UserProfile['dateFormat'] {
+  if (format === DateFormat.MDY || format === DateFormat.DMY || format === DateFormat.YMD) return format;
   return undefined;
 }

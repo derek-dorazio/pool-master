@@ -9,6 +9,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import { AuthProvider } from '@poolmaster/shared/domain';
 import type { ContestStatus, LeagueRole, Sport } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
 
@@ -37,7 +38,7 @@ export interface UserDetailView {
   id: string;
   email: string;
   displayName: string;
-  authProvider?: string;
+  authProvider?: AuthProvider;
   isActive: boolean;
   createdAt: Date;
   lastLoginAt?: Date;
@@ -212,7 +213,7 @@ export class UserService {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
-      authProvider: user.authProvider ?? undefined,
+      authProvider: mapAuthProvider(user.authProvider),
       isActive: user.isActive,
       createdAt: user.createdAt,
       lastLoginAt: undefined,
@@ -426,4 +427,11 @@ export class UserService {
 
     return result;
   }
+}
+
+function mapAuthProvider(provider: string | null | undefined): AuthProvider | undefined {
+  if (provider === 'local') return AuthProvider.EMAIL;
+  if (provider === 'google') return AuthProvider.GOOGLE;
+  if (provider === 'apple') return AuthProvider.APPLE;
+  return undefined;
 }

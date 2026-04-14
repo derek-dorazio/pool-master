@@ -8,9 +8,11 @@
  */
 
 import type {
+  AuthProvider,
   CommissionerPermission,
   ContestStatus,
   ContestType,
+  DateFormat,
   DraftStatus,
   FormTrend,
   InjuryStatusCode,
@@ -28,6 +30,8 @@ import type {
   Sport,
   SquadMembershipStatus,
   SquadStatus,
+  TimeFormat,
+  WeekDay,
 } from './enums';
 
 // --- Base ---
@@ -45,13 +49,13 @@ export interface User extends DomainEntity {
   email: string;
   displayName: string;
   isActive: boolean;
-  authProvider?: string;
+  authProvider?: AuthProvider;
   authId?: string;
   isRootAdmin?: boolean;
   timezone?: string;
   locale?: string;
-  timeFormat?: '12H' | '24H';
-  dateFormat?: 'MDY' | 'DMY' | 'YMD';
+  timeFormat?: TimeFormat;
+  dateFormat?: DateFormat;
 }
 
 // --- User Locale Preferences ---
@@ -60,9 +64,9 @@ export interface UserLocalePreference {
   userId: string;
   language: string;
   timezone?: string;
-  timeFormat: '12H' | '24H';
-  dateFormat: 'MDY' | 'DMY' | 'YMD';
-  firstDayOfWeek: 'SUNDAY' | 'MONDAY';
+  timeFormat: TimeFormat;
+  dateFormat: DateFormat;
+  firstDayOfWeek: WeekDay;
   preferredCurrency?: string;
   deviceLocale?: string;
   deviceTimezone?: string;

@@ -2,6 +2,7 @@
  * Auth DTOs — request/response schemas for authentication endpoints.
  */
 import { z } from 'zod';
+import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { SuccessSchema } from './common.dto';
 import { ErrorEnvelopeSchema } from './errors.dto';
 
@@ -74,12 +75,19 @@ export const UserProfileDtoSchema = z.object({
     .describe('Whether the account is currently active for normal sign-in and product usage.'),
   isRootAdmin: z.boolean().describe('Whether the user has platform-level root-admin access.'),
   authProvider: z
-    .enum(['email', 'google', 'apple'])
+    .enum([AuthProvider.EMAIL, AuthProvider.GOOGLE, AuthProvider.APPLE])
     .optional()
     .describe('Authentication provider used for the account when known.'),
   timezone: z.string().optional().describe('Preferred IANA timezone for user-facing scheduling and reminders.'),
   locale: z.string().optional().describe('Preferred locale for formatting and localized copy.'),
-  avatarUrl: z.string().nullable().optional().describe('Optional avatar image URL for profile and social surfaces.'),
+  timeFormat: z
+    .enum([TimeFormat.TWELVE_HOUR, TimeFormat.TWENTY_FOUR_HOUR])
+    .optional()
+    .describe('Preferred clock display used in account and scheduling surfaces.'),
+  dateFormat: z
+    .enum([DateFormat.MDY, DateFormat.DMY, DateFormat.YMD])
+    .optional()
+    .describe('Preferred date display format used in account and scheduling surfaces.'),
   createdAt: z.string().datetime().optional().describe('Account creation timestamp in ISO 8601 format.'),
 }).describe('Frontend-facing user profile summary derived from the authenticated account.');
 export type UserProfileDto = z.infer<typeof UserProfileDtoSchema>;

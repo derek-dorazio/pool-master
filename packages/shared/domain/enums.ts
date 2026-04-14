@@ -189,6 +189,26 @@ export const LeagueVisibility = {
 } as const;
 export type LeagueVisibility = (typeof LeagueVisibility)[keyof typeof LeagueVisibility];
 
+export const AuthProvider = {
+  EMAIL: 'email',
+  GOOGLE: 'google',
+  APPLE: 'apple',
+} as const;
+export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider];
+
+export const TimeFormat = {
+  TWELVE_HOUR: '12H',
+  TWENTY_FOUR_HOUR: '24H',
+} as const;
+export type TimeFormat = (typeof TimeFormat)[keyof typeof TimeFormat];
+
+export const DateFormat = {
+  MDY: 'MDY',
+  DMY: 'DMY',
+  YMD: 'YMD',
+} as const;
+export type DateFormat = (typeof DateFormat)[keyof typeof DateFormat];
+
 export const SquadStatus = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE',

@@ -2737,8 +2737,16 @@ export interface operations {
                             timezone?: string;
                             /** @description Preferred locale for formatting and localized copy. */
                             locale?: string;
-                            /** @description Optional avatar image URL for profile and social surfaces. */
-                            avatarUrl?: string | null;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
                             /**
                              * Format: date-time
                              * @description Account creation timestamp in ISO 8601 format.
@@ -2849,8 +2857,16 @@ export interface operations {
                             timezone?: string;
                             /** @description Preferred locale for formatting and localized copy. */
                             locale?: string;
-                            /** @description Optional avatar image URL for profile and social surfaces. */
-                            avatarUrl?: string | null;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
                             /**
                              * Format: date-time
                              * @description Account creation timestamp in ISO 8601 format.
@@ -3096,8 +3112,16 @@ export interface operations {
                             timezone?: string;
                             /** @description Preferred locale for formatting and localized copy. */
                             locale?: string;
-                            /** @description Optional avatar image URL for profile and social surfaces. */
-                            avatarUrl?: string | null;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
                             /**
                              * Format: date-time
                              * @description Account creation timestamp in ISO 8601 format.
@@ -9376,8 +9400,16 @@ export interface operations {
                             timezone?: string;
                             /** @description Preferred locale for formatting and localized copy. */
                             locale?: string;
-                            /** @description Optional avatar image URL for profile and social surfaces. */
-                            avatarUrl?: string | null;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
                             /**
                              * Format: date-time
                              * @description Account creation timestamp in ISO 8601 format.
@@ -9817,7 +9849,8 @@ export interface operations {
                         id: string;
                         email: string;
                         displayName: string;
-                        authProvider?: string;
+                        /** @enum {string} */
+                        authProvider?: "email" | "google" | "apple";
                         /** @description Whether the account is currently active for normal sign-in and product usage. */
                         isActive: boolean;
                         /** Format: date-time */

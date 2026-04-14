@@ -132,9 +132,13 @@ export type RegisterUserResponses = {
              */
             locale?: string;
             /**
-             * Optional avatar image URL for profile and social surfaces.
+             * Preferred clock display used in account and scheduling surfaces.
              */
-            avatarUrl?: string;
+            timeFormat?: '12H' | '24H';
+            /**
+             * Preferred date display format used in account and scheduling surfaces.
+             */
+            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -254,9 +258,13 @@ export type LoginUserResponses = {
              */
             locale?: string;
             /**
-             * Optional avatar image URL for profile and social surfaces.
+             * Preferred clock display used in account and scheduling surfaces.
              */
-            avatarUrl?: string;
+            timeFormat?: '12H' | '24H';
+            /**
+             * Preferred date display format used in account and scheduling surfaces.
+             */
+            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -547,9 +555,13 @@ export type GetCurrentUserResponses = {
              */
             locale?: string;
             /**
-             * Optional avatar image URL for profile and social surfaces.
+             * Preferred clock display used in account and scheduling surfaces.
              */
-            avatarUrl?: string;
+            timeFormat?: '12H' | '24H';
+            /**
+             * Preferred date display format used in account and scheduling surfaces.
+             */
+            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -7601,9 +7613,13 @@ export type InactivateAccountResponses = {
              */
             locale?: string;
             /**
-             * Optional avatar image URL for profile and social surfaces.
+             * Preferred clock display used in account and scheduling surfaces.
              */
-            avatarUrl?: string;
+            timeFormat?: '12H' | '24H';
+            /**
+             * Preferred date display format used in account and scheduling surfaces.
+             */
+            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -8091,7 +8107,7 @@ export type AdminGetUserDetailResponses = {
         id: string;
         email: string;
         displayName: string;
-        authProvider?: string;
+        authProvider?: 'email' | 'google' | 'apple';
         /**
          * Whether the account is currently active for normal sign-in and product usage.
          */
