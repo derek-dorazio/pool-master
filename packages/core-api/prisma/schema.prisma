@@ -16,9 +16,9 @@ datasource db {
 // - Every DateTime column uses @db.Timestamptz (PostgreSQL `timestamptz`).
 // - Application code MUST write UTC values — never local times.
 // - Timezone conversion is a **display concern** handled by the client using
-//   the user's timezone preference (UserLocalePreference.timezone) or the
-//   league/tenant default timezone.
-// - Resolution order: user timezone > league timezone > tenant timezone.
+//   the user's persisted account timezone or the league default timezone when
+//   it exists.
+// - Resolution order: user timezone > league timezone.
 //
 // See plans/14-poolmaster-localisation-i18n.md for the full timezone strategy.
 // =============================================================================
@@ -52,7 +52,6 @@ model User {
   rootAdminAuditEntries AdminAuditEntry[]    @relation("RootAdminAuditActor")
   migrationRunsStarted  MigrationRun[]       @relation("MigrationStartedBy")
   notifications       Notification[]
-  localePreference    UserLocalePreference?
 
   refreshTokens       RefreshToken[]
 
@@ -758,23 +757,6 @@ model Notification {
 // =============================================================================
 // User Locale Preferences
 // =============================================================================
-
-model UserLocalePreference {
-  userId            String   @id @map("user_id") @db.Uuid
-  language          String   @default("en-US") @db.VarChar(10)
-  timezone          String?  @db.VarChar(50)
-  timeFormat        String   @default("12H") @map("time_format") @db.VarChar(5)
-  dateFormat        String   @default("MDY") @map("date_format") @db.VarChar(5)
-  firstDayOfWeek    String   @default("SUNDAY") @map("first_day_of_week") @db.VarChar(10)
-  preferredCurrency String?  @map("preferred_currency") @db.VarChar(3)
-  deviceLocale      String?  @map("device_locale") @db.VarChar(10)
-  deviceTimezone    String?  @map("device_timezone") @db.VarChar(50)
-  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@map("user_locale_preferences")
-}
 
 model ConsentRecord {
   id          String   @id @default(uuid()) @db.Uuid

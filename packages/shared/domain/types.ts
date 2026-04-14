@@ -31,7 +31,6 @@ import type {
   SquadMembershipStatus,
   SquadStatus,
   TimeFormat,
-  WeekDay,
 } from './enums';
 
 // --- Base ---
@@ -56,21 +55,6 @@ export interface User extends DomainEntity {
   locale?: string;
   timeFormat?: TimeFormat;
   dateFormat?: DateFormat;
-}
-
-// --- User Locale Preferences ---
-
-export interface UserLocalePreference {
-  userId: string;
-  language: string;
-  timezone?: string;
-  timeFormat: TimeFormat;
-  dateFormat: DateFormat;
-  firstDayOfWeek: WeekDay;
-  preferredCurrency?: string;
-  deviceLocale?: string;
-  deviceTimezone?: string;
-  updatedAt: Date;
 }
 
 // --- League ---

@@ -96,5 +96,4 @@ export type {
   TierDefinition,
   UpcomingEvent,
   User,
-  UserLocalePreference,
 } from './types';

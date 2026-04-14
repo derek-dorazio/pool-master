@@ -120,7 +120,6 @@ classDiagram
     class Notification
     class NotificationPreference
     class DeviceRegistration
-    class UserLocalePreference
     class ConsentRecord
     class DataExportRequest
     class DeletionRequest
@@ -140,7 +139,6 @@ classDiagram
     User "1" --> "*" Notification : receives
     User "1" --> "1" NotificationPreference : configures
     User "1" --> "*" DeviceRegistration : registers
-    User "1" --> "1" UserLocalePreference : prefers
     User "1" --> "*" ConsentRecord : grants
     User "1" --> "*" DataExportRequest : requests
     User "1" --> "*" DeletionRequest : requests
@@ -190,7 +188,6 @@ classDiagram
 | `tenants` | Top-level tenancy boundary for users, leagues, billing, and overrides | `id`, `slug`, plan defaults, locale/timezone/currency defaults | `Both` |
 | `users` | Member-facing account identity and profile basics | `id`, `email`, `tenant_id`, `display_name`, locale/timezone fields | `Both` |
 | `refresh_tokens` | Opaque refresh-token storage and revocation state | `token`, `user_id`, `expires_at`, `revoked_at` | `Both` |
-| `user_locale_preferences` | Per-user display preferences beyond base user profile | language, timezone, time/date formats, currency | `Web` |
 
 ## League And Commissioner Operations
 

@@ -143,7 +143,6 @@ describe('AccountService', () => {
     const tx = {
       refreshToken: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
       notification: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-      userLocalePreference: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
       consentRecord: { deleteMany: jest.fn().mockResolvedValue({ count: 2 }) },
       leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
       commissionerAuditLog: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },

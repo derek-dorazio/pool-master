@@ -106,7 +106,6 @@ export class AccountService {
     await this.prisma.$transaction(async (tx) => {
       await tx.refreshToken.deleteMany({ where: { userId } });
       await tx.notification.deleteMany({ where: { userId } });
-      await tx.userLocalePreference.deleteMany({ where: { userId } });
       await tx.consentRecord.deleteMany({ where: { userId } });
       await tx.leagueInvitation.deleteMany({
         where: {
