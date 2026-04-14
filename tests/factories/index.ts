@@ -11,7 +11,6 @@ import type {
   League,
   LeagueInvitation,
   LeagueMembership,
-  LeagueSettings,
   PayoutConfig,
   User,
 } from '@poolmaster/shared/domain/types';
@@ -19,14 +18,13 @@ import {
   ContestStatus,
   ContestType,
   InvitationStatus,
-  InvitePolicy,
+  JoinPolicy,
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
   LeagueVisibility,
   ScoringEngine,
   SelectionType,
-  WeekDay,
 } from '@poolmaster/shared/domain';
 
 let counter = 0;
@@ -55,26 +53,12 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     leagueCode: `LEAGUE${id.slice(-4)}`,
     name: `League ${id}`,
     createdBy: 'owner-1',
+    isActive: true,
+    joinPolicy: JoinPolicy.COMMISSIONER_ONLY,
     visibility: LeagueVisibility.PRIVATE,
     maxMembers: 20,
-    settings: buildLeagueSettings() as unknown as Record<string, unknown>,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
-    ...overrides,
-  };
-}
-
-export function buildLeagueSettings(overrides: Partial<LeagueSettings> = {}): LeagueSettings {
-  return {
-    isActive: true,
-    invitePolicy: InvitePolicy.COMMISSIONER_ONLY,
-    allowMidSeasonJoin: false,
-    requireApproval: false,
-    activityFeedEnabled: true,
-    weeklyRecapEnabled: false,
-    weeklyRecapDay: WeekDay.MONDAY,
-    timezone: 'America/New_York',
-    currency: 'USD',
     ...overrides,
   };
 }

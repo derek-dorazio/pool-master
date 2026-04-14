@@ -42,7 +42,6 @@ export const API_ROUTES = {
     removeMember: (leagueId: string, memberId: string) =>
       `/api/v1/leagues/${leagueId}/members/${memberId}`,
     inviteLink: (id: string) => `/api/v1/leagues/${id}/invite-link`,
-    settings: (id: string) => `/api/v1/leagues/${id}/settings`,
     contests: (id: string) => `/api/v1/leagues/${id}/contests`,
     squads: (id: string) => `/api/v1/leagues/${id}/squads`,
     contestManagement: (id: string) =>

@@ -15,8 +15,8 @@ describe('Commissioner Permissions', () => {
       expect(ALL_COMMISSIONER_PERMISSIONS).toHaveLength(23);
     });
 
-    it('includes league.settings.edit', () => {
-      expect(ALL_COMMISSIONER_PERMISSIONS).toContain('league.settings.edit');
+    it('includes league.manage.edit', () => {
+      expect(ALL_COMMISSIONER_PERMISSIONS).toContain('league.manage.edit');
     });
 
     it('includes scoring.override', () => {
@@ -37,22 +37,22 @@ describe('Commissioner Permissions', () => {
     it('returns true for COMMISSIONER with the permission', () => {
       const commissioner = buildMembership({
         role: LeagueRole.COMMISSIONER,
-        permissions: [CommissionerPermission.LEAGUE_SETTINGS_EDIT],
+        permissions: [CommissionerPermission.LEAGUE_MANAGE_EDIT],
       });
-      expect(hasPermission(commissioner, CommissionerPermission.LEAGUE_SETTINGS_EDIT)).toBe(true);
+      expect(hasPermission(commissioner, CommissionerPermission.LEAGUE_MANAGE_EDIT)).toBe(true);
     });
 
     it('returns false for COMMISSIONER without the permission', () => {
       const commissioner = buildMembership({
         role: LeagueRole.COMMISSIONER,
-        permissions: [CommissionerPermission.LEAGUE_SETTINGS_EDIT],
+        permissions: [CommissionerPermission.LEAGUE_MANAGE_EDIT],
       });
       expect(hasPermission(commissioner, CommissionerPermission.SCORING_OVERRIDE)).toBe(false);
     });
 
     it('returns false for MEMBER', () => {
       const member = buildMembership({ role: LeagueRole.MEMBER });
-      expect(hasPermission(member, CommissionerPermission.LEAGUE_SETTINGS_EDIT)).toBe(false);
+      expect(hasPermission(member, CommissionerPermission.LEAGUE_MANAGE_EDIT)).toBe(false);
     });
   });
 
@@ -64,7 +64,7 @@ describe('Commissioner Permissions', () => {
       });
       expect(
         hasAnyPermission(commissioner, [
-          CommissionerPermission.LEAGUE_SETTINGS_EDIT,
+          CommissionerPermission.LEAGUE_MANAGE_EDIT,
           CommissionerPermission.CONTEST_CREATE,
         ]),
       ).toBe(true);

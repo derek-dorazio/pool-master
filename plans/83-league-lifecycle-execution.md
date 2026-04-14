@@ -46,6 +46,9 @@ lifecycle:
 | 83-009 | 2 | Frontend developer: add inactive-league delete mini-wizard UX | Done | Added inline delete flow with irreversible warning, typed `leagueCode` confirmation, disabled delete until exact match, and post-delete success state. |
 | 83-010 | 2 | Frontend developer: add post-delete routing and truthful empty-state behavior | Done | Deletion refreshes the leagues query; when no leagues remain, the existing list route truthfully returns the commissioner to `/welcome`. |
 | 83-011 | 2 | Frontend developer: add UI tests and extend browser journey planning hooks | Done | Added modal UI tests covering inactivate and delete behavior. Browser expansion remains intentionally deferred under Plan 86 until lifecycle/account cleanup flows are complete. |
+| 83-012 | 3 | Data-modeler: remediate league lifecycle model drift by promoting first-class fields and removing `League.settings` | Done | Locked the simplified league model: `League.isActive` and `League.joinPolicy` are first-class fields, speculative settings were retired, and the old JSON settings bag is no longer part of the approved design. |
+| 83-013 | 3 | Backend developer: update league persistence, contract, and tests to match the simplified model | Done | Added schema migration, repository/service cleanup, DTO/OpenAPI regeneration, removed the stale settings patch route, and aligned commissioner permissions to `league.manage.edit`. |
+| 83-014 | 3 | Frontend developer: align PoolMaster league surfaces to the simplified first-class league model | Done | Updated generated-client consumers to use `joinPolicy`, removed active frontend reliance on `League.settings`, and kept league detail/manage surfaces truthful. |
 
 ## Data-Modeler Review Notes
 

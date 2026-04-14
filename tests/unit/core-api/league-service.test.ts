@@ -1,6 +1,6 @@
-import { LeagueService, LeagueNotFoundError } from '../../../packages/core-api/src/modules/leagues/service';
+import { LeagueService } from '../../../packages/core-api/src/modules/leagues/service';
 import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
-import { LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
+import { JoinPolicy, LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
 import { buildLeague, buildMembership } from '../../factories';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
@@ -94,7 +94,7 @@ describe('LeagueService', () => {
       expect(leagueRepo.findByCode).toHaveBeenCalledWith('MYLEAGUE');
     });
 
-    it('applies the default private visibility and default settings', async () => {
+    it('applies the default private visibility and first-class lifecycle fields', async () => {
       const leagueRepo = createMockLeagueRepo();
       const membershipRepo = createMockMembershipRepo();
       const service = new LeagueService(leagueRepo, membershipRepo);
@@ -104,12 +104,9 @@ describe('LeagueService', () => {
         leagueCode: 'MYLEAGUE',
       });
       const createArg = (leagueRepo.create as jest.Mock).mock.calls[0][0];
-      const settings = createArg.settings;
       expect(createArg.visibility).toBe(LeagueVisibility.PRIVATE);
-      expect(settings.timezone).toBe('America/New_York');
-      expect(settings.invitePolicy).toBe('COMMISSIONER_ONLY');
-      expect(settings.currency).toBe('USD');
-      expect(settings.weeklyRecapDay).toBe('MONDAY');
+      expect(createArg.isActive).toBe(true);
+      expect(createArg.joinPolicy).toBe(JoinPolicy.COMMISSIONER_ONLY);
     });
 
     it('uses default maxMembers when not provided', async () => {
@@ -173,47 +170,11 @@ describe('LeagueService', () => {
     });
   });
 
-  describe('updateSettings', () => {
-    it('merges updates with existing settings', async () => {
-      const existingLeague = buildLeague({
-        id: 'league-1',
-        settings: {
-          invitePolicy: 'COMMISSIONER_ONLY',
-          timezone: 'America/New_York',
-          currency: 'USD',
-          allowMidSeasonJoin: false,
-          requireApproval: false,
-          activityFeedEnabled: true,
-          weeklyRecapEnabled: false,
-          weeklyRecapDay: 'MONDAY',
-        },
-      });
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(existingLeague),
-      });
-      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
-      await service.updateSettings('league-1', { timezone: 'Europe/London' });
-      const updateArg = (leagueRepo.update as jest.Mock).mock.calls[0][1];
-      expect((updateArg.settings as Record<string, unknown>).timezone).toBe('Europe/London');
-      expect((updateArg.settings as Record<string, unknown>).currency).toBe('USD');
-    });
-
-    it('throws LeagueNotFoundError for missing league', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(null),
-      });
-      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
-      await expect(
-        service.updateSettings('missing', { timezone: 'UTC' }),
-      ).rejects.toThrow(LeagueNotFoundError);
-    });
-  });
-
   describe('inactivateLeague', () => {
     it('marks an active league inactive', async () => {
       const existingLeague = buildLeague({
         id: 'league-1',
-        settings: { isActive: true, timezone: 'America/New_York' },
+        isActive: true,
       });
       const leagueRepo = createMockLeagueRepo({
         findById: jest.fn().mockResolvedValue(existingLeague),
@@ -225,7 +186,7 @@ describe('LeagueService', () => {
       expect(leagueRepo.update).toHaveBeenCalledWith(
         'league-1',
         expect.objectContaining({
-          settings: expect.objectContaining({ isActive: false }),
+          isActive: false,
         }),
       );
     });
@@ -234,7 +195,7 @@ describe('LeagueService', () => {
       const leagueRepo = createMockLeagueRepo({
         findById: jest.fn().mockResolvedValue(buildLeague({
           id: 'league-1',
-          settings: { isActive: false },
+          isActive: false,
         })),
       });
       const service = new LeagueService(leagueRepo, createMockMembershipRepo());
@@ -252,7 +213,7 @@ describe('LeagueService', () => {
         findById: jest.fn().mockResolvedValue(buildLeague({
           id: 'league-1',
           leagueCode: 'ACTIVE1',
-          settings: { isActive: true },
+          isActive: true,
         })),
       });
       const { prisma } = createMockLifecyclePrisma();
@@ -273,7 +234,7 @@ describe('LeagueService', () => {
         findById: jest.fn().mockResolvedValue(buildLeague({
           id: 'league-1',
           leagueCode: 'RIGHT123',
-          settings: { isActive: false },
+          isActive: false,
         })),
       });
       const { prisma } = createMockLifecyclePrisma();
@@ -294,7 +255,7 @@ describe('LeagueService', () => {
         findById: jest.fn().mockResolvedValue(buildLeague({
           id: 'league-1',
           leagueCode: 'DELETE01',
-          settings: { isActive: false },
+          isActive: false,
         })),
       });
       const { prisma, tx } = createMockLifecyclePrisma();

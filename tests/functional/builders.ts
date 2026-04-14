@@ -109,12 +109,12 @@ export async function buildLeagueWithCommissioner(overrides?: {
     memberCount: number;
     activeContestCount: number;
     visibility: string;
+    isActive: boolean;
+    joinPolicy: string;
     createdAt?: string;
     description?: string;
-    invitePolicy?: string;
     maxMembers?: number;
     role?: string;
-    settings?: Record<string, unknown>;
   };
   commissioner: RegisteredUserContext;
   commissionerClient: Client;

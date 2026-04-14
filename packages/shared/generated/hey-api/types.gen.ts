@@ -724,7 +724,7 @@ export type CreateLeagueResponses = {
      */
     201: {
         /**
-         * Detailed league payload used by league-home and league-settings surfaces.
+         * Detailed league payload used by league-home and commissioner-management surfaces.
          */
         league: {
             /**
@@ -772,15 +772,9 @@ export type CreateLeagueResponses = {
              */
             maxMembers?: number;
             /**
-             * League settings object as currently persisted for commissioner-driven controls.
+             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              */
-            settings?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Current invitation policy resolved from league settings.
-             */
-            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         };
     };
 };
@@ -909,7 +903,7 @@ export type GetLeagueResponses = {
      */
     200: {
         /**
-         * Detailed league payload used by league-home and league-settings surfaces.
+         * Detailed league payload used by league-home and commissioner-management surfaces.
          */
         league: {
             /**
@@ -957,15 +951,9 @@ export type GetLeagueResponses = {
              */
             maxMembers?: number;
             /**
-             * League settings object as currently persisted for commissioner-driven controls.
+             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              */
-            settings?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Current invitation policy resolved from league settings.
-             */
-            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         };
     };
 };
@@ -1014,7 +1002,7 @@ export type GetLeagueByCodeResponses = {
      */
     200: {
         /**
-         * Detailed league payload used by league-home and league-settings surfaces.
+         * Detailed league payload used by league-home and commissioner-management surfaces.
          */
         league: {
             /**
@@ -1062,165 +1050,14 @@ export type GetLeagueByCodeResponses = {
              */
             maxMembers?: number;
             /**
-             * League settings object as currently persisted for commissioner-driven controls.
+             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              */
-            settings?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Current invitation policy resolved from league settings.
-             */
-            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         };
     };
 };
 
 export type GetLeagueByCodeResponse = GetLeagueByCodeResponses[keyof GetLeagueByCodeResponses];
-
-export type UpdateLeagueSettingsData = {
-    /**
-     * Commissioner-managed settings patch for a league.
-     */
-    body: {
-        /**
-         * League activity flag. Inactive leagues remain readable but should restrict write actions in the web app.
-         */
-        isActive?: boolean;
-        /**
-         * Invitation policy controlling whether members join only through commissioners, links, or open enrollment.
-         */
-        invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        /**
-         * Whether members may join after the league has already started.
-         */
-        allowMidSeasonJoin?: boolean;
-        /**
-         * Whether commissioner approval is required before a join becomes active.
-         */
-        requireApproval?: boolean;
-        /**
-         * Whether league activity should appear in future feed surfaces.
-         */
-        activityFeedEnabled?: boolean;
-        /**
-         * Whether the league wants a recurring weekly recap delivery.
-         */
-        weeklyRecapEnabled?: boolean;
-        /**
-         * Day of week for future recap scheduling.
-         */
-        weeklyRecapDay?: 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
-        /**
-         * League-level timezone override used for schedule-oriented displays.
-         */
-        timezone?: string;
-        /**
-         * Default currency code for league-level money displays.
-         */
-        currency?: string;
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/settings';
-};
-
-export type UpdateLeagueSettingsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type UpdateLeagueSettingsError = UpdateLeagueSettingsErrors[keyof UpdateLeagueSettingsErrors];
-
-export type UpdateLeagueSettingsResponses = {
-    /**
-     * Single-league detail response.
-     */
-    200: {
-        /**
-         * Detailed league payload used by league-home and league-settings surfaces.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string;
-            /**
-             * Current league visibility mode.
-             */
-            visibility: 'PRIVATE' | 'PUBLIC';
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Current user role in the league when the response is viewer-scoped.
-             */
-            role?: 'COMMISSIONER' | 'MEMBER';
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Optional maximum number of allowed league members.
-             */
-            maxMembers?: number;
-            /**
-             * League settings object as currently persisted for commissioner-driven controls.
-             */
-            settings?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Current invitation policy resolved from league settings.
-             */
-            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        };
-    };
-};
-
-export type UpdateLeagueSettingsResponse = UpdateLeagueSettingsResponses[keyof UpdateLeagueSettingsResponses];
 
 export type InactivateLeagueData = {
     body?: never;
@@ -1286,7 +1123,7 @@ export type InactivateLeagueResponses = {
      */
     200: {
         /**
-         * Detailed league payload used by league-home and league-settings surfaces.
+         * Detailed league payload used by league-home and commissioner-management surfaces.
          */
         league: {
             /**
@@ -1334,15 +1171,9 @@ export type InactivateLeagueResponses = {
              */
             maxMembers?: number;
             /**
-             * League settings object as currently persisted for commissioner-driven controls.
+             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              */
-            settings?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Current invitation policy resolved from league settings.
-             */
-            invitePolicy?: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         };
     };
 };

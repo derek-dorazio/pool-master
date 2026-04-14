@@ -227,12 +227,12 @@ export type TierAssignmentMethod = (typeof TierAssignmentMethod)[keyof typeof Ti
 
 // --- League Invitation ---
 
-export const InvitePolicy = {
+export const JoinPolicy = {
   COMMISSIONER_ONLY: 'COMMISSIONER_ONLY',
   LINK_INVITE: 'LINK_INVITE',
   OPEN: 'OPEN',
 } as const;
-export type InvitePolicy = (typeof InvitePolicy)[keyof typeof InvitePolicy];
+export type JoinPolicy = (typeof JoinPolicy)[keyof typeof JoinPolicy];
 
 export const InviteType = {
   EMAIL: 'EMAIL',
@@ -252,7 +252,7 @@ export type InvitationStatus = (typeof InvitationStatus)[keyof typeof Invitation
 
 export const CommissionerPermission = {
   // League management
-  LEAGUE_SETTINGS_EDIT: 'league.settings.edit',
+  LEAGUE_MANAGE_EDIT: 'league.manage.edit',
   LEAGUE_MEMBERS_INVITE: 'league.members.invite',
   LEAGUE_MEMBERS_REMOVE: 'league.members.remove',
   LEAGUE_MEMBERS_ROLE_CHANGE: 'league.members.role.change',

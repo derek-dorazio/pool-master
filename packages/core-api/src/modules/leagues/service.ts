@@ -1,5 +1,5 @@
 /**
- * LeagueService — league creation, retrieval, and settings management.
+ * LeagueService — league creation, retrieval, and lifecycle management.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -7,9 +7,8 @@ import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/s
 import type {
   League,
   LeagueMembership,
-  LeagueSettings,
 } from '@poolmaster/shared/domain';
-import { InvitePolicy, LeagueMembershipStatus, LeagueRole, LeagueVisibility, WeekDay } from '@poolmaster/shared/domain';
+import { JoinPolicy, LeagueMembershipStatus, LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
 import { ALL_COMMISSIONER_PERMISSIONS } from '../../core/permissions';
 
 export interface CreateLeagueInput {
@@ -24,19 +23,8 @@ export interface UserLeagueView {
   membership: LeagueMembership;
 }
 
-const DEFAULT_LEAGUE_SETTINGS: LeagueSettings = {
-  isActive: true,
-  invitePolicy: InvitePolicy.COMMISSIONER_ONLY,
-  allowMidSeasonJoin: false,
-  requireApproval: false,
-  activityFeedEnabled: true,
-  weeklyRecapEnabled: false,
-  weeklyRecapDay: WeekDay.MONDAY,
-  timezone: 'America/New_York',
-  currency: 'USD',
-};
-
 const DEFAULT_MAX_MEMBERS = 20;
+const DEFAULT_JOIN_POLICY = JoinPolicy.COMMISSIONER_ONLY;
 
 export class LeagueService {
   constructor(
@@ -56,9 +44,10 @@ export class LeagueService {
       name: input.name,
       description: input.description,
       createdBy: input.createdBy,
+      isActive: true,
+      joinPolicy: DEFAULT_JOIN_POLICY,
       visibility: LeagueVisibility.PRIVATE,
       maxMembers: DEFAULT_MAX_MEMBERS,
-      settings: DEFAULT_LEAGUE_SETTINGS as unknown as Record<string, unknown>,
     });
     const membership = await this.membershipRepo.create({
       leagueId: league.id,
@@ -97,37 +86,20 @@ export class LeagueService {
     });
   }
 
-  /** Partially updates the league settings JSONB, merging with existing values. */
-  async updateSettings(
-    leagueId: string,
-    updates: Partial<LeagueSettings>,
-  ): Promise<League> {
-    const league = await this.leagueRepo.findById(leagueId);
-    if (!league) {
-      throw new LeagueNotFoundError(leagueId);
-    }
-    const currentSettings = league.settings as unknown as LeagueSettings;
-    const mergedSettings: LeagueSettings = { ...DEFAULT_LEAGUE_SETTINGS, ...currentSettings, ...updates };
-    return this.leagueRepo.update(leagueId, {
-      settings: mergedSettings as unknown as Record<string, unknown>,
-    });
-  }
-
   async inactivateLeague(leagueId: string): Promise<League> {
     const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
       throw new LeagueNotFoundError(leagueId);
     }
 
-    const currentSettings = league.settings as unknown as LeagueSettings;
-    if (currentSettings?.isActive === false) {
+    if (league.isActive === false) {
       throw new LeagueOperationError(
         'League is already inactive',
         'LEAGUE_ALREADY_INACTIVE',
       );
     }
 
-    return this.updateSettings(leagueId, { isActive: false });
+    return this.leagueRepo.update(leagueId, { isActive: false });
   }
 
   async deleteInactiveLeague(leagueId: string, confirmationLeagueCode: string): Promise<void> {
@@ -136,8 +108,7 @@ export class LeagueService {
       throw new LeagueNotFoundError(leagueId);
     }
 
-    const currentSettings = league.settings as unknown as LeagueSettings;
-    if (currentSettings?.isActive ?? true) {
+    if (league.isActive) {
       throw new LeagueOperationError(
         'League must be inactive before it can be permanently deleted',
         'LEAGUE_DELETE_REQUIRES_INACTIVE',

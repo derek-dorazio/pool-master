@@ -36,7 +36,7 @@ export const swaggerPlugin = fp(async (fastify) => {
       security: [{ BearerAuth: [] }],
       tags: [
         { name: 'Auth', description: 'Authentication, registration, and user profile' },
-        { name: 'Leagues', description: 'League CRUD, membership, and settings' },
+        { name: 'Leagues', description: 'League CRUD, membership, and lifecycle management' },
         { name: 'Contests', description: 'Contest creation, lifecycle, and scoring' },
         { name: 'Drafts', description: 'Draft sessions — snake, auction, tiered' },
         { name: 'Standings', description: 'Contest standings and leaderboards' },

@@ -1,5 +1,5 @@
 /**
- * League route handlers — league CRUD and settings management.
+ * League route handlers — league CRUD and lifecycle management.
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -17,7 +17,6 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     createLeague,
     getLeague,
     getLeagueByCode,
-    updateSettings,
     inactivateLeague,
     deleteLeague,
   };
@@ -109,29 +108,6 @@ export function createLeagueHandlers(leagueService: LeagueService) {
         role: membership?.role,
       }),
     });
-  }
-
-  async function updateSettings(
-    request: FastifyRequest<{
-      Params: { id: string };
-      Body: Record<string, unknown>;
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    try {
-      const league = await leagueService.updateSettings(
-        request.params.id,
-        request.body as Parameters<LeagueService['updateSettings']>[1],
-      );
-      return reply.send({
-        league: toLeagueDetailDto(league),
-      });
-    } catch (err) {
-      if (err instanceof LeagueNotFoundError) {
-        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
-      }
-      throw err;
-    }
   }
 
   async function inactivateLeague(

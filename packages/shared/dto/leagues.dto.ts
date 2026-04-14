@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import {
   InvitationStatus,
-  InvitePolicy,
+  JoinPolicy,
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
@@ -23,33 +23,6 @@ export const CreateLeagueRequestSchema = z.object({
   description: z.string().max(500).optional().describe('Optional short description or commissioner-facing summary for the league.'),
 }).describe('Commissioner request payload for creating a new private league.');
 export type CreateLeagueRequest = z.infer<typeof CreateLeagueRequestSchema>;
-
-export const UpdateLeagueSettingsRequestSchema = z.object({
-  isActive: z
-    .boolean()
-    .optional()
-    .describe('League activity flag. Inactive leagues remain readable but should restrict write actions in the web app.'),
-  invitePolicy: z
-    .enum([InvitePolicy.COMMISSIONER_ONLY, InvitePolicy.LINK_INVITE, InvitePolicy.OPEN])
-    .optional()
-    .describe('Invitation policy controlling whether members join only through commissioners, links, or open enrollment.'),
-  allowMidSeasonJoin: z.boolean().optional().describe('Whether members may join after the league has already started.'),
-  requireApproval: z.boolean().optional().describe('Whether commissioner approval is required before a join becomes active.'),
-  activityFeedEnabled: z.boolean().optional().describe('Whether league activity should appear in future feed surfaces.'),
-  weeklyRecapEnabled: z.boolean().optional().describe('Whether the league wants a recurring weekly recap delivery.'),
-  weeklyRecapDay: z.enum([
-    'MONDAY',
-    'TUESDAY',
-    'WEDNESDAY',
-    'THURSDAY',
-    'FRIDAY',
-    'SATURDAY',
-    'SUNDAY',
-  ]).optional().describe('Day of week for future recap scheduling.'),
-  timezone: z.string().optional().describe('League-level timezone override used for schedule-oriented displays.'),
-  currency: z.string().optional().describe('Default currency code for league-level money displays.'),
-}).describe('Commissioner-managed settings patch for a league.');
-export type UpdateLeagueSettingsRequest = z.infer<typeof UpdateLeagueSettingsRequestSchema>;
 
 export const DeleteLeagueRequestSchema = z.object({
   leagueCode: z
@@ -127,12 +100,10 @@ export type LeagueSummaryDto = z.infer<typeof LeagueSummaryDtoSchema>;
 
 export const LeagueDetailDtoSchema = LeagueSummaryDtoSchema.extend({
   maxMembers: z.number().optional().describe('Optional maximum number of allowed league members.'),
-  settings: z.record(z.unknown()).optional().describe('League settings object as currently persisted for commissioner-driven controls.'),
-  invitePolicy: z
-    .enum([InvitePolicy.COMMISSIONER_ONLY, InvitePolicy.LINK_INVITE, InvitePolicy.OPEN])
-    .optional()
-    .describe('Current invitation policy resolved from league settings.'),
-}).describe('Detailed league payload used by league-home and league-settings surfaces.');
+  joinPolicy: z
+    .enum([JoinPolicy.COMMISSIONER_ONLY, JoinPolicy.LINK_INVITE, JoinPolicy.OPEN])
+    .describe('League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.'),
+}).describe('Detailed league payload used by league-home and commissioner-management surfaces.');
 export type LeagueDetailDto = z.infer<typeof LeagueDetailDtoSchema>;
 
 export const LeagueMemberDtoSchema = z.object({

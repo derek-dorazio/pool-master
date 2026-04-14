@@ -6,7 +6,7 @@ import type {
   LeagueDetailDto,
   LeagueListResponse,
 } from '@poolmaster/shared/dto';
-import type { LeagueRole, LeagueSettings, LeagueVisibility } from '@poolmaster/shared/domain';
+import type { JoinPolicy, LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
 
 interface LeagueRow {
   id: string;
@@ -14,9 +14,10 @@ interface LeagueRow {
   name: string;
   description?: string | null;
   createdBy: string;
+  isActive: boolean;
+  joinPolicy: JoinPolicy;
   visibility: LeagueVisibility;
   maxMembers: number;
-  settings: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,14 +26,13 @@ export function toLeagueSummaryDto(
   league: LeagueRow,
   opts?: { memberCount?: number; activeContestCount?: number; role?: LeagueRole },
 ): LeagueSummaryDto {
-  const settings = league.settings as unknown as LeagueSettings | undefined;
   return {
     id: league.id,
     leagueCode: league.leagueCode,
     name: league.name,
     description: league.description ?? null,
     visibility: league.visibility,
-    isActive: settings?.isActive ?? true,
+    isActive: league.isActive,
     memberCount: opts?.memberCount ?? 0,
     activeContestCount: opts?.activeContestCount ?? 0,
     role: opts?.role,
@@ -44,12 +44,10 @@ export function toLeagueDetailDto(
   league: LeagueRow,
   opts?: { memberCount?: number; activeContestCount?: number; role?: LeagueRole },
 ): LeagueDetailDto {
-  const settings = league.settings as unknown as LeagueSettings | undefined;
   return {
     ...toLeagueSummaryDto(league, opts),
     maxMembers: league.maxMembers,
-    settings: league.settings,
-    invitePolicy: settings?.invitePolicy,
+    joinPolicy: league.joinPolicy,
   };
 }
 

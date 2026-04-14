@@ -249,10 +249,8 @@ export function LeagueDetailPage() {
               <div className="mt-1 font-semibold text-foreground">{leagueQuery.data.visibility}</div>
             </div>
             <div className="rounded-2xl bg-background px-4 py-4">
-              <div>Invite policy</div>
-              <div className="mt-1 font-semibold text-foreground">
-                {leagueQuery.data.invitePolicy || 'Not set'}
-              </div>
+              <div>Join policy</div>
+              <div className="mt-1 font-semibold text-foreground">{leagueQuery.data.joinPolicy}</div>
             </div>
           </div>
         </div>

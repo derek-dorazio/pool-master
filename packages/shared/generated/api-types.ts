@@ -215,7 +215,11 @@ export interface paths {
         get: operations["getLeague"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete an inactive league permanently
+         * @description Allows a commissioner to permanently delete an inactive league after typing the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.
+         */
+        delete: operations["deleteLeague"];
         options?: never;
         head?: never;
         patch?: never;
@@ -241,7 +245,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/leagues/{id}/settings": {
+    "/api/v1/leagues/{id}/inactivate": {
         parameters: {
             query?: never;
             header?: never;
@@ -249,12 +253,12 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
         /**
-         * Update league settings
-         * @description Allows a commissioner to patch league settings such as activity state and invitation policy. The resulting league payload should drive read-only or active UI behavior.
+         * Inactivate a league
+         * @description Allows a commissioner to mark a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.
          */
-        put: operations["updateLeagueSettings"];
-        post?: never;
+        post: operations["inactivateLeague"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1312,6 +1316,46 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/inactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inactivate the authenticated account
+         * @description Marks the authenticated account inactive for normal sign-in and product usage. This is the required first step before a permanent self-delete becomes available.
+         */
+        post: operations["inactivateAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete the authenticated inactive account permanently
+         * @description Permanently deletes the authenticated account after the user has already inactivated it and provides exact email confirmation. This removes the user row and user-owned account data.
+         */
+        delete: operations["deleteAccount"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2680,6 +2724,8 @@ export interface operations {
                             email: string;
                             /** @description Name shown in league, contest, and profile surfaces. */
                             displayName: string;
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
                             /** @description Whether the user has platform-level root-admin access. */
                             isRootAdmin: boolean;
                             /**
@@ -2790,6 +2836,8 @@ export interface operations {
                             email: string;
                             /** @description Name shown in league, contest, and profile surfaces. */
                             displayName: string;
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
                             /** @description Whether the user has platform-level root-admin access. */
                             isRootAdmin: boolean;
                             /**
@@ -3035,6 +3083,8 @@ export interface operations {
                             email: string;
                             /** @description Name shown in league, contest, and profile surfaces. */
                             displayName: string;
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
                             /** @description Whether the user has platform-level root-admin access. */
                             isRootAdmin: boolean;
                             /**
@@ -3177,7 +3227,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Detailed league payload used by league-home and league-settings surfaces. */
+                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
                         league: {
                             /** @description Internal league identifier used for authenticated management APIs. */
                             id: string;
@@ -3210,15 +3260,11 @@ export interface operations {
                             createdAt?: string;
                             /** @description Optional maximum number of allowed league members. */
                             maxMembers?: number;
-                            /** @description League settings object as currently persisted for commissioner-driven controls. */
-                            settings?: {
-                                [key: string]: unknown;
-                            };
                             /**
-                             * @description Current invitation policy resolved from league settings.
+                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}
                              */
-                            invitePolicy?: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
                         };
                     };
                 };
@@ -3281,7 +3327,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Detailed league payload used by league-home and league-settings surfaces. */
+                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
                         league: {
                             /** @description Internal league identifier used for authenticated management APIs. */
                             id: string;
@@ -3314,15 +3360,85 @@ export interface operations {
                             createdAt?: string;
                             /** @description Optional maximum number of allowed league members. */
                             maxMembers?: number;
-                            /** @description League settings object as currently persisted for commissioner-driven controls. */
-                            settings?: {
-                                [key: string]: unknown;
-                            };
                             /**
-                             * @description Current invitation policy resolved from league settings.
+                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}
                              */
-                            invitePolicy?: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    deleteLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Commissioner confirmation payload for permanently deleting an inactive league. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Exact league code confirmation required before permanently deleting an inactive league. */
+                    leagueCode: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
                         };
                     };
                 };
@@ -3366,7 +3482,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Detailed league payload used by league-home and league-settings surfaces. */
+                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
                         league: {
                             /** @description Internal league identifier used for authenticated management APIs. */
                             id: string;
@@ -3399,15 +3515,11 @@ export interface operations {
                             createdAt?: string;
                             /** @description Optional maximum number of allowed league members. */
                             maxMembers?: number;
-                            /** @description League settings object as currently persisted for commissioner-driven controls. */
-                            settings?: {
-                                [key: string]: unknown;
-                            };
                             /**
-                             * @description Current invitation policy resolved from league settings.
+                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}
                              */
-                            invitePolicy?: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
                         };
                     };
                 };
@@ -3433,7 +3545,7 @@ export interface operations {
             };
         };
     };
-    updateLeagueSettings: {
+    inactivateLeague: {
         parameters: {
             query?: never;
             header?: never;
@@ -3442,37 +3554,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner-managed settings patch for a league. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description League activity flag. Inactive leagues remain readable but should restrict write actions in the web app. */
-                    isActive?: boolean;
-                    /**
-                     * @description Invitation policy controlling whether members join only through commissioners, links, or open enrollment.
-                     * @enum {string}
-                     */
-                    invitePolicy?: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                    /** @description Whether members may join after the league has already started. */
-                    allowMidSeasonJoin?: boolean;
-                    /** @description Whether commissioner approval is required before a join becomes active. */
-                    requireApproval?: boolean;
-                    /** @description Whether league activity should appear in future feed surfaces. */
-                    activityFeedEnabled?: boolean;
-                    /** @description Whether the league wants a recurring weekly recap delivery. */
-                    weeklyRecapEnabled?: boolean;
-                    /**
-                     * @description Day of week for future recap scheduling.
-                     * @enum {string}
-                     */
-                    weeklyRecapDay?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
-                    /** @description League-level timezone override used for schedule-oriented displays. */
-                    timezone?: string;
-                    /** @description Default currency code for league-level money displays. */
-                    currency?: string;
-                };
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Single-league detail response. */
             200: {
@@ -3481,7 +3563,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Detailed league payload used by league-home and league-settings surfaces. */
+                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
                         league: {
                             /** @description Internal league identifier used for authenticated management APIs. */
                             id: string;
@@ -3514,15 +3596,30 @@ export interface operations {
                             createdAt?: string;
                             /** @description Optional maximum number of allowed league members. */
                             maxMembers?: number;
-                            /** @description League settings object as currently persisted for commissioner-driven controls. */
-                            settings?: {
-                                [key: string]: unknown;
-                            };
                             /**
-                             * @description Current invitation policy resolved from league settings.
+                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}
                              */
-                            invitePolicy?: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
                         };
                     };
                 };
@@ -9242,6 +9339,226 @@ export interface operations {
             };
         };
     };
+    inactivateAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        user: {
+                            /** @description Stable user identifier. */
+                            id: string;
+                            /** @description Primary email address for the user account. */
+                            email: string;
+                            /** @description Name shown in league, contest, and profile surfaces. */
+                            displayName: string;
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
+                            /** @description Whether the user has platform-level root-admin access. */
+                            isRootAdmin: boolean;
+                            /**
+                             * @description Authentication provider used for the account when known.
+                             * @enum {string}
+                             */
+                            authProvider?: "email" | "google" | "apple";
+                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                            timezone?: string;
+                            /** @description Preferred locale for formatting and localized copy. */
+                            locale?: string;
+                            /** @description Optional avatar image URL for profile and social surfaces. */
+                            avatarUrl?: string | null;
+                            /**
+                             * Format: date-time
+                             * @description Account creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    deleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Self-service confirmation payload for permanently deleting an inactive account. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Format: email
+                     * @description Exact email confirmation required before permanently deleting the inactive account.
+                     */
+                    email: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Minimal success response returned after permanently deleting an inactive account. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     getConsentHistory: {
         parameters: {
             query?: never;
@@ -9355,7 +9672,7 @@ export interface operations {
         parameters: {
             query?: {
                 search?: string;
-                status?: "active" | "disabled";
+                isActive?: boolean;
                 page?: number;
                 pageSize?: number;
             };
@@ -9390,8 +9707,8 @@ export interface operations {
                             }[];
                             /** Format: date-time */
                             lastLoginAt?: string;
-                            /** @enum {string} */
-                            status: "active" | "disabled";
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
                             /** Format: date-time */
                             createdAt: string;
                         }[];
@@ -9501,8 +9818,8 @@ export interface operations {
                         email: string;
                         displayName: string;
                         authProvider?: string;
-                        /** @enum {string} */
-                        status: "active" | "disabled";
+                        /** @description Whether the account is currently active for normal sign-in and product usage. */
+                        isActive: boolean;
                         /** Format: date-time */
                         createdAt: string;
                         /** Format: date-time */

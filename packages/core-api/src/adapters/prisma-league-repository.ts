@@ -30,9 +30,10 @@ export class PrismaLeagueRepository implements LeagueRepository {
         name: league.name,
         description: league.description,
         createdBy: league.createdBy,
+        isActive: league.isActive,
+        joinPolicy: league.joinPolicy,
         visibility: league.visibility,
         maxMembers: league.maxMembers,
-        settings: league.settings as object,
       },
     });
     return mapToLeague(row);
@@ -45,9 +46,10 @@ export class PrismaLeagueRepository implements LeagueRepository {
         ...(updates.leagueCode !== undefined && { leagueCode: updates.leagueCode }),
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.description !== undefined && { description: updates.description }),
+        ...(updates.isActive !== undefined && { isActive: updates.isActive }),
+        ...(updates.joinPolicy !== undefined && { joinPolicy: updates.joinPolicy }),
         ...(updates.visibility !== undefined && { visibility: updates.visibility }),
         ...(updates.maxMembers !== undefined && { maxMembers: updates.maxMembers }),
-        ...(updates.settings !== undefined && { settings: updates.settings as object }),
       },
     });
     return mapToLeague(row);
@@ -64,9 +66,10 @@ function mapToLeague(row: {
   name: string;
   description: string | null;
   createdBy: string;
+  isActive: boolean;
+  joinPolicy: string;
   visibility: string;
   maxMembers: number;
-  settings: unknown;
   createdAt: Date;
   updatedAt: Date;
 }): League {
@@ -76,9 +79,10 @@ function mapToLeague(row: {
     name: row.name,
     description: row.description ?? undefined,
     createdBy: row.createdBy,
+    isActive: row.isActive,
+    joinPolicy: row.joinPolicy as League['joinPolicy'],
     visibility: row.visibility as League['visibility'],
     maxMembers: row.maxMembers,
-    settings: (row.settings ?? {}) as Record<string, unknown>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

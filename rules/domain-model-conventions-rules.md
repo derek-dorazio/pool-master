@@ -45,6 +45,15 @@ Use `isActive` by default for:
 - read-only preserved records
 - eligibility gating before a later hard delete
 
+When an entity uses `isActive`, it must be a first-class persisted field in the
+storage model itself.
+
+- do not model `isActive` only in DTOs
+- do not hide `isActive` inside JSON/settings blobs when it is a true lifecycle
+  concept for the entity
+- expose the same first-class `isActive` concept consistently through shared
+  domain types and relevant DTOs
+
 Do not invent multiple lifecycle shapes for the same meaning across entities
 without a documented reason.
 
@@ -173,7 +182,8 @@ before backend implementation begins.
 
 These conventions match the current intended direction for PoolMaster:
 
-- league lifecycle uses `settings.isActive` for the first slice
+- league and user lifecycle should use real persistent `isActive` fields when
+  active/inactive is a core lifecycle concept
 - user account lifecycle should use a real persistent activity field such as
   `User.isActive`
 - `status` remains reserved for workflow/state-machine concepts such as

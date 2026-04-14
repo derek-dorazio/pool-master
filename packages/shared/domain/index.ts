@@ -73,7 +73,6 @@ export type {
   League,
   LeagueInvitation,
   LeagueMembership,
-  LeagueSettings,
   MemberActivityEvent,
   MigrationRun,
   Participant,

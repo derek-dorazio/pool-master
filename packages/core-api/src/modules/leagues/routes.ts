@@ -24,7 +24,6 @@ import {
   ChangeLeagueMemberRoleRequestSchema,
   CopySeasonRequestSchema,
   LeagueMembersResponseSchema,
-  UpdateLeagueSettingsRequestSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
@@ -149,23 +148,6 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     handler: league.getLeagueByCode,
   });
 
-  fastify.put('/:id/settings', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Update league settings',
-      description:
-        'Allows a commissioner to patch league settings such as activity state and invitation policy. The resulting league payload should drive read-only or active UI behavior.',
-      operationId: 'updateLeagueSettings',
-      body: zodToJsonSchema(UpdateLeagueSettingsRequestSchema),
-      response: {
-        200: zodToJsonSchema(LeagueResponseSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_SETTINGS_EDIT),
-    handler: league.updateSettings,
-  });
-
   fastify.post('/:id/inactivate', {
     schema: {
       tags: ['Leagues'],
@@ -179,7 +161,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_SETTINGS_EDIT),
+    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MANAGE_EDIT),
     handler: league.inactivateLeague,
   });
 
@@ -197,7 +179,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_SETTINGS_EDIT),
+    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MANAGE_EDIT),
     handler: league.deleteLeague,
   });
 

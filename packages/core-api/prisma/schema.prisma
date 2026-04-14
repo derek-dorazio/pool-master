@@ -83,9 +83,10 @@ model League {
   name        String
   description String?
   createdBy   String   @map("created_by") @db.Uuid
+  isActive    Boolean  @default(true) @map("is_active")
+  joinPolicy  String   @default("COMMISSIONER_ONLY") @map("join_policy") @db.VarChar(30)
   visibility  String   @default("PRIVATE")
   maxMembers  Int      @default(20) @map("max_members")
-  settings    Json     @default("{}")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

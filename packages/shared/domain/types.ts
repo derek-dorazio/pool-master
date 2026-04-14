@@ -11,12 +11,11 @@ import type {
   CommissionerPermission,
   ContestStatus,
   ContestType,
-  DraftMode,
   DraftStatus,
   FormTrend,
   InjuryStatusCode,
   InvitationStatus,
-  InvitePolicy,
+  JoinPolicy,
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
@@ -29,7 +28,6 @@ import type {
   Sport,
   SquadMembershipStatus,
   SquadStatus,
-  WeekDay,
 } from './enums';
 
 // --- Base ---
@@ -73,7 +71,7 @@ export interface UserLocalePreference {
 
 // --- League ---
 
-/** Core league record that powers league-home, invites, and league settings. */
+/** Core league record that powers league-home, invites, and commissioner management. */
 export interface League extends DomainEntity {
   leagueCode: string;
   name: string;
@@ -81,7 +79,8 @@ export interface League extends DomainEntity {
   createdBy: string;
   visibility: LeagueVisibility;
   maxMembers: number;
-  settings: Record<string, unknown>;
+  isActive: boolean;
+  joinPolicy: JoinPolicy;
 }
 
 /** User membership within a league, including role and commissioner permissions. */
@@ -125,22 +124,6 @@ export interface LeagueInvitation extends DomainEntity {
   expiresAt?: Date;
   acceptedAt?: Date;
   acceptedBy?: string;
-}
-
-/** Resolved league settings object after defaults have been applied. */
-export interface LeagueSettings {
-  isActive: boolean;
-  invitePolicy: InvitePolicy;
-  inviteLinkCode?: string;
-  allowMidSeasonJoin: boolean;
-  requireApproval: boolean;
-  defaultDraftType?: DraftMode;
-  defaultPayoutTemplateId?: string;
-  activityFeedEnabled: boolean;
-  weeklyRecapEnabled: boolean;
-  weeklyRecapDay: WeekDay;
-  timezone: string;
-  currency: string;
 }
 
 // --- Sport & Participant ---

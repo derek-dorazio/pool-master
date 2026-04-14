@@ -1119,19 +1119,14 @@
                           "type": "number",
                           "description": "Optional maximum number of allowed league members."
                         },
-                        "settings": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "League settings object as currently persisted for commissioner-driven controls."
-                        },
-                        "invitePolicy": {
+                        "joinPolicy": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER_ONLY",
                             "LINK_INVITE",
                             "OPEN"
                           ],
-                          "description": "Current invitation policy resolved from league settings."
+                          "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
                         }
                       },
                       "required": [
@@ -1141,10 +1136,11 @@
                         "visibility",
                         "isActive",
                         "memberCount",
-                        "activeContestCount"
+                        "activeContestCount",
+                        "joinPolicy"
                       ],
                       "additionalProperties": false,
-                      "description": "Detailed league payload used by league-home and league-settings surfaces."
+                      "description": "Detailed league payload used by league-home and commissioner-management surfaces."
                     }
                   },
                   "required": [
@@ -1320,19 +1316,14 @@
                           "type": "number",
                           "description": "Optional maximum number of allowed league members."
                         },
-                        "settings": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "League settings object as currently persisted for commissioner-driven controls."
-                        },
-                        "invitePolicy": {
+                        "joinPolicy": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER_ONLY",
                             "LINK_INVITE",
                             "OPEN"
                           ],
-                          "description": "Current invitation policy resolved from league settings."
+                          "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
                         }
                       },
                       "required": [
@@ -1342,10 +1333,11 @@
                         "visibility",
                         "isActive",
                         "memberCount",
-                        "activeContestCount"
+                        "activeContestCount",
+                        "joinPolicy"
                       ],
                       "additionalProperties": false,
-                      "description": "Detailed league payload used by league-home and league-settings surfaces."
+                      "description": "Detailed league payload used by league-home and commissioner-management surfaces."
                     }
                   },
                   "required": [
@@ -1627,19 +1619,14 @@
                           "type": "number",
                           "description": "Optional maximum number of allowed league members."
                         },
-                        "settings": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "League settings object as currently persisted for commissioner-driven controls."
-                        },
-                        "invitePolicy": {
+                        "joinPolicy": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER_ONLY",
                             "LINK_INVITE",
                             "OPEN"
                           ],
-                          "description": "Current invitation policy resolved from league settings."
+                          "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
                         }
                       },
                       "required": [
@@ -1649,237 +1636,11 @@
                         "visibility",
                         "isActive",
                         "memberCount",
-                        "activeContestCount"
+                        "activeContestCount",
+                        "joinPolicy"
                       ],
                       "additionalProperties": false,
-                      "description": "Detailed league payload used by league-home and league-settings surfaces."
-                    }
-                  },
-                  "required": [
-                    "league"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-league detail response."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/leagues/{id}/settings": {
-      "put": {
-        "operationId": "updateLeagueSettings",
-        "summary": "Update league settings",
-        "tags": [
-          "Leagues"
-        ],
-        "description": "Allows a commissioner to patch league settings such as activity state and invitation policy. The resulting league payload should drive read-only or active UI behavior.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "isActive": {
-                    "type": "boolean",
-                    "description": "League activity flag. Inactive leagues remain readable but should restrict write actions in the web app."
-                  },
-                  "invitePolicy": {
-                    "type": "string",
-                    "enum": [
-                      "COMMISSIONER_ONLY",
-                      "LINK_INVITE",
-                      "OPEN"
-                    ],
-                    "description": "Invitation policy controlling whether members join only through commissioners, links, or open enrollment."
-                  },
-                  "allowMidSeasonJoin": {
-                    "type": "boolean",
-                    "description": "Whether members may join after the league has already started."
-                  },
-                  "requireApproval": {
-                    "type": "boolean",
-                    "description": "Whether commissioner approval is required before a join becomes active."
-                  },
-                  "activityFeedEnabled": {
-                    "type": "boolean",
-                    "description": "Whether league activity should appear in future feed surfaces."
-                  },
-                  "weeklyRecapEnabled": {
-                    "type": "boolean",
-                    "description": "Whether the league wants a recurring weekly recap delivery."
-                  },
-                  "weeklyRecapDay": {
-                    "type": "string",
-                    "enum": [
-                      "MONDAY",
-                      "TUESDAY",
-                      "WEDNESDAY",
-                      "THURSDAY",
-                      "FRIDAY",
-                      "SATURDAY",
-                      "SUNDAY"
-                    ],
-                    "description": "Day of week for future recap scheduling."
-                  },
-                  "timezone": {
-                    "type": "string",
-                    "description": "League-level timezone override used for schedule-oriented displays."
-                  },
-                  "currency": {
-                    "type": "string",
-                    "description": "Default currency code for league-level money displays."
-                  }
-                },
-                "additionalProperties": false,
-                "description": "Commissioner-managed settings patch for a league."
-              }
-            }
-          },
-          "description": "Commissioner-managed settings patch for a league."
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Single-league detail response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "league": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Internal league identifier used for authenticated management APIs."
-                        },
-                        "leagueCode": {
-                          "type": "string",
-                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Primary display name for the league."
-                        },
-                        "description": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Optional short league description."
-                        },
-                        "visibility": {
-                          "type": "string",
-                          "enum": [
-                            "PRIVATE",
-                            "PUBLIC"
-                          ],
-                          "description": "Current league visibility mode."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the league is currently active for normal write interactions."
-                        },
-                        "memberCount": {
-                          "type": "number",
-                          "description": "Current number of memberships in the league."
-                        },
-                        "activeContestCount": {
-                          "type": "number",
-                          "description": "Number of currently active contests associated with the league."
-                        },
-                        "role": {
-                          "type": "string",
-                          "enum": [
-                            "COMMISSIONER",
-                            "MEMBER"
-                          ],
-                          "description": "Current user role in the league when the response is viewer-scoped."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "League creation timestamp in ISO 8601 format."
-                        },
-                        "maxMembers": {
-                          "type": "number",
-                          "description": "Optional maximum number of allowed league members."
-                        },
-                        "settings": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "League settings object as currently persisted for commissioner-driven controls."
-                        },
-                        "invitePolicy": {
-                          "type": "string",
-                          "enum": [
-                            "COMMISSIONER_ONLY",
-                            "LINK_INVITE",
-                            "OPEN"
-                          ],
-                          "description": "Current invitation policy resolved from league settings."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueCode",
-                        "name",
-                        "visibility",
-                        "isActive",
-                        "memberCount",
-                        "activeContestCount"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Detailed league payload used by league-home and league-settings surfaces."
+                      "description": "Detailed league payload used by league-home and commissioner-management surfaces."
                     }
                   },
                   "required": [
@@ -2016,19 +1777,14 @@
                           "type": "number",
                           "description": "Optional maximum number of allowed league members."
                         },
-                        "settings": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "League settings object as currently persisted for commissioner-driven controls."
-                        },
-                        "invitePolicy": {
+                        "joinPolicy": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER_ONLY",
                             "LINK_INVITE",
                             "OPEN"
                           ],
-                          "description": "Current invitation policy resolved from league settings."
+                          "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
                         }
                       },
                       "required": [
@@ -2038,10 +1794,11 @@
                         "visibility",
                         "isActive",
                         "memberCount",
-                        "activeContestCount"
+                        "activeContestCount",
+                        "joinPolicy"
                       ],
                       "additionalProperties": false,
-                      "description": "Detailed league payload used by league-home and league-settings surfaces."
+                      "description": "Detailed league payload used by league-home and commissioner-management surfaces."
                     }
                   },
                   "required": [
@@ -29166,7 +28923,7 @@
     },
     {
       "name": "Leagues",
-      "description": "League CRUD, membership, and settings"
+      "description": "League CRUD, membership, and lifecycle management"
     },
     {
       "name": "Contests",

@@ -13,7 +13,6 @@ import {
   listLeagues,
   removeMember,
   resolveActionItem,
-  updateLeagueSettings,
 } from '@poolmaster/shared/generated/hey-api';
 import { randomUUID } from 'node:crypto';
 import { buildRegisteredUser } from './builders';
@@ -305,51 +304,23 @@ describe('SDK Functional: Leagues', () => {
     });
   });
 
-  it('updates league settings and manages the member lifecycle through the generated SDK', async () => {
+  it('manages invite-link and member lifecycle through the generated SDK', async () => {
     const commissioner = await buildRegisteredUser({
-      displayName: 'Settings Commissioner',
+      displayName: 'Lifecycle Commissioner',
     });
     const member = await buildRegisteredUser({
-      displayName: 'Settings Member',
+      displayName: 'Lifecycle Member',
     });
 
     const createResponse = await createLeague({
       client: commissioner.client,
-      body: buildCreateLeagueBody('League Settings Flow'),
+      body: buildCreateLeagueBody('League Lifecycle Flow'),
     });
 
     const leagueId = createResponse.data?.league.id;
     expect(leagueId).toBeTruthy();
-
-    const updateResponse = await updateLeagueSettings({
-      client: commissioner.client,
-      path: {
-        id: leagueId as string,
-      },
-      body: {
-        invitePolicy: 'OPEN',
-        allowMidSeasonJoin: true,
-        requireApproval: false,
-        weeklyRecapEnabled: true,
-        weeklyRecapDay: 'MONDAY',
-        timezone: 'America/New_York',
-        currency: 'USD',
-      },
-    });
-
-    expect(updateResponse.data).toBeDefined();
-    expect(updateResponse.data?.league.invitePolicy).toBe('OPEN');
-    expect(updateResponse.data?.league.settings).toEqual(
-      expect.objectContaining({
-        invitePolicy: 'OPEN',
-        allowMidSeasonJoin: true,
-        requireApproval: false,
-        weeklyRecapEnabled: true,
-        weeklyRecapDay: 'MONDAY',
-        timezone: 'America/New_York',
-        currency: 'USD',
-      }),
-    );
+    expect(createResponse.data?.league.joinPolicy).toBe('COMMISSIONER_ONLY');
+    expect(createResponse.data?.league.isActive).toBe(true);
 
     const invitationResponse = await generateInviteLink({
       client: commissioner.client,
