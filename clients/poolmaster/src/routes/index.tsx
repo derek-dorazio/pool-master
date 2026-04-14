@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
+import { MyAccountPage } from '@/features/account/my-account-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
           {
             path: 'my-leagues',
             element: <MyLeaguesPage />,
+          },
+          {
+            path: 'my-account',
+            element: <MyAccountPage />,
           },
           {
             path: 'league/:leagueCode',

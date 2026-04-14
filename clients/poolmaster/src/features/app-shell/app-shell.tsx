@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-provider';
 import { listLeagues } from '@/lib/api';
+import { AccountMenu } from '@/features/account/account-menu';
 import {
   CreateLeagueModal,
   buildCreateLeagueDestination,
@@ -70,22 +71,6 @@ export function AppShell() {
             {auth.isAuthenticated ? (
               <>
                 <button
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-                  disabled
-                  title="Profile tools will be designed next."
-                  type="button"
-                >
-                  Profile
-                </button>
-                <button
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-                  disabled
-                  title="League and account settings will be designed next."
-                  type="button"
-                >
-                  Settings
-                </button>
-                <button
                   aria-label="Notifications"
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
                   disabled
@@ -102,14 +87,10 @@ export function AppShell() {
                 >
                   Help
                 </button>
-                <button
-                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
-                  data-testid="app-logout"
-                  onClick={() => void auth.clearSession().then(() => navigate('/', { replace: true }))}
-                  type="button"
-                >
-                  Log out
-                </button>
+                <AccountMenu
+                  displayName={auth.user?.displayName ?? 'Account'}
+                  onLogout={() => auth.clearSession().then(() => navigate('/', { replace: true }))}
+                />
               </>
             ) : (
               <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">

@@ -37,12 +37,12 @@ lifecycle:
 | 85-003 | 1 | Backend developer: add self-account delete API for inactive accounts | Done | Added `DELETE /api/v1/account`. Delete rejects active accounts, requires exact email confirmation, and clears auth cookies on success. |
 | 85-004 | 1 | Backend developer: implement account cleanup behavior | Done | First slice hard-deletes only when no league/squad memberships or league/squad ownership remain, then removes refresh tokens, preferences, notifications, consent, invitations, audit references, and the user row. |
 | 85-005 | 1 | Backend developer: add backend validation and contract coverage | Done | Added schema migration, shared DTOs, OpenAPI/SDK refresh, unit coverage, contract verification, functional API coverage, and inactive-user auth/session validation. |
-| 85-006 | 2 | Frontend developer: add header user identity affordance and menu entry to `My Account` | Not Started | Menu may later include Settings, Preferences, and other personal options |
-| 85-007 | 2 | Frontend developer: design and implement `My Account` shell | Not Started | Prepare future profile, password, email, and lifecycle sections even if lifecycle lands first |
-| 85-008 | 2 | Frontend developer: implement account lifecycle UI inside `My Account` | Not Started | Inactivate first, delete second, strong warning |
-| 85-009 | 2 | Frontend developer: add account delete mini-wizard | Not Started | Inline flow with exact email confirmation before enabling DELETE |
-| 85-010 | 2 | Frontend developer: add post-delete logout and route handling | Not Started | User should land in signed-out state |
-| 85-011 | 2 | Frontend developer: add UI tests and future browser-journey hooks | Not Started | Supports later no-residue E2E cleanup |
+| 85-006 | 2 | Frontend developer: add header user identity affordance and menu entry to `My Account` | Done | Header now uses a real signed-in account menu with `My Account`, `Settings`, and `Preferences` placement. |
+| 85-007 | 2 | Frontend developer: design and implement `My Account` shell | Done | Added the `My Account` home with lifecycle live first and future profile/password/preferences scaffolding in place. |
+| 85-008 | 2 | Frontend developer: implement account lifecycle UI inside `My Account` | Done | Real inactivate flow is wired against the backend and updates signed-in session state immediately. |
+| 85-009 | 2 | Frontend developer: add account delete mini-wizard | Done | Inline wizard uses exact email confirmation before enabling `DELETE`. |
+| 85-010 | 2 | Frontend developer: add post-delete logout and route handling | Done | Success path exits through signed-out routing after the user acknowledges delete completion. |
+| 85-011 | 2 | Frontend developer: add UI tests and future browser-journey hooks | Done | Added component tests for inactivate, email confirmation gating, and delete success behavior to support future no-residue E2E cleanup. |
 
 ## Data-Modeler Review Notes
 
