@@ -950,14 +950,6 @@
                             "nullable": true,
                             "description": "Optional short league description."
                           },
-                          "visibility": {
-                            "type": "string",
-                            "enum": [
-                              "PRIVATE",
-                              "PUBLIC"
-                            ],
-                            "description": "Current league visibility mode."
-                          },
                           "isActive": {
                             "type": "boolean",
                             "description": "Whether the league is currently active for normal write interactions."
@@ -988,7 +980,6 @@
                           "id",
                           "leagueCode",
                           "name",
-                          "visibility",
                           "isActive",
                           "memberCount",
                           "activeContestCount"
@@ -1118,14 +1109,6 @@
                           "nullable": true,
                           "description": "Optional short league description."
                         },
-                        "visibility": {
-                          "type": "string",
-                          "enum": [
-                            "PRIVATE",
-                            "PUBLIC"
-                          ],
-                          "description": "Current league visibility mode."
-                        },
                         "isActive": {
                           "type": "boolean",
                           "description": "Whether the league is currently active for normal write interactions."
@@ -1151,10 +1134,6 @@
                           "format": "date-time",
                           "description": "League creation timestamp in ISO 8601 format."
                         },
-                        "maxMembers": {
-                          "type": "number",
-                          "description": "Optional maximum number of allowed league members."
-                        },
                         "joinPolicy": {
                           "type": "string",
                           "enum": [
@@ -1169,7 +1148,6 @@
                         "id",
                         "leagueCode",
                         "name",
-                        "visibility",
                         "isActive",
                         "memberCount",
                         "activeContestCount",
@@ -1315,14 +1293,6 @@
                           "nullable": true,
                           "description": "Optional short league description."
                         },
-                        "visibility": {
-                          "type": "string",
-                          "enum": [
-                            "PRIVATE",
-                            "PUBLIC"
-                          ],
-                          "description": "Current league visibility mode."
-                        },
                         "isActive": {
                           "type": "boolean",
                           "description": "Whether the league is currently active for normal write interactions."
@@ -1348,10 +1318,6 @@
                           "format": "date-time",
                           "description": "League creation timestamp in ISO 8601 format."
                         },
-                        "maxMembers": {
-                          "type": "number",
-                          "description": "Optional maximum number of allowed league members."
-                        },
                         "joinPolicy": {
                           "type": "string",
                           "enum": [
@@ -1366,7 +1332,6 @@
                         "id",
                         "leagueCode",
                         "name",
-                        "visibility",
                         "isActive",
                         "memberCount",
                         "activeContestCount",
@@ -1618,14 +1583,6 @@
                           "nullable": true,
                           "description": "Optional short league description."
                         },
-                        "visibility": {
-                          "type": "string",
-                          "enum": [
-                            "PRIVATE",
-                            "PUBLIC"
-                          ],
-                          "description": "Current league visibility mode."
-                        },
                         "isActive": {
                           "type": "boolean",
                           "description": "Whether the league is currently active for normal write interactions."
@@ -1651,10 +1608,6 @@
                           "format": "date-time",
                           "description": "League creation timestamp in ISO 8601 format."
                         },
-                        "maxMembers": {
-                          "type": "number",
-                          "description": "Optional maximum number of allowed league members."
-                        },
                         "joinPolicy": {
                           "type": "string",
                           "enum": [
@@ -1669,7 +1622,6 @@
                         "id",
                         "leagueCode",
                         "name",
-                        "visibility",
                         "isActive",
                         "memberCount",
                         "activeContestCount",
@@ -1776,14 +1728,6 @@
                           "nullable": true,
                           "description": "Optional short league description."
                         },
-                        "visibility": {
-                          "type": "string",
-                          "enum": [
-                            "PRIVATE",
-                            "PUBLIC"
-                          ],
-                          "description": "Current league visibility mode."
-                        },
                         "isActive": {
                           "type": "boolean",
                           "description": "Whether the league is currently active for normal write interactions."
@@ -1809,10 +1753,6 @@
                           "format": "date-time",
                           "description": "League creation timestamp in ISO 8601 format."
                         },
-                        "maxMembers": {
-                          "type": "number",
-                          "description": "Optional maximum number of allowed league members."
-                        },
                         "joinPolicy": {
                           "type": "string",
                           "enum": [
@@ -1827,7 +1767,6 @@
                         "id",
                         "leagueCode",
                         "name",
-                        "visibility",
                         "isActive",
                         "memberCount",
                         "activeContestCount",

@@ -136,7 +136,9 @@ export function WelcomePage() {
               <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                 {roleLabel(league.role)}
               </span>
-              <span className="text-xs text-muted-foreground">{league.visibility}</span>
+              <span className="text-xs text-muted-foreground">
+                {league.isActive ? 'Active league' : 'Inactive league'}
+              </span>
             </div>
             <h3 className="mt-4 text-xl font-semibold">{league.name}</h3>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm text-muted-foreground">
@@ -238,8 +240,6 @@ export function MyLeaguesPage() {
                       {roleLabel(league.role)}
                     </span>
                     <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
-                      <span>{league.visibility}</span>
-                      <span aria-hidden="true">·</span>
                       <span>{isInactive ? 'Inactive' : 'Active'}</span>
                     </div>
                   </div>

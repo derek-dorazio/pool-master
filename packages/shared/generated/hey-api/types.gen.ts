@@ -629,10 +629,6 @@ export type ListLeaguesResponses = {
              */
             description?: string;
             /**
-             * Current league visibility mode.
-             */
-            visibility: 'PRIVATE' | 'PUBLIC';
-            /**
              * Whether the league is currently active for normal write interactions.
              */
             isActive: boolean;
@@ -756,10 +752,6 @@ export type CreateLeagueResponses = {
              */
             description?: string;
             /**
-             * Current league visibility mode.
-             */
-            visibility: 'PRIVATE' | 'PUBLIC';
-            /**
              * Whether the league is currently active for normal write interactions.
              */
             isActive: boolean;
@@ -779,10 +771,6 @@ export type CreateLeagueResponses = {
              * League creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Optional maximum number of allowed league members.
-             */
-            maxMembers?: number;
             /**
              * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              */
@@ -935,10 +923,6 @@ export type GetLeagueResponses = {
              */
             description?: string;
             /**
-             * Current league visibility mode.
-             */
-            visibility: 'PRIVATE' | 'PUBLIC';
-            /**
              * Whether the league is currently active for normal write interactions.
              */
             isActive: boolean;
@@ -958,10 +942,6 @@ export type GetLeagueResponses = {
              * League creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Optional maximum number of allowed league members.
-             */
-            maxMembers?: number;
             /**
              * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              */
@@ -1034,10 +1014,6 @@ export type GetLeagueByCodeResponses = {
              */
             description?: string;
             /**
-             * Current league visibility mode.
-             */
-            visibility: 'PRIVATE' | 'PUBLIC';
-            /**
              * Whether the league is currently active for normal write interactions.
              */
             isActive: boolean;
@@ -1057,10 +1033,6 @@ export type GetLeagueByCodeResponses = {
              * League creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Optional maximum number of allowed league members.
-             */
-            maxMembers?: number;
             /**
              * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              */
@@ -1155,10 +1127,6 @@ export type InactivateLeagueResponses = {
              */
             description?: string;
             /**
-             * Current league visibility mode.
-             */
-            visibility: 'PRIVATE' | 'PUBLIC';
-            /**
              * Whether the league is currently active for normal write interactions.
              */
             isActive: boolean;
@@ -1178,10 +1146,6 @@ export type InactivateLeagueResponses = {
              * League creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Optional maximum number of allowed league members.
-             */
-            maxMembers?: number;
             /**
              * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              */

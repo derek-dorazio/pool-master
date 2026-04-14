@@ -6,7 +6,6 @@ import {
   ScoringEngine,
   SurvivorStyle,
   DraftMode,
-  LeagueVisibility,
   PricingMethod,
   TierAssignmentMethod,
 } from '@poolmaster/shared/domain';
@@ -87,13 +86,6 @@ describe('DraftMode enum', () => {
   it('has live and async', () => {
     expect(DraftMode.LIVE).toBe('LIVE');
     expect(DraftMode.ASYNC).toBe('ASYNC');
-  });
-});
-
-describe('LeagueVisibility enum', () => {
-  it('has private and public', () => {
-    expect(LeagueVisibility.PRIVATE).toBe('PRIVATE');
-    expect(LeagueVisibility.PUBLIC).toBe('PUBLIC');
   });
 });
 

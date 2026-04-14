@@ -1,6 +1,6 @@
 import { LeagueService } from '../../../packages/core-api/src/modules/leagues/service';
 import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
-import { JoinPolicy, LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
+import { JoinPolicy, LeagueRole } from '@poolmaster/shared/domain';
 import { buildLeague, buildMembership } from '../../factories';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
@@ -94,7 +94,7 @@ describe('LeagueService', () => {
       expect(leagueRepo.findByCode).toHaveBeenCalledWith('MYLEAGUE');
     });
 
-    it('applies the default private visibility and first-class lifecycle fields', async () => {
+    it('applies the default first-class lifecycle fields', async () => {
       const leagueRepo = createMockLeagueRepo();
       const membershipRepo = createMockMembershipRepo();
       const service = new LeagueService(leagueRepo, membershipRepo);
@@ -104,22 +104,8 @@ describe('LeagueService', () => {
         leagueCode: 'MYLEAGUE',
       });
       const createArg = (leagueRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.visibility).toBe(LeagueVisibility.PRIVATE);
       expect(createArg.isActive).toBe(true);
       expect(createArg.joinPolicy).toBe(JoinPolicy.COMMISSIONER_ONLY);
-    });
-
-    it('uses default maxMembers when not provided', async () => {
-      const leagueRepo = createMockLeagueRepo();
-      const membershipRepo = createMockMembershipRepo();
-      const service = new LeagueService(leagueRepo, membershipRepo);
-      await service.createLeague({
-        createdBy: 'user-1',
-        name: 'My League',
-        leagueCode: 'MYLEAGUE',
-      });
-      const createArg = (leagueRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.maxMembers).toBe(20);
     });
 
     it('rejects duplicate league codes', async () => {

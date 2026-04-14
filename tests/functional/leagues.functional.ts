@@ -54,7 +54,6 @@ describe('SDK Functional: Leagues', () => {
     expect(createResponse.data).toBeDefined();
     expect(createResponse.data?.league.id).toBeTruthy();
     expect(createResponse.data?.league.name).toBe('Functional League');
-    expect(createResponse.data?.league.visibility).toBe('PRIVATE');
     expect(createResponse.data?.league.role).toBe('COMMISSIONER');
     expect(createResponse.data?.league.memberCount).toBe(1);
 

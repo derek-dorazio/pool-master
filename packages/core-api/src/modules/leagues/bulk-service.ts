@@ -88,8 +88,6 @@ export class BulkService {
     if (!league) {
       throw new BulkOperationError('League not found', 'LEAGUE_NOT_FOUND');
     }
-    const members = await this.membershipRepo.findByLeague(leagueId);
-    const currentCount = members.length;
     let sent = 0;
     const failed: { email: string; reason: string }[] = [];
     const duplicates: string[] = [];
@@ -97,10 +95,6 @@ export class BulkService {
       const email = row.email.toLowerCase().trim();
       if (!email || !email.includes('@')) {
         failed.push({ email, reason: 'Invalid email format' });
-        continue;
-      }
-      if (currentCount + sent >= league.maxMembers) {
-        failed.push({ email, reason: 'League member limit reached' });
         continue;
       }
       const existing = await this.invitationRepo.findByEmail(leagueId, email);

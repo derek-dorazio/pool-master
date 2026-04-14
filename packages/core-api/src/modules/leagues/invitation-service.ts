@@ -163,13 +163,6 @@ export class InvitationService {
     if (!league) {
       throw new InvitationInvalidError('League no longer exists', 'LEAGUE_NOT_FOUND');
     }
-    const members = await this.membershipRepo.findByLeague(invitation.leagueId);
-    if (members.length >= league.maxMembers) {
-      throw new InvitationInvalidError(
-        'League has reached its member limit',
-        'LEAGUE_MEMBER_LIMIT_REACHED',
-      );
-    }
     const membership = existingMembership
       ? await this.membershipRepo.update(existingMembership.id, {
           role: LeagueRole.MEMBER,

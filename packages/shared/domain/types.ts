@@ -21,7 +21,6 @@ import type {
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
-  LeagueVisibility,
   MappingConfidence,
   ParticipantStatus,
   ParticipantType,
@@ -65,8 +64,6 @@ export interface League extends DomainEntity {
   name: string;
   description?: string;
   createdBy: string;
-  visibility: LeagueVisibility;
-  maxMembers: number;
   isActive: boolean;
   joinPolicy: JoinPolicy;
 }

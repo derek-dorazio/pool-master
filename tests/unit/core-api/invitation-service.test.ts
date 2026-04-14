@@ -60,7 +60,7 @@ function createMockMembershipRepo(
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
-    findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1', maxMembers: 20 })),
+    findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
     findByCode: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
@@ -327,27 +327,6 @@ describe('InvitationService', () => {
         membershipRepo,
         createMockLeagueRepo(),
       );
-      await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
-        InvitationInvalidError,
-      );
-    });
-
-    it('throws InvitationInvalidError when league is full', async () => {
-      const invitation = buildInvitation({
-        leagueId: 'league-1',
-        status: InvitationStatus.PENDING,
-        expiresAt: new Date('2099-01-01'),
-      });
-      const invitationRepo = createMockInvitationRepo({
-        findByCode: jest.fn().mockResolvedValue(invitation),
-      });
-      const membershipRepo = createMockMembershipRepo({
-        findByLeague: jest.fn().mockResolvedValue(Array(20).fill(buildMembership())),
-      });
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(buildLeague({ maxMembers: 20 })),
-      });
-      const service = new InvitationService(invitationRepo, membershipRepo, leagueRepo);
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
       );

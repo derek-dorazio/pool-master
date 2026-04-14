@@ -32,8 +32,6 @@ export class PrismaLeagueRepository implements LeagueRepository {
         createdBy: league.createdBy,
         isActive: league.isActive,
         joinPolicy: league.joinPolicy,
-        visibility: league.visibility,
-        maxMembers: league.maxMembers,
       },
     });
     return mapToLeague(row);
@@ -48,8 +46,6 @@ export class PrismaLeagueRepository implements LeagueRepository {
         ...(updates.description !== undefined && { description: updates.description }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
         ...(updates.joinPolicy !== undefined && { joinPolicy: updates.joinPolicy }),
-        ...(updates.visibility !== undefined && { visibility: updates.visibility }),
-        ...(updates.maxMembers !== undefined && { maxMembers: updates.maxMembers }),
       },
     });
     return mapToLeague(row);
@@ -68,8 +64,6 @@ function mapToLeague(row: {
   createdBy: string;
   isActive: boolean;
   joinPolicy: string;
-  visibility: string;
-  maxMembers: number;
   createdAt: Date;
   updatedAt: Date;
 }): League {
@@ -81,8 +75,6 @@ function mapToLeague(row: {
     createdBy: row.createdBy,
     isActive: row.isActive,
     joinPolicy: row.joinPolicy as League['joinPolicy'],
-    visibility: row.visibility as League['visibility'],
-    maxMembers: row.maxMembers,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

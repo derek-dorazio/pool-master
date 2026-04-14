@@ -22,7 +22,6 @@ import {
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
-  LeagueVisibility,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -55,8 +54,6 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     createdBy: 'owner-1',
     isActive: true,
     joinPolicy: JoinPolicy.COMMISSIONER_ONLY,
-    visibility: LeagueVisibility.PRIVATE,
-    maxMembers: 20,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

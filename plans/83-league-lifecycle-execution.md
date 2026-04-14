@@ -49,6 +49,9 @@ lifecycle:
 | 83-012 | 3 | Data-modeler: remediate league lifecycle model drift by promoting first-class fields and removing `League.settings` | Done | Locked the simplified league model: `League.isActive` and `League.joinPolicy` are first-class fields, speculative settings were retired, and the old JSON settings bag is no longer part of the approved design. |
 | 83-013 | 3 | Backend developer: update league persistence, contract, and tests to match the simplified model | Done | Added schema migration, repository/service cleanup, DTO/OpenAPI regeneration, removed the stale settings patch route, and aligned commissioner permissions to `league.manage.edit`. |
 | 83-014 | 3 | Frontend developer: align PoolMaster league surfaces to the simplified first-class league model | Done | Updated generated-client consumers to use `joinPolicy`, removed active frontend reliance on `League.settings`, and kept league detail/manage surfaces truthful. |
+| 83-015 | 4 | Data-modeler: remove speculative league access fields that are not part of approved v1 product truth | Done | `visibility` and `maxMembers` were confirmed as speculative/legacy fields. The approved league model now keeps only `isActive` and `joinPolicy` as lifecycle/access controls. |
+| 83-016 | 4 | Backend developer: remove `visibility` and `maxMembers` from league persistence, services, and contracts | Done | Dropped both columns from Prisma, removed repository and service handling, deleted member-limit enforcement, regenerated OpenAPI/SDK/types, and passed the full backend gate. |
+| 83-017 | 4 | Frontend developer: remove `visibility` and member-limit assumptions from PoolMaster league UI and tests | Done | League overview/detail surfaces now reflect lifecycle and join policy only, and test fixtures were updated so no PoolMaster consumer still depends on the removed fields. |
 
 ## Data-Modeler Review Notes
 

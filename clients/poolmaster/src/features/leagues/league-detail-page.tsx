@@ -245,12 +245,14 @@ export function LeagueDetailPage() {
               </div>
             </div>
             <div className="rounded-2xl bg-background px-4 py-4">
-              <div>Visibility</div>
-              <div className="mt-1 font-semibold text-foreground">{leagueQuery.data.visibility}</div>
-            </div>
-            <div className="rounded-2xl bg-background px-4 py-4">
               <div>Join policy</div>
               <div className="mt-1 font-semibold text-foreground">{leagueQuery.data.joinPolicy}</div>
+            </div>
+            <div className="rounded-2xl bg-background px-4 py-4">
+              <div>Lifecycle</div>
+              <div className="mt-1 font-semibold text-foreground">
+                {leagueQuery.data.isActive ? 'Active' : 'Inactive'}
+              </div>
             </div>
           </div>
         </div>

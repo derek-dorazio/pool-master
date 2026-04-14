@@ -3177,11 +3177,6 @@ export interface operations {
                             name: string;
                             /** @description Optional short league description. */
                             description?: string | null;
-                            /**
-                             * @description Current league visibility mode.
-                             * @enum {string}
-                             */
-                            visibility: "PRIVATE" | "PUBLIC";
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
                             /** @description Current number of memberships in the league. */
@@ -3261,11 +3256,6 @@ export interface operations {
                             name: string;
                             /** @description Optional short league description. */
                             description?: string | null;
-                            /**
-                             * @description Current league visibility mode.
-                             * @enum {string}
-                             */
-                            visibility: "PRIVATE" | "PUBLIC";
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
                             /** @description Current number of memberships in the league. */
@@ -3282,8 +3272,6 @@ export interface operations {
                              * @description League creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /** @description Optional maximum number of allowed league members. */
-                            maxMembers?: number;
                             /**
                              * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}
@@ -3361,11 +3349,6 @@ export interface operations {
                             name: string;
                             /** @description Optional short league description. */
                             description?: string | null;
-                            /**
-                             * @description Current league visibility mode.
-                             * @enum {string}
-                             */
-                            visibility: "PRIVATE" | "PUBLIC";
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
                             /** @description Current number of memberships in the league. */
@@ -3382,8 +3365,6 @@ export interface operations {
                              * @description League creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /** @description Optional maximum number of allowed league members. */
-                            maxMembers?: number;
                             /**
                              * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}
@@ -3516,11 +3497,6 @@ export interface operations {
                             name: string;
                             /** @description Optional short league description. */
                             description?: string | null;
-                            /**
-                             * @description Current league visibility mode.
-                             * @enum {string}
-                             */
-                            visibility: "PRIVATE" | "PUBLIC";
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
                             /** @description Current number of memberships in the league. */
@@ -3537,8 +3513,6 @@ export interface operations {
                              * @description League creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /** @description Optional maximum number of allowed league members. */
-                            maxMembers?: number;
                             /**
                              * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}
@@ -3597,11 +3571,6 @@ export interface operations {
                             name: string;
                             /** @description Optional short league description. */
                             description?: string | null;
-                            /**
-                             * @description Current league visibility mode.
-                             * @enum {string}
-                             */
-                            visibility: "PRIVATE" | "PUBLIC";
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
                             /** @description Current number of memberships in the league. */
@@ -3618,8 +3587,6 @@ export interface operations {
                              * @description League creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /** @description Optional maximum number of allowed league members. */
-                            maxMembers?: number;
                             /**
                              * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}

@@ -19,7 +19,6 @@ const commissionerLeague: LeagueSummary = {
   leagueCode: 'BIGDAWGS',
   name: 'Big Dawgs',
   description: 'Neighborhood league',
-  visibility: 'PRIVATE',
   isActive: true,
   memberCount: 4,
   activeContestCount: 1,

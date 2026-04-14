@@ -8,7 +8,6 @@ import {
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
-  LeagueVisibility,
 } from '../domain/enums';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 
@@ -84,9 +83,6 @@ export const LeagueSummaryDtoSchema = z.object({
   leagueCode: z.string().describe('Stable short code used in bookmarkable league-home routes and invite context.'),
   name: z.string().describe('Primary display name for the league.'),
   description: z.string().nullable().optional().describe('Optional short league description.'),
-  visibility: z
-    .enum([LeagueVisibility.PRIVATE, LeagueVisibility.PUBLIC])
-    .describe('Current league visibility mode.'),
   isActive: z.boolean().describe('Whether the league is currently active for normal write interactions.'),
   memberCount: z.number().describe('Current number of memberships in the league.'),
   activeContestCount: z.number().describe('Number of currently active contests associated with the league.'),
@@ -99,7 +95,6 @@ export const LeagueSummaryDtoSchema = z.object({
 export type LeagueSummaryDto = z.infer<typeof LeagueSummaryDtoSchema>;
 
 export const LeagueDetailDtoSchema = LeagueSummaryDtoSchema.extend({
-  maxMembers: z.number().optional().describe('Optional maximum number of allowed league members.'),
   joinPolicy: z
     .enum([JoinPolicy.COMMISSIONER_ONLY, JoinPolicy.LINK_INVITE, JoinPolicy.OPEN])
     .describe('League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.'),

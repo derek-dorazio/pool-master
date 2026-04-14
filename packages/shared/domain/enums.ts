@@ -183,12 +183,6 @@ export const LeagueMembershipStatus = {
 export type LeagueMembershipStatus =
   (typeof LeagueMembershipStatus)[keyof typeof LeagueMembershipStatus];
 
-export const LeagueVisibility = {
-  PRIVATE: 'PRIVATE',
-  PUBLIC: 'PUBLIC',
-} as const;
-export type LeagueVisibility = (typeof LeagueVisibility)[keyof typeof LeagueVisibility];
-
 export const AuthProvider = {
   EMAIL: 'email',
   GOOGLE: 'google',

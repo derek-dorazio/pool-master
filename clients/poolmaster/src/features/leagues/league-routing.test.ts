@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
+import { LeagueRole } from '@poolmaster/shared/domain';
 import {
   getLeagueSelectorOptions,
   sortLeaguesForOverview,
@@ -10,7 +10,6 @@ const leagues = [
     id: 'league-active-member',
     leagueCode: 'ACTIVE1',
     name: 'Active Member League',
-    visibility: LeagueVisibility.PRIVATE,
     isActive: true,
     memberCount: 12,
     activeContestCount: 2,
@@ -21,7 +20,6 @@ const leagues = [
     id: 'league-inactive-member',
     leagueCode: 'INACTIVE1',
     name: 'Inactive Member League',
-    visibility: LeagueVisibility.PRIVATE,
     isActive: false,
     memberCount: 10,
     activeContestCount: 0,
@@ -32,7 +30,6 @@ const leagues = [
     id: 'league-inactive-commissioner',
     leagueCode: 'COMMOFF1',
     name: 'Inactive Commissioner League',
-    visibility: LeagueVisibility.PRIVATE,
     isActive: false,
     memberCount: 8,
     activeContestCount: 0,
@@ -43,7 +40,6 @@ const leagues = [
     id: 'league-active-commissioner',
     leagueCode: 'COMMON1',
     name: 'Active Commissioner League',
-    visibility: LeagueVisibility.PRIVATE,
     isActive: true,
     memberCount: 14,
     activeContestCount: 3,

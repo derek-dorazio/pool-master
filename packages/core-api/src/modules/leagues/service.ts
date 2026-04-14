@@ -8,7 +8,7 @@ import type {
   League,
   LeagueMembership,
 } from '@poolmaster/shared/domain';
-import { JoinPolicy, LeagueMembershipStatus, LeagueRole, LeagueVisibility } from '@poolmaster/shared/domain';
+import { JoinPolicy, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { ALL_COMMISSIONER_PERMISSIONS } from '../../core/permissions';
 
 export interface CreateLeagueInput {
@@ -23,7 +23,6 @@ export interface UserLeagueView {
   membership: LeagueMembership;
 }
 
-const DEFAULT_MAX_MEMBERS = 20;
 const DEFAULT_JOIN_POLICY = JoinPolicy.COMMISSIONER_ONLY;
 
 export class LeagueService {
@@ -46,8 +45,6 @@ export class LeagueService {
       createdBy: input.createdBy,
       isActive: true,
       joinPolicy: DEFAULT_JOIN_POLICY,
-      visibility: LeagueVisibility.PRIVATE,
-      maxMembers: DEFAULT_MAX_MEMBERS,
     });
     const membership = await this.membershipRepo.create({
       leagueId: league.id,

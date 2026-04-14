@@ -10,7 +10,6 @@ import {
   ContestType,
   SelectionType,
   ScoringEngine,
-  LeagueVisibility,
   LeagueRole,
 } from '@poolmaster/shared/domain';
 
@@ -39,9 +38,6 @@ const ROUTE_SCORING_ENGINES = [
   'FIGHT_RESULT',
   'CUMULATIVE',
 ];
-
-// From packages/core-api/src/modules/leagues/routes.ts — POST / body schema
-const ROUTE_VISIBILITY = ['PRIVATE', 'PUBLIC'];
 
 // From leagues/routes.ts — PUT /:id/members/:uid/role body schema
 const ROUTE_MEMBER_ROLES = ['COMMISSIONER', 'MEMBER'];
@@ -78,15 +74,6 @@ describe('Enum consistency — route schemas vs domain enums', () => {
   it('every scoringEngine in route schema is a valid ScoringEngine', () => {
     const valid = enumValues(ScoringEngine);
     for (const val of ROUTE_SCORING_ENGINES) {
-      expect(valid).toContain(val);
-    }
-  });
-
-  // --- LeagueVisibility ---
-
-  it('every visibility in league route schema is a valid LeagueVisibility', () => {
-    const valid = enumValues(LeagueVisibility);
-    for (const val of ROUTE_VISIBILITY) {
       expect(valid).toContain(val);
     }
   });

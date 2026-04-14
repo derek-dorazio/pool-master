@@ -193,7 +193,7 @@ classDiagram
 
 | Table | Purpose | Key Columns | Primary Surface |
 |---|---|---|---|
-| `leagues` | Core league record | `tenant_id`, `name`, `visibility`, `max_members`, `settings` | `Both` |
+| `leagues` | Core league record | `league_code`, `name`, `created_by`, `is_active`, `join_policy` | `Both` |
 | `league_memberships` | User membership within a league plus role and commissioner permissions | `league_id`, `user_id`, `role`, `permissions` | `Both` |
 | `league_invitations` | Email/link invites and acceptance tracking | `league_id`, `invite_code`, `invite_type`, `status`, `accepted_by` | `Web` |
 | `commissioner_audit_log` | Immutable commissioner action history | `league_id`, `contest_id`, `actor_id`, `action`, `before_state`, `after_state` | `Both` |
