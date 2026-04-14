@@ -1,5 +1,4 @@
 import type { FastifyInstance } from 'fastify';
-import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   ContestConfigurationRequestSchema,
   ContestManagementResponseSchema,
@@ -15,7 +14,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaParticipantContestScoringRuleRepository,
 } from '../../adapters';
-import { requirePermission } from '../../core/require-permission';
+import { requireCommissioner } from '../leagues/permissions';
 import { createContestManagementHandlers } from './handler';
 import { ContestManagementService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
@@ -50,10 +49,7 @@ export async function contestManagementModule(
         422: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(
-      membershipRepo,
-      CommissionerPermission.CONTEST_CREATE,
-    ),
+    preHandler: requireCommissioner(membershipRepo),
     handler: handlers.createContest,
   });
 
@@ -72,10 +68,7 @@ export async function contestManagementModule(
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(
-      membershipRepo,
-      CommissionerPermission.CONTEST_EDIT,
-    ),
+    preHandler: requireCommissioner(membershipRepo),
     handler: handlers.getContest,
   });
 
@@ -96,10 +89,7 @@ export async function contestManagementModule(
         422: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(
-      membershipRepo,
-      CommissionerPermission.CONTEST_EDIT,
-    ),
+    preHandler: requireCommissioner(membershipRepo),
     handler: handlers.updateContestConfiguration,
   });
 }

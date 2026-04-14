@@ -1,5 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import {
+  AccountPasswordChangeRequestSchema,
+  AccountPasswordChangeResponseSchema,
+  AccountPreferencesUpdateRequestSchema,
+  AccountProfileUpdateRequestSchema,
   AccountDeleteRequestSchema,
   AccountDeleteResponseSchema,
   AccountResponseSchema,
@@ -9,11 +13,85 @@ import {
 import { getAppPrisma } from '../../core/prisma-context';
 import { createAccountHandlers } from './handler';
 import { AccountService } from './service';
+import { AuthService } from '../auth/auth-service';
 
 export async function accountModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
   const service = new AccountService(prisma);
-  const handlers = createAccountHandlers(service);
+  const authService = new AuthService(prisma);
+  const handlers = createAccountHandlers(service, authService);
+
+  fastify.post('/reactivate', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Reactivate the authenticated account',
+      description:
+        'Reactivates an inactive account and rotates a fresh browser session so the user can resume normal product usage immediately.',
+      operationId: 'reactivateAccount',
+      response: {
+        200: zodToJsonSchema(AccountResponseSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.reactivate,
+  });
+
+  fastify.put('/profile', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Update the authenticated account profile',
+      description:
+        'Updates the authenticated account profile fields that are owned directly by the user profile: first name and last name.',
+      operationId: 'updateAccountProfile',
+      body: zodToJsonSchema(AccountProfileUpdateRequestSchema),
+      response: {
+        200: zodToJsonSchema(AccountResponseSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.updateProfile,
+  });
+
+  fastify.put('/preferences', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Update authenticated account preferences',
+      description:
+        'Updates first-pass user preferences for locale, timezone, and date/time formatting without inventing a separate preferences-only account model.',
+      operationId: 'updateAccountPreferences',
+      body: zodToJsonSchema(AccountPreferencesUpdateRequestSchema),
+      response: {
+        200: zodToJsonSchema(AccountResponseSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.updatePreferences,
+  });
+
+  fastify.post('/password', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Change the authenticated account password',
+      description:
+        'Changes the authenticated account password after validating the current password and matching new-password confirmation. Other refresh-token sessions are revoked while the current session stays usable.',
+      operationId: 'changeAccountPassword',
+      body: zodToJsonSchema(AccountPasswordChangeRequestSchema),
+      response: {
+        200: zodToJsonSchema(AccountPasswordChangeResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.changePassword,
+  });
 
   fastify.post('/inactivate', {
     schema: {

@@ -1,8 +1,5 @@
 /**
- * User admin route handlers — request/response layer for user management.
- *
- * Each handler extracts params, query, and body from the request, delegates
- * to UserService for business logic, and returns the appropriate response.
+ * User admin route handlers — request/response layer for root-admin user management.
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -11,10 +8,6 @@ import { UserNotFoundError } from './user-service';
 import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
 
-// ---------------------------------------------------------------------------
-// Handler factory
-// ---------------------------------------------------------------------------
-
 export function createUserHandlers(userService: UserService) {
   return {
     listUsers,
@@ -22,10 +15,7 @@ export function createUserHandlers(userService: UserService) {
     forceLogout,
     disableUser,
     enableUser,
-    mergeUsers,
   };
-
-  // --- List / search users ---
 
   async function listUsers(
     request: FastifyRequest<{
@@ -48,14 +38,20 @@ export function createUserHandlers(userService: UserService) {
     });
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 25;
+
     return {
       items: result.items.map((item) => ({
         id: item.id,
         email: item.email,
-        displayName: item.displayName,
-        leagues: item.leagues,
-        lastLoginAt: item.lastLoginAt?.toISOString(),
+        firstName: item.firstName,
+        lastName: item.lastName,
+        isRootAdmin: item.isRootAdmin,
+        authProvider: item.authProvider,
         isActive: item.isActive,
+        timezone: item.timezone,
+        locale: item.locale,
+        timeFormat: item.timeFormat,
+        dateFormat: item.dateFormat,
         createdAt: item.createdAt.toISOString(),
       })),
       total: result.total,
@@ -64,8 +60,6 @@ export function createUserHandlers(userService: UserService) {
       totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
     };
   }
-
-  // --- User detail ---
 
   async function getUserDetail(
     request: FastifyRequest<{ Params: { userId: string } }>,
@@ -76,19 +70,6 @@ export function createUserHandlers(userService: UserService) {
       return reply.send({
         ...detail,
         createdAt: detail.createdAt.toISOString(),
-        lastLoginAt: detail.lastLoginAt?.toISOString(),
-        leagues: detail.leagues.map((league) => ({
-          ...league,
-          joinedAt: league.joinedAt?.toISOString(),
-        })),
-        devices: detail.devices.map((device) => ({
-          ...device,
-          lastActiveAt: device.lastActiveAt.toISOString(),
-        })),
-        recentAuthEvents: detail.recentAuthEvents.map((event) => ({
-          ...event,
-          timestamp: event.timestamp.toISOString(),
-        })),
       });
     } catch (err) {
       if (err instanceof UserNotFoundError) {
@@ -97,8 +78,6 @@ export function createUserHandlers(userService: UserService) {
       throw err;
     }
   }
-
-  // --- Force logout ---
 
   async function forceLogout(
     request: FastifyRequest<{ Params: { userId: string } }>,
@@ -117,8 +96,6 @@ export function createUserHandlers(userService: UserService) {
       throw err;
     }
   }
-
-  // --- Disable user ---
 
   async function disableUser(
     request: FastifyRequest<{
@@ -142,8 +119,6 @@ export function createUserHandlers(userService: UserService) {
     }
   }
 
-  // --- Enable user ---
-
   async function enableUser(
     request: FastifyRequest<{ Params: { userId: string } }>,
     reply: FastifyReply,
@@ -160,25 +135,5 @@ export function createUserHandlers(userService: UserService) {
       }
       throw err;
     }
-  }
-
-  // --- Merge users ---
-
-  async function mergeUsers(
-    request: FastifyRequest<{
-      Body: { primaryId: string; duplicateId: string };
-    }>,
-    reply: FastifyReply,
-  ) {
-    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
-    const { primaryId, duplicateId } = request.body;
-
-    const result = await userService.mergeUsers(
-      primaryId,
-      duplicateId,
-      rootAdminUserId,
-      rootAdminEmail,
-    );
-    return reply.send(result);
   }
 }

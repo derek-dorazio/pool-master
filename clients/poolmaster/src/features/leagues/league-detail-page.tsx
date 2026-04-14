@@ -11,6 +11,7 @@ import {
   type ListContestsResponses,
   type ListLeagueMembersResponses,
 } from '@/lib/api';
+import { formatUserName } from '@/features/account/user-name';
 import { buildInvitePath, setRecentLeagueCode } from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
@@ -288,7 +289,7 @@ export function LeagueDetailPage() {
                   key={member.id}
                 >
                   <div>
-                    <div className="font-medium">{member.displayName}</div>
+                    <div className="font-medium">{formatUserName(member.firstName, member.lastName)}</div>
                     <div className="text-sm text-muted-foreground">{member.userId}</div>
                   </div>
                   <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">

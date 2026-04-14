@@ -56,7 +56,6 @@ describe('SquadService', () => {
     userId: 'user-1',
     role: 'MEMBER' as const,
     status: LeagueMembershipStatus.ACTIVE,
-    permissions: [],
     joinedAt: new Date('2026-04-07T00:00:00Z'),
     createdAt: new Date('2026-04-07T00:00:00Z'),
     updatedAt: new Date('2026-04-07T00:00:00Z'),
@@ -79,7 +78,7 @@ describe('SquadService', () => {
         id: 'squad-1',
         leagueId: 'league-1',
         createdBy: 'user-1',
-        name: "Derek's Squad",
+        name: "Derek Dorazio's Team",
         iconUrl: undefined,
         status: SquadStatus.ACTIVE,
         createdAt: new Date('2026-04-07T00:00:00Z'),
@@ -89,7 +88,7 @@ describe('SquadService', () => {
         id: 'squad-1',
         leagueId: 'league-1',
         createdBy: 'user-1',
-        name: "Derek's Squad",
+        name: "Derek Dorazio's Team",
         iconUrl: undefined,
         status: SquadStatus.ACTIVE,
         createdAt: new Date('2026-04-07T00:00:00Z'),
@@ -124,8 +123,8 @@ describe('SquadService', () => {
     const leagueMembershipRepo = createLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
     });
-    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', displayName: 'Derek' });
-    prisma.user.findMany.mockResolvedValue([{ id: 'user-1', displayName: 'Derek' }]);
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
+    prisma.user.findMany.mockResolvedValue([{ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }]);
 
     const service = new SquadService(
       squadRepo,
@@ -136,9 +135,9 @@ describe('SquadService', () => {
 
     const result = await service.createSquad('league-1', 'user-1', {});
 
-    expect(squadRepo.create).toHaveBeenCalledWith(expect.objectContaining({ name: "Derek's Squad" }));
+    expect(squadRepo.create).toHaveBeenCalledWith(expect.objectContaining({ name: "Derek Dorazio's Team" }));
     expect(squadMembershipRepo.create).toHaveBeenCalled();
-    expect(result.name).toBe("Derek's Squad");
+    expect(result.name).toBe("Derek Dorazio's Team");
     expect(result.memberCount).toBe(1);
   });
 

@@ -2,7 +2,6 @@ import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import {
   LeagueMembershipStatus,
   LeagueRole,
-  CommissionerPermission,
 } from '@poolmaster/shared/domain';
 import { requireCommissioner, requireLeagueMembership } from '../../../packages/core-api/src/modules/leagues/permissions';
 import { buildMembership } from '../../factories';
@@ -161,7 +160,6 @@ describe('league permissions', () => {
   it('allows commissioners through requireCommissioner', async () => {
     const membership = buildMembership({
       role: LeagueRole.COMMISSIONER,
-      permissions: [CommissionerPermission.CONTEST_CREATE],
     });
     const repo = createMockMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),

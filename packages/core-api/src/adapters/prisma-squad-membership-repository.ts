@@ -1,6 +1,7 @@
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient, SquadMembership as PrismaSquadMembership } from '@prisma/client';
 import type { SquadMembershipRepository } from '@poolmaster/shared/db';
-import type { SquadMembership } from '@poolmaster/shared/domain';
+import type { SquadMembership, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { SquadMembershipStatus as SharedSquadMembershipStatus } from '@poolmaster/shared/domain';
 
 export class PrismaSquadMembershipRepository implements SquadMembershipRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -9,7 +10,7 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
     const rows = await this.prisma.squadMembership.findMany({
       where: {
         squadId,
-        ...(includeInactive ? {} : { status: 'ACTIVE' }),
+        ...(includeInactive ? {} : { status: SharedSquadMembershipStatus.ACTIVE }),
       },
       orderBy: { joinedAt: 'asc' },
     });
@@ -62,22 +63,13 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
   }
 }
 
-function mapToSquadMembership(row: {
-  id: string;
-  squadId: string;
-  leagueId: string;
-  userId: string;
-  status: string;
-  joinedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}): SquadMembership {
+function mapToSquadMembership(row: PrismaSquadMembership): SquadMembership {
   return {
     id: row.id,
     squadId: row.squadId,
     leagueId: row.leagueId,
     userId: row.userId,
-    status: row.status as SquadMembership['status'],
+    status: row.status as SquadMembershipStatus,
     joinedAt: row.joinedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

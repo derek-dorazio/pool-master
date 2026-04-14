@@ -21,11 +21,6 @@ export const API_ROUTES = {
     refresh: '/api/v1/auth/refresh',
     logout: '/api/v1/auth/logout',
     me: '/api/v1/auth/me',
-    profile: '/api/v1/auth/profile',
-    profileAvatar: '/api/v1/auth/profile/avatar',
-    password: '/api/v1/auth/password',
-    callback: '/api/v1/auth/callback',
-    linkedAccounts: (provider: string) => `/api/v1/auth/linked-accounts/${provider}`,
   },
 
   // Leagues
@@ -117,7 +112,11 @@ export const API_ROUTES = {
   // Account / Compliance
   account: {
     consent: '/api/v1/account/consent',
+    reactivate: '/api/v1/account/reactivate',
     inactivate: '/api/v1/account/inactivate',
+    profile: '/api/v1/account/profile',
+    preferences: '/api/v1/account/preferences',
+    password: '/api/v1/account/password',
     detail: '/api/v1/account',
   },
 

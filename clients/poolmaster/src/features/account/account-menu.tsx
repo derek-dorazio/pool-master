@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 type AccountMenuProps = {
-  displayName: string;
+  userName: string;
   onLogout: () => void | Promise<void>;
 };
 
-export function AccountMenu({ displayName, onLogout }: AccountMenuProps) {
+export function AccountMenu({ userName, onLogout }: AccountMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -19,7 +19,7 @@ export function AccountMenu({ displayName, onLogout }: AccountMenuProps) {
         onClick={() => setIsOpen((open) => !open)}
         type="button"
       >
-        {displayName}
+        {userName}
       </button>
 
       {isOpen ? (
@@ -29,33 +29,17 @@ export function AccountMenu({ displayName, onLogout }: AccountMenuProps) {
         >
           <div className="rounded-[1.25rem] border border-border bg-background px-4 py-3">
             <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Signed in as</div>
-            <div className="mt-2 text-base font-semibold text-foreground">{displayName}</div>
+            <div className="mt-2 text-base font-semibold text-foreground">{userName}</div>
           </div>
 
           <nav aria-label="User menu" className="mt-3 space-y-2">
-            <button
-              className="block w-full rounded-[1.25rem] border border-border px-4 py-3 text-left text-sm font-medium text-muted-foreground"
-              disabled
-              title="Settings will be designed next."
-              type="button"
-            >
-              Settings
-            </button>
-            <button
-              className="block w-full rounded-[1.25rem] border border-border px-4 py-3 text-left text-sm font-medium text-muted-foreground"
-              disabled
-              title="Preferences will be designed next."
-              type="button"
-            >
-              Preferences
-            </button>
             <Link
               className="block rounded-[1.25rem] border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-              data-testid="account-menu-my-account"
+              data-testid="account-menu-profile"
               onClick={() => setIsOpen(false)}
               to="/my-account"
             >
-              My Account
+              Profile
             </Link>
             <button
               className="block w-full rounded-[1.25rem] bg-primary px-4 py-3 text-left text-sm font-medium text-primary-foreground transition hover:opacity-95"

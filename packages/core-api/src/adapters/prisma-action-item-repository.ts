@@ -12,7 +12,7 @@ export class PrismaActionItemRepository implements ActionItemRepository {
   async findByLeague(leagueId: string, includeResolved = false): Promise<ActionItem[]> {
     const rows = await this.prisma.commissionerActionItem.findMany({
       where: { leagueId, ...(!includeResolved && { resolved: false }) },
-      orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [{ createdAt: 'desc' }],
     });
     return rows.map(mapToActionItem);
   }
@@ -26,8 +26,6 @@ export class PrismaActionItemRepository implements ActionItemRepository {
       data: {
         leagueId: item.leagueId,
         contestId: item.contestId,
-        type: item.type,
-        priority: item.priority,
         title: item.title,
         description: item.description,
         actionUrl: item.actionUrl,
@@ -55,8 +53,6 @@ function mapToActionItem(row: {
   id: string;
   leagueId: string;
   contestId: string | null;
-  type: string;
-  priority: string;
   title: string;
   description: string | null;
   actionUrl: string | null;
@@ -69,8 +65,6 @@ function mapToActionItem(row: {
     id: row.id,
     leagueId: row.leagueId,
     contestId: row.contestId ?? undefined,
-    type: row.type as ActionItem['type'],
-    priority: row.priority as ActionItem['priority'],
     title: row.title,
     description: row.description ?? undefined,
     actionUrl: row.actionUrl ?? undefined,

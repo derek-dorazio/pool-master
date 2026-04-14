@@ -6,6 +6,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import { formatUserFullName } from '../../core/user-name';
 
 export interface AuditListQuery {
   actorUserId?: string;
@@ -68,12 +69,12 @@ function toAuditEntryView(row: {
   createdAt: Date;
   beforeState: unknown;
   afterState: unknown;
-  actor?: { displayName: string } | null;
+  actor?: { firstName: string; lastName: string } | null;
 }): AuditEntryView {
   return {
     id: row.id,
     actorEmail: row.actorEmail,
-    actorName: row.actor?.displayName ?? row.actorEmail,
+    actorName: row.actor ? formatUserFullName(row.actor.firstName, row.actor.lastName) : row.actorEmail,
     action: row.action,
     resourceType: row.resourceType,
     resourceId: row.resourceId,
@@ -116,7 +117,7 @@ export async function queryAuditLog(query: AuditListQuery): Promise<AuditListRes
       where,
       include: {
         actor: {
-          select: { displayName: true },
+          select: { firstName: true, lastName: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -140,7 +141,7 @@ export async function getAuditEntryById(entryId: string): Promise<AuditEntryView
     where: { id: entryId },
     include: {
       actor: {
-        select: { displayName: true },
+        select: { firstName: true, lastName: true },
       },
     },
   });

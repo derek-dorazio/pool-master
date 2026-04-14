@@ -60,7 +60,7 @@ export interface IngestionJob {
   providerId: string;
   sport: Sport;
   eventId: string | null;
-  status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
   startedAt: Date | null;
   completedAt: Date | null;
   recordsProcessed: number;
@@ -520,7 +520,7 @@ export class ProviderService {
     )).sort((a, b) => `${a.providerId}:${a.sport}`.localeCompare(`${b.providerId}:${b.sport}`));
 
     const activeJobsRows = await this.prisma.ingestionJob.findMany({
-      where: { status: { in: ['QUEUED', 'RUNNING'] } },
+      where: { status: { in: ['PENDING', 'RUNNING'] } },
       orderBy: { createdAt: 'desc' },
       take: 10,
     });

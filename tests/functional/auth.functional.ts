@@ -39,7 +39,8 @@ describe('SDK Functional: Auth', () => {
     expect(currentUser).toBeDefined();
     expect(currentUser?.user.id).toBe(user.userId);
     expect(currentUser?.user.email).toBe(user.email);
-    expect(currentUser?.user.displayName).toBe(user.displayName);
+    expect(currentUser?.user.firstName).toBe(user.firstName);
+    expect(currentUser?.user.lastName).toBe(user.lastName);
   });
 
   it('supports cookie-session auth for reads and refresh rotation through the SDK', async () => {

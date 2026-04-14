@@ -32,6 +32,7 @@ import type { ContestEntryDto } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
 } from '../../mappers/contests.mapper';
+import { buildDefaultSquadName } from '../../core/user-name';
 export interface CreateContestInput {
   leagueId: string;
   createdBy: string;
@@ -392,7 +393,7 @@ export class ContestService {
       }
     }
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.displayName) {
+    if (!user?.firstName || !user?.lastName) {
       throw new ContestEntryOperationError(
         'Unable to resolve the squad owner',
         'SQUAD_OWNER_RESOLUTION_FAILED',
@@ -401,7 +402,7 @@ export class ContestService {
     const squad = await this.requireSquadRepo().create({
       leagueId,
       createdBy: userId,
-      name: `${user.displayName}'s Squad`,
+      name: buildDefaultSquadName(user.firstName, user.lastName),
       iconUrl: undefined,
       status: SquadStatus.ACTIVE,
     });

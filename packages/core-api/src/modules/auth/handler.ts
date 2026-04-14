@@ -18,20 +18,18 @@ export function createAuthHandlers(authService: AuthService) {
     login: handleLogin,
     refresh: handleRefresh,
     logout: handleLogout,
-    forgotPassword: handleForgotPassword,
-    oauthCallback: handleOAuthCallback,
     me: handleMe,
   };
 
   async function handleRegister(
     request: FastifyRequest<{
-      Body: { email: string; password: string; displayName: string };
+      Body: { email: string; password: string; firstName: string; lastName: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const { email, password, displayName } = request.body;
-      const result = await authService.register(email, password, displayName);
+      const { email, password, firstName, lastName } = request.body;
+      const result = await authService.register(email, password, firstName, lastName);
       reply.header('Set-Cookie', createSessionCookieHeaders(result.tokens));
       return reply.status(201).send(result);
     } catch (err) {
@@ -95,31 +93,6 @@ export function createAuthHandlers(authService: AuthService) {
     }
     reply.header('Set-Cookie', createClearedSessionCookieHeaders());
     return reply.send({ success: true });
-  }
-
-  async function handleForgotPassword(
-    request: FastifyRequest<{
-      Body: { email: string };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    // Placeholder — always returns success to prevent email enumeration
-    return reply.send({
-      message: 'If an account with that email exists, a password reset link has been sent.',
-    });
-  }
-
-  async function handleOAuthCallback(
-    request: FastifyRequest,
-    reply: FastifyReply,
-  ): Promise<void> {
-    // Placeholder for Auth0/Cognito OAuth callback
-    return sendError(
-      reply,
-      501,
-      'NOT_IMPLEMENTED',
-      'OAuth callback not yet configured. Use email/password registration.',
-    );
   }
 
   async function handleMe(

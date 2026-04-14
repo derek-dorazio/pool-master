@@ -6,8 +6,6 @@
  *   POST /login           — Authenticate and receive tokens
  *   POST /refresh         — Exchange refresh token for new access token
  *   POST /logout          — Revoke refresh token
- *   POST /forgot-password — Request password reset (placeholder)
- *   POST /callback        — OAuth callback (placeholder)
  *   GET  /me              — Current user profile from JWT
  */
 
@@ -24,10 +22,6 @@ import {
   MeResponseSchema,
   ErrorEnvelopeSchema,
   SuccessSchema,
-  ForgotPasswordRequestSchema,
-  ForgotPasswordResponseSchema,
-  OAuthCallbackRequestSchema,
-  OAuthCallbackResponseSchema,
 } from '@poolmaster/shared/dto';
 
 export async function authModule(fastify: FastifyInstance): Promise<void> {
@@ -100,34 +94,6 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     handler: handlers.logout,
-  });
-
-  // --- Forgot Password (placeholder) ---
-  fastify.post('/forgot-password', {
-    schema: {
-      tags: ['Auth'],
-      summary: 'Request password reset email',
-      description:
-        'Begins the password-reset flow for an email/password account. This remains a placeholder-style capability in the current product surface.',
-      operationId: 'forgotPassword',
-      body: zodToJsonSchema(ForgotPasswordRequestSchema),
-      response: { 200: zodToJsonSchema(ForgotPasswordResponseSchema) },
-    },
-    handler: handlers.forgotPassword,
-  });
-
-  // --- OAuth Callback (placeholder) ---
-  fastify.post('/callback', {
-    schema: {
-      tags: ['Auth'],
-      summary: 'OAuth provider callback',
-      description:
-        'Handles an OAuth callback payload from an upstream provider. This route is documented now for contract completeness but the product flow remains deferred.',
-      operationId: 'oauthCallback',
-      body: zodToJsonSchema(OAuthCallbackRequestSchema),
-      response: { 501: zodToJsonSchema(OAuthCallbackResponseSchema) },
-    },
-    handler: handlers.oauthCallback,
   });
 
   // --- Current User Profile ---

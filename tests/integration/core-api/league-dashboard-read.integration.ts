@@ -124,8 +124,6 @@ describe('League Dashboard Read Integration', () => {
       data: {
         leagueId,
         contestId,
-        type: 'CONTEST_ENDING',
-        priority: 'HIGH',
         title: 'Contest ending soon',
         description: 'Review payout settings before the contest closes.',
         actionUrl: `/leagues/${leagueId}/contests/${contestId}`,
@@ -159,8 +157,6 @@ describe('League Dashboard Read Integration', () => {
       expect.objectContaining({
         leagueId,
         contestId,
-        type: 'CONTEST_ENDING',
-        priority: 'HIGH',
         resolved: false,
       }),
     );
@@ -168,12 +164,10 @@ describe('League Dashboard Read Integration', () => {
       expect.arrayContaining([
         expect.objectContaining({
           userId: ownerUserId,
-          displayName: ownerUserId,
           action: 'joined the league',
         }),
         expect.objectContaining({
           userId: invitedUserId,
-          displayName: invitedUserId,
           action: 'joined the league',
         }),
       ]),

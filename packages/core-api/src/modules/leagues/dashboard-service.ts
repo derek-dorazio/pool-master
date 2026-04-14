@@ -78,7 +78,8 @@ function buildRecentActivity(
     .slice(0, 10)
     .map((m) => ({
       userId: m.userId,
-      displayName: m.userId,
+      firstName: undefined,
+      lastName: undefined,
       action: 'joined the league',
       timestamp: m.joinedAt,
     }));

@@ -1,11 +1,206 @@
+import bcrypt from 'bcryptjs';
 import { AccountLifecycleError, AccountService } from '../../../packages/core-api/src/modules/account/service';
 
 describe('AccountService', () => {
+  it('updates the active account profile', async () => {
+    const updatedUser = {
+      id: 'user-1',
+      email: 'user@example.com',
+      firstName: 'Derek',
+      lastName: 'Dorazio',
+      isActive: true,
+      isRootAdmin: false,
+      authProvider: 'EMAIL',
+      timezone: null,
+      locale: null,
+      timeFormat: null,
+      dateFormat: null,
+      createdAt: new Date('2026-04-13T00:00:00.000Z'),
+    };
+
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: '$2b$12$placeholder',
+          isActive: true,
+        }),
+        update: jest.fn().mockResolvedValue(updatedUser),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.updateOwnProfile('user-1', {
+        firstName: ' Derek ',
+        lastName: ' Dorazio ',
+      }),
+    ).resolves.toEqual(updatedUser);
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: {
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+      },
+    });
+  });
+
+  it('rejects profile changes for inactive accounts', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: '$2b$12$placeholder',
+          isActive: false,
+        }),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.updateOwnProfile('user-1', {
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+      }),
+    ).rejects.toMatchObject({
+      code: 'ACCOUNT_INACTIVE_READ_ONLY',
+      statusCode: 409,
+    } satisfies Partial<AccountLifecycleError>);
+  });
+
+  it('updates account preferences and allows clearing values', async () => {
+    const updatedUser = {
+      id: 'user-1',
+      email: 'user@example.com',
+      firstName: 'Derek',
+      lastName: 'Dorazio',
+      isActive: true,
+      isRootAdmin: false,
+      authProvider: 'EMAIL',
+      timezone: 'America/New_York',
+      locale: null,
+      timeFormat: 'TWELVE_HOUR',
+      dateFormat: 'MDY',
+      createdAt: new Date('2026-04-13T00:00:00.000Z'),
+    };
+
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: '$2b$12$placeholder',
+          isActive: true,
+        }),
+        update: jest.fn().mockResolvedValue(updatedUser),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.updateOwnPreferences('user-1', {
+        timezone: ' America/New_York ',
+        locale: ' ',
+        timeFormat: '12H',
+        dateFormat: 'MDY',
+      }),
+    ).resolves.toEqual(updatedUser);
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: {
+        timezone: 'America/New_York',
+        locale: null,
+        timeFormat: 'TWELVE_HOUR',
+        dateFormat: 'MDY',
+      },
+    });
+  });
+
+  it('changes the password and revokes only other refresh sessions', async () => {
+    const existingPasswordHash = await bcrypt.hash('CurrentPass123!', 10);
+    const tx = {
+      user: {
+        update: jest.fn().mockResolvedValue(undefined),
+      },
+      refreshToken: {
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      },
+    };
+
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: existingPasswordHash,
+          isActive: true,
+        }),
+      },
+      $transaction: jest.fn().mockImplementation(async (callback) => callback(tx)),
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.changeOwnPassword('user-1', {
+        currentPassword: 'CurrentPass123!',
+        newPassword: 'NewPass456!',
+        confirmNewPassword: 'NewPass456!',
+        currentRefreshToken: 'keep-me',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(tx.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: {
+        passwordHash: expect.any(String),
+      },
+    });
+    expect(tx.refreshToken.updateMany).toHaveBeenCalledWith({
+      where: {
+        userId: 'user-1',
+        revokedAt: null,
+        NOT: { token: 'keep-me' },
+      },
+      data: { revokedAt: expect.any(Date) },
+    });
+  });
+
+  it('rejects password change when the current password is wrong', async () => {
+    const existingPasswordHash = await bcrypt.hash('CurrentPass123!', 10);
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: existingPasswordHash,
+          isActive: true,
+        }),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.changeOwnPassword('user-1', {
+        currentPassword: 'WrongPass123!',
+        newPassword: 'NewPass456!',
+        confirmNewPassword: 'NewPass456!',
+      }),
+    ).rejects.toMatchObject({
+      code: 'INVALID_CURRENT_PASSWORD',
+      statusCode: 400,
+    } satisfies Partial<AccountLifecycleError>);
+  });
+
   it('inactivates an active account and revokes refresh tokens', async () => {
     const updatedUser = {
       id: 'user-1',
       email: 'user@example.com',
-      displayName: 'User Example',
+      firstName: 'User',
+      lastName: 'Example',
       isActive: false,
       isRootAdmin: false,
       authProvider: 'EMAIL',

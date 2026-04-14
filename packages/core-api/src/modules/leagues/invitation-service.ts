@@ -174,7 +174,6 @@ export class InvitationService {
           userId,
           role: LeagueRole.MEMBER,
           status: LeagueMembershipStatus.ACTIVE,
-          permissions: [],
           joinedAt: new Date(),
         });
     const newUses = invitation.currentUses + 1;

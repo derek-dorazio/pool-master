@@ -1,21 +1,13 @@
 /**
- * UserService — business logic for admin user management operations.
+ * UserService — business logic for root-admin user management operations.
  *
- * Provides user search, detail views, password reset, force logout,
- * account enable/disable, admin email, and account merge.
- * All write operations are audit-logged.
- *
- * Persisted via Prisma to the users table.
+ * Root-admin reads should reflect the same underlying User model used by the
+ * rest of the product rather than inventing a parallel admin-user shape.
  */
 
 import type { PrismaClient, UserAuthProvider as PrismaUserAuthProvider } from '@prisma/client';
-import { AuthProvider } from '@poolmaster/shared/domain';
-import type { ContestStatus, LeagueRole, Sport } from '@poolmaster/shared/domain';
+import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 export interface UserSearchQuery {
   search?: string;
@@ -27,39 +19,32 @@ export interface UserSearchQuery {
 export interface UserListItem {
   id: string;
   email: string;
-  displayName: string;
-  leagues: { id: string; name: string; role: LeagueRole }[];
-  lastLoginAt?: Date;
+  firstName: string;
+  lastName: string;
+  isRootAdmin: boolean;
+  authProvider?: AuthProvider;
   isActive: boolean;
+  timezone?: string;
+  locale?: string;
+  timeFormat?: TimeFormat;
+  dateFormat?: DateFormat;
   createdAt: Date;
 }
 
 export interface UserDetailView {
   id: string;
   email: string;
-  displayName: string;
+  firstName: string;
+  lastName: string;
+  isRootAdmin: boolean;
   authProvider?: AuthProvider;
   isActive: boolean;
+  timezone?: string;
+  locale?: string;
+  timeFormat?: TimeFormat;
+  dateFormat?: DateFormat;
   createdAt: Date;
-  lastLoginAt?: Date;
-  leagues: { id: string; name: string; role: LeagueRole; joinedAt?: Date }[];
-  activeContests: { id: string; name: string; sport: Sport; status: ContestStatus; rank?: number }[];
-  devices: { id: string; platform: string; lastActiveAt: Date; tokenStatus: string }[];
-  recentAuthEvents: { type: string; timestamp: Date; ipAddress?: string; success: boolean }[];
 }
-
-export interface MergeResult {
-  primaryUserId: string;
-  duplicateUserId: string;
-  leaguesTransferred: number;
-  entriesTransferred: number;
-  historyRecordsTransferred: number;
-  mergedAt: Date;
-}
-
-// ---------------------------------------------------------------------------
-// Errors
-// ---------------------------------------------------------------------------
 
 export class UserNotFoundError extends Error {
   constructor(userId: string) {
@@ -71,9 +56,6 @@ export class UserNotFoundError extends Error {
 export class UserService {
   constructor(private readonly prisma: PrismaClient) {}
 
-  /**
- * Searches users with filtering and pagination.
-   */
   async searchUsers(
     query: UserSearchQuery,
   ): Promise<{ items: UserListItem[]; total: number }> {
@@ -86,147 +68,65 @@ export class UserService {
     if (query.search) {
       where.OR = [
         { email: { contains: query.search, mode: 'insensitive' } },
-        { displayName: { contains: query.search, mode: 'insensitive' } },
+        { firstName: { contains: query.search, mode: 'insensitive' } },
+        { lastName: { contains: query.search, mode: 'insensitive' } },
       ];
     }
     if (typeof query.isActive === 'boolean') {
       where.isActive = query.isActive;
     }
+
     const [rows, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: pageSize,
-        include: {
-          memberships: {
-            select: {
-              role: true,
-              league: { select: { id: true, name: true } },
-            },
-          },
-        },
       }),
       this.prisma.user.count({ where }),
     ]);
 
-    const items: UserListItem[] = rows.map((row) => {
-      return {
-        id: row.id,
-        email: row.email,
-        displayName: row.displayName,
-        leagues: row.memberships.map((membership) => ({
-          id: membership.league.id,
-          name: membership.league.name,
-          role: membership.role as LeagueRole,
-        })),
-        lastLoginAt: undefined, // User model has no lastLoginAt column yet
-        isActive: row.isActive,
-        createdAt: row.createdAt,
-      };
-    });
+    const items: UserListItem[] = rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      isRootAdmin: row.isRootAdmin,
+      authProvider: mapAuthProvider(row.authProvider),
+      isActive: row.isActive,
+      timezone: row.timezone ?? undefined,
+      locale: row.locale ?? undefined,
+      timeFormat: mapTimeFormat(row.timeFormat),
+      dateFormat: mapDateFormat(row.dateFormat),
+      createdAt: row.createdAt,
+    }));
 
     return { items, total };
   }
 
-  /**
-   * Returns the full admin detail view for a single user.
-   */
   async getUserDetail(userId: string): Promise<UserDetailView> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        memberships: {
-          include: {
-            league: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new UserNotFoundError(userId);
     }
 
-    // Build leagues from memberships
-    const leagues: UserDetailView['leagues'] = [];
-    const activeContests: UserDetailView['activeContests'] = [];
-
-    for (const m of user.memberships) {
-      leagues.push({
-        id: m.league.id,
-        name: m.league.name,
-        role: m.role as LeagueRole,
-        joinedAt: m.joinedAt,
-      });
-    }
-
-    const activeEntries = await this.prisma.contestEntry.findMany({
-      where: {
-        squad: {
-          memberships: {
-            some: {
-              userId,
-              status: 'ACTIVE',
-            },
-          },
-        },
-        contest: {
-          status: { in: ['ACTIVE', 'OPEN', 'IN_PROGRESS', 'DRAFT'] },
-        },
-      },
-      include: {
-        contest: {
-          select: {
-            id: true,
-            name: true,
-            sportEvent: {
-              select: { sport: true },
-            },
-            status: true,
-          },
-        },
-      },
-      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-    });
-
-    for (const entry of activeEntries) {
-      const sport = entry.contest.sportEvent?.sport;
-      if (!sport) {
-        continue;
-      }
-      activeContests.push({
-        id: entry.contest.id,
-        name: entry.contest.name,
-        sport: sport as Sport,
-        status: entry.contest.status as ContestStatus,
-        rank: entry.standingsPosition ?? undefined,
-      });
-    }
-
     return {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      isRootAdmin: user.isRootAdmin,
       authProvider: mapAuthProvider(user.authProvider),
       isActive: user.isActive,
+      timezone: user.timezone ?? undefined,
+      locale: user.locale ?? undefined,
+      timeFormat: mapTimeFormat(user.timeFormat),
+      dateFormat: mapDateFormat(user.dateFormat),
       createdAt: user.createdAt,
-      lastLoginAt: undefined,
-      leagues,
-      activeContests,
-      devices: [],
-      recentAuthEvents: [], // Auth events not yet modelled — will come from auth service
     };
   }
 
-  /**
-   * Invalidates all sessions for the user, forcing them to log in again.
-   */
   async forceUserLogout(
     userId: string,
     rootAdminUserId: string,
@@ -235,7 +135,6 @@ export class UserService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UserNotFoundError(userId);
 
-    // Revoke all refresh tokens for this user
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
@@ -251,10 +150,6 @@ export class UserService {
     });
   }
 
-  /**
-   * Disables a user account with a reason.
-   * Stores the disabled state in the real user activity field and revokes sessions.
-   */
   async disableUser(
     userId: string,
     reason: string,
@@ -269,7 +164,6 @@ export class UserService {
       data: { isActive: false },
     });
 
-    // Revoke all refresh tokens
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
@@ -287,9 +181,6 @@ export class UserService {
     });
   }
 
-  /**
-   * Re-enables a previously disabled user account.
-   */
   async enableUser(
     userId: string,
     rootAdminUserId: string,
@@ -313,120 +204,6 @@ export class UserService {
       afterState: { isActive: true },
     });
   }
-
-  /**
-   * Merges a duplicate user account into a primary account.
-   * Transfers all memberships, entries, and history records.
-   */
-  async mergeUsers(
-    primaryId: string,
-    duplicateId: string,
-    rootAdminUserId: string,
-    rootAdminEmail: string,
-  ): Promise<MergeResult> {
-    const [primary, duplicate] = await Promise.all([
-      this.prisma.user.findUnique({ where: { id: primaryId } }),
-      this.prisma.user.findUnique({ where: { id: duplicateId } }),
-    ]);
-    if (!primary) throw new UserNotFoundError(primaryId);
-    if (!duplicate) throw new UserNotFoundError(duplicateId);
-
-    let leaguesTransferred = 0;
-    let entriesTransferred = 0;
-
-    await this.prisma.$transaction(async (tx) => {
-      // Transfer league memberships from duplicate to primary
-      const dupMemberships = await tx.leagueMembership.findMany({
-        where: { userId: duplicateId },
-      });
-
-      for (const m of dupMemberships) {
-        // Check if primary already has a membership in this league
-        const existing = await tx.leagueMembership.findUnique({
-          where: { leagueId_userId: { leagueId: m.leagueId, userId: primaryId } },
-        });
-        if (!existing) {
-          await tx.leagueMembership.update({
-            where: { id: m.id },
-            data: { userId: primaryId },
-          });
-          leaguesTransferred++;
-        }
-      }
-
-      // Transfer contest entries
-      const dupEntries = await tx.contestEntry.findMany({
-        where: {
-          squad: {
-            memberships: {
-              some: {
-                userId: duplicateId,
-                status: 'ACTIVE',
-              },
-            },
-          },
-        },
-      });
-      entriesTransferred = dupEntries.length;
-
-      const duplicateSquadMemberships = await tx.squadMembership.findMany({
-        where: { userId: duplicateId },
-        orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
-      });
-
-      for (const membership of duplicateSquadMemberships) {
-        const existing = await tx.squadMembership.findUnique({
-          where: {
-            squadId_userId: {
-              squadId: membership.squadId,
-              userId: primaryId,
-            },
-          },
-        });
-
-        if (existing) {
-          await tx.squadMembership.delete({ where: { id: membership.id } });
-        } else {
-          await tx.squadMembership.update({
-            where: { id: membership.id },
-            data: { userId: primaryId },
-          });
-        }
-      }
-
-      // Revoke duplicate's tokens
-      await tx.refreshToken.updateMany({
-        where: { userId: duplicateId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-    });
-
-    const result: MergeResult = {
-      primaryUserId: primaryId,
-      duplicateUserId: duplicateId,
-      leaguesTransferred,
-      entriesTransferred,
-      historyRecordsTransferred: 0,
-      mergedAt: new Date(),
-    };
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'user.merge',
-      resourceType: 'USER',
-      resourceId: primaryId,
-      description: `Merged user ${duplicateId} into ${primaryId}`,
-      afterState: {
-        duplicateUserId: duplicateId,
-        leaguesTransferred: result.leaguesTransferred,
-        entriesTransferred: result.entriesTransferred,
-        historyRecordsTransferred: result.historyRecordsTransferred,
-      },
-    });
-
-    return result;
-  }
 }
 
 function mapAuthProvider(provider: PrismaUserAuthProvider | null | undefined): AuthProvider | undefined {
@@ -434,4 +211,12 @@ function mapAuthProvider(provider: PrismaUserAuthProvider | null | undefined): A
   if (provider === 'GOOGLE') return AuthProvider.GOOGLE;
   if (provider === 'APPLE') return AuthProvider.APPLE;
   return undefined;
+}
+
+function mapTimeFormat(value: string | null | undefined): TimeFormat | undefined {
+  return value ? (value as TimeFormat) : undefined;
+}
+
+function mapDateFormat(value: string | null | undefined): DateFormat | undefined {
+  return value ? (value as DateFormat) : undefined;
 }

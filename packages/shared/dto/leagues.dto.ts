@@ -47,7 +47,6 @@ export const ChangeLeagueMemberRoleRequestSchema = z.object({
   role: z
     .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
     .describe('Target membership role after the change. Commissioner grants league-administration access.'),
-  permissions: z.array(z.string()).optional().describe('Optional explicit permission override list for the member.'),
 }).describe('Commissioner-managed membership role update payload.');
 export type ChangeLeagueMemberRoleRequest = z.infer<typeof ChangeLeagueMemberRoleRequestSchema>;
 
@@ -63,7 +62,8 @@ export type CopySeasonRequest = z.infer<typeof CopySeasonRequestSchema>;
 
 export const CsvImportRowSchema = z.object({
   email: z.string().describe('Email address for the imported member row.'),
-  displayName: z.string().optional().describe('Optional display name supplied in the import row.'),
+  firstName: z.string().optional().describe('Optional first name supplied in the import row.'),
+  lastName: z.string().optional().describe('Optional last name supplied in the import row.'),
   role: z
     .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
     .optional()
@@ -104,7 +104,8 @@ export type LeagueDetailDto = z.infer<typeof LeagueDetailDtoSchema>;
 export const LeagueMemberDtoSchema = z.object({
   id: z.string().describe('Membership record identifier.'),
   userId: z.string().describe('User account identifier for the member.'),
-  displayName: z.string().describe('Display name shown in member-management surfaces.'),
+  firstName: z.string().describe('First name shown in member-management surfaces.'),
+  lastName: z.string().describe('Last name shown in member-management surfaces.'),
   role: z
     .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
     .describe('League role for the member, such as COMMISSIONER or MEMBER.'),
@@ -122,7 +123,6 @@ export const LeagueMembershipDtoSchema = z.object({
   status: z
     .enum([LeagueMembershipStatus.ACTIVE, LeagueMembershipStatus.INACTIVE])
     .describe('Membership lifecycle state.'),
-  permissions: z.array(z.string()).describe('Explicit commissioner permission overrides granted to the membership.'),
   joinedAt: DateTimeSchema.describe('When the user joined the league.'),
   createdAt: DateTimeSchema.describe('When the membership record was created.'),
   updatedAt: DateTimeSchema.describe('When the membership record was last updated.'),
@@ -179,8 +179,6 @@ export const LeagueActionItemDtoSchema = z.object({
   id: z.string(),
   leagueId: z.string(),
   contestId: z.string().nullable().optional(),
-  type: z.string(),
-  priority: z.string(),
   title: z.string(),
   description: z.string(),
   actionUrl: z.string().nullable().optional(),
@@ -192,7 +190,8 @@ export type LeagueActionItemDto = z.infer<typeof LeagueActionItemDtoSchema>;
 
 export const MemberActivityEventDtoSchema = z.object({
   userId: z.string().describe('User involved in the activity event.'),
-  displayName: z.string().describe('Display name shown for the member activity event.'),
+  firstName: z.string().optional().describe('First name shown for the member activity event when available.'),
+  lastName: z.string().optional().describe('Last name shown for the member activity event when available.'),
   action: z.string().describe('Normalized member activity action label.'),
   timestamp: DateTimeSchema.describe('When the member activity occurred.'),
 }).describe('Recent member activity row used on commissioner dashboards.');

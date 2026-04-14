@@ -1,9 +1,12 @@
 import {
+  changeAccountPassword,
   deleteAccount,
   getCurrentUser,
   inactivateAccount,
   loginUser,
   refreshToken,
+  updateAccountPreferences,
+  updateAccountProfile,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser } from './builders';
 import {
@@ -23,6 +26,74 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Account Lifecycle', () => {
+  it('updates profile, preferences, and password through the account SDK surface', async () => {
+    const user = await buildRegisteredUser({
+      displayName: 'Account Profile User',
+    });
+    const cookieClient = createCookieSessionClient(user.login.tokens);
+
+    const profileResponse = await updateAccountProfile({
+      client: cookieClient,
+      body: {
+        firstName: 'Updated',
+        lastName: 'Person',
+      },
+    });
+
+    expect(profileResponse.data?.user.firstName).toBe('Updated');
+    expect(profileResponse.data?.user.lastName).toBe('Person');
+
+    const preferencesResponse = await updateAccountPreferences({
+      client: cookieClient,
+      body: {
+        timezone: 'America/New_York',
+        locale: 'en-US',
+        timeFormat: '12H',
+        dateFormat: 'MDY',
+      },
+    });
+
+    expect(preferencesResponse.data?.user.timezone).toBe('America/New_York');
+    expect(preferencesResponse.data?.user.locale).toBe('en-US');
+    expect(preferencesResponse.data?.user.timeFormat).toBe('12H');
+    expect(preferencesResponse.data?.user.dateFormat).toBe('MDY');
+
+    const passwordResponse = await changeAccountPassword({
+      client: cookieClient,
+      body: {
+        currentPassword: user.password,
+        newPassword: 'UpdatedPassword123!',
+        confirmNewPassword: 'UpdatedPassword123!',
+      },
+    });
+
+    expect(passwordResponse.data?.success).toBe(true);
+
+    const loginWithOldPassword = await loginUser({
+      client: getSdkClient(),
+      body: {
+        email: user.email,
+        password: user.password,
+      },
+    });
+
+    expectFunctionalError(loginWithOldPassword, {
+      status: 401,
+      code: 'INVALID_CREDENTIALS',
+    });
+
+    const loginWithNewPassword = await loginUser({
+      client: getSdkClient(),
+      body: {
+        email: user.email,
+        password: 'UpdatedPassword123!',
+      },
+    });
+
+    expect(loginWithNewPassword.data?.user.firstName).toBe('Updated');
+    expect(loginWithNewPassword.data?.user.lastName).toBe('Person');
+  });
+
   it('inactivates an account, blocks new auth, and permanently deletes it with exact email confirmation', async () => {
     const user = await buildRegisteredUser({
       displayName: 'Account Lifecycle User',

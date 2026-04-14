@@ -2,12 +2,12 @@
  * Prisma adapter for LeagueMembershipRepository port.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { LeagueMembership as PrismaLeagueMembership, PrismaClient } from '@prisma/client';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import type {
-  CommissionerPermission,
   LeagueMembership,
   LeagueMembershipStatus,
+  LeagueRole,
 } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
 
@@ -46,7 +46,6 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
         userId: membership.userId,
         role: membership.role,
         status: membership.status,
-        permissions: membership.permissions as string[],
         joinedAt: membership.joinedAt,
       },
     });
@@ -59,7 +58,6 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
       data: {
         ...(updates.role !== undefined && { role: updates.role }),
         ...(updates.status !== undefined && { status: updates.status }),
-        ...(updates.permissions !== undefined && { permissions: updates.permissions as string[] }),
         ...(updates.joinedAt !== undefined && { joinedAt: updates.joinedAt }),
       },
     });
@@ -71,24 +69,13 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
   }
 }
 
-function mapToMembership(row: {
-  id: string;
-  leagueId: string;
-  userId: string;
-  role: string;
-  status: string;
-  permissions: unknown;
-  joinedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}): LeagueMembership {
+function mapToMembership(row: PrismaLeagueMembership): LeagueMembership {
   return {
     id: row.id,
     leagueId: row.leagueId,
     userId: row.userId,
-    role: row.role as LeagueMembership['role'],
+    role: row.role as LeagueRole,
     status: row.status as LeagueMembershipStatus,
-    permissions: (Array.isArray(row.permissions) ? row.permissions : []) as CommissionerPermission[],
     joinedAt: row.joinedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

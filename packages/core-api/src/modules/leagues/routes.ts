@@ -3,7 +3,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   CreateLeagueRequestSchema,
   DeleteLeagueRequestSchema,
@@ -33,7 +32,6 @@ import {
   PrismaContestRepository,
   PrismaActionItemRepository,
 } from '../../adapters';
-import { requirePermission } from '../../core/require-permission';
 import { LeagueService } from './service';
 import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
@@ -161,7 +159,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MANAGE_EDIT),
+    preHandler: requireCommissioner(membershipRepo),
     handler: league.inactivateLeague,
   });
 
@@ -179,7 +177,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MANAGE_EDIT),
+    preHandler: requireCommissioner(membershipRepo),
     handler: league.deleteLeague,
   });
 
@@ -198,7 +196,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
+    preHandler: requireCommissioner(membershipRepo),
     handler: invitation.sendInvitations,
   });
 
@@ -215,7 +213,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
+    preHandler: requireCommissioner(membershipRepo),
     handler: invitation.generateInviteLink,
   });
 
@@ -232,7 +230,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
+    preHandler: requireCommissioner(membershipRepo),
     handler: invitation.revokeInviteLink,
   });
 
@@ -270,10 +268,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(
-      membershipRepo,
-      CommissionerPermission.LEAGUE_MEMBERS_ROLE_CHANGE,
-    ),
+    preHandler: requireCommissioner(membershipRepo),
     handler: member.changeRole,
   });
 
@@ -291,7 +286,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_REMOVE),
+    preHandler: requireCommissioner(membershipRepo),
     handler: member.removeMember,
   });
 
@@ -397,7 +392,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
+    preHandler: requireCommissioner(membershipRepo),
     handler: bulk.copySeason,
   });
 
@@ -415,7 +410,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.LEAGUE_MEMBERS_INVITE),
+    preHandler: requireCommissioner(membershipRepo),
     handler: bulk.importMembers,
   });
 }

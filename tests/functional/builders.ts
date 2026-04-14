@@ -15,6 +15,8 @@ function describeSdkFailure(result: {
 
 export interface RegisteredUserContext {
   client: Client;
+  firstName: string;
+  lastName: string;
   displayName: string;
   email: string;
   login: {
@@ -27,7 +29,8 @@ export interface RegisteredUserContext {
     user: {
       id: string;
       email: string;
-      displayName: string;
+      firstName: string;
+      lastName: string;
     };
   };
   password: string;
@@ -41,7 +44,8 @@ export interface RegisteredUserContext {
     user: {
       id: string;
       email: string;
-      displayName: string;
+      firstName: string;
+      lastName: string;
     };
   };
   token: string;
@@ -49,20 +53,27 @@ export interface RegisteredUserContext {
 }
 
 export async function buildRegisteredUser(overrides?: {
+  firstName?: string;
+  lastName?: string;
   displayName?: string;
   email?: string;
   password?: string;
 }): Promise<RegisteredUserContext> {
   const email = overrides?.email ?? createFunctionalEmail('auth');
   const password = overrides?.password ?? 'FuncTest123!';
-  const displayName = overrides?.displayName ?? 'Functional Pilot User';
+  const fallbackName = overrides?.displayName ?? 'Functional Pilot User';
+  const [fallbackFirstName, ...fallbackLastParts] = fallbackName.split(/\s+/);
+  const firstName = overrides?.firstName ?? fallbackFirstName ?? 'Functional';
+  const lastName = overrides?.lastName ?? (fallbackLastParts.join(' ').trim() || 'User');
+  const displayName = `${firstName} ${lastName}`;
 
   const registration = await registerUser({
     client: getSdkClient(),
     body: {
       email,
       password,
-      displayName,
+      firstName,
+      lastName,
     },
   });
 
@@ -87,6 +98,8 @@ export async function buildRegisteredUser(overrides?: {
 
   return {
     client,
+    firstName,
+    lastName,
     displayName,
     email,
     login: login.data,
@@ -98,6 +111,8 @@ export async function buildRegisteredUser(overrides?: {
 }
 
 export async function buildLeagueWithCommissioner(overrides?: {
+  firstName?: string;
+  lastName?: string;
   displayName?: string;
   email?: string;
   leagueName?: string;
@@ -118,6 +133,8 @@ export async function buildLeagueWithCommissioner(overrides?: {
   commissionerClient: Client;
 }> {
   const commissioner = await buildRegisteredUser({
+    firstName: overrides?.firstName,
+    lastName: overrides?.lastName,
     displayName: overrides?.displayName,
     email: overrides?.email,
     password: overrides?.password,

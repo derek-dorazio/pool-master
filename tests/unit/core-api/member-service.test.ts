@@ -5,7 +5,6 @@ import {
 } from '../../../packages/core-api/src/modules/leagues/member-service';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import {
-  CommissionerPermission,
   LeagueMembershipStatus,
   LeagueRole,
 } from '@poolmaster/shared/domain';
@@ -45,11 +44,9 @@ describe('MemberService', () => {
         leagueId: 'league-1',
         targetUserId: 'user-1',
         newRole: LeagueRole.COMMISSIONER,
-        permissions: [CommissionerPermission.CONTEST_CREATE],
       });
       expect(repo.update).toHaveBeenCalledWith(membership.id, {
         role: LeagueRole.COMMISSIONER,
-        permissions: [CommissionerPermission.CONTEST_CREATE],
       });
     });
 
@@ -116,17 +113,4 @@ describe('MemberService', () => {
     });
   });
 
-  describe('updatePermissions', () => {
-    it('updates the permissions on a membership', async () => {
-      const repo = createMockMembershipRepo();
-      const service = new MemberService(repo);
-      await service.updatePermissions('membership-1', [
-        CommissionerPermission.CONTEST_CREATE,
-        CommissionerPermission.DRAFT_START,
-      ]);
-      expect(repo.update).toHaveBeenCalledWith('membership-1', {
-        permissions: [CommissionerPermission.CONTEST_CREATE, CommissionerPermission.DRAFT_START],
-      });
-    });
-  });
 });

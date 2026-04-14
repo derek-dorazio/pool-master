@@ -11,6 +11,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
+import { buildDefaultSquadName } from '../../core/user-name';
 
 interface CreateSquadInput {
   name?: string;
@@ -51,7 +52,7 @@ export class SquadService {
     const squad = await this.squadRepo.create({
       leagueId,
       createdBy: userId,
-      name: input.name?.trim() || `${user.displayName}'s Squad`,
+      name: input.name?.trim() || buildDefaultSquadName(user.firstName, user.lastName),
       iconUrl: input.iconUrl,
       status: SquadStatus.ACTIVE,
     });
@@ -159,11 +160,15 @@ export class SquadService {
       ? []
       : await this.prisma.user.findMany({
         where: { id: { in: memberships.map((membership) => membership.userId) } },
-        select: { id: true, displayName: true },
+        select: { id: true, firstName: true, lastName: true },
       });
-    const displayNameByUserId = new Map(users.map((user) => [user.id, user.displayName]));
+    const userByUserId = new Map(users.map((user) => [user.id, user]));
     const memberDtos = memberships.map((membership) =>
-      toSquadMembershipDto(membership, displayNameByUserId.get(membership.userId)),
+      toSquadMembershipDto(
+        membership,
+        userByUserId.get(membership.userId)?.firstName,
+        userByUserId.get(membership.userId)?.lastName,
+      ),
     );
     const memberCount = memberships.filter(
       (membership) => membership.status === SquadMembershipStatus.ACTIVE,
@@ -182,7 +187,7 @@ export class SquadService {
     updatedAt: Date;
   }): Promise<SquadMembershipDto> {
     const user = await this.requireUser(membership.userId);
-    return toSquadMembershipDto(membership, user.displayName);
+    return toSquadMembershipDto(membership, user.firstName, user.lastName);
   }
 
   private async requireLeagueScopedSquad(leagueId: string, squadId: string) {
@@ -241,7 +246,7 @@ export class SquadService {
   private async requireUser(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, displayName: true },
+      select: { id: true, firstName: true, lastName: true },
     });
     if (!user) {
       throw new SquadOperationError(`User not found: ${userId}`, 'USER_NOT_FOUND');

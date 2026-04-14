@@ -57,8 +57,6 @@ export type {
   AdminAuditEntry,
   AdminPermission,
   ActionItem,
-  ActionItemPriority,
-  ActionItemType,
   CommissionerDashboard,
   Contest,
   ContestEntry,

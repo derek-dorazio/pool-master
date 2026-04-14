@@ -4,8 +4,7 @@
 
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
-import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
-import { isCommissioner } from '../../core/permissions';
+import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 
 function extractLeagueContext(request: FastifyRequest): { userId?: string; leagueId?: string } {
@@ -20,6 +19,18 @@ async function loadMembership(
   reply: FastifyReply,
 ) {
   const { userId, leagueId } = extractLeagueContext(request);
+  if (request.authUser?.isRootAdmin) {
+    return {
+      id: 'root-admin-commissioner-bypass',
+      leagueId: leagueId ?? '',
+      userId: userId ?? '',
+      role: LeagueRole.COMMISSIONER,
+      status: LeagueMembershipStatus.ACTIVE,
+      joinedAt: new Date(0),
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+    };
+  }
   if (!userId) {
     await sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     return null;
@@ -68,7 +79,7 @@ export function requireCommissioner(
     if (!membership) {
       return;
     }
-    if (!isCommissioner(membership)) {
+    if (membership.role !== LeagueRole.COMMISSIONER) {
       return sendError(
         reply,
         403,

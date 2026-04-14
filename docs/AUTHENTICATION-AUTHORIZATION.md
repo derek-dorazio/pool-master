@@ -8,7 +8,7 @@ This document describes how authentication and authorization currently work in P
 - the admin app
 - the backend API enforcement layers behind both
 
-This is intentionally a **current-state** document. It describes what the code does today, including rough edges and partially implemented admin behavior.
+This is intentionally a **current-state** document. It describes what the code does today, including remaining deferred auth surface that still needs product or implementation follow-up.
 
 ## Terms
 
@@ -35,15 +35,12 @@ This is intentionally a **current-state** document. It describes what the code d
 
 ### Admin app
 
-- Currently also logs in through the same `POST /api/v1/auth/login` endpoint
-- Stores a JWT in `localStorage` under `admin_access_token`
-- Also stores an in-memory Zustand `adminUser`
-- Sends:
+- Root-admin backend routes currently reuse the same authenticated user session established through `POST /api/v1/auth/login`
+- Requests can authenticate with:
   - `Authorization: Bearer ...`
-  - `x-admin-user-id`
-  - `x-admin-user-email`
-- Current backend admin routes do **not** use the dedicated admin JWT plugin at runtime
-- Current backend admin routes use a placeholder `adminAuth` pre-handler that only checks for `x-admin-user-id`
+  - or the backend-owned access cookie
+- Backend admin routes use the scoped root-admin auth plugin at runtime
+- The live runtime gate checks the authenticated user row and requires `isRootAdmin=true`
 - There is a defined admin role/permission model in code, but it is **not currently the live runtime gate**
 
 ## Backend Authentication Components
@@ -161,16 +158,15 @@ Core permission logic:
 
 Important rules:
 
-- `OWNER` has implicit access to all commissioner permissions
+- `COMMISSIONER` has implicit access to all commissioner permissions
 - `COMMISSIONER` has only the permissions explicitly stored on the membership
-- `MANAGER` and `VIEWER` do not get commissioner permissions
 
 Examples enforced today:
 
 - invite members
 - remove members
 - change member roles
-- edit league settings
+- manage league lifecycle and settings
 - create contests
 
 ### Web authorization sequence for a league-scoped action
@@ -272,18 +268,19 @@ Admin/backend authorization details below remain relevant for server-side root-a
 
 ## Root Admin Authorization
 
-### Intended backend design
+### Backend design in production code
 
 There is a dedicated admin auth plugin at [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts).
 
-That plugin is designed to:
+That plugin currently:
 
-- validate a bearer token
-- load the real `adminUser` from Postgres
-- attach `request.adminContext`
-- enable permission checks via [packages/core-api/src/core/admin-permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/admin-permissions.ts)
+- resolves the access token from either the `Authorization` header or the backend-owned access cookie
+- validates the JWT
+- loads the real `User` row from Postgres
+- requires `isRootAdmin=true`
+- attaches `request.rootAdminContext`
 
-The admin permission model already exists and includes:
+The broader admin permission model already exists and includes:
 
 - roles:
   - `SUPER_ADMIN`
@@ -300,51 +297,47 @@ The admin permission model already exists and includes:
 
 ### Actual runtime admin authorization today
 
-The live admin module in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts) does **not** currently use the dedicated admin JWT plugin.
+The live admin module in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts) **does** register the dedicated root-admin auth plugin.
 
-Instead it uses this placeholder pre-handler:
+Current runtime admin authorization is therefore:
 
-- checks only that `x-admin-user-id` exists
-- returns `401` if the header is missing
-- does not validate role
-- does not validate admin permissions
-- does not attach `request.adminContext`
+- require an authenticated access token or access cookie
+- verify the token
+- load the current user row
+- require `isRootAdmin=true`
+- attach `request.rootAdminContext`
 
-So current runtime admin authorization is effectively:
-
-- "if the request contains admin identity headers, allow the route to continue"
-
-After that, individual handlers/services may record `adminUserId` and `adminUserEmail` for audit purposes, but the strong role/permission model is not yet the enforcement layer.
+What is still deferred is finer-grained root-admin role/permission enforcement. The codebase still contains a broader admin role/permission model, but the active runtime gate today is the root-admin boolean check.
 
 ### Admin current-state authentication/authorization sequence
 
 ```mermaid
 sequenceDiagram
     actor Admin
-    participant UI as Admin App
+    participant UI as Root Admin Client
     participant API as Core API
     participant Auth as AuthService
-    participant AdminRoutes as Admin Module Placeholder Gate
+    participant AdminPlugin as admin-auth plugin
+    participant DB as PostgreSQL
 
     Admin->>UI: Enter email + password
     UI->>API: POST /api/v1/auth/login
     API->>Auth: login(email, password)
     Auth-->>UI: JWT access token + user payload
-    UI->>UI: store admin_access_token
-    UI->>UI: store AdminUser in Zustand
-    UI->>API: GET /api/v1/admin/... with Bearer token + x-admin-user-id + x-admin-user-email
-    API->>AdminRoutes: placeholder adminAuth(request)
-    alt x-admin-user-id present
-        AdminRoutes-->>API: allow
+    UI->>API: GET /api/v1/admin/... with Bearer token or access cookie
+    API->>AdminPlugin: validate root-admin session
+    AdminPlugin->>DB: load current user
+    alt authenticated user is root admin
+        AdminPlugin-->>API: request.rootAdminContext
         API-->>UI: admin response
-    else missing
-        AdminRoutes-->>UI: 401 UNAUTHORIZED
+    else not root admin or invalid session
+        AdminPlugin-->>UI: 401/403
     end
 ```
 
-### Intended admin target sequence
+### Deferred admin target sequence
 
-This is the direction implied by the existing code, but it is **not fully live yet**:
+This is the next likely direction if root-admin authorization grows beyond the current boolean gate:
 
 ```mermaid
 sequenceDiagram
@@ -358,8 +351,8 @@ sequenceDiagram
     Admin->>UI: Use admin auth flow
     UI->>API: GET /api/v1/admin/... with Bearer token
     API->>Plugin: validate token
-    Plugin->>DB: load adminUser by id
-    Plugin-->>API: request.adminContext
+    Plugin->>DB: load root-admin user by id
+    Plugin-->>API: request.rootAdminContext
     API->>Perm: check required admin permission
     alt permission granted
         Perm-->>API: continue
@@ -374,11 +367,11 @@ sequenceDiagram
 | Concern | Web app | Admin app |
 |---|---|---|
 | Login endpoint | `POST /api/v1/auth/login` | currently also `POST /api/v1/auth/login` |
-| Access token storage | `access_token` | `admin_access_token` |
+| Access token storage | `access_token` | same authenticated session or cookie model |
 | User store | Zustand `useAuthStore` | Zustand `useAdminAuthStore` |
 | Auth header | `Authorization` | `Authorization` |
-| Extra identity headers | none | `x-admin-user-id`, `x-admin-user-email` |
-| Backend auth gate | real JWT auth guard | placeholder header gate |
+| Extra identity headers | none | none required |
+| Backend auth gate | real JWT auth guard | real root-admin auth plugin |
 | Tenant enforcement | yes | not central in admin flow |
 | Runtime role/permission enforcement | yes for many league-scoped actions | role model exists, but not the current runtime gate |
 
@@ -394,10 +387,8 @@ sequenceDiagram
 
 ### Weak or transitional areas today
 
-- admin login is not a separate hardened admin auth flow
-- admin routes are not yet enforced through the dedicated admin JWT plugin
+- admin login is not a separate hardened root-admin auth flow
 - admin role/permission checks exist in code, but are not currently the primary runtime authorization layer
-- admin UI currently relies on sending extra identity headers from the browser
 - SSO is still placeholder UI/backlog behavior, not the actual live auth mechanism
 - `/api/v1/auth/me` manually re-verifies the token inside the handler rather than reusing the shared auth context directly
 
@@ -496,8 +487,8 @@ For member-facing routes:
 
 For admin routes:
 
-- replace the placeholder header check with the existing `admin-auth` plugin
-- attach a real `request.adminContext`
+- keep using the existing `admin-auth` plugin
+- attach `request.rootAdminContext`
 - use `requireAdminPermission()` where appropriate
 
 ### Should authorization information live in the session token?
@@ -551,14 +542,9 @@ Important detail:
 
 ### Concrete recommended changes for PoolMaster
 
-#### 1. Remove browser-supplied admin identity headers as the trust boundary
+#### 1. Keep browser-supplied admin identity headers out of the trust boundary
 
-Eliminate the current reliance on:
-
-- `x-admin-user-id`
-- `x-admin-user-email`
-
-These are acceptable as a temporary bridge, but they should not remain the primary admin auth mechanism.
+The backend should continue to rely on the authenticated session plus server-side root-admin lookup, not browser-supplied identity headers.
 
 #### 2. Stop storing access tokens in `localStorage`
 
@@ -570,9 +556,9 @@ That means:
 - frontend app shells hydrate from truthful backend-authenticated identity reads
 - refresh, revocation, and logout stay backend-owned
 
-#### 3. Wire the live admin module to the existing admin auth plugin
+#### 3. Grow root-admin authorization from the existing live plugin
 
-Use [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) as the real runtime admin gate instead of the placeholder function in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts).
+Use [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) as the runtime root-admin gate and layer any future permission model on top of that live foundation.
 
 #### 4. Decide on one principal model
 

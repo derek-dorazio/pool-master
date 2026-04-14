@@ -9,7 +9,8 @@ import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain'
 interface UserRow {
   id: string;
   email: string;
-  displayName: string;
+  firstName: string;
+  lastName: string;
   isActive: boolean;
   isRootAdmin: boolean;
   authProvider?: PrismaUserAuthProvider | null;
@@ -44,7 +45,8 @@ export function mapAccountUserToDto(user: UserRow): UserProfileDto {
   return {
     id: user.id,
     email: user.email,
-    displayName: user.displayName,
+    firstName: user.firstName,
+    lastName: user.lastName,
     isActive: user.isActive,
     isRootAdmin: user.isRootAdmin,
     authProvider: mapAuthProvider(user.authProvider),

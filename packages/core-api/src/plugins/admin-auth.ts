@@ -14,6 +14,7 @@ import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
 import { sendError } from '../core/error-handler';
 import { readAccessCookie } from '../core/session-cookies';
+import { formatUserFullName } from '../core/user-name';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'poolmaster-dev-secret-change-in-production';
 
@@ -84,7 +85,8 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
       select: {
         id: true,
         email: true,
-        displayName: true,
+        firstName: true,
+        lastName: true,
         isRootAdmin: true,
       },
     });
@@ -101,7 +103,7 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
       rootAdminUser: {
         id: rootAdminUser.id,
         email: rootAdminUser.email,
-        name: rootAdminUser.displayName,
+        name: formatUserFullName(rootAdminUser.firstName, rootAdminUser.lastName),
         isRootAdmin: true,
       },
     };

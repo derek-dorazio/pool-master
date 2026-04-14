@@ -6,6 +6,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { Sport } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
   SportEventDetail,
@@ -280,7 +281,7 @@ export class IngestionPersistence {
       }
 
       const season = String(r.asOfDate.getFullYear());
-      const sportName = mapping.participant.sport.name;
+      const sportName = mapping.participant.sport.name as Sport;
 
       // Build the ranking entry to merge into the rankings JSON array
       const rankingEntry = {

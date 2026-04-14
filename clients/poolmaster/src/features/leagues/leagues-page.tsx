@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { listLeagues, type ListLeaguesResponses } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { formatUserName } from '@/features/account/user-name';
 import {
   buildLeaguePath,
   getLeagueInitials,
@@ -75,7 +76,7 @@ export function WelcomePage() {
           Welcome
         </span>
         <h2 className="mt-4 text-2xl font-semibold">
-          Welcome to Ultimate Office Pool Manager, {auth.user?.displayName ?? 'Commissioner'}.
+          Welcome to Ultimate Office Pool Manager, {formatUserName(auth.user?.firstName, auth.user?.lastName)}.
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           This is your normal app home. Once you create leagues, they&apos;ll appear here. For a
@@ -317,7 +318,7 @@ export function MyLeaguesPage() {
             current league home and create-league experiences.
           </p>
           <p className="mt-3 text-sm text-muted-foreground">
-            Signed in as <span className="font-medium text-foreground">{auth.user?.displayName ?? 'Member'}</span>.
+            Signed in as <span className="font-medium text-foreground">{formatUserName(auth.user?.firstName, auth.user?.lastName)}</span>.
           </p>
         </div>
       </section>

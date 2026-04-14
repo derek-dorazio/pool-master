@@ -557,8 +557,6 @@ describe('SDK Functional: Leagues', () => {
     const actionItem = await getFunctionalPrisma().commissionerActionItem.create({
       data: {
         leagueId: leagueId as string,
-        type: 'JOIN_REQUEST',
-        priority: 'MEDIUM',
         title: 'Review pending request',
         description: 'A member action requires commissioner review.',
         actionUrl: `/leagues/${leagueId}`,

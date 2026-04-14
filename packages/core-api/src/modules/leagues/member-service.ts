@@ -4,18 +4,15 @@
 
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import type {
-  CommissionerPermission,
   LeagueMembership,
   LeagueRole,
 } from '@poolmaster/shared/domain';
-import { LeagueMembershipStatus, LeagueRole as MembershipRole } from '@poolmaster/shared/domain';
-import { ALL_COMMISSIONER_PERMISSIONS } from '../../core/permissions';
+import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 
 export interface ChangeRoleInput {
   leagueId: string;
   targetUserId: string;
   newRole: LeagueRole;
-  permissions?: CommissionerPermission[];
 }
 
 export class MemberService {
@@ -38,13 +35,7 @@ export class MemberService {
     }
     const updates: Partial<LeagueMembership> = {
       role: input.newRole,
-      permissions:
-        input.permissions
-        ?? (input.newRole === MembershipRole.COMMISSIONER ? [...ALL_COMMISSIONER_PERMISSIONS] : []),
     };
-    if (input.permissions !== undefined) {
-      updates.permissions = input.permissions;
-    }
     return this.membershipRepo.update(membership.id, updates);
   }
 
@@ -60,14 +51,6 @@ export class MemberService {
     await this.membershipRepo.update(membership.id, {
       status: LeagueMembershipStatus.INACTIVE,
     });
-  }
-
-  /** Updates the commissioner permission set for a membership. */
-  async updatePermissions(
-    membershipId: string,
-    permissions: CommissionerPermission[],
-  ): Promise<LeagueMembership> {
-    return this.membershipRepo.update(membershipId, { permissions });
   }
 }
 

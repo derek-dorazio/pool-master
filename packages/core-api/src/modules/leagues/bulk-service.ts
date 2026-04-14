@@ -29,7 +29,8 @@ export interface CopySeasonInput {
 
 export interface CsvImportRow {
   email: string;
-  displayName?: string;
+  firstName?: string;
+  lastName?: string;
   role?: string;
 }
 

@@ -10,8 +10,6 @@ import { setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryPrisma } from './audit-query-service';
 import { UserService } from './user-service';
 import { createUserHandlers } from './user-handler';
-import { ContestService } from './contest-service';
-import { createContestHandlers } from './contest-handler';
 import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
@@ -28,9 +26,6 @@ import {
   ProviderIngestionDashboardResponseSchema,
   ProviderUnmappedParticipantListResponseSchema,
   ProviderHealthCheckDtoSchema,
-  AdminContestListResponseSchema,
-  ContestAdminDetailResponseSchema,
-  ContestRecalculationResultDtoSchema,
   ServiceHealthListResponseSchema,
   InfrastructureMetricsResponseSchema,
   BusinessMetricsResponseSchema,
@@ -75,7 +70,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   // --- Services ---
   const userService = new UserService(prisma);
-  const contestService = new ContestService(prisma);
   const healthService = new HealthService(prisma);
   const providerService = new ProviderService(prisma);
   const pollConfigService = new PollConfigService();
@@ -83,12 +77,10 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
 
   // --- Handlers ---
   const user = createUserHandlers(userService);
-  const contest = createContestHandlers(contestService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService);
 
   // --- User Management Routes ---
-  // NOTE: /users/merge is registered before /users/:userId to avoid route collision.
 
   fastify.get('/users', {
     schema: {
@@ -108,25 +100,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     handler: user.listUsers,
-  });
-
-  fastify.post('/users/merge', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Merge duplicate user accounts',
-      description: 'Merges two user accounts when platform operations need to consolidate duplicate identities.',
-      operationId: 'adminMergeUsers',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }),
-      body: {
-        type: 'object',
-        required: ['primaryId', 'duplicateId'],
-        properties: {
-          primaryId: { type: 'string', minLength: 1 },
-          duplicateId: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: user.mergeUsers,
   });
 
   fastify.get('/users/:userId', {
@@ -178,138 +151,6 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
     },
     handler: user.enableUser,
-  });
-
-  // --- Contest Management Routes ---
-
-  fastify.get('/contests', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List contests with filters',
-      description: 'Returns the platform-wide contest list with administrative filtering and search support.',
-      operationId: 'adminListContests',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminContestListResponseSchema) }),
-      querystring: {
-        type: 'object',
-        properties: {
-          league: { type: 'string' },
-          sport: { type: 'string' },
-          status: { type: 'string' },
-          type: { type: 'string' },
-          selection: { type: 'string' },
-          page: { type: 'integer', minimum: 1 },
-          pageSize: { type: 'integer', minimum: 1, maximum: 100 },
-        },
-      },
-    },
-    handler: contest.listContests,
-  });
-
-  fastify.get('/contests/:contestId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get contest detail',
-      description: 'Returns the administrative detail view for a specific contest.',
-      operationId: 'adminGetContestDetail',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(ContestAdminDetailResponseSchema) }, [404]),
-    },
-    handler: contest.getContestDetail,
-  });
-
-  fastify.post('/contests/:contestId/force-close', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Force-close a contest',
-      description: 'Force-closes a contest through the root-admin operations surface.',
-      operationId: 'adminForceCloseContest',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
-      body: {
-        type: 'object',
-        required: ['reason'],
-        properties: {
-          reason: { type: 'string', minLength: 1, maxLength: 1000 },
-        },
-      },
-    },
-    handler: contest.forceCloseContest,
-  });
-
-  fastify.post('/contests/:contestId/reopen', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Reopen a closed contest',
-      description: 'Reopens a contest through the root-admin operations surface.',
-      operationId: 'adminReopenContest',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
-      body: {
-        type: 'object',
-        required: ['reason'],
-        properties: {
-          reason: { type: 'string', minLength: 1, maxLength: 1000 },
-        },
-      },
-    },
-    handler: contest.reopenContest,
-  });
-
-  fastify.post('/contests/:contestId/override-score', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Override an entry score in a contest',
-      description: 'Applies a root-admin score override inside the specified contest.',
-      operationId: 'adminOverrideScore',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
-      body: {
-        type: 'object',
-        required: ['entryId', 'newScore', 'reason'],
-        properties: {
-          entryId: { type: 'string', minLength: 1 },
-          newScore: { type: 'number' },
-          reason: { type: 'string', minLength: 1, maxLength: 1000 },
-        },
-      },
-    },
-    handler: contest.overrideScore,
-  });
-
-  fastify.post('/contests/:contestId/recalculate-standings', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Recalculate contest standings',
-      description: 'Triggers an administrative standings recalculation for the target contest.',
-      operationId: 'adminRecalculateStandings',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(ContestRecalculationResultDtoSchema) }, [404]),
-    },
-    handler: contest.recalculateStandings,
-  });
-
-  fastify.post('/contests/:contestId/recalculate-payouts', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Recalculate contest payouts',
-      description: 'Triggers an administrative payout recalculation for the target contest.',
-      operationId: 'adminRecalculatePayouts',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
-    },
-    handler: contest.recalculatePayouts,
-  });
-
-  fastify.post('/contests/:contestId/re-ingest', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Re-ingest scoring data for an event',
-      description: 'Triggers administrative re-ingestion of scoring data for the target contest event.',
-      operationId: 'adminReIngestScoring',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(ContestRecalculationResultDtoSchema) }, [404]),
-      body: {
-        type: 'object',
-        required: ['eventId'],
-        properties: {
-          eventId: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-    handler: contest.reIngestScoring,
   });
 
   // --- Sports Data Provider Routes ---

@@ -55,17 +55,24 @@
                     "maxLength": 128,
                     "description": "Plaintext password chosen during registration."
                   },
-                  "displayName": {
+                  "firstName": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 100,
-                    "description": "Full display name shown across the product after account creation."
+                    "description": "First name captured for the account profile."
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Last name captured for the account profile."
                   }
                 },
                 "required": [
                   "email",
                   "password",
-                  "displayName"
+                  "firstName",
+                  "lastName"
                 ],
                 "additionalProperties": false,
                 "description": "Create-account payload for a new email/password user."
@@ -93,9 +100,13 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
-                        "displayName": {
+                        "firstName": {
                           "type": "string",
-                          "description": "Name shown in league, contest, and profile surfaces."
+                          "description": "First name shown in account and member-management surfaces."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name shown in account and member-management surfaces."
                         },
                         "isActive": {
                           "type": "boolean",
@@ -148,7 +159,8 @@
                       "required": [
                         "id",
                         "email",
-                        "displayName",
+                        "firstName",
+                        "lastName",
                         "isActive",
                         "isRootAdmin"
                       ],
@@ -331,9 +343,13 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
-                        "displayName": {
+                        "firstName": {
                           "type": "string",
-                          "description": "Name shown in league, contest, and profile surfaces."
+                          "description": "First name shown in account and member-management surfaces."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name shown in account and member-management surfaces."
                         },
                         "isActive": {
                           "type": "boolean",
@@ -386,7 +402,8 @@
                       "required": [
                         "id",
                         "email",
-                        "displayName",
+                        "firstName",
+                        "lastName",
                         "isActive",
                         "isRootAdmin"
                       ],
@@ -637,140 +654,6 @@
         }
       }
     },
-    "/api/v1/auth/forgot-password": {
-      "post": {
-        "operationId": "forgotPassword",
-        "summary": "Request password reset email",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Begins the password-reset flow for an email/password account. This remains a placeholder-style capability in the current product surface.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "description": "Email address that should receive password-reset instructions."
-                  }
-                },
-                "required": [
-                  "email"
-                ],
-                "additionalProperties": false,
-                "description": "Password-reset initiation payload."
-              }
-            }
-          },
-          "description": "Password-reset initiation payload."
-        },
-        "responses": {
-          "200": {
-            "description": "Password-reset initiation acknowledgement.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "description": "User-safe confirmation message for the password-reset request."
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Password-reset initiation acknowledgement."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/callback": {
-      "post": {
-        "operationId": "oauthCallback",
-        "summary": "OAuth provider callback",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Handles an OAuth callback payload from an upstream provider. This route is documented now for contract completeness but the product flow remains deferred.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string",
-                    "description": "Authorization code returned by the upstream OAuth provider."
-                  },
-                  "state": {
-                    "type": "string",
-                    "description": "Opaque anti-forgery state value returned from the OAuth initiation step."
-                  }
-                },
-                "required": [
-                  "code",
-                  "state"
-                ],
-                "additionalProperties": false,
-                "description": "OAuth callback payload passed back from a provider integration."
-              }
-            }
-          },
-          "description": "OAuth callback payload passed back from a provider integration."
-        },
-        "responses": {
-          "501": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/auth/me": {
       "get": {
         "operationId": "getCurrentUser",
@@ -798,9 +681,13 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
-                        "displayName": {
+                        "firstName": {
                           "type": "string",
-                          "description": "Name shown in league, contest, and profile surfaces."
+                          "description": "First name shown in account and member-management surfaces."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name shown in account and member-management surfaces."
                         },
                         "isActive": {
                           "type": "boolean",
@@ -853,7 +740,8 @@
                       "required": [
                         "id",
                         "email",
-                        "displayName",
+                        "firstName",
+                        "lastName",
                         "isActive",
                         "isRootAdmin"
                       ],
@@ -2470,9 +2358,13 @@
                             "type": "string",
                             "description": "User account identifier for the member."
                           },
-                          "displayName": {
+                          "firstName": {
                             "type": "string",
-                            "description": "Display name shown in member-management surfaces."
+                            "description": "First name shown in member-management surfaces."
+                          },
+                          "lastName": {
+                            "type": "string",
+                            "description": "Last name shown in member-management surfaces."
                           },
                           "role": {
                             "type": "string",
@@ -2491,7 +2383,8 @@
                         "required": [
                           "id",
                           "userId",
-                          "displayName",
+                          "firstName",
+                          "lastName",
                           "role"
                         ],
                         "additionalProperties": false,
@@ -2611,13 +2504,6 @@
                       "MEMBER"
                     ],
                     "description": "Target membership role after the change. Commissioner grants league-administration access."
-                  },
-                  "permissions": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Optional explicit permission override list for the member."
                   }
                 },
                 "required": [
@@ -2687,13 +2573,6 @@
                           ],
                           "description": "Membership lifecycle state."
                         },
-                        "permissions": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Explicit commissioner permission overrides granted to the membership."
-                        },
                         "joinedAt": {
                           "type": "string",
                           "format": "date-time",
@@ -2716,7 +2595,6 @@
                         "userId",
                         "role",
                         "status",
-                        "permissions",
                         "joinedAt",
                         "createdAt",
                         "updatedAt"
@@ -3234,12 +3112,6 @@
                             "type": "string",
                             "nullable": true
                           },
-                          "type": {
-                            "type": "string"
-                          },
-                          "priority": {
-                            "type": "string"
-                          },
                           "title": {
                             "type": "string"
                           },
@@ -3267,8 +3139,6 @@
                         "required": [
                           "id",
                           "leagueId",
-                          "type",
-                          "priority",
                           "title",
                           "description",
                           "resolved",
@@ -3306,9 +3176,13 @@
                             "type": "string",
                             "description": "User involved in the activity event."
                           },
-                          "displayName": {
+                          "firstName": {
                             "type": "string",
-                            "description": "Display name shown for the member activity event."
+                            "description": "First name shown for the member activity event when available."
+                          },
+                          "lastName": {
+                            "type": "string",
+                            "description": "Last name shown for the member activity event when available."
                           },
                           "action": {
                             "type": "string",
@@ -3322,7 +3196,6 @@
                         },
                         "required": [
                           "userId",
-                          "displayName",
                           "action",
                           "timestamp"
                         ],
@@ -3512,12 +3385,6 @@
                           "type": "string",
                           "nullable": true
                         },
-                        "type": {
-                          "type": "string"
-                        },
-                        "priority": {
-                          "type": "string"
-                        },
                         "title": {
                           "type": "string"
                         },
@@ -3545,8 +3412,6 @@
                       "required": [
                         "id",
                         "leagueId",
-                        "type",
-                        "priority",
                         "title",
                         "description",
                         "resolved",
@@ -3942,9 +3807,13 @@
                           "type": "string",
                           "description": "Email address for the imported member row."
                         },
-                        "displayName": {
+                        "firstName": {
                           "type": "string",
-                          "description": "Optional display name supplied in the import row."
+                          "description": "Optional first name supplied in the import row."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Optional last name supplied in the import row."
                         },
                         "role": {
                           "type": "string",
@@ -4175,9 +4044,13 @@
                                   "type": "string",
                                   "format": "uuid"
                                 },
-                                "displayName": {
+                                "firstName": {
                                   "type": "string",
-                                  "description": "Display name for the squad member."
+                                  "description": "First name for the squad member."
+                                },
+                                "lastName": {
+                                  "type": "string",
+                                  "description": "Last name for the squad member."
                                 },
                                 "status": {
                                   "type": "string",
@@ -4481,9 +4354,13 @@
                                 "type": "string",
                                 "format": "uuid"
                               },
-                              "displayName": {
+                              "firstName": {
                                 "type": "string",
-                                "description": "Display name for the squad member."
+                                "description": "First name for the squad member."
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "description": "Last name for the squad member."
                               },
                               "status": {
                                 "type": "string",
@@ -4769,9 +4646,13 @@
                                 "type": "string",
                                 "format": "uuid"
                               },
-                              "displayName": {
+                              "firstName": {
                                 "type": "string",
-                                "description": "Display name for the squad member."
+                                "description": "First name for the squad member."
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "description": "Last name for the squad member."
                               },
                               "status": {
                                 "type": "string",
@@ -5082,9 +4963,13 @@
                                 "type": "string",
                                 "format": "uuid"
                               },
-                              "displayName": {
+                              "firstName": {
                                 "type": "string",
-                                "description": "Display name for the squad member."
+                                "description": "First name for the squad member."
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "description": "Last name for the squad member."
                               },
                               "status": {
                                 "type": "string",
@@ -5345,9 +5230,13 @@
                           "type": "string",
                           "format": "uuid"
                         },
-                        "displayName": {
+                        "firstName": {
                           "type": "string",
-                          "description": "Display name for the squad member."
+                          "description": "First name for the squad member."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name for the squad member."
                         },
                         "status": {
                           "type": "string",
@@ -5577,9 +5466,13 @@
                           "type": "string",
                           "format": "uuid"
                         },
-                        "displayName": {
+                        "firstName": {
                           "type": "string",
-                          "description": "Display name for the squad member."
+                          "description": "First name for the squad member."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name for the squad member."
                         },
                         "status": {
                           "type": "string",
@@ -5985,13 +5878,6 @@
                           ],
                           "description": "Membership lifecycle state."
                         },
-                        "permissions": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Explicit commissioner permission overrides granted to the membership."
-                        },
                         "joinedAt": {
                           "type": "string",
                           "format": "date-time",
@@ -6014,7 +5900,6 @@
                         "userId",
                         "role",
                         "status",
-                        "permissions",
                         "joinedAt",
                         "createdAt",
                         "updatedAt"
@@ -14179,14 +14064,14 @@
         }
       }
     },
-    "/api/v1/account/inactivate": {
+    "/api/v1/account/reactivate": {
       "post": {
-        "operationId": "inactivateAccount",
-        "summary": "Inactivate the authenticated account",
+        "operationId": "reactivateAccount",
+        "summary": "Reactivate the authenticated account",
         "tags": [
           "Account"
         ],
-        "description": "Marks the authenticated account inactive for normal sign-in and product usage. This is the required first step before a permanent self-delete becomes available.",
+        "description": "Reactivates an inactive account and rotates a fresh browser session so the user can resume normal product usage immediately.",
         "responses": {
           "200": {
             "description": "Self-service account response envelope for authenticated account lifecycle actions.",
@@ -14206,9 +14091,13 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
-                        "displayName": {
+                        "firstName": {
                           "type": "string",
-                          "description": "Name shown in league, contest, and profile surfaces."
+                          "description": "First name shown in account and member-management surfaces."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name shown in account and member-management surfaces."
                         },
                         "isActive": {
                           "type": "boolean",
@@ -14261,7 +14150,989 @@
                       "required": [
                         "id",
                         "email",
-                        "displayName",
+                        "firstName",
+                        "lastName",
+                        "isActive",
+                        "isRootAdmin"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Self-service account response envelope for authenticated account lifecycle actions."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/profile": {
+      "put": {
+        "operationId": "updateAccountProfile",
+        "summary": "Update the authenticated account profile",
+        "tags": [
+          "Account"
+        ],
+        "description": "Updates the authenticated account profile fields that are owned directly by the user profile: first name and last name.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Updated first name for the account profile."
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Updated last name for the account profile."
+                  }
+                },
+                "required": [
+                  "firstName",
+                  "lastName"
+                ],
+                "additionalProperties": false,
+                "description": "Self-service profile update payload for the authenticated account."
+              }
+            }
+          },
+          "description": "Self-service profile update payload for the authenticated account."
+        },
+        "responses": {
+          "200": {
+            "description": "Self-service account response envelope for authenticated account lifecycle actions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Stable user identifier."
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "Primary email address for the user account."
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "description": "First name shown in account and member-management surfaces."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name shown in account and member-management surfaces."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the account is currently active for normal sign-in and product usage."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the user has platform-level root-admin access."
+                        },
+                        "authProvider": {
+                          "type": "string",
+                          "enum": [
+                            "email",
+                            "google",
+                            "apple"
+                          ],
+                          "description": "Authentication provider used for the account when known."
+                        },
+                        "timezone": {
+                          "type": "string",
+                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                        },
+                        "locale": {
+                          "type": "string",
+                          "description": "Preferred locale for formatting and localized copy."
+                        },
+                        "timeFormat": {
+                          "type": "string",
+                          "enum": [
+                            "12H",
+                            "24H"
+                          ],
+                          "description": "Preferred clock display used in account and scheduling surfaces."
+                        },
+                        "dateFormat": {
+                          "type": "string",
+                          "enum": [
+                            "MDY",
+                            "DMY",
+                            "YMD"
+                          ],
+                          "description": "Preferred date display format used in account and scheduling surfaces."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Account creation timestamp in ISO 8601 format."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "firstName",
+                        "lastName",
+                        "isActive",
+                        "isRootAdmin"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Self-service account response envelope for authenticated account lifecycle actions."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/preferences": {
+      "put": {
+        "operationId": "updateAccountPreferences",
+        "summary": "Update authenticated account preferences",
+        "tags": [
+          "Account"
+        ],
+        "description": "Updates first-pass user preferences for locale, timezone, and date/time formatting without inventing a separate preferences-only account model.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "timezone": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Preferred IANA timezone, or null to clear it."
+                  },
+                  "locale": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 20,
+                    "nullable": true,
+                    "description": "Preferred locale, or null to clear it."
+                  },
+                  "timeFormat": {
+                    "type": "string",
+                    "enum": [
+                      "12H",
+                      "24H"
+                    ],
+                    "nullable": true,
+                    "description": "Preferred clock display format, or null to clear it."
+                  },
+                  "dateFormat": {
+                    "type": "string",
+                    "enum": [
+                      "MDY",
+                      "DMY",
+                      "YMD"
+                    ],
+                    "nullable": true,
+                    "description": "Preferred date display format, or null to clear it."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Self-service preferences update payload for the authenticated account."
+              }
+            }
+          },
+          "description": "Self-service preferences update payload for the authenticated account."
+        },
+        "responses": {
+          "200": {
+            "description": "Self-service account response envelope for authenticated account lifecycle actions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Stable user identifier."
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "Primary email address for the user account."
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "description": "First name shown in account and member-management surfaces."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name shown in account and member-management surfaces."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the account is currently active for normal sign-in and product usage."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the user has platform-level root-admin access."
+                        },
+                        "authProvider": {
+                          "type": "string",
+                          "enum": [
+                            "email",
+                            "google",
+                            "apple"
+                          ],
+                          "description": "Authentication provider used for the account when known."
+                        },
+                        "timezone": {
+                          "type": "string",
+                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                        },
+                        "locale": {
+                          "type": "string",
+                          "description": "Preferred locale for formatting and localized copy."
+                        },
+                        "timeFormat": {
+                          "type": "string",
+                          "enum": [
+                            "12H",
+                            "24H"
+                          ],
+                          "description": "Preferred clock display used in account and scheduling surfaces."
+                        },
+                        "dateFormat": {
+                          "type": "string",
+                          "enum": [
+                            "MDY",
+                            "DMY",
+                            "YMD"
+                          ],
+                          "description": "Preferred date display format used in account and scheduling surfaces."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Account creation timestamp in ISO 8601 format."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "firstName",
+                        "lastName",
+                        "isActive",
+                        "isRootAdmin"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Self-service account response envelope for authenticated account lifecycle actions."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/password": {
+      "post": {
+        "operationId": "changeAccountPassword",
+        "summary": "Change the authenticated account password",
+        "tags": [
+          "Account"
+        ],
+        "description": "Changes the authenticated account password after validating the current password and matching new-password confirmation. Other refresh-token sessions are revoked while the current session stays usable.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Existing password that must match before the password can be changed."
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128,
+                    "description": "New password to persist for future sign-in attempts."
+                  },
+                  "confirmNewPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128,
+                    "description": "Repeat of the new password to guard against confirmation mistakes."
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "newPassword",
+                  "confirmNewPassword"
+                ],
+                "additionalProperties": false,
+                "description": "Self-service password-change payload for the authenticated account."
+              }
+            }
+          },
+          "description": "Self-service password-change payload for the authenticated account."
+        },
+        "responses": {
+          "200": {
+            "description": "Minimal success response returned after changing the authenticated account password.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ],
+                      "description": "Confirms that the requested operation succeeded."
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Minimal success response returned after changing the authenticated account password."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/inactivate": {
+      "post": {
+        "operationId": "inactivateAccount",
+        "summary": "Inactivate the authenticated account",
+        "tags": [
+          "Account"
+        ],
+        "description": "Marks the authenticated account inactive for normal sign-in and product usage. This is the required first step before a permanent self-delete becomes available.",
+        "responses": {
+          "200": {
+            "description": "Self-service account response envelope for authenticated account lifecycle actions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Stable user identifier."
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "Primary email address for the user account."
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "description": "First name shown in account and member-management surfaces."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name shown in account and member-management surfaces."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the account is currently active for normal sign-in and product usage."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the user has platform-level root-admin access."
+                        },
+                        "authProvider": {
+                          "type": "string",
+                          "enum": [
+                            "email",
+                            "google",
+                            "apple"
+                          ],
+                          "description": "Authentication provider used for the account when known."
+                        },
+                        "timezone": {
+                          "type": "string",
+                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                        },
+                        "locale": {
+                          "type": "string",
+                          "description": "Preferred locale for formatting and localized copy."
+                        },
+                        "timeFormat": {
+                          "type": "string",
+                          "enum": [
+                            "12H",
+                            "24H"
+                          ],
+                          "description": "Preferred clock display used in account and scheduling surfaces."
+                        },
+                        "dateFormat": {
+                          "type": "string",
+                          "enum": [
+                            "MDY",
+                            "DMY",
+                            "YMD"
+                          ],
+                          "description": "Preferred date display format used in account and scheduling surfaces."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Account creation timestamp in ISO 8601 format."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "firstName",
+                        "lastName",
                         "isActive",
                         "isRootAdmin"
                       ],
@@ -14895,68 +15766,79 @@
                         "type": "object",
                         "properties": {
                           "id": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Stable user identifier."
                           },
                           "email": {
-                            "type": "string"
-                          },
-                          "displayName": {
-                            "type": "string"
-                          },
-                          "leagues": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "id": {
-                                  "type": "string",
-                                  "description": "League identifier."
-                                },
-                                "name": {
-                                  "type": "string",
-                                  "description": "League display name."
-                                },
-                                "role": {
-                                  "type": "string",
-                                  "enum": [
-                                    "COMMISSIONER",
-                                    "MEMBER"
-                                  ],
-                                  "description": "User role in the league."
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "name",
-                                "role"
-                              ],
-                              "additionalProperties": false,
-                              "description": "Compact league summary included in admin user lists."
-                            }
-                          },
-                          "lastLoginAt": {
                             "type": "string",
-                            "format": "date-time"
+                            "description": "Primary email address for the user account."
+                          },
+                          "firstName": {
+                            "type": "string",
+                            "description": "First name shown in account and member-management surfaces."
+                          },
+                          "lastName": {
+                            "type": "string",
+                            "description": "Last name shown in account and member-management surfaces."
                           },
                           "isActive": {
                             "type": "boolean",
                             "description": "Whether the account is currently active for normal sign-in and product usage."
                           },
+                          "isRootAdmin": {
+                            "type": "boolean",
+                            "description": "Whether the user has platform-level root-admin access."
+                          },
+                          "authProvider": {
+                            "type": "string",
+                            "enum": [
+                              "email",
+                              "google",
+                              "apple"
+                            ],
+                            "description": "Authentication provider used for the account when known."
+                          },
+                          "timezone": {
+                            "type": "string",
+                            "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                          },
+                          "locale": {
+                            "type": "string",
+                            "description": "Preferred locale for formatting and localized copy."
+                          },
+                          "timeFormat": {
+                            "type": "string",
+                            "enum": [
+                              "12H",
+                              "24H"
+                            ],
+                            "description": "Preferred clock display used in account and scheduling surfaces."
+                          },
+                          "dateFormat": {
+                            "type": "string",
+                            "enum": [
+                              "MDY",
+                              "DMY",
+                              "YMD"
+                            ],
+                            "description": "Preferred date display format used in account and scheduling surfaces."
+                          },
                           "createdAt": {
                             "type": "string",
-                            "format": "date-time"
+                            "format": "date-time",
+                            "description": "Account creation timestamp in ISO 8601 format."
                           }
                         },
                         "required": [
                           "id",
                           "email",
-                          "displayName",
-                          "leagues",
+                          "firstName",
+                          "lastName",
                           "isActive",
-                          "createdAt"
+                          "isRootAdmin"
                         ],
                         "additionalProperties": false,
-                        "description": "Admin user-list row."
+                        "description": "Frontend-facing user profile summary derived from the authenticated account."
                       },
                       "description": "Current result page items."
                     },
@@ -15032,105 +15914,6 @@
         }
       }
     },
-    "/api/v1/admin/users/merge": {
-      "post": {
-        "operationId": "adminMergeUsers",
-        "summary": "Merge duplicate user accounts",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Merges two user accounts when platform operations need to consolidate duplicate identities.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "primaryId",
-                  "duplicateId"
-                ],
-                "properties": {
-                  "primaryId": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "duplicateId": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Minimal success response envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal success response envelope."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/admin/users/{userId}": {
       "get": {
         "operationId": "adminGetUserDetail",
@@ -15151,20 +15934,35 @@
         ],
         "responses": {
           "200": {
-            "description": "Admin user-detail response.",
+            "description": "Root-admin user-detail response.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "id": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Stable user identifier."
                     },
                     "email": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Primary email address for the user account."
                     },
-                    "displayName": {
-                      "type": "string"
+                    "firstName": {
+                      "type": "string",
+                      "description": "First name shown in account and member-management surfaces."
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "description": "Last name shown in account and member-management surfaces."
+                    },
+                    "isActive": {
+                      "type": "boolean",
+                      "description": "Whether the account is currently active for normal sign-in and product usage."
+                    },
+                    "isRootAdmin": {
+                      "type": "boolean",
+                      "description": "Whether the user has platform-level root-admin access."
                     },
                     "authProvider": {
                       "type": "string",
@@ -15172,179 +15970,50 @@
                         "email",
                         "google",
                         "apple"
-                      ]
+                      ],
+                      "description": "Authentication provider used for the account when known."
                     },
-                    "isActive": {
-                      "type": "boolean",
-                      "description": "Whether the account is currently active for normal sign-in and product usage."
+                    "timezone": {
+                      "type": "string",
+                      "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": "Preferred locale for formatting and localized copy."
+                    },
+                    "timeFormat": {
+                      "type": "string",
+                      "enum": [
+                        "12H",
+                        "24H"
+                      ],
+                      "description": "Preferred clock display used in account and scheduling surfaces."
+                    },
+                    "dateFormat": {
+                      "type": "string",
+                      "enum": [
+                        "MDY",
+                        "DMY",
+                        "YMD"
+                      ],
+                      "description": "Preferred date display format used in account and scheduling surfaces."
                     },
                     "createdAt": {
                       "type": "string",
-                      "format": "date-time"
-                    },
-                    "lastLoginAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "leagues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "role": {
-                            "type": "string",
-                            "enum": [
-                              "COMMISSIONER",
-                              "MEMBER"
-                            ]
-                          },
-                          "joinedAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "role"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Expanded league detail embedded in admin user detail responses."
-                      }
-                    },
-                    "activeContests": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
-                            ]
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "DRAFT",
-                              "OPEN",
-                              "DRAFTING",
-                              "LOCKED",
-                              "ACTIVE",
-                              "COMPLETED",
-                              "CANCELLED"
-                            ]
-                          },
-                          "rank": {
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "sport",
-                          "status"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Active contest detail embedded in admin user detail responses."
-                      }
-                    },
-                    "devices": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "platform": {
-                            "type": "string"
-                          },
-                          "lastActiveAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "tokenStatus": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "platform",
-                          "lastActiveAt",
-                          "tokenStatus"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Known user device summary."
-                      }
-                    },
-                    "recentAuthEvents": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string"
-                          },
-                          "timestamp": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "ipAddress": {
-                            "type": "string"
-                          },
-                          "success": {
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "timestamp",
-                          "success"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Recent authentication event shown in admin user detail."
-                      }
+                      "format": "date-time",
+                      "description": "Account creation timestamp in ISO 8601 format."
                     }
                   },
                   "required": [
                     "id",
                     "email",
-                    "displayName",
+                    "firstName",
+                    "lastName",
                     "isActive",
-                    "createdAt",
-                    "leagues",
-                    "activeContests",
-                    "devices",
-                    "recentAuthEvents"
+                    "isRootAdmin"
                   ],
                   "additionalProperties": false,
-                  "description": "Admin user-detail response."
+                  "description": "Root-admin user-detail response."
                 }
               }
             }
@@ -15822,1427 +16491,6 @@
         }
       }
     },
-    "/api/v1/admin/contests": {
-      "get": {
-        "operationId": "adminListContests",
-        "summary": "List contests with filters",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Returns the platform-wide contest list with administrative filtering and search support.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "league",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "sport",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "status",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "type",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "selection",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "in": "query",
-            "name": "page",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            },
-            "in": "query",
-            "name": "pageSize",
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Admin contest-list response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "leagueName": {
-                            "type": "string"
-                          },
-                          "sport": {
-                            "type": "string"
-                          },
-                          "contestType": {
-                            "type": "string"
-                          },
-                          "selectionType": {
-                            "type": "string"
-                          },
-                          "status": {
-                            "type": "string"
-                          },
-                          "entryCount": {
-                            "type": "number"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "leagueName",
-                          "sport",
-                          "contestType",
-                          "selectionType",
-                          "status",
-                          "entryCount",
-                          "createdAt"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Admin contest-list row."
-                      },
-                      "description": "Contest page or slice returned by the API."
-                    },
-                    "total": {
-                      "type": "number",
-                      "description": "Total contests matching the admin query."
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "total"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Admin contest-list response."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/contests/{contestId}": {
-      "get": {
-        "operationId": "adminGetContestDetail",
-        "summary": "Get contest detail",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Returns the administrative detail view for a specific contest.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Expanded contest detail used by admin contest-management surfaces.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "sport": {
-                      "type": "string"
-                    },
-                    "contestType": {
-                      "type": "string"
-                    },
-                    "selectionType": {
-                      "type": "string"
-                    },
-                    "scoringEngine": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string"
-                    },
-                    "leagueName": {
-                      "type": "string"
-                    },
-                    "leagueId": {
-                      "type": "string"
-                    },
-                    "entryCount": {
-                      "type": "number"
-                    },
-                    "startsAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "nullable": true
-                    },
-                    "endsAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "nullable": true
-                    },
-                    "lockAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "standings": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "entryId": {
-                            "type": "string"
-                          },
-                          "entryName": {
-                            "type": "string"
-                          },
-                          "ownerEmail": {
-                            "type": "string"
-                          },
-                          "standingsPosition": {
-                            "type": "number"
-                          },
-                          "totalScore": {
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "entryId",
-                          "entryName",
-                          "ownerEmail",
-                          "standingsPosition",
-                          "totalScore"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Admin-facing standing row for a contest entry."
-                      }
-                    },
-                    "draftStatus": {
-                      "type": "object",
-                      "properties": {
-                        "status": {
-                          "type": "string"
-                        },
-                        "currentPick": {
-                          "type": "number"
-                        },
-                        "totalPicks": {
-                          "type": "number"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        }
-                      },
-                      "required": [
-                        "status",
-                        "currentPick",
-                        "totalPicks"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Current draft status snapshot for a contest."
-                    },
-                    "draftPickHistories": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "round": {
-                            "type": "number"
-                          },
-                          "pick": {
-                            "type": "number"
-                          },
-                          "participant": {
-                            "type": "string"
-                          },
-                          "owner": {
-                            "type": "string"
-                          },
-                          "autoPicked": {
-                            "type": "boolean"
-                          },
-                          "time": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "round",
-                          "pick",
-                          "participant",
-                          "owner",
-                          "autoPicked",
-                          "time"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Draft pick-history row shown in admin contest detail."
-                      }
-                    },
-                    "scoringFreshness": {
-                      "type": "object",
-                      "properties": {
-                        "lastStatEvent": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "isStale": {
-                          "type": "boolean"
-                        },
-                        "staleMinutes": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "isStale",
-                        "staleMinutes"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "statEventCount": {
-                      "type": "number"
-                    },
-                    "correctionsApplied": {
-                      "type": "number"
-                    },
-                    "overrides": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "adminEmail": {
-                            "type": "string"
-                          },
-                          "entryId": {
-                            "type": "string"
-                          },
-                          "oldScore": {
-                            "type": "number"
-                          },
-                          "newScore": {
-                            "type": "number"
-                          },
-                          "reason": {
-                            "type": "string"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "adminEmail",
-                          "entryId",
-                          "oldScore",
-                          "newScore",
-                          "reason",
-                          "createdAt"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Manual score override record."
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "sport",
-                    "contestType",
-                    "selectionType",
-                    "scoringEngine",
-                    "status",
-                    "leagueName",
-                    "leagueId",
-                    "entryCount",
-                    "createdAt",
-                    "standings",
-                    "draftPickHistories",
-                    "scoringFreshness",
-                    "statEventCount",
-                    "correctionsApplied",
-                    "overrides"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Expanded contest detail used by admin contest-management surfaces."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/contests/{contestId}/force-close": {
-      "post": {
-        "operationId": "adminForceCloseContest",
-        "summary": "Force-close a contest",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Force-closes a contest through the root-admin operations surface.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "reason"
-                ],
-                "properties": {
-                  "reason": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 1000
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Minimal success response envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal success response envelope."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/contests/{contestId}/reopen": {
-      "post": {
-        "operationId": "adminReopenContest",
-        "summary": "Reopen a closed contest",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Reopens a contest through the root-admin operations surface.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "reason"
-                ],
-                "properties": {
-                  "reason": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 1000
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Minimal success response envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal success response envelope."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/contests/{contestId}/override-score": {
-      "post": {
-        "operationId": "adminOverrideScore",
-        "summary": "Override an entry score in a contest",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Applies a root-admin score override inside the specified contest.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "entryId",
-                  "newScore",
-                  "reason"
-                ],
-                "properties": {
-                  "entryId": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "newScore": {
-                    "type": "number"
-                  },
-                  "reason": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 1000
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Minimal success response envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal success response envelope."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/contests/{contestId}/recalculate-standings": {
-      "post": {
-        "operationId": "adminRecalculateStandings",
-        "summary": "Recalculate contest standings",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Triggers an administrative standings recalculation for the target contest.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Contest recalculation result summary.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "contestId": {
-                      "type": "string"
-                    },
-                    "entriesAffected": {
-                      "type": "number"
-                    },
-                    "rankChanges": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "entryId": {
-                            "type": "string"
-                          },
-                          "oldRank": {
-                            "type": "number"
-                          },
-                          "newRank": {
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "entryId",
-                          "oldRank",
-                          "newRank"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Per-entry rank change returned from a contest recalculation."
-                      }
-                    },
-                    "recalculatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "contestId",
-                    "entriesAffected",
-                    "rankChanges",
-                    "recalculatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Contest recalculation result summary."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/contests/{contestId}/recalculate-payouts": {
-      "post": {
-        "operationId": "adminRecalculatePayouts",
-        "summary": "Recalculate contest payouts",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Triggers an administrative payout recalculation for the target contest.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Minimal success response envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal success response envelope."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/contests/{contestId}/re-ingest": {
-      "post": {
-        "operationId": "adminReIngestScoring",
-        "summary": "Re-ingest scoring data for an event",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Triggers administrative re-ingestion of scoring data for the target contest event.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "eventId"
-                ],
-                "properties": {
-                  "eventId": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Contest recalculation result summary.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "contestId": {
-                      "type": "string"
-                    },
-                    "entriesAffected": {
-                      "type": "number"
-                    },
-                    "rankChanges": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "entryId": {
-                            "type": "string"
-                          },
-                          "oldRank": {
-                            "type": "number"
-                          },
-                          "newRank": {
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "entryId",
-                          "oldRank",
-                          "newRank"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Per-entry rank change returned from a contest recalculation."
-                      }
-                    },
-                    "recalculatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "contestId",
-                    "entriesAffected",
-                    "rankChanges",
-                    "recalculatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Contest recalculation result summary."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/admin/providers/health": {
       "get": {
         "operationId": "adminListProviders",
@@ -17531,7 +16779,7 @@
                           "status": {
                             "type": "string",
                             "enum": [
-                              "QUEUED",
+                              "PENDING",
                               "RUNNING",
                               "COMPLETED",
                               "FAILED"
@@ -17606,7 +16854,7 @@
                           "status": {
                             "type": "string",
                             "enum": [
-                              "QUEUED",
+                              "PENDING",
                               "RUNNING",
                               "COMPLETED",
                               "FAILED"
@@ -18169,7 +17417,7 @@
                           "status": {
                             "type": "string",
                             "enum": [
-                              "QUEUED",
+                              "PENDING",
                               "RUNNING",
                               "COMPLETED",
                               "FAILED"

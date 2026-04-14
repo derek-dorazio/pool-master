@@ -37,7 +37,8 @@ export function buildUser(overrides: Partial<User> = {}): User {
   return {
     id,
     email: `user-${id}@example.com`,
-    displayName: `User ${id}`,
+    firstName: 'User',
+    lastName: id,
     isActive: true,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
@@ -67,7 +68,6 @@ export function buildMembership(overrides: Partial<LeagueMembership> = {}): Leag
     userId: 'user-1',
     role: LeagueRole.MEMBER,
     status: LeagueMembershipStatus.ACTIVE,
-    permissions: [],
     joinedAt: new Date('2026-01-01'),
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),

@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-r
 import { useAuth } from '@/features/auth/auth-provider';
 import { listLeagues } from '@/lib/api';
 import { AccountMenu } from '@/features/account/account-menu';
+import { formatUserName } from '@/features/account/user-name';
 import {
   CreateLeagueModal,
   buildCreateLeagueDestination,
@@ -88,7 +89,7 @@ export function AppShell() {
                   Help
                 </button>
                 <AccountMenu
-                  displayName={auth.user?.displayName ?? 'Account'}
+                  userName={formatUserName(auth.user?.firstName, auth.user?.lastName)}
                   onLogout={() => auth.clearSession().then(() => navigate('/', { replace: true }))}
                 />
               </>

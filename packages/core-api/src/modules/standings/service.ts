@@ -5,6 +5,8 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import { formatUserFullName } from '../../core/user-name';
+import { SquadMembershipStatus } from '@poolmaster/shared/domain';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -134,7 +136,7 @@ export class StandingsService {
         squad: {
           include: {
             memberships: {
-              where: { status: 'ACTIVE' },
+              where: { status: SquadMembershipStatus.ACTIVE },
               include: { user: true },
               orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
             },
@@ -166,7 +168,10 @@ export class StandingsService {
         movement: computeMovement(rank, entry.standingsPosition ?? null),
         entryId: entry.id,
         entryName: entry?.name ?? 'Unknown',
-        ownerDisplayName: ownerMembership?.user?.displayName ?? entry?.squad.name ?? 'Unknown',
+        ownerDisplayName:
+          (ownerMembership?.user
+            ? formatUserFullName(ownerMembership.user.firstName, ownerMembership.user.lastName)
+            : null) ?? entry?.squad.name ?? 'Unknown',
         ownerId: ownerMembership?.user?.id ?? '',
         totalScore: entry.totalScore,
         isEliminated: entry?.isEliminated ?? false,
@@ -221,7 +226,8 @@ function assignRanksFromEntries(
       memberships: Array<{
         user: {
           id: string;
-          displayName: string;
+          firstName: string;
+          lastName: string;
         };
       }>;
     };

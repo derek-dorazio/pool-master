@@ -1,9 +1,10 @@
 /**
- * Admin DTOs — request/response schemas for admin panel endpoints.
+ * Admin DTOs — request/response schemas for root-admin endpoints.
  */
 import { z } from 'zod';
-import { AuthProvider, ContestStatus, LeagueRole, Sport } from '@poolmaster/shared/domain';
+import { Sport } from '@poolmaster/shared/domain';
 import { PaginatedSchema } from './common.dto';
+import { UserProfileDtoSchema } from './auth.dto';
 
 const SportSchema = z.enum([
   Sport.GOLF,
@@ -21,25 +22,6 @@ const SportSchema = z.enum([
   Sport.MLB,
   Sport.UFC,
 ]);
-const LeagueRoleSchema = z.enum([
-  LeagueRole.COMMISSIONER,
-  LeagueRole.MEMBER,
-]);
-const ContestStatusSchema = z.enum([
-  ContestStatus.DRAFT,
-  ContestStatus.OPEN,
-  ContestStatus.DRAFTING,
-  ContestStatus.LOCKED,
-  ContestStatus.ACTIVE,
-  ContestStatus.COMPLETED,
-  ContestStatus.CANCELLED,
-]);
-const AuthProviderSchema = z.enum([
-  AuthProvider.EMAIL,
-  AuthProvider.GOOGLE,
-  AuthProvider.APPLE,
-]);
-
 // --- Response Sub-schemas ---
 
 export const MetricValueDtoSchema = z.object({
@@ -57,73 +39,9 @@ export const PlatformMetricsResponseSchema = z.object({
 }).describe('Top-line platform metrics response.');
 export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSchema>;
 
-export const UserLeagueMembershipSummaryDtoSchema = z.object({
-  id: z.string().describe('League identifier.'),
-  name: z.string().describe('League display name.'),
-  role: LeagueRoleSchema.describe('User role in the league.'),
-}).describe('Compact league summary included in admin user lists.');
-export type UserLeagueMembershipSummaryDto = z.infer<typeof UserLeagueMembershipSummaryDtoSchema>;
-
-export const UserListItemDtoSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-  leagues: z.array(UserLeagueMembershipSummaryDtoSchema),
-  lastLoginAt: z.string().datetime().optional(),
-  isActive: z.boolean().describe('Whether the account is currently active for normal sign-in and product usage.'),
-  createdAt: z.string().datetime(),
-}).describe('Admin user-list row.');
-export type UserListItemDto = z.infer<typeof UserListItemDtoSchema>;
-
-export const UserListResponseSchema = PaginatedSchema(UserListItemDtoSchema);
+export const UserListResponseSchema = PaginatedSchema(UserProfileDtoSchema);
 export type UserListResponse = z.infer<typeof UserListResponseSchema>;
-
-export const UserLeagueDetailDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  role: LeagueRoleSchema,
-  joinedAt: z.string().datetime().optional(),
-}).describe('Expanded league detail embedded in admin user detail responses.');
-export type UserLeagueDetailDto = z.infer<typeof UserLeagueDetailDtoSchema>;
-
-export const UserContestDetailDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  sport: SportSchema,
-  status: ContestStatusSchema,
-  rank: z.number().optional(),
-}).describe('Active contest detail embedded in admin user detail responses.');
-export type UserContestDetailDto = z.infer<typeof UserContestDetailDtoSchema>;
-
-export const UserDeviceDtoSchema = z.object({
-  id: z.string(),
-  platform: z.string(),
-  lastActiveAt: z.string().datetime(),
-  tokenStatus: z.string(),
-}).describe('Known user device summary.');
-export type UserDeviceDto = z.infer<typeof UserDeviceDtoSchema>;
-
-export const UserAuthEventDtoSchema = z.object({
-  type: z.string(),
-  timestamp: z.string().datetime(),
-  ipAddress: z.string().optional(),
-  success: z.boolean(),
-}).describe('Recent authentication event shown in admin user detail.');
-export type UserAuthEventDto = z.infer<typeof UserAuthEventDtoSchema>;
-
-export const UserDetailResponseSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-  authProvider: AuthProviderSchema.optional(),
-  isActive: z.boolean().describe('Whether the account is currently active for normal sign-in and product usage.'),
-  createdAt: z.string().datetime(),
-  lastLoginAt: z.string().datetime().optional(),
-  leagues: z.array(UserLeagueDetailDtoSchema),
-  activeContests: z.array(UserContestDetailDtoSchema),
-  devices: z.array(UserDeviceDtoSchema),
-  recentAuthEvents: z.array(UserAuthEventDtoSchema),
-}).describe('Admin user-detail response.');
+export const UserDetailResponseSchema = UserProfileDtoSchema.describe('Root-admin user-detail response.');
 export type UserDetailResponse = z.infer<typeof UserDetailResponseSchema>;
 
 export const AdminServiceDependencyDtoSchema = z.object({
@@ -245,7 +163,7 @@ export const ProviderIngestionJobDtoSchema = z.object({
   providerId: z.string(),
   sport: SportSchema,
   eventId: z.string().nullable(),
-  status: z.enum(['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED']),
+  status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']),
   startedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   recordsProcessed: z.number(),
@@ -288,109 +206,6 @@ export const ProviderIngestionDashboardResponseSchema = z.object({
   throughputPerMinute: z.number(),
 }).describe('Admin provider-ingestion dashboard response.');
 export type ProviderIngestionDashboardResponse = z.infer<typeof ProviderIngestionDashboardResponseSchema>;
-
-export const ContestListItemDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  leagueName: z.string(),
-  sport: z.string(),
-  contestType: z.string(),
-  selectionType: z.string(),
-  status: z.string(),
-  entryCount: z.number(),
-  createdAt: z.string().datetime(),
-}).describe('Admin contest-list row.');
-export type ContestListItemDto = z.infer<typeof ContestListItemDtoSchema>;
-
-export const AdminContestListResponseSchema = z.object({
-  items: z.array(ContestListItemDtoSchema).describe('Contest page or slice returned by the API.'),
-  total: z.number().describe('Total contests matching the admin query.'),
-}).describe('Admin contest-list response.');
-export type AdminContestListResponse = z.infer<typeof AdminContestListResponseSchema>;
-
-export const ContestEntryStandingDtoSchema = z.object({
-  entryId: z.string(),
-  entryName: z.string(),
-  ownerEmail: z.string(),
-  standingsPosition: z.number(),
-  totalScore: z.number(),
-}).describe('Admin-facing standing row for a contest entry.');
-export type ContestEntryStandingDto = z.infer<typeof ContestEntryStandingDtoSchema>;
-
-export const ContestDraftStatusDtoSchema = z.object({
-  status: z.string(),
-  currentPick: z.number(),
-  totalPicks: z.number(),
-  startedAt: z.string().datetime().nullable().optional(),
-}).describe('Current draft status snapshot for a contest.');
-export type ContestDraftStatusDto = z.infer<typeof ContestDraftStatusDtoSchema>;
-
-export const AdminDraftPickHistoryDtoSchema = z.object({
-  round: z.number(),
-  pick: z.number(),
-  participant: z.string(),
-  owner: z.string(),
-  autoPicked: z.boolean(),
-  time: z.string().datetime(),
-}).describe('Draft pick-history row shown in admin contest detail.');
-export type AdminDraftPickHistoryDto = z.infer<
-  typeof AdminDraftPickHistoryDtoSchema
->;
-
-export const ContestOverrideDtoSchema = z.object({
-  id: z.string(),
-  adminEmail: z.string(),
-  entryId: z.string(),
-  oldScore: z.number(),
-  newScore: z.number(),
-  reason: z.string(),
-  createdAt: z.string().datetime(),
-}).describe('Manual score override record.');
-export type ContestOverrideDto = z.infer<typeof ContestOverrideDtoSchema>;
-
-export const ContestRankChangeDtoSchema = z.object({
-  entryId: z.string(),
-  oldRank: z.number(),
-  newRank: z.number(),
-}).describe('Per-entry rank change returned from a contest recalculation.');
-export type ContestRankChangeDto = z.infer<typeof ContestRankChangeDtoSchema>;
-
-export const ContestRecalculationResultDtoSchema = z.object({
-  contestId: z.string(),
-  entriesAffected: z.number(),
-  rankChanges: z.array(ContestRankChangeDtoSchema),
-  recalculatedAt: z.string().datetime(),
-}).describe('Contest recalculation result summary.');
-export type ContestRecalculationResultDto = z.infer<typeof ContestRecalculationResultDtoSchema>;
-
-export const ContestAdminDetailResponseSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  sport: z.string(),
-  contestType: z.string(),
-  selectionType: z.string(),
-  scoringEngine: z.string(),
-  status: z.string(),
-  leagueName: z.string(),
-  leagueId: z.string(),
-  entryCount: z.number(),
-  startsAt: z.string().datetime().nullable().optional(),
-  endsAt: z.string().datetime().nullable().optional(),
-  lockAt: z.string().datetime().nullable().optional(),
-  createdAt: z.string().datetime(),
-  standings: z.array(ContestEntryStandingDtoSchema),
-  draftStatus: ContestDraftStatusDtoSchema.optional(),
-  draftPickHistories: z.array(AdminDraftPickHistoryDtoSchema),
-  scoringFreshness: z.object({
-    lastStatEvent: z.string().datetime().nullable().optional(),
-    isStale: z.boolean(),
-    staleMinutes: z.number(),
-  }),
-  statEventCount: z.number(),
-  correctionsApplied: z.number(),
-  overrides: z.array(ContestOverrideDtoSchema),
-}).describe('Expanded contest detail used by admin contest-management surfaces.');
-export type ContestAdminDetailResponse = z.infer<typeof ContestAdminDetailResponseSchema>;
 
 export const ErrorLogEntryDtoSchema = z.object({
   id: z.string(),

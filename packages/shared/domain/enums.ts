@@ -262,40 +262,6 @@ export const InvitationStatus = {
 } as const;
 export type InvitationStatus = (typeof InvitationStatus)[keyof typeof InvitationStatus];
 
-// --- Commissioner Permissions ---
-
-export const CommissionerPermission = {
-  // League management
-  LEAGUE_MANAGE_EDIT: 'league.manage.edit',
-  LEAGUE_MEMBERS_INVITE: 'league.members.invite',
-  LEAGUE_MEMBERS_REMOVE: 'league.members.remove',
-  LEAGUE_MEMBERS_ROLE_CHANGE: 'league.members.role.change',
-  // Contest management
-  CONTEST_CREATE: 'contest.create',
-  CONTEST_EDIT: 'contest.edit',
-  CONTEST_DELETE: 'contest.delete',
-  CONTEST_CLOSE: 'contest.close',
-  CONTEST_REOPEN: 'contest.reopen',
-  // Draft management
-  DRAFT_START: 'draft.start',
-  DRAFT_PAUSE: 'draft.pause',
-  DRAFT_UNDO_PICK: 'draft.undo_pick',
-  DRAFT_OVERRIDE_PICK: 'draft.override_pick',
-  DRAFT_EXTEND_CLOCK: 'draft.extend_clock',
-  // Scoring & results
-  SCORING_OVERRIDE: 'scoring.override',
-  SCORING_RECALCULATE: 'scoring.recalculate',
-  RESULTS_OVERRIDE: 'results.override',
-  PAYOUT_CONFIRM: 'payout.confirm',
-  PAYOUT_RECALCULATE: 'payout.recalculate',
-  // Communication
-  ANNOUNCEMENT_POST: 'announcement.post',
-  ANNOUNCEMENT_PIN: 'announcement.pin',
-  MESSAGE_DELETE: 'message.delete',
-  MEMBER_MUTE: 'member.mute',
-} as const;
-export type CommissionerPermission = (typeof CommissionerPermission)[keyof typeof CommissionerPermission];
-
 // --- Week Day ---
 
 export const WeekDay = {
@@ -355,13 +321,6 @@ export const AdminRole = {
   VIEWER: 'VIEWER',
 } as const;
 export type AdminRole = (typeof AdminRole)[keyof typeof AdminRole];
-
-export const ActionItemPriority = {
-  HIGH: 'HIGH',
-  MEDIUM: 'MEDIUM',
-  LOW: 'LOW',
-} as const;
-export type ActionItemPriority = (typeof ActionItemPriority)[keyof typeof ActionItemPriority];
 
 // --- Announcements ---
 

@@ -9,7 +9,6 @@
 
 import type {
   AuthProvider,
-  CommissionerPermission,
   ContestStatus,
   ContestType,
   DateFormat,
@@ -45,7 +44,8 @@ export interface DomainEntity {
 /** Core user-account record used across PoolMaster services. */
 export interface User extends DomainEntity {
   email: string;
-  displayName: string;
+  firstName: string;
+  lastName: string;
   isActive: boolean;
   authProvider?: AuthProvider;
   authId?: string;
@@ -68,13 +68,12 @@ export interface League extends DomainEntity {
   joinPolicy: JoinPolicy;
 }
 
-/** User membership within a league, including role and commissioner permissions. */
+/** User membership within a league. */
 export interface LeagueMembership extends DomainEntity {
   leagueId: string;
   userId: string;
   role: LeagueRole;
   status: LeagueMembershipStatus;
-  permissions: CommissionerPermission[];
   joinedAt: Date;
 }
 
@@ -476,25 +475,12 @@ export interface MigrationRun {
 export interface ActionItem extends DomainEntity {
   leagueId: string;
   contestId?: string;
-  type: ActionItemType;
-  priority: ActionItemPriority;
   title: string;
   description?: string;
   actionUrl?: string;
   resolved: boolean;
   resolvedAt?: Date;
 }
-
-export type ActionItemType =
-  | 'DRAFT_STARTING'
-  | 'PAYOUT_PENDING'
-  | 'JOIN_REQUEST'
-  | 'SCORE_OVERRIDE_NEEDED'
-  | 'MEMBER_INACTIVE'
-  | 'CONTEST_ENDING'
-  | 'DATA_ISSUE';
-
-export type ActionItemPriority = 'HIGH' | 'MEDIUM' | 'LOW';
 
 export interface CommissionerDashboard {
   league: League;
@@ -509,7 +495,8 @@ export interface CommissionerDashboard {
 /** Member activity event surfaced in commissioner dashboards. */
 export interface MemberActivityEvent {
   userId: string;
-  displayName: string;
+  firstName?: string;
+  lastName?: string;
   action: string;
   timestamp: Date;
 }

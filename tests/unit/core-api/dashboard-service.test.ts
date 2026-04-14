@@ -13,6 +13,7 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
   return {
     findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
     findByCode: jest.fn().mockResolvedValue(null),
+    findAll: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
     delete: jest.fn().mockResolvedValue(undefined),
@@ -84,8 +85,6 @@ function createMockActionItemRepo(
       {
         id: 'ai-1',
         leagueId: 'league-1',
-        type: 'JOIN_REQUEST',
-        priority: 'HIGH',
         title: 'New join request',
         resolved: false,
         createdAt: new Date(),
@@ -101,8 +100,6 @@ function createMockActionItemRepo(
     resolve: jest.fn().mockImplementation(async (id) => ({
       id,
       leagueId: 'league-1',
-      type: 'JOIN_REQUEST',
-      priority: 'HIGH',
       title: 'Resolved',
       resolved: true,
       resolvedAt: new Date(),
@@ -229,8 +226,6 @@ describe('DashboardService', () => {
       );
       const item = await service.createActionItem({
         leagueId: 'league-1',
-        type: 'PAYOUT_PENDING',
-        priority: 'MEDIUM',
         title: 'Confirm payouts for NFL Week 14',
         resolved: false,
       });

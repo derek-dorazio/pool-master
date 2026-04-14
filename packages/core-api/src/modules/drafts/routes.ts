@@ -11,6 +11,7 @@ import { PrismaClient } from '@prisma/client';
 import {
   DraftStatus,
   SelectionType,
+  SquadMembershipStatus,
 } from '@poolmaster/shared/domain';
 import {
   zodToJsonSchema,
@@ -321,7 +322,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
     : await prisma.squadMembership.findMany({
         where: {
           squadId: { in: squadIds },
-          status: 'ACTIVE',
+          status: SquadMembershipStatus.ACTIVE,
         },
         orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
       });

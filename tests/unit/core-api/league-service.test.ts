@@ -7,6 +7,7 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
   return {
     findById: jest.fn().mockResolvedValue(null),
     findByCode: jest.fn().mockResolvedValue(null),
+    findAll: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
       id: 'new-league-id',

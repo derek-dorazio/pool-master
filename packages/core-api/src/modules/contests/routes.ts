@@ -4,7 +4,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { CommissionerPermission } from '@poolmaster/shared/domain';
 import {
   AdjustContestScoreRequestSchema,
   CloseContestRequestSchema,
@@ -38,7 +37,7 @@ import {
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
 } from '../../adapters';
-import { requirePermission } from '../../core/require-permission';
+import { requireCommissioner } from '../leagues/permissions';
 import { ContestService } from './service';
 import { OverrideService } from './override-service';
 import { ContestScoringRecalculationService } from '../contest-scoring';
@@ -96,7 +95,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requirePermission(membershipRepo, CommissionerPermission.CONTEST_CREATE),
+    preHandler: requireCommissioner(membershipRepo),
     handler: handlers.createContest,
   });
 }

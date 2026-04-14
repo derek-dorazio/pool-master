@@ -2,9 +2,9 @@
  * Prisma adapter for LeagueRepository port.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { League as PrismaLeague, PrismaClient } from '@prisma/client';
 import type { LeagueRepository } from '@poolmaster/shared/db';
-import type { League } from '@poolmaster/shared/domain';
+import type { JoinPolicy, League } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueRepository implements LeagueRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -21,6 +21,13 @@ export class PrismaLeagueRepository implements LeagueRepository {
       where: { leagueCode: code },
     });
     return row ? mapToLeague(row) : null;
+  }
+
+  async findAll(): Promise<League[]> {
+    const rows = await this.prisma.league.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map(mapToLeague);
   }
 
   async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League> {
@@ -56,17 +63,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
   }
 }
 
-function mapToLeague(row: {
-  id: string;
-  leagueCode: string;
-  name: string;
-  description: string | null;
-  createdBy: string;
-  isActive: boolean;
-  joinPolicy: string;
-  createdAt: Date;
-  updatedAt: Date;
-}): League {
+function mapToLeague(row: PrismaLeague): League {
   return {
     id: row.id,
     leagueCode: row.leagueCode,
@@ -74,7 +71,7 @@ function mapToLeague(row: {
     description: row.description ?? undefined,
     createdBy: row.createdBy,
     isActive: row.isActive,
-    joinPolicy: row.joinPolicy as League['joinPolicy'],
+    joinPolicy: row.joinPolicy as JoinPolicy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

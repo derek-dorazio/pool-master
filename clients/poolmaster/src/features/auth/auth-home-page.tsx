@@ -128,7 +128,8 @@ export function AuthHomePage() {
         body: {
           email: values.email,
           password: values.password,
-          displayName: `${values.firstName.trim()} ${values.lastName.trim()}`.trim(),
+          firstName: values.firstName.trim(),
+          lastName: values.lastName.trim(),
         },
       });
 

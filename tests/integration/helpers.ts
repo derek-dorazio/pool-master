@@ -123,7 +123,14 @@ export async function teardownIntegrationTests(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 interface TestUserResult {
-  user: { id: string; email: string; displayName: string; isRootAdmin: boolean };
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    displayName: string;
+    isRootAdmin: boolean;
+  };
   headers: Record<string, string>;
   accessToken: string;
 }
@@ -133,20 +140,26 @@ interface TestUserResult {
  */
 export async function createTestUser(overrides: {
   email?: string;
+  firstName?: string;
+  lastName?: string;
   displayName?: string;
   password?: string;
   isRootAdmin?: boolean;
 } = {}): Promise<TestUserResult> {
   const id = randomUUID();
   const email = overrides.email ?? `test-${id.slice(0, 8)}@integration.test`;
-  const displayName = overrides.displayName ?? `Test User ${id.slice(0, 8)}`;
+  const fallbackName = overrides.displayName ?? `Test User ${id.slice(0, 8)}`;
+  const [fallbackFirstName, ...fallbackLastParts] = fallbackName.split(/\s+/);
+  const firstName = overrides.firstName ?? fallbackFirstName ?? 'Test';
+  const lastName = overrides.lastName ?? (fallbackLastParts.join(' ').trim() || 'User');
   const passwordHash = await bcrypt.hash(overrides.password ?? 'TestPass123', 10);
 
   const user = await prisma.user.create({
     data: {
       id,
       email,
-      displayName,
+      firstName,
+      lastName,
       passwordHash,
       isRootAdmin: overrides.isRootAdmin ?? false,
     },
@@ -162,7 +175,9 @@ export async function createTestUser(overrides: {
     user: {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      displayName: `${user.firstName} ${user.lastName}`,
       isRootAdmin: user.isRootAdmin,
     },
     headers: {

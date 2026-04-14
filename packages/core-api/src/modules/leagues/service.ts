@@ -9,7 +9,6 @@ import type {
   LeagueMembership,
 } from '@poolmaster/shared/domain';
 import { JoinPolicy, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
-import { ALL_COMMISSIONER_PERMISSIONS } from '../../core/permissions';
 
 export interface CreateLeagueInput {
   createdBy: string;
@@ -21,6 +20,11 @@ export interface CreateLeagueInput {
 export interface UserLeagueView {
   league: League;
   membership: LeagueMembership;
+}
+
+export interface RootAdminLeagueView {
+  league: League;
+  role: LeagueRole;
 }
 
 const DEFAULT_JOIN_POLICY = JoinPolicy.COMMISSIONER_ONLY;
@@ -51,7 +55,6 @@ export class LeagueService {
       userId: input.createdBy,
       role: LeagueRole.COMMISSIONER,
       status: LeagueMembershipStatus.ACTIVE,
-      permissions: [...ALL_COMMISSIONER_PERMISSIONS],
       joinedAt: new Date(),
     });
     return { league, membership };
@@ -81,6 +84,14 @@ export class LeagueService {
         membership,
       }];
     });
+  }
+
+  async findAllForRootAdmin(): Promise<RootAdminLeagueView[]> {
+    const leagues = await this.leagueRepo.findAll();
+    return leagues.map((league) => ({
+      league,
+      role: LeagueRole.COMMISSIONER,
+    }));
   }
 
   async inactivateLeague(leagueId: string): Promise<League> {

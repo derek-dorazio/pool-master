@@ -1,6 +1,7 @@
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient, Squad as PrismaSquad } from '@prisma/client';
 import type { SquadRepository } from '@poolmaster/shared/db';
-import type { Squad } from '@poolmaster/shared/domain';
+import type { Squad, SquadStatus } from '@poolmaster/shared/domain';
+import { SquadStatus as SharedSquadStatus } from '@poolmaster/shared/domain';
 
 export class PrismaSquadRepository implements SquadRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -14,7 +15,7 @@ export class PrismaSquadRepository implements SquadRepository {
     const rows = await this.prisma.squad.findMany({
       where: {
         leagueId,
-        ...(includeInactive ? {} : { status: 'ACTIVE' }),
+        ...(includeInactive ? {} : { status: SharedSquadStatus.ACTIVE }),
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -51,23 +52,14 @@ export class PrismaSquadRepository implements SquadRepository {
   }
 }
 
-function mapToSquad(row: {
-  id: string;
-  leagueId: string;
-  createdBy: string;
-  name: string;
-  iconUrl: string | null;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-}): Squad {
+function mapToSquad(row: PrismaSquad): Squad {
   return {
     id: row.id,
     leagueId: row.leagueId,
     createdBy: row.createdBy,
     name: row.name,
     iconUrl: row.iconUrl ?? undefined,
-    status: row.status as Squad['status'],
+    status: row.status as SquadStatus,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

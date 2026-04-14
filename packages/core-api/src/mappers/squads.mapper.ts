@@ -3,14 +3,16 @@ import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 
 export function toSquadMembershipDto(
   membership: SquadMembership,
-  displayName?: string,
+  firstName?: string,
+  lastName?: string,
 ): SquadMembershipDto {
   return {
     id: membership.id,
     squadId: membership.squadId,
     leagueId: membership.leagueId,
     userId: membership.userId,
-    displayName,
+    firstName,
+    lastName,
     status: membership.status,
     joinedAt: membership.joinedAt.toISOString(),
     createdAt: membership.createdAt.toISOString(),

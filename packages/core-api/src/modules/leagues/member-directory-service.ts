@@ -12,7 +12,8 @@ export class MemberDirectoryService {
       include: {
         user: {
           select: {
-            displayName: true,
+            firstName: true,
+            lastName: true,
           },
         },
       },
@@ -22,7 +23,8 @@ export class MemberDirectoryService {
     return rows.map((row) => ({
       id: row.id,
       userId: row.userId,
-      displayName: row.user.displayName,
+      firstName: row.user.firstName,
+      lastName: row.user.lastName,
       role: row.role as LeagueRole,
       joinedAt: row.joinedAt.toISOString(),
     }));

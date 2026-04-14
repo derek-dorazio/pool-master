@@ -23,6 +23,7 @@ import {
 export interface AuthUser {
   userId: string;
   email: string;
+  isRootAdmin: boolean;
 }
 
 // Extend Fastify request to carry auth context
@@ -41,8 +42,6 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/auth/login',
   'POST /api/v1/auth/refresh',
   'POST /api/v1/auth/logout',
-  'POST /api/v1/auth/forgot-password',
-  'POST /api/v1/auth/callback',
 ]);
 
 const PUBLIC_ROUTE_PATTERNS = [
@@ -83,6 +82,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
       const payload = jwt.verify(accessToken, jwtSecret) as {
         sub: string;
         email: string;
+        isRootAdmin?: boolean;
       };
 
       const usingCookieSession = !authHeader?.startsWith('Bearer ');
@@ -97,6 +97,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
       request.authUser = {
         userId: payload.sub,
         email: payload.email,
+        isRootAdmin: payload.isRootAdmin === true,
       };
 
     } catch {

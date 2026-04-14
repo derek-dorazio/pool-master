@@ -10,6 +10,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
+  AccountPasswordChangeResponseSchema,
   AccountDeleteResponseSchema,
   AccountResponseSchema,
   ContestManagementResponseSchema,
@@ -261,6 +262,48 @@ describe('Contract verification (web)', () => {
 
   it('account lifecycle routes match their shared response DTOs', async () => {
     const user = await createTestUser({ displayName: 'Contract Account User' });
+
+    const profileRes = await getApp().inject({
+      method: 'PUT',
+      url: API_ROUTES.account.profile,
+      headers: user.headers,
+      payload: {
+        firstName: 'Updated',
+        lastName: 'Person',
+      },
+    });
+
+    expect(profileRes.statusCode).toBe(200);
+    expect(AccountResponseSchema.safeParse(profileRes.json()).success).toBe(true);
+
+    const preferencesRes = await getApp().inject({
+      method: 'PUT',
+      url: API_ROUTES.account.preferences,
+      headers: user.headers,
+      payload: {
+        timezone: 'America/New_York',
+        locale: 'en-US',
+        timeFormat: '12H',
+        dateFormat: 'MDY',
+      },
+    });
+
+    expect(preferencesRes.statusCode).toBe(200);
+    expect(AccountResponseSchema.safeParse(preferencesRes.json()).success).toBe(true);
+
+    const passwordRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.account.password,
+      headers: user.headers,
+      payload: {
+        currentPassword: 'TestPass123',
+        newPassword: 'UpdatedPassword123!',
+        confirmNewPassword: 'UpdatedPassword123!',
+      },
+    });
+
+    expect(passwordRes.statusCode).toBe(200);
+    expect(AccountPasswordChangeResponseSchema.safeParse(passwordRes.json()).success).toBe(true);
 
     const inactivateRes = await getApp().inject({
       method: 'POST',

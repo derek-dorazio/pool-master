@@ -26,6 +26,7 @@ export interface TokenPair {
 export interface JwtPayload {
   sub: string;
   email: string;
+  isRootAdmin: boolean;
   iat: number;
   exp: number;
 }
@@ -33,7 +34,8 @@ export interface JwtPayload {
 export interface UserProfile {
   id: string;
   email: string;
-  displayName: string;
+  firstName: string;
+  lastName: string;
   isActive: boolean;
   isRootAdmin: boolean;
   authProvider?: AuthProvider;
@@ -84,7 +86,8 @@ export class AuthService {
   async register(
     email: string,
     password: string,
-    displayName: string,
+    firstName: string,
+    lastName: string,
   ): Promise<{ user: UserProfile; tokens: TokenPair }> {
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -97,12 +100,13 @@ export class AuthService {
       data: {
         email,
         passwordHash,
-        displayName,
+        firstName,
+        lastName,
         authProvider: PrismaUserAuthProvider.EMAIL,
       },
     });
 
-    const tokens = await this.issueTokens(user.id, user.email);
+    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
 
     return {
       user: mapUserProfile(user),
@@ -131,7 +135,7 @@ export class AuthService {
       throw new AuthError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
-    const tokens = await this.issueTokens(user.id, user.email);
+    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
 
     return {
       user: mapUserProfile(user),
@@ -165,7 +169,7 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    return this.issueTokens(stored.user.id, stored.user.email);
+    return this.issueTokens(stored.user.id, stored.user.email, stored.user.isRootAdmin);
   }
 
   /**
@@ -200,15 +204,31 @@ export class AuthService {
     return mapUserProfile(user);
   }
 
+  async issueSessionForUser(userId: string): Promise<TokenPair> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new AuthError('User not found', 'USER_NOT_FOUND', 404);
+    }
+    if (!user.isActive) {
+      throw new AuthError(
+        'This account is inactive. Session refresh is unavailable.',
+        'ACCOUNT_INACTIVE',
+        403,
+      );
+    }
+
+    return this.issueTokens(user.id, user.email, user.isRootAdmin);
+  }
+
   // -------------------------------------------------------------------------
   // Private helpers
   // -------------------------------------------------------------------------
 
-  private async issueTokens(userId: string, email: string): Promise<TokenPair> {
+  private async issueTokens(userId: string, email: string, isRootAdmin: boolean): Promise<TokenPair> {
     const now = Math.floor(Date.now() / 1000);
 
     const accessToken = jwt.sign(
-      { sub: userId, email, iat: now, exp: now + ACCESS_TOKEN_EXPIRY },
+      { sub: userId, email, isRootAdmin, iat: now, exp: now + ACCESS_TOKEN_EXPIRY },
       this.jwtSecret,
     );
 
@@ -239,7 +259,8 @@ export class AuthService {
 function mapUserProfile(user: {
   id: string;
   email: string;
-  displayName: string;
+  firstName: string;
+  lastName: string;
   isActive: boolean;
   isRootAdmin: boolean;
   authProvider: PrismaUserAuthProvider | null;
@@ -252,7 +273,8 @@ function mapUserProfile(user: {
   return {
     id: user.id,
     email: user.email,
-    displayName: user.displayName,
+    firstName: user.firstName,
+    lastName: user.lastName,
     isActive: user.isActive,
     isRootAdmin: user.isRootAdmin,
     authProvider: mapAuthProvider(user.authProvider),

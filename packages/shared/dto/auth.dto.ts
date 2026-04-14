@@ -4,7 +4,6 @@
 import { z } from 'zod';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { SuccessSchema } from './common.dto';
-import { ErrorEnvelopeSchema } from './errors.dto';
 
 // --- Requests ---
 
@@ -15,11 +14,16 @@ export const RegisterRequestSchema = z.object({
     .min(8)
     .max(128)
     .describe('Plaintext password chosen during registration.'),
-  displayName: z
+  firstName: z
     .string()
     .min(1)
     .max(100)
-    .describe('Full display name shown across the product after account creation.'),
+    .describe('First name captured for the account profile.'),
+  lastName: z
+    .string()
+    .min(1)
+    .max(100)
+    .describe('Last name captured for the account profile.'),
 }).describe('Create-account payload for a new email/password user.');
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 
@@ -45,17 +49,6 @@ export const LogoutRequestSchema = z.object({
 }).optional().describe('Optional logout payload. Normally omitted when the refresh cookie is present.');
 export type LogoutRequest = z.infer<typeof LogoutRequestSchema>;
 
-export const ForgotPasswordRequestSchema = z.object({
-  email: z.string().email().describe('Email address that should receive password-reset instructions.'),
-}).describe('Password-reset initiation payload.');
-export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>;
-
-export const OAuthCallbackRequestSchema = z.object({
-  code: z.string().describe('Authorization code returned by the upstream OAuth provider.'),
-  state: z.string().describe('Opaque anti-forgery state value returned from the OAuth initiation step.'),
-}).describe('OAuth callback payload passed back from a provider integration.');
-export type OAuthCallbackRequest = z.infer<typeof OAuthCallbackRequestSchema>;
-
 // --- Response Sub-schemas ---
 
 export const AuthTokensDtoSchema = z.object({
@@ -69,7 +62,8 @@ export type AuthTokensDto = z.infer<typeof AuthTokensDtoSchema>;
 export const UserProfileDtoSchema = z.object({
   id: z.string().describe('Stable user identifier.'),
   email: z.string().describe('Primary email address for the user account.'),
-  displayName: z.string().describe('Name shown in league, contest, and profile surfaces.'),
+  firstName: z.string().describe('First name shown in account and member-management surfaces.'),
+  lastName: z.string().describe('Last name shown in account and member-management surfaces.'),
   isActive: z
     .boolean()
     .describe('Whether the account is currently active for normal sign-in and product usage.'),
@@ -110,11 +104,3 @@ export type TokenRefreshResponse = AuthTokensDto;
 
 export const LogoutResponseSchema = SuccessSchema;
 export type LogoutResponse = z.infer<typeof LogoutResponseSchema>;
-
-export const ForgotPasswordResponseSchema = z.object({
-  message: z.string().describe('User-safe confirmation message for the password-reset request.'),
-}).describe('Password-reset initiation acknowledgement.');
-export type ForgotPasswordResponse = z.infer<typeof ForgotPasswordResponseSchema>;
-
-export const OAuthCallbackResponseSchema = ErrorEnvelopeSchema;
-export type OAuthCallbackResponse = z.infer<typeof OAuthCallbackResponseSchema>;

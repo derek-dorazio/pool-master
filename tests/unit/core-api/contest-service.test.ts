@@ -106,6 +106,7 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
   return {
     findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
     findByCode: jest.fn().mockResolvedValue(null),
+    findAll: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
     delete: jest.fn().mockResolvedValue(undefined),
@@ -166,7 +167,7 @@ function createMockSquadMembershipRepo(
 }
 
 function createMockPrisma(overrides: Record<string, unknown> = {}) {
-  const user = buildUser({ id: 'user-1', displayName: 'Derek' });
+  const user = buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
   return {
     contestEntry: {
       findMany: jest.fn().mockResolvedValue([

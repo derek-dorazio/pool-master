@@ -41,7 +41,6 @@ export function createMemberHandlers(
         leagueId: request.params.id,
         targetUserId: request.params.uid,
         newRole: request.body.role as Parameters<MemberService['changeRole']>[0]['newRole'],
-        permissions: request.body.permissions as Parameters<MemberService['changeRole']>[0]['permissions'],
       });
       return reply.send({ membership: mapLeagueMembershipToDto(membership) });
     } catch (err) {

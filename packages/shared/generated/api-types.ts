@@ -117,46 +117,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/forgot-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Request password reset email
-         * @description Begins the password-reset flow for an email/password account. This remains a placeholder-style capability in the current product surface.
-         */
-        post: operations["forgotPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/callback": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * OAuth provider callback
-         * @description Handles an OAuth callback payload from an upstream provider. This route is documented now for contract completeness but the product flow remains deferred.
-         */
-        post: operations["oauthCallback"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/auth/me": {
         parameters: {
             query?: never;
@@ -1405,26 +1365,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/users/merge": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Merge duplicate user accounts
-         * @description Merges two user accounts when platform operations need to consolidate duplicate identities.
-         */
-        post: operations["adminMergeUsers"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/users/{userId}": {
         parameters: {
             query?: never;
@@ -1499,166 +1439,6 @@ export interface paths {
          * @description Re-enables a previously disabled user account.
          */
         post: operations["adminEnableUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List contests with filters
-         * @description Returns the platform-wide contest list with administrative filtering and search support.
-         */
-        get: operations["adminListContests"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contests/{contestId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get contest detail
-         * @description Returns the administrative detail view for a specific contest.
-         */
-        get: operations["adminGetContestDetail"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contests/{contestId}/force-close": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Force-close a contest
-         * @description Force-closes a contest through the root-admin operations surface.
-         */
-        post: operations["adminForceCloseContest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contests/{contestId}/reopen": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reopen a closed contest
-         * @description Reopens a contest through the root-admin operations surface.
-         */
-        post: operations["adminReopenContest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contests/{contestId}/override-score": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Override an entry score in a contest
-         * @description Applies a root-admin score override inside the specified contest.
-         */
-        post: operations["adminOverrideScore"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contests/{contestId}/recalculate-standings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Recalculate contest standings
-         * @description Triggers an administrative standings recalculation for the target contest.
-         */
-        post: operations["adminRecalculateStandings"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contests/{contestId}/recalculate-payouts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Recalculate contest payouts
-         * @description Triggers an administrative payout recalculation for the target contest.
-         */
-        post: operations["adminRecalculatePayouts"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contests/{contestId}/re-ingest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Re-ingest scoring data for an event
-         * @description Triggers administrative re-ingestion of scoring data for the target contest event.
-         */
-        post: operations["adminReIngestScoring"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3001,80 +2781,6 @@ export interface operations {
             };
         };
     };
-    forgotPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Password-reset initiation payload. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Email address that should receive password-reset instructions.
-                     */
-                    email: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Password-reset initiation acknowledgement. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description User-safe confirmation message for the password-reset request. */
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    oauthCallback: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description OAuth callback payload passed back from a provider integration. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Authorization code returned by the upstream OAuth provider. */
-                    code: string;
-                    /** @description Opaque anti-forgery state value returned from the OAuth initiation step. */
-                    state: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Standard API error envelope. */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
     getCurrentUser: {
         parameters: {
             query?: never;
@@ -4001,8 +3707,6 @@ export interface operations {
                      * @enum {string}
                      */
                     role: "COMMISSIONER" | "MEMBER";
-                    /** @description Optional explicit permission override list for the member. */
-                    permissions?: string[];
                 };
             };
         };
@@ -4032,8 +3736,6 @@ export interface operations {
                              * @enum {string}
                              */
                             status: "ACTIVE" | "INACTIVE";
-                            /** @description Explicit commissioner permission overrides granted to the membership. */
-                            permissions: string[];
                             /**
                              * Format: date-time
                              * @description When the user joined the league.
@@ -4310,8 +4012,6 @@ export interface operations {
                             id: string;
                             leagueId: string;
                             contestId?: string | null;
-                            type: string;
-                            priority: string;
                             title: string;
                             description: string;
                             actionUrl?: string | null;
@@ -4431,8 +4131,6 @@ export interface operations {
                             id: string;
                             leagueId: string;
                             contestId?: string | null;
-                            type: string;
-                            priority: string;
                             title: string;
                             description: string;
                             actionUrl?: string | null;
@@ -5673,8 +5371,6 @@ export interface operations {
                              * @enum {string}
                              */
                             status: "ACTIVE" | "INACTIVE";
-                            /** @description Explicit commissioner permission overrides granted to the membership. */
-                            permissions: string[];
                             /**
                              * Format: date-time
                              * @description When the user joined the league.
@@ -9690,26 +9386,40 @@ export interface operations {
                     "application/json": {
                         /** @description Current result page items. */
                         items: {
+                            /** @description Stable user identifier. */
                             id: string;
+                            /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Name shown in league, contest, and profile surfaces. */
                             displayName: string;
-                            leagues: {
-                                /** @description League identifier. */
-                                id: string;
-                                /** @description League display name. */
-                                name: string;
-                                /**
-                                 * @description User role in the league.
-                                 * @enum {string}
-                                 */
-                                role: "COMMISSIONER" | "MEMBER";
-                            }[];
-                            /** Format: date-time */
-                            lastLoginAt?: string;
                             /** @description Whether the account is currently active for normal sign-in and product usage. */
                             isActive: boolean;
-                            /** Format: date-time */
-                            createdAt: string;
+                            /** @description Whether the user has platform-level root-admin access. */
+                            isRootAdmin: boolean;
+                            /**
+                             * @description Authentication provider used for the account when known.
+                             * @enum {string}
+                             */
+                            authProvider?: "email" | "google" | "apple";
+                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                            timezone?: string;
+                            /** @description Preferred locale for formatting and localized copy. */
+                            locale?: string;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
+                            /**
+                             * Format: date-time
+                             * @description Account creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
                         }[];
                         /** @description Total number of matching records. */
                         total: number;
@@ -9719,58 +9429,6 @@ export interface operations {
                         pageSize: number;
                         /** @description Total page count for the current query. */
                         totalPages: number;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminMergeUsers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    primaryId: string;
-                    duplicateId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
                     };
                 };
             };
@@ -9806,55 +9464,47 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Admin user-detail response. */
+            /** @description Root-admin user-detail response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
+                        /** @description Stable user identifier. */
                         id: string;
+                        /** @description Primary email address for the user account. */
                         email: string;
+                        /** @description Name shown in league, contest, and profile surfaces. */
                         displayName: string;
-                        /** @enum {string} */
-                        authProvider?: "email" | "google" | "apple";
                         /** @description Whether the account is currently active for normal sign-in and product usage. */
                         isActive: boolean;
-                        /** Format: date-time */
-                        createdAt: string;
-                        /** Format: date-time */
-                        lastLoginAt?: string;
-                        leagues: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            role: "COMMISSIONER" | "MEMBER";
-                            /** Format: date-time */
-                            joinedAt?: string;
-                        }[];
-                        activeContests: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            rank?: number;
-                        }[];
-                        devices: {
-                            id: string;
-                            platform: string;
-                            /** Format: date-time */
-                            lastActiveAt: string;
-                            tokenStatus: string;
-                        }[];
-                        recentAuthEvents: {
-                            type: string;
-                            /** Format: date-time */
-                            timestamp: string;
-                            ipAddress?: string;
-                            success: boolean;
-                        }[];
+                        /** @description Whether the user has platform-level root-admin access. */
+                        isRootAdmin: boolean;
+                        /**
+                         * @description Authentication provider used for the account when known.
+                         * @enum {string}
+                         */
+                        authProvider?: "email" | "google" | "apple";
+                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                        timezone?: string;
+                        /** @description Preferred locale for formatting and localized copy. */
+                        locale?: string;
+                        /**
+                         * @description Preferred clock display used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        timeFormat?: "12H" | "24H";
+                        /**
+                         * @description Preferred date display format used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        dateFormat?: "MDY" | "DMY" | "YMD";
+                        /**
+                         * Format: date-time
+                         * @description Account creation timestamp in ISO 8601 format.
+                         */
+                        createdAt?: string;
                     };
                 };
             };
@@ -10102,620 +9752,6 @@ export interface operations {
             };
         };
     };
-    adminListContests: {
-        parameters: {
-            query?: {
-                league?: string;
-                sport?: string;
-                status?: string;
-                type?: string;
-                selection?: string;
-                page?: number;
-                pageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Admin contest-list response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Contest page or slice returned by the API. */
-                        items: {
-                            id: string;
-                            name: string;
-                            leagueName: string;
-                            sport: string;
-                            contestType: string;
-                            selectionType: string;
-                            status: string;
-                            entryCount: number;
-                            /** Format: date-time */
-                            createdAt: string;
-                        }[];
-                        /** @description Total contests matching the admin query. */
-                        total: number;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetContestDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Expanded contest detail used by admin contest-management surfaces. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        sport: string;
-                        contestType: string;
-                        selectionType: string;
-                        scoringEngine: string;
-                        status: string;
-                        leagueName: string;
-                        leagueId: string;
-                        entryCount: number;
-                        /** Format: date-time */
-                        startsAt?: string | null;
-                        /** Format: date-time */
-                        endsAt?: string | null;
-                        /** Format: date-time */
-                        lockAt?: string | null;
-                        /** Format: date-time */
-                        createdAt: string;
-                        standings: {
-                            entryId: string;
-                            entryName: string;
-                            ownerEmail: string;
-                            standingsPosition: number;
-                            totalScore: number;
-                        }[];
-                        /** @description Current draft status snapshot for a contest. */
-                        draftStatus?: {
-                            status: string;
-                            currentPick: number;
-                            totalPicks: number;
-                            /** Format: date-time */
-                            startedAt?: string | null;
-                        };
-                        draftPickHistories: {
-                            round: number;
-                            pick: number;
-                            participant: string;
-                            owner: string;
-                            autoPicked: boolean;
-                            /** Format: date-time */
-                            time: string;
-                        }[];
-                        scoringFreshness: {
-                            /** Format: date-time */
-                            lastStatEvent?: string | null;
-                            isStale: boolean;
-                            staleMinutes: number;
-                        };
-                        statEventCount: number;
-                        correctionsApplied: number;
-                        overrides: {
-                            id: string;
-                            adminEmail: string;
-                            entryId: string;
-                            oldScore: number;
-                            newScore: number;
-                            reason: string;
-                            /** Format: date-time */
-                            createdAt: string;
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminForceCloseContest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminReopenContest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminOverrideScore: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    entryId: string;
-                    newScore: number;
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminRecalculateStandings: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Contest recalculation result summary. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        contestId: string;
-                        entriesAffected: number;
-                        rankChanges: {
-                            entryId: string;
-                            oldRank: number;
-                            newRank: number;
-                        }[];
-                        /** Format: date-time */
-                        recalculatedAt: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminRecalculatePayouts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminReIngestScoring: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    eventId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Contest recalculation result summary. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        contestId: string;
-                        entriesAffected: number;
-                        rankChanges: {
-                            entryId: string;
-                            oldRank: number;
-                            newRank: number;
-                        }[];
-                        /** Format: date-time */
-                        recalculatedAt: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
     adminListProviders: {
         parameters: {
             query?: never;
@@ -10812,7 +9848,7 @@ export interface operations {
                             sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                             eventId: string | null;
                             /** @enum {string} */
-                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
                             /** Format: date-time */
                             startedAt: string | null;
                             /** Format: date-time */
@@ -10827,7 +9863,7 @@ export interface operations {
                             sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                             eventId: string | null;
                             /** @enum {string} */
-                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
                             /** Format: date-time */
                             startedAt: string | null;
                             /** Format: date-time */
@@ -11026,7 +10062,7 @@ export interface operations {
                             sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                             eventId: string | null;
                             /** @enum {string} */
-                            status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
                             /** Format: date-time */
                             startedAt: string | null;
                             /** Format: date-time */

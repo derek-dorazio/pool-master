@@ -42,6 +42,7 @@ export interface UserRepository {
 export interface LeagueRepository {
   findById(id: string): Promise<League | null>;
   findByCode(code: string): Promise<League | null>;
+  findAll(): Promise<League[]>;
   create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
   delete(id: string): Promise<void>;

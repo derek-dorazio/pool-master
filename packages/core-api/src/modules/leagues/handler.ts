@@ -10,6 +10,7 @@ import {
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueService } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
+import { LeagueRole } from '@poolmaster/shared/domain';
 
 export function createLeagueHandlers(leagueService: LeagueService) {
   return {
@@ -29,10 +30,12 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     if (!userId) {
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
-    const leagues = await leagueService.findByUser(userId);
+    const leagues = request.authUser?.isRootAdmin
+      ? await leagueService.findAllForRootAdmin()
+      : await leagueService.findByUser(userId);
     return {
-      leagues: leagues.map(({ league, membership }) => toLeagueSummaryDto(league, {
-        role: membership.role,
+      leagues: leagues.map((item) => toLeagueSummaryDto(item.league, {
+        role: 'role' in item ? item.role : item.membership.role,
       })),
     };
   }
@@ -84,7 +87,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       league: toLeagueDetailDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
-        role: membership?.role,
+        role: request.authUser?.isRootAdmin ? LeagueRole.COMMISSIONER : membership?.role,
       }),
     });
   }
@@ -105,7 +108,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       league: toLeagueDetailDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
-        role: membership?.role,
+        role: request.authUser?.isRootAdmin ? LeagueRole.COMMISSIONER : membership?.role,
       }),
     });
   }

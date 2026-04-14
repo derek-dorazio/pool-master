@@ -2,9 +2,10 @@
  * Prisma adapter for LeagueInvitationRepository port.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { LeagueInvitation as PrismaLeagueInvitation, PrismaClient } from '@prisma/client';
 import type { LeagueInvitationRepository } from '@poolmaster/shared/db';
-import type { LeagueInvitation } from '@poolmaster/shared/domain';
+import type { InviteType, InvitationStatus, LeagueInvitation } from '@poolmaster/shared/domain';
+import { InvitationStatus as SharedInvitationStatus } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueInvitationRepository implements LeagueInvitationRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -31,7 +32,7 @@ export class PrismaLeagueInvitationRepository implements LeagueInvitationReposit
 
   async findByEmail(leagueId: string, email: string): Promise<LeagueInvitation | null> {
     const row = await this.prisma.leagueInvitation.findFirst({
-      where: { leagueId, email, status: 'PENDING' },
+      where: { leagueId, email, status: SharedInvitationStatus.PENDING },
     });
     return row ? mapToInvitation(row) : null;
   }
@@ -75,29 +76,14 @@ export class PrismaLeagueInvitationRepository implements LeagueInvitationReposit
   }
 }
 
-function mapToInvitation(row: {
-  id: string;
-  leagueId: string;
-  email: string | null;
-  inviteCode: string;
-  inviteType: string;
-  status: string;
-  maxUses: number;
-  currentUses: number;
-  invitedBy: string;
-  expiresAt: Date | null;
-  acceptedAt: Date | null;
-  acceptedBy: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}): LeagueInvitation {
+function mapToInvitation(row: PrismaLeagueInvitation): LeagueInvitation {
   return {
     id: row.id,
     leagueId: row.leagueId,
     email: row.email ?? undefined,
     inviteCode: row.inviteCode,
-    inviteType: row.inviteType as LeagueInvitation['inviteType'],
-    status: row.status as LeagueInvitation['status'],
+    inviteType: row.inviteType as InviteType,
+    status: row.status as InvitationStatus,
     maxUses: row.maxUses,
     currentUses: row.currentUses,
     invitedBy: row.invitedBy,

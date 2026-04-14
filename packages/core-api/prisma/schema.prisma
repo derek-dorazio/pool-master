@@ -24,6 +24,85 @@ enum UserDateFormat {
   YMD
 }
 
+enum PrismaLeagueJoinPolicy {
+  COMMISSIONER_ONLY
+  LINK_INVITE
+  OPEN
+}
+
+enum PrismaLeagueRole {
+  COMMISSIONER
+  MEMBER
+}
+
+enum PrismaLeagueMembershipStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PrismaSquadStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PrismaSquadMembershipStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PrismaLeagueInviteType {
+  EMAIL
+  LINK
+}
+
+enum PrismaLeagueInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum PrismaParticipantType {
+  INDIVIDUAL
+  TEAM
+}
+
+enum PrismaParticipantStatus {
+  ACTIVE
+  INACTIVE
+  RETIRED
+  SUSPENDED
+}
+
+enum PrismaParticipantFormTrend {
+  RISING
+  STABLE
+  FALLING
+}
+
+enum PrismaParticipantMappingConfidence {
+  EXACT
+  HIGH
+  MANUAL
+}
+
+enum PrismaSport {
+  GOLF
+  NFL
+  NBA
+  F1
+  NASCAR
+  NCAA_BASKETBALL
+  NCAA_HOCKEY
+  NCAA_FOOTBALL
+  TENNIS
+  HORSE_RACING
+  SOCCER
+  NHL
+  MLB
+  UFC
+}
+
 // =============================================================================
 // UTC Storage Convention
 // =============================================================================
@@ -48,7 +127,8 @@ model User {
   id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
   passwordHash String?  @map("password_hash")
-  displayName  String   @map("display_name")
+  firstName    String   @map("first_name") @db.VarChar(100)
+  lastName     String   @map("last_name") @db.VarChar(100)
   isActive     Boolean  @default(true) @map("is_active")
   authProvider UserAuthProvider?  @map("auth_provider")
   authId       String?  @map("auth_id")
@@ -100,7 +180,7 @@ model League {
   description String?
   createdBy   String   @map("created_by") @db.Uuid
   isActive    Boolean  @default(true) @map("is_active")
-  joinPolicy  String   @default("COMMISSIONER_ONLY") @map("join_policy") @db.VarChar(30)
+  joinPolicy  PrismaLeagueJoinPolicy @default(COMMISSIONER_ONLY) @map("join_policy")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -119,9 +199,8 @@ model LeagueMembership {
   id          String   @id @default(uuid()) @db.Uuid
   leagueId    String   @map("league_id") @db.Uuid
   userId      String   @map("user_id") @db.Uuid
-  role        String   @default("MEMBER")
-  status      String   @default("ACTIVE") @db.VarChar(20)
-  permissions Json     @default("[]")
+  role        PrismaLeagueRole @default(MEMBER)
+  status      PrismaLeagueMembershipStatus @default(ACTIVE)
   joinedAt    DateTime @default(now()) @map("joined_at") @db.Timestamptz
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -140,7 +219,7 @@ model Squad {
   createdBy String   @map("created_by") @db.Uuid
   name      String
   iconUrl   String?  @map("icon_url")
-  status    String   @default("ACTIVE") @db.VarChar(20)
+  status    PrismaSquadStatus @default(ACTIVE)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -158,7 +237,7 @@ model SquadMembership {
   squadId   String   @map("squad_id") @db.Uuid
   leagueId  String   @map("league_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
-  status    String   @default("ACTIVE") @db.VarChar(20)
+  status    PrismaSquadMembershipStatus @default(ACTIVE)
   joinedAt  DateTime @default(now()) @map("joined_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -178,8 +257,8 @@ model LeagueInvitation {
   leagueId    String    @map("league_id") @db.Uuid
   email       String?   @db.VarChar(255)
   inviteCode  String    @unique @map("invite_code") @db.VarChar(100)
-  inviteType  String    @default("EMAIL") @map("invite_type") @db.VarChar(20)
-  status      String    @default("PENDING") @db.VarChar(20)
+  inviteType  PrismaLeagueInviteType @default(EMAIL) @map("invite_type")
+  status      PrismaLeagueInvitationStatus @default(PENDING)
   maxUses     Int       @default(1) @map("max_uses")
   currentUses Int       @default(0) @map("current_uses")
   invitedBy   String    @map("invited_by") @db.Uuid
@@ -223,8 +302,6 @@ model CommissionerActionItem {
   id          String    @id @default(uuid()) @db.Uuid
   leagueId    String    @map("league_id") @db.Uuid
   contestId   String?   @map("contest_id") @db.Uuid
-  type        String    @db.VarChar(50)
-  priority    String    @default("MEDIUM") @db.VarChar(20)
   title       String    @db.VarChar(255)
   description String?
   actionUrl   String?   @map("action_url") @db.VarChar(500)
@@ -235,7 +312,7 @@ model CommissionerActionItem {
 
   league League @relation(fields: [leagueId], references: [id])
 
-  @@index([leagueId, resolved, priority])
+  @@index([leagueId, resolved, createdAt(sort: Desc)])
   @@map("commissioner_action_items")
 }
 
@@ -246,7 +323,7 @@ model CommissionerActionItem {
 model Sport {
   id              String   @id @default(uuid()) @db.Uuid
   name            String   @unique
-  participantType String   @map("participant_type")
+  participantType PrismaParticipantType @map("participant_type")
   statSchema      Json     @default("{}") @map("stat_schema")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -276,7 +353,7 @@ model Participant {
   id              String   @id @default(uuid()) @db.Uuid
   sportId         String   @map("sport_id") @db.Uuid
   name            String
-  participantType String   @map("participant_type")
+  participantType PrismaParticipantType @map("participant_type")
   externalId      String?  @map("external_id")
   metadata        Json     @default("{}")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -289,7 +366,7 @@ model Participant {
   nationality     String?  @db.VarChar(10)
   position        String?  @db.VarChar(50)
   teamAffiliation String?  @map("team_affiliation")
-  status          String   @default("ACTIVE") @db.VarChar(20)
+  status          PrismaParticipantStatus @default(ACTIVE)
   injuryStatus    Json     @default("{\"status\": \"HEALTHY\"}") @map("injury_status")
   photoUrl        String?  @map("photo_url")
   photoLastUpdated DateTime? @map("photo_last_updated") @db.Timestamptz
@@ -308,7 +385,7 @@ model Participant {
 model ParticipantSeasonRecord {
   id              String   @id @default(uuid()) @db.Uuid
   participantId   String   @map("participant_id") @db.Uuid
-  sport           String   @db.VarChar(50)
+  sport           PrismaSport
   season          String   @db.VarChar(20)
   rankings        Json     @default("[]")
   budgetPrice     Int      @default(0) @map("budget_price")
@@ -322,7 +399,7 @@ model ParticipantSeasonRecord {
   top25Finishes   Int      @default(0) @map("top_25_finishes")
   seasonStats     Json     @default("{}") @map("season_stats")
   formRating      Decimal  @default(50.0) @map("form_rating") @db.Decimal(5, 2)
-  formTrend       String   @default("STABLE") @map("form_trend") @db.VarChar(20)
+  formTrend       PrismaParticipantFormTrend @default(STABLE) @map("form_trend")
   lastUpdated     DateTime @default(now()) @map("last_updated") @db.Timestamptz
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -340,7 +417,7 @@ model ParticipantProviderMapping {
   participantId String   @map("participant_id") @db.Uuid
   providerId    String   @map("provider_id") @db.VarChar(100)
   externalId    String   @map("external_id") @db.VarChar(255)
-  confidence    String   @default("EXACT") @db.VarChar(20)
+  confidence    PrismaParticipantMappingConfidence @default(EXACT)
   mappedAt      DateTime @default(now()) @map("mapped_at") @db.Timestamptz
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz

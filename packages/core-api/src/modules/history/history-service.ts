@@ -9,6 +9,7 @@ import type {
   ContestHistoryPayout,
   ContestHistoryResult,
 } from '@poolmaster/shared/domain';
+import { ContestStatus, LeagueMembershipStatus, SquadMembershipStatus } from '@poolmaster/shared/domain';
 
 export class HistoryService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -126,7 +127,7 @@ export class HistoryService {
             squad: {
               include: {
                 memberships: {
-                  where: { status: 'ACTIVE' },
+                  where: { status: SquadMembershipStatus.ACTIVE },
                   orderBy: { joinedAt: 'asc' },
                 },
               },
@@ -187,7 +188,7 @@ export class HistoryService {
       where: {
         ...(filters.contestId && { id: filters.contestId }),
         ...(filters.leagueId && { leagueId: filters.leagueId }),
-        status: 'COMPLETED',
+        status: ContestStatus.COMPLETED,
       },
       include: {
         sportEvent: {
@@ -199,7 +200,7 @@ export class HistoryService {
               include: {
                 memberships: {
                   where: {
-                    status: 'ACTIVE',
+                    status: SquadMembershipStatus.ACTIVE,
                     ...(filters.userId && { userId: filters.userId }),
                   },
                   orderBy: { joinedAt: 'asc' },
@@ -236,6 +237,7 @@ export class HistoryService {
 
     const leagueMemberships = await this.prisma.leagueMembership.findMany({
       where: {
+        status: LeagueMembershipStatus.ACTIVE,
         OR: uniqueMembershipPairs.map((pair) => ({
           leagueId: pair.leagueId,
           userId: pair.userId,
