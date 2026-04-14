@@ -138,3 +138,13 @@ This is the eventual cleanup path for browser-created users:
 
 - None currently. The placement, confirmation pattern, and post-delete logout
   behavior are now locked for the first slice.
+
+## Future Follow-On Scope
+
+- `My Account` should expand next into:
+  - profile editing
+  - password change
+  - first-pass personal preferences
+- That follow-on work is now tracked separately in
+  [Plan 93](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/93-my-account-profile-password-and-preferences-execution.md)
+  so the lifecycle slice does not need to be rediscovered later.

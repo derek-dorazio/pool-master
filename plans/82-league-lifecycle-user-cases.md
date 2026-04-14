@@ -179,6 +179,10 @@ journey:
   - updating league icon
   - broader league settings
   - future commissioner management actions beyond lifecycle
+- That follow-on work is now tracked separately in
+  [Plan 92](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/92-league-management-details-and-identity-execution.md)
+  so lifecycle cleanup does not need to be rediscovered as league-management
+  feature work continues.
 
 ## Open Questions
 
