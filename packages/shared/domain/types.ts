@@ -46,6 +46,7 @@ export interface DomainEntity {
 export interface User extends DomainEntity {
   email: string;
   displayName: string;
+  isActive: boolean;
   authProvider?: string;
   authId?: string;
   isRootAdmin?: boolean;

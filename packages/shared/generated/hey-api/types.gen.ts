@@ -112,6 +112,10 @@ export type RegisterUserResponses = {
              */
             displayName: string;
             /**
+             * Whether the account is currently active for normal sign-in and product usage.
+             */
+            isActive: boolean;
+            /**
              * Whether the user has platform-level root-admin access.
              */
             isRootAdmin: boolean;
@@ -229,6 +233,10 @@ export type LoginUserResponses = {
              * Name shown in league, contest, and profile surfaces.
              */
             displayName: string;
+            /**
+             * Whether the account is currently active for normal sign-in and product usage.
+             */
+            isActive: boolean;
             /**
              * Whether the user has platform-level root-admin access.
              */
@@ -518,6 +526,10 @@ export type GetCurrentUserResponses = {
              * Name shown in league, contest, and profile surfaces.
              */
             displayName: string;
+            /**
+             * Whether the account is currently active for normal sign-in and product usage.
+             */
+            isActive: boolean;
             /**
              * Whether the user has platform-level root-admin access.
              */
@@ -7638,6 +7650,261 @@ export type GetMemberResultsResponses = {
 
 export type GetMemberResultsResponse = GetMemberResultsResponses[keyof GetMemberResultsResponses];
 
+export type InactivateAccountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/inactivate';
+};
+
+export type InactivateAccountErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type InactivateAccountError = InactivateAccountErrors[keyof InactivateAccountErrors];
+
+export type InactivateAccountResponses = {
+    /**
+     * Self-service account response envelope for authenticated account lifecycle actions.
+     */
+    200: {
+        /**
+         * Frontend-facing user profile summary derived from the authenticated account.
+         */
+        user: {
+            /**
+             * Stable user identifier.
+             */
+            id: string;
+            /**
+             * Primary email address for the user account.
+             */
+            email: string;
+            /**
+             * Name shown in league, contest, and profile surfaces.
+             */
+            displayName: string;
+            /**
+             * Whether the account is currently active for normal sign-in and product usage.
+             */
+            isActive: boolean;
+            /**
+             * Whether the user has platform-level root-admin access.
+             */
+            isRootAdmin: boolean;
+            /**
+             * Authentication provider used for the account when known.
+             */
+            authProvider?: 'email' | 'google' | 'apple';
+            /**
+             * Preferred IANA timezone for user-facing scheduling and reminders.
+             */
+            timezone?: string;
+            /**
+             * Preferred locale for formatting and localized copy.
+             */
+            locale?: string;
+            /**
+             * Optional avatar image URL for profile and social surfaces.
+             */
+            avatarUrl?: string;
+            /**
+             * Account creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+        };
+    };
+};
+
+export type InactivateAccountResponse = InactivateAccountResponses[keyof InactivateAccountResponses];
+
+export type DeleteAccountData = {
+    /**
+     * Self-service confirmation payload for permanently deleting an inactive account.
+     */
+    body: {
+        /**
+         * Exact email confirmation required before permanently deleting the inactive account.
+         */
+        email: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/';
+};
+
+export type DeleteAccountErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type DeleteAccountError = DeleteAccountErrors[keyof DeleteAccountErrors];
+
+export type DeleteAccountResponses = {
+    /**
+     * Minimal success response returned after permanently deleting an inactive account.
+     */
+    200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
+        success: true;
+    };
+};
+
+export type DeleteAccountResponse = DeleteAccountResponses[keyof DeleteAccountResponses];
+
 export type GetConsentHistoryData = {
     body?: never;
     path?: never;
@@ -7788,7 +8055,7 @@ export type AdminListUsersData = {
     path?: never;
     query?: {
         search?: string;
-        status?: 'active' | 'disabled';
+        isActive?: boolean;
         page?: number;
         pageSize?: number;
     };
@@ -7849,7 +8116,10 @@ export type AdminListUsersResponses = {
                 role: 'COMMISSIONER' | 'MEMBER';
             }>;
             lastLoginAt?: string;
-            status: 'active' | 'disabled';
+            /**
+             * Whether the account is currently active for normal sign-in and product usage.
+             */
+            isActive: boolean;
             createdAt: string;
         }>;
         /**
@@ -7991,7 +8261,10 @@ export type AdminGetUserDetailResponses = {
         email: string;
         displayName: string;
         authProvider?: string;
-        status: 'active' | 'disabled';
+        /**
+         * Whether the account is currently active for normal sign-in and product usage.
+         */
+        isActive: boolean;
         createdAt: string;
         lastLoginAt?: string;
         leagues: Array<{

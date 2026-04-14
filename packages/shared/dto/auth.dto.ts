@@ -69,6 +69,9 @@ export const UserProfileDtoSchema = z.object({
   id: z.string().describe('Stable user identifier.'),
   email: z.string().describe('Primary email address for the user account.'),
   displayName: z.string().describe('Name shown in league, contest, and profile surfaces.'),
+  isActive: z
+    .boolean()
+    .describe('Whether the account is currently active for normal sign-in and product usage.'),
   isRootAdmin: z.boolean().describe('Whether the user has platform-level root-admin access.'),
   authProvider: z
     .enum(['email', 'google', 'apple'])

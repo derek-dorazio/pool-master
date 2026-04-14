@@ -97,6 +97,10 @@
                           "type": "string",
                           "description": "Name shown in league, contest, and profile surfaces."
                         },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the account is currently active for normal sign-in and product usage."
+                        },
                         "isRootAdmin": {
                           "type": "boolean",
                           "description": "Whether the user has platform-level root-admin access."
@@ -133,6 +137,7 @@
                         "id",
                         "email",
                         "displayName",
+                        "isActive",
                         "isRootAdmin"
                       ],
                       "additionalProperties": false,
@@ -318,6 +323,10 @@
                           "type": "string",
                           "description": "Name shown in league, contest, and profile surfaces."
                         },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the account is currently active for normal sign-in and product usage."
+                        },
                         "isRootAdmin": {
                           "type": "boolean",
                           "description": "Whether the user has platform-level root-admin access."
@@ -354,6 +363,7 @@
                         "id",
                         "email",
                         "displayName",
+                        "isActive",
                         "isRootAdmin"
                       ],
                       "additionalProperties": false,
@@ -768,6 +778,10 @@
                           "type": "string",
                           "description": "Name shown in league, contest, and profile surfaces."
                         },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the account is currently active for normal sign-in and product usage."
+                        },
                         "isRootAdmin": {
                           "type": "boolean",
                           "description": "Whether the user has platform-level root-admin access."
@@ -804,6 +818,7 @@
                         "id",
                         "email",
                         "displayName",
+                        "isActive",
                         "isRootAdmin"
                       ],
                       "additionalProperties": false,
@@ -14432,6 +14447,428 @@
         }
       }
     },
+    "/api/v1/account/inactivate": {
+      "post": {
+        "operationId": "inactivateAccount",
+        "summary": "Inactivate the authenticated account",
+        "tags": [
+          "Account"
+        ],
+        "description": "Marks the authenticated account inactive for normal sign-in and product usage. This is the required first step before a permanent self-delete becomes available.",
+        "responses": {
+          "200": {
+            "description": "Self-service account response envelope for authenticated account lifecycle actions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Stable user identifier."
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "Primary email address for the user account."
+                        },
+                        "displayName": {
+                          "type": "string",
+                          "description": "Name shown in league, contest, and profile surfaces."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the account is currently active for normal sign-in and product usage."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the user has platform-level root-admin access."
+                        },
+                        "authProvider": {
+                          "type": "string",
+                          "enum": [
+                            "email",
+                            "google",
+                            "apple"
+                          ],
+                          "description": "Authentication provider used for the account when known."
+                        },
+                        "timezone": {
+                          "type": "string",
+                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                        },
+                        "locale": {
+                          "type": "string",
+                          "description": "Preferred locale for formatting and localized copy."
+                        },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Optional avatar image URL for profile and social surfaces."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Account creation timestamp in ISO 8601 format."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "displayName",
+                        "isActive",
+                        "isRootAdmin"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Self-service account response envelope for authenticated account lifecycle actions."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/": {
+      "delete": {
+        "operationId": "deleteAccount",
+        "summary": "Delete the authenticated inactive account permanently",
+        "tags": [
+          "Account"
+        ],
+        "description": "Permanently deletes the authenticated account after the user has already inactivated it and provides exact email confirmation. This removes the user row and user-owned account data.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Exact email confirmation required before permanently deleting the inactive account."
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false,
+                "description": "Self-service confirmation payload for permanently deleting an inactive account."
+              }
+            }
+          },
+          "description": "Self-service confirmation payload for permanently deleting an inactive account."
+        },
+        "responses": {
+          "200": {
+            "description": "Minimal success response returned after permanently deleting an inactive account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ],
+                      "description": "Confirms that the requested operation succeeded."
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Minimal success response returned after permanently deleting an inactive account."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/consent": {
       "post": {
         "operationId": "recordConsent",
@@ -14674,14 +15111,10 @@
           },
           {
             "schema": {
-              "type": "string",
-              "enum": [
-                "active",
-                "disabled"
-              ]
+              "type": "boolean"
             },
             "in": "query",
-            "name": "status",
+            "name": "isActive",
             "required": false
           },
           {
@@ -14761,12 +15194,9 @@
                             "type": "string",
                             "format": "date-time"
                           },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "active",
-                              "disabled"
-                            ]
+                          "isActive": {
+                            "type": "boolean",
+                            "description": "Whether the account is currently active for normal sign-in and product usage."
                           },
                           "createdAt": {
                             "type": "string",
@@ -14778,7 +15208,7 @@
                           "email",
                           "displayName",
                           "leagues",
-                          "status",
+                          "isActive",
                           "createdAt"
                         ],
                         "additionalProperties": false,
@@ -14995,12 +15425,9 @@
                     "authProvider": {
                       "type": "string"
                     },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "active",
-                        "disabled"
-                      ]
+                    "isActive": {
+                      "type": "boolean",
+                      "description": "Whether the account is currently active for normal sign-in and product usage."
                     },
                     "createdAt": {
                       "type": "string",
@@ -15160,7 +15587,7 @@
                     "id",
                     "email",
                     "displayName",
-                    "status",
+                    "isActive",
                     "createdAt",
                     "leagues",
                     "activeContests",

@@ -65,7 +65,7 @@ export const UserListItemDtoSchema = z.object({
   displayName: z.string(),
   leagues: z.array(UserLeagueMembershipSummaryDtoSchema),
   lastLoginAt: z.string().datetime().optional(),
-  status: z.enum(['active', 'disabled']),
+  isActive: z.boolean().describe('Whether the account is currently active for normal sign-in and product usage.'),
   createdAt: z.string().datetime(),
 }).describe('Admin user-list row.');
 export type UserListItemDto = z.infer<typeof UserListItemDtoSchema>;
@@ -111,7 +111,7 @@ export const UserDetailResponseSchema = z.object({
   email: z.string(),
   displayName: z.string(),
   authProvider: z.string().optional(),
-  status: z.enum(['active', 'disabled']),
+  isActive: z.boolean().describe('Whether the account is currently active for normal sign-in and product usage.'),
   createdAt: z.string().datetime(),
   lastLoginAt: z.string().datetime().optional(),
   leagues: z.array(UserLeagueDetailDtoSchema),

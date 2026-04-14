@@ -41,6 +41,7 @@ export function buildUser(overrides: Partial<User> = {}): User {
     id,
     email: `user-${id}@example.com`,
     displayName: `User ${id}`,
+    isActive: true,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

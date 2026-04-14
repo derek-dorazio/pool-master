@@ -118,6 +118,8 @@ export const API_ROUTES = {
   // Account / Compliance
   account: {
     consent: '/api/v1/account/consent',
+    inactivate: '/api/v1/account/inactivate',
+    detail: '/api/v1/account',
   },
 
   // Health

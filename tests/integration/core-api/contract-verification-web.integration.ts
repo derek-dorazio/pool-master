@@ -10,6 +10,8 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
+  AccountDeleteResponseSchema,
+  AccountResponseSchema,
   ContestManagementResponseSchema,
   ConsentRecordResponseSchema,
   DraftStateResponseSchema,
@@ -255,6 +257,31 @@ describe('Contract verification (web)', () => {
     expect(
       ScoringConfigValidationResponseSchema.safeParse(scoringRes.json()).success,
     ).toBe(true);
+  });
+
+  it('account lifecycle routes match their shared response DTOs', async () => {
+    const user = await createTestUser({ displayName: 'Contract Account User' });
+
+    const inactivateRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.account.inactivate,
+      headers: withoutJsonBodyHeaders(user.headers),
+    });
+
+    expect(inactivateRes.statusCode).toBe(200);
+    expect(AccountResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
+
+    const deleteRes = await getApp().inject({
+      method: 'DELETE',
+      url: API_ROUTES.account.detail,
+      headers: user.headers,
+      payload: {
+        email: user.user.email,
+      },
+    });
+
+    expect(deleteRes.statusCode).toBe(200);
+    expect(AccountDeleteResponseSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
   it('draft room routes match DraftStateResponseSchema', async () => {

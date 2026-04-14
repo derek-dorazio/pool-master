@@ -101,7 +101,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
         type: 'object',
         properties: {
           search: { type: 'string' },
-          status: { type: 'string', enum: ['active', 'disabled'] },
+          isActive: { type: 'boolean' },
           page: { type: 'integer', minimum: 1 },
           pageSize: { type: 'integer', minimum: 1, maximum: 100 },
         },

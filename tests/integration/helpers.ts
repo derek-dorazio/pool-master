@@ -34,6 +34,7 @@ import { scoringRoutes } from '../../packages/core-api/src/modules/scoring/route
 import { StandingsRollup } from '../../packages/core-api/src/modules/scoring/rollup/standings-rollup';
 import { ScoringService } from '../../packages/core-api/src/modules/scoring/service';
 import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
+import { accountModule } from '../../packages/core-api/src/modules/account/routes';
 import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
@@ -89,6 +90,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
     prisma,
   });
   testApp.register(scoringRoutes, { prefix: '/api/v1', scoringService });
+  testApp.register(accountModule, { prefix: '/api/v1/account' });
   testApp.register(accountConsentModule, { prefix: '/api/v1/account' });
   testApp.register(configModule, { prefix: '/api/v1/config' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });

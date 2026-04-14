@@ -33,10 +33,10 @@ lifecycle:
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
 | 85-001 | 1 | Product/data-model review of account lifecycle semantics | Done | Current `User` has no lifecycle field, so this plan requires a schema/model change before backend implementation. Recommended first slice: add persistent user activity state (for example `isActive`) to support inactive-first delete without abusing auth/session rows as lifecycle state. Hard delete can still remove the user row entirely later. |
-| 85-002 | 1 | Backend developer: add self-account inactivate API | Not Started | Real product route, not admin-only |
-| 85-003 | 1 | Backend developer: add self-account delete API for inactive accounts | Not Started | Must reject delete while active |
-| 85-004 | 1 | Backend developer: implement account cleanup behavior | Not Started | Sessions/tokens/preferences/consent/account row handling |
-| 85-005 | 1 | Backend developer: add backend validation and contract coverage | Not Started | Unit, integration, functional API, contract verification, API regen |
+| 85-002 | 1 | Backend developer: add self-account inactivate API | Done | Added `POST /api/v1/account/inactivate`. Inactivation now sets `User.isActive=false`, revokes refresh tokens, returns the updated account profile, and blocks new login attempts. |
+| 85-003 | 1 | Backend developer: add self-account delete API for inactive accounts | Done | Added `DELETE /api/v1/account`. Delete rejects active accounts, requires exact email confirmation, and clears auth cookies on success. |
+| 85-004 | 1 | Backend developer: implement account cleanup behavior | Done | First slice hard-deletes only when no league/squad memberships or league/squad ownership remain, then removes refresh tokens, preferences, notifications, consent, invitations, audit references, and the user row. |
+| 85-005 | 1 | Backend developer: add backend validation and contract coverage | Done | Added schema migration, shared DTOs, OpenAPI/SDK refresh, unit coverage, contract verification, functional API coverage, and inactive-user auth/session validation. |
 | 85-006 | 2 | Frontend developer: add header user identity affordance and menu entry to `My Account` | Not Started | Menu may later include Settings, Preferences, and other personal options |
 | 85-007 | 2 | Frontend developer: design and implement `My Account` shell | Not Started | Prepare future profile, password, email, and lifecycle sections even if lifecycle lands first |
 | 85-008 | 2 | Frontend developer: implement account lifecycle UI inside `My Account` | Not Started | Inactivate first, delete second, strong warning |
@@ -65,7 +65,16 @@ lifecycle:
     the account is already inactive.
 - Recommended behavior direction for later implementation:
   - inactive users should not be able to start new authenticated sessions
-  - the current self-service session may remain valid long enough to complete the
+  - the current access-token session may remain valid long enough to complete the
     immediate delete flow after inactivation
   - delete should revoke refresh tokens and remove user-owned rows that should
     not survive account removal
+- Approved first-slice backend rule:
+  - inactivation revokes refresh tokens so session extension stops immediately
+  - the already-issued access token may continue until expiry, allowing the
+    user to proceed directly into delete
+- Implemented backend notes:
+  - `User.isActive` is now the persisted account lifecycle field
+  - auth profile and root-admin user surfaces now expose `isActive` rather than
+    a synthetic status label, keeping the shared contract aligned with the new
+    domain-model convention

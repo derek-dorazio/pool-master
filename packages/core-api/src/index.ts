@@ -23,6 +23,7 @@ import { participantsModule } from './modules/participants/routes';
 import { standingsModule } from './modules/standings/routes';
 import { historyModule } from './modules/history/routes';
 import { accountConsentModule } from './modules/account-consent/routes';
+import { accountModule } from './modules/account/routes';
 import { adminModule } from './modules/admin/routes';
 import { configModule } from './modules/config/routes';
 
@@ -103,6 +104,7 @@ export function buildApp() {
   app.register(participantsModule, { prefix: '/api/v1/participants' });
   app.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
   app.register(historyModule, { prefix: '/api/v1' });
+  app.register(accountModule, { prefix: '/api/v1/account' });
   app.register(accountConsentModule, { prefix: '/api/v1/account' });
   app.register(adminModule, { prefix: '/api/v1/admin' });
   app.register(configModule, { prefix: '/api/v1/config' });

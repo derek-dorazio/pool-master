@@ -32,6 +32,7 @@ model User {
   email        String   @unique
   passwordHash String?  @map("password_hash")
   displayName  String   @map("display_name")
+  isActive     Boolean  @default(true) @map("is_active")
   authProvider String?  @map("auth_provider")
   authId       String?  @map("auth_id")
   isRootAdmin  Boolean  @default(false) @map("is_root_admin")

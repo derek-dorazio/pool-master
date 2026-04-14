@@ -32,7 +32,7 @@ export function createUserHandlers(userService: UserService) {
       Querystring: {
         search?: string;
         tenant?: string;
-        status?: 'active' | 'disabled';
+        isActive?: boolean;
         page?: number;
         pageSize?: number;
       };
@@ -42,7 +42,7 @@ export function createUserHandlers(userService: UserService) {
     const query = request.query;
     const result = await userService.searchUsers({
       search: query.search,
-      status: query.status,
+      isActive: query.isActive,
       page: query.page,
       pageSize: query.pageSize,
     });
@@ -55,7 +55,7 @@ export function createUserHandlers(userService: UserService) {
         displayName: item.displayName,
         leagues: item.leagues,
         lastLoginAt: item.lastLoginAt?.toISOString(),
-        status: item.status,
+        isActive: item.isActive,
         createdAt: item.createdAt.toISOString(),
       })),
       total: result.total,

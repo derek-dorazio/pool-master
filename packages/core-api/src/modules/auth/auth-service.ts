@@ -32,6 +32,7 @@ export interface UserProfile {
   id: string;
   email: string;
   displayName: string;
+  isActive: boolean;
   isRootAdmin: boolean;
   authProvider?: 'email' | 'google' | 'apple';
   timezone?: string | null;
@@ -113,6 +114,13 @@ export class AuthService {
     if (!user || !user.passwordHash) {
       throw new AuthError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
+    if (!user.isActive) {
+      throw new AuthError(
+        'This account is inactive. Sign in is unavailable until the account is reactivated or deleted.',
+        'ACCOUNT_INACTIVE',
+        403,
+      );
+    }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
@@ -138,6 +146,13 @@ export class AuthService {
 
     if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
       throw new AuthError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
+    }
+    if (!stored.user.isActive) {
+      throw new AuthError(
+        'This account is inactive. Session refresh is unavailable.',
+        'ACCOUNT_INACTIVE',
+        403,
+      );
     }
 
     // Revoke the old refresh token (rotation)
@@ -221,6 +236,7 @@ function mapUserProfile(user: {
   id: string;
   email: string;
   displayName: string;
+  isActive: boolean;
   isRootAdmin: boolean;
   authProvider: string | null;
   timezone: string | null;
@@ -231,6 +247,7 @@ function mapUserProfile(user: {
     id: user.id,
     email: user.email,
     displayName: user.displayName,
+    isActive: user.isActive,
     isRootAdmin: user.isRootAdmin,
     authProvider: mapAuthProvider(user.authProvider),
     timezone: user.timezone ?? undefined,

@@ -18,7 +18,7 @@ import { logAdminAction } from './admin-audit-service';
 
 export interface UserSearchQuery {
   search?: string;
-  status?: 'active' | 'disabled';
+  isActive?: boolean;
   page?: number;
   pageSize?: number;
 }
@@ -29,7 +29,7 @@ export interface UserListItem {
   displayName: string;
   leagues: { id: string; name: string; role: LeagueRole }[];
   lastLoginAt?: Date;
-  status: 'active' | 'disabled';
+  isActive: boolean;
   createdAt: Date;
 }
 
@@ -38,7 +38,7 @@ export interface UserDetailView {
   email: string;
   displayName: string;
   authProvider?: string;
-  status: 'active' | 'disabled';
+  isActive: boolean;
   createdAt: Date;
   lastLoginAt?: Date;
   leagues: { id: string; name: string; role: LeagueRole; joinedAt?: Date }[];
@@ -88,6 +88,9 @@ export class UserService {
         { displayName: { contains: query.search, mode: 'insensitive' } },
       ];
     }
+    if (typeof query.isActive === 'boolean') {
+      where.isActive = query.isActive;
+    }
     const [rows, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
@@ -117,17 +120,12 @@ export class UserService {
           role: membership.role as LeagueRole,
         })),
         lastLoginAt: undefined, // User model has no lastLoginAt column yet
-        status: 'active' as const,
+        isActive: row.isActive,
         createdAt: row.createdAt,
       };
     });
 
-    // Post-filter by status if requested (no dedicated column yet)
-    const filtered = query.status
-      ? items.filter((u) => u.status === query.status)
-      : items;
-
-    return { items: filtered, total };
+    return { items, total };
   }
 
   /**
@@ -215,7 +213,7 @@ export class UserService {
       email: user.email,
       displayName: user.displayName,
       authProvider: user.authProvider ?? undefined,
-      status: 'active',
+      isActive: user.isActive,
       createdAt: user.createdAt,
       lastLoginAt: undefined,
       leagues,
@@ -254,8 +252,7 @@ export class UserService {
 
   /**
    * Disables a user account with a reason.
-   * Stores the disabled state in the user's password hash field prefix convention.
-   * (A proper status column should be added in a future migration.)
+   * Stores the disabled state in the real user activity field and revokes sessions.
    */
   async disableUser(
     userId: string,
@@ -265,6 +262,11 @@ export class UserService {
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UserNotFoundError(userId);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive: false },
+    });
 
     // Revoke all refresh tokens
     await this.prisma.refreshToken.updateMany({
@@ -279,7 +281,7 @@ export class UserService {
       resourceType: 'USER',
       resourceId: userId,
       description: `Disabled user ${userId} — reason: ${reason}`,
-      afterState: { status: 'disabled' },
+      afterState: { isActive: false },
       reason,
     });
   }
@@ -295,6 +297,11 @@ export class UserService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UserNotFoundError(userId);
 
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive: true },
+    });
+
     await logAdminAction({
       actorUserId: rootAdminUserId,
       actorEmail: rootAdminEmail,
@@ -302,7 +309,7 @@ export class UserService {
       resourceType: 'USER',
       resourceId: userId,
       description: `Re-enabled user ${userId}`,
-      afterState: { status: 'active' },
+      afterState: { isActive: true },
     });
   }
 

@@ -11,6 +11,7 @@ export * from './participants.dto';
 export * from './notifications.dto';
 export * from './admin.dto';
 export * from './config.dto';
+export * from './account.dto';
 export * from './account-consent.dto';
 export * from './history.dto';
 export * from './events.dto';
