@@ -8,7 +8,7 @@
  */
 
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserAuthProvider } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const BCRYPT_ROUNDS = 12;
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
       email,
       displayName,
       passwordHash,
-      authProvider: 'local',
+      authProvider: UserAuthProvider.EMAIL,
       isRootAdmin: true,
     },
     select: {

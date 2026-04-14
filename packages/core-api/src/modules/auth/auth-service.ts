@@ -8,6 +8,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import { UserAuthProvider as PrismaUserAuthProvider, UserDateFormat as PrismaUserDateFormat, UserTimeFormat as PrismaUserTimeFormat } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 
@@ -97,7 +98,7 @@ export class AuthService {
         email,
         passwordHash,
         displayName,
-        authProvider: 'local',
+        authProvider: PrismaUserAuthProvider.EMAIL,
       },
     });
 
@@ -241,11 +242,11 @@ function mapUserProfile(user: {
   displayName: string;
   isActive: boolean;
   isRootAdmin: boolean;
-  authProvider: string | null;
+  authProvider: PrismaUserAuthProvider | null;
   timezone: string | null;
   locale: string | null;
-  timeFormat: string | null;
-  dateFormat: string | null;
+  timeFormat: PrismaUserTimeFormat | null;
+  dateFormat: PrismaUserDateFormat | null;
   createdAt: Date;
 }): UserProfile {
   return {
@@ -263,19 +264,22 @@ function mapUserProfile(user: {
   };
 }
 
-function mapAuthProvider(provider: string | null): UserProfile['authProvider'] {
-  if (provider === 'local') return AuthProvider.EMAIL;
-  if (provider === 'google') return AuthProvider.GOOGLE;
-  if (provider === 'apple') return AuthProvider.APPLE;
+function mapAuthProvider(provider: PrismaUserAuthProvider | null): UserProfile['authProvider'] {
+  if (provider === PrismaUserAuthProvider.EMAIL) return AuthProvider.EMAIL;
+  if (provider === PrismaUserAuthProvider.GOOGLE) return AuthProvider.GOOGLE;
+  if (provider === PrismaUserAuthProvider.APPLE) return AuthProvider.APPLE;
   return undefined;
 }
 
-function mapTimeFormat(format: string | null): UserProfile['timeFormat'] {
-  if (format === TimeFormat.TWELVE_HOUR || format === TimeFormat.TWENTY_FOUR_HOUR) return format;
+function mapTimeFormat(format: PrismaUserTimeFormat | null): UserProfile['timeFormat'] {
+  if (format === PrismaUserTimeFormat.TWELVE_HOUR) return TimeFormat.TWELVE_HOUR;
+  if (format === PrismaUserTimeFormat.TWENTY_FOUR_HOUR) return TimeFormat.TWENTY_FOUR_HOUR;
   return undefined;
 }
 
-function mapDateFormat(format: string | null): UserProfile['dateFormat'] {
-  if (format === DateFormat.MDY || format === DateFormat.DMY || format === DateFormat.YMD) return format;
+function mapDateFormat(format: PrismaUserDateFormat | null): UserProfile['dateFormat'] {
+  if (format === PrismaUserDateFormat.MDY) return DateFormat.MDY;
+  if (format === PrismaUserDateFormat.DMY) return DateFormat.DMY;
+  if (format === PrismaUserDateFormat.YMD) return DateFormat.YMD;
   return undefined;
 }

@@ -1,3 +1,8 @@
+import {
+  UserAuthProvider as PrismaUserAuthProvider,
+  UserDateFormat as PrismaUserDateFormat,
+  UserTimeFormat as PrismaUserTimeFormat,
+} from '@prisma/client';
 import type { AccountResponse, UserProfileDto } from '@poolmaster/shared/dto';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 
@@ -7,28 +12,31 @@ interface UserRow {
   displayName: string;
   isActive: boolean;
   isRootAdmin: boolean;
-  authProvider?: string | null;
+  authProvider?: PrismaUserAuthProvider | null;
   timezone?: string | null;
   locale?: string | null;
-  timeFormat?: string | null;
-  dateFormat?: string | null;
+  timeFormat?: PrismaUserTimeFormat | null;
+  dateFormat?: PrismaUserDateFormat | null;
   createdAt: Date;
 }
 
-function mapAuthProvider(provider: string | null | undefined): UserProfileDto['authProvider'] {
-  if (provider === 'local') return AuthProvider.EMAIL;
-  if (provider === 'google') return AuthProvider.GOOGLE;
-  if (provider === 'apple') return AuthProvider.APPLE;
+function mapAuthProvider(provider: PrismaUserAuthProvider | null | undefined): UserProfileDto['authProvider'] {
+  if (provider === PrismaUserAuthProvider.EMAIL) return AuthProvider.EMAIL;
+  if (provider === PrismaUserAuthProvider.GOOGLE) return AuthProvider.GOOGLE;
+  if (provider === PrismaUserAuthProvider.APPLE) return AuthProvider.APPLE;
   return undefined;
 }
 
-function mapTimeFormat(format: string | null | undefined): UserProfileDto['timeFormat'] {
-  if (format === TimeFormat.TWELVE_HOUR || format === TimeFormat.TWENTY_FOUR_HOUR) return format;
+function mapTimeFormat(format: PrismaUserTimeFormat | null | undefined): UserProfileDto['timeFormat'] {
+  if (format === PrismaUserTimeFormat.TWELVE_HOUR) return TimeFormat.TWELVE_HOUR;
+  if (format === PrismaUserTimeFormat.TWENTY_FOUR_HOUR) return TimeFormat.TWENTY_FOUR_HOUR;
   return undefined;
 }
 
-function mapDateFormat(format: string | null | undefined): UserProfileDto['dateFormat'] {
-  if (format === DateFormat.MDY || format === DateFormat.DMY || format === DateFormat.YMD) return format;
+function mapDateFormat(format: PrismaUserDateFormat | null | undefined): UserProfileDto['dateFormat'] {
+  if (format === PrismaUserDateFormat.MDY) return DateFormat.MDY;
+  if (format === PrismaUserDateFormat.DMY) return DateFormat.DMY;
+  if (format === PrismaUserDateFormat.YMD) return DateFormat.YMD;
   return undefined;
 }
 

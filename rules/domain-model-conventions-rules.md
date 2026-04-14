@@ -131,6 +131,8 @@ as an enum/union rather than a broad string.
 
 Use enum-backed modeling for:
 
+- persistence schema enums when the storage tier supports them and the value set
+  is stable
 - domain enums in `packages/shared/domain/enums.ts`
 - shared domain types
 - DTO schemas
@@ -145,6 +147,22 @@ Do not use free-form `string` when the product meaning is actually:
 
 If persistence still stores a broad string temporarily, document that as
 transitional debt and keep the API/domain surface strongly typed.
+
+For closed sets that are stable enough to persist strongly:
+
+- use a first-class enum in the persistence schema rather than a broad `String`
+  column
+- keep mapper logic explicit when persistence enum identifiers differ from the
+  API/domain literals
+- normalize legacy values during migration rather than preserving stale aliases
+  indefinitely
+
+Do not leave persistence as free-form text once the repo has high confidence
+that the values are:
+
+- closed
+- reviewed
+- actively used in product/API flows
 
 ---
 

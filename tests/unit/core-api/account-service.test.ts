@@ -8,7 +8,7 @@ describe('AccountService', () => {
       displayName: 'User Example',
       isActive: false,
       isRootAdmin: false,
-      authProvider: 'local',
+      authProvider: 'EMAIL',
       timezone: null,
       locale: null,
       createdAt: new Date('2026-04-13T00:00:00.000Z'),

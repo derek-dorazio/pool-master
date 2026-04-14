@@ -1,4 +1,9 @@
-import type { PrismaClient } from '@prisma/client';
+import type {
+  PrismaClient,
+  UserAuthProvider as PrismaUserAuthProvider,
+  UserDateFormat as PrismaUserDateFormat,
+  UserTimeFormat as PrismaUserTimeFormat,
+} from '@prisma/client';
 
 type AccountUserRow = {
   id: string;
@@ -6,11 +11,11 @@ type AccountUserRow = {
   displayName: string;
   isActive: boolean;
   isRootAdmin: boolean;
-  authProvider: string | null;
+  authProvider: PrismaUserAuthProvider | null;
   timezone: string | null;
   locale: string | null;
-  timeFormat: string | null;
-  dateFormat: string | null;
+  timeFormat: PrismaUserTimeFormat | null;
+  dateFormat: PrismaUserDateFormat | null;
   createdAt: Date;
 };
 

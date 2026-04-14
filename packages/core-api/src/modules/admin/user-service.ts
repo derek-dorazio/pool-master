@@ -8,7 +8,7 @@
  * Persisted via Prisma to the users table.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient, UserAuthProvider as PrismaUserAuthProvider } from '@prisma/client';
 import { AuthProvider } from '@poolmaster/shared/domain';
 import type { ContestStatus, LeagueRole, Sport } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
@@ -429,9 +429,9 @@ export class UserService {
   }
 }
 
-function mapAuthProvider(provider: string | null | undefined): AuthProvider | undefined {
-  if (provider === 'local') return AuthProvider.EMAIL;
-  if (provider === 'google') return AuthProvider.GOOGLE;
-  if (provider === 'apple') return AuthProvider.APPLE;
+function mapAuthProvider(provider: PrismaUserAuthProvider | null | undefined): AuthProvider | undefined {
+  if (provider === 'EMAIL') return AuthProvider.EMAIL;
+  if (provider === 'GOOGLE') return AuthProvider.GOOGLE;
+  if (provider === 'APPLE') return AuthProvider.APPLE;
   return undefined;
 }

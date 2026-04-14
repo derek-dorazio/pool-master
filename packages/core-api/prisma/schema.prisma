@@ -7,6 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserAuthProvider {
+  EMAIL  @map("email")
+  GOOGLE @map("google")
+  APPLE  @map("apple")
+}
+
+enum UserTimeFormat {
+  TWELVE_HOUR     @map("12H")
+  TWENTY_FOUR_HOUR @map("24H")
+}
+
+enum UserDateFormat {
+  MDY
+  DMY
+  YMD
+}
+
 // =============================================================================
 // UTC Storage Convention
 // =============================================================================
@@ -33,13 +50,13 @@ model User {
   passwordHash String?  @map("password_hash")
   displayName  String   @map("display_name")
   isActive     Boolean  @default(true) @map("is_active")
-  authProvider String?  @map("auth_provider")
+  authProvider UserAuthProvider?  @map("auth_provider")
   authId       String?  @map("auth_id")
   isRootAdmin  Boolean  @default(false) @map("is_root_admin")
   timezone     String?  @db.VarChar(50)
   locale       String?  @default("en-US") @db.VarChar(10)
-  timeFormat   String?  @default("12H") @map("time_format") @db.VarChar(5)
-  dateFormat   String?  @default("MDY") @map("date_format") @db.VarChar(5)
+  timeFormat   UserTimeFormat?  @default(TWELVE_HOUR) @map("time_format")
+  dateFormat   UserDateFormat?  @default(MDY) @map("date_format")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
