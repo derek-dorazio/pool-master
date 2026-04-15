@@ -1,5 +1,7 @@
 # Architect And Platform Persona
 
+**Nickname:** `Archie`
+
 ## Purpose
 
 Use this persona for cross-cutting architecture, CI/CD, deployment, Docker,

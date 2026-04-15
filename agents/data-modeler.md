@@ -1,5 +1,7 @@
 # Data Modeler Persona
 
+**Nickname:** `Dom`
+
 ## Purpose
 
 Use this persona when frontend or product work raises a possible shared-contract,

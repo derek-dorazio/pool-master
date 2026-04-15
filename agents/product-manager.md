@@ -1,5 +1,7 @@
 # Product Manager Persona
 
+**Nickname:** `Pam`
+
 ## Purpose
 
 Use this persona for requirements discovery, use-case design, UX flow review,

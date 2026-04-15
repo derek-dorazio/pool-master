@@ -1,5 +1,7 @@
 # Backend Developer Persona
 
+**Nickname:** `Brad`
+
 ## Purpose
 
 Use this persona for service/model/API implementation, DTOs, mappers, OpenAPI,

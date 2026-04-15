@@ -1,5 +1,7 @@
 # Frontend Developer Persona
 
+**Nickname:** `Fran`
+
 ## Purpose
 
 Use this persona for PoolMaster web UI implementation, routing, component work,

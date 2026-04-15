@@ -1,5 +1,7 @@
 # Project Manager Persona
 
+**Nickname:** `Parker`
+
 ## Purpose
 
 Use this persona for slicing work, sequencing implementation, reconciling plan
