@@ -6,79 +6,135 @@ finished.
 
 ## Scope
 
-- squad creation during the user join flow
-- default squad naming
-- later squad management and co-owner support
+- team creation during the user join flow
+- default team naming
+- first-pass team management
+- co-owner support
 
 ## Starter Design Direction
 
 - Squad identity should become the primary team-facing identity layer shown
   across the product.
-- User profile identity and squad/team identity are related but distinct.
-- Avatar work is deferred until there is a real avatar-selection or file-upload
+- User profile identity and team identity are related but distinct.
+- UI should use **Team** terminology while the backend/domain model may keep
+  `Squad` naming for internal clarity.
+- Avatar upload work is deferred until there is a real upload or avatar
   product flow.
+
+## Locked Product Decisions (April 15, 2026)
+
+- Every active league member should have exactly one active team in that league
+  for the first slice.
+- Commissioners and members should use the same team-management surface.
+- Team name should be editable during the join flow instead of forcing users to
+  accept the default and change it later.
+- The default team name remains:
+  - `<firstName> <lastName>'s Team`
+- Team ownership model:
+  - one primary owner
+  - optional co-owners
+  - the original creator remains the primary owner until a future explicit
+    transfer feature exists
+  - removing a co-owner should inactivate the related squad membership
+- Team icon behavior:
+  - remove free-form/custom `iconUrl` behavior from the first slice
+  - add one shared built-in icon catalog for all teams
+  - use a single sprite sheet
+  - aim for roughly 100 options
+  - the icons should be sports-themed or sports-inspired, but not
+    sport-specific logic
+  - some icons can be more avatar-like, some gear-like, and some playful
+- UX entry points:
+  - build a dedicated in-league `My Team` page first
+  - also expose a convenient shortcut or card on league home
+- Members may leave leagues normally.
+- Commissioner leave rules remain a separate league-membership concern:
+  - the current backend does not yet enforce “assign another commissioner
+    first”
+  - that rule should be added in the league-membership lane rather than hidden
+    inside team logic
 
 ## Starter User Cases
 
-### SQ-001: New user gets a squad as part of the join flow
+### SQ-001: New user gets a team as part of the join flow
 
 **Actor:** New league member or commissioner
 
 **Preconditions**
 - User signs up or joins a league
-- User needs a team/squad identity in that league
+- User needs a team identity in that league
 
 **Flow**
 1. User joins the league
-2. System creates the initial squad as part of the join flow
-3. Squad name defaults to `<firstName> <lastName>'s Team`
-4. User continues into the product with a valid squad identity
+2. System creates the initial squad/team as part of the join flow
+3. Team name defaults to `<firstName> <lastName>'s Team`
+4. User may edit the team name before completing the join flow
+5. User selects a built-in team icon from the curated shared catalog
+6. User continues into the product with a valid team identity
 
 **Expected outcomes**
-- Squad creation is part of the real join flow, not a separate forgotten setup
+- Team creation is part of the real join flow, not a separate forgotten setup
 - Team identity is available immediately
+- Team identity is user-configurable at the right moment instead of being left
+  as deferred cleanup
 
-### SQ-002: User later manages squad details
+### SQ-002: User later manages team details
 
-**Actor:** Squad owner
+**Actor:** Team primary owner or co-owner
 
 **Preconditions**
-- Squad exists
+- Team exists
 
 **Flow**
-1. User opens squad/team management
-2. User updates the squad name
-3. Later, when supported, user updates the squad avatar
+1. User opens team management
+2. User updates the team name
+3. User updates the selected built-in team icon
+4. Later, when supported, user may update the team avatar through a separate
+   upload or avatar-selection flow
 
 **Expected outcomes**
-- Squad identity can evolve without changing the underlying user account
+- Team identity can evolve without changing the underlying user account
 
-### SQ-003: Squad owner later invites co-owners
+### SQ-003: Team owner later invites co-owners
 
-**Actor:** Squad owner
+**Actor:** Team primary owner
 
 **Preconditions**
-- Squad exists
+- Team exists
 - Co-owner support has been implemented
 
 **Flow**
-1. Owner opens squad/team management
+1. Owner opens team management
 2. Owner invites or adds co-owners
-3. System updates squad ownership/management relationships
+3. System updates team ownership/management relationships
 
 **Expected outcomes**
-- Squad ownership can expand beyond a single person when the feature is ready
+- Team ownership can expand beyond a single person when the feature is ready
+
+### SQ-004: League home exposes a clear path to team identity
+
+**Actor:** Commissioner or member
+
+**Preconditions**
+- User is an active member of a league
+- User already has exactly one active team in that league
+
+**Flow**
+1. User lands on league home
+2. User sees a clear `My Team` or `Manage Team` entry point
+3. User opens the dedicated team-management surface
+
+**Expected outcomes**
+- Team identity is easy to discover
+- Users do not have to hunt through account settings for league-scoped team
+  behavior
 
 ## Deferred Questions To Review During Implementation
 
-- Should every league membership always imply exactly one squad in the first
-  pass?
-- Should commissioners and members follow the same squad-creation flow?
-- Should squad naming be editable immediately during join, or only after the
-  default is created?
-- How should squad co-ownership map to current membership and role concepts?
-- Which current user-facing surfaces should switch from user identity to squad
+- Which current user-facing surfaces should switch from user identity to team
   identity first?
+- Should the future owner-transfer flow require an explicit acceptance step?
+- How should future team-avatar uploads coexist with the built-in icon catalog?
 
 ## Required Model Review Before Implementation
 
@@ -87,10 +143,14 @@ Before implementation, review:
 - current `Squad` and `SquadMembership` models
 - whether squad ownership semantics are already truthful
 - whether any current squad fields are speculative
-- whether user-facing identity should transition from `displayName` to squad
-  identity in specific read surfaces
+- whether `iconUrl` should be removed and replaced by a first-class `iconKey`
+- whether `SquadMembership` needs an explicit role field for primary-owner vs
+  co-owner semantics
+- which current user-facing surfaces should transition from user identity to
+  team identity in specific read surfaces
 
 ## Follow-On Planning Note
 
-This plan should remain deferred until after the current user and league
-feature lanes are complete.
+This plan should now feed a concrete execution plan rather than remaining a
+loose deferred note. Implementation should still stay backend-first and run
+through the data-modeler before frontend work begins.

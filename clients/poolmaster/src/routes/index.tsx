@@ -8,6 +8,7 @@ import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
+import { MyTeamPage } from '@/features/teams/my-team-page';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
 function LegacyJoinInviteRedirect() {
@@ -54,6 +55,10 @@ export const router = createBrowserRouter([
           {
             path: 'league/:leagueCode',
             element: <LeagueDetailPage />,
+          },
+          {
+            path: 'league/:leagueCode/team',
+            element: <MyTeamPage />,
           },
           {
             path: 'contests/:contestId',

@@ -13,7 +13,7 @@ import {
 } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { LeagueIcon } from './league-icon';
-import { buildInvitePath, setRecentLeagueCode } from './league-routing';
+import { buildInvitePath, buildLeagueTeamPath, setRecentLeagueCode } from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -308,6 +308,24 @@ export function LeagueDetailPage() {
         </div>
 
         <div className="space-y-6">
+          <div className="rounded-[2rem] border border-border bg-card p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold">My Team</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Team identity lives in league context. Create or manage your team here before
+                  icons and ownership controls expand in the next slice.
+                </p>
+              </div>
+              <Link
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
+              >
+                Manage team
+              </Link>
+            </div>
+          </div>
+
           <div className="rounded-[2rem] border border-border bg-card p-6">
             <h3 className="text-xl font-semibold">Next build steps</h3>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
