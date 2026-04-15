@@ -159,12 +159,12 @@ export function AuthHomePage() {
             <h2 className="max-w-xl text-4xl font-semibold tracking-tight">
               {inviteContext
                 ? `You're almost inside ${inviteContext.league.name}.`
-                : 'Ultimate Office Pool Manager starts with one simple choice: sign in or register.'}
+                : 'Run your league, manage your team, and keep every pool night organized.'}
             </h2>
             <p className="max-w-xl text-base text-muted-foreground">
               {inviteContext
                 ? 'Sign in to join with your existing account, or create a new account and continue to the invitation confirmation step.'
-                : 'New to Ultimate Office Pool Manager? Register and create your first league now.'}
+                : 'PoolMaster gives commissioners one place to create leagues, invite members, manage teams, and grow into contests as new features come online.'}
             </p>
           </div>
           {inviteContext ? (
@@ -179,12 +179,12 @@ export function AuthHomePage() {
           ) : (
             <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
               <div className="rounded-2xl border border-border bg-background p-4">
-                Commissioners start by registering themselves, landing in the app, and creating
-                their first league.
+                Commissioners start by creating an account, landing in the app, and launching
+                their first league with a memorable league code.
               </div>
               <div className="rounded-2xl border border-border bg-background p-4">
-                Members most often join later by invitation after a commissioner has created the
-                league.
+                Members join later through invitation, then manage their own team inside the
+                league experience.
               </div>
             </div>
           )}
