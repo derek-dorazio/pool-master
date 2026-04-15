@@ -25,11 +25,7 @@ test('new user can sign up and land on the welcome page', async ({ page }) => {
 
   await page.goto('/');
 
-  await expect(
-    page.getByRole('heading', {
-      name: /ultimate office pool manager starts with one simple choice/i,
-    }),
-  ).toBeVisible();
+  await expect(page.getByTestId('auth-register-tab')).toBeVisible();
 
   await registerUser(page, {
     firstName: 'Playwright',
@@ -41,8 +37,6 @@ test('new user can sign up and land on the welcome page', async ({ page }) => {
   await expect(page).toHaveURL(/\/welcome$/);
   await expect(page.getByTestId('authenticated-landing')).toBeVisible();
   await expect(
-    page.getByRole('heading', {
-      name: /welcome to ultimate office pool manager/i,
-    }),
+    page.getByTestId('welcome-create-league'),
   ).toBeVisible();
 });
