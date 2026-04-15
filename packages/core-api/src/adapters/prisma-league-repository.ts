@@ -4,7 +4,7 @@
 
 import type { League as PrismaLeague, PrismaClient } from '@prisma/client';
 import type { LeagueRepository } from '@poolmaster/shared/db';
-import type { JoinPolicy, League } from '@poolmaster/shared/domain';
+import type { JoinPolicy, League, LeagueIconKey } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueRepository implements LeagueRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -38,6 +38,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         description: league.description,
         createdBy: league.createdBy,
         isActive: league.isActive,
+        iconKey: league.iconKey,
         joinPolicy: league.joinPolicy,
       },
     });
@@ -52,6 +53,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.description !== undefined && { description: updates.description }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
+        ...(updates.iconKey !== undefined && { iconKey: updates.iconKey }),
         ...(updates.joinPolicy !== undefined && { joinPolicy: updates.joinPolicy }),
       },
     });
@@ -71,6 +73,7 @@ function mapToLeague(row: PrismaLeague): League {
     description: row.description ?? undefined,
     createdBy: row.createdBy,
     isActive: row.isActive,
+    iconKey: row.iconKey as LeagueIconKey,
     joinPolicy: row.joinPolicy as JoinPolicy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

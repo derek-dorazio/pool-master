@@ -8,13 +8,22 @@ import type {
   League,
   LeagueMembership,
 } from '@poolmaster/shared/domain';
-import { JoinPolicy, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { JoinPolicy, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 
 export interface CreateLeagueInput {
   createdBy: string;
   name: string;
   leagueCode: string;
   description?: string;
+}
+
+export interface UpdateLeagueDetailsInput {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateLeagueIconInput {
+  iconKey: LeagueIconKey;
 }
 
 export interface UserLeagueView {
@@ -48,6 +57,7 @@ export class LeagueService {
       description: input.description,
       createdBy: input.createdBy,
       isActive: true,
+      iconKey: LeagueIconKey.TROPHY,
       joinPolicy: DEFAULT_JOIN_POLICY,
     });
     const membership = await this.membershipRepo.create({
@@ -108,6 +118,43 @@ export class LeagueService {
     }
 
     return this.leagueRepo.update(leagueId, { isActive: false });
+  }
+
+  async updateLeagueDetails(leagueId: string, updates: UpdateLeagueDetailsInput): Promise<League> {
+    const league = await this.leagueRepo.findById(leagueId);
+    if (!league) {
+      throw new LeagueNotFoundError(leagueId);
+    }
+
+    if (league.isActive === false) {
+      throw new LeagueOperationError(
+        'Inactive leagues are read-only outside lifecycle actions',
+        'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
+      );
+    }
+
+    return this.leagueRepo.update(leagueId, {
+      name: updates.name,
+      description: updates.description?.trim() ? updates.description.trim() : undefined,
+    });
+  }
+
+  async updateLeagueIcon(leagueId: string, updates: UpdateLeagueIconInput): Promise<League> {
+    const league = await this.leagueRepo.findById(leagueId);
+    if (!league) {
+      throw new LeagueNotFoundError(leagueId);
+    }
+
+    if (league.isActive === false) {
+      throw new LeagueOperationError(
+        'Inactive leagues are read-only outside lifecycle actions',
+        'LEAGUE_ICON_READ_ONLY_WHEN_INACTIVE',
+      );
+    }
+
+    return this.leagueRepo.update(leagueId, {
+      iconKey: updates.iconKey,
+    });
   }
 
   async deleteInactiveLeague(leagueId: string, confirmationLeagueCode: string): Promise<void> {

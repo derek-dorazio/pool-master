@@ -842,6 +842,32 @@
                             "type": "boolean",
                             "description": "Whether the league is currently active for normal write interactions."
                           },
+                          "iconKey": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_FLAG",
+                              "GOLF_BALL",
+                              "FOOTBALL",
+                              "FOOTBALL_HELMET",
+                              "BASKETBALL",
+                              "BASKETBALL_HOOP",
+                              "CHECKERED_FLAG",
+                              "RACING_WHEEL",
+                              "TENNIS_BALL",
+                              "TENNIS_RACKET",
+                              "HORSESHOE",
+                              "SOCCER_BALL",
+                              "HOCKEY_STICK",
+                              "HOCKEY_PUCK",
+                              "BASEBALL",
+                              "BASEBALL_BAT",
+                              "FIGHT_GLOVE",
+                              "TROPHY",
+                              "WHISTLE",
+                              "STOPWATCH"
+                            ],
+                            "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                          },
                           "memberCount": {
                             "type": "number",
                             "description": "Current number of memberships in the league."
@@ -869,6 +895,7 @@
                           "leagueCode",
                           "name",
                           "isActive",
+                          "iconKey",
                           "memberCount",
                           "activeContestCount"
                         ],
@@ -1001,6 +1028,32 @@
                           "type": "boolean",
                           "description": "Whether the league is currently active for normal write interactions."
                         },
+                        "iconKey": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF_FLAG",
+                            "GOLF_BALL",
+                            "FOOTBALL",
+                            "FOOTBALL_HELMET",
+                            "BASKETBALL",
+                            "BASKETBALL_HOOP",
+                            "CHECKERED_FLAG",
+                            "RACING_WHEEL",
+                            "TENNIS_BALL",
+                            "TENNIS_RACKET",
+                            "HORSESHOE",
+                            "SOCCER_BALL",
+                            "HOCKEY_STICK",
+                            "HOCKEY_PUCK",
+                            "BASEBALL",
+                            "BASEBALL_BAT",
+                            "FIGHT_GLOVE",
+                            "TROPHY",
+                            "WHISTLE",
+                            "STOPWATCH"
+                          ],
+                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                        },
                         "memberCount": {
                           "type": "number",
                           "description": "Current number of memberships in the league."
@@ -1037,6 +1090,7 @@
                         "leagueCode",
                         "name",
                         "isActive",
+                        "iconKey",
                         "memberCount",
                         "activeContestCount",
                         "joinPolicy"
@@ -1185,6 +1239,32 @@
                           "type": "boolean",
                           "description": "Whether the league is currently active for normal write interactions."
                         },
+                        "iconKey": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF_FLAG",
+                            "GOLF_BALL",
+                            "FOOTBALL",
+                            "FOOTBALL_HELMET",
+                            "BASKETBALL",
+                            "BASKETBALL_HOOP",
+                            "CHECKERED_FLAG",
+                            "RACING_WHEEL",
+                            "TENNIS_BALL",
+                            "TENNIS_RACKET",
+                            "HORSESHOE",
+                            "SOCCER_BALL",
+                            "HOCKEY_STICK",
+                            "HOCKEY_PUCK",
+                            "BASEBALL",
+                            "BASEBALL_BAT",
+                            "FIGHT_GLOVE",
+                            "TROPHY",
+                            "WHISTLE",
+                            "STOPWATCH"
+                          ],
+                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                        },
                         "memberCount": {
                           "type": "number",
                           "description": "Current number of memberships in the league."
@@ -1221,6 +1301,7 @@
                         "leagueCode",
                         "name",
                         "isActive",
+                        "iconKey",
                         "memberCount",
                         "activeContestCount",
                         "joinPolicy"
@@ -1475,6 +1556,32 @@
                           "type": "boolean",
                           "description": "Whether the league is currently active for normal write interactions."
                         },
+                        "iconKey": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF_FLAG",
+                            "GOLF_BALL",
+                            "FOOTBALL",
+                            "FOOTBALL_HELMET",
+                            "BASKETBALL",
+                            "BASKETBALL_HOOP",
+                            "CHECKERED_FLAG",
+                            "RACING_WHEEL",
+                            "TENNIS_BALL",
+                            "TENNIS_RACKET",
+                            "HORSESHOE",
+                            "SOCCER_BALL",
+                            "HOCKEY_STICK",
+                            "HOCKEY_PUCK",
+                            "BASEBALL",
+                            "BASEBALL_BAT",
+                            "FIGHT_GLOVE",
+                            "TROPHY",
+                            "WHISTLE",
+                            "STOPWATCH"
+                          ],
+                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                        },
                         "memberCount": {
                           "type": "number",
                           "description": "Current number of memberships in the league."
@@ -1511,6 +1618,7 @@
                         "leagueCode",
                         "name",
                         "isActive",
+                        "iconKey",
                         "memberCount",
                         "activeContestCount",
                         "joinPolicy"
@@ -1524,6 +1632,501 @@
                   ],
                   "additionalProperties": false,
                   "description": "Single-league detail response."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/details": {
+      "put": {
+        "operationId": "updateLeagueDetails",
+        "summary": "Update league details",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Allows a commissioner to edit the active league detail fields that are currently product truth: name and description. League code remains immutable after creation.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Updated primary league name shown in selectors, tiles, and league home."
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Optional updated commissioner-facing league description. Omit or send an empty value to clear it."
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Commissioner request payload for editing league details while the league remains active."
+              }
+            }
+          },
+          "description": "Commissioner request payload for editing league details while the league remains active."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league detail response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "league": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
+                        },
+                        "leagueCode": {
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Primary display name for the league."
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Optional short league description."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
+                        },
+                        "iconKey": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF_FLAG",
+                            "GOLF_BALL",
+                            "FOOTBALL",
+                            "FOOTBALL_HELMET",
+                            "BASKETBALL",
+                            "BASKETBALL_HOOP",
+                            "CHECKERED_FLAG",
+                            "RACING_WHEEL",
+                            "TENNIS_BALL",
+                            "TENNIS_RACKET",
+                            "HORSESHOE",
+                            "SOCCER_BALL",
+                            "HOCKEY_STICK",
+                            "HOCKEY_PUCK",
+                            "BASEBALL",
+                            "BASEBALL_BAT",
+                            "FIGHT_GLOVE",
+                            "TROPHY",
+                            "WHISTLE",
+                            "STOPWATCH"
+                          ],
+                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                        },
+                        "memberCount": {
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
+                        },
+                        "activeContestCount": {
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
+                          "description": "Current user role in the league when the response is viewer-scoped."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
+                        },
+                        "joinPolicy": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER_ONLY",
+                            "LINK_INVITE",
+                            "OPEN"
+                          ],
+                          "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueCode",
+                        "name",
+                        "isActive",
+                        "iconKey",
+                        "memberCount",
+                        "activeContestCount",
+                        "joinPolicy"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Detailed league payload used by league-home and commissioner-management surfaces."
+                    }
+                  },
+                  "required": [
+                    "league"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single-league detail response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/icon": {
+      "put": {
+        "operationId": "updateLeagueIcon",
+        "summary": "Update league icon",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Allows a commissioner to select a built-in league icon from the curated PoolMaster icon catalog. Custom uploads remain out of scope for this slice.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "iconKey": {
+                    "type": "string",
+                    "enum": [
+                      "GOLF_FLAG",
+                      "GOLF_BALL",
+                      "FOOTBALL",
+                      "FOOTBALL_HELMET",
+                      "BASKETBALL",
+                      "BASKETBALL_HOOP",
+                      "CHECKERED_FLAG",
+                      "RACING_WHEEL",
+                      "TENNIS_BALL",
+                      "TENNIS_RACKET",
+                      "HORSESHOE",
+                      "SOCCER_BALL",
+                      "HOCKEY_STICK",
+                      "HOCKEY_PUCK",
+                      "BASEBALL",
+                      "BASEBALL_BAT",
+                      "FIGHT_GLOVE",
+                      "TROPHY",
+                      "WHISTLE",
+                      "STOPWATCH"
+                    ],
+                    "description": "Selected built-in league icon from the curated PoolMaster icon catalog."
+                  }
+                },
+                "required": [
+                  "iconKey"
+                ],
+                "additionalProperties": false,
+                "description": "Commissioner request payload for selecting a built-in league icon."
+              }
+            }
+          },
+          "description": "Commissioner request payload for selecting a built-in league icon."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league detail response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "league": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
+                        },
+                        "leagueCode": {
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Primary display name for the league."
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Optional short league description."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
+                        },
+                        "iconKey": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF_FLAG",
+                            "GOLF_BALL",
+                            "FOOTBALL",
+                            "FOOTBALL_HELMET",
+                            "BASKETBALL",
+                            "BASKETBALL_HOOP",
+                            "CHECKERED_FLAG",
+                            "RACING_WHEEL",
+                            "TENNIS_BALL",
+                            "TENNIS_RACKET",
+                            "HORSESHOE",
+                            "SOCCER_BALL",
+                            "HOCKEY_STICK",
+                            "HOCKEY_PUCK",
+                            "BASEBALL",
+                            "BASEBALL_BAT",
+                            "FIGHT_GLOVE",
+                            "TROPHY",
+                            "WHISTLE",
+                            "STOPWATCH"
+                          ],
+                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                        },
+                        "memberCount": {
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
+                        },
+                        "activeContestCount": {
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
+                          "description": "Current user role in the league when the response is viewer-scoped."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
+                        },
+                        "joinPolicy": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER_ONLY",
+                            "LINK_INVITE",
+                            "OPEN"
+                          ],
+                          "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueCode",
+                        "name",
+                        "isActive",
+                        "iconKey",
+                        "memberCount",
+                        "activeContestCount",
+                        "joinPolicy"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Detailed league payload used by league-home and commissioner-management surfaces."
+                    }
+                  },
+                  "required": [
+                    "league"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single-league detail response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -1620,6 +2223,32 @@
                           "type": "boolean",
                           "description": "Whether the league is currently active for normal write interactions."
                         },
+                        "iconKey": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF_FLAG",
+                            "GOLF_BALL",
+                            "FOOTBALL",
+                            "FOOTBALL_HELMET",
+                            "BASKETBALL",
+                            "BASKETBALL_HOOP",
+                            "CHECKERED_FLAG",
+                            "RACING_WHEEL",
+                            "TENNIS_BALL",
+                            "TENNIS_RACKET",
+                            "HORSESHOE",
+                            "SOCCER_BALL",
+                            "HOCKEY_STICK",
+                            "HOCKEY_PUCK",
+                            "BASEBALL",
+                            "BASEBALL_BAT",
+                            "FIGHT_GLOVE",
+                            "TROPHY",
+                            "WHISTLE",
+                            "STOPWATCH"
+                          ],
+                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                        },
                         "memberCount": {
                           "type": "number",
                           "description": "Current number of memberships in the league."
@@ -1656,6 +2285,7 @@
                         "leagueCode",
                         "name",
                         "isActive",
+                        "iconKey",
                         "memberCount",
                         "activeContestCount",
                         "joinPolicy"

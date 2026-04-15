@@ -1,7 +1,18 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import { deleteLeague, inactivateLeague, type ListLeaguesResponses } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import type { LeagueIconKey } from '@poolmaster/shared/domain';
+import {
+  deleteLeague,
+  getLeague,
+  inactivateLeague,
+  updateLeagueDetails,
+  updateLeagueIcon,
+  type ListLeaguesResponses,
+} from '@/lib/api';
+import { buildLeaguePath } from './league-routing';
+import { LeagueIcon } from './league-icon';
+import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -76,10 +87,39 @@ export function ManageLeagueModal({
   const [activeTab, setActiveTab] = useState<ManageTab>(MANAGE_TAB_LIFECYCLE);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [detailsName, setDetailsName] = useState('');
+  const [detailsDescription, setDetailsDescription] = useState('');
+  const [selectedIconKey, setSelectedIconKey] = useState(league?.iconKey ?? 'TROPHY');
   const normalizedConfirmation = useMemo(
     () => deleteConfirmation.trim().toUpperCase(),
     [deleteConfirmation],
   );
+
+  useEffect(() => {
+    if (!league) {
+      return;
+    }
+
+    setDetailsName(league.name);
+    setDetailsDescription(league.description ?? '');
+    setSelectedIconKey(league.iconKey);
+  }, [league]);
+
+  const leagueDetailQuery = useQuery({
+    queryKey: ['poolmaster', 'league', league?.id, 'manage'],
+    enabled: isOpen && Boolean(league?.id),
+    queryFn: async () => {
+      const response = await getLeague({
+        path: { id: league?.id ?? '' },
+      });
+
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League detail response is missing data.');
+      }
+
+      return response.data.league;
+    },
+  });
 
   const inactivateMutation = useMutation({
     mutationFn: async (leagueId: string) => {
@@ -95,6 +135,59 @@ export function ManageLeagueModal({
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', league?.id, 'manage'] });
+    },
+  });
+
+  const detailsMutation = useMutation({
+    mutationFn: async ({
+      leagueId,
+      name,
+      description,
+    }: {
+      leagueId: string;
+      name: string;
+      description?: string;
+    }) => {
+      const response = await updateLeagueDetails({
+        path: { id: leagueId },
+        body: {
+          name,
+          ...(description?.trim() ? { description: description.trim() } : {}),
+        },
+      });
+
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League details update response is missing data.');
+      }
+
+      return response.data.league;
+    },
+    onSuccess: async (updatedLeague) => {
+      setDetailsName(updatedLeague.name);
+      setDetailsDescription(updatedLeague.description ?? '');
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', league?.id, 'manage'] });
+    },
+  });
+
+  const iconMutation = useMutation({
+    mutationFn: async ({ leagueId, iconKey }: { leagueId: string; iconKey: LeagueIconKey }) => {
+      const response = await updateLeagueIcon({
+        path: { id: leagueId },
+        body: { iconKey },
+      });
+
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League icon update response is missing data.');
+      }
+
+      return response.data.league;
+    },
+    onSuccess: async (updatedLeague) => {
+      setSelectedIconKey(updatedLeague.iconKey);
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', league?.id, 'manage'] });
     },
   });
 
@@ -118,14 +211,24 @@ export function ManageLeagueModal({
   });
 
   function handleClose() {
-    if (inactivateMutation.isPending || deleteMutation.isPending) {
+    if (
+      inactivateMutation.isPending ||
+      detailsMutation.isPending ||
+      iconMutation.isPending ||
+      deleteMutation.isPending
+    ) {
       return;
     }
 
     setActiveTab(MANAGE_TAB_LIFECYCLE);
     setDeleteConfirmation('');
     setDeleteSuccess(false);
+    setDetailsName(league?.name ?? '');
+    setDetailsDescription(league?.description ?? '');
+    setSelectedIconKey(league?.iconKey ?? 'TROPHY');
     inactivateMutation.reset();
+    detailsMutation.reset();
+    iconMutation.reset();
     deleteMutation.reset();
     onClose();
   }
@@ -134,8 +237,11 @@ export function ManageLeagueModal({
     return null;
   }
 
-  const isInactive = league.isActive === false;
+  const isInactive = inactivateMutation.data?.isActive === false || league.isActive === false;
   const canDelete = isInactive && normalizedConfirmation === league.leagueCode;
+  const canEditDetails = !isInactive && !detailsMutation.isPending && !deleteMutation.isPending;
+  const currentJoinPolicy = leagueDetailQuery.data?.joinPolicy;
+  const canEditIcon = !isInactive && !iconMutation.isPending && !deleteMutation.isPending;
 
   return (
     <Dialog.Root
@@ -176,7 +282,7 @@ export function ManageLeagueModal({
               <button
                 aria-label="Close manage league modal"
                 className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={inactivateMutation.isPending || deleteMutation.isPending}
+                disabled={inactivateMutation.isPending || detailsMutation.isPending || deleteMutation.isPending}
                 onClick={handleClose}
                 type="button"
               >
@@ -198,6 +304,9 @@ export function ManageLeagueModal({
                   <div className="text-sm text-muted-foreground">
                     Status: {isInactive ? 'Inactive' : 'Active'}
                   </div>
+                </div>
+                <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary">
+                  <LeagueIcon iconKey={leagueDetailQuery.data?.iconKey ?? league.iconKey} size="lg" />
                 </div>
               </div>
 
@@ -229,32 +338,120 @@ export function ManageLeagueModal({
                   <div>
                     <h3 className="text-xl font-semibold">League details</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      This tab is scaffolded for the next slice. It will host league name,
-                      description, and other commissioner-editable identity fields.
+                      Edit the commissioner-owned league details that are real today: league name
+                      and description. League code stays stable after creation.
                     </p>
                   </div>
-                  <dl className="grid gap-4 rounded-[1.5rem] border border-border bg-card p-5 sm:grid-cols-2">
+                  <div className="grid gap-4 rounded-[1.5rem] border border-border bg-card p-5 sm:grid-cols-2">
+                    <label className="block space-y-2 sm:col-span-2">
+                      <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        League name
+                      </span>
+                      <input
+                        className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+                        data-testid="manage-league-name"
+                        disabled={!canEditDetails}
+                        onChange={(event) => setDetailsName(event.target.value)}
+                        type="text"
+                        value={detailsName}
+                      />
+                    </label>
+
                     <div>
-                      <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                        Name
-                      </dt>
-                      <dd className="mt-1 text-base font-medium">{league.name}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                         League code
-                      </dt>
-                      <dd className="mt-1 font-mono text-base font-medium">{league.leagueCode}</dd>
+                      </div>
+                      <div className="mt-1 font-mono text-base font-medium">{league.leagueCode}</div>
                     </div>
-                    <div className="sm:col-span-2">
-                      <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Homepage
+                      </div>
+                      <a
+                        className="mt-1 inline-flex text-sm font-medium text-primary hover:underline"
+                        href={buildLeaguePath(league.leagueCode)}
+                      >
+                        {buildLeaguePath(league.leagueCode)}
+                      </a>
+                    </div>
+
+                    <label className="block space-y-2 sm:col-span-2">
+                      <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                         Description
-                      </dt>
-                      <dd className="mt-1 text-sm text-muted-foreground">
-                        {league.description?.trim() || 'No description yet.'}
-                      </dd>
+                      </span>
+                      <textarea
+                        className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+                        data-testid="manage-league-description"
+                        disabled={!canEditDetails}
+                        onChange={(event) => setDetailsDescription(event.target.value)}
+                        value={detailsDescription}
+                      />
+                    </label>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Member count
+                      </div>
+                      <div className="mt-1 text-base font-medium">{league.memberCount}</div>
                     </div>
-                  </dl>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Active contests
+                      </div>
+                      <div className="mt-1 text-base font-medium">{league.activeContestCount}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Status
+                      </div>
+                      <div className="mt-1 text-base font-medium">{isInactive ? 'Inactive' : 'Active'}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Created
+                      </div>
+                      <div className="mt-1 text-base font-medium">
+                        {league.createdAt ? new Date(league.createdAt).toLocaleDateString() : 'Unknown'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isInactive ? (
+                    <p className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                      Inactive leagues are read-only here. Lifecycle remains the only place to
+                      make further league changes.
+                    </p>
+                  ) : null}
+
+                  {detailsMutation.isError ? (
+                    <p className="text-sm text-destructive">{extractErrorMessage(detailsMutation.error)}</p>
+                  ) : null}
+
+                  {detailsMutation.isSuccess ? (
+                    <p className="text-sm text-emerald-700">League details were saved.</p>
+                  ) : null}
+
+                  <div className="flex justify-end">
+                    <button
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                      data-testid="manage-league-save-details"
+                      disabled={!canEditDetails || detailsName.trim().length === 0}
+                      onClick={() =>
+                        void detailsMutation.mutateAsync({
+                          leagueId: league.id,
+                          name: detailsName.trim(),
+                          description: detailsDescription,
+                        })
+                      }
+                      type="button"
+                    >
+                      {detailsMutation.isPending ? 'Saving...' : 'Save details'}
+                    </button>
+                  </div>
                 </div>
               ) : null}
 
@@ -263,12 +460,82 @@ export function ManageLeagueModal({
                   <div>
                     <h3 className="text-xl font-semibold">League icon</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Icon upload and visual league identity are planned next. This tab is being
-                      scaffolded now so the commissioner management surface stays consistent.
+                      Choose from the built-in PoolMaster icon catalog for now. Custom uploads stay
+                      deferred until a later slice.
                     </p>
                   </div>
-                  <div className="rounded-[1.5rem] border border-dashed border-border bg-card p-5 text-sm text-muted-foreground">
-                    Future icon tools will live here.
+                  <div className="rounded-[1.5rem] border border-border bg-card p-5">
+                    <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary">
+                        <LeagueIcon iconKey={selectedIconKey as never} size="lg" />
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                          Selected icon
+                        </div>
+                        <div className="mt-1 text-base font-medium">
+                          {LEAGUE_ICON_OPTIONS.find((icon) => icon.key === selectedIconKey)?.label ?? 'Trophy'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-4">
+                      {LEAGUE_ICON_OPTIONS.map((icon) => {
+                        const isSelected = selectedIconKey === icon.key;
+
+                        return (
+                          <button
+                            className={`rounded-[1.25rem] border px-3 py-4 text-center transition ${
+                              isSelected
+                                ? 'border-primary bg-primary/10 text-foreground'
+                                : 'border-border bg-background text-muted-foreground hover:bg-muted/40'
+                            }`}
+                            data-testid={`manage-league-icon-${icon.key}`}
+                            disabled={!canEditIcon}
+                            key={icon.key}
+                            onClick={() => setSelectedIconKey(icon.key)}
+                            type="button"
+                          >
+                            <div className="flex justify-center text-primary">
+                              <LeagueIcon iconKey={icon.key} size="md" />
+                            </div>
+                            <div className="mt-3 text-xs font-medium">{icon.label}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {isInactive ? (
+                      <p className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                        Inactive leagues are read-only here. Lifecycle remains the only place to
+                        make further league changes.
+                      </p>
+                    ) : null}
+
+                    {iconMutation.isError ? (
+                      <p className="mt-4 text-sm text-destructive">{extractErrorMessage(iconMutation.error)}</p>
+                    ) : null}
+
+                    {iconMutation.isSuccess ? (
+                      <p className="mt-4 text-sm text-emerald-700">League icon was saved.</p>
+                    ) : null}
+
+                    <div className="mt-5 flex justify-end">
+                      <button
+                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                        data-testid="manage-league-save-icon"
+                        disabled={!canEditIcon}
+                        onClick={() =>
+                          void iconMutation.mutateAsync({
+                            leagueId: league.id,
+                            iconKey: selectedIconKey,
+                          })
+                        }
+                        type="button"
+                      >
+                        {iconMutation.isPending ? 'Saving...' : 'Save icon'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : null}
@@ -278,13 +545,21 @@ export function ManageLeagueModal({
                   <div>
                     <h3 className="text-xl font-semibold">League settings</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Broader settings management is a follow-on slice. This tab reserves the
-                      commissioner-owned home for future settings without mixing them into lifecycle
-                      actions.
+                      This first pass stays intentionally small. Join policy is shown here for
+                      context, but broader settings remain a follow-on slice.
                     </p>
                   </div>
-                  <div className="rounded-[1.5rem] border border-dashed border-border bg-card p-5 text-sm text-muted-foreground">
-                    Future settings controls will live here.
+                  <div className="rounded-[1.5rem] border border-border bg-card p-5">
+                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Join policy
+                    </div>
+                    <div className="mt-2 text-base font-medium">
+                      {currentJoinPolicy ?? 'Loading...'}
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Join policy editing is deferred until invite and open-league product flows are
+                      reviewed. This surface stays read-only and truthful for now.
+                    </p>
                   </div>
                 </div>
               ) : null}

@@ -18,6 +18,7 @@ import type {
   InvitationStatus,
   JoinPolicy,
   InviteType,
+  LeagueIconKey,
   LeagueMembershipStatus,
   LeagueRole,
   MappingConfidence,
@@ -65,6 +66,7 @@ export interface League extends DomainEntity {
   description?: string;
   createdBy: string;
   isActive: boolean;
+  iconKey: LeagueIconKey;
   joinPolicy: JoinPolicy;
 }
 

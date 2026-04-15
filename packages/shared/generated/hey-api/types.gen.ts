@@ -574,6 +574,10 @@ export type ListLeaguesResponses = {
              */
             isActive: boolean;
             /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
              * Current number of memberships in the league.
              */
             memberCount: number;
@@ -696,6 +700,10 @@ export type CreateLeagueResponses = {
              * Whether the league is currently active for normal write interactions.
              */
             isActive: boolean;
+            /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
             /**
              * Current number of memberships in the league.
              */
@@ -868,6 +876,10 @@ export type GetLeagueResponses = {
              */
             isActive: boolean;
             /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
              * Current number of memberships in the league.
              */
             memberCount: number;
@@ -959,6 +971,10 @@ export type GetLeagueByCodeResponses = {
              */
             isActive: boolean;
             /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
              * Current number of memberships in the league.
              */
             memberCount: number;
@@ -983,6 +999,260 @@ export type GetLeagueByCodeResponses = {
 };
 
 export type GetLeagueByCodeResponse = GetLeagueByCodeResponses[keyof GetLeagueByCodeResponses];
+
+export type UpdateLeagueDetailsData = {
+    /**
+     * Commissioner request payload for editing league details while the league remains active.
+     */
+    body: {
+        /**
+         * Updated primary league name shown in selectors, tiles, and league home.
+         */
+        name: string;
+        /**
+         * Optional updated commissioner-facing league description. Omit or send an empty value to clear it.
+         */
+        description?: string;
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/details';
+};
+
+export type UpdateLeagueDetailsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateLeagueDetailsError = UpdateLeagueDetailsErrors[keyof UpdateLeagueDetailsErrors];
+
+export type UpdateLeagueDetailsResponses = {
+    /**
+     * Single-league detail response.
+     */
+    200: {
+        /**
+         * Detailed league payload used by league-home and commissioner-management surfaces.
+         */
+        league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
+            id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
+            leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
+            name: string;
+            /**
+             * Optional short league description.
+             */
+            description?: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
+            isActive: boolean;
+            /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
+             * Current number of memberships in the league.
+             */
+            memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
+            activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
+            role?: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+            /**
+             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+             */
+            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+        };
+    };
+};
+
+export type UpdateLeagueDetailsResponse = UpdateLeagueDetailsResponses[keyof UpdateLeagueDetailsResponses];
+
+export type UpdateLeagueIconData = {
+    /**
+     * Commissioner request payload for selecting a built-in league icon.
+     */
+    body: {
+        /**
+         * Selected built-in league icon from the curated PoolMaster icon catalog.
+         */
+        iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/icon';
+};
+
+export type UpdateLeagueIconErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateLeagueIconError = UpdateLeagueIconErrors[keyof UpdateLeagueIconErrors];
+
+export type UpdateLeagueIconResponses = {
+    /**
+     * Single-league detail response.
+     */
+    200: {
+        /**
+         * Detailed league payload used by league-home and commissioner-management surfaces.
+         */
+        league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
+            id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
+            leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
+            name: string;
+            /**
+             * Optional short league description.
+             */
+            description?: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
+            isActive: boolean;
+            /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
+             * Current number of memberships in the league.
+             */
+            memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
+            activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
+            role?: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+            /**
+             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+             */
+            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+        };
+    };
+};
+
+export type UpdateLeagueIconResponse = UpdateLeagueIconResponses[keyof UpdateLeagueIconResponses];
 
 export type InactivateLeagueData = {
     body?: never;
@@ -1071,6 +1341,10 @@ export type InactivateLeagueResponses = {
              * Whether the league is currently active for normal write interactions.
              */
             isActive: boolean;
+            /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
             /**
              * Current number of memberships in the league.
              */

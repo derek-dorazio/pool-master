@@ -18,6 +18,8 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     createLeague,
     getLeague,
     getLeagueByCode,
+    updateLeagueDetails,
+    updateLeagueIcon,
     inactivateLeague,
     deleteLeague,
   };
@@ -119,6 +121,54 @@ export function createLeagueHandlers(leagueService: LeagueService) {
   ): Promise<void> {
     try {
       const league = await leagueService.inactivateLeague(request.params.id);
+      return reply.send({
+        league: toLeagueDetailDto(league),
+      });
+    } catch (err) {
+      if (err instanceof LeagueNotFoundError) {
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      if (err instanceof LeagueOperationError) {
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function updateLeagueDetails(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: { name: string; description?: string };
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const league = await leagueService.updateLeagueDetails(request.params.id, request.body);
+      return reply.send({
+        league: toLeagueDetailDto(league),
+      });
+    } catch (err) {
+      if (err instanceof LeagueNotFoundError) {
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      if (err instanceof LeagueOperationError) {
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function updateLeagueIcon(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: { iconKey: string };
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const league = await leagueService.updateLeagueIcon(request.params.id, {
+        iconKey: request.body.iconKey as never,
+      });
       return reply.send({
         league: toLeagueDetailDto(league),
       });

@@ -3,7 +3,20 @@
   "compilerOptions": {
     "composite": true,
     "rootDir": ".",
-    "outDir": "dist"
+    "outDir": "dist",
+    "lib": ["ES2022", "DOM"]
   },
-  "include": ["domain/**/*", "db/**/*", "events/**/*", "utils/**/*", "src/**/*", "i18n/**/*", "i18n/locales/**/*.json", "api-routes.ts", "index.ts", "dto/**/*"]
+  "include": [
+    "domain/**/*",
+    "db/**/*",
+    "events/**/*",
+    "utils/**/*",
+    "src/**/*",
+    "i18n/**/*",
+    "i18n/locales/**/*.json",
+    "api-routes.ts",
+    "index.ts",
+    "dto/**/*",
+    "generated/**/*"
+  ]
 }

@@ -6,7 +6,7 @@ import type {
   LeagueDetailDto,
   LeagueListResponse,
 } from '@poolmaster/shared/dto';
-import type { JoinPolicy, LeagueRole } from '@poolmaster/shared/domain';
+import type { JoinPolicy, LeagueIconKey, LeagueRole } from '@poolmaster/shared/domain';
 
 interface LeagueRow {
   id: string;
@@ -15,6 +15,7 @@ interface LeagueRow {
   description?: string | null;
   createdBy: string;
   isActive: boolean;
+  iconKey: LeagueIconKey;
   joinPolicy: JoinPolicy;
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +31,7 @@ export function toLeagueSummaryDto(
     name: league.name,
     description: league.description ?? null,
     isActive: league.isActive,
+    iconKey: league.iconKey,
     memberCount: opts?.memberCount ?? 0,
     activeContestCount: opts?.activeContestCount ?? 0,
     role: opts?.role,

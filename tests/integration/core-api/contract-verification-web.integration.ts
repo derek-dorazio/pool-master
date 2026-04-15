@@ -159,6 +159,55 @@ describe('Contract verification (web)', () => {
     expect(SuccessSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
+  it('league detail update route matches LeagueResponseSchema', async () => {
+    const owner = await createTestUser({ displayName: 'Contract League Editor' });
+
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: owner.headers,
+      payload: buildCreateLeaguePayload('Editable League'),
+    });
+    const leagueId = leagueRes.json().league.id as string;
+
+    const updateRes = await getApp().inject({
+      method: 'PUT',
+      url: API_ROUTES.leagues.details(leagueId),
+      headers: owner.headers,
+      payload: {
+        name: 'Edited League',
+        description: 'Edited description',
+      },
+    });
+
+    expect(updateRes.statusCode).toBe(200);
+    expect(LeagueResponseSchema.safeParse(updateRes.json()).success).toBe(true);
+  });
+
+  it('league icon update route matches LeagueResponseSchema', async () => {
+    const owner = await createTestUser({ displayName: 'Contract League Icon Editor' });
+
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: owner.headers,
+      payload: buildCreateLeaguePayload('Icon League'),
+    });
+    const leagueId = leagueRes.json().league.id as string;
+
+    const updateRes = await getApp().inject({
+      method: 'PUT',
+      url: API_ROUTES.leagues.icon(leagueId),
+      headers: owner.headers,
+      payload: {
+        iconKey: 'SOCCER_BALL',
+      },
+    });
+
+    expect(updateRes.statusCode).toBe(200);
+    expect(LeagueResponseSchema.safeParse(updateRes.json()).success).toBe(true);
+  });
+
   it('contest management routes match ContestManagementResponseSchema', async () => {
     const owner = await createTestUser({ displayName: 'Contract Contest Owner' });
 

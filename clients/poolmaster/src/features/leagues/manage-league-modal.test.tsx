@@ -6,10 +6,16 @@ import { ManageLeagueModal } from './manage-league-modal';
 
 const inactivateLeagueMock = vi.fn();
 const deleteLeagueMock = vi.fn();
+const getLeagueMock = vi.fn();
+const updateLeagueDetailsMock = vi.fn();
+const updateLeagueIconMock = vi.fn();
 
 vi.mock('@/lib/api', () => ({
+  getLeague: (...args: unknown[]) => getLeagueMock(...args),
   inactivateLeague: (...args: unknown[]) => inactivateLeagueMock(...args),
   deleteLeague: (...args: unknown[]) => deleteLeagueMock(...args),
+  updateLeagueDetails: (...args: unknown[]) => updateLeagueDetailsMock(...args),
+  updateLeagueIcon: (...args: unknown[]) => updateLeagueIconMock(...args),
 }));
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
@@ -20,18 +26,32 @@ const commissionerLeague: LeagueSummary = {
   name: 'Big Dawgs',
   description: 'Neighborhood league',
   isActive: true,
+  iconKey: 'TROPHY',
   memberCount: 4,
   activeContestCount: 1,
   role: 'COMMISSIONER',
+  createdAt: '2026-04-15T10:00:00.000Z',
 };
 
 describe('ManageLeagueModal', () => {
   afterEach(() => {
+    getLeagueMock.mockReset();
     inactivateLeagueMock.mockReset();
     deleteLeagueMock.mockReset();
+    updateLeagueDetailsMock.mockReset();
+    updateLeagueIconMock.mockReset();
   });
 
   it('opens on the lifecycle tab and inactivates the league', async () => {
+    getLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'TROPHY',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
     inactivateLeagueMock.mockResolvedValue({
       data: {
         league: {
@@ -68,6 +88,15 @@ describe('ManageLeagueModal', () => {
   });
 
   it('keeps delete disabled until the confirmation code matches', async () => {
+    getLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'TROPHY',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -104,6 +133,15 @@ describe('ManageLeagueModal', () => {
   });
 
   it('deletes an inactive league and shows success state', async () => {
+    getLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'TROPHY',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
     deleteLeagueMock.mockResolvedValue({
       data: {
         success: true,
@@ -149,5 +187,154 @@ describe('ManageLeagueModal', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
     expect(onDeleted).toHaveBeenCalled();
+  });
+
+  it('updates league details from the details tab', async () => {
+    getLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'TROPHY',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+    updateLeagueDetailsMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'TROPHY',
+          name: 'Edited Dawgs',
+          description: 'Updated description',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ManageLeagueModal
+          isOpen
+          league={commissionerLeague}
+          onClose={vi.fn()}
+          onDeleted={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Details/ }));
+    fireEvent.change(screen.getByTestId('manage-league-name'), {
+      target: { value: 'Edited Dawgs' },
+    });
+    fireEvent.change(screen.getByTestId('manage-league-description'), {
+      target: { value: 'Updated description' },
+    });
+    fireEvent.click(screen.getByTestId('manage-league-save-details'));
+
+    await waitFor(() =>
+      expect(updateLeagueDetailsMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+        body: {
+          name: 'Edited Dawgs',
+          description: 'Updated description',
+        },
+      }),
+    );
+  });
+
+  it('shows details as read-only when the league is inactive', async () => {
+    getLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          isActive: false,
+          iconKey: 'TROPHY',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ManageLeagueModal
+          isOpen
+          league={{
+            ...commissionerLeague,
+            isActive: false,
+          }}
+          onClose={vi.fn()}
+          onDeleted={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Details/ }));
+
+    expect(screen.getByTestId('manage-league-name')).toBeDisabled();
+    expect(screen.getByTestId('manage-league-description')).toBeDisabled();
+    expect(screen.getByTestId('manage-league-save-details')).toBeDisabled();
+  });
+
+  it('updates league icon from the curated catalog', async () => {
+    getLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'TROPHY',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+    updateLeagueIconMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'SOCCER_BALL',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ManageLeagueModal
+          isOpen
+          league={commissionerLeague}
+          onClose={vi.fn()}
+          onDeleted={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Icon/ }));
+    fireEvent.click(screen.getByTestId('manage-league-icon-SOCCER_BALL'));
+    fireEvent.click(screen.getByTestId('manage-league-save-icon'));
+
+    await waitFor(() =>
+      expect(updateLeagueIconMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+        body: {
+          iconKey: 'SOCCER_BALL',
+        },
+      }),
+    );
   });
 });

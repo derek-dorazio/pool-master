@@ -1,16 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueIconKey, LeagueRole } from '@poolmaster/shared/domain';
+import type { ListLeaguesResponses } from '@/lib/api';
 import {
   getLeagueSelectorOptions,
   sortLeaguesForOverview,
 } from './league-routing';
 
-const leagues = [
+type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
+
+const leagues: LeagueSummary[] = [
   {
     id: 'league-active-member',
     leagueCode: 'ACTIVE1',
     name: 'Active Member League',
     isActive: true,
+    iconKey: LeagueIconKey.TROPHY,
     memberCount: 12,
     activeContestCount: 2,
     role: LeagueRole.MEMBER,
@@ -21,6 +25,7 @@ const leagues = [
     leagueCode: 'INACTIVE1',
     name: 'Inactive Member League',
     isActive: false,
+    iconKey: LeagueIconKey.TROPHY,
     memberCount: 10,
     activeContestCount: 0,
     role: LeagueRole.MEMBER,
@@ -31,6 +36,7 @@ const leagues = [
     leagueCode: 'COMMOFF1',
     name: 'Inactive Commissioner League',
     isActive: false,
+    iconKey: LeagueIconKey.TROPHY,
     memberCount: 8,
     activeContestCount: 0,
     role: LeagueRole.COMMISSIONER,
@@ -41,6 +47,7 @@ const leagues = [
     leagueCode: 'COMMON1',
     name: 'Active Commissioner League',
     isActive: true,
+    iconKey: LeagueIconKey.TROPHY,
     memberCount: 14,
     activeContestCount: 3,
     role: LeagueRole.COMMISSIONER,

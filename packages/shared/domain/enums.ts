@@ -183,6 +183,30 @@ export const LeagueMembershipStatus = {
 export type LeagueMembershipStatus =
   (typeof LeagueMembershipStatus)[keyof typeof LeagueMembershipStatus];
 
+export const LeagueIconKey = {
+  GOLF_FLAG: 'GOLF_FLAG',
+  GOLF_BALL: 'GOLF_BALL',
+  FOOTBALL: 'FOOTBALL',
+  FOOTBALL_HELMET: 'FOOTBALL_HELMET',
+  BASKETBALL: 'BASKETBALL',
+  BASKETBALL_HOOP: 'BASKETBALL_HOOP',
+  CHECKERED_FLAG: 'CHECKERED_FLAG',
+  RACING_WHEEL: 'RACING_WHEEL',
+  TENNIS_BALL: 'TENNIS_BALL',
+  TENNIS_RACKET: 'TENNIS_RACKET',
+  HORSESHOE: 'HORSESHOE',
+  SOCCER_BALL: 'SOCCER_BALL',
+  HOCKEY_STICK: 'HOCKEY_STICK',
+  HOCKEY_PUCK: 'HOCKEY_PUCK',
+  BASEBALL: 'BASEBALL',
+  BASEBALL_BAT: 'BASEBALL_BAT',
+  FIGHT_GLOVE: 'FIGHT_GLOVE',
+  TROPHY: 'TROPHY',
+  WHISTLE: 'WHISTLE',
+  STOPWATCH: 'STOPWATCH',
+} as const;
+export type LeagueIconKey = (typeof LeagueIconKey)[keyof typeof LeagueIconKey];
+
 export const AuthProvider = {
   EMAIL: 'email',
   GOOGLE: 'google',

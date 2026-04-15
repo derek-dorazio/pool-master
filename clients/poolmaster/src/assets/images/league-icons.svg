@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="league-icon-golf-flag" viewBox="0 0 64 64">
+    <path d="M22 10v44" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+    <path d="M24 12h20l-6 8 6 8H24" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="4"/>
+    <path d="M18 54h12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+  </symbol>
+  <symbol id="league-icon-golf-ball" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M24 26l4-3 4 3 4-3 4 3 4-3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/>
+    <path d="M24 34l4-3 4 3 4-3 4 3 4-3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/>
+  </symbol>
+  <symbol id="league-icon-football" viewBox="0 0 64 64">
+    <path d="M18 32c6-10 22-18 28-14 4 3 4 21 0 24-6 4-22-4-28-14z" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M26 24l12 16" fill="none" stroke="currentColor" stroke-width="3"/>
+    <path d="M32 22v20" fill="none" stroke="currentColor" stroke-width="3"/>
+    <path d="M28 28h8M28 36h8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/>
+  </symbol>
+  <symbol id="league-icon-football-helmet" viewBox="0 0 64 64">
+    <path d="M46 44H18c0-13 8-22 20-22 7 0 14 6 14 14v8z" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M42 44v6H30" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+    <path d="M22 34h16" fill="none" stroke="currentColor" stroke-width="3"/>
+  </symbol>
+  <symbol id="league-icon-basketball" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M14 32h36M32 14c6 5 10 11 10 18s-4 13-10 18M32 14c-6 5-10 11-10 18s4 13 10 18" fill="none" stroke="currentColor" stroke-width="3"/>
+  </symbol>
+  <symbol id="league-icon-basketball-hoop" viewBox="0 0 64 64">
+    <path d="M18 18h20v10H18z" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M38 23h8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+    <path d="M22 28h12l4 10H18z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3"/>
+    <path d="M22 28l-2 10M30 28v10M38 28l2 10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  </symbol>
+  <symbol id="league-icon-checkered-flag" viewBox="0 0 64 64">
+    <path d="M18 10v44" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+    <path d="M20 14h24v20H20z" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M20 14h12v10H20zM32 24h12v10H32z" fill="currentColor"/>
+  </symbol>
+  <symbol id="league-icon-racing-wheel" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="4"/>
+    <circle cx="32" cy="32" r="6" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M32 14v12M14 32h12M50 32H38M22 22l6 6M42 22l-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/>
+  </symbol>
+  <symbol id="league-icon-tennis-ball" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M22 18c8 4 12 9 12 14s-4 10-12 14M42 18c-8 4-12 9-12 14s4 10 12 14" fill="none" stroke="currentColor" stroke-width="3"/>
+  </symbol>
+  <symbol id="league-icon-tennis-racket" viewBox="0 0 64 64">
+    <ellipse cx="30" cy="26" rx="12" ry="14" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M24 16v20M30 12v28M36 16v20M18 24h24M20 30h20" fill="none" stroke="currentColor" stroke-width="2.5"/>
+    <path d="M38 38l10 10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="5"/>
+  </symbol>
+  <symbol id="league-icon-horseshoe" viewBox="0 0 64 64">
+    <path d="M22 20a10 10 0 0 1 20 0v20a8 8 0 0 1-16 0V20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="5"/>
+    <path d="M22 46l-6 6M42 46l6 6M24 24h0M40 24h0M24 34h0M40 34h0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+  </symbol>
+  <symbol id="league-icon-soccer-ball" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M32 22l6 4-2 7h-8l-2-7zM26 36l6-3 6 3-2 7h-8zM22 28l6-2M42 28l-6-2M24 42l4-2M40 42l-4-2" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2.5"/>
+  </symbol>
+  <symbol id="league-icon-hockey-stick" viewBox="0 0 64 64">
+    <path d="M20 18l18 24M40 44l8 0 4-8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+    <path d="M18 44c6 0 10-4 10-10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+  </symbol>
+  <symbol id="league-icon-hockey-puck" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="26" rx="16" ry="7" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M16 26v10c0 4 7 7 16 7s16-3 16-7V26" fill="none" stroke="currentColor" stroke-width="4"/>
+  </symbol>
+  <symbol id="league-icon-baseball" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M22 20c5 4 8 8 8 12s-3 8-8 12M42 20c-5 4-8 8-8 12s3 8 8 12" fill="none" stroke="currentColor" stroke-width="3"/>
+    <path d="M24 24l2 2M22 30l3 2M24 38l2-2M40 24l-2 2M42 30l-3 2M40 38l-2-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+  </symbol>
+  <symbol id="league-icon-baseball-bat" viewBox="0 0 64 64">
+    <path d="M22 42l18-18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="6"/>
+    <path d="M18 46l6-6M40 24l6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+    <circle cx="44" cy="20" r="4" fill="none" stroke="currentColor" stroke-width="3"/>
+  </symbol>
+  <symbol id="league-icon-fight-glove" viewBox="0 0 64 64">
+    <path d="M22 28V18M28 28V16M34 28V18M40 30V20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+    <path d="M20 30h22a8 8 0 0 1 8 8v8H28a8 8 0 0 1-8-8z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="4"/>
+  </symbol>
+  <symbol id="league-icon-trophy" viewBox="0 0 64 64">
+    <path d="M24 16h16v8a8 8 0 0 1-16 0z" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M24 18h-6a6 6 0 0 0 6 10M40 18h6a6 6 0 0 1-6 10" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M32 32v8M24 48h16M28 40h8v8h-8z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+  </symbol>
+  <symbol id="league-icon-whistle" viewBox="0 0 64 64">
+    <path d="M22 28a10 10 0 1 0 0 20h12a8 8 0 0 0 0-16h-6l8-8h10" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="4"/>
+    <circle cx="22" cy="38" r="4" fill="none" stroke="currentColor" stroke-width="3"/>
+  </symbol>
+  <symbol id="league-icon-stopwatch" viewBox="0 0 64 64">
+    <circle cx="32" cy="34" r="16" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M32 18v-6M26 12h12M40 18l4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"/>
+    <path d="M32 34l8-6M32 34v8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/>
+  </symbol>
+</svg>

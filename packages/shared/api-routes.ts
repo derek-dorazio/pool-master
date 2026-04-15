@@ -28,6 +28,8 @@ export const API_ROUTES = {
     list: '/api/v1/leagues',
     create: '/api/v1/leagues',
     detail: (id: string) => `/api/v1/leagues/${id}`,
+    details: (id: string) => `/api/v1/leagues/${id}/details`,
+    icon: (id: string) => `/api/v1/leagues/${id}/icon`,
     inactivate: (id: string) => `/api/v1/leagues/${id}/inactivate`,
     byCode: (leagueCode: string) => `/api/v1/leagues/code/${leagueCode}`,
     members: (id: string) => `/api/v1/leagues/${id}/members`,

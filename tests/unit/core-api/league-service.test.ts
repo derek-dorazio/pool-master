@@ -1,6 +1,6 @@
 import { LeagueService } from '../../../packages/core-api/src/modules/leagues/service';
 import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
-import { JoinPolicy, LeagueRole } from '@poolmaster/shared/domain';
+import { JoinPolicy, LeagueIconKey, LeagueRole } from '@poolmaster/shared/domain';
 import { buildLeague, buildMembership } from '../../factories';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
@@ -189,6 +189,93 @@ describe('LeagueService', () => {
 
       await expect(service.inactivateLeague('league-1')).rejects.toMatchObject({
         code: 'LEAGUE_ALREADY_INACTIVE',
+        statusCode: 400,
+      });
+    });
+  });
+
+  describe('updateLeagueDetails', () => {
+    it('updates name and description for an active league', async () => {
+      const leagueRepo = createMockLeagueRepo({
+        findById: jest.fn().mockResolvedValue(buildLeague({
+          id: 'league-1',
+          isActive: true,
+        })),
+      });
+      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
+
+      await service.updateLeagueDetails('league-1', {
+        name: 'Updated League',
+        description: 'Updated description',
+      });
+
+      expect(leagueRepo.update).toHaveBeenCalledWith(
+        'league-1',
+        expect.objectContaining({
+          name: 'Updated League',
+          description: 'Updated description',
+        }),
+      );
+    });
+
+    it('rejects details updates once a league is inactive', async () => {
+      const leagueRepo = createMockLeagueRepo({
+        findById: jest.fn().mockResolvedValue(buildLeague({
+          id: 'league-1',
+          isActive: false,
+        })),
+      });
+      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
+
+      await expect(
+        service.updateLeagueDetails('league-1', {
+          name: 'Updated League',
+          description: 'Updated description',
+        }),
+      ).rejects.toMatchObject({
+        code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
+        statusCode: 400,
+      });
+    });
+  });
+
+  describe('updateLeagueIcon', () => {
+    it('updates the built-in icon for an active league', async () => {
+      const leagueRepo = createMockLeagueRepo({
+        findById: jest.fn().mockResolvedValue(buildLeague({
+          id: 'league-1',
+          isActive: true,
+        })),
+      });
+      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
+
+      await service.updateLeagueIcon('league-1', {
+        iconKey: LeagueIconKey.SOCCER_BALL,
+      });
+
+      expect(leagueRepo.update).toHaveBeenCalledWith(
+        'league-1',
+        expect.objectContaining({
+          iconKey: LeagueIconKey.SOCCER_BALL,
+        }),
+      );
+    });
+
+    it('rejects icon updates once a league is inactive', async () => {
+      const leagueRepo = createMockLeagueRepo({
+        findById: jest.fn().mockResolvedValue(buildLeague({
+          id: 'league-1',
+          isActive: false,
+        })),
+      });
+      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
+
+      await expect(
+        service.updateLeagueIcon('league-1', {
+          iconKey: LeagueIconKey.SOCCER_BALL,
+        }),
+      ).rejects.toMatchObject({
+        code: 'LEAGUE_ICON_READ_ONLY_WHEN_INACTIVE',
         statusCode: 400,
       });
     });

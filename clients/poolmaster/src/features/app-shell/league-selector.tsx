@@ -2,9 +2,9 @@ import type { ListLeaguesResponses } from '@/lib/api';
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
-  getLeagueInitials,
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
+import { LeagueIcon } from '@/features/leagues/league-icon';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -30,8 +30,8 @@ export function LeagueSelector({
         className="flex cursor-pointer list-none items-center gap-3 rounded-[1.5rem] border border-border bg-background px-4 py-3 text-left shadow-sm"
         data-testid="league-selector-toggle"
       >
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {activeLeague ? getLeagueInitials(activeLeague.name) : 'LG'}
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <LeagueIcon iconKey={activeLeague?.iconKey} size="md" />
         </div>
         <div className="min-w-0">
           <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">League</div>
@@ -62,8 +62,8 @@ export function LeagueSelector({
               }}
               type="button"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                {getLeagueInitials(league.name)}
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <LeagueIcon iconKey={league.iconKey} size="sm" />
               </div>
               <div className="min-w-0">
                 <div className="truncate font-medium text-foreground">{league.name}</div>

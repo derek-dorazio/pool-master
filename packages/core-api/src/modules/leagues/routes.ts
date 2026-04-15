@@ -5,6 +5,8 @@
 import type { FastifyInstance } from 'fastify';
 import {
   CreateLeagueRequestSchema,
+  UpdateLeagueDetailsRequestSchema,
+  UpdateLeagueIconRequestSchema,
   DeleteLeagueRequestSchema,
   LeagueAuditEntriesResponseSchema,
   LeagueBulkOperationResponseSchema,
@@ -144,6 +146,42 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     handler: league.getLeagueByCode,
+  });
+
+  fastify.put('/:id/details', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Update league details',
+      description:
+        'Allows a commissioner to edit the active league detail fields that are currently product truth: name and description. League code remains immutable after creation.',
+      operationId: 'updateLeagueDetails',
+      body: zodToJsonSchema(UpdateLeagueDetailsRequestSchema),
+      response: {
+        200: zodToJsonSchema(LeagueResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: league.updateLeagueDetails,
+  });
+
+  fastify.put('/:id/icon', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Update league icon',
+      description:
+        'Allows a commissioner to select a built-in league icon from the curated PoolMaster icon catalog. Custom uploads remain out of scope for this slice.',
+      operationId: 'updateLeagueIcon',
+      body: zodToJsonSchema(UpdateLeagueIconRequestSchema),
+      response: {
+        200: zodToJsonSchema(LeagueResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: league.updateLeagueIcon,
   });
 
   fastify.post('/:id/inactivate', {

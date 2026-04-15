@@ -12,6 +12,7 @@ import {
   type ListLeagueMembersResponses,
 } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
+import { LeagueIcon } from './league-icon';
 import { buildInvitePath, setRecentLeagueCode } from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
@@ -224,12 +225,17 @@ export function LeagueDetailPage() {
             <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
               {formatRole(leagueQuery.data.role)}
             </span>
-            <div>
+            <div className="flex items-start gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-primary/10 text-primary">
+                <LeagueIcon iconKey={leagueQuery.data.iconKey} size="lg" />
+              </div>
+              <div>
               <h2 className="text-3xl font-semibold tracking-tight">{leagueQuery.data.name}</h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 {leagueQuery.data.description?.trim() ||
                   'This league is ready for contests, squads, standings, and commissioner workflows in the rebuilt PoolMaster app.'}
               </p>
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">

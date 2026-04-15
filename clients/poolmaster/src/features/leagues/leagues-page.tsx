@@ -6,10 +6,10 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { formatUserName } from '@/features/account/user-name';
 import {
   buildLeaguePath,
-  getLeagueInitials,
   resolveDefaultLeagueCode,
   sortLeaguesForOverview,
 } from './league-routing';
+import { LeagueIcon } from './league-icon';
 import { ManageLeagueModal } from './manage-league-modal';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
@@ -244,8 +244,8 @@ export function MyLeaguesPage() {
                       <span>{isInactive ? 'Inactive' : 'Active'}</span>
                     </div>
                   </div>
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                    {getLeagueInitials(league.name)}
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <LeagueIcon iconKey={league.iconKey} size="md" />
                   </div>
                 </div>
 

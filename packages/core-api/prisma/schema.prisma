@@ -30,6 +30,29 @@ enum PrismaLeagueJoinPolicy {
   OPEN
 }
 
+enum PrismaLeagueIconKey {
+  GOLF_FLAG
+  GOLF_BALL
+  FOOTBALL
+  FOOTBALL_HELMET
+  BASKETBALL
+  BASKETBALL_HOOP
+  CHECKERED_FLAG
+  RACING_WHEEL
+  TENNIS_BALL
+  TENNIS_RACKET
+  HORSESHOE
+  SOCCER_BALL
+  HOCKEY_STICK
+  HOCKEY_PUCK
+  BASEBALL
+  BASEBALL_BAT
+  FIGHT_GLOVE
+  TROPHY
+  WHISTLE
+  STOPWATCH
+}
+
 enum PrismaLeagueRole {
   COMMISSIONER
   MEMBER
@@ -180,6 +203,7 @@ model League {
   description String?
   createdBy   String   @map("created_by") @db.Uuid
   isActive    Boolean  @default(true) @map("is_active")
+  iconKey     PrismaLeagueIconKey @default(TROPHY) @map("icon_key")
   joinPolicy  PrismaLeagueJoinPolicy @default(COMMISSIONER_ONLY) @map("join_policy")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
