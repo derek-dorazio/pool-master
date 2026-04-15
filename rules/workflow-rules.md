@@ -257,6 +257,7 @@ Current persona nickname map:
 
 | Formal Persona | Nickname | Notes |
 |---|---|---|
+| Application Specification Builder | Abe | Technology-neutral rebuild specifications and handoff docs |
 | Data Modeler | Dom | Model and contract impact classification |
 | Backend Developer | Brad | Service, DTO, OpenAPI, and test implementation |
 | Frontend Developer | Fran | PoolMaster web UI and browser-flow delivery |

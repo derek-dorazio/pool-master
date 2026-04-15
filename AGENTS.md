@@ -22,6 +22,7 @@ All agents working in this repo should:
 - `rules/workflow-rules.md`
 - `rules/architecture-rules.md`
 - `rules/poolmaster-webapp-rules.md`
+- `rules/application-specification-rules.md`
 - `rules/domain-model-conventions-rules.md`
 - `rules/service-rules.md`
 - `rules/react-ui-rules.md`
@@ -36,6 +37,7 @@ All agents working in this repo should:
 - `rules/workflow-rules.md`: plan tracking, execution protocol, and how to update plan task status.
 - `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
 - `rules/poolmaster-webapp-rules.md`: single-webapp product rules, role-based behavior, archived-app policy, and functional expectations for the go-forward PoolMaster web app.
+- `rules/application-specification-rules.md`: technology-neutral application-spec output rules, source-of-truth hierarchy, and rebuild-document structure.
 - `rules/domain-model-conventions-rules.md`: lifecycle naming, soft-delete vs hard-delete semantics, `status` vs `isActive`, and domain-model consistency conventions.
 - `rules/service-rules.md`: backend Fastify, Prisma, DTO, mapper, and OpenAPI requirements.
 - `rules/react-ui-rules.md`: PoolMaster React conventions, generated-client usage, and prohibited frontend patterns.
@@ -50,6 +52,7 @@ All agents working in this repo should:
 The `agents/` directory contains optional role-scoped playbooks for common kinds of work:
 
 - `agents/product-manager.md`
+- `agents/application-specification-builder.md`
 - `agents/project-manager.md`
 - `agents/data-modeler.md`
 - `agents/frontend-developer.md`
