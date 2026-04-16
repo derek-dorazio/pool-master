@@ -1,15 +1,15 @@
 import {
   acceptInvitation,
-  addSquadCoManager,
   createLeagueSquad,
   generateInviteLink,
-  removeSquadCoManager,
+  listLeagueSquads,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
   expectFunctionalError,
+  getFunctionalPrisma,
 } from './setup';
 
 afterEach(async () => {
@@ -21,7 +21,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Squads', () => {
-  it('creates a squad and manages co-manager membership through the generated SDK', async () => {
+  it('provisions default teams during league creation and invitation acceptance', async () => {
     const { league, commissioner } = await buildLeagueWithCommissioner({
       displayName: 'Squad Commissioner',
       leagueName: 'Functional Squad League',
@@ -53,54 +53,56 @@ describe('SDK Functional: Squads', () => {
     expect(acceptResponse.data?.membership.leagueId).toBe(league.id);
     expect(acceptResponse.data?.membership.userId).toBe(invitee.userId);
 
-    const createResponse = await createLeagueSquad({
+    const commissionerSquads = await listLeagueSquads({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+    });
+
+    const commissionerTeam = commissionerSquads.data?.squads.find(
+      (squad) => squad.createdBy === commissioner.userId,
+    );
+
+    expect(commissionerTeam).toBeDefined();
+    expect(commissionerTeam?.leagueId).toBe(league.id);
+    expect(commissionerTeam?.status).toBe('ACTIVE');
+    expect(commissionerTeam?.memberCount).toBe(1);
+
+    const inviteeTeam = await getFunctionalPrisma().squad.findFirst({
+      where: {
+        leagueId: league.id,
+        createdBy: invitee.userId,
+        status: 'ACTIVE',
+      },
+      include: {
+        memberships: {
+          where: {
+            status: 'ACTIVE',
+          },
+        },
+      },
+    });
+
+    expect(inviteeTeam).toBeDefined();
+    expect(inviteeTeam?.leagueId).toBe(league.id);
+    expect(inviteeTeam?.status).toBe('ACTIVE');
+    expect(inviteeTeam?.memberships).toHaveLength(1);
+
+    const duplicateCreateResponse = await createLeagueSquad({
       client: commissioner.client,
       path: {
         id: league.id,
       },
       body: {
-        name: 'Functional Squad',
+        name: 'Second Commissioner Team',
       },
     });
 
-    expect(createResponse.data).toBeDefined();
-    expect(createResponse.data?.squad.leagueId).toBe(league.id);
-    expect(createResponse.data?.squad.createdBy).toBe(commissioner.userId);
-    expect(createResponse.data?.squad.name).toBe('Functional Squad');
-    expect(createResponse.data?.squad.status).toBe('ACTIVE');
-    expect(createResponse.data?.squad.memberCount).toBe(1);
-
-    const squadId = createResponse.data?.squad.id as string;
-
-    const addResponse = await addSquadCoManager({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-        squadId,
-      },
-      body: {
-        userId: invitee.userId,
-      },
+    expectFunctionalError(duplicateCreateResponse, {
+      status: 400,
+      code: 'SQUAD_MEMBERSHIP_CONFLICT',
     });
-
-    expect(addResponse.data).toBeDefined();
-    expect(addResponse.data?.membership.squadId).toBe(squadId);
-    expect(addResponse.data?.membership.leagueId).toBe(league.id);
-    expect(addResponse.data?.membership.userId).toBe(invitee.userId);
-    expect(addResponse.data?.membership.status).toBe('ACTIVE');
-
-    const removeResponse = await removeSquadCoManager({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-        squadId,
-        userId: invitee.userId,
-      },
-    });
-
-    expect(removeResponse.data).toBeDefined();
-    expect(removeResponse.data?.membership.userId).toBe(invitee.userId);
-    expect(removeResponse.data?.membership.status).toBe('INACTIVE');
   });
 
   it('rejects a non-league member from creating a squad', async () => {
@@ -112,17 +114,14 @@ describe('SDK Functional: Squads', () => {
       displayName: 'Squad Outsider',
     });
 
-    const createResponse = await createLeagueSquad({
+    const listResponse = await listLeagueSquads({
       client: commissioner.client,
       path: {
         id: league.id,
       },
-      body: {
-        name: 'Commissioner Squad',
-      },
     });
 
-    expect(createResponse.data).toBeDefined();
+    expect(listResponse.data?.squads).toHaveLength(1);
 
     const outsiderResponse = await createLeagueSquad({
       client: outsider.client,

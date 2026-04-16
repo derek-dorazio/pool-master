@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="team-icon-captain-smile" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="22" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M18 25h28l-4 7H22z" fill="currentColor"/>
+    <circle cx="25" cy="33" r="2.5" fill="currentColor"/>
+    <circle cx="39" cy="33" r="2.5" fill="currentColor"/>
+    <path d="M24 42c2.5 3 5.2 4 8 4s5.5-1 8-4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-captain-wink" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="22" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M18 24h28l-3 7H21z" fill="currentColor"/>
+    <path d="M22 33h6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="39" cy="33" r="2.5" fill="currentColor"/>
+    <path d="M23 43c2 2.5 5.3 3.8 9 3.8 3.7 0 7-1.3 9-3.8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-champion-beard" viewBox="0 0 64 64">
+    <circle cx="32" cy="26" r="13" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M21 35c1 9 5 15 11 15s10-6 11-15c-3 2-7 3-11 3s-8-1-11-3z" fill="currentColor"/>
+    <circle cx="27" cy="25" r="2.4" fill="currentColor"/>
+    <circle cx="37" cy="25" r="2.4" fill="currentColor"/>
+    <path d="M23 15c4-5 14-5 18 0" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-maverick-mask" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="22" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M18 32c4-7 10-10 14-10s10 3 14 10c-4 4-9 6-14 6s-10-2-14-6z" fill="currentColor"/>
+    <circle cx="27" cy="31" r="2.5" fill="#fff"/>
+    <circle cx="37" cy="31" r="2.5" fill="#fff"/>
+    <path d="M25 43c2.4 1.8 4.8 2.7 7 2.7s4.6-.9 7-2.7" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-starface" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="22" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="m32 18 3.6 7.2 7.9 1.1-5.7 5.6 1.4 7.8-7.2-3.8-7.2 3.8 1.4-7.8-5.7-5.6 7.9-1.1z" fill="currentColor"/>
+    <path d="M24 45c2.4 2 5 3 8 3s5.6-1 8-3" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-helmet-stripe" viewBox="0 0 64 64">
+    <path d="M14 37c0-12 8-21 21-21 10 0 19 7 19 17v10H44" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M30 17v25" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+    <path d="M18 43h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="46" cy="43" r="4" fill="currentColor"/>
+  </symbol>
+  <symbol id="team-icon-helmet-bolt" viewBox="0 0 64 64">
+    <path d="M14 37c0-12 8-21 21-21 10 0 19 7 19 17v10H44" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <path d="m28 19-4 9h6l-4 10 11-12h-6l4-7z" fill="currentColor"/>
+    <path d="M18 43h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="46" cy="43" r="4" fill="currentColor"/>
+  </symbol>
+  <symbol id="team-icon-helmet-horn" viewBox="0 0 64 64">
+    <path d="M14 37c0-12 8-21 21-21 10 0 19 7 19 17v10H44" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M20 18c-2-3-6-5-9-4 3 3 5 6 5 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M46 18c2-3 6-5 9-4-3 3-5 6-5 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M18 43h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-helmet-wing" viewBox="0 0 64 64">
+    <path d="M14 37c0-12 8-21 21-21 10 0 19 7 19 17v10H44" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M44 24c5 0 9-2 12-5-1 4-4 8-8 10 3 1 6 1 8 0-2 3-6 5-12 5" fill="currentColor"/>
+    <path d="M18 43h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-helmet-grid" viewBox="0 0 64 64">
+    <path d="M14 37c0-12 8-21 21-21 10 0 19 7 19 17v10H44" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M24 22h14M22 27h17M21 32h18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M28 18v18M34 18v18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M18 43h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-golf-bag" viewBox="0 0 64 64">
+    <path d="M23 16h14l4 30a6 6 0 0 1-6 7H25a6 6 0 0 1-6-7z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M27 13v12M32 11v14M37 13v12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M24 32h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="28" cy="47" r="2" fill="currentColor"/>
+    <circle cx="36" cy="47" r="2" fill="currentColor"/>
+  </symbol>
+  <symbol id="team-icon-whistle-badge" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="20" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M24 30c0-4 3-7 7-7 3 0 6 2 7 5l4 1v8h-7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="28" cy="37" r="5" fill="none" stroke="currentColor" stroke-width="3"/>
+    <circle cx="41" cy="37" r="2.2" fill="currentColor"/>
+  </symbol>
+  <symbol id="team-icon-stopwatch-badge" viewBox="0 0 64 64">
+    <circle cx="32" cy="34" r="16" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M28 12h8M32 18v-6M40 16l4-3" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M32 34 39 28" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="32" cy="34" r="2.5" fill="currentColor"/>
+  </symbol>
+  <symbol id="team-icon-megaphone" viewBox="0 0 64 64">
+    <path d="M17 34h10l17-9v22l-17-9H17z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M17 34v8a5 5 0 0 0 5 5h2" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M48 28c4 2 6 5 6 8s-2 6-6 8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-foam-finger" viewBox="0 0 64 64">
+    <path d="M24 50V30c0-3 2-5 5-5 1 0 2 .3 3 1V18c0-2 2-4 4-4s4 2 4 4v10c1-.7 2-1 3-1 3 0 5 2 5 5v10c0 5-4 8-9 8z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M32 18v14M40 22v10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-bull-head" viewBox="0 0 64 64">
+    <path d="M20 20c-5-5-10-6-14-4 4 2 7 6 8 11M44 20c5-5 10-6 14-4-4 2-7 6-8 11" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M22 24h20l5 10-6 13H23l-6-13z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="27" cy="34" r="2.3" fill="currentColor"/>
+    <circle cx="37" cy="34" r="2.3" fill="currentColor"/>
+    <path d="M28 43c1.4 1.3 2.8 2 4 2s2.6-.7 4-2" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-lucky-duck" viewBox="0 0 64 64">
+    <path d="M18 37c0-10 7-17 16-17 10 0 17 8 17 18 0 8-6 14-14 14H31c-8 0-13-6-13-15z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <circle cx="30" cy="31" r="2.4" fill="currentColor"/>
+    <path d="M43 35h8c-1 4-4 7-9 7" fill="currentColor"/>
+    <path d="M18 26c5 0 8-4 9-8 3 3 7 5 11 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-turbo-turtle" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="35" rx="16" ry="12" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <circle cx="47" cy="33" r="5" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M22 28l4-7M31 24l1-8M40 28l5-6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M21 47l-4 4M31 48v5M40 47l4 4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="team-icon-fire-pizza" viewBox="0 0 64 64">
+    <path d="M14 20c14 3 25 13 31 30l5-5c-1-12-11-22-24-25z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M18 18c2-6 8-10 14-10-2 4-2 8 0 12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="28" cy="32" r="2.5" fill="currentColor"/>
+    <circle cx="35" cy="39" r="2.5" fill="currentColor"/>
+    <circle cx="24" cy="40" r="2.5" fill="currentColor"/>
+  </symbol>
+  <symbol id="team-icon-banana-bat" viewBox="0 0 64 64">
+    <path d="M21 20c8-2 17 0 22 7-9 1-16 5-21 14-6-5-7-13-1-21z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="3"/>
+    <path d="M35 18c5 2 10 7 11 13" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M20 43 44 19" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+    <path d="M42 17l5 5" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+  </symbol>
+</svg>

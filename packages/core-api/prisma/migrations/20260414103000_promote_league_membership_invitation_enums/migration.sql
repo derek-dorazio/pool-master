@@ -36,6 +36,54 @@ CREATE TYPE "PrismaLeagueInvitationStatus" AS ENUM (
   'REVOKED'
 );
 
+-- Normalize legacy string values before casting into the new enum-backed columns.
+UPDATE "leagues"
+SET "join_policy" = CASE
+  WHEN LOWER("join_policy") = 'invite-only' THEN 'COMMISSIONER_ONLY'
+  ELSE UPPER("join_policy")
+END
+WHERE "join_policy" IS NOT NULL
+  AND (
+    LOWER("join_policy") = 'invite-only'
+    OR "join_policy" <> UPPER("join_policy")
+  );
+
+UPDATE "league_memberships"
+SET "role" = CASE
+  WHEN UPPER("role") = 'OWNER' THEN 'COMMISSIONER'
+  ELSE UPPER("role")
+END
+WHERE "role" IS NOT NULL
+  AND (
+    UPPER("role") = 'OWNER'
+    OR "role" <> UPPER("role")
+  );
+
+UPDATE "league_memberships"
+SET "status" = UPPER("status")
+WHERE "status" IS NOT NULL
+  AND "status" <> UPPER("status");
+
+UPDATE "squads"
+SET "status" = UPPER("status")
+WHERE "status" IS NOT NULL
+  AND "status" <> UPPER("status");
+
+UPDATE "squad_memberships"
+SET "status" = UPPER("status")
+WHERE "status" IS NOT NULL
+  AND "status" <> UPPER("status");
+
+UPDATE "league_invitations"
+SET "invite_type" = UPPER("invite_type")
+WHERE "invite_type" IS NOT NULL
+  AND "invite_type" <> UPPER("invite_type");
+
+UPDATE "league_invitations"
+SET "status" = UPPER("status")
+WHERE "status" IS NOT NULL
+  AND "status" <> UPPER("status");
+
 ALTER TABLE "leagues"
   ALTER COLUMN "join_policy" DROP DEFAULT,
   ALTER COLUMN "join_policy" TYPE "PrismaLeagueJoinPolicy"

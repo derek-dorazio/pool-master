@@ -26,13 +26,11 @@ import {
   ScoringEngine,
   SelectionType,
   SquadMembershipStatus,
-  SquadStatus,
 } from '@poolmaster/shared/domain';
 import type { ContestEntryDto } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
 } from '../../mappers/contests.mapper';
-import { buildDefaultSquadName } from '../../core/user-name';
 export interface CreateContestInput {
   leagueId: string;
   createdBy: string;
@@ -211,9 +209,8 @@ export class ContestService {
       );
     }
 
-    const squad = await this.resolveOrCreateSquadForEntry(
+    const squad = await this.requireSquadForEntry(
       context.contest.leagueId,
-      userId,
       context.squadMembership,
     );
     const existingEntries = await this.findEntriesBySquad(contestId, squad.id);
@@ -380,40 +377,21 @@ export class ContestService {
     return rosterPickCount + draftPickHistoryCount > 0;
   }
 
-  private async resolveOrCreateSquadForEntry(
+  private async requireSquadForEntry(
     leagueId: string,
-    userId: string,
     existingSquadMembership: Awaited<ReturnType<SquadMembershipRepository['findByLeagueAndUser']>>,
   ) {
-    const prisma = this.requirePrisma();
     if (existingSquadMembership?.status === SquadMembershipStatus.ACTIVE) {
       const squad = await this.requireSquadRepo().findById(existingSquadMembership.squadId);
       if (squad) {
         return squad;
       }
     }
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.firstName || !user?.lastName) {
-      throw new ContestEntryOperationError(
-        'Unable to resolve the squad owner',
-        'SQUAD_OWNER_RESOLUTION_FAILED',
-      );
-    }
-    const squad = await this.requireSquadRepo().create({
-      leagueId,
-      createdBy: userId,
-      name: buildDefaultSquadName(user.firstName, user.lastName),
-      iconUrl: undefined,
-      status: SquadStatus.ACTIVE,
-    });
-    await this.requireSquadMembershipRepo().create({
-      squadId: squad.id,
-      leagueId,
-      userId,
-      status: SquadMembershipStatus.ACTIVE,
-      joinedAt: new Date(),
-    });
-    return squad;
+
+    throw new ContestEntryOperationError(
+      'You must have an active team in this league before entering a contest',
+      'SQUAD_MEMBERSHIP_REQUIRED',
+    );
   }
 
   private async getMaxEntriesPerSquad(contestId: string): Promise<number> {

@@ -8,6 +8,7 @@ import {
   LeagueMembershipStatus,
   SquadMembershipStatus,
   SquadStatus,
+  TeamIconKey,
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
@@ -15,12 +16,12 @@ import { buildDefaultSquadName } from '../../core/user-name';
 
 interface CreateSquadInput {
   name?: string;
-  iconUrl?: string;
+  iconKey?: TeamIconKey;
 }
 
 interface UpdateSquadInput {
   name?: string;
-  iconUrl?: string;
+  iconKey?: TeamIconKey;
 }
 
 export class SquadService {
@@ -53,7 +54,7 @@ export class SquadService {
       leagueId,
       createdBy: userId,
       name: input.name?.trim() || buildDefaultSquadName(user.firstName, user.lastName),
-      iconUrl: input.iconUrl,
+      iconKey: input.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD,
       status: SquadStatus.ACTIVE,
     });
 
@@ -74,22 +75,22 @@ export class SquadService {
     userId: string,
     input: UpdateSquadInput,
   ): Promise<SquadDto> {
-    await this.requireActiveSquadCoManager(leagueId, squadId, userId);
+    await this.requireActiveSquadOwner(leagueId, squadId, userId);
     await this.squadRepo.update(squadId, {
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
-      ...(input.iconUrl !== undefined ? { iconUrl: input.iconUrl ?? undefined } : {}),
+      ...(input.iconKey !== undefined ? { iconKey: input.iconKey } : {}),
     });
     return this.loadSquadDto(squadId);
   }
 
-  async addCoManager(
+  async addOwner(
     leagueId: string,
     squadId: string,
     actorUserId: string,
     targetUserId: string,
   ): Promise<SquadMembershipDto> {
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
-    await this.requireActiveSquadCoManager(leagueId, squadId, actorUserId);
+    await this.requireActiveSquadOwner(leagueId, squadId, actorUserId);
     await this.requireActiveLeagueMembership(leagueId, targetUserId);
 
     const existingLeagueMembership = await this.squadMembershipRepo.findByLeagueAndUser(leagueId, targetUserId);
@@ -125,13 +126,13 @@ export class SquadService {
     return this.loadSquadMembershipDto(created);
   }
 
-  async removeCoManager(
+  async removeOwner(
     leagueId: string,
     squadId: string,
     actorUserId: string,
     targetUserId: string,
   ): Promise<SquadMembershipDto> {
-    await this.requireActiveSquadCoManager(leagueId, squadId, actorUserId);
+    await this.requireActiveSquadOwner(leagueId, squadId, actorUserId);
     const membership = await this.squadMembershipRepo.findBySquadAndUser(squadId, targetUserId);
     if (!membership || membership.status !== SquadMembershipStatus.ACTIVE) {
       throw new SquadNotFoundError(`Active squad membership not found for user ${targetUserId}`);
@@ -209,13 +210,13 @@ export class SquadService {
     return membership;
   }
 
-  private async requireActiveSquadCoManager(leagueId: string, squadId: string, userId: string) {
+  private async requireActiveSquadOwner(leagueId: string, squadId: string, userId: string) {
     await this.requireLeagueScopedSquad(leagueId, squadId);
     const membership = await this.squadMembershipRepo.findBySquadAndUser(squadId, userId);
     if (!membership || membership.status !== SquadMembershipStatus.ACTIVE) {
       throw new SquadOperationError(
-        'You must be an active squad co-manager to perform this action',
-        'SQUAD_CO_MANAGER_REQUIRED',
+        'You must be an active team owner to perform this action',
+        'SQUAD_OWNER_REQUIRED',
       );
     }
     if (membership.leagueId !== leagueId) {

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TeamIconKey } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -101,6 +102,7 @@ describe('MyTeamPage', () => {
           leagueId: 'league-1',
           createdBy: 'user-1',
           name: 'Derek Squad',
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
           status: 'ACTIVE',
           memberCount: 1,
           createdAt: '2026-04-15T00:00:00.000Z',
@@ -134,7 +136,7 @@ describe('MyTeamPage', () => {
     await waitFor(() =>
       expect(createLeagueSquadMock).toHaveBeenCalledWith({
         path: { id: 'league-1' },
-        body: { name: 'Derek Squad' },
+        body: { name: 'Derek Squad', iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD },
       }),
     );
   });
@@ -178,6 +180,7 @@ describe('MyTeamPage', () => {
             leagueId: 'league-1',
             createdBy: 'user-1',
             name: 'Original Team',
+            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
             status: 'ACTIVE',
             memberCount: 1,
             createdAt: '2026-04-15T00:00:00.000Z',
@@ -207,6 +210,7 @@ describe('MyTeamPage', () => {
           leagueId: 'league-1',
           createdBy: 'user-1',
           name: 'Updated Team',
+          iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT,
           status: 'ACTIVE',
           memberCount: 1,
           createdAt: '2026-04-15T00:00:00.000Z',
@@ -232,6 +236,7 @@ describe('MyTeamPage', () => {
     renderMyTeamPage();
 
     await screen.findByDisplayValue('Original Team');
+    fireEvent.click(screen.getByTestId(`my-team-icon-${TeamIconKey.TURBO_TURTLE_MIDNIGHT}`));
     fireEvent.change(screen.getByTestId('my-team-name'), {
       target: { value: 'Updated Team' },
     });
@@ -240,7 +245,7 @@ describe('MyTeamPage', () => {
     await waitFor(() =>
       expect(updateLeagueSquadMock).toHaveBeenCalledWith({
         path: { id: 'league-1', squadId: 'team-1' },
-        body: { name: 'Updated Team' },
+        body: { name: 'Updated Team', iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT },
       }),
     );
   });

@@ -205,6 +205,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update league details
+         * @description Allows a commissioner to edit the active league detail fields that are currently product truth: name and description. League code remains immutable after creation.
+         */
+        put: operations["updateLeagueDetails"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/icon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update league icon
+         * @description Allows a commissioner to select a built-in league icon from the curated PoolMaster icon catalog. Custom uploads remain out of scope for this slice.
+         */
+        put: operations["updateLeagueIcon"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/inactivate": {
         parameters: {
             query?: never;
@@ -315,7 +355,7 @@ export interface paths {
         get?: never;
         /**
          * Change a member role and permissions
-         * @description Allows a commissioner to promote or demote a member and optionally adjust explicit permission overrides for that membership.
+         * @description Allows a commissioner to promote or demote a member within the league.
          */
         put: operations["changeMemberRole"];
         post?: never;
@@ -543,10 +583,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Add or reactivate a squad co-manager
-         * @description Adds a co-manager to the squad or reactivates an existing inactive co-manager membership.
+         * Add or reactivate a team owner
+         * @description Adds an owner to the team or reactivates an existing inactive owner membership.
          */
-        post: operations["addSquadCoManager"];
+        post: operations["addSquadOwner"];
         delete?: never;
         options?: never;
         head?: never;
@@ -564,10 +604,10 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Remove a squad co-manager
-         * @description Removes the co-manager relationship between the target user and squad.
+         * Remove a team owner
+         * @description Removes the owner relationship between the target user and team.
          */
-        delete: operations["removeSquadCoManager"];
+        delete: operations["removeSquadOwner"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1275,6 +1315,86 @@ export interface paths {
         get: operations["getMemberResults"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reactivate the authenticated account
+         * @description Reactivates an inactive account and rotates a fresh browser session so the user can resume normal product usage immediately.
+         */
+        post: operations["reactivateAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the authenticated account profile
+         * @description Updates the authenticated account profile fields that are owned directly by the user profile: first name and last name.
+         */
+        put: operations["updateAccountProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update authenticated account preferences
+         * @description Updates first-pass user preferences for locale, timezone, and date/time formatting without inventing a separate preferences-only account model.
+         */
+        put: operations["updateAccountPreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the authenticated account password
+         * @description Changes the authenticated account password after validating the current password and matching new-password confirmation. Other refresh-token sessions are revoked while the current session stays usable.
+         */
+        post: operations["changeAccountPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2483,8 +2603,10 @@ export interface operations {
                     email: string;
                     /** @description Plaintext password chosen during registration. */
                     password: string;
-                    /** @description Full display name shown across the product after account creation. */
-                    displayName: string;
+                    /** @description First name captured for the account profile. */
+                    firstName: string;
+                    /** @description Last name captured for the account profile. */
+                    lastName: string;
                 };
             };
         };
@@ -2502,8 +2624,10 @@ export interface operations {
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
-                            /** @description Name shown in league, contest, and profile surfaces. */
-                            displayName: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
                             /** @description Whether the account is currently active for normal sign-in and product usage. */
                             isActive: boolean;
                             /** @description Whether the user has platform-level root-admin access. */
@@ -2622,8 +2746,10 @@ export interface operations {
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
-                            /** @description Name shown in league, contest, and profile surfaces. */
-                            displayName: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
                             /** @description Whether the account is currently active for normal sign-in and product usage. */
                             isActive: boolean;
                             /** @description Whether the user has platform-level root-admin access. */
@@ -2803,8 +2929,10 @@ export interface operations {
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
-                            /** @description Name shown in league, contest, and profile surfaces. */
-                            displayName: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
                             /** @description Whether the account is currently active for normal sign-in and product usage. */
                             isActive: boolean;
                             /** @description Whether the user has platform-level root-admin access. */
@@ -2885,6 +3013,11 @@ export interface operations {
                             description?: string | null;
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
                             /** @description Current number of memberships in the league. */
                             memberCount: number;
                             /** @description Number of currently active contests associated with the league. */
@@ -2964,6 +3097,11 @@ export interface operations {
                             description?: string | null;
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
                             /** @description Current number of memberships in the league. */
                             memberCount: number;
                             /** @description Number of currently active contests associated with the league. */
@@ -3057,6 +3195,11 @@ export interface operations {
                             description?: string | null;
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
                             /** @description Current number of memberships in the league. */
                             memberCount: number;
                             /** @description Number of currently active contests associated with the league. */
@@ -3205,6 +3348,11 @@ export interface operations {
                             description?: string | null;
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
                             /** @description Current number of memberships in the league. */
                             memberCount: number;
                             /** @description Number of currently active contests associated with the league. */
@@ -3224,6 +3372,223 @@ export interface operations {
                              * @enum {string}
                              */
                             joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateLeagueDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Commissioner request payload for editing league details while the league remains active. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Updated primary league name shown in selectors, tiles, and league home. */
+                    name: string;
+                    /** @description Optional updated commissioner-facing league description. Omit or send an empty value to clear it. */
+                    description?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Single-league detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
+                        league: {
+                            /** @description Internal league identifier used for authenticated management APIs. */
+                            id: string;
+                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                            leagueCode: string;
+                            /** @description Primary display name for the league. */
+                            name: string;
+                            /** @description Optional short league description. */
+                            description?: string | null;
+                            /** @description Whether the league is currently active for normal write interactions. */
+                            isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                            /** @description Current number of memberships in the league. */
+                            memberCount: number;
+                            /** @description Number of currently active contests associated with the league. */
+                            activeContestCount: number;
+                            /**
+                             * @description Current user role in the league when the response is viewer-scoped.
+                             * @enum {string}
+                             */
+                            role?: "COMMISSIONER" | "MEMBER";
+                            /**
+                             * Format: date-time
+                             * @description League creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                            /**
+                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                             * @enum {string}
+                             */
+                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateLeagueIcon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Commissioner request payload for selecting a built-in league icon. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Selected built-in league icon from the curated PoolMaster icon catalog.
+                     * @enum {string}
+                     */
+                    iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                };
+            };
+        };
+        responses: {
+            /** @description Single-league detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
+                        league: {
+                            /** @description Internal league identifier used for authenticated management APIs. */
+                            id: string;
+                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                            leagueCode: string;
+                            /** @description Primary display name for the league. */
+                            name: string;
+                            /** @description Optional short league description. */
+                            description?: string | null;
+                            /** @description Whether the league is currently active for normal write interactions. */
+                            isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                            /** @description Current number of memberships in the league. */
+                            memberCount: number;
+                            /** @description Number of currently active contests associated with the league. */
+                            activeContestCount: number;
+                            /**
+                             * @description Current user role in the league when the response is viewer-scoped.
+                             * @enum {string}
+                             */
+                            role?: "COMMISSIONER" | "MEMBER";
+                            /**
+                             * Format: date-time
+                             * @description League creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                            /**
+                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                             * @enum {string}
+                             */
+                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
                         };
                     };
                 };
@@ -3279,6 +3644,11 @@ export interface operations {
                             description?: string | null;
                             /** @description Whether the league is currently active for normal write interactions. */
                             isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
                             /** @description Current number of memberships in the league. */
                             memberCount: number;
                             /** @description Number of currently active contests associated with the league. */
@@ -3632,8 +4002,10 @@ export interface operations {
                             id: string;
                             /** @description User account identifier for the member. */
                             userId: string;
-                            /** @description Display name shown in member-management surfaces. */
-                            displayName: string;
+                            /** @description First name shown in member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in member-management surfaces. */
+                            lastName: string;
                             /**
                              * @description League role for the member, such as COMMISSIONER or MEMBER.
                              * @enum {string}
@@ -4039,8 +4411,10 @@ export interface operations {
                         recentMemberActivity: {
                             /** @description User involved in the activity event. */
                             userId: string;
-                            /** @description Display name shown for the member activity event. */
-                            displayName: string;
+                            /** @description First name shown for the member activity event when available. */
+                            firstName?: string;
+                            /** @description Last name shown for the member activity event when available. */
+                            lastName?: string;
                             /** @description Normalized member activity action label. */
                             action: string;
                             /**
@@ -4347,8 +4721,10 @@ export interface operations {
                     rows: {
                         /** @description Email address for the imported member row. */
                         email: string;
-                        /** @description Optional display name supplied in the import row. */
-                        displayName?: string;
+                        /** @description Optional first name supplied in the import row. */
+                        firstName?: string;
+                        /** @description Optional last name supplied in the import row. */
+                        lastName?: string;
                         /**
                          * @description Optional requested league role for the imported member.
                          * @enum {string}
@@ -4437,8 +4813,11 @@ export interface operations {
                             createdBy: string;
                             /** @description Squad display name. */
                             name: string;
-                            /** @description Optional squad icon URL. */
-                            iconUrl?: string | null;
+                            /**
+                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
                             /**
                              * @description Current squad lifecycle state.
                              * @enum {string}
@@ -4466,8 +4845,10 @@ export interface operations {
                                 leagueId: string;
                                 /** Format: uuid */
                                 userId: string;
-                                /** @description Display name for the squad member. */
-                                displayName?: string;
+                                /** @description First name for the squad member. */
+                                firstName?: string;
+                                /** @description Last name for the squad member. */
+                                lastName?: string;
                                 /**
                                  * @description Squad membership status.
                                  * @enum {string}
@@ -4568,10 +4949,10 @@ export interface operations {
                     /** @description Squad display name. */
                     name?: string;
                     /**
-                     * Format: uri
-                     * @description Optional squad icon URL.
+                     * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                     * @enum {string}
                      */
-                    iconUrl?: string;
+                    iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
                 };
             };
         };
@@ -4593,8 +4974,11 @@ export interface operations {
                             createdBy: string;
                             /** @description Squad display name. */
                             name: string;
-                            /** @description Optional squad icon URL. */
-                            iconUrl?: string | null;
+                            /**
+                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
                             /**
                              * @description Current squad lifecycle state.
                              * @enum {string}
@@ -4622,8 +5006,10 @@ export interface operations {
                                 leagueId: string;
                                 /** Format: uuid */
                                 userId: string;
-                                /** @description Display name for the squad member. */
-                                displayName?: string;
+                                /** @description First name for the squad member. */
+                                firstName?: string;
+                                /** @description Last name for the squad member. */
+                                lastName?: string;
                                 /**
                                  * @description Squad membership status.
                                  * @enum {string}
@@ -4737,8 +5123,11 @@ export interface operations {
                             createdBy: string;
                             /** @description Squad display name. */
                             name: string;
-                            /** @description Optional squad icon URL. */
-                            iconUrl?: string | null;
+                            /**
+                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
                             /**
                              * @description Current squad lifecycle state.
                              * @enum {string}
@@ -4766,8 +5155,10 @@ export interface operations {
                                 leagueId: string;
                                 /** Format: uuid */
                                 userId: string;
-                                /** @description Display name for the squad member. */
-                                displayName?: string;
+                                /** @description First name for the squad member. */
+                                firstName?: string;
+                                /** @description Last name for the squad member. */
+                                lastName?: string;
                                 /**
                                  * @description Squad membership status.
                                  * @enum {string}
@@ -4869,10 +5260,10 @@ export interface operations {
                     /** @description Updated squad display name. */
                     name?: string;
                     /**
-                     * Format: uri
-                     * @description Updated squad icon URL.
+                     * @description Updated built-in team icon key from the curated PoolMaster team icon catalog.
+                     * @enum {string}
                      */
-                    iconUrl?: string;
+                    iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
                 };
             };
         };
@@ -4894,8 +5285,11 @@ export interface operations {
                             createdBy: string;
                             /** @description Squad display name. */
                             name: string;
-                            /** @description Optional squad icon URL. */
-                            iconUrl?: string | null;
+                            /**
+                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
                             /**
                              * @description Current squad lifecycle state.
                              * @enum {string}
@@ -4923,8 +5317,10 @@ export interface operations {
                                 leagueId: string;
                                 /** Format: uuid */
                                 userId: string;
-                                /** @description Display name for the squad member. */
-                                displayName?: string;
+                                /** @description First name for the squad member. */
+                                firstName?: string;
+                                /** @description Last name for the squad member. */
+                                lastName?: string;
                                 /**
                                  * @description Squad membership status.
                                  * @enum {string}
@@ -5009,7 +5405,7 @@ export interface operations {
             };
         };
     };
-    addSquadCoManager: {
+    addSquadOwner: {
         parameters: {
             query?: never;
             header?: never;
@@ -5025,7 +5421,7 @@ export interface operations {
                 "application/json": {
                     /**
                      * Format: uuid
-                     * @description User to add as a squad co-manager or member.
+                     * @description User to add as an owner of the team.
                      */
                     userId: string;
                 };
@@ -5049,8 +5445,10 @@ export interface operations {
                             leagueId: string;
                             /** Format: uuid */
                             userId: string;
-                            /** @description Display name for the squad member. */
-                            displayName?: string;
+                            /** @description First name for the squad member. */
+                            firstName?: string;
+                            /** @description Last name for the squad member. */
+                            lastName?: string;
                             /**
                              * @description Squad membership status.
                              * @enum {string}
@@ -5134,7 +5532,7 @@ export interface operations {
             };
         };
     };
-    removeSquadCoManager: {
+    removeSquadOwner: {
         parameters: {
             query?: never;
             header?: never;
@@ -5164,8 +5562,10 @@ export interface operations {
                             leagueId: string;
                             /** Format: uuid */
                             userId: string;
-                            /** @description Display name for the squad member. */
-                            displayName?: string;
+                            /** @description First name for the squad member. */
+                            firstName?: string;
+                            /** @description Last name for the squad member. */
+                            lastName?: string;
                             /**
                              * @description Squad membership status.
                              * @enum {string}
@@ -9026,6 +9426,501 @@ export interface operations {
             };
         };
     };
+    reactivateAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        user: {
+                            /** @description Stable user identifier. */
+                            id: string;
+                            /** @description Primary email address for the user account. */
+                            email: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
+                            /** @description Whether the user has platform-level root-admin access. */
+                            isRootAdmin: boolean;
+                            /**
+                             * @description Authentication provider used for the account when known.
+                             * @enum {string}
+                             */
+                            authProvider?: "email" | "google" | "apple";
+                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                            timezone?: string;
+                            /** @description Preferred locale for formatting and localized copy. */
+                            locale?: string;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
+                            /**
+                             * Format: date-time
+                             * @description Account creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateAccountProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Self-service profile update payload for the authenticated account. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Updated first name for the account profile. */
+                    firstName: string;
+                    /** @description Updated last name for the account profile. */
+                    lastName: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        user: {
+                            /** @description Stable user identifier. */
+                            id: string;
+                            /** @description Primary email address for the user account. */
+                            email: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
+                            /** @description Whether the user has platform-level root-admin access. */
+                            isRootAdmin: boolean;
+                            /**
+                             * @description Authentication provider used for the account when known.
+                             * @enum {string}
+                             */
+                            authProvider?: "email" | "google" | "apple";
+                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                            timezone?: string;
+                            /** @description Preferred locale for formatting and localized copy. */
+                            locale?: string;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
+                            /**
+                             * Format: date-time
+                             * @description Account creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateAccountPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Self-service preferences update payload for the authenticated account. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Preferred IANA timezone, or null to clear it. */
+                    timezone?: string | null;
+                    /** @description Preferred locale, or null to clear it. */
+                    locale?: string | null;
+                    /**
+                     * @description Preferred clock display format, or null to clear it.
+                     * @enum {string|null}
+                     */
+                    timeFormat?: "12H" | "24H" | null;
+                    /**
+                     * @description Preferred date display format, or null to clear it.
+                     * @enum {string|null}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD" | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        user: {
+                            /** @description Stable user identifier. */
+                            id: string;
+                            /** @description Primary email address for the user account. */
+                            email: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
+                            /** @description Whether the user has platform-level root-admin access. */
+                            isRootAdmin: boolean;
+                            /**
+                             * @description Authentication provider used for the account when known.
+                             * @enum {string}
+                             */
+                            authProvider?: "email" | "google" | "apple";
+                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                            timezone?: string;
+                            /** @description Preferred locale for formatting and localized copy. */
+                            locale?: string;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
+                            /**
+                             * Format: date-time
+                             * @description Account creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    changeAccountPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Self-service password-change payload for the authenticated account. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Existing password that must match before the password can be changed. */
+                    currentPassword: string;
+                    /** @description New password to persist for future sign-in attempts. */
+                    newPassword: string;
+                    /** @description Repeat of the new password to guard against confirmation mistakes. */
+                    confirmNewPassword: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Minimal success response returned after changing the authenticated account password. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     inactivateAccount: {
         parameters: {
             query?: never;
@@ -9048,8 +9943,10 @@ export interface operations {
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
-                            /** @description Name shown in league, contest, and profile surfaces. */
-                            displayName: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
                             /** @description Whether the account is currently active for normal sign-in and product usage. */
                             isActive: boolean;
                             /** @description Whether the user has platform-level root-admin access. */
@@ -9390,8 +10287,10 @@ export interface operations {
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
-                            /** @description Name shown in league, contest, and profile surfaces. */
-                            displayName: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
                             /** @description Whether the account is currently active for normal sign-in and product usage. */
                             isActive: boolean;
                             /** @description Whether the user has platform-level root-admin access. */
@@ -9475,8 +10374,10 @@ export interface operations {
                         id: string;
                         /** @description Primary email address for the user account. */
                         email: string;
-                        /** @description Name shown in league, contest, and profile surfaces. */
-                        displayName: string;
+                        /** @description First name shown in account and member-management surfaces. */
+                        firstName: string;
+                        /** @description Last name shown in account and member-management surfaces. */
+                        lastName: string;
                         /** @description Whether the account is currently active for normal sign-in and product usage. */
                         isActive: boolean;
                         /** @description Whether the user has platform-level root-admin access. */

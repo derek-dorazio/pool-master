@@ -11,6 +11,7 @@ import {
   leaveLeague,
   listLeagueMembers,
   listLeagues,
+  listLeagueSquads,
   removeMember,
   resolveActionItem,
   updateLeagueDetails,
@@ -84,6 +85,20 @@ describe('SDK Functional: Leagues', () => {
     expect(detailResponse.data?.league.name).toBe('Functional League');
     expect(detailResponse.data?.league.role).toBe('COMMISSIONER');
     expect(detailResponse.data?.league.memberCount).toBe(1);
+
+    const commissionerSquads = await listLeagueSquads({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expect(commissionerSquads.data?.squads).toHaveLength(1);
+    expect(commissionerSquads.data?.squads[0]?.createdBy).toBe(commissioner.userId);
+    expect(commissionerSquads.data?.squads[0]?.memberCount).toBe(1);
+    expect(commissionerSquads.data?.squads[0]?.name).toBe(
+      `${commissioner.firstName} ${commissioner.lastName}'s Team`,
+    );
   });
 
   it('updates active league details and rejects edits after inactivation', async () => {
@@ -241,6 +256,27 @@ describe('SDK Functional: Leagues', () => {
     expect(inviteeDetail.data).toBeDefined();
     expect(inviteeDetail.data?.league.id).toBe(leagueId);
     expect(inviteeDetail.data?.league.role).toBe('MEMBER');
+
+    const inviteeTeam = await getFunctionalPrisma().squad.findFirst({
+      where: {
+        leagueId: leagueId as string,
+        createdBy: invitee.userId,
+        status: 'ACTIVE',
+      },
+      include: {
+        memberships: {
+          where: {
+            status: 'ACTIVE',
+          },
+        },
+      },
+    });
+
+    expect(inviteeTeam).toBeDefined();
+    expect(inviteeTeam?.memberships).toHaveLength(1);
+    expect(inviteeTeam?.name).toBe(
+      `${invitee.firstName} ${invitee.lastName}'s Team`,
+    );
   });
 
   it('allows an unauthenticated user to preview a league invitation by invite code', async () => {
@@ -509,6 +545,15 @@ describe('SDK Functional: Leagues', () => {
     });
 
     expect(leaveResponse.data).toEqual({ success: true });
+
+    const inactiveTeam = await getFunctionalPrisma().squad.findFirst({
+      where: {
+        leagueId: leagueId as string,
+        createdBy: member.userId,
+      },
+    });
+
+    expect(inactiveTeam?.status).toBe('INACTIVE');
 
     const secondLeaveResponse = await leaveLeague({
       client: member.client,

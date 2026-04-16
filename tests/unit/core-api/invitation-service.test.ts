@@ -7,12 +7,17 @@ import type {
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  SquadMembershipRepository,
+  SquadRepository,
 } from '@poolmaster/shared/db';
 import {
   InvitationStatus,
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
+  SquadMembershipStatus,
+  SquadStatus,
+  TeamIconKey,
 } from '@poolmaster/shared/domain';
 import { buildInvitation, buildLeague, buildMembership } from '../../factories';
 
@@ -67,6 +72,72 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
     update: jest.fn().mockResolvedValue(buildLeague()),
     delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
+  };
+}
+
+function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
+  return {
+    findById: jest.fn().mockResolvedValue(null),
+    findByLeague: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockImplementation(async (input) => ({
+      ...input,
+      id: 'new-squad-id',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+    update: jest.fn().mockImplementation(async (id, updates) => ({
+      id,
+      leagueId: 'league-1',
+      createdBy: 'user-1',
+      name: "User One's Team",
+      iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+      status: SquadStatus.ACTIVE,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...updates,
+    })),
+    delete: jest.fn().mockResolvedValue(undefined),
+    ...overrides,
+  };
+}
+
+function createMockSquadMembershipRepo(
+  overrides: Partial<SquadMembershipRepository> = {},
+): SquadMembershipRepository {
+  return {
+    findBySquad: jest.fn().mockResolvedValue([]),
+    findBySquadAndUser: jest.fn().mockResolvedValue(null),
+    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation(async (input) => ({
+      ...input,
+      id: 'new-squad-membership-id',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+    update: jest.fn().mockImplementation(async (id, updates) => ({
+      id,
+      squadId: 'new-squad-id',
+      leagueId: 'league-1',
+      userId: 'user-1',
+      status: SquadMembershipStatus.ACTIVE,
+      joinedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...updates,
+    })),
+    delete: jest.fn().mockResolvedValue(undefined),
+    ...overrides,
+  };
+}
+
+function createMockProvisioningPrisma() {
+  return {
+    user: {
+      findUnique: jest.fn().mockResolvedValue({
+        firstName: 'User',
+        lastName: 'One',
+      }),
+    },
   };
 }
 
@@ -217,13 +288,20 @@ describe('InvitationService', () => {
         findByCode: jest.fn().mockResolvedValue(invitation),
       });
       const membershipRepo = createMockMembershipRepo();
+      const squadRepo = createMockSquadRepo();
+      const squadMembershipRepo = createMockSquadMembershipRepo();
       const service = new InvitationService(
         invitationRepo,
         membershipRepo,
         createMockLeagueRepo(),
+        squadRepo,
+        squadMembershipRepo,
+        createMockProvisioningPrisma() as any,
       );
       await service.acceptInvitation('valid-code', 'new-user');
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
+      expect(squadRepo.create).toHaveBeenCalledTimes(1);
+      expect(squadMembershipRepo.create).toHaveBeenCalledTimes(1);
       const createArg = (membershipRepo.create as jest.Mock).mock.calls[0][0];
       expect(createArg.role).toBe(LeagueRole.MEMBER);
       expect(createArg.userId).toBe('new-user');
@@ -250,10 +328,37 @@ describe('InvitationService', () => {
       const membershipRepo = createMockMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(inactiveMembership),
       });
+      const squadRepo = createMockSquadRepo({
+        findById: jest.fn().mockResolvedValue({
+          id: 'existing-squad-id',
+          leagueId: 'league-1',
+          createdBy: 'returning-user',
+          name: "Returning User's Team",
+          status: SquadStatus.ACTIVE,
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      });
+      const squadMembershipRepo = createMockSquadMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue({
+          id: 'inactive-squad-membership-id',
+          squadId: 'existing-squad-id',
+          leagueId: 'league-1',
+          userId: 'returning-user',
+          status: SquadMembershipStatus.INACTIVE,
+          joinedAt: new Date('2026-01-01'),
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        }),
+      });
       const service = new InvitationService(
         invitationRepo,
         membershipRepo,
         createMockLeagueRepo(),
+        squadRepo,
+        squadMembershipRepo,
+        createMockProvisioningPrisma() as any,
       );
 
       await service.acceptInvitation('valid-code', 'returning-user');
@@ -264,6 +369,12 @@ describe('InvitationService', () => {
         expect.objectContaining({
           role: LeagueRole.MEMBER,
           status: LeagueMembershipStatus.ACTIVE,
+        }),
+      );
+      expect(squadMembershipRepo.update).toHaveBeenCalledWith(
+        'inactive-squad-membership-id',
+        expect.objectContaining({
+          status: SquadMembershipStatus.ACTIVE,
         }),
       );
     });
@@ -327,6 +438,9 @@ describe('InvitationService', () => {
         invitationRepo,
         membershipRepo,
         createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo(),
+        createMockProvisioningPrisma() as any,
       );
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -372,6 +486,9 @@ describe('InvitationService', () => {
         invitationRepo,
         membershipRepo,
         createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo(),
+        createMockProvisioningPrisma() as any,
       );
 
       await service.acceptInvitation('code', 'user-1');

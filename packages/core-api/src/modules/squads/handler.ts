@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { TeamIconKey } from '@poolmaster/shared/domain';
 import {
   SquadNotFoundError,
   SquadOperationError,
@@ -37,13 +38,16 @@ export function createSquadHandlers(service: SquadService) {
     createSquad: async (
       request: FastifyRequest<{
         Params: { id: string };
-        Body: { name?: string; iconUrl?: string };
+        Body: { name?: string; iconKey?: string };
       }>,
       reply: FastifyReply,
     ) => {
       try {
         const userId = request.authUser!.userId;
-        const squad = await service.createSquad(request.params.id, userId, request.body ?? {});
+        const squad = await service.createSquad(request.params.id, userId, {
+          name: request.body?.name,
+          iconKey: request.body?.iconKey as TeamIconKey | undefined,
+        });
         return reply.code(201).send({ squad });
       } catch (error) {
         return handleSquadError(reply, error);
@@ -53,7 +57,7 @@ export function createSquadHandlers(service: SquadService) {
     updateSquad: async (
       request: FastifyRequest<{
         Params: { id: string; squadId: string };
-        Body: { name?: string; iconUrl?: string };
+        Body: { name?: string; iconKey?: string };
       }>,
       reply: FastifyReply,
     ) => {
@@ -63,7 +67,10 @@ export function createSquadHandlers(service: SquadService) {
           request.params.id,
           request.params.squadId,
           userId,
-          request.body ?? {},
+          {
+            name: request.body?.name,
+            iconKey: request.body?.iconKey as TeamIconKey | undefined,
+          },
         );
         return reply.send({ squad });
       } catch (error) {
@@ -71,7 +78,7 @@ export function createSquadHandlers(service: SquadService) {
       }
     },
 
-    addCoManager: async (
+    addOwner: async (
       request: FastifyRequest<{
         Params: { id: string; squadId: string };
         Body: { userId: string };
@@ -80,7 +87,7 @@ export function createSquadHandlers(service: SquadService) {
     ) => {
       try {
         const userId = request.authUser!.userId;
-        const membership = await service.addCoManager(
+        const membership = await service.addOwner(
           request.params.id,
           request.params.squadId,
           userId,
@@ -92,7 +99,7 @@ export function createSquadHandlers(service: SquadService) {
       }
     },
 
-    removeCoManager: async (
+    removeOwner: async (
       request: FastifyRequest<{
         Params: { id: string; squadId: string; userId: string };
       }>,
@@ -100,7 +107,7 @@ export function createSquadHandlers(service: SquadService) {
     ) => {
       try {
         const actorUserId = request.authUser!.userId;
-        const membership = await service.removeCoManager(
+        const membership = await service.removeOwner(
           request.params.id,
           request.params.squadId,
           actorUserId,

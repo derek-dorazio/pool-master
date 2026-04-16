@@ -1,20 +1,23 @@
 import { z } from 'zod';
+import { TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
+
+const TeamIconKeyValues = Object.values(TeamIconKeyEnum) as [TeamIconKey, ...TeamIconKey[]];
 
 export const CreateSquadRequestSchema = z.object({
   name: z.string().min(1).max(100).optional().describe('Squad display name.'),
-  iconUrl: z.string().url().max(500).optional().describe('Optional squad icon URL.'),
+  iconKey: z.enum(TeamIconKeyValues).optional().describe('Selected built-in team icon key from the curated PoolMaster team icon catalog.'),
 }).describe('Request payload for creating a squad within a league.');
 export type CreateSquadRequest = z.infer<typeof CreateSquadRequestSchema>;
 
 export const UpdateSquadRequestSchema = z.object({
   name: z.string().min(1).max(100).optional().describe('Updated squad display name.'),
-  iconUrl: z.string().url().max(500).optional().describe('Updated squad icon URL.'),
+  iconKey: z.enum(TeamIconKeyValues).optional().describe('Updated built-in team icon key from the curated PoolMaster team icon catalog.'),
 }).describe('Patch payload for updating a squad.');
 export type UpdateSquadRequest = z.infer<typeof UpdateSquadRequestSchema>;
 
 export const AddSquadMemberRequestSchema = z.object({
-  userId: z.string().uuid().describe('User to add as a squad co-manager or member.'),
+  userId: z.string().uuid().describe('User to add as an owner of the team.'),
 }).describe('Request payload for adding a user to a squad.');
 export type AddSquadMemberRequest = z.infer<typeof AddSquadMemberRequestSchema>;
 
@@ -37,7 +40,7 @@ export const SquadDtoSchema = z.object({
   leagueId: z.string().uuid(),
   createdBy: z.string().uuid(),
   name: z.string().describe('Squad display name.'),
-  iconUrl: z.string().nullable().optional().describe('Optional squad icon URL.'),
+  iconKey: z.enum(TeamIconKeyValues).describe('Selected built-in team icon key from the curated PoolMaster team icon catalog.'),
   status: z.enum(['ACTIVE', 'INACTIVE']).describe('Current squad lifecycle state.'),
   memberCount: z.number().int().describe('Number of memberships attached to the squad.'),
   createdAt: DateTimeSchema.describe('When the squad was created.'),

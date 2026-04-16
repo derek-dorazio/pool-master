@@ -31,6 +31,8 @@ import {
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
+  PrismaSquadMembershipRepository,
+  PrismaSquadRepository,
   PrismaContestRepository,
   PrismaActionItemRepository,
 } from '../../adapters';
@@ -55,12 +57,27 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
+  const squadRepo = new PrismaSquadRepository(prisma);
+  const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const contestRepo = new PrismaContestRepository(prisma);
   const actionItemRepo = new PrismaActionItemRepository(prisma);
 
-  const leagueService = new LeagueService(leagueRepo, membershipRepo, prisma);
-  const invitationService = new InvitationService(invitationRepo, membershipRepo, leagueRepo);
-  const memberService = new MemberService(membershipRepo);
+  const leagueService = new LeagueService(
+    leagueRepo,
+    membershipRepo,
+    squadRepo,
+    squadMembershipRepo,
+    prisma,
+  );
+  const invitationService = new InvitationService(
+    invitationRepo,
+    membershipRepo,
+    leagueRepo,
+    squadRepo,
+    squadMembershipRepo,
+    prisma,
+  );
+  const memberService = new MemberService(membershipRepo, squadRepo, squadMembershipRepo);
   const memberDirectoryService = new MemberDirectoryService(prisma);
   const dashboardService = new DashboardService(
     leagueRepo,
@@ -296,7 +313,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Change a member role and permissions',
       description:
-        'Allows a commissioner to promote or demote a member and optionally adjust explicit permission overrides for that membership.',
+        'Allows a commissioner to promote or demote a member within the league.',
       operationId: 'changeMemberRole',
       body: zodToJsonSchema(ChangeLeagueMemberRoleRequestSchema),
       response: {

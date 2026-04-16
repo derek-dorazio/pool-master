@@ -1,6 +1,6 @@
 import type { PrismaClient, Squad as PrismaSquad } from '@prisma/client';
 import type { SquadRepository } from '@poolmaster/shared/db';
-import type { Squad, SquadStatus } from '@poolmaster/shared/domain';
+import type { Squad, SquadStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { SquadStatus as SharedSquadStatus } from '@poolmaster/shared/domain';
 
 export class PrismaSquadRepository implements SquadRepository {
@@ -28,7 +28,7 @@ export class PrismaSquadRepository implements SquadRepository {
         leagueId: squad.leagueId,
         createdBy: squad.createdBy,
         name: squad.name,
-        iconUrl: squad.iconUrl,
+        iconKey: squad.iconKey,
         status: squad.status,
       },
     });
@@ -40,7 +40,7 @@ export class PrismaSquadRepository implements SquadRepository {
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
-        ...(updates.iconUrl !== undefined && { iconUrl: updates.iconUrl }),
+        ...(updates.iconKey !== undefined && { iconKey: updates.iconKey }),
         ...(updates.status !== undefined && { status: updates.status }),
       },
     });
@@ -58,7 +58,7 @@ function mapToSquad(row: PrismaSquad): Squad {
     leagueId: row.leagueId,
     createdBy: row.createdBy,
     name: row.name,
-    iconUrl: row.iconUrl ?? undefined,
+    iconKey: row.iconKey as TeamIconKey,
     status: row.status as SquadStatus,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

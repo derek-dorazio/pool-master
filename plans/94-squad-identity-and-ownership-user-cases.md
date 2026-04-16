@@ -9,7 +9,7 @@ finished.
 - team creation during the user join flow
 - default team naming
 - first-pass team management
-- co-owner support
+- additional owner support
 
 ## Starter Design Direction
 
@@ -31,11 +31,12 @@ finished.
 - The default team name remains:
   - `<firstName> <lastName>'s Team`
 - Team ownership model:
-  - one primary owner
-  - optional co-owners
-  - the original creator remains the primary owner until a future explicit
-    transfer feature exists
-  - removing a co-owner should inactivate the related squad membership
+  - one or more owners
+  - every team must always retain at least one active owner
+  - there is no explicit primary-owner vs co-owner distinction in the first
+    slice
+  - an owner may not leave or become inactive if that would leave the team with
+    zero active owners unless the team itself is also being inactivated
 - Team icon behavior:
   - remove free-form/custom `iconUrl` behavior from the first slice
   - add one shared built-in icon catalog for all teams
@@ -80,7 +81,7 @@ finished.
 
 ### SQ-002: User later manages team details
 
-**Actor:** Team primary owner or co-owner
+**Actor:** Team owner
 
 **Preconditions**
 - Team exists
@@ -95,17 +96,17 @@ finished.
 **Expected outcomes**
 - Team identity can evolve without changing the underlying user account
 
-### SQ-003: Team owner later invites co-owners
+### SQ-003: Team owner later adds additional owners
 
-**Actor:** Team primary owner
+**Actor:** Team owner
 
 **Preconditions**
 - Team exists
-- Co-owner support has been implemented
+- multi-owner support has been implemented
 
 **Flow**
 1. Owner opens team management
-2. Owner invites or adds co-owners
+2. Owner invites or adds additional owners
 3. System updates team ownership/management relationships
 
 **Expected outcomes**
@@ -144,8 +145,9 @@ Before implementation, review:
 - whether squad ownership semantics are already truthful
 - whether any current squad fields are speculative
 - whether `iconUrl` should be removed and replaced by a first-class `iconKey`
-- whether `SquadMembership` needs an explicit role field for primary-owner vs
-  co-owner semantics
+- whether `SquadMembership` needs an explicit ownership field at all, or
+  whether a simpler owner-only membership model is sufficient for the first
+  slice
 - which current user-facing surfaces should transition from user identity to
   team identity in specific read surfaces
 

@@ -99,10 +99,10 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
   fastify.post('/:squadId/members', {
     schema: {
       tags: ['Squads'],
-      summary: 'Add or reactivate a squad co-manager',
+      summary: 'Add or reactivate a team owner',
       description:
-        'Adds a co-manager to the squad or reactivates an existing inactive co-manager membership.',
-      operationId: 'addSquadCoManager',
+        'Adds an owner to the team or reactivates an existing inactive owner membership.',
+      operationId: 'addSquadOwner',
       body: zodToJsonSchema(AddSquadMemberRequestSchema),
       response: {
         201: zodToJsonSchema(SquadMembershipResponseSchema),
@@ -111,16 +111,16 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    handler: handler.addCoManager,
+    handler: handler.addOwner,
   });
 
   fastify.delete('/:squadId/members/:userId', {
     schema: {
       tags: ['Squads'],
-      summary: 'Remove a squad co-manager',
+      summary: 'Remove a team owner',
       description:
-        'Removes the co-manager relationship between the target user and squad.',
-      operationId: 'removeSquadCoManager',
+        'Removes the owner relationship between the target user and team.',
+      operationId: 'removeSquadOwner',
       response: {
         200: zodToJsonSchema(SquadMembershipResponseSchema),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -128,6 +128,6 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    handler: handler.removeCoManager,
+    handler: handler.removeOwner,
   });
 }

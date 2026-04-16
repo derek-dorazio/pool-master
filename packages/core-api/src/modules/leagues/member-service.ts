@@ -2,12 +2,17 @@
  * MemberService — role management and member lifecycle operations.
  */
 
-import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
+import type {
+  LeagueMembershipRepository,
+  SquadMembershipRepository,
+  SquadRepository,
+} from '@poolmaster/shared/db';
 import type {
   LeagueMembership,
   LeagueRole,
 } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { deactivateSquadMembershipForLeagueMember } from '../squads/owner-membership';
 
 export interface ChangeRoleInput {
   leagueId: string;
@@ -16,7 +21,11 @@ export interface ChangeRoleInput {
 }
 
 export class MemberService {
-  constructor(private readonly membershipRepo: LeagueMembershipRepository) {}
+  constructor(
+    private readonly membershipRepo: LeagueMembershipRepository,
+    private readonly squadRepo?: SquadRepository,
+    private readonly squadMembershipRepo?: SquadMembershipRepository,
+  ) {}
 
   /** Changes a member's role. */
   async changeRole(input: ChangeRoleInput): Promise<LeagueMembership> {
@@ -51,6 +60,15 @@ export class MemberService {
     await this.membershipRepo.update(membership.id, {
       status: LeagueMembershipStatus.INACTIVE,
     });
+
+    if (this.squadRepo && this.squadMembershipRepo) {
+      await deactivateSquadMembershipForLeagueMember({
+        leagueId,
+        userId,
+        squadRepo: this.squadRepo,
+        squadMembershipRepo: this.squadMembershipRepo,
+      });
+    }
   }
 }
 

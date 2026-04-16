@@ -6,8 +6,11 @@ import type {
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  SquadMembershipRepository,
+  SquadRepository,
 } from '@poolmaster/shared/db';
 import type { LeagueInvitation, LeagueMembership } from '@poolmaster/shared/domain';
+import type { PrismaClient } from '@prisma/client';
 import {
   InvitationStatus,
   InviteType,
@@ -15,6 +18,7 @@ import {
   LeagueRole,
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
+import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 
 export interface SendInvitationsInput {
   leagueId: string;
@@ -53,6 +57,9 @@ export class InvitationService {
     private readonly invitationRepo: LeagueInvitationRepository,
     private readonly membershipRepo: LeagueMembershipRepository,
     private readonly leagueRepo: LeagueRepository,
+    private readonly squadRepo?: SquadRepository,
+    private readonly squadMembershipRepo?: SquadMembershipRepository,
+    private readonly prisma?: PrismaClient,
   ) {}
 
   /** Creates email invitations, skipping existing members and pending duplicates. */
@@ -176,6 +183,9 @@ export class InvitationService {
           status: LeagueMembershipStatus.ACTIVE,
           joinedAt: new Date(),
         });
+
+    await this.ensureDefaultSquad(invitation.leagueId, userId);
+
     const newUses = invitation.currentUses + 1;
     const isFullyUsed = invitation.maxUses > 0 && newUses >= invitation.maxUses;
     await this.invitationRepo.update(invitation.id, {
@@ -185,6 +195,20 @@ export class InvitationService {
       ...(isFullyUsed && { status: InvitationStatus.ACCEPTED }),
     });
     return membership;
+  }
+
+  private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
+    if (!this.squadRepo || !this.squadMembershipRepo || !this.prisma) {
+      return;
+    }
+
+    await ensureDefaultSquadForLeagueMember({
+      leagueId,
+      userId,
+      squadRepo: this.squadRepo,
+      squadMembershipRepo: this.squadMembershipRepo,
+      prisma: this.prisma,
+    });
   }
 
   async getInvitationPreview(inviteCode: string): Promise<InvitationPreview> {

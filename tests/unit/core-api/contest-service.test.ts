@@ -19,6 +19,7 @@ import {
   ContestType,
   SquadMembershipStatus,
   SquadStatus,
+  TeamIconKey,
 } from '@poolmaster/shared/domain';
 import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
 
@@ -121,7 +122,7 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       leagueId: 'league-1',
       createdBy: 'user-1',
       name: "Derek's Squad",
-      iconUrl: undefined,
+      iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
       status: SquadStatus.ACTIVE,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
@@ -132,7 +133,7 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       leagueId: 'league-1',
       createdBy: 'user-1',
       name: "Derek's Squad",
-      iconUrl: undefined,
+      iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
       status: SquadStatus.ACTIVE,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
@@ -431,13 +432,25 @@ describe('ContestService', () => {
         findBySquad: jest.fn().mockResolvedValue([]),
       });
       const prisma = createMockPrisma();
+      const squadMembershipRepo = createMockSquadMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue({
+          id: 'squad-membership-1',
+          squadId: 'squad-1',
+          leagueId: 'league-1',
+          userId: 'user-1',
+          status: SquadMembershipStatus.ACTIVE,
+          joinedAt: new Date('2026-01-01'),
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        }),
+      });
       const service = new ContestService(
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
         createMockLeagueRepo(),
         createMockSquadRepo(),
-        createMockSquadMembershipRepo(),
+        squadMembershipRepo,
         entryRepo,
         prisma as any,
       );
@@ -451,6 +464,33 @@ describe('ContestService', () => {
         entryNumber: 1,
         name: "Derek's Squad Entry 1",
       }));
+    });
+
+    it('rejects contest entry creation when the league member has no active squad', async () => {
+      const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(contest),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+        }),
+        createMockEntryRepo(),
+        createMockPrisma() as any,
+      );
+
+      await expect(service.createEntry('contest-1', 'user-1')).rejects.toMatchObject({
+        code: 'SQUAD_MEMBERSHIP_REQUIRED',
+      });
     });
 
     it('returns the joined entry state for pre-draft contest views', async () => {

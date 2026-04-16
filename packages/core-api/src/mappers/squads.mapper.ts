@@ -30,7 +30,7 @@ export function toSquadDto(
     leagueId: squad.leagueId,
     createdBy: squad.createdBy,
     name: squad.name,
-    iconUrl: squad.iconUrl ?? null,
+    iconKey: squad.iconKey,
     status: squad.status,
     memberCount,
     createdAt: squad.createdAt.toISOString(),

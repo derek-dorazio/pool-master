@@ -3,12 +3,18 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
+import type {
+  LeagueMembershipRepository,
+  LeagueRepository,
+  SquadMembershipRepository,
+  SquadRepository,
+} from '@poolmaster/shared/db';
 import type {
   League,
   LeagueMembership,
 } from '@poolmaster/shared/domain';
 import { JoinPolicy, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 
 export interface CreateLeagueInput {
   createdBy: string;
@@ -42,6 +48,8 @@ export class LeagueService {
   constructor(
     private readonly leagueRepo: LeagueRepository,
     private readonly membershipRepo: LeagueMembershipRepository,
+    private readonly squadRepo?: SquadRepository,
+    private readonly squadMembershipRepo?: SquadMembershipRepository,
     private readonly prisma?: PrismaClient,
   ) {}
 
@@ -67,6 +75,9 @@ export class LeagueService {
       status: LeagueMembershipStatus.ACTIVE,
       joinedAt: new Date(),
     });
+
+    await this.ensureDefaultSquad(league.id, input.createdBy);
+
     return { league, membership };
   }
 
@@ -263,6 +274,20 @@ export class LeagueService {
     }
     const members = await this.membershipRepo.findByLeague(league.id);
     return { league, members };
+  }
+
+  private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
+    if (!this.squadRepo || !this.squadMembershipRepo || !this.prisma) {
+      return;
+    }
+
+    await ensureDefaultSquadForLeagueMember({
+      leagueId,
+      userId,
+      squadRepo: this.squadRepo,
+      squadMembershipRepo: this.squadMembershipRepo,
+      prisma: this.prisma,
+    });
   }
 
 }

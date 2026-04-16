@@ -2,6 +2,7 @@ import {
   LeagueMembershipStatus,
   SquadMembershipStatus,
   SquadStatus,
+  TeamIconKey,
 } from '../../../packages/shared/domain';
 import type {
   LeagueMembershipRepository,
@@ -79,7 +80,7 @@ describe('SquadService', () => {
         leagueId: 'league-1',
         createdBy: 'user-1',
         name: "Derek Dorazio's Team",
-        iconUrl: undefined,
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
         status: SquadStatus.ACTIVE,
         createdAt: new Date('2026-04-07T00:00:00Z'),
         updatedAt: new Date('2026-04-07T00:00:00Z'),
@@ -89,7 +90,7 @@ describe('SquadService', () => {
         leagueId: 'league-1',
         createdBy: 'user-1',
         name: "Derek Dorazio's Team",
-        iconUrl: undefined,
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
         status: SquadStatus.ACTIVE,
         createdAt: new Date('2026-04-07T00:00:00Z'),
         updatedAt: new Date('2026-04-07T00:00:00Z'),
@@ -138,6 +139,7 @@ describe('SquadService', () => {
     expect(squadRepo.create).toHaveBeenCalledWith(expect.objectContaining({ name: "Derek Dorazio's Team" }));
     expect(squadMembershipRepo.create).toHaveBeenCalled();
     expect(result.name).toBe("Derek Dorazio's Team");
+    expect(result.iconKey).toBe(TeamIconKey.CAPTAIN_SMILE_FIELD);
     expect(result.memberCount).toBe(1);
   });
 
@@ -167,14 +169,14 @@ describe('SquadService', () => {
     );
   });
 
-  it('inactivates the squad when the last co-manager is removed', async () => {
+  it('inactivates the squad when the last owner is removed', async () => {
     const squadRepo = createSquadRepo({
       findById: jest.fn().mockResolvedValue({
         id: 'squad-1',
         leagueId: 'league-1',
         createdBy: 'user-1',
         name: 'Ace Squad',
-        iconUrl: undefined,
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
         status: SquadStatus.ACTIVE,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -184,7 +186,7 @@ describe('SquadService', () => {
         leagueId: 'league-1',
         createdBy: 'user-1',
         name: 'Ace Squad',
-        iconUrl: undefined,
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
         status: SquadStatus.INACTIVE,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -226,7 +228,7 @@ describe('SquadService', () => {
       findBySquad: jest.fn().mockResolvedValue([]),
     });
     const leagueMembershipRepo = createLeagueMembershipRepo();
-    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', displayName: 'Derek' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
 
     const service = new SquadService(
       squadRepo,
@@ -235,7 +237,7 @@ describe('SquadService', () => {
       prisma,
     );
 
-    await service.removeCoManager('league-1', 'squad-1', 'user-1', 'user-1');
+    await service.removeOwner('league-1', 'squad-1', 'user-1', 'user-1');
 
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
   });
