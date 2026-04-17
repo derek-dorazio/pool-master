@@ -13,6 +13,10 @@ export function buildLeagueTeamPath(leagueCode: string) {
   return `/league/${leagueCode}/team`;
 }
 
+export function buildLeagueTeamsPath(leagueCode: string) {
+  return `/league/${leagueCode}/teams`;
+}
+
 export function buildInvitePath(inviteCode: string) {
   return `/invite/${inviteCode}`;
 }

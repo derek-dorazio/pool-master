@@ -13,7 +13,7 @@ import {
 } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { LeagueIcon } from './league-icon';
-import { buildInvitePath, buildLeagueTeamPath, setRecentLeagueCode } from './league-routing';
+import { buildInvitePath, buildLeagueTeamPath, buildLeagueTeamsPath, setRecentLeagueCode } from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -322,6 +322,23 @@ export function LeagueDetailPage() {
                 to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
               >
                 Manage team
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-border bg-card p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold">Teams</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Browse every team in the league and review pending owner invites from one place.
+                </p>
+              </div>
+              <Link
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                to={buildLeagueTeamsPath(leagueQuery.data.leagueCode)}
+              >
+                View teams
               </Link>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
   createLeagueSquad,
@@ -44,6 +44,7 @@ function extractErrorMessage(error: unknown): string {
 
 export function MyTeamPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  const [searchParams] = useSearchParams();
   const auth = useAuth();
   const queryClient = useQueryClient();
   const [teamName, setTeamName] = useState('');
@@ -99,16 +100,25 @@ export function MyTeamPage() {
     ) ?? null;
   }, [auth.user?.id, teamsQuery.data]);
 
+  const requestedTeamId = searchParams.get('teamId');
+  const selectedTeam = useMemo(() => {
+    if (leagueQuery.data?.role === 'COMMISSIONER' && requestedTeamId) {
+      return teamsQuery.data?.find((team) => team.id === requestedTeamId) ?? myTeam;
+    }
+
+    return myTeam;
+  }, [leagueQuery.data?.role, myTeam, requestedTeamId, teamsQuery.data]);
+
   useEffect(() => {
-    if (myTeam) {
-      setTeamName(myTeam.name);
-      setSelectedIconKey(myTeam.iconKey);
+    if (selectedTeam) {
+      setTeamName(selectedTeam.name);
+      setSelectedIconKey(selectedTeam.iconKey);
       return;
     }
 
     setTeamName(buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName));
     setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
-  }, [auth.user?.firstName, auth.user?.lastName, myTeam]);
+  }, [auth.user?.firstName, auth.user?.lastName, selectedTeam]);
 
   const createTeamMutation = useMutation({
     mutationFn: async ({ nextTeamName, nextIconKey }: { nextTeamName: string; nextIconKey: TeamIconKey }) => {
@@ -156,9 +166,9 @@ export function MyTeamPage() {
       return;
     }
 
-    if (myTeam) {
+    if (selectedTeam) {
       await updateTeamMutation.mutateAsync({
-        teamId: myTeam.id,
+        teamId: selectedTeam.id,
         nextTeamName,
         nextIconKey: selectedIconKey,
       });
@@ -194,8 +204,9 @@ export function MyTeamPage() {
   }
 
   const isInactiveLeague = leagueQuery.data.isActive === false;
+  const isCommissioner = leagueQuery.data.role === 'COMMISSIONER';
   const isBusy = createTeamMutation.isPending || updateTeamMutation.isPending;
-  const activeMembers = (myTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
+  const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
   const selectedIcon = getTeamIconOption(selectedIconKey);
 
   return (
@@ -208,14 +219,15 @@ export function MyTeamPage() {
             </div>
             <div>
               <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                Team
+                {isCommissioner && selectedTeam && selectedTeam.id !== myTeam?.id ? 'Commissioner team view' : 'Team'}
               </span>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight">
-                {myTeam ? myTeam.name : 'Create your team'}
+                {selectedTeam ? selectedTeam.name : 'Create your team'}
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                Team identity lives inside the league context. This slice adds the built-in icon
-                catalog so your Team can look distinct before owner controls expand.
+                {isCommissioner && selectedTeam && selectedTeam.id !== myTeam?.id
+                  ? 'Commissioners can use this same team surface to review and update any team in the league.'
+                  : 'Team identity lives inside the league context. This slice adds the built-in icon catalog so your Team can look distinct before owner controls expand.'}
               </p>
             </div>
           </div>
@@ -240,9 +252,9 @@ export function MyTeamPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-[2rem] border border-border bg-card p-6">
-          <h3 className="text-xl font-semibold">{myTeam ? 'Team details' : 'Create your team'}</h3>
+          <h3 className="text-xl font-semibold">{selectedTeam ? 'Team details' : 'Create your team'}</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            {myTeam
+            {selectedTeam
               ? 'You can update your team name and choose a built-in icon here.'
               : 'A team is required for league participation. Start with a name and icon that feel right for your group.'}
           </p>
@@ -308,12 +320,12 @@ export function MyTeamPage() {
             >
               {isBusy
                 ? 'Saving...'
-                : myTeam
+                : selectedTeam
                   ? 'Save team'
                   : 'Create team'}
             </button>
 
-            {createTeamMutation.isSuccess && !myTeam ? (
+            {createTeamMutation.isSuccess && !selectedTeam ? (
               <p className="text-sm text-emerald-700">Your team was created.</p>
             ) : null}
             {updateTeamMutation.isSuccess ? (
@@ -341,7 +353,7 @@ export function MyTeamPage() {
                 <p className="text-sm text-muted-foreground">Loading team members...</p>
               ) : teamsQuery.isError ? (
                 <p className="text-sm text-muted-foreground">We couldn&apos;t load your team yet.</p>
-              ) : !myTeam ? (
+              ) : !selectedTeam ? (
                 <p className="text-sm text-muted-foreground">
                   Create your team first and the active member list will appear here.
                 </p>
